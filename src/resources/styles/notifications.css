@@ -1,0 +1,882 @@
+/**
+ * Notifications Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides styles for error handling and user notifications,
+ * including toast notifications, error dialogs, and status messages.
+ */
+
+/* ================================
+   NOTIFICATION CONTAINER
+   ================================ */
+
+/* Notification container for positioning notifications */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* ================================
+   TOAST NOTIFICATIONS
+   ================================ */
+
+/* Base toast notification */
+.toast-notification {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Toast notification show state */
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Toast notification hide state */
+.toast-notification.hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Toast notification types */
+.toast-notification.info {
+    border-left: 4px solid #0078d4;
+}
+
+.toast-notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.toast-notification.warning {
+    border-left: 4px solid #ffc107;
+}
+
+.toast-notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+/* Toast notification header */
+.toast-notification-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+/* Toast notification icon */
+.toast-notification-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+/* Toast notification close button */
+.toast-notification-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #666666;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+}
+
+.toast-notification-close:hover {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+
+/* Toast notification message */
+.toast-notification-message {
+    color: #333333;
+    line-height: 1.4;
+}
+
+/* Toast notification actions */
+.toast-notification-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Toast notification action button */
+.toast-notification-action {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.toast-notification-action:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+.toast-notification-action.primary {
+    background-color: #0078d4;
+    color: #ffffff;
+    border-color: #0078d4;
+}
+
+.toast-notification-action.primary:hover {
+    background-color: #106ebe;
+}
+
+/* ================================
+   PROGRESS NOTIFICATIONS
+   ================================
+
+/* Progress notification */
+.progress-notification {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto;
+}
+
+/* Progress notification header */
+.progress-notification-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Progress notification title */
+.progress-notification-title {
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+/* Progress notification percentage */
+.progress-notification-percentage {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666666;
+}
+
+/* Progress notification progress bar */
+.progress-notification-progress {
+    height: 4px;
+    background-color: #f0f0f0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-notification-progress-bar {
+    height: 100%;
+    background-color: #0078d4;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Progress notification status */
+.progress-notification-status {
+    font-size: 12px;
+    color: #666666;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Progress notification cancel button */
+.progress-notification-cancel {
+    background: none;
+    border: none;
+    color: #0078d4;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.progress-notification-cancel:hover {
+    color: #106ebe;
+}
+
+/* ================================
+   ERROR DIALOGS
+   ================================
+
+/* Error dialog */
+.error-dialog {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 20px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Error dialog header */
+.error-dialog-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Error dialog icon */
+.error-dialog-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    color: #dc3545;
+}
+
+/* Error dialog title */
+.error-dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+/* Error dialog message */
+.error-dialog-message {
+    margin-bottom: 16px;
+    line-height: 1.5;
+    color: #333333;
+}
+
+/* Error dialog details */
+.error-dialog-details {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #495057;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Error dialog actions */
+.error-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Error dialog action button */
+.error-dialog-action {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.error-dialog-action:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+.error-dialog-action.primary {
+    background-color: #0078d4;
+    color: #ffffff;
+    border-color: #0078d4;
+}
+
+.error-dialog-action.primary:hover {
+    background-color: #106ebe;
+}
+
+/* ================================
+   WARNING DIALOGS
+   ================================
+
+/* Warning dialog */
+.warning-dialog {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 20px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Warning dialog header */
+.warning-dialog-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Warning dialog icon */
+.warning-dialog-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    color: #ffc107;
+}
+
+/* Warning dialog title */
+.warning-dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #856404;
+}
+
+/* ================================
+   SUCCESS DIALOGS
+   ================================
+
+/* Success dialog */
+.success-dialog {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 20px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Success dialog header */
+.success-dialog-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Success dialog icon */
+.success-dialog-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    color: #28a745;
+}
+
+/* Success dialog title */
+.success-dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #155724;
+}
+
+/* ================================
+   INFO DIALOGS
+   ================================
+
+/* Info dialog */
+.info-dialog {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 20px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Info dialog header */
+.info-dialog-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Info dialog icon */
+.info-dialog-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    color: #0078d4;
+}
+
+/* Info dialog title */
+.info-dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #004085;
+}
+
+/* ================================
+   STATUS BAR NOTIFICATIONS
+   ================================
+
+/* Status bar notification */
+.status-bar-notification {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    margin: 0 4px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Status bar notification icon */
+.status-bar-notification-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+}
+
+/* Status bar notification types */
+.status-bar-notification.info {
+    border-color: #0078d4;
+    color: #004085;
+}
+
+.status-bar-notification.success {
+    border-color: #28a745;
+    color: #155724;
+}
+
+.status-bar-notification.warning {
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.status-bar-notification.error {
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* ================================
+   INLINE VALIDATION MESSAGES
+   ================================
+
+/* Inline validation message */
+.inline-validation-message {
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+}
+
+/* Inline validation message icon */
+.inline-validation-message-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+}
+
+/* Inline validation message types */
+.inline-validation-message.info {
+    color: #004085;
+}
+
+.inline-validation-message.success {
+    color: #155724;
+}
+
+.inline-validation-message.warning {
+    color: #856404;
+}
+
+.inline-validation-message.error {
+    color: #721c24;
+}
+
+/* ================================
+   LOADING STATES
+   ================================
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 120, 212, 0.2);
+    border-top: 4px solid #0078d4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Loading message */
+.loading-message {
+    font-size: 16px;
+    color: #333333;
+    margin-bottom: 16px;
+}
+
+/* Loading progress */
+.loading-progress {
+    width: 300px;
+    height: 4px;
+    background-color: #f0f0f0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-progress-bar {
+    height: 100%;
+    background-color: #0078d4;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Loading cancel button */
+.loading-cancel {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 8px 16px;
+    margin-top: 16px;
+    cursor: pointer;
+}
+
+.loading-cancel:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+/* ================================
+   RESPONSIVE NOTIFICATIONS
+   ================================
+
+/* Small screen adjustments */
+@media (max-width: 600px) {
+    .notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast-notification {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .error-dialog, .warning-dialog, .success-dialog, .info-dialog {
+        min-width: auto;
+        max-width: none;
+        margin: 10px;
+    }
+    
+    .loading-overlay {
+        padding: 20px;
+    }
+    
+    .loading-progress {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* ================================
+   DARK MODE NOTIFICATIONS
+   ================================
+
+/* Dark mode toast notifications */
+QMainWindow[darkMode="true"] .toast-notification {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toast-notification-close {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toast-notification-close:hover {
+    background-color: #3e3e42;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toast-notification-message {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toast-notification-action {
+    background-color: #3e3e42;
+    border-color: #555555;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toast-notification-action:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+/* Dark mode error dialogs */
+QMainWindow[darkMode="true"] .error-dialog {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .error-dialog-header {
+    border-bottom-color: #3e3e42;
+}
+
+QMainWindow[darkMode="true"] .error-dialog-message {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .error-dialog-details {
+    background-color: #1e1e1e;
+    border-color: #3e3e42;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .error-dialog-action {
+    background-color: #3e3e42;
+    border-color: #555555;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .error-dialog-action:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+/* Dark mode loading overlay */
+QMainWindow[darkMode="true"] .loading-overlay {
+    background-color: rgba(45, 45, 48, 0.8);
+}
+
+QMainWindow[darkMode="true"] .loading-message {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .loading-progress {
+    background-color: #3e3e42;
+}
+
+QMainWindow[darkMode="true"] .loading-cancel {
+    background-color: #3e3e42;
+    border-color: #555555;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .loading-cancel:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+/* ================================
+   ACCESSIBILITY FOR NOTIFICATIONS
+   ================================
+
+/* High contrast mode notifications */
+QMainWindow[highContrast="true"] .toast-notification {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .toast-notification.info {
+    border-left-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .toast-notification.success {
+    border-left-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .toast-notification.warning {
+    border-left-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .toast-notification.error {
+    border-left-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .error-dialog {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .error-dialog-header {
+    border-bottom-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .error-dialog-title {
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .error-dialog-message {
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .error-dialog-details {
+    background-color: #000000;
+    border: 1px solid #ffffff;
+    color: #ffffff;
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus indicators for notifications */
+.toast-notification:focus,
+.error-dialog-action:focus,
+.loading-cancel:focus {
+    outline: 2px solid #0078d4;
+    outline-offset: 2px;
+}
+
+/* ================================
+   ANIMATION KEYFRAMES
+   ================================
+
+/* Slide in animation */
+@keyframes slide-in {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Slide out animation */
+@keyframes slide-out {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Fade out animation */
+@keyframes fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Pulse animation for attention */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Bounce animation for attention */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .toast-notification,
+    .progress-notification,
+    .error-dialog,
+    .warning-dialog,
+    .success-dialog,
+    .info-dialog,
+    .loading-overlay {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .loading-spinner {
+        animation: none;
+        border-top-color: #0078d4;
+        border-right-color: #0078d4;
+        border-bottom-color: #0078d4;
+        border-left-color: rgba(0, 120, 212, 0.2);
+    }
+}

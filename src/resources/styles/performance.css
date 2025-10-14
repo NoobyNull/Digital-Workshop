@@ -1,0 +1,478 @@
+/**
+ * Performance Optimization Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides performance optimizations for UI elements,
+ * particularly during model loading and resource-intensive operations.
+ */
+
+/* ================================
+   LOADING STATE OPTIMIZATIONS
+   ================================ */
+
+/* Optimize rendering during loading */
+.loading-state {
+    /* Use GPU acceleration for animations */
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    
+    /* Reduce expensive effects during loading */
+    box-shadow: none;
+    text-shadow: none;
+    border-radius: 0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+/* Loading overlay with optimized rendering */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 1000;
+    
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    will-change: opacity;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+}
+
+/* Optimized loading spinner */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 120, 212, 0.2);
+    border-top: 4px solid #0078d4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+    
+    /* Use hardware acceleration */
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes spin {
+    0% { transform: translateZ(0) rotate(0deg); }
+    100% { transform: translateZ(0) rotate(360deg); }
+}
+
+/* ================================
+   PROGRESS INDICATOR OPTIMIZATIONS
+   ================================
+
+/* Optimized progress bar */
+.progress-bar-optimized {
+    height: 4px;
+    background-color: #f0f0f0;
+    border-radius: 0;
+    overflow: hidden;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border: none;
+}
+
+.progress-bar-optimized::chunk {
+    background-color: #0078d4;
+    width: 0%;
+    height: 100%;
+    
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    will-change: width;
+    
+    /* Use hardware acceleration */
+    backface-visibility: hidden;
+}
+
+/* Lightweight progress text */
+.progress-text {
+    font-size: 8pt;
+    color: #666666;
+    margin-top: 4px;
+    
+    /* Disable text shadows during loading */
+    text-shadow: none;
+}
+
+/* ================================
+   MODEL LIBRARY OPTIMIZATIONS
+   ================================
+
+/* Optimized model list view */
+.model-list-optimized {
+    /* Use virtual scrolling for large lists */
+    virtual-scrolling: true;
+    
+    /* Optimize item rendering */
+    item-rendering: simple;
+    
+    /* Disable expensive effects */
+    alternate-background-color: transparent;
+}
+
+.model-list-optimized::item {
+    padding: 4px;
+    border-bottom: 1px solid #f0f0f0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+.model-list-optimized::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+}
+
+/* Optimized model grid view */
+.model-grid-optimized {
+    /* Use virtual scrolling for large grids */
+    virtual-scrolling: true;
+    
+    /* Optimize item rendering */
+    item-rendering: simple;
+    
+    /* Disable expensive effects */
+    alternate-background-color: transparent;
+}
+
+.model-grid-optimized::item {
+    padding: 4px;
+    margin: 2px;
+    border: 1px solid #f0f0f0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+.model-grid-optimized::item:selected {
+    border-color: #0078d4;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+}
+
+/* Optimized thumbnail placeholder */
+.thumbnail-placeholder {
+    width: 128px;
+    height: 128px;
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    
+    /* Use simple rendering */
+    rendering: simple;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* ================================
+   3D VIEWER OPTIMIZATIONS
+   ================================
+
+/* Optimized viewer container */
+.viewer-optimized {
+    /* Use hardware acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+    
+    /* Optimize for rendering */
+    rendering: optimized;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+}
+
+/* Optimized viewer controls */
+.viewer-controls-optimized {
+    background-color: rgba(245, 245, 245, 0.9);
+    padding: 4px;
+    
+    /* Use simple rendering */
+    rendering: simple;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.viewer-controls-optimized QPushButton {
+    padding: 4px 8px;
+    margin: 0 2px;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+/* ================================
+   METADATA EDITOR OPTIMIZATIONS
+   ================================
+
+/* Optimized metadata form */
+.metadata-form-optimized {
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.metadata-form-optimized QLineEdit,
+.metadata-form-optimized QTextEdit,
+.metadata-form-optimized QComboBox {
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+/* ================================
+   SEARCH WIDGET OPTIMIZATIONS
+   ================================
+
+/* Optimized search input */
+.search-input-optimized {
+    /* Use simple rendering */
+    rendering: simple;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+    
+    /* Optimize for input */
+    input-method: optimized;
+}
+
+/* Optimized search results */
+.search-results-optimized {
+    /* Use virtual scrolling for large result sets */
+    virtual-scrolling: true;
+    
+    /* Optimize item rendering */
+    item-rendering: simple;
+    
+    /* Disable expensive effects */
+    alternate-background-color: transparent;
+}
+
+.search-results-optimized::item {
+    padding: 4px;
+    border-bottom: 1px solid #f0f0f0;
+    
+    /* Disable transitions during loading */
+    transition: none;
+}
+
+/* ================================
+   DOCK WIDGET OPTIMIZATIONS
+   ================================
+
+/* Optimized dock widgets */
+.dock-widget-optimized {
+    /* Use hardware acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+}
+
+.dock-widget-optimized QDockWidget::title {
+    /* Use simple rendering */
+    rendering: simple;
+    
+    /* Disable expensive effects */
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* ================================
+   RESPONSIVE PERFORMANCE
+   ================================
+
+/* Performance optimizations for small screens */
+@media (max-width: 800px) {
+    /* Reduce visual complexity on small screens */
+    .loading-overlay {
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+    
+    /* Simplify progress indicators */
+    .progress-bar-optimized {
+        height: 2px;
+    }
+    
+    /* Reduce thumbnail size */
+    .thumbnail-placeholder {
+        width: 64px;
+        height: 64px;
+    }
+    
+    /* Simplify controls */
+    .viewer-controls-optimized QPushButton {
+        padding: 2px 4px;
+        font-size: 8pt;
+    }
+}
+
+/* Performance optimizations for low-end devices */
+@media (max-resolution: 120dpi) {
+    /* Disable animations on low-end devices */
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    /* Use simpler rendering */
+    .loading-spinner {
+        border-width: 2px;
+        animation: spin 2s linear infinite;
+    }
+    
+    /* Reduce visual effects */
+    .loading-overlay {
+        background-color: rgba(255, 255, 255, 1);
+    }
+}
+
+/* ================================
+   MEMORY OPTIMIZATIONS
+   ================================
+
+/* Reduce memory usage with CSS containment */
+.memory-optimized {
+    contain: strict;
+}
+
+/* Optimize images for memory usage */
+.memory-optimized img {
+    image-rendering: optimizeSpeed;
+    image-orientation: from-image;
+}
+
+/* Reduce repaints with CSS containment */
+.viewport-optimized {
+    contain: layout style paint;
+}
+
+/* ================================
+   CACHING OPTIMIZATIONS
+   ================================
+
+/* Enable content caching for static elements */
+.cacheable-content {
+    /* Optimize for caching */
+    will-change: auto;
+    contain: content;
+}
+
+/* Disable caching for dynamic content */
+.non-cacheable-content {
+    /* Prevent caching */
+    will-change: transform, opacity;
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ================================
+   CUSTOM PROPERTIES FOR PERFORMANCE
+   ================================
+
+/* Performance tuning variables */
+:root {
+    --loading-opacity: 0.9;
+    --progress-height: 4px;
+    --spinner-size: 40px;
+    --thumbnail-size: 128px;
+    --control-padding: 4px;
+    --animation-duration: 1s;
+    --transition-duration: 0.2s;
+}
+
+/* Performance tuning for different environments */
+.performance-high {
+    --loading-opacity: 0.8;
+    --progress-height: 6px;
+    --spinner-size: 48px;
+    --thumbnail-size: 128px;
+    --control-padding: 6px;
+    --animation-duration: 0.8s;
+    --transition-duration: 0.3s;
+}
+
+.performance-medium {
+    --loading-opacity: 0.9;
+    --progress-height: 4px;
+    --spinner-size: 40px;
+    --thumbnail-size: 128px;
+    --control-padding: 4px;
+    --animation-duration: 1s;
+    --transition-duration: 0.2s;
+}
+
+.performance-low {
+    --loading-opacity: 1.0;
+    --progress-height: 2px;
+    --spinner-size: 32px;
+    --thumbnail-size: 64px;
+    --control-padding: 2px;
+    --animation-duration: 2s;
+    --transition-duration: 0.1s;
+}
+
+/* Apply performance variables */
+.loading-overlay {
+    opacity: var(--loading-opacity);
+}
+
+.progress-bar-optimized {
+    height: var(--progress-height);
+}
+
+.loading-spinner {
+    width: var(--spinner-size);
+    height: var(--spinner-size);
+    animation-duration: var(--animation-duration);
+}
+
+.thumbnail-placeholder {
+    width: var(--thumbnail-size);
+    height: var(--thumbnail-size);
+}
+
+.viewer-controls-optimized QPushButton {
+    padding: var(--control-padding);
+}
+
+* {
+    transition-duration: var(--transition-duration);
+}

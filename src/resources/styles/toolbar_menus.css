@@ -1,0 +1,815 @@
+/**
+ * Toolbar and Menu Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides styles for enhanced toolbar and menu organization,
+ * including context menus, toolbar groups, and menu separators.
+ */
+
+/* ================================
+   MAIN TOOLBAR STYLES
+   ================================ */
+
+/* Main toolbar container */
+.main-toolbar {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-bottom: 1px solid #d0d0d0;
+    padding: 4px;
+    spacing: 2px;
+}
+
+/* Toolbar group container */
+.toolbar-group {
+    background-color: transparent;
+    border: none;
+    margin: 0 8px;
+    padding: 0;
+}
+
+/* Toolbar group separator */
+.toolbar-group::before {
+    content: "";
+    width: 1px;
+    height: 24px;
+    background-color: #d0d0d0;
+    margin: 0 8px;
+}
+
+/* Toolbar group label */
+.toolbar-group-label {
+    font-size: 8pt;
+    color: #666666;
+    margin: 0 4px;
+    padding: 0 4px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Toolbar button */
+.toolbar-button {
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: 6px;
+    margin: 1px;
+    border-radius: 2px;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.toolbar-button:hover {
+    background-color: #e1e1e1;
+    border: 1px solid #0078d4;
+}
+
+.toolbar-button:pressed {
+    background-color: #d0d0d0;
+}
+
+.toolbar-button:checked {
+    background-color: #0078d4;
+    color: #ffffff;
+    border: 1px solid #0078d4;
+}
+
+/* Toolbar button with icon */
+.toolbar-button-icon {
+    padding: 6px;
+}
+
+/* Toolbar button with text */
+.toolbar-button-text {
+    padding: 6px 12px;
+}
+
+/* Toolbar button with icon and text */
+.toolbar-button-icon-text {
+    padding: 6px 8px;
+}
+
+/* Toolbar button disabled */
+.toolbar-button:disabled {
+    background-color: transparent;
+    color: #a0a0a0;
+    border: 1px solid transparent;
+}
+
+/* ================================
+   CONTEXT MENU STYLES
+   ================================
+
+/* Context menu container */
+.context-menu {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 4px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+}
+
+/* Context menu item */
+.context-menu-item {
+    background-color: transparent;
+    border: none;
+    padding: 8px 16px;
+    margin: 0;
+    text-align: left;
+    border-radius: 0;
+}
+
+.context-menu-item:hover {
+    background-color: #e1e1e1;
+}
+
+.context-menu-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Context menu separator */
+.context-menu-separator {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 8px;
+    padding: 0;
+}
+
+/* Context menu submenu indicator */
+.context-menu-item::after {
+    content: "▶";
+    float: right;
+    margin-left: 12px;
+    font-size: 8pt;
+    color: #666666;
+}
+
+/* Context menu item disabled */
+.context-menu-item:disabled {
+    color: #a0a0a0;
+    background-color: transparent;
+}
+
+/* Context menu item with icon */
+.context-menu-item-icon {
+    padding-left: 36px;
+    background-position: 12px center;
+    background-repeat: no-repeat;
+}
+
+/* Context menu item with checkbox */
+.context-menu-item-checkbox {
+    padding-left: 36px;
+    background-position: 12px center;
+    background-repeat: no-repeat;
+}
+
+.context-menu-item-checkbox:checked {
+    background-image: url(check.png);
+}
+
+/* ================================
+   MENU BAR STYLES
+   ================================
+
+/* Menu bar container */
+.menu-bar {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #d0d0d0;
+    padding: 2px;
+    spacing: 2px;
+}
+
+/* Menu bar item */
+.menu-bar-item {
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    margin: 1px;
+    border-radius: 2px;
+}
+
+.menu-bar-item:hover {
+    background-color: #e1e1e1;
+}
+
+.menu-bar-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Menu bar item disabled */
+.menu-bar-item:disabled {
+    color: #a0a0a0;
+    background-color: transparent;
+}
+
+/* ================================
+   DROPDOWN MENU STYLES
+   ================================
+
+/* Dropdown menu container */
+.dropdown-menu {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 4px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+}
+
+/* Dropdown menu item */
+.dropdown-menu-item {
+    background-color: transparent;
+    border: none;
+    padding: 8px 16px;
+    margin: 0;
+    text-align: left;
+    border-radius: 0;
+}
+
+.dropdown-menu-item:hover {
+    background-color: #e1e1e1;
+}
+
+.dropdown-menu-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Dropdown menu separator */
+.dropdown-menu-separator {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 8px;
+    padding: 0;
+}
+
+/* Dropdown menu submenu indicator */
+.dropdown-menu-item::after {
+    content: "▶";
+    float: right;
+    margin-left: 12px;
+    font-size: 8pt;
+    color: #666666;
+}
+
+/* Dropdown menu item disabled */
+.dropdown-menu-item:disabled {
+    color: #a0a0a0;
+    background-color: transparent;
+}
+
+/* Dropdown menu item with icon */
+.dropdown-menu-item-icon {
+    padding-left: 36px;
+    background-position: 12px center;
+    background-repeat: no-repeat;
+}
+
+/* Dropdown menu item with checkbox */
+.dropdown-menu-item-checkbox {
+    padding-left: 36px;
+    background-position: 12px center;
+    background-repeat: no-repeat;
+}
+
+.dropdown-menu-item-checkbox:checked {
+    background-image: url(check.png);
+}
+
+/* Dropdown menu item with shortcut */
+.dropdown-menu-item-shortcut {
+    padding-right: 36px;
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    font-size: 8pt;
+    color: #666666;
+}
+
+/* ================================
+   TOOLBAR CUSTOMIZATION
+   ================================
+
+/* Toolbar customization dialog */
+.toolbar-customization {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 16px;
+    min-width: 400px;
+}
+
+/* Toolbar customization list */
+.toolbar-customization-list {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    min-height: 200px;
+    max-height: 300px;
+}
+
+/* Toolbar customization item */
+.toolbar-customization-item {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    padding: 8px;
+    margin: 2px;
+}
+
+/* Toolbar customization item selected */
+.toolbar-customization-item:selected {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+/* Toolbar customization item disabled */
+.toolbar-customization-item:disabled {
+    color: #a0a0a0;
+    background-color: #f5f5f5;
+}
+
+/* Toolbar customization buttons */
+.toolbar-customization-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+/* Toolbar customization button */
+.toolbar-customization-button {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 6px 12px;
+}
+
+.toolbar-customization-button:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+.toolbar-customization-button:disabled {
+    background-color: #f5f5f5;
+    color: #a0a0a0;
+    border-color: #e0e0e0;
+}
+
+/* ================================
+   RESPONSIVE TOOLBAR
+   ================================
+
+/* Small screen toolbar adjustments */
+@media (max-width: 800px) {
+    .main-toolbar {
+        padding: 2px;
+        spacing: 1px;
+    }
+    
+    .toolbar-group {
+        margin: 0 4px;
+    }
+    
+    .toolbar-group::before {
+        margin: 0 4px;
+    }
+    
+    .toolbar-button {
+        padding: 4px;
+        margin: 1px;
+        min-width: 20px;
+        min-height: 20px;
+    }
+    
+    .toolbar-button-text {
+        padding: 4px 8px;
+        font-size: 8pt;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 4px 6px;
+    }
+    
+    .context-menu {
+        min-width: 150px;
+    }
+    
+    .dropdown-menu {
+        min-width: 150px;
+    }
+}
+
+/* Very small screen toolbar adjustments */
+@media (max-width: 600px) {
+    .main-toolbar {
+        padding: 1px;
+        spacing: 0px;
+    }
+    
+    .toolbar-group {
+        margin: 0 2px;
+    }
+    
+    .toolbar-group::before {
+        display: none;
+    }
+    
+    .toolbar-group-label {
+        display: none;
+    }
+    
+    .toolbar-button {
+        padding: 3px;
+        margin: 1px;
+        min-width: 18px;
+        min-height: 18px;
+    }
+    
+    .toolbar-button-text {
+        display: none;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 3px;
+    }
+    
+    .context-menu {
+        min-width: 120px;
+    }
+    
+    .dropdown-menu {
+        min-width: 120px;
+    }
+}
+
+/* ================================
+   DARK MODE TOOLBAR AND MENUS
+   ================================
+
+/* Dark mode main toolbar */
+QMainWindow[darkMode="true"] .main-toolbar {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode toolbar group */
+QMainWindow[darkMode="true"] .toolbar-group::before {
+    background-color: #3e3e42;
+}
+
+/* Dark mode toolbar group label */
+QMainWindow[darkMode="true"] .toolbar-group-label {
+    color: #f1f1f1;
+    border-color: #3e3e42;
+}
+
+/* Dark mode toolbar button */
+QMainWindow[darkMode="true"] .toolbar-button {
+    background-color: transparent;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .toolbar-button:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+QMainWindow[darkMode="true"] .toolbar-button:pressed {
+    background-color: #666666;
+}
+
+QMainWindow[darkMode="true"] .toolbar-button:checked {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Dark mode toolbar button disabled */
+QMainWindow[darkMode="true"] .toolbar-button:disabled {
+    color: #666666;
+}
+
+/* Dark mode menu bar */
+QMainWindow[darkMode="true"] .menu-bar {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode menu bar item */
+QMainWindow[darkMode="true"] .menu-bar-item {
+    background-color: transparent;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .menu-bar-item:hover {
+    background-color: #555555;
+}
+
+QMainWindow[darkMode="true"] .menu-bar-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Dark mode context menu */
+QMainWindow[darkMode="true"] .context-menu {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode context menu item */
+QMainWindow[darkMode="true"] .context-menu-item {
+    background-color: transparent;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .context-menu-item:hover {
+    background-color: #555555;
+}
+
+QMainWindow[darkMode="true"] .context-menu-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Dark mode context menu separator */
+QMainWindow[darkMode="true"] .context-menu-separator {
+    background-color: #3e3e42;
+}
+
+/* Dark mode dropdown menu */
+QMainWindow[darkMode="true"] .dropdown-menu {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode dropdown menu item */
+QMainWindow[darkMode="true"] .dropdown-menu-item {
+    background-color: transparent;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .dropdown-menu-item:hover {
+    background-color: #555555;
+}
+
+QMainWindow[darkMode="true"] .dropdown-menu-item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Dark mode dropdown menu separator */
+QMainWindow[darkMode="true"] .dropdown-menu-separator {
+    background-color: #3e3e42;
+}
+
+/* ================================
+   HIGH CONTRAST MODE TOOLBAR AND MENUS
+   ================================
+
+/* High contrast mode main toolbar */
+QMainWindow[highContrast="true"] .main-toolbar {
+    background-color: #000000;
+    border-color: #ffffff;
+}
+
+/* High contrast mode toolbar group */
+QMainWindow[highContrast="true"] .toolbar-group::before {
+    background-color: #ffffff;
+}
+
+/* High contrast mode toolbar group label */
+QMainWindow[highContrast="true"] .toolbar-group-label {
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+/* High contrast mode toolbar button */
+QMainWindow[highContrast="true"] .toolbar-button {
+    background-color: #000000;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] .toolbar-button:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] .toolbar-button:pressed {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] .toolbar-button:checked {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* High contrast mode menu bar */
+QMainWindow[highContrast="true"] .menu-bar {
+    background-color: #000000;
+    border-color: #ffffff;
+}
+
+/* High contrast mode menu bar item */
+QMainWindow[highContrast="true"] .menu-bar-item {
+    background-color: #000000;
+    color: #ffffff;
+    border: 1px solid transparent;
+}
+
+QMainWindow[highContrast="true"] .menu-bar-item:hover {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] .menu-bar-item:selected {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+}
+
+/* High contrast mode context menu */
+QMainWindow[highContrast="true"] .context-menu {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode context menu item */
+QMainWindow[highContrast="true"] .context-menu-item {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .context-menu-item:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] .context-menu-item:selected {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* High contrast mode context menu separator */
+QMainWindow[highContrast="true"] .context-menu-separator {
+    background-color: #ffffff;
+}
+
+/* ================================
+   ACCESSIBILITY FOR TOOLBAR AND MENUS
+   ================================
+
+/* Focus indicators for toolbar buttons */
+.toolbar-button:focus {
+    border: 2px solid #0078d4;
+    outline: 2px solid #0078d4;
+    outline-offset: 1px;
+}
+
+/* Focus indicators for menu items */
+.menu-bar-item:focus,
+.context-menu-item:focus,
+.dropdown-menu-item:focus {
+    background-color: #e1f1ff;
+    border: 1px solid #0078d4;
+}
+
+/* Screen reader only text for toolbar buttons */
+.toolbar-button-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Keyboard navigation hints */
+.toolbar-button-keyboard-hint {
+    font-size: 8pt;
+    color: #666666;
+    margin-left: 4px;
+}
+
+/* ================================
+   ANIMATIONS FOR TOOLBAR AND MENUS
+   ================================
+
+/* Menu animation */
+.menu-animation {
+    animation: menu-slide-down 0.2s ease-out;
+}
+
+@keyframes menu-slide-down {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toolbar button animation */
+.toolbar-button-animation {
+    animation: toolbar-button-bounce 0.3s ease-out;
+}
+
+@keyframes toolbar-button-bounce {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ================================
+   CUSTOM PROPERTIES FOR TOOLBAR AND MENUS
+   ================================
+
+/* Toolbar and menu tuning variables */
+:root {
+    --toolbar-height: 32px;
+    --toolbar-button-size: 24px;
+    --toolbar-padding: 4px;
+    --toolbar-spacing: 2px;
+    --menu-min-width: 180px;
+    --menu-item-height: 32px;
+    --menu-padding: 4px;
+    --menu-icon-size: 16px;
+}
+
+/* High performance mode */
+.performance-high {
+    --toolbar-height: 36px;
+    --toolbar-button-size: 28px;
+    --toolbar-padding: 6px;
+    --toolbar-spacing: 4px;
+    --menu-min-width: 200px;
+    --menu-item-height: 36px;
+    --menu-padding: 6px;
+    --menu-icon-size: 18px;
+}
+
+/* Low performance mode */
+.performance-low {
+    --toolbar-height: 28px;
+    --toolbar-button-size: 20px;
+    --toolbar-padding: 2px;
+    --toolbar-spacing: 1px;
+    --menu-min-width: 160px;
+    --menu-item-height: 28px;
+    --menu-padding: 2px;
+    --menu-icon-size: 14px;
+}
+
+/* Apply toolbar and menu variables */
+.main-toolbar {
+    height: var(--toolbar-height);
+    padding: var(--toolbar-padding);
+}
+
+.toolbar-button {
+    min-width: var(--toolbar-button-size);
+    min-height: var(--toolbar-button-size);
+}
+
+.context-menu,
+.dropdown-menu {
+    min-width: var(--menu-min-width);
+}
+
+.context-menu-item,
+.dropdown-menu-item {
+    height: var(--menu-item-height);
+    padding: var(--menu-padding);
+}
+
+.toolbar-button-icon,
+.context-menu-item-icon,
+.dropdown-menu-item-icon {
+    width: var(--menu-icon-size);
+    height: var(--menu-icon-size);
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .menu-animation,
+    .toolbar-button-animation {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

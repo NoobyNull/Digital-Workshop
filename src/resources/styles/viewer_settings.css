@@ -1,0 +1,631 @@
+/**
+ * 3D Viewer Settings Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides styles for the 3D viewer settings panel,
+ * including controls for lighting, camera position, colors, and other settings.
+ */
+
+/* ================================
+   VIEWER SETTINGS PANEL
+   ================================ */
+
+/* Main viewer settings panel */
+.viewer-settings-panel {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 8px;
+    min-width: 250px;
+    max-width: 300px;
+}
+
+/* Panel header */
+.viewer-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Panel title */
+.viewer-settings-title {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #333333;
+}
+
+/* Panel toggle button */
+.viewer-settings-toggle {
+    background: none;
+    border: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    color: #666666;
+}
+
+.viewer-settings-toggle:hover {
+    color: #0078d4;
+}
+
+/* Panel content */
+.viewer-settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ================================
+   SETTINGS SECTIONS
+   ================================
+
+/* Settings section */
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Section header */
+.settings-section-header {
+    display: flex;
+    align-items: center;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+/* Section content */
+.settings-section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 8px;
+}
+
+/* ================================
+   LIGHTING CONTROLS
+   ================================
+
+/* Lighting control group */
+.lighting-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+/* Lighting control label */
+.lighting-control-label {
+    font-size: 8pt;
+    color: #333333;
+    flex: 1;
+}
+
+/* Lighting control slider */
+.lighting-control-slider {
+    width: 100px;
+    height: 16px;
+}
+
+/* Lighting control value */
+.lighting-control-value {
+    font-size: 8pt;
+    color: #666666;
+    width: 30px;
+    text-align: right;
+}
+
+/* Color picker */
+.color-picker {
+    width: 100%;
+    height: 24px;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+/* ================================
+   CAMERA CONTROLS
+   ================================
+
+/* Camera control group */
+.camera-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+/* Camera position control */
+.camera-position-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Camera position label */
+.camera-position-label {
+    font-size: 8pt;
+    color: #333333;
+    width: 20px;
+}
+
+/* Camera position slider */
+.camera-position-slider {
+    width: 100px;
+    height: 16px;
+}
+
+/* Camera position value */
+.camera-position-value {
+    font-size: 8pt;
+    color: #666666;
+    width: 30px;
+    text-align: right;
+}
+
+/* Camera preset buttons */
+.camera-preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Camera preset button */
+.camera-preset-button {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    font-size: 8pt;
+    cursor: pointer;
+}
+
+.camera-preset-button:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+.camera-preset-button:active {
+    background-color: #d0d0d0;
+}
+
+/* ================================
+   RENDERING CONTROLS
+   ================================
+
+/* Rendering mode selector */
+.rendering-mode-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Rendering mode option */
+.rendering-mode-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Rendering mode radio */
+.rendering-mode-radio {
+    margin: 0;
+}
+
+/* Rendering mode label */
+.rendering-mode-label {
+    font-size: 8pt;
+    color: #333333;
+}
+
+/* ================================
+   VISIBILITY CONTROLS
+   ================================
+
+/* Visibility control */
+.visibility-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+/* Visibility control label */
+.visibility-control-label {
+    font-size: 8pt;
+    color: #333333;
+}
+
+/* Visibility control checkbox */
+.visibility-control-checkbox {
+    margin: 0;
+}
+
+/* ================================
+   TRANSFORM CONTROLS
+   ================================
+
+/* Transform control */
+.transform-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+/* Transform slider */
+.transform-slider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Transform label */
+.transform-label {
+    font-size: 8pt;
+    color: #333333;
+    width: 20px;
+}
+
+/* Transform slider */
+.transform-slider-input {
+    width: 100px;
+    height: 16px;
+}
+
+/* Transform value */
+.transform-value {
+    font-size: 8pt;
+    color: #666666;
+    width: 30px;
+    text-align: right;
+}
+
+/* Transform reset button */
+.transform-reset-button {
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    font-size: 8pt;
+    cursor: pointer;
+}
+
+.transform-reset-button:hover {
+    background-color: #e1e1e1;
+    border-color: #0078d4;
+}
+
+/* ================================
+   ADVANCED SETTINGS
+   ================================
+
+/* Advanced settings toggle */
+.advanced-settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 4px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Advanced settings checkbox */
+.advanced-settings-checkbox {
+    margin: 0;
+}
+
+/* Advanced settings label */
+.advanced-settings-label {
+    font-size: 8pt;
+    color: #333333;
+    cursor: pointer;
+}
+
+/* Advanced settings content */
+.advanced-settings-content {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    padding-left: 8px;
+}
+
+.advanced-settings-content.show {
+    display: flex;
+}
+
+/* ================================
+   RESPONSIVE ADJUSTMENTS
+   ================================
+
+/* Small screen adjustments */
+@media (max-width: 800px) {
+    .viewer-settings-panel {
+        min-width: 200px;
+        max-width: 250px;
+        padding: 6px;
+    }
+    
+    .viewer-settings-title {
+        font-size: 9pt;
+    }
+    
+    .settings-section-header {
+        font-size: 8pt;
+    }
+    
+    .lighting-control-slider,
+    .camera-position-slider,
+    .transform-slider-input {
+        width: 80px;
+    }
+    
+    .lighting-control-value,
+    .camera-position-value,
+    .transform-value {
+        width: 25px;
+        font-size: 7pt;
+    }
+}
+
+/* Very small screen adjustments */
+@media (max-width: 600px) {
+    .viewer-settings-panel {
+        min-width: 180px;
+        max-width: 200px;
+        padding: 4px;
+    }
+    
+    .viewer-settings-title {
+        font-size: 8pt;
+    }
+    
+    .settings-section-header {
+        font-size: 7pt;
+    }
+    
+    .lighting-control-slider,
+    .camera-position-slider,
+    .transform-slider-input {
+        width: 60px;
+    }
+    
+    .lighting-control-value,
+    .camera-position-value,
+    .transform-value {
+        width: 20px;
+        font-size: 6pt;
+    }
+    
+    .camera-preset-button {
+        padding: 2px 4px;
+        font-size: 7pt;
+    }
+}
+
+/* ================================
+   DARK MODE ADJUSTMENTS
+   ================================
+
+/* Dark mode viewer settings panel */
+QMainWindow[darkMode="true"] .viewer-settings-panel {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode panel header */
+QMainWindow[darkMode="true"] .viewer-settings-header {
+    border-bottom-color: #3e3e42;
+}
+
+/* Dark mode panel title */
+QMainWindow[darkMode="true"] .viewer-settings-title {
+    color: #f1f1f1;
+}
+
+/* Dark mode panel toggle button */
+QMainWindow[darkMode="true"] .viewer-settings-toggle {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .viewer-settings-toggle:hover {
+    color: #0078d4;
+}
+
+/* Dark mode section header */
+QMainWindow[darkMode="true"] .settings-section-header {
+    color: #f1f1f1;
+}
+
+/* Dark mode control labels */
+QMainWindow[darkMode="true"] .lighting-control-label,
+QMainWindow[darkMode="true"] .camera-position-label,
+QMainWindow[darkMode="true"] .transform-label,
+QMainWindow[darkMode="true"] .visibility-control-label,
+QMainWindow[darkMode="true"] .rendering-mode-label,
+QMainWindow[darkMode="true"] .advanced-settings-label {
+    color: #f1f1f1;
+}
+
+/* Dark mode control values */
+QMainWindow[darkMode="true"] .lighting-control-value,
+QMainWindow[darkMode="true"] .camera-position-value,
+QMainWindow[darkMode="true"] .transform-value {
+    color: #f1f1f1;
+}
+
+/* Dark mode color picker */
+QMainWindow[darkMode="true"] .color-picker {
+    border-color: #3e3e42;
+}
+
+/* Dark mode camera preset button */
+QMainWindow[darkMode="true"] .camera-preset-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .camera-preset-button:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+/* Dark mode transform reset button */
+QMainWindow[darkMode="true"] .transform-reset-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .transform-reset-button:hover {
+    background-color: #555555;
+    border-color: #0078d4;
+}
+
+/* Dark mode advanced settings toggle */
+QMainWindow[darkMode="true"] .advanced-settings-toggle {
+    border-top-color: #3e3e42;
+}
+
+/* ================================
+   HIGH CONTRAST MODE ADJUSTMENTS
+   ================================
+
+/* High contrast mode viewer settings panel */
+QMainWindow[highContrast="true"] .viewer-settings-panel {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode panel header */
+QMainWindow[highContrast="true"] .viewer-settings-header {
+    border-bottom-color: #ffffff;
+}
+
+/* High contrast mode panel title */
+QMainWindow[highContrast="true"] .viewer-settings-title {
+    color: #ffffff;
+}
+
+/* High contrast mode panel toggle button */
+QMainWindow[highContrast="true"] .viewer-settings-toggle {
+    color: #ffffff;
+}
+
+/* High contrast mode section header */
+QMainWindow[highContrast="true"] .settings-section-header {
+    color: #ffffff;
+}
+
+/* High contrast mode control labels */
+QMainWindow[highContrast="true"] .lighting-control-label,
+QMainWindow[highContrast="true"] .camera-position-label,
+QMainWindow[highContrast="true"] .transform-label,
+QMainWindow[highContrast="true"] .visibility-control-label,
+QMainWindow[highContrast="true"] .rendering-mode-label,
+QMainWindow[highContrast="true"] .advanced-settings-label {
+    color: #ffffff;
+}
+
+/* High contrast mode control values */
+QMainWindow[highContrast="true"] .lighting-control-value,
+QMainWindow[highContrast="true"] .camera-position-value,
+QMainWindow[highContrast="true"] .transform-value {
+    color: #ffffff;
+}
+
+/* High contrast mode color picker */
+QMainWindow[highContrast="true"] .color-picker {
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode camera preset button */
+QMainWindow[highContrast="true"] .camera-preset-button {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+}
+
+/* High contrast mode transform reset button */
+QMainWindow[highContrast="true"] .transform-reset-button {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+}
+
+/* ================================
+   ACCESSIBILITY ADJUSTMENTS
+   ================================
+
+/* Focus indicators */
+.viewer-settings-toggle:focus,
+.color-picker:focus,
+.camera-preset-button:focus,
+.transform-reset-button:focus,
+.advanced-settings-checkbox:focus {
+    outline: 2px solid #0078d4;
+    outline-offset: 1px;
+}
+
+/* Screen reader only text */
+.viewer-settings-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ================================
+   ANIMATIONS
+   ================================
+
+/* Panel expand/collapse animation */
+.viewer-settings-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.viewer-settings-content.collapsed {
+    max-height: 0;
+}
+
+/* Advanced settings expand/collapse animation */
+.advanced-settings-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+/* Button press animation */
+.camera-preset-button:active,
+.transform-reset-button:active {
+    transform: scale(0.98);
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .viewer-settings-content,
+    .advanced-settings-content {
+        transition: none;
+    }
+    
+    .camera-preset-button:active,
+    .transform-reset-button:active {
+        transform: none;
+    }
+}

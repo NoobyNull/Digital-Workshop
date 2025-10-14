@@ -1,0 +1,44 @@
+# 3D-MM (3D Model Manager) - Conda Environment File
+# Use this file with: conda env create -f requirements-conda.yml
+
+name: 3d-mm
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python version
+  - python=3.9
+
+  # Core GUI Framework
+  - pyside6
+
+  # 3D Visualization
+  - pyqt
+
+  # Optional: Enhanced 3D Visualization
+  - vtk
+
+  # Optional: Numerical operations for geometry processing
+  - numpy
+
+  # Optional: XML parsing for advanced formats
+  - lxml
+
+  # Development and Testing
+  - pytest
+
+  # Performance Monitoring
+  - psutil
+
+  # Build and Packaging
+  - pyinstaller
+
+  # Pip for packages not available in conda
+  - pip
+
+  # Additional pip packages if needed
+  - pip:
+    - PyQt3D>=5.15.0
+    - pytest-qt>=4.0.0
+    - cx-freeze>=6.15.0

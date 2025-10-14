@@ -1,0 +1,18 @@
+# Material file for cube.obj
+# Created for testing 3D-MM OBJ parser
+
+newmtl cube_material
+# Ambient color
+Ka 0.2 0.2 0.2
+# Diffuse color
+Kd 0.8 0.8 0.8
+# Specular color
+Ks 1.0 1.0 1.0
+# Specular exponent
+Ns 32.0
+# Optical density
+Ni 1.0
+# Dissolve
+d 1.0
+# Illumination model
+illum 2

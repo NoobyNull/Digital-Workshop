@@ -1,0 +1,535 @@
+/**
+ * Accessibility Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides enhanced accessibility features including
+ * keyboard navigation, screen reader support, and high contrast modes.
+ */
+
+/* ================================
+   KEYBOARD NAVIGATION ENHANCEMENTS
+   ================================ */
+
+/* Enhanced focus indicators for all interactive elements */
+QPushButton:focus, QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus,
+QComboBox:focus, QCheckBox:focus, QRadioButton:focus,
+QSpinBox:focus, QDoubleSpinBox:focus, QDateEdit:focus, QDateTimeEdit:focus,
+QTimeEdit:focus, QTabBar::tab:focus, QHeaderView::section:focus,
+QTableView::item:focus, QTreeView::item:focus, QListView::item:focus,
+QMenu::item:focus, QMenuBar::item:focus, QToolButton:focus {
+    border: 2px solid #0078d4;
+    outline: 2px solid #0078d4;
+    outline-offset: 1px;
+}
+
+/* Skip to main content link for keyboard users */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #0078d4;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 1000;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 6px;
+}
+
+/* Keyboard navigation hints */
+.keyboard-hint {
+    font-size: 8pt;
+    color: #666666;
+    margin-left: 4px;
+}
+
+/* ================================
+   SCREEN READER SUPPORT
+   ================================ */
+
+/* Hidden elements for screen readers only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Accessible labels for complex widgets */
+QLabel[accessibility-label]::after {
+    content: attr(accessibility-label);
+    display: none;
+}
+
+/* ================================
+   HIGH CONTRAST MODE
+   ================================ */
+
+/* High contrast mode for Windows */
+QMainWindow[highContrast="true"] {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QMenuBar {
+    background-color: #000000;
+    color: #ffffff;
+    border-bottom: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QMenuBar::item {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid transparent;
+}
+
+QMainWindow[highContrast="true"] QMenuBar::item:selected {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QMenu {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QMenu::item {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid transparent;
+}
+
+QMainWindow[highContrast="true"] QMenu::item:selected {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QToolBar {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QToolButton {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QToolButton:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QToolButton:checked {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QPushButton {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QPushButton:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QPushButton:default {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QLineEdit, QMainWindow[highContrast="true"] QTextEdit,
+QMainWindow[highContrast="true"] QPlainTextEdit {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QComboBox {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QComboBox QAbstractItemView {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QComboBox QAbstractItemView::item:selected {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QCheckBox, QMainWindow[highContrast="true"] QRadioButton {
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QCheckBox::indicator:unchecked {
+    border: 2px solid #ffffff;
+    background-color: #000000;
+}
+
+QMainWindow[highContrast="true"] QCheckBox::indicator:checked {
+    border: 2px solid #ffffff;
+    background-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QRadioButton::indicator:unchecked {
+    border: 2px solid #ffffff;
+    background-color: #000000;
+}
+
+QMainWindow[highContrast="true"] QRadioButton::indicator:checked {
+    border: 2px solid #ffffff;
+    background-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QTabBar::tab {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QTabBar::tab:selected {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QTableView, QMainWindow[highContrast="true"] QTreeView,
+QMainWindow[highContrast="true"] QListView {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QTableView::item:selected,
+QMainWindow[highContrast="true"] QTreeView::item:selected,
+QMainWindow[highContrast="true"] QListView::item:selected {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QMainWindow[highContrast="true"] QHeaderView::section {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QDockWidget {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QDockWidget::title {
+    background-color: #000000;
+    color: #ffffff;
+    border-bottom: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QGroupBox {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QGroupBox::title {
+    color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QProgressBar {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QProgressBar::chunk {
+    background-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QScrollBar:vertical {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QScrollBar::handle:vertical {
+    background-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QScrollBar:horizontal {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QScrollBar::handle:horizontal {
+    background-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] QStatusBar {
+    background-color: #000000;
+    color: #ffffff;
+    border-top: 2px solid #ffffff;
+}
+
+QMainWindow[highContrast="true"] QSplitter::handle {
+    background-color: #ffffff;
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================ */
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ================================
+   TEXT SCALING
+   ================================ */
+
+/* Support for text scaling up to 200% */
+@media (min-resolution: 120dpi) {
+    QMainWindow {
+        font-size: 10pt;
+    }
+}
+
+@media (min-resolution: 144dpi) {
+    QMainWindow {
+        font-size: 11pt;
+    }
+}
+
+@media (min-resolution: 192dpi) {
+    QMainWindow {
+        font-size: 12pt;
+    }
+}
+
+/* ================================
+   FOCUS MANAGEMENT
+   ================================ */
+
+/* Focus trap for modal dialogs */
+.modal-dialog:focus-within {
+    outline: 2px solid #0078d4;
+}
+
+/* Focus indicators for tab order */
+.tab-indicator {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.tab-indicator:focus {
+    width: auto;
+    height: auto;
+    position: static;
+    overflow: visible;
+}
+
+/* ================================
+   COLOR BLINDNESS SUPPORT
+   ================================ */
+
+/* Color blindness friendly palette */
+.colorblind-friendly {
+    --primary: #005a9e;
+    --secondary: #6b567f;
+    --success: #00843d;
+    --warning: #e67300;
+    --error: #c83c3c;
+    --info: #0067b9;
+}
+
+/* Ensure information isn't conveyed by color alone */
+.colorblind-friendly QPushButton::after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 4px;
+}
+
+.colorblind-friendly QPushButton[primary]::after {
+    background-color: var(--primary);
+}
+
+.colorblind-friendly QPushButton[success]::after {
+    background-color: var(--success);
+}
+
+.colorblind-friendly QPushButton[warning]::after {
+    background-color: var(--warning);
+}
+
+.colorblind-friendly QPushButton[error]::after {
+    background-color: var(--error);
+}
+
+/* ================================
+   ACCESSIBLE FORMS
+   ================================
+
+/* Required field indicators */
+.required-field::after {
+    content: " *";
+    color: #c83c3c;
+    font-weight: bold;
+}
+
+/* Error states with indicators */
+.error-state {
+    border: 2px solid #c83c3c;
+    background-color: #fff5f5;
+}
+
+.error-state::after {
+    content: " ⚠";
+    color: #c83c3c;
+}
+
+/* Success states with indicators */
+.success-state {
+    border: 2px solid #00843d;
+    background-color: #f0fff4;
+}
+
+.success-state::after {
+    content: " ✓";
+    color: #00843d;
+}
+
+/* Warning states with indicators */
+.warning-state {
+    border: 2px solid #e67300;
+    background-color: #fffdf7;
+}
+
+.warning-state::after {
+    content: " ⚠";
+    color: #e67300;
+}
+
+/* ================================
+   ACCESSIBLE TABLES
+   ================================
+
+/* Table headers with proper scope */
+QTableView::header-section {
+    font-weight: bold;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* Row headers */
+.row-header {
+    font-weight: bold;
+    background-color: #f0f0f0;
+}
+
+/* ================================
+   ACCESSIBLE NOTIFICATIONS
+   ================================
+
+/* Toast notifications with ARIA live region */
+.toast-notification[role="alert"] {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #ffffff;
+    border: 2px solid #0078d4;
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.toast-notification[role="alert"][type="error"] {
+    border-color: #c83c3c;
+    background-color: #fff5f5;
+}
+
+.toast-notification[role="alert"][type="success"] {
+    border-color: #00843d;
+    background-color: #f0fff4;
+}
+
+.toast-notification[role="alert"][type="warning"] {
+    border-color: #e67300;
+    background-color: #fffdf7;
+}
+
+/* ================================
+   ACCESSIBLE PROGRESS INDICATORS
+   ================================
+
+/* Progress bars with accessible labels */
+.progress-bar[aria-valuenow]::before {
+    content: attr(aria-label) ": " attr(aria-valuenow) "%";
+    position: absolute;
+    left: -10000px;
+}
+
+/* ================================
+   KEYBOARD SHORTCUTS VISUALIZATION
+   ================================
+
+/* Visual indicators for keyboard shortcuts */
+.keyboard-shortcut {
+    font-family: monospace;
+    font-size: 8pt;
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-radius: 3px;
+    padding: 2px 4px;
+    margin-left: 4px;
+}
+
+/* ================================
+   CUSTOM ACCESSIBILITY PROPERTIES
+   ================================
+
+/* Custom property for accessible name */
+[accessible-name]::before {
+    content: attr(accessible-name);
+    position: absolute;
+    left: -10000px;
+}
+
+/* Custom property for accessible description */
+[accessible-description]::after {
+    content: attr(accessible-description);
+    position: absolute;
+    left: -10000px;
+}
+
+/* Custom property for accessible role */
+[accessible-role] {
+    /* This would be handled by the accessibility API in the actual implementation */
+}

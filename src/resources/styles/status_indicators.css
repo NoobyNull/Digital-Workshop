@@ -1,0 +1,1050 @@
+/**
+ * Status Indicators Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides styles for status indicators that show system health,
+ * including memory usage, CPU usage, GPU usage, and performance metrics.
+ */
+
+/* ================================
+   STATUS INDICATOR BASE STYLES
+   ================================ */
+
+/* Base status indicator */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: normal;
+    margin: 0 4px;
+    min-width: 80px;
+    justify-content: center;
+}
+
+/* Status indicator icon */
+.status-indicator-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+/* Status indicator text */
+.status-indicator-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ================================
+   STATUS LEVELS
+   ================================
+
+/* Good status */
+.status-good {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-good .status-indicator-icon {
+    background-color: #28a745;
+}
+
+/* Warning status */
+.status-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.status-warning .status-indicator-icon {
+    background-color: #ffc107;
+}
+
+/* Error status */
+.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-error .status-indicator-icon {
+    background-color: #dc3545;
+}
+
+/* Unknown status */
+.status-unknown {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.status-unknown .status-indicator-icon {
+    background-color: #6c757d;
+}
+
+/* ================================
+   SYSTEM STATUS CONTAINER
+   ================================
+
+/* System status container */
+.system-status-container {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    margin: 2px 4px;
+}
+
+/* System status label */
+.system-status-label {
+    font-size: 8pt;
+    font-weight: bold;
+    margin-right: 8px;
+    color: #333333;
+}
+
+/* System status indicators */
+.system-status-indicators {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ================================
+   MEMORY USAGE INDICATOR
+   ================================
+
+/* Memory usage indicator */
+.memory-usage-indicator {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* Memory usage bar */
+.memory-usage-bar {
+    width: 40px;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-right: 6px;
+    overflow: hidden;
+}
+
+.memory-usage-bar-fill {
+    height: 100%;
+    background-color: #28a745;
+    border-radius: 4px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Memory usage text */
+.memory-usage-text {
+    font-size: 8pt;
+    color: #333333;
+    white-space: nowrap;
+}
+
+/* Memory usage levels */
+.memory-usage-low .memory-usage-bar-fill {
+    background-color: #28a745;
+}
+
+.memory-usage-medium .memory-usage-bar-fill {
+    background-color: #ffc107;
+}
+
+.memory-usage-high .memory-usage-bar-fill {
+    background-color: #dc3545;
+}
+
+/* ================================
+   CPU USAGE INDICATOR
+   ================================
+
+/* CPU usage indicator */
+.cpu-usage-indicator {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* CPU usage bar */
+.cpu-usage-bar {
+    width: 40px;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-right: 6px;
+    overflow: hidden;
+}
+
+.cpu-usage-bar-fill {
+    height: 100%;
+    background-color: #28a745;
+    border-radius: 4px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* CPU usage text */
+.cpu-usage-text {
+    font-size: 8pt;
+    color: #333333;
+    white-space: nowrap;
+}
+
+/* CPU usage levels */
+.cpu-usage-low .cpu-usage-bar-fill {
+    background-color: #28a745;
+}
+
+.cpu-usage-medium .cpu-usage-bar-fill {
+    background-color: #ffc107;
+}
+
+.cpu-usage-high .cpu-usage-bar-fill {
+    background-color: #dc3545;
+}
+
+/* ================================
+   GPU USAGE INDICATOR
+   ================================
+
+/* GPU usage indicator */
+.gpu-usage-indicator {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* GPU usage bar */
+.gpu-usage-bar {
+    width: 40px;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-right: 6px;
+    overflow: hidden;
+}
+
+.gpu-usage-bar-fill {
+    height: 100%;
+    background-color: #28a745;
+    border-radius: 4px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* GPU usage text */
+.gpu-usage-text {
+    font-size: 8pt;
+    color: #333333;
+    white-space: nowrap;
+}
+
+/* GPU usage levels */
+.gpu-usage-low .gpu-usage-bar-fill {
+    background-color: #28a745;
+}
+
+.gpu-usage-medium .gpu-usage-bar-fill {
+    background-color: #ffc107;
+}
+
+.gpu-usage-high .gpu-usage-bar-fill {
+    background-color: #dc3545;
+}
+
+/* ================================
+   PERFORMANCE INDICATOR
+   ================================
+
+/* Performance indicator */
+.performance-indicator {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* Performance icon */
+.performance-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Performance bars */
+.performance-bars {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.performance-bar {
+    width: 3px;
+    background-color: #e0e0e0;
+    border-radius: 1px;
+    transition: background-color 0.3s ease;
+}
+
+/* Performance levels */
+.performance-good .performance-bar {
+    background-color: #28a745;
+}
+
+.performance-fair .performance-bar {
+    background-color: #ffc107;
+}
+
+.performance-poor .performance-bar {
+    background-color: #dc3545;
+}
+
+/* ================================
+   STATUS BAR INDICATORS
+   ================================
+
+/* Status bar indicators container */
+.status-bar-indicators {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Status bar indicator */
+.status-bar-indicator {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* Status bar indicator icon */
+.status-bar-indicator-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+/* Status bar indicator text */
+.status-bar-indicator-text {
+    font-size: 8pt;
+    color: #333333;
+    white-space: nowrap;
+}
+
+/* ================================
+   STATUS PANEL
+   ================================
+
+/* Status panel container */
+.status-panel {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 8px;
+    min-width: 200px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Status panel header */
+.status-panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Status panel title */
+.status-panel-title {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #333333;
+    margin-right: auto;
+}
+
+/* Status panel refresh button */
+.status-panel-refresh {
+    background: none;
+    border: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    color: #666666;
+}
+
+.status-panel-refresh:hover {
+    color: #0078d4;
+}
+
+/* Status panel content */
+.status-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Status panel section */
+.status-panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Status panel section header */
+.status-panel-section-header {
+    display: flex;
+    align-items: center;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+/* Status panel section content */
+.status-panel-section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 8px;
+}
+
+/* Status panel item */
+.status-panel-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #333333;
+}
+
+/* Status panel item label */
+.status-panel-item-label {
+    margin-right: 8px;
+}
+
+/* Status panel item value */
+.status-panel-item-value {
+    font-weight: bold;
+    color: #333333;
+}
+
+/* ================================
+   COMPACT STATUS INDICATORS
+   ================================
+
+/* Compact status indicator */
+.compact-status-indicator {
+    display: flex;
+    align-items: center;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 7pt;
+    background-color: #f5f5f5;
+    border: 1px solid #d0d0d0;
+}
+
+/* Compact status indicator icon */
+.compact-status-indicator-icon {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 3px;
+    flex-shrink: 0;
+}
+
+/* Compact status indicator text */
+.compact-status-indicator-text {
+    font-size: 7pt;
+    color: #333333;
+    white-space: nowrap;
+}
+
+/* ================================
+   STATUS INDICATOR ANIMATIONS
+   ================================
+
+/* Pulsing animation for warning status */
+.status-warning .status-indicator-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Blinking animation for error status */
+.status-error .status-indicator-icon {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Loading animation */
+.status-loading .status-indicator-icon {
+    animation: spin 1s linear infinite;
+    background: conic-gradient(from 0deg, #0078d4, #0078d4 10%, transparent 10%);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ================================
+   RESPONSIVE STATUS INDICATORS
+   ================================
+
+/* Small screen adjustments */
+@media (max-width: 800px) {
+    .status-indicator {
+        min-width: 60px;
+        padding: 2px 4px;
+        font-size: 7pt;
+    }
+    
+    .status-indicator-icon {
+        width: 8px;
+        height: 8px;
+        margin-right: 4px;
+    }
+    
+    .memory-usage-bar,
+    .cpu-usage-bar,
+    .gpu-usage-bar {
+        width: 30px;
+        height: 6px;
+    }
+    
+    .memory-usage-text,
+    .cpu-usage-text,
+    .gpu-usage-text {
+        font-size: 7pt;
+    }
+    
+    .status-panel {
+        min-width: 150px;
+        padding: 6px;
+    }
+    
+    .status-panel-title {
+        font-size: 9pt;
+    }
+    
+    .status-panel-section-header {
+        font-size: 8pt;
+    }
+    
+    .status-panel-item {
+        font-size: 7pt;
+    }
+}
+
+/* Very small screen adjustments */
+@media (max-width: 600px) {
+    .status-indicator {
+        min-width: 50px;
+        padding: 1px 3px;
+        font-size: 6pt;
+    }
+    
+    .status-indicator-icon {
+        width: 6px;
+        height: 6px;
+        margin-right: 3px;
+    }
+    
+    .status-indicator-text {
+        display: none;
+    }
+    
+    .memory-usage-bar,
+    .cpu-usage-bar,
+    .gpu-usage-bar {
+        width: 20px;
+        height: 4px;
+    }
+    
+    .memory-usage-text,
+    .cpu-usage-text,
+    .gpu-usage-text {
+        font-size: 6pt;
+    }
+    
+    .status-panel {
+        min-width: 120px;
+        padding: 4px;
+    }
+    
+    .status-panel-title {
+        font-size: 8pt;
+    }
+    
+    .status-panel-section-header {
+        font-size: 7pt;
+    }
+    
+    .status-panel-item {
+        font-size: 6pt;
+    }
+    
+    .compact-status-indicator {
+        padding: 1px 2px;
+        font-size: 6pt;
+    }
+    
+    .compact-status-indicator-icon {
+        width: 5px;
+        height: 5px;
+        margin-right: 2px;
+    }
+}
+
+/* ================================
+   DARK MODE STATUS INDICATORS
+   ================================
+
+/* Dark mode base status indicator */
+QMainWindow[darkMode="true"] .status-indicator {
+    background-color: #3e3e42;
+    color: #f1f1f1;
+    border-color: #555555;
+}
+
+/* Dark mode status indicator icon */
+QMainWindow[darkMode="true"] .status-indicator-icon {
+    /* Icon color remains the same */
+}
+
+/* Dark mode status indicator text */
+QMainWindow[darkMode="true"] .status-indicator-text {
+    color: #f1f1f1;
+}
+
+/* Dark mode good status */
+QMainWindow[darkMode="true"] .status-good {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #76ff76;
+    border-color: rgba(40, 167, 69, 0.4);
+}
+
+/* Dark mode warning status */
+QMainWindow[darkMode="true"] .status-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffdf7e;
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
+/* Dark mode error status */
+QMainWindow[darkMode="true"] .status-error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #ff8a8a;
+    border-color: rgba(220, 53, 69, 0.4);
+}
+
+/* Dark mode unknown status */
+QMainWindow[darkMode="true"] .status-unknown {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #c8c8c8;
+    border-color: rgba(108, 117, 125, 0.4);
+}
+
+/* Dark mode system status container */
+QMainWindow[darkMode="true"] .system-status-container {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode system status label */
+QMainWindow[darkMode="true"] .system-status-label {
+    color: #f1f1f1;
+}
+
+/* Dark mode memory usage indicator */
+QMainWindow[darkMode="true"] .memory-usage-indicator {
+    background-color: #3e3e42;
+    border-color: #555555;
+}
+
+/* Dark mode memory usage bar */
+QMainWindow[darkMode="true"] .memory-usage-bar {
+    background-color: #555555;
+}
+
+/* Dark mode memory usage text */
+QMainWindow[darkMode="true"] .memory-usage-text {
+    color: #f1f1f1;
+}
+
+/* Dark mode CPU usage indicator */
+QMainWindow[darkMode="true"] .cpu-usage-indicator {
+    background-color: #3e3e42;
+    border-color: #555555;
+}
+
+/* Dark mode CPU usage bar */
+QMainWindow[darkMode="true"] .cpu-usage-bar {
+    background-color: #555555;
+}
+
+/* Dark mode CPU usage text */
+QMainWindow[darkMode="true"] .cpu-usage-text {
+    color: #f1f1f1;
+}
+
+/* Dark mode GPU usage indicator */
+QMainWindow[darkMode="true"] .gpu-usage-indicator {
+    background-color: #3e3e42;
+    border-color: #555555;
+}
+
+/* Dark mode GPU usage bar */
+QMainWindow[darkMode="true"] .gpu-usage-bar {
+    background-color: #555555;
+}
+
+/* Dark mode GPU usage text */
+QMainWindow[darkMode="true"] .gpu-usage-text {
+    color: #f1f1f1;
+}
+
+/* Dark mode performance indicator */
+QMainWindow[darkMode="true"] .performance-indicator {
+    background-color: #3e3e42;
+    border-color: #555555;
+}
+
+/* Dark mode performance bars */
+QMainWindow[darkMode="true"] .performance-bar {
+    background-color: #555555;
+}
+
+/* Dark mode status panel */
+QMainWindow[darkMode="true"] .status-panel {
+    background-color: #2d2d30;
+    border-color: #3e3e42;
+}
+
+/* Dark mode status panel header */
+QMainWindow[darkMode="true"] .status-panel-header {
+    border-bottom-color: #3e3e42;
+}
+
+/* Dark mode status panel title */
+QMainWindow[darkMode="true"] .status-panel-title {
+    color: #f1f1f1;
+}
+
+/* Dark mode status panel refresh button */
+QMainWindow[darkMode="true"] .status-panel-refresh {
+    color: #f1f1f1;
+}
+
+QMainWindow[darkMode="true"] .status-panel-refresh:hover {
+    color: #0078d4;
+}
+
+/* Dark mode status panel section header */
+QMainWindow[darkMode="true"] .status-panel-section-header {
+    color: #f1f1f1;
+}
+
+/* Dark mode status panel item */
+QMainWindow[darkMode="true"] .status-panel-item {
+    color: #f1f1f1;
+}
+
+/* Dark mode status panel item value */
+QMainWindow[darkMode="true"] .status-panel-item-value {
+    color: #f1f1f1;
+}
+
+/* ================================
+   HIGH CONTRAST MODE STATUS INDICATORS
+   ================================
+
+/* High contrast mode base status indicator */
+QMainWindow[highContrast="true"] .status-indicator {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode status indicator icon */
+QMainWindow[highContrast="true"] .status-indicator-icon {
+    border: 1px solid #ffffff;
+}
+
+/* High contrast mode good status */
+QMainWindow[highContrast="true"] .status-good {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .status-good .status-indicator-icon {
+    background-color: #ffffff;
+}
+
+/* High contrast mode warning status */
+QMainWindow[highContrast="true"] .status-warning {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .status-warning .status-indicator-icon {
+    background-color: #ffffff;
+}
+
+/* High contrast mode error status */
+QMainWindow[highContrast="true"] .status-error {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .status-error .status-indicator-icon {
+    background-color: #ffffff;
+}
+
+/* High contrast mode unknown status */
+QMainWindow[highContrast="true"] .status-unknown {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+QMainWindow[highContrast="true"] .status-unknown .status-indicator-icon {
+    background-color: #ffffff;
+}
+
+/* High contrast mode system status container */
+QMainWindow[highContrast="true"] .system-status-container {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode system status label */
+QMainWindow[highContrast="true"] .system-status-label {
+    color: #ffffff;
+}
+
+/* High contrast mode memory usage indicator */
+QMainWindow[highContrast="true"] .memory-usage-indicator {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode memory usage bar */
+QMainWindow[highContrast="true"] .memory-usage-bar {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+/* High contrast mode memory usage text */
+QMainWindow[highContrast="true"] .memory-usage-text {
+    color: #ffffff;
+}
+
+/* High contrast mode CPU usage indicator */
+QMainWindow[highContrast="true"] .cpu-usage-indicator {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode CPU usage bar */
+QMainWindow[highContrast="true"] .cpu-usage-bar {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+/* High contrast mode CPU usage text */
+QMainWindow[highContrast="true"] .cpu-usage-text {
+    color: #ffffff;
+}
+
+/* High contrast mode GPU usage indicator */
+QMainWindow[highContrast="true"] .gpu-usage-indicator {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode GPU usage bar */
+QMainWindow[highContrast="true"] .gpu-usage-bar {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+/* High contrast mode GPU usage text */
+QMainWindow[highContrast="true"] .gpu-usage-text {
+    color: #ffffff;
+}
+
+/* High contrast mode performance indicator */
+QMainWindow[highContrast="true"] .performance-indicator {
+    background-color: #000000;
+    border: 2px solid #ffffff;
+}
+
+/* High contrast mode performance bars */
+QMainWindow[highContrast="true"] .performance-bar {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+/* ================================
+   ACCESSIBILITY FOR STATUS INDICATORS
+   ================================
+
+/* Focus indicators for status indicators */
+.status-indicator:focus,
+.status-panel-refresh:focus {
+    outline: 2px solid #0078d4;
+    outline-offset: 1px;
+}
+
+/* Screen reader only text for status indicators */
+.status-indicator-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Accessible labels for status indicators */
+.status-indicator[aria-label]::before {
+    content: attr(aria-label);
+    position: absolute;
+    left: -10000px;
+}
+
+/* ================================
+   CUSTOM PROPERTIES FOR STATUS INDICATORS
+   ================================
+
+/* Status indicator tuning variables */
+:root {
+    --status-indicator-height: 20px;
+    --status-indicator-padding: 4px 8px;
+    --status-indicator-font-size: 8pt;
+    --status-indicator-icon-size: 10px;
+    --status-bar-width: 40px;
+    --status-bar-height: 8px;
+}
+
+/* High performance mode */
+.performance-high {
+    --status-indicator-height: 24px;
+    --status-indicator-padding: 6px 12px;
+    --status-indicator-font-size: 9pt;
+    --status-indicator-icon-size: 12px;
+    --status-bar-width: 50px;
+    --status-bar-height: 10px;
+}
+
+/* Low performance mode */
+.performance-low {
+    --status-indicator-height: 16px;
+    --status-indicator-padding: 2px 4px;
+    --status-indicator-font-size: 7pt;
+    --status-indicator-icon-size: 8px;
+    --status-bar-width: 30px;
+    --status-bar-height: 6px;
+}
+
+/* Apply status indicator variables */
+.status-indicator {
+    height: var(--status-indicator-height);
+    padding: var(--status-indicator-padding);
+    font-size: var(--status-indicator-font-size);
+}
+
+.status-indicator-icon {
+    width: var(--status-indicator-icon-size);
+    height: var(--status-indicator-icon-size);
+}
+
+.memory-usage-bar,
+.cpu-usage-bar,
+.gpu-usage-bar {
+    width: var(--status-bar-width);
+    height: var(--status-bar-height);
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .status-warning .status-indicator-icon,
+    .status-error .status-indicator-icon,
+    .status-loading .status-indicator-icon {
+        animation: none !important;
+    }
+    
+    .memory-usage-bar-fill,
+    .cpu-usage-bar-fill,
+    .gpu-usage-bar-fill,
+    .performance-bar {
+        transition: none !important;
+    }
+}

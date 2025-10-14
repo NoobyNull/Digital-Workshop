@@ -1,0 +1,685 @@
+/**
+ * Visual Feedback Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides visual feedback for user actions, including
+ * hover effects, active states, focus indicators, and transition animations.
+ */
+
+/* ================================
+   BASE TRANSITION SETTINGS
+   ================================ */
+
+/* Default transition duration and easing */
+QPushButton, QToolButton, QLineEdit, QTextEdit, QComboBox,
+QCheckBox, QRadioButton, QSpinBox, QDoubleSpinBox, QTabBar::tab,
+QHeaderView::section, QTableView::item, QTreeView::item, QListView::item,
+QMenu::item, QMenuBar::item, QDockWidget, QGroupBox {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Disable transitions for performance-critical elements */
+.no-transition {
+    transition: none !important;
+}
+
+/* ================================
+   BUTTON HOVER AND ACTIVE STATES
+   ================================
+
+/* Default button hover and active states */
+QPushButton:hover {
+    background-color: #e1e1e1;
+    border: 1px solid #0078d4;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+QPushButton:pressed {
+    background-color: #d0d0d0;
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Default button active state */
+QPushButton:checked {
+    background-color: #0078d4;
+    color: #ffffff;
+    border: 1px solid #0078d4;
+}
+
+/* Primary button hover and active states */
+QPushButton:default:hover {
+    background-color: #106ebe;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+QPushButton:default:pressed {
+    background-color: #005a9e;
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Tool button hover and active states */
+QToolButton:hover {
+    background-color: rgba(225, 225, 225, 0.5);
+    border: 1px solid #0078d4;
+    transform: translateY(-1px);
+}
+
+QToolButton:pressed {
+    background-color: rgba(208, 208, 208, 0.5);
+    transform: translateY(0px);
+}
+
+QToolButton:checked:hover {
+    background-color: #106ebe;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================
+   INPUT FIELD HOVER AND FOCUS STATES
+   ================================
+
+/* Text input hover and focus states */
+QLineEdit:hover, QTextEdit:hover {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QLineEdit:focus, QTextEdit:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+    background-color: #ffffff;
+}
+
+/* Combo box hover and focus states */
+QComboBox:hover {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QComboBox:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+/* Spin box hover and focus states */
+QSpinBox:hover, QDoubleSpinBox:hover {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QSpinBox:focus, QDoubleSpinBox:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+/* Date edit hover and focus states */
+QDateEdit:hover, QDateTimeEdit:hover, QTimeEdit:hover {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QDateEdit:focus, QDateTimeEdit:focus, QTimeEdit:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+/* ================================
+   CHECKBOX AND RADIO BUTTON STATES
+// ================================
+
+/* Checkbox hover and checked states */
+QCheckBox:hover {
+    color: #0078d4;
+}
+
+QCheckBox:hover::indicator {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QCheckBox:checked::indicator {
+    background-color: #0078d4;
+    border-color: #0078d4;
+}
+
+/* Radio button hover and checked states */
+QRadioButton:hover {
+    color: #0078d4;
+}
+
+QRadioButton:hover::indicator {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+QRadioButton:checked::indicator {
+    background-color: #0078d4;
+    border-color: #0078d4;
+}
+
+/* ================================
+   TAB BAR HOVER AND ACTIVE STATES
+   ================================
+
+/* Tab hover and active states */
+QTabBar::tab:hover {
+    background-color: #e1e1e1;
+}
+
+QTabBar::tab:selected {
+    background-color: #ffffff;
+    border-bottom: 2px solid #0078d4;
+}
+
+/* ================================
+   MENU HOVER AND ACTIVE STATES
+   ================================
+
+/* Menu bar item hover and active states */
+QMenuBar::item:hover {
+    background-color: #e1e1e1;
+}
+
+QMenuBar::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Menu item hover and active states */
+QMenu::item:hover {
+    background-color: #e1e1e1;
+}
+
+QMenu::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* ================================
+   TABLE AND LIST ITEM HOVER AND SELECTION STATES
+   ================================
+
+/* Table item hover and selection states */
+QTableView::item:hover {
+    background-color: rgba(0, 120, 212, 0.1);
+}
+
+QTableView::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* Tree item hover and selection states */
+QTreeView::item:hover {
+    background-color: rgba(0, 120, 212, 0.1);
+}
+
+QTreeView::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* List item hover and selection states */
+QListView::item:hover {
+    background-color: rgba(0, 120, 212, 0.1);
+}
+
+QListView::item:selected {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+
+/* ================================
+   DOCK WIDGET HOVER AND ACTIVE STATES
+   ================================
+
+/* Dock widget title bar hover states */
+QDockWidget::title:hover {
+    background-color: #e1e1e1;
+}
+
+/* Dock widget close and float button hover states */
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background-color: #e1e1e1;
+    border: 1px solid #0078d4;
+}
+
+/* ================================
+   GROUP BOX HOVER STATES
+   ================================
+
+/* Group box hover states */
+QGroupBox:hover {
+    border-color: #0078d4;
+}
+
+QGroupBox::title:hover {
+    color: #0078d4;
+}
+
+/* ================================
+   PROGRESS BAR ANIMATIONS
+   ================================
+
+/* Animated progress bar */
+QProgressBar::chunk {
+    background: linear-gradient(90deg, #0078d4 0%, #0078d4 50%, #106ebe 50%, #106ebe 100%);
+    background-size: 200% 100%;
+    animation: progress-animation 2s linear infinite;
+}
+
+@keyframes progress-animation {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 200% 0%;
+    }
+}
+
+/* ================================
+   SLIDER HOVER AND ACTIVE STATES
+   ================================
+
+/* Slider handle hover and active states */
+QSlider::handle:hover {
+    background-color: #106ebe;
+    border: 1px solid #106ebe;
+    transform: scale(1.1);
+}
+
+QSlider::handle:pressed {
+    background-color: #005a9e;
+    transform: scale(0.95);
+}
+
+/* ================================
+   SCROLL BAR HOVER STATES
+   ================================
+
+/* Scroll bar handle hover states */
+QScrollBar::handle:hover {
+    background-color: #a0a0a0;
+}
+
+QScrollBar::handle:pressed {
+    background-color: #808080;
+}
+
+/* ================================
+   SPLITTER HANDLE HOVER STATES
+   ================================
+
+/* Splitter handle hover states */
+QSplitter::handle:hover {
+    background-color: #0078d4;
+}
+
+QSplitter::handle:pressed {
+    background-color: #005a9e;
+}
+
+/* ================================
+   HEADER SECTION HOVER STATES
+   ================================
+
+/* Header section hover states */
+QHeaderView::section:hover {
+    background-color: #e1e1e1;
+}
+
+QHeaderView::section:pressed {
+    background-color: #d0d0d0;
+}
+
+/* ================================
+   LOADING AND PROCESSING STATES
+   ================================
+
+/* Loading state for buttons */
+QPushButton:loading {
+    background-color: #f5f5f5;
+    color: #666666;
+    border: 1px solid #d0d0d0;
+    pointer-events: none;
+}
+
+QPushButton:loading::after {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    border: 2px solid #d0d0d0;
+    border-top: 2px solid #0078d4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Processing state for inputs */
+QLineEdit:processing, QTextEdit:processing {
+    background-color: #f5f5f5;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="%230078d4" stroke-width="2" stroke-dasharray="4 2"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="1s" repeatCount="indefinite"/></circle></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    pointer-events: none;
+}
+
+/* ================================
+   SUCCESS AND ERROR STATES
+   ================================
+
+/* Success state for buttons */
+QPushButton:success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+QPushButton:success:hover {
+    background-color: #c3e6cb;
+}
+
+/* Error state for buttons */
+QPushButton:error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+QPushButton:error:hover {
+    background-color: #f5c6cb;
+}
+
+/* Success state for inputs */
+QLineEdit:success, QTextEdit:success {
+    border: 1px solid #c3e6cb;
+    background-color: #f0fff4;
+}
+
+/* Error state for inputs */
+QLineEdit:error, QTextEdit:error {
+    border: 1px solid #f5c6cb;
+    background-color: #fff5f5;
+}
+
+/* ================================
+   DISABLED STATES
+   ================================
+
+/* Disabled state with reduced opacity */
+QPushButton:disabled, QToolButton:disabled,
+QLineEdit:disabled, QTextEdit:disabled,
+QComboBox:disabled, QCheckBox:disabled,
+QRadioButton:disabled, QSpinBox:disabled,
+QDoubleSpinBox:disabled, QDateEdit:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ================================
+   VALIDATION STATES
+   ================================
+
+/* Valid state for inputs */
+QLineEdit:valid, QTextEdit:valid {
+    border: 1px solid #c3e6cb;
+    background-color: #f0fff4;
+}
+
+/* Invalid state for inputs */
+QLineEdit:invalid, QTextEdit:invalid {
+    border: 1px solid #f5c6cb;
+    background-color: #fff5f5;
+}
+
+/* ================================
+   DRAG AND DROP STATES
+   ================================
+
+/* Drag over state */
+QPushButton:drag-over, QLineEdit:drag-over,
+QTextEdit:drag-over, QComboBox:drag-over {
+    border: 2px dashed #0078d4;
+    background-color: rgba(0, 120, 212, 0.05);
+}
+
+/* Drop valid state */
+QPushButton:drop-valid, QLineEdit:drop-valid,
+QTextEdit:drop-valid, QComboBox:drop-valid {
+    border: 2px solid #28a745;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+/* Drop invalid state */
+QPushButton:drop-invalid, QLineEdit:drop-invalid,
+QTextEdit:drop-invalid, QComboBox:drop-invalid {
+    border: 2px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* ================================
+   ANIMATION KEYFRAMES
+   ================================
+
+/* Spin animation for loading indicators */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pulse animation for attention */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Fade out animation */
+@keyframes fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Slide in animation */
+@keyframes slide-in {
+    0% {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Bounce animation */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* ================================
+   UTILITY CLASSES FOR VISUAL FEEDBACK
+   ================================
+
+/* Pulse effect for attention */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Fade in effect */
+.fade-in {
+    animation: fade-in 0.3s ease-in-out;
+}
+
+/* Fade out effect */
+.fade-out {
+    animation: fade-out 0.3s ease-in-out;
+}
+
+/* Slide in effect */
+.slide-in {
+    animation: slide-in 0.3s ease-in-out;
+}
+
+/* Bounce effect */
+.bounce {
+    animation: bounce 1s ease-in-out;
+}
+
+/* ================================
+   RESPONSIVE VISUAL FEEDBACK
+   ================================
+
+/* Reduce visual effects on small screens */
+@media (max-width: 800px) {
+    /* Reduce transform effects */
+    QPushButton:hover, QToolButton:hover {
+        transform: none;
+    }
+    
+    /* Reduce box shadows */
+    QPushButton:hover, QToolButton:hover {
+        box-shadow: none;
+    }
+    
+    /* Shorten transition duration */
+    QPushButton, QToolButton, QLineEdit, QTextEdit, QComboBox {
+        transition-duration: 0.1s;
+    }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    /* Disable animations */
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    /* Disable transform effects */
+    QPushButton:hover, QToolButton:hover {
+        transform: none !important;
+    }
+}
+
+/* ================================
+   DARK MODE VISUAL FEEDBACK
+   ================================
+
+/* Dark mode hover states */
+QMainWindow[darkMode="true"] QPushButton:hover {
+    background-color: #555555;
+    border: 1px solid #0078d4;
+}
+
+QMainWindow[darkMode="true"] QPushButton:pressed {
+    background-color: #666666;
+}
+
+QMainWindow[darkMode="true"] QLineEdit:hover, 
+QMainWindow[darkMode="true"] QTextEdit:hover {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.3);
+}
+
+QMainWindow[darkMode="true"] QTableView::item:hover,
+QMainWindow[darkMode="true"] QTreeView::item:hover,
+QMainWindow[darkMode="true"] QListView::item:hover {
+    background-color: rgba(0, 120, 212, 0.2);
+}
+
+/* ================================
+   CUSTOM PROPERTIES FOR VISUAL FEEDBACK
+   ================================
+
+/* Visual feedback tuning variables */
+:root {
+    --hover-brightness: 5%;
+    --active-brightness: -5%;
+    --transition-duration: 0.2s;
+    --transform-distance: 1px;
+    --shadow-size: 2px;
+    --focus-glow-size: 2px;
+}
+
+/* High performance mode */
+.performance-high {
+    --hover-brightness: 10%;
+    --active-brightness: -10%;
+    --transition-duration: 0.3s;
+    --transform-distance: 2px;
+    --shadow-size: 4px;
+    --focus-glow-size: 3px;
+}
+
+/* Low performance mode */
+.performance-low {
+    --hover-brightness: 2%;
+    --active-brightness: -2%;
+    --transition-duration: 0.1s;
+    --transform-distance: 0px;
+    --shadow-size: 1px;
+    --focus-glow-size: 1px;
+}
+
+/* Apply visual feedback variables */
+QPushButton:hover {
+    filter: brightness(var(--hover-brightness));
+    transform: translateY(calc(var(--transform-distance) * -1));
+    box-shadow: 0 var(--shadow-size) var(--shadow-size) * 2 rgba(0, 0, 0, 0.1);
+}
+
+QPushButton:pressed {
+    filter: brightness(var(--active-brightness));
+    transform: translateY(0px);
+    box-shadow: 0 1px var(--shadow-size) rgba(0, 0, 0, 0.1);
+}
+
+QLineEdit:focus, QTextEdit:focus {
+    box-shadow: 0 0 0 var(--focus-glow-size) rgba(0, 120, 212, 0.3);
+}
+
+* {
+    transition-duration: var(--transition-duration);
+}

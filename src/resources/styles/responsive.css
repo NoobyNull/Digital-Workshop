@@ -1,0 +1,1113 @@
+/**
+ * Responsive Design Stylesheet for 3D-MM Application
+ * 
+ * This stylesheet provides responsive design styles for different window sizes,
+ * including breakpoints, fluid layouts, and adaptive components.
+ */
+
+/* ================================
+   RESPONSIVE BREAKPOINTS
+   ================================
+
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+    /* Main window adjustments */
+    .main-window {
+        padding: 4px;
+    }
+    
+    /* Toolbar adjustments */
+    .main-toolbar {
+        padding: 2px;
+        spacing: 1px;
+    }
+    
+    .toolbar-group {
+        margin: 0 2px;
+    }
+    
+    .toolbar-group::before {
+        display: none;
+    }
+    
+    .toolbar-group-label {
+        display: none;
+    }
+    
+    .toolbar-button {
+        padding: 3px;
+        margin: 1px;
+        min-width: 18px;
+        min-height: 18px;
+    }
+    
+    .toolbar-button-text {
+        display: none;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 3px;
+    }
+    
+    /* Menu bar adjustments */
+    .menu-bar {
+        padding: 1px;
+    }
+    
+    .menu-bar-item {
+        padding: 4px 8px;
+        font-size: 9pt;
+    }
+    
+    /* Status bar adjustments */
+    .status-bar {
+        padding: 2px;
+        font-size: 8pt;
+    }
+    
+    .status-bar-indicator {
+        padding: 1px 3px;
+        font-size: 7pt;
+    }
+    
+    /* Panel adjustments */
+    .dock-widget {
+        border: 1px solid #d0d0d0;
+        border-radius: 2px;
+    }
+    
+    .dock-widget-title {
+        padding: 4px;
+        font-size: 9pt;
+    }
+    
+    /* Model library adjustments */
+    .model-library-widget {
+        padding: 4px;
+    }
+    
+    .model-list-view::item {
+        padding: 2px;
+        font-size: 9pt;
+    }
+    
+    .model-grid-view::item {
+        padding: 2px;
+        margin: 1px;
+    }
+    
+    .thumbnail-placeholder {
+        width: 64px;
+        height: 64px;
+    }
+    
+    /* Metadata editor adjustments */
+    .metadata-editor-widget {
+        padding: 4px;
+    }
+    
+    .metadata-form label {
+        font-size: 9pt;
+    }
+    
+    .metadata-form QLineEdit,
+    .metadata-form QTextEdit,
+    .metadata-form QComboBox {
+        padding: 4px;
+        font-size: 9pt;
+    }
+    
+    /* 3D viewer adjustments */
+    .viewer-widget {
+        border: 1px solid #d0d0d0;
+    }
+    
+    .viewer-controls {
+        padding: 4px;
+    }
+    
+    .viewer-controls QPushButton {
+        padding: 4px;
+        font-size: 9pt;
+    }
+    
+    /* Notification adjustments */
+    .toast-notification {
+        min-width: auto;
+        max-width: 90%;
+        padding: 8px 12px;
+        font-size: 9pt;
+    }
+    
+    /* Dialog adjustments */
+    .error-dialog,
+    .warning-dialog,
+    .success-dialog,
+    .info-dialog {
+        min-width: auto;
+        max-width: 90%;
+        margin: 10px;
+        padding: 12px;
+    }
+    
+    /* Progress adjustments */
+    .progress-notification {
+        min-width: auto;
+        max-width: 90%;
+    }
+    
+    /* Loading adjustments */
+    .loading-overlay {
+        padding: 10px;
+    }
+    
+    .loading-progress {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+    /* Main window adjustments */
+    .main-window {
+        padding: 6px;
+    }
+    
+    /* Toolbar adjustments */
+    .main-toolbar {
+        padding: 3px;
+        spacing: 2px;
+    }
+    
+    .toolbar-group {
+        margin: 0 4px;
+    }
+    
+    .toolbar-group::before {
+        margin: 0 4px;
+    }
+    
+    .toolbar-group-label {
+        font-size: 8pt;
+        margin: 0 4px;
+    }
+    
+    .toolbar-button {
+        padding: 4px;
+        margin: 1px;
+        min-width: 20px;
+        min-height: 20px;
+    }
+    
+    .toolbar-button-text {
+        font-size: 9pt;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 4px 6px;
+    }
+    
+    /* Menu bar adjustments */
+    .menu-bar {
+        padding: 2px;
+    }
+    
+    .menu-bar-item {
+        padding: 6px 12px;
+        font-size: 10pt;
+    }
+    
+    /* Status bar adjustments */
+    .status-bar {
+        padding: 3px;
+        font-size: 9pt;
+    }
+    
+    /* Panel adjustments */
+    .dock-widget {
+        border: 1px solid #d0d0d0;
+        border-radius: 3px;
+    }
+    
+    .dock-widget-title {
+        padding: 6px;
+        font-size: 10pt;
+    }
+    
+    /* Model library adjustments */
+    .model-library-widget {
+        padding: 6px;
+    }
+    
+    .model-list-view::item {
+        padding: 4px;
+        font-size: 10pt;
+    }
+    
+    .model-grid-view::item {
+        padding: 4px;
+        margin: 2px;
+    }
+    
+    .thumbnail-placeholder {
+        width: 96px;
+        height: 96px;
+    }
+    
+    /* Metadata editor adjustments */
+    .metadata-editor-widget {
+        padding: 6px;
+    }
+    
+    .metadata-form label {
+        font-size: 10pt;
+    }
+    
+    .metadata-form QLineEdit,
+    .metadata-form QTextEdit,
+    .metadata-form QComboBox {
+        padding: 6px;
+        font-size: 10pt;
+    }
+    
+    /* 3D viewer adjustments */
+    .viewer-widget {
+        border: 1px solid #d0d0d0;
+    }
+    
+    .viewer-controls {
+        padding: 6px;
+    }
+    
+    .viewer-controls QPushButton {
+        padding: 6px;
+        font-size: 10pt;
+    }
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+    /* Main window adjustments */
+    .main-window {
+        padding: 8px;
+    }
+    
+    /* Toolbar adjustments */
+    .main-toolbar {
+        padding: 4px;
+        spacing: 2px;
+    }
+    
+    .toolbar-group {
+        margin: 0 6px;
+    }
+    
+    .toolbar-group::before {
+        margin: 0 6px;
+    }
+    
+    .toolbar-group-label {
+        font-size: 9pt;
+        margin: 0 6px;
+    }
+    
+    .toolbar-button {
+        padding: 6px;
+        margin: 1px;
+        min-width: 24px;
+        min-height: 24px;
+    }
+    
+    .toolbar-button-text {
+        font-size: 10pt;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 6px 8px;
+    }
+    
+    /* Menu bar adjustments */
+    .menu-bar {
+        padding: 3px;
+    }
+    
+    .menu-bar-item {
+        padding: 8px 16px;
+        font-size: 11pt;
+    }
+    
+    /* Status bar adjustments */
+    .status-bar {
+        padding: 4px;
+        font-size: 10pt;
+    }
+    
+    /* Panel adjustments */
+    .dock-widget {
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+    }
+    
+    .dock-widget-title {
+        padding: 8px;
+        font-size: 11pt;
+    }
+    
+    /* Model library adjustments */
+    .model-library-widget {
+        padding: 8px;
+    }
+    
+    .model-list-view::item {
+        padding: 6px;
+        font-size: 11pt;
+    }
+    
+    .model-grid-view::item {
+        padding: 6px;
+        margin: 3px;
+    }
+    
+    .thumbnail-placeholder {
+        width: 128px;
+        height: 128px;
+    }
+    
+    /* Metadata editor adjustments */
+    .metadata-editor-widget {
+        padding: 8px;
+    }
+    
+    .metadata-form label {
+        font-size: 11pt;
+    }
+    
+    .metadata-form QLineEdit,
+    .metadata-form QTextEdit,
+    .metadata-form QComboBox {
+        padding: 8px;
+        font-size: 11pt;
+    }
+    
+    /* 3D viewer adjustments */
+    .viewer-widget {
+        border: 1px solid #d0d0d0;
+    }
+    
+    .viewer-controls {
+        padding: 8px;
+    }
+    
+    .viewer-controls QPushButton {
+        padding: 8px;
+        font-size: 11pt;
+    }
+}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {
+    /* Main window adjustments */
+    .main-window {
+        padding: 10px;
+    }
+    
+    /* Toolbar adjustments */
+    .main-toolbar {
+        padding: 5px;
+        spacing: 3px;
+    }
+    
+    .toolbar-group {
+        margin: 0 8px;
+    }
+    
+    .toolbar-group::before {
+        margin: 0 8px;
+    }
+    
+    .toolbar-group-label {
+        font-size: 10pt;
+        margin: 0 8px;
+    }
+    
+    .toolbar-button {
+        padding: 8px;
+        margin: 1px;
+        min-width: 28px;
+        min-height: 28px;
+    }
+    
+    .toolbar-button-text {
+        font-size: 11pt;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 8px 12px;
+    }
+    
+    /* Menu bar adjustments */
+    .menu-bar {
+        padding: 4px;
+    }
+    
+    .menu-bar-item {
+        padding: 10px 20px;
+        font-size: 12pt;
+    }
+    
+    /* Status bar adjustments */
+    .status-bar {
+        padding: 5px;
+        font-size: 11pt;
+    }
+    
+    /* Panel adjustments */
+    .dock-widget {
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+    }
+    
+    .dock-widget-title {
+        padding: 10px;
+        font-size: 12pt;
+    }
+    
+    /* Model library adjustments */
+    .model-library-widget {
+        padding: 10px;
+    }
+    
+    .model-list-view::item {
+        padding: 8px;
+        font-size: 12pt;
+    }
+    
+    .model-grid-view::item {
+        padding: 8px;
+        margin: 4px;
+    }
+    
+    .thumbnail-placeholder {
+        width: 160px;
+        height: 160px;
+    }
+    
+    /* Metadata editor adjustments */
+    .metadata-editor-widget {
+        padding: 10px;
+    }
+    
+    .metadata-form label {
+        font-size: 12pt;
+    }
+    
+    .metadata-form QLineEdit,
+    .metadata-form QTextEdit,
+    .metadata-form QComboBox {
+        padding: 10px;
+        font-size: 12pt;
+    }
+    
+    /* 3D viewer adjustments */
+    .viewer-widget {
+        border: 1px solid #d0d0d0;
+    }
+    
+    .viewer-controls {
+        padding: 10px;
+    }
+    
+    .viewer-controls QPushButton {
+        padding: 10px;
+        font-size: 12pt;
+    }
+}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-width: 1200px) {
+    /* Main window adjustments */
+    .main-window {
+        padding: 12px;
+    }
+    
+    /* Toolbar adjustments */
+    .main-toolbar {
+        padding: 6px;
+        spacing: 4px;
+    }
+    
+    .toolbar-group {
+        margin: 0 10px;
+    }
+    
+    .toolbar-group::before {
+        margin: 0 10px;
+    }
+    
+    .toolbar-group-label {
+        font-size: 11pt;
+        margin: 0 10px;
+    }
+    
+    .toolbar-button {
+        padding: 10px;
+        margin: 2px;
+        min-width: 32px;
+        min-height: 32px;
+    }
+    
+    .toolbar-button-text {
+        font-size: 12pt;
+    }
+    
+    .toolbar-button-icon-text {
+        padding: 10px 16px;
+    }
+    
+    /* Menu bar adjustments */
+    .menu-bar {
+        padding: 5px;
+    }
+    
+    .menu-bar-item {
+        padding: 12px 24px;
+        font-size: 13pt;
+    }
+    
+    /* Status bar adjustments */
+    .status-bar {
+        padding: 6px;
+        font-size: 12pt;
+    }
+    
+    /* Panel adjustments */
+    .dock-widget {
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+    }
+    
+    .dock-widget-title {
+        padding: 12px;
+        font-size: 13pt;
+    }
+    
+    /* Model library adjustments */
+    .model-library-widget {
+        padding: 12px;
+    }
+    
+    .model-list-view::item {
+        padding: 10px;
+        font-size: 13pt;
+    }
+    
+    .model-grid-view::item {
+        padding: 10px;
+        margin: 5px;
+    }
+    
+    .thumbnail-placeholder {
+        width: 192px;
+        height: 192px;
+    }
+    
+    /* Metadata editor adjustments */
+    .metadata-editor-widget {
+        padding: 12px;
+    }
+    
+    .metadata-form label {
+        font-size: 13pt;
+    }
+    
+    .metadata-form QLineEdit,
+    .metadata-form QTextEdit,
+    .metadata-form QComboBox {
+        padding: 12px;
+        font-size: 13pt;
+    }
+    
+    /* 3D viewer adjustments */
+    .viewer-widget {
+        border: 1px solid #d0d0d0;
+    }
+    
+    .viewer-controls {
+        padding: 12px;
+    }
+    
+    .viewer-controls QPushButton {
+        padding: 12px;
+        font-size: 13pt;
+    }
+}
+
+/* ================================
+   ORIENTATION-BASED STYLES
+   ================================
+
+/* Portrait orientation */
+@media only screen and (orientation: portrait) {
+    /* Stack panels vertically */
+    .main-window {
+        flex-direction: column;
+    }
+    
+    /* Adjust toolbar for portrait */
+    .main-toolbar {
+        flex-wrap: wrap;
+    }
+    
+    /* Adjust model library for portrait */
+    .model-library-widget {
+        flex-direction: column;
+    }
+    
+    /* Adjust metadata editor for portrait */
+    .metadata-editor-widget {
+        flex-direction: column;
+    }
+    
+    /* Adjust viewer for portrait */
+    .viewer-widget {
+        min-height: 300px;
+    }
+}
+
+/* Landscape orientation */
+@media only screen and (orientation: landscape) {
+    /* Stack panels horizontally */
+    .main-window {
+        flex-direction: row;
+    }
+    
+    /* Adjust toolbar for landscape */
+    .main-toolbar {
+        flex-wrap: nowrap;
+    }
+    
+    /* Adjust model library for landscape */
+    .model-library-widget {
+        flex-direction: row;
+    }
+    
+    /* Adjust metadata editor for landscape */
+    .metadata-editor-widget {
+        flex-direction: row;
+    }
+    
+    /* Adjust viewer for landscape */
+    .viewer-widget {
+        min-height: 400px;
+    }
+}
+
+/* ================================
+   ASPECT RATIO-BASED STYLES
+   ================================
+
+/* Very wide screens (aspect ratio > 16:9) */
+@media only screen and (min-aspect-ratio: 16/9) {
+    /* Use more horizontal space */
+    .model-library-widget {
+        max-width: 300px;
+    }
+    
+    .metadata-editor-widget {
+        max-width: 300px;
+    }
+    
+    .viewer-widget {
+        flex-grow: 1;
+    }
+}
+
+/* Very tall screens (aspect ratio < 9:16) */
+@media only screen and (max-aspect-ratio: 9/16) {
+    /* Use more vertical space */
+    .model-library-widget {
+        max-height: 200px;
+    }
+    
+    .metadata-editor-widget {
+        max-height: 200px;
+    }
+    
+    .viewer-widget {
+        flex-grow: 1;
+    }
+}
+
+/* ================================
+   DEVICE-SPECIFIC STYLES
+   ================================
+
+/* High DPI screens */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi) {
+    /* Use higher resolution images */
+    .thumbnail-placeholder {
+        background-size: cover;
+    }
+    
+    /* Adjust border widths for high DPI */
+    .main-window,
+    .main-toolbar,
+    .dock-widget,
+    .viewer-widget {
+        border-width: 0.5px;
+    }
+}
+
+/* Touch devices */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    .toolbar-button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .menu-bar-item {
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+    
+    .dock-widget-title {
+        min-height: 44px;
+        padding: 12px;
+    }
+    
+    .model-list-view::item {
+        min-height: 44px;
+        padding: 12px;
+    }
+    
+    .model-grid-view::item {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    /* Add visual feedback for touch */
+    .toolbar-button:active {
+        background-color: #0078d4;
+        color: #ffffff;
+    }
+    
+    .menu-bar-item:active {
+        background-color: #0078d4;
+        color: #ffffff;
+    }
+}
+
+/* ================================
+   FLUID LAYOUTS
+   ================================
+
+/* Fluid containers */
+.fluid-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* Fluid grid */
+.fluid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+/* Flexbox layouts */
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+}
+
+.flex-item {
+    flex: 1 1 auto;
+    min-width: 200px;
+}
+
+/* ================================
+   RESPONSIVE TYPOGRAPHY
+   ================================
+
+/* Fluid font sizes */
+.fluid-text {
+    font-size: calc(12px + 0.4vw);
+}
+
+.fluid-heading {
+    font-size: calc(16px + 0.8vw);
+}
+
+.fluid-title {
+    font-size: calc(20px + 1.2vw);
+}
+
+/* Responsive line heights */
+.responsive-text {
+    line-height: 1.4;
+}
+
+@media (min-width: 768px) {
+    .responsive-text {
+        line-height: 1.5;
+    }
+}
+
+@media (min-width: 1200px) {
+    .responsive-text {
+        line-height: 1.6;
+    }
+}
+
+/* ================================
+   RESPONSIVE IMAGES
+   ================================
+
+/* Responsive image container */
+.responsive-image-container {
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    position: relative;
+    overflow: hidden;
+}
+
+.responsive-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ================================
+   RESPONSIVE NAVIGATION
+   ================================
+
+/* Responsive navigation container */
+.responsive-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    width: 100%;
+}
+
+/* Navigation item */
+.nav-item {
+    flex: 1 1 auto;
+    min-width: 100px;
+}
+
+/* Hamburger menu for small screens */
+.hamburger-menu {
+    display: none;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .hamburger-menu {
+        display: block;
+    }
+    
+    .responsive-nav {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .nav-item {
+        width: 100%;
+    }
+}
+
+/* ================================
+   RESPONSIVE TABLES
+   ================================
+
+/* Responsive table container */
+.responsive-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Responsive table */
+.responsive-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.responsive-table th,
+.responsive-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #d0d0d0;
+}
+
+@media (max-width: 600px) {
+    .responsive-table th,
+    .responsive-table td {
+        padding: 4px;
+        font-size: 9pt;
+    }
+}
+
+/* ================================
+   RESPONSIVE FORMS
+   ================================
+
+/* Responsive form container */
+.responsive-form {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Form group */
+.form-group {
+    margin-bottom: 15px;
+}
+
+@media (min-width: 768px) {
+    .form-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-group label {
+        flex: 0 0 120px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        flex: 1;
+    }
+}
+
+/* ================================
+   RESPONSIVE UTILITIES
+   ================================
+
+/* Hide elements on small screens */
+.hidden-xs {
+    display: none;
+}
+
+@media (min-width: 600px) {
+    .hidden-xs {
+        display: block;
+    }
+}
+
+/* Hide elements on medium screens */
+.hidden-sm {
+    display: block;
+}
+
+@media (min-width: 600px) and (max-width: 768px) {
+    .hidden-sm {
+        display: none;
+    }
+}
+
+/* Hide elements on large screens */
+.hidden-md {
+    display: block;
+}
+
+@media (min-width: 768px) and (max-width: 992px) {
+    .hidden-md {
+        display: none;
+    }
+}
+
+/* Hide elements on extra large screens */
+.hidden-lg {
+    display: block;
+}
+
+@media (min-width: 992px) {
+    .hidden-lg {
+        display: none;
+    }
+}
+
+/* Show elements only on small screens */
+.visible-xs {
+    display: block;
+}
+
+@media (min-width: 600px) {
+    .visible-xs {
+        display: none;
+    }
+}
+
+/* Show elements only on medium screens */
+.visible-sm {
+    display: none;
+}
+
+@media (min-width: 600px) and (max-width: 768px) {
+    .visible-sm {
+        display: block;
+    }
+}
+
+/* Show elements only on large screens */
+.visible-md {
+    display: none;
+}
+
+@media (min-width: 768px) and (max-width: 992px) {
+    .visible-md {
+        display: block;
+    }
+}
+
+/* Show elements only on extra large screens */
+.visible-lg {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .visible-lg {
+        display: block;
+    }
+}
+
+/* ================================
+   PRINT STYLES
+   ================================
+
+@media print {
+    /* Hide unnecessary elements */
+    .main-toolbar,
+    .menu-bar,
+    .status-bar,
+    .viewer-controls {
+        display: none !important;
+    }
+    
+    /* Ensure content fits on page */
+    .main-window {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+    
+    /* Adjust colors for printing */
+    * {
+        color: black !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+}
