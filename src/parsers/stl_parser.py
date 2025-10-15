@@ -42,6 +42,7 @@ from .base_parser import (
     ModelStats, ParseError, ProgressCallback, LoadingState
 )
 from core.logging_config import get_logger, log_function_call
+from core.hardware_acceleration import get_acceleration_manager, AccelBackend
 
 
 class STLFormat(Enum):
@@ -196,6 +197,24 @@ class STLParser(BaseParser):
 
                 triangle_count = struct.unpack('<I', count_bytes)[0]
                 self.logger.info(f"Parsing binary STL with {triangle_count} triangles")
+                
+                # Probe hardware acceleration and report status
+                backend = None
+                try:
+                    caps = get_acceleration_manager().get_capabilities()
+                    backend = caps.recommended_backend
+                    if progress_callback:
+                        progress_callback.report(3.0, f"Hardware backend: {backend.value}")
+                    self.logger.info(
+                        "Hardware backend selected: %s (score=%s, available=%s, devices=%s)",
+                        backend.value,
+                        caps.performance_score,
+                        [b.value for b in caps.available_backends],
+                        [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
+                    )
+                except Exception as accel_err:
+                    self.logger.warning(f"Hardware acceleration probe failed: {accel_err}")
+                    backend = None
 
                 # Validate triangle count is reasonable
                 if triangle_count > 100000000:  # 100 million triangles is unreasonable

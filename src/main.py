@@ -21,6 +21,7 @@ from core.logging_config import setup_logging
 from core.settings_migration import migrate_on_startup
 from gui.main_window import MainWindow
 from gui.theme import load_theme_from_settings
+from core.hardware_acceleration import get_acceleration_manager
 
 
 def setup_directories():
@@ -73,7 +74,22 @@ def main():
         
         # Load theme settings before creating windows
         load_theme_from_settings()
-        
+
+        # Detect hardware acceleration and log a clear status; warn if not available
+        try:
+            mgr = get_acceleration_manager()
+            caps = mgr.get_capabilities()
+            logger.info(
+                "Hardware acceleration detected: backend=%s score=%d available=%s devices=%s",
+                caps.recommended_backend.value,
+                caps.performance_score,
+                [b.value for b in caps.available_backends],
+                [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
+            )
+            mgr.warn_if_no_acceleration()
+        except Exception as accel_err:
+            logger.warning(f"Hardware acceleration detection failed: {accel_err}")
+
         # Create and show main window
         logger.debug("Creating main window")
         main_window = MainWindow()
