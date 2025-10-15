@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from core.logging_config import get_logger
 from core.database_manager import get_database_manager
 from parsers.stl_parser import STLParser, STLProgressCallback
-from gui.theme import COLORS, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from gui.preferences import PreferencesDialog
 
 
@@ -176,10 +176,17 @@ class MainWindow(QMainWindow):
                 background-color: {COLORS.pressed};
             }}
         """
-        # Load external CSS first (with hardcoded colors)
-        self._load_external_stylesheet()
-        # Apply base theme stylesheet on top (to override hardcoded colors with theme variables)
-        self.setStyleSheet(base_qss)
+        # Apply ThemeManager-managed external stylesheet, then append base_qss
+        try:
+            tm = ThemeManager.instance()
+            css_abs_path = str(Path(__file__).resolve().parents[1] / "resources" / "styles" / "main_window.css")
+            tm.register_widget(self, css_path=css_abs_path)
+            tm.apply_stylesheet(self)
+            # Append base_qss overrides
+            self.setStyleSheet(self.styleSheet() + "\n" + base_qss)
+        except Exception:
+            # Fallback: apply base_qss only
+            self.setStyleSheet(base_qss)
         # Notify via status bar for visible validation
         try:
             self.statusBar().showMessage("Applied main_window.css", 2000)
@@ -275,9 +282,13 @@ class MainWindow(QMainWindow):
                 background-color: {COLORS.pressed};
             }}
         """
-        # Load external CSS first (with hardcoded colors), then apply theme styles on top
-        self._load_external_stylesheet()
-        self.setStyleSheet(base_qss)
+        # Re-apply ThemeManager stylesheet and append base_qss
+        try:
+            tm = ThemeManager.instance()
+            tm.apply_stylesheet(self)
+            self.setStyleSheet(self.styleSheet() + "\n" + base_qss)
+        except Exception:
+            self.setStyleSheet(base_qss)
         # Notify via status bar for visible validation
         try:
             self.statusBar().showMessage("Applied main_window.css", 2000)
@@ -385,6 +396,12 @@ class MainWindow(QMainWindow):
         reload_stylesheet_action.setStatusTip("Reload and apply the main stylesheet")
         reload_stylesheet_action.triggered.connect(self._reload_stylesheet_action)
         view_menu.addAction(reload_stylesheet_action)
+
+        # Theme Manager
+        theme_manager_action = QAction("Theme Manager...", self)
+        theme_manager_action.setStatusTip("Open Theme Manager")
+        theme_manager_action.triggered.connect(self._show_theme_manager)
+        view_menu.addAction(theme_manager_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -1282,6 +1299,28 @@ class MainWindow(QMainWindow):
         dlg.theme_changed.connect(self._apply_theme_styles)
         dlg.exec_()
     
+    def _show_theme_manager(self) -> None:
+        """Show the Theme Manager dialog and hook apply signal."""
+        try:
+            from gui.theme_manager_widget import ThemeManagerWidget
+            dlg = ThemeManagerWidget(self)
+            dlg.themeApplied.connect(self._on_theme_applied)
+            dlg.show()
+        except Exception as e:
+            self.logger.error(f"Failed to open Theme Manager: {e}")
+            QMessageBox.warning(self, "Theme Manager", f"Failed to open Theme Manager:\n{e}")
+
+    def _on_theme_applied(self, _colors: dict) -> None:
+        """Re-apply styles after a theme change."""
+        try:
+            ThemeManager.instance().apply_to_registered()
+        except Exception:
+            pass
+        try:
+            self._apply_theme_styles()
+        except Exception:
+            pass
+
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
         self.logger.debug("Zoom in requested")

@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 
 from core.logging_config import get_logger, log_function_call
 from core.database_manager import get_database_manager
-from gui.theme import COLORS, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 
 
 class StarRatingWidget(QWidget):
@@ -380,90 +380,93 @@ class MetadataEditorWidget(QWidget):
         parent_layout.addWidget(button_frame)
     
     def _apply_styling(self) -> None:
-        """Apply styling to the widget with Windows standard colors."""
-        self.setStyleSheet(f"""
-            QGroupBox {{
+        """Apply styling using ThemeManager CSS template processing."""
+        tm = ThemeManager.instance()
+        css_text = """
+            QGroupBox {
                 font-weight: bold;
-                border: 2px solid {COLORS.border};
+                border: 2px solid {{border}};
                 border-radius: 4px;
                 margin-top: 1ex;
-                padding-top: {SPACING_12}px;
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QGroupBox::title {{
+                padding-top: 12px;
+                background-color: {{window_bg}};
+                color: {{text}};
+            }
+            QGroupBox::title {
                 subcontrol-origin: margin;
-                left: {SPACING_12}px;
-                padding: 0 {SPACING_8}px 0 {SPACING_8}px;
-                color: {COLORS.text};
-            }}
-            QLineEdit, QTextEdit, QComboBox {{
-                border: 1px solid {COLORS.border};
+                left: 12px;
+                padding: 0 8px 0 8px;
+                color: {{text}};
+            }
+            QLineEdit, QTextEdit, QComboBox {
+                border: 1px solid {{border}};
                 border-radius: 2px;
-                padding: {SPACING_8}px;
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-                selection-background-color: {COLORS.selection_bg};
-                selection-color: {COLORS.selection_text};
-            }}
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {{
-                border: 2px solid {COLORS.primary};
+                padding: 8px;
+                background-color: {{window_bg}};
+                color: {{text}};
+                selection-background-color: {{selection_bg}};
+                selection-color: {{selection_text}};
+            }
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+                border: 2px solid {{primary}};
                 outline: none;
-            }}
-            QLineEdit:hover, QTextEdit:hover, QComboBox:hover {{
-                border: 1px solid {COLORS.primary};
-            }}
-            QPushButton {{
-                border: 1px solid {COLORS.border};
+            }
+            QLineEdit:hover, QTextEdit:hover, QComboBox:hover {
+                border: 1px solid {{primary}};
+            }
+            QPushButton {
+                border: 1px solid {{border}};
                 border-radius: 2px;
-                padding: {SPACING_8}px {SPACING_16}px;
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
+                padding: 8px 16px;
+                background-color: {{surface}};
+                color: {{text}};
                 font-weight: normal;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS.hover};
-                border: 1px solid {COLORS.primary};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS.pressed};
-            }}
-            QPushButton:default {{
-                border: 1px solid {COLORS.primary};
-                background-color: {COLORS.primary};
-                color: {COLORS.primary_text};
+            }
+            QPushButton:hover {
+                background-color: {{hover}};
+                border: 1px solid {{primary}};
+            }
+            QPushButton:pressed {
+                background-color: {{pressed}};
+            }
+            QPushButton:default {
+                border: 1px solid {{primary}};
+                background-color: {{primary}};
+                color: {{primary_text}};
                 font-weight: bold;
-            }}
-            QPushButton:default:hover {{
-                background-color: {COLORS.primary_hover};
-            }}
-            QLabel {{
-                color: {COLORS.text};
+            }
+            QPushButton:default:hover {
+                background-color: {{primary_hover}};
+            }
+            QLabel {
+                color: {{text}};
                 background-color: transparent;
-            }}
-            QScrollArea {{
-                background-color: {COLORS.window_bg};
+            }
+            QScrollArea {
+                background-color: {{window_bg}};
                 border: none;
-            }}
-            QComboBox::drop-down {{
+            }
+            QComboBox::drop-down {
                 border: none;
                 width: 20px;
-            }}
-            QComboBox::down-arrow {{
+            }
+            QComboBox::down-arrow {
                 image: none;
-                border-left: {SPACING_4}px solid transparent;
-                border-right: {SPACING_4}px solid transparent;
-                border-top: {SPACING_4}px solid {COLORS.text_muted};
-                margin-right: {SPACING_8}px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS.window_bg};
-                border: 1px solid {COLORS.border};
-                selection-background-color: {COLORS.selection_bg};
-                selection-color: {COLORS.selection_text};
-                color: {COLORS.text};
-            }}
-        """)
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 4px solid {{text_muted}};
+                margin-right: 8px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: {{window_bg}};
+                border: 1px solid {{border}};
+                selection-background-color: {{selection_bg}};
+                selection-color: {{selection_text}};
+                color: {{text}};
+            }
+        """
+        tm.register_widget(self, css_text=css_text)
+        tm.apply_stylesheet(self)
     
     def _setup_connections(self) -> None:
         """Set up signal connections."""
