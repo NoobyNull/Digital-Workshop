@@ -176,10 +176,9 @@ class MainWindow(QMainWindow):
                 background-color: {COLORS.pressed};
             }}
         """
-        # Load external CSS first (with hardcoded colors)
-        self._load_external_stylesheet()
-        # Apply base theme stylesheet on top (to override hardcoded colors with theme variables)
+        # Apply base theme stylesheet first, then layer external CSS on top
         self.setStyleSheet(base_qss)
+        self._load_external_stylesheet()
         # Notify via status bar for visible validation
         try:
             self.statusBar().showMessage("Applied main_window.css", 2000)
@@ -275,14 +274,14 @@ class MainWindow(QMainWindow):
                 background-color: {COLORS.pressed};
             }}
         """
-        # Load external CSS first (with hardcoded colors), then apply theme styles on top
-        self._load_external_stylesheet()
-        self.setStyleSheet(base_qss)
-        # Notify via status bar for visible validation
-        try:
-            self.statusBar().showMessage("Applied main_window.css", 2000)
-        except Exception:
-            pass
+       # Apply base theme stylesheet first, then layer external CSS on top
+       self.setStyleSheet(base_qss)
+       self._load_external_stylesheet()
+       # Notify via status bar for visible validation
+       try:
+           self.statusBar().showMessage("Applied main_window.css", 2000)
+       except Exception:
+           pass
         # Propagate to known child widgets that support re-styling
         try:
             if hasattr(self, "model_library_widget") and hasattr(self.model_library_widget, "_apply_styling"):
@@ -829,32 +828,15 @@ class MainWindow(QMainWindow):
     def _update_status(self) -> None:
         """Update status bar information."""
         try:
-            # Check if current status message is an important UI feedback message
-            current_message = self.status_label.text()
-            important_messages = [
-                "Applied main_window.css",
-                "Modern UI styling applied",
-                "Stylesheet reloaded",
-                "Toolbar icons active",
-                "Loading:",
-                "Metadata saved",
-                "Added"
-            ]
-
-            # Don't override important UI feedback messages
-            is_important = any(msg in current_message for msg in important_messages)
-            if not is_important:
-                import psutil
-                process = psutil.Process()
-                memory_mb = process.memory_info().rss / 1024 / 1024
-                self.memory_label.setText(f"Memory: {memory_mb:.1f} MB")
+            import psutil
+            process = psutil.Process()
+            memory_mb = process.memory_info().rss / 1024 / 1024
+            self.memory_label.setText(f"Memory: {memory_mb:.1f} MB")
         except ImportError:
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
-                self.memory_label.setText("Memory: N/A (psutil not available)")
+            self.memory_label.setText("Memory: N/A (psutil not available)")
         except Exception as e:
             self.logger.warning(f"Failed to update memory status: {str(e)}")
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
-                self.memory_label.setText("Memory: Error")
+            self.memory_label.setText("Memory: Error")
     
     # --- Dock layout helpers ---
     def _save_default_layout_state(self) -> None:

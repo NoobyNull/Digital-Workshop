@@ -11,11 +11,12 @@ from enum import Enum
 from typing import Optional, Tuple, Any
 
 from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, QLabel, QFrame
 from PySide6.QtGui import QColor
 
 import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtk.util import numpy_support as vtk_np
 
 from core.logging_config import get_logger, log_function_call
 from core.performance_monitor import get_performance_monitor
@@ -100,12 +101,21 @@ class Viewer3DWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create VTK widget
+        # Create VTK widget wrapped in a framed container
         self.vtk_widget = QVTKRenderWindowInteractor(self)
-        layout.addWidget(self.vtk_widget)
+
+        self.viewer_frame = QFrame()
+        self.viewer_frame.setObjectName("ViewerFrame")
+        viewer_layout = QVBoxLayout(self.viewer_frame)
+        viewer_layout.setContentsMargins(0, 0, 0, 0)
+        viewer_layout.setSpacing(0)
+        viewer_layout.addWidget(self.vtk_widget)
+
+        layout.addWidget(self.viewer_frame)
         
         # Create control panel
         control_panel = QWidget()
+        control_panel.setObjectName("ControlPanel")
         control_layout = QHBoxLayout(control_panel)
         control_layout.setContentsMargins(5, 5, 5, 5)
         
@@ -149,35 +159,46 @@ class Viewer3DWidget(QWidget):
         
         # Style the widget using theme variables
         self.setStyleSheet(f"""
+            QFrame#ViewerFrame {{
+                border: 1px solid {COLORS.border};
+                border-radius: 6px;
+                background-color: {COLORS.window_bg};
+            }}
+            QWidget#ControlPanel {{
+                background-color: {COLORS.card_bg};
+                border-top: 1px solid {COLORS.border};
+            }}
             QPushButton {{
                 padding: 6px 12px;
                 border: 1px solid {COLORS.border};
                 background-color: {COLORS.surface};
                 color: {COLORS.text};
-                border-radius: 2px;
+                border-radius: 4px;
                 font-weight: normal;
             }}
             QPushButton:checked {{
                 background-color: {COLORS.primary};
                 color: {COLORS.primary_text};
                 border: 1px solid {COLORS.primary};
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {COLORS.hover};
+                border-color: {COLORS.primary};
             }}
             QPushButton:pressed {{
                 background-color: {COLORS.pressed};
             }}
             QProgressBar {{
                 border: 1px solid {COLORS.border};
-                border-radius: 2px;
+                border-radius: 3px;
                 text-align: center;
                 background-color: {COLORS.window_bg};
                 color: {COLORS.text};
             }}
             QProgressBar::chunk {{
                 background-color: {COLORS.progress_chunk};
-                border-radius: 1px;
+                border-radius: 2px;
             }}
             QLabel {{
                 color: {COLORS.text};
@@ -327,6 +348,115 @@ class Viewer3DWidget(QWidget):
         polydata.GetPointData().SetNormals(normals)
         
         return polydata
+
+    def _create_vtk_polydata_from_arrays(self, model: Model) -> vtk.vtkPolyData:
+        """
+        Create VTK polydata directly from NumPy arrays on the Model.
+        Expects:
+          - model.vertex_array: float32 [N*3, 3]
+          - model.normal_array: float32 [N*3, 3]
+        """
+        try:
+            if not hasattr(model, "is_array_based") or not model.is_array_based():
+                # Fallback to legacy path if arrays are not available
+                return self._create_vtk_polydata(model)  # type: ignore[arg-type]
+
+            import numpy as _np  # local import to avoid global dependency
+            vertex_array = model.vertex_array  # type: ignore[assignment]
+            normal_array = model.normal_array  # type: ignore[assignment]
+            if vertex_array is None or normal_array is None:
+                return self._create_vtk_polydata(model)  # type: ignore[arg-type]
+
+            total_vertices = int(vertex_array.shape[0])
+            if total_vertices % 3 != 0:
+                # Data integrity check failed; fallback
+                self.logger.warning("Vertex array length is not multiple of 3; falling back to legacy path")
+                return self._create_vtk_polydata(model)  # type: ignore[arg-type]
+
+            tri_count = total_vertices // 3
+            self.logger.info(f"Creating VTK polydata for {tri_count} triangles via array fast path")
+
+            # Ensure arrays are contiguous and use double precision for maximum VTK compatibility
+            vertex_array = _np.ascontiguousarray(vertex_array, dtype=_np.float64)
+            normal_array = _np.ascontiguousarray(normal_array, dtype=_np.float64)
+
+            # Points
+            points = vtk.vtkPoints()
+            vtk_points = vtk_np.numpy_to_vtk(vertex_array, deep=True, array_type=vtk.VTK_DOUBLE)
+            # Ensure 3 components per tuple for xyz
+            vtk_points.SetNumberOfComponents(3)
+            points.SetData(vtk_points)
+
+            # Normals
+            normals_vtk = vtk_np.numpy_to_vtk(normal_array, deep=True, array_type=vtk.VTK_DOUBLE)
+            normals_vtk.SetName("Normals")
+            # Ensure 3 components per tuple for nx ny nz
+            normals_vtk.SetNumberOfComponents(3)
+
+            # Build connectivity using VTK 9 explicit offsets + connectivity API
+            conn = _np.arange(total_vertices, dtype=_np.int64)
+            offsets = _np.arange(0, total_vertices + 1, 3, dtype=_np.int64)  # length tri_count+1
+
+            conn_vtk = vtk_np.numpy_to_vtkIdTypeArray(conn, deep=True)
+            offsets_vtk = vtk_np.numpy_to_vtkIdTypeArray(offsets, deep=True)
+
+            triangles = vtk.vtkCellArray()
+            triangles.SetData(offsets_vtk, conn_vtk)
+
+            # Assemble polydata
+            polydata = vtk.vtkPolyData()
+            polydata.SetPoints(points)
+            polydata.SetPolys(triangles)
+            polydata.GetPointData().SetNormals(normals_vtk)
+            polydata.GetPointData().SetActiveNormals("Normals")
+            polydata.Modified()
+            try:
+                # Compact internal arrays and finalize topology for safe rendering
+                polydata.Squeeze()
+                polydata.BuildCells()
+                # Explicitly mark sub-datasets as modified to avoid stale pipeline states
+                if polydata.GetPoints() is not None:
+                    polydata.GetPoints().Modified()
+                if polydata.GetPolys() is not None:
+                    polydata.GetPolys().Modified()
+            except Exception:
+                pass
+
+            # If some VTK builds still report 0 polys, try legacy var-encoding SetCells fallback
+            if polydata.GetNumberOfPolys() == 0:
+                self.logger.warning("VTK9 SetData connectivity yielded 0 polys; trying legacy SetCells fallback")
+                ids = _np.arange(total_vertices, dtype=_np.int64).reshape(tri_count, 3)
+                three_col = _np.full((tri_count, 1), 3, dtype=_np.int64)
+                cells_flat = _np.hstack((three_col, ids)).ravel()
+                id_array = vtk_np.numpy_to_vtkIdTypeArray(cells_flat, deep=True)
+                triangles_legacy = vtk.vtkCellArray()
+                triangles_legacy.SetCells(tri_count, id_array)
+
+                polydata_legacy = vtk.vtkPolyData()
+                polydata_legacy.SetPoints(points)
+                polydata_legacy.SetPolys(triangles_legacy)
+                polydata_legacy.GetPointData().SetNormals(normals_vtk)
+                polydata_legacy.GetPointData().SetActiveNormals("Normals")
+                try:
+                    polydata_legacy.Squeeze()
+                    polydata_legacy.BuildCells()
+                except Exception:
+                    pass
+                self.logger.info(
+                    f"Legacy path counts: points={polydata_legacy.GetNumberOfPoints()}, polys={polydata_legacy.GetNumberOfPolys()}"
+                )
+                if polydata_legacy.GetNumberOfPolys() > 0:
+                    polydata = polydata_legacy
+
+            self.logger.info(
+                f"PolyData created: points={polydata.GetNumberOfPoints()}, polys={polydata.GetNumberOfPolys()}, "
+                f"expected_points={total_vertices}, expected_polys={tri_count}"
+            )
+            return polydata
+        except Exception as e:
+            # Fail-safe: log and fallback
+            self.logger.error(f"Array-to-VTK fast path failed: {e}; using legacy path")
+            return self._create_vtk_polydata(model)  # type: ignore[arg-type]
     
     def _set_render_mode(self, mode: RenderMode) -> None:
         """
@@ -446,14 +576,32 @@ class Viewer3DWidget(QWidget):
             cam.SetPosition(cx, cy, cz + distance)
             cam.SetViewUp(0.0, 1.0, 0.0)
 
-            # Update clipping range for current bounds
-            self.renderer.ResetCameraClippingRange()
+            # Explicit clipping range to avoid empty viewport on extreme bounds
+            try:
+                near = max(0.001, distance - (radius * 4.0))
+                far = distance + (radius * 4.0)
+                if far <= near:
+                    far = near * 10.0
+                cam.SetClippingRange(near, far)
+            except Exception:
+                pass
+
+            # Also ask the renderer to recompute clipping
+            try:
+                self.renderer.ResetCameraClippingRange()
+            except Exception:
+                pass
 
             # Render updates
-            self.vtk_widget.GetRenderWindow().Render()
+            try:
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
+
             self.logger.debug(
                 f"Camera fitted to model: center=({cx:.3f},{cy:.3f},{cz:.3f}) "
-                f"radius={radius:.3f} distance={distance:.3f}"
+                f"radius={radius:.3f} distance={distance:.3f} "
+                f"clip={tuple(round(v,3) for v in (cam.GetClippingRange() if hasattr(cam,'GetClippingRange') else (0,0)))}"
             )
         except Exception as e:
             # Fallback to default reset on any error
@@ -484,18 +632,130 @@ class Viewer3DWidget(QWidget):
             
             # Store reference to the model
             self.current_model = model
-            
+
+            # On-demand full geometry load if buffers are missing but stats indicate geometry
+            try:
+                missing_arrays = not (hasattr(model, "is_array_based") and callable(getattr(model, "is_array_based")) and model.is_array_based())
+                no_triangles_list = (len(getattr(model, "triangles", [])) == 0)
+                has_stats = getattr(model, "stats", None) is not None
+                has_tris_in_stats = has_stats and getattr(model.stats, "triangle_count", 0) > 0
+                has_path = bool(getattr(model, "file_path", None))
+                if missing_arrays and no_triangles_list and has_tris_in_stats and has_path:
+                    self.logger.warning("No geometry buffers present; performing on-demand full load (non-lazy)")
+                    from parsers.stl_parser import STLParser  # late import to avoid overhead on normal path
+                    _parser = STLParser()
+                    loaded = _parser.parse_file(model.file_path, progress_callback=None, lazy_loading=False)  # type: ignore[arg-type]
+                    self.current_model = loaded
+                    model = loaded
+            except Exception as _ond_err:
+                self.logger.error(f"On-demand full load failed: {_ond_err}")
+
             # Create VTK polydata from model
-            polydata = self._create_vtk_polydata(model)
-            
+            # Emit diagnostics so we can see why a path was selected
+            va = getattr(model, "vertex_array", None)
+            na = getattr(model, "normal_array", None)
+            ls = getattr(model, "loading_state", None)
+
+            va_len = -1
+            va_shape = None
+            na_len = -1
+            na_shape = None
+            try:
+                if va is not None:
+                    va_shape = getattr(va, "shape", None)
+                    if hasattr(va, "shape") and len(va.shape) > 0:
+                        va_len = int(va.shape[0] or 0)
+                    elif hasattr(va, "__len__"):
+                        va_len = len(va)  # type: ignore[arg-type]
+                if na is not None:
+                    na_shape = getattr(na, "shape", None)
+                    if hasattr(na, "shape") and len(na.shape) > 0:
+                        na_len = int(na.shape[0] or 0)
+                    elif hasattr(na, "__len__"):
+                        na_len = len(na)  # type: ignore[arg-type]
+            except Exception:
+                pass
+
+            self.logger.info(
+                f"Array path diagnostics: loading_state={getattr(ls,'value',ls)}, "
+                f"va_present={va is not None}, va_len={va_len}, va_shape={va_shape}, "
+                f"na_present={na is not None}, na_len={na_len}, na_shape={na_shape}"
+            )
+
+            use_array = (
+                (ls == LoadingState.ARRAY_GEOMETRY) and
+                (va is not None) and (na is not None) and
+                (va_len is not None and va_len > 0)
+            )
+
+            # Also honor explicit method if available
+            if not use_array:
+                try:
+                    is_array_based_attr = getattr(model, "is_array_based", None)
+                    if callable(is_array_based_attr) and bool(is_array_based_attr()):
+                        use_array = True
+                except Exception:
+                    pass
+
+            if use_array:
+                self.logger.info("Selected ARRAY geometry path for VTK creation")
+                polydata = self._create_vtk_polydata_from_arrays(model)
+                self.logger.info("Used array-based fast path for VTK creation")
+            else:
+                self.logger.info("Selected legacy Triangle-object path for VTK creation")
+                # Fallback to legacy triangle-object path
+                polydata = self._create_vtk_polydata(model)
+
+            # Safety fallback: if polys are zero try triangle filter (some VTK builds require this)
+            try:
+                if polydata.GetNumberOfPolys() == 0 and polydata.GetNumberOfStrips() == 0:
+                    self.logger.warning("Polydata has zero polygons; applying vtkTriangleFilter fallback")
+                    tf = vtk.vtkTriangleFilter()
+                    tf.SetInputData(polydata)
+                    tf.PassLinesOff()
+                    tf.PassVertsOff()
+                    tf.Update()
+                    polydata = tf.GetOutput()
+                    self.logger.info(
+                        f"TriangleFilter result: points={polydata.GetNumberOfPoints()}, polys={polydata.GetNumberOfPolys()}"
+                    )
+            except Exception as _tf_err:
+                self.logger.error(f"TriangleFilter fallback failed: {_tf_err}")
+
+            # Preprocess normals to ensure shading and visibility
+            try:
+                need_normals = True
+                pd_normals = polydata.GetPointData().GetNormals()
+                if pd_normals is not None and pd_normals.GetNumberOfTuples() == polydata.GetNumberOfPoints():
+                    need_normals = False
+                if need_normals:
+                    nrm = vtk.vtkPolyDataNormals()
+                    nrm.SetInputData(polydata)
+                    nrm.SetSplitting(0)
+                    nrm.SetConsistency(1)
+                    nrm.ComputePointNormalsOn()
+                    nrm.ComputeCellNormalsOff()
+                    nrm.AutoOrientNormalsOn()
+                    nrm.Update()
+                    polydata = nrm.GetOutput()
+            except Exception:
+                # Non-fatal; proceed without normals filter
+                pass
+
             # Create mapper
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputData(polydata)
-            
+            # Avoid unexpected scalar coloring affecting visibility
+            try:
+                mapper.ScalarVisibilityOff()
+            except Exception:
+                pass
+            mapper.Update()
+
             # Create actor
             self.actor = vtk.vtkActor()
             self.actor.SetMapper(mapper)
-            
+
             # Set properties using theme colors
             self.actor.GetProperty().SetColor(*vtk_rgb('model_surface'))
             self.actor.GetProperty().SetAmbient(0.3)  # Increased ambient lighting
@@ -504,21 +764,73 @@ class Viewer3DWidget(QWidget):
             self.actor.GetProperty().SetSpecularPower(15.0)
             self.actor.GetProperty().SetEdgeColor(*vtk_rgb('edge_color'))
             self.actor.GetProperty().SetLineWidth(1.0)
+            self.actor.GetProperty().BackfaceCullingOff()
+            self.actor.VisibilityOn()
+            # Ensure fully opaque and lighting enabled for visibility
+            try:
+                self.actor.GetProperty().SetOpacity(1.0)
+                self.actor.GetProperty().LightingOn()
+            except Exception:
+                pass
+            # If model color too close to background, switch to high-contrast fallback color
+            try:
+                ms = vtk_rgb('model_surface')
+                bg = vtk_rgb('canvas_bg')
+                if abs(ms[0]-bg[0]) + abs(ms[1]-bg[1]) + abs(ms[2]-bg[2]) < 0.30:
+                    self.actor.GetProperty().SetColor(0.95, 0.2, 0.2)
+                    self.logger.info("Adjusted model color for contrast with background")
+            except Exception:
+                pass
             # Edge visibility will be controlled by render mode in _apply_render_mode()
-            
+ 
             # Add actor to renderer
             self.renderer.AddActor(self.actor)
-            
+
+            # Add bounding box outline for visibility diagnostics
+            try:
+                of = vtk.vtkOutlineFilter()
+                of.SetInputData(polydata)
+                of.Update()
+                omap = vtk.vtkPolyDataMapper()
+                omap.SetInputConnection(of.GetOutputPort())
+                oact = vtk.vtkActor()
+                oact.SetMapper(omap)
+                oact.GetProperty().SetColor(*vtk_rgb('edge_color'))
+                oact.GetProperty().SetLineWidth(2.0)
+                oact.PickableOff()
+                self.renderer.AddActor(oact)
+                self.logger.info(
+                    f"Added outline actor: points={of.GetOutput().GetNumberOfPoints()}, "
+                    f"lines={of.GetOutput().GetNumberOfLines()}"
+                )
+            except Exception as _ol_err:
+                self.logger.warning(f"Failed to add outline actor: {_ol_err}")
+ 
             # Apply current render mode
             self._apply_render_mode()
-            
+ 
             # Fit camera to model
             self._fit_camera_to_model(model)
-            
+
+            # Extra safety: ensure bounds not empty; if empty, force compute and reset camera
+            try:
+                _ = self.actor.GetBounds()
+                self.renderer.ResetCameraClippingRange()
+            except Exception:
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+
+            # Render scene to ensure on-screen
+            self.vtk_widget.GetRenderWindow().Render()
+
             # Emit signal
             self.model_loaded.emit(f"Model with {model.stats.triangle_count} triangles")
-            
-            self.logger.info(f"Model loaded successfully: {model.stats.triangle_count} triangles, {model.stats.vertex_count} vertices")
+
+            self.logger.info(
+                f"Model loaded successfully: {model.stats.triangle_count} triangles, "
+                f"{model.stats.vertex_count} vertices, "
+                f"polydata points={polydata.GetNumberOfPoints()}, polys={polydata.GetNumberOfPolys()}"
+            )
             return True
             
         except Exception as e:
@@ -604,35 +916,46 @@ class Viewer3DWidget(QWidget):
             # Re-apply widget QSS using current COLORS
             from gui.theme import COLORS, vtk_rgb  # late import to read current theme
             self.setStyleSheet(f"""
+                QFrame#ViewerFrame {{
+                    border: 1px solid {COLORS.border};
+                    border-radius: 6px;
+                    background-color: {COLORS.window_bg};
+                }}
+                QWidget#ControlPanel {{
+                    background-color: {COLORS.card_bg};
+                    border-top: 1px solid {COLORS.border};
+                }}
                 QPushButton {{
                     padding: 6px 12px;
                     border: 1px solid {COLORS.border};
                     background-color: {COLORS.surface};
                     color: {COLORS.text};
-                    border-radius: 2px;
+                    border-radius: 4px;
                     font-weight: normal;
                 }}
                 QPushButton:checked {{
                     background-color: {COLORS.primary};
                     color: {COLORS.primary_text};
                     border: 1px solid {COLORS.primary};
+                    font-weight: 600;
                 }}
                 QPushButton:hover {{
                     background-color: {COLORS.hover};
+                    border-color: {COLORS.primary};
                 }}
                 QPushButton:pressed {{
                     background-color: {COLORS.pressed};
                 }}
                 QProgressBar {{
                     border: 1px solid {COLORS.border};
-                    border-radius: 2px;
+                    border-radius: 3px;
                     text-align: center;
                     background-color: {COLORS.window_bg};
                     color: {COLORS.text};
                 }}
                 QProgressBar::chunk {{
                     background-color: {COLORS.progress_chunk};
-                    border-radius: 1px;
+                    border-radius: 2px;
                 }}
                 QLabel {{
                     color: {COLORS.text};

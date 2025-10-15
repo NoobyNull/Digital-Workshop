@@ -8,7 +8,7 @@ By centralizing these structures, we avoid circular import dependencies.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 
 
 class ModelFormat(Enum):
@@ -75,6 +75,7 @@ class LoadingState(Enum):
     METADATA_ONLY = "metadata_only"
     LOW_RES_GEOMETRY = "low_res_geometry"
     FULL_GEOMETRY = "full_geometry"
+    ARRAY_GEOMETRY = "array_geometry"
 
 
 @dataclass
@@ -86,6 +87,10 @@ class Model:
     format_type: ModelFormat
     loading_state: LoadingState = LoadingState.FULL_GEOMETRY
     file_path: Optional[str] = None
+    # Array-based fast path fields (used when loading_state == ARRAY_GEOMETRY)
+    # Use Any to avoid hard dependency on NumPy in core structures.
+    vertex_array: Optional[Any] = None  # Expected shape: (N*3, 3) float32
+    normal_array: Optional[Any] = None  # Expected shape: (N*3, 3) float32
     
     def get_vertices(self) -> List[Vector3D]:
         """Get all unique vertices from all triangles."""
@@ -96,9 +101,10 @@ class Model:
     
     def get_memory_usage(self) -> int:
         """Estimate memory usage in bytes."""
+        # Note: This is a rough estimate and does not include NumPy array buffers.
         return (
             len(self.header.encode('utf-8')) +
-            len(self.triangles) * (50 + 4 * 9) +  # Rough estimate
+            len(self.triangles) * (50 + 4 * 9) +  # Rough estimate for Triangle objects
             100  # Stats and other data
         )
     
@@ -109,3 +115,11 @@ class Model:
     def needs_geometry_loading(self) -> bool:
         """Check if model geometry needs to be loaded."""
         return self.loading_state == LoadingState.METADATA_ONLY
+
+    def is_array_based(self) -> bool:
+        """Check if model uses array-based geometry representation."""
+        return (
+            self.loading_state == LoadingState.ARRAY_GEOMETRY
+            and self.vertex_array is not None
+            and self.normal_array is not None
+        )

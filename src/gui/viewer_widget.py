@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Optional, Tuple, Any
 
 from PySide6.QtCore import Qt, Signal, QTimer, QPropertyAnimation, QEasingCurve, QThread
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, QLabel, QFrame
 from PySide6.QtGui import QColor
 
 from PyQt3D.Qt3DCore import QEntity, QTransform, QTranslateTransform, QVector3D
@@ -23,7 +23,7 @@ from PyQt3D.Qt3DRender import QClearBuffers, QBuffer, QAttribute, QGeometryRende
 from PyQt3D.Qt3DInput import QInputSettings
 
 from core.logging_config import get_logger, log_function_call
-from gui.theme import COLORS, qcolor
+from gui.theme import COLORS, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16
 from core.performance_monitor import get_performance_monitor
 from core.model_cache import get_model_cache, CacheLevel
 from parsers.stl_parser import STLModel
@@ -184,15 +184,24 @@ class Viewer3DWidget(QWidget):
         self.view = Qt3DWindow()
         self.view.defaultFrameGraph().setClearColor(qcolor('canvas_bg'))
         
-        # Create container widget for the 3D window
+        # Create container widget for the 3D window, wrapped in a framed container for styling
         self.container = QWidget.createWindowContainer(self.view)
         self.container.setMinimumSize(400, 300)
-        layout.addWidget(self.container)
+
+        self.viewer_frame = QFrame()
+        self.viewer_frame.setObjectName("ViewerFrame")
+        viewer_layout = QVBoxLayout(self.viewer_frame)
+        viewer_layout.setContentsMargins(0, 0, 0, 0)
+        viewer_layout.setSpacing(0)
+        viewer_layout.addWidget(self.container)
+
+        layout.addWidget(self.viewer_frame)
         
         # Create control panel
         control_panel = QWidget()
+        control_panel.setObjectName("ControlPanel")
         control_layout = QHBoxLayout(control_panel)
-        control_layout.setContentsMargins(5, 5, 5, 5)
+        control_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
         
         # Render mode buttons
         self.solid_button = QPushButton("Solid")
@@ -223,7 +232,7 @@ class Viewer3DWidget(QWidget):
         # Create progress bar for loading
         self.progress_frame = QWidget()
         progress_layout = QHBoxLayout(self.progress_frame)
-        progress_layout.setContentsMargins(5, 5, 5, 5)
+        progress_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
         
         self.progress_label = QLabel("Loading...")
         self.progress_bar = QProgressBar()
@@ -238,20 +247,31 @@ class Viewer3DWidget(QWidget):
         
         # Style the widget using theme variables
         self.setStyleSheet(f"""
+            QFrame#ViewerFrame {{
+                border: 1px solid {COLORS.border};
+                border-radius: 6px;
+                background-color: {COLORS.window_bg};
+            }}
+            QWidget#ControlPanel {{
+                background-color: {COLORS.card_bg};
+                border-top: 1px solid {COLORS.border};
+            }}
             QPushButton {{
-                padding: 5px 10px;
+                padding: {SPACING_8}px {SPACING_16}px;
                 border: 1px solid {COLORS.border};
                 background-color: {COLORS.surface};
                 color: {COLORS.text};
-                border-radius: 3px;
+                border-radius: 4px;
             }}
             QPushButton:checked {{
                 background-color: {COLORS.primary};
                 color: {COLORS.primary_text};
                 border: 1px solid {COLORS.primary};
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {COLORS.hover};
+                border-color: {COLORS.primary};
             }}
             QPushButton:pressed {{
                 background-color: {COLORS.pressed};
@@ -857,6 +877,66 @@ class Viewer3DWidget(QWidget):
         
         self.logger.info("3D viewer cleanup completed")
     
+    def apply_theme(self) -> None:
+        """
+        Reapply themed styling for the PyQt3D viewer:
+        - Update canvas clear color
+        - Refresh QSS for framed viewer container, control panel, buttons, and progress bar
+        Safe to call multiple times.
+        """
+        try:
+            from gui.theme import COLORS, qcolor  # late import to reflect current theme
+            # Update canvas background color
+            if hasattr(self, "view"):
+                self.view.defaultFrameGraph().setClearColor(qcolor('canvas_bg'))
+
+            # Re-apply stylesheet using current theme variables
+            self.setStyleSheet(f"""
+                QFrame#ViewerFrame {{
+                    border: 1px solid {COLORS.border};
+                    border-radius: 6px;
+                    background-color: {COLORS.window_bg};
+                }}
+                QWidget#ControlPanel {{
+                    background-color: {COLORS.card_bg};
+                    border-top: 1px solid {COLORS.border};
+                }}
+                QPushButton {{
+                    padding: {SPACING_8}px {SPACING_16}px;
+                    border: 1px solid {COLORS.border};
+                    background-color: {COLORS.surface};
+                    color: {COLORS.text};
+                    border-radius: 4px;
+                }}
+                QPushButton:checked {{
+                    background-color: {COLORS.primary};
+                    color: {COLORS.primary_text};
+                    border: 1px solid {COLORS.primary};
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS.hover};
+                    border-color: {COLORS.primary};
+                }}
+                QPushButton:pressed {{
+                    background-color: {COLORS.pressed};
+                }}
+                QProgressBar {{
+                    border: 1px solid {COLORS.border};
+                    border-radius: 3px;
+                    text-align: center;
+                    background-color: {COLORS.window_bg};
+                    color: {COLORS.text};
+                }}
+                QProgressBar::chunk {{
+                    background-color: {COLORS.progress_chunk};
+                    border-radius: 2px;
+                }}
+            """)
+        except Exception:
+            # Fail-safe: do not break UI due to theme update
+            pass
+
     def closeEvent(self, event) -> None:
         """Handle widget close event."""
         self.cleanup()

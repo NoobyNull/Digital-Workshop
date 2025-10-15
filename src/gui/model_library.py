@@ -37,7 +37,7 @@ from parsers import (
     STLParser, OBJParser, ThreeMFParser, STEPParser,
     FormatDetector, ModelFormat
 )
-from gui.theme import COLORS, qcolor
+from gui.theme import COLORS, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 
 
 class ViewMode(Enum):
@@ -226,18 +226,18 @@ class ModelLibraryWidget(QWidget):
 
     def _init_ui(self) -> None:
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
-        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
+        main_layout.setSpacing(SPACING_8)
 
         self._create_toolbar(main_layout)
         self._create_search_bar(main_layout)
 
-        content_splitter = QSplitter(Qt.Horizontal)
-        main_layout.addWidget(content_splitter)
-
-        self._create_file_browser(content_splitter)
-        self._create_model_view_area(content_splitter)
-        content_splitter.setSizes([300, 700])
+        self.content_splitter = QSplitter(Qt.Horizontal)
+        main_layout.addWidget(self.content_splitter)
+        
+        self._create_file_browser(self.content_splitter)
+        self._create_model_view_area(self.content_splitter)
+        self.content_splitter.setSizes([300, 700])
 
         self._create_status_bar(main_layout)
         self._apply_styling()
@@ -246,6 +246,7 @@ class ModelLibraryWidget(QWidget):
         toolbar_frame = QFrame()
         toolbar_layout = QHBoxLayout(toolbar_frame)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_layout.setSpacing(SPACING_8)
 
         self.list_view_button = QToolButton()
         self.list_view_button.setText("List View")
@@ -278,6 +279,7 @@ class ModelLibraryWidget(QWidget):
         controls_frame = QFrame()
         controls_layout = QHBoxLayout(controls_frame)
         controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(SPACING_8)
 
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search models...")
@@ -364,6 +366,7 @@ class ModelLibraryWidget(QWidget):
         status_frame = QFrame()
         status_layout = QHBoxLayout(status_frame)
         status_layout.setContentsMargins(0, 0, 0, 0)
+        status_layout.setSpacing(SPACING_8)
 
         self.status_label = QLabel("Ready")
         status_layout.addWidget(self.status_label)

@@ -21,6 +21,13 @@ import json
 from PySide6.QtGui import QColor
 from PySide6.QtCore import QStandardPaths
 
+# Spacing scale constants (px)
+SPACING_4 = 4
+SPACING_8 = 8
+SPACING_12 = 12
+SPACING_16 = 16
+SPACING_24 = 24
+
 
 def _normalize_hex(h: str) -> str:
     """Return a normalized #RRGGBB hex string."""

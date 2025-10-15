@@ -190,8 +190,24 @@ class ModelCache:
         """
         try:
             if isinstance(data, Model):
-                # Estimate model size based on triangle count
-                return len(data.triangles) * 50 + 100  # Rough estimate
+                # Base estimate for Triangle objects
+                size = len(data.triangles) * 50 + 100  # Rough estimate
+                
+                # Account for array-based geometry if present
+                va = getattr(data, "vertex_array", None)
+                na = getattr(data, "normal_array", None)
+                for arr in (va, na):
+                    if arr is not None:
+                        nbytes = getattr(arr, "nbytes", None)
+                        if isinstance(nbytes, (int, float)):
+                            size += int(nbytes)
+                        else:
+                            # Fallback: approximate via size * itemsize if available
+                            try:
+                                size += int(getattr(arr, "size", 0)) * int(getattr(arr, "itemsize", 4))
+                            except Exception:
+                                pass
+                return size
             else:
                 # Use pickle size as estimate
                 return len(pickle.dumps(data))

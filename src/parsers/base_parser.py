@@ -242,14 +242,37 @@ class BaseParser(ABC):
                 # Lazy import to avoid NameError during async geometry load
                 from core.model_cache import CacheLevel
                 full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
-                
-                # Update the metadata model with geometry
-                metadata_model.triangles = full_model.triangles
-                metadata_model.loading_state = LoadingState.FULL_GEOMETRY
-                
-                # Cache the full model
+
+                # Merge geometry into the metadata model
+                try:
+                    # Prefer array-based path if available
+                    is_array_based = False
+                    if hasattr(full_model, "is_array_based") and callable(getattr(full_model, "is_array_based")):
+                        is_array_based = bool(full_model.is_array_based())  # type: ignore[attr-defined]
+
+                    if is_array_based:
+                        # Copy arrays and mark state
+                        setattr(metadata_model, "vertex_array", getattr(full_model, "vertex_array", None))
+                        setattr(metadata_model, "normal_array", getattr(full_model, "normal_array", None))
+                        metadata_model.triangles = []  # ensure no legacy triangles
+                        metadata_model.loading_state = LoadingState.ARRAY_GEOMETRY
+                    else:
+                        # Legacy triangles path
+                        metadata_model.triangles = full_model.triangles
+                        metadata_model.loading_state = LoadingState.FULL_GEOMETRY
+
+                    # Always copy stats and format (in case improved precision)
+                    metadata_model.stats = full_model.stats
+                    metadata_model.format_type = full_model.format_type
+                except Exception as merge_err:
+                    # Fallback to legacy triangles only to avoid blank view
+                    self.logger.warning(f"Geometry merge fallback (triangles only) due to: {merge_err}")
+                    metadata_model.triangles = full_model.triangles
+                    metadata_model.loading_state = LoadingState.FULL_GEOMETRY
+
+                # Cache the full model (may be skipped if too large per cache limits)
                 self.model_cache.put(metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model)
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to load geometry for {metadata_model.file_path}: {str(e)}")
     
