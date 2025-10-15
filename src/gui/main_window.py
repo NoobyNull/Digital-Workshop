@@ -7,10 +7,12 @@ status bar, and dockable widgets for 3D model management.
 
 import logging
 import sys
+import json
+import base64
 from pathlib import Path
 from typing import List, Optional
 
-from PySide6.QtCore import Qt, QSize, QTimer, Signal
+from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
@@ -21,6 +23,8 @@ from PySide6.QtWidgets import (
 from core.logging_config import get_logger
 from core.database_manager import get_database_manager
 from parsers.stl_parser import STLParser, STLProgressCallback
+from gui.theme import COLORS
+from gui.preferences import PreferencesDialog
 
 
 class MainWindow(QMainWindow):
@@ -76,71 +80,157 @@ class MainWindow(QMainWindow):
         QApplication.setStyle("Fusion")  # Modern look and feel
         
         # Enable dock widget features for better layout management
-        self.setDockOptions(
+        options = (
             QMainWindow.AllowNestedDocks |
             QMainWindow.AllowTabbedDocks |
             QMainWindow.AnimatedDocks
         )
+        # Grouped dragging (if available) improves docking behavior when tabs are involved
+        if hasattr(QMainWindow, "GroupedDragging"):
+            options |= QMainWindow.GroupedDragging
+        self.setDockOptions(options)
+        # Explicitly enable nesting (no-op on some styles, harmless)
+        try:
+            self.setDockNestingEnabled(True)
+        except Exception:
+            pass
         
-        # Set central widget background with standard Windows colors
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QDockWidget {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+        # Set central widget background using theme variables
+        self.setStyleSheet(f"""
+            QMainWindow {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QDockWidget {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 font-weight: bold;
-            }
-            QDockWidget::title {
-                background-color: #f5f5f5;
+            }}
+            QDockWidget::title {{
+                background-color: {COLORS.surface};
                 padding: 5px;
-                border-bottom: 1px solid #d0d0d0;
-            }
-            QToolBar {
-                background-color: #f5f5f5;
-                border: 1px solid #d0d0d0;
+                border-bottom: 1px solid {COLORS.border};
+            }}
+            QToolBar {{
+                background-color: {COLORS.surface};
+                border: 1px solid {COLORS.border};
                 spacing: 3px;
-                color: #000000;
-            }
-            QMenuBar {
-                background-color: #f5f5f5;
-                color: #000000;
-                border-bottom: 1px solid #d0d0d0;
-            }
-            QMenuBar::item {
+                color: {COLORS.text};
+            }}
+            QMenuBar {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border-bottom: 1px solid {COLORS.border};
+            }}
+            QMenuBar::item {{
                 background-color: transparent;
                 padding: 4px 8px;
-            }
-            QMenuBar::item:selected {
-                background-color: #0078d4;
-                color: #ffffff;
-            }
-            QStatusBar {
-                background-color: #f5f5f5;
-                color: #000000;
-                border-top: 1px solid #d0d0d0;
-            }
-            QLabel {
-                color: #000000;
-            }
-            QPushButton {
-                background-color: #f5f5f5;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+            }}
+            QMenuBar::item:selected {{
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
+            }}
+            QStatusBar {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border-top: 1px solid {COLORS.border};
+            }}
+            QLabel {{
+                color: {COLORS.text};
+            }}
+            QPushButton {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 padding: 4px 12px;
                 border-radius: 2px;
-            }
-            QPushButton:hover {
-                background-color: #e1e1e1;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
         """)
     
+    def _apply_theme_styles(self) -> None:
+        """Apply theme to MainWindow and child widgets."""
+        # Main window, menus, docks, labels, buttons
+        self.setStyleSheet(f"""
+            QMainWindow {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QDockWidget {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
+                font-weight: bold;
+            }}
+            QDockWidget::title {{
+                background-color: {COLORS.surface};
+                padding: 5px;
+                border-bottom: 1px solid {COLORS.border};
+            }}
+            QToolBar {{
+                background-color: {COLORS.surface};
+                border: 1px solid {COLORS.border};
+                spacing: 3px;
+                color: {COLORS.text};
+            }}
+            QMenuBar {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border-bottom: 1px solid {COLORS.border};
+            }}
+            QMenuBar::item {{
+                background-color: transparent;
+                padding: 4px 8px;
+            }}
+            QMenuBar::item:selected {{
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
+            }}
+            QStatusBar {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border-top: 1px solid {COLORS.border};
+            }}
+            QLabel {{
+                color: {COLORS.text};
+            }}
+            QPushButton {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
+                padding: 4px 12px;
+                border-radius: 2px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
+        """)
+        # Propagate to known child widgets that support re-styling
+        try:
+            if hasattr(self, "model_library_widget") and hasattr(self.model_library_widget, "_apply_styling"):
+                self.model_library_widget._apply_styling()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "metadata_editor") and hasattr(self.metadata_editor, "_apply_styling"):
+                self.metadata_editor._apply_styling()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "viewer_widget") and hasattr(self.viewer_widget, "apply_theme"):
+                self.viewer_widget.apply_theme()
+        except Exception:
+            pass
+
     def _setup_menu_bar(self) -> None:
         """Set up the application menu bar."""
         self.logger.debug("Setting up menu bar")
@@ -198,6 +288,12 @@ class MainWindow(QMainWindow):
         reset_view_action.setStatusTip("Reset the 3D view to default")
         reset_view_action.triggered.connect(self._reset_view)
         view_menu.addAction(reset_view_action)
+
+        # Reset dock layout action (helps when a floating dock is hard to re-dock)
+        reset_layout_action = QAction("Reset &Layout", self)
+        reset_layout_action.setStatusTip("Restore default dock layout")
+        reset_layout_action.triggered.connect(self._reset_dock_layout)
+        view_menu.addAction(reset_layout_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -275,6 +371,9 @@ class MainWindow(QMainWindow):
         self.model_library_dock.setAllowedAreas(
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
         )
+        self.model_library_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+        )
         
         # Create model library widget
         try:
@@ -287,6 +386,11 @@ class MainWindow(QMainWindow):
             self.model_library_widget.models_added.connect(self._on_models_added)
             
             self.model_library_dock.setWidget(self.model_library_widget)
+            # Add context menu helpers for docking
+            try:
+                self._setup_dock_context_menu(self.model_library_dock, Qt.LeftDockWidgetArea)
+            except Exception:
+                pass
             self.logger.info("Model library widget created successfully")
             
         except ImportError as e:
@@ -308,12 +412,20 @@ class MainWindow(QMainWindow):
             self.model_library_dock.setWidget(model_library_widget)
         
         self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+        # Autosave when this dock changes state/position
+        try:
+            self._connect_layout_autosave(self.model_library_dock)
+        except Exception:
+            pass
         
         # Properties dock (right side)
         self.properties_dock = QDockWidget("Model Properties", self)
         self.properties_dock.setObjectName("PropertiesDock")
         self.properties_dock.setAllowedAreas(
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
+        )
+        self.properties_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
         )
         
         # Placeholder for model properties
@@ -330,14 +442,26 @@ class MainWindow(QMainWindow):
             "- Export settings"
         )
         self.properties_dock.setWidget(properties_widget)
+        try:
+            self._setup_dock_context_menu(self.properties_dock, Qt.RightDockWidgetArea)
+        except Exception:
+            pass
         
         self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+        # Autosave when this dock changes state/position
+        try:
+            self._connect_layout_autosave(self.properties_dock)
+        except Exception:
+            pass
         
         # Metadata dock (bottom)
         self.metadata_dock = QDockWidget("Metadata Editor", self)
         self.metadata_dock.setObjectName("MetadataDock")
         self.metadata_dock.setAllowedAreas(
             Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea
+        )
+        self.metadata_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
         )
         
         # Create metadata editor widget
@@ -350,6 +474,10 @@ class MainWindow(QMainWindow):
             self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
             
             self.metadata_dock.setWidget(self.metadata_editor)
+            try:
+                self._setup_dock_context_menu(self.metadata_dock, Qt.BottomDockWidgetArea)
+            except Exception:
+                pass
             self.logger.info("Metadata editor widget created successfully")
             
         except ImportError as e:
@@ -371,7 +499,24 @@ class MainWindow(QMainWindow):
             self.metadata_dock.setWidget(metadata_widget)
         
         self.addDockWidget(Qt.BottomDockWidgetArea, self.metadata_dock)
+        # Autosave when this dock changes state/position
+        try:
+            self._connect_layout_autosave(self.metadata_dock)
+        except Exception:
+            pass
         
+        # Capture the default layout as the baseline for future resets
+        try:
+            self._save_default_layout_state()
+        except Exception:
+            pass
+
+        # Initialize autosave mechanics and attempt to restore last layout
+        try:
+            self._init_layout_persistence()
+            self._load_saved_layout()
+        except Exception:
+            pass
         self.logger.debug("Dock widgets setup completed")
     
     def _setup_central_widget(self) -> None:
@@ -396,6 +541,13 @@ class MainWindow(QMainWindow):
             # Connect signals
             self.viewer_widget.model_loaded.connect(self._on_model_loaded)
             self.viewer_widget.performance_updated.connect(self._on_performance_updated)
+            
+            # Apply theme to viewer if supported
+            if hasattr(self.viewer_widget, "apply_theme"):
+                try:
+                    self.viewer_widget.apply_theme()
+                except Exception:
+                    pass
             
             self.logger.info("3D viewer widget created successfully")
             
@@ -448,6 +600,155 @@ class MainWindow(QMainWindow):
             self.logger.warning(f"Failed to update memory status: {str(e)}")
             self.memory_label.setText("Memory: Error")
     
+    # --- Dock layout helpers ---
+    def _save_default_layout_state(self) -> None:
+        """Save the default geometry/state for later restore."""
+        try:
+            self._default_layout_state = self.saveState()
+            self._default_geometry = self.saveGeometry()
+        except Exception:
+            self._default_layout_state = None
+            self._default_geometry = None
+
+    def _reset_dock_layout(self) -> None:
+        """Restore dock widgets to their default docking layout."""
+        try:
+            if getattr(self, "_default_geometry", None):
+                self.restoreGeometry(self._default_geometry)
+            if getattr(self, "_default_layout_state", None):
+                # restoreState returns bool; ignore on failure
+                self.restoreState(self._default_layout_state)
+        except Exception:
+            pass
+        # Fallback: programmatically re-dock common widgets
+        self._redock_all()
+        # Persist the reset layout
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+
+    def _redock_all(self) -> None:
+        """Force re-dock of known dock widgets to their default areas."""
+        try:
+            if hasattr(self, "model_library_dock"):
+                self.model_library_dock.setFloating(False)
+                self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+            if hasattr(self, "properties_dock"):
+                self.properties_dock.setFloating(False)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+            if hasattr(self, "metadata_dock"):
+                self.metadata_dock.setFloating(False)
+                self.addDockWidget(Qt.BottomDockWidgetArea, self.metadata_dock)
+        except Exception as e:
+            self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
+
+    # ---- Layout persistence (auto-save/auto-load) ----
+    def _settings_json_path(self) -> Path:
+        """Return AppData settings.json path."""
+        app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+        app_data.mkdir(parents=True, exist_ok=True)
+        return app_data / "settings.json"
+
+    def _read_settings_json(self) -> dict:
+        try:
+            p = self._settings_json_path()
+            if p.exists():
+                with p.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+        return {}
+
+    def _write_settings_json(self, data: dict) -> None:
+        try:
+            p = self._settings_json_path()
+            with p.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
+    def _init_layout_persistence(self) -> None:
+        """Initialize debounced autosave timer."""
+        try:
+            self._layout_save_timer = QTimer(self)
+            self._layout_save_timer.setSingleShot(True)
+            self._layout_save_timer.setInterval(700)  # ms debounce
+            self._layout_save_timer.timeout.connect(self._save_current_layout)
+        except Exception:
+            pass
+
+    def _schedule_layout_save(self) -> None:
+        """Request a debounced layout save."""
+        try:
+            if hasattr(self, "_layout_save_timer"):
+                self._layout_save_timer.start()
+        except Exception:
+            pass
+
+    def _save_current_layout(self) -> None:
+        """Persist current window geometry and dock layout to settings.json."""
+        try:
+            geom = bytes(self.saveGeometry())
+            state = bytes(self.saveState())
+            payload = {
+                "window_geometry": base64.b64encode(geom).decode("ascii"),
+                "window_state": base64.b64encode(state).decode("ascii"),
+                "layout_version": 1,
+            }
+            settings = self._read_settings_json()
+            settings.update(payload)
+            self._write_settings_json(settings)
+            self.logger.debug("Layout autosaved")
+        except Exception as e:
+            self.logger.warning(f"Failed to save current layout: {e}")
+
+    def _load_saved_layout(self) -> bool:
+        """Restore previously saved layout from settings.json. Returns True if successful."""
+        try:
+            settings = self._read_settings_json()
+            g64 = settings.get("window_geometry")
+            s64 = settings.get("window_state")
+            ok_any = False
+            if g64:
+                try:
+                    geom = base64.b64decode(g64)
+                    ok_any = self.restoreGeometry(geom) or ok_any
+                except Exception:
+                    pass
+            if s64:
+                try:
+                    state = base64.b64decode(s64)
+                    ok_any = self.restoreState(state) or ok_any
+                except Exception:
+                    pass
+            if ok_any:
+                self.logger.info("Restored window layout from saved settings")
+            return ok_any
+        except Exception as e:
+            self.logger.warning(f"Failed to load saved layout: {e}")
+            return False
+
+    def _connect_layout_autosave(self, dock: QDockWidget) -> None:
+        """Connect signals from a dock to trigger autosave."""
+        try:
+            dock.topLevelChanged.connect(lambda _=False: self._schedule_layout_save())
+            # Some bindings expose dockLocationChanged(area)
+            if hasattr(dock, "dockLocationChanged"):
+                dock.dockLocationChanged.connect(lambda _area=None: self._schedule_layout_save())
+            dock.visibilityChanged.connect(lambda _=False: self._schedule_layout_save())
+        except Exception:
+            pass
+
+    def _reset_dock_layout_and_save(self) -> None:
+        """Reset layout to defaults and persist immediately."""
+        self._reset_dock_layout()
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+
     # Menu action handlers
     
     def _open_model(self) -> None:
@@ -690,16 +991,10 @@ class MainWindow(QMainWindow):
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
         self.logger.info("Opening preferences dialog")
-        QMessageBox.information(
-            self,
-            "Preferences",
-            "Preferences dialog will be implemented in a future version.\n\n"
-            "Planned features:\n"
-            "- Display settings\n"
-            "- File paths and directories\n"
-            "- Performance options\n"
-            "- Theme customization"
-        )
+        dlg = PreferencesDialog(self, on_reset_layout=self._reset_dock_layout_and_save)
+        # Live theme apply
+        dlg.theme_changed.connect(self._apply_theme_styles)
+        dlg.exec_()
     
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
@@ -751,7 +1046,23 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "About 3D-MM", about_text)
     
     # Event handlers
-    
+
+    def resizeEvent(self, event) -> None:
+        """Autosave geometry changes on resize (debounced)."""
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+        return super().resizeEvent(event)
+
+    def moveEvent(self, event) -> None:
+        """Autosave geometry changes on move (debounced)."""
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+        return super().moveEvent(event)
+     
     def closeEvent(self, event) -> None:
         """Handle window close event."""
         self.logger.info("Application closing")

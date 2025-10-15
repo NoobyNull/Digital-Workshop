@@ -18,7 +18,7 @@ def check_python_version():
     if version < (3, 8):
         print(f"Error: Python 3.8 or higher is required. You have Python {version.major}.{version.minor}.{version.micro}")
         return False
-    elif version > (3, 12):
+    elif (version.major, version.minor) >= (3, 13):
         print(f"Warning: Python {version.major}.{version.minor}.{version.micro} detected. 3D-MM is tested with Python 3.8-3.12")
         try:
             response = input("Continue anyway? (y/n): ")

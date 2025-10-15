@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core.logging_config import setup_logging
 from core.settings_migration import migrate_on_startup
 from gui.main_window import MainWindow
+from gui.theme import load_theme_from_settings
 
 
 def setup_directories():
@@ -69,6 +70,9 @@ def main():
         logger.debug("Checking for settings migration")
         if not migrate_on_startup():
             logger.warning("Settings migration failed or incomplete")
+        
+        # Load theme settings before creating windows
+        load_theme_from_settings()
         
         # Create and show main window
         logger.debug("Creating main window")

@@ -23,6 +23,7 @@ from PyQt3D.Qt3DRender import QClearBuffers, QBuffer, QAttribute, QGeometryRende
 from PyQt3D.Qt3DInput import QInputSettings
 
 from core.logging_config import get_logger, log_function_call
+from gui.theme import COLORS, qcolor
 from core.performance_monitor import get_performance_monitor
 from core.model_cache import get_model_cache, CacheLevel
 from parsers.stl_parser import STLModel
@@ -181,7 +182,7 @@ class Viewer3DWidget(QWidget):
         
         # Create 3D window
         self.view = Qt3DWindow()
-        self.view.defaultFrameGraph().setClearColor(QColor(240, 240, 240))
+        self.view.defaultFrameGraph().setClearColor(qcolor('canvas_bg'))
         
         # Create container widget for the 3D window
         self.container = QWidget.createWindowContainer(self.view)
@@ -235,30 +236,37 @@ class Viewer3DWidget(QWidget):
         layout.addWidget(self.progress_frame)
         self.progress_frame.setVisible(False)
         
-        # Style the widget
-        self.setStyleSheet("""
-            QPushButton {
+        # Style the widget using theme variables
+        self.setStyleSheet(f"""
+            QPushButton {{
                 padding: 5px 10px;
-                border: 1px solid #c0c0c0;
-                background-color: #f0f0f0;
+                border: 1px solid {COLORS.border};
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
                 border-radius: 3px;
-            }
-            QPushButton:checked {
-                background-color: #e0e0e0;
-                border: 1px solid #a0a0a0;
-            }
-            QPushButton:hover {
-                background-color: #e8e8e8;
-            }
-            QProgressBar {
-                border: 1px solid #c0c0c0;
+            }}
+            QPushButton:checked {{
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
+                border: 1px solid {COLORS.primary};
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
+            QProgressBar {{
+                border: 1px solid {COLORS.border};
                 border-radius: 3px;
                 text-align: center;
-            }
-            QProgressBar::chunk {
-                background-color: #4a90e2;
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QProgressBar::chunk {{
+                background-color: {COLORS.progress_chunk};
                 border-radius: 2px;
-            }
+            }}
         """)
     
     def _setup_3d_scene(self) -> None:
@@ -293,9 +301,11 @@ class Viewer3DWidget(QWidget):
         self.cube_mesh.setYExtent(5.0)
         self.cube_mesh.setZExtent(5.0)
         
-        # Create material
+        # Create material (theme-based)
         self.default_material = QPhongMaterial()
-        self.default_material.setDiffuse(QColor(200, 200, 200))
+        self.default_material.setDiffuse(qcolor('model_surface'))
+        self.default_material.setAmbient(qcolor('model_ambient'))
+        self.default_material.setSpecular(qcolor('model_specular'))
         
         # Create transform
         self.default_transform = QTransform()
@@ -309,7 +319,7 @@ class Viewer3DWidget(QWidget):
         """Set up configurable lighting for the scene."""
         # Main directional light (like sunlight)
         self.directional_light = QDirectionalLight()
-        self.directional_light.setColor(QColor(255, 255, 255))
+        self.directional_light.setColor(qcolor('light_color'))
         self.directional_light.setIntensity(0.8)
         self.directional_light.setWorldDirection(QVector3D(-1, -1, -1))
         
@@ -319,7 +329,7 @@ class Viewer3DWidget(QWidget):
         
         # Point light (for better illumination)
         self.point_light = QPointLight()
-        self.point_light.setColor(QColor(255, 255, 255))
+        self.point_light.setColor(qcolor('light_color'))
         self.point_light.setIntensity(0.5)
         self.point_light.setConstantAttenuation(1.0)
         self.point_light.setLinearAttenuation(0.1)
@@ -643,9 +653,9 @@ class Viewer3DWidget(QWidget):
             
             # Create material for the model
             material = QPhongMaterial()
-            material.setDiffuse(QColor(100, 150, 200))
-            material.setAmbient(QColor(50, 75, 100))
-            material.setSpecular(QColor(255, 255, 255))
+            material.setDiffuse(qcolor('model_surface'))
+            material.setAmbient(qcolor('model_ambient'))
+            material.setSpecular(qcolor('model_specular'))
             material.setShininess(100.0)
             
             # Create transform

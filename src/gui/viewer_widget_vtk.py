@@ -22,6 +22,7 @@ from core.performance_monitor import get_performance_monitor
 from core.model_cache import get_model_cache, CacheLevel
 from parsers.stl_parser import STLModel
 from core.data_structures import Model, LoadingState, Vector3D, Triangle
+from gui.theme import COLORS, vtk_rgb
 
 
 class RenderMode(Enum):
@@ -118,13 +119,9 @@ class Viewer3DWidget(QWidget):
         self.wireframe_button.setCheckable(True)
         self.wireframe_button.clicked.connect(lambda: self._set_render_mode(RenderMode.WIREFRAME))
         
-        self.points_button = QPushButton("Points")
-        self.points_button.setCheckable(True)
-        self.points_button.clicked.connect(lambda: self._set_render_mode(RenderMode.POINTS))
-        
+        # Points mode intentionally removed per requirements (keep backend support if needed)
         control_layout.addWidget(self.solid_button)
         control_layout.addWidget(self.wireframe_button)
-        control_layout.addWidget(self.points_button)
         control_layout.addStretch()
         
         # Reset view button
@@ -150,61 +147,78 @@ class Viewer3DWidget(QWidget):
         layout.addWidget(self.progress_frame)
         self.progress_frame.setVisible(False)
         
-        # Style the widget with Windows standard colors
-        self.setStyleSheet("""
-            QPushButton {
+        # Style the widget using theme variables
+        self.setStyleSheet(f"""
+            QPushButton {{
                 padding: 6px 12px;
-                border: 1px solid #d0d0d0;
-                background-color: #f5f5f5;
-                color: #000000;
+                border: 1px solid {COLORS.border};
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
                 border-radius: 2px;
                 font-weight: normal;
-            }
-            QPushButton:checked {
-                background-color: #0078d4;
-                color: #ffffff;
-                border: 1px solid #0078d4;
-            }
-            QPushButton:hover {
-                background-color: #e1e1e1;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
-            QProgressBar {
-                border: 1px solid #d0d0d0;
+            }}
+            QPushButton:checked {{
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
+                border: 1px solid {COLORS.primary};
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
+            QProgressBar {{
+                border: 1px solid {COLORS.border};
                 border-radius: 2px;
                 text-align: center;
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QProgressBar::chunk {
-                background-color: #0078d4;
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QProgressBar::chunk {{
+                background-color: {COLORS.progress_chunk};
                 border-radius: 1px;
-            }
-            QLabel {
-                color: #000000;
+            }}
+            QLabel {{
+                color: {COLORS.text};
                 background-color: transparent;
-            }
+            }}
         """)
     
     def _setup_vtk_scene(self) -> None:
         """Set up the VTK scene with renderer and interactor."""
         # Create renderer
         self.renderer = vtk.vtkRenderer()
-        self.renderer.SetBackground(1.0, 1.0, 1.0)  # White background for better contrast
+        self.renderer.SetBackground(*vtk_rgb('canvas_bg'))  # Theme canvas background
+
+        # Configure VTK multi-threading to use available CPU cores
+        try:
+            import multiprocessing as _mp  # local import to avoid global overhead
+            threads = max(2, (_mp.cpu_count() or 2))
+            # Set thread count for legacy threader
+            vtk.vtkMultiThreader.SetGlobalDefaultNumberOfThreads(threads)
+            # If SMPTools exists (newer VTK), set number of threads too
+            if hasattr(vtk, "vtkSMPTools"):
+                try:
+                    vtk.vtkSMPTools.SetNumberOfThreads(threads)
+                except Exception:
+                    pass
+            self.logger.info(f"VTK thread count set to {threads}")
+        except Exception:
+            # Non-fatal if this fails; VTK will use its defaults
+            pass
         
         # Add better lighting for improved visibility
         light1 = vtk.vtkLight()
         light1.SetPosition(100, 100, 100)
         light1.SetIntensity(0.8)
-        light1.SetColor(1.0, 1.0, 1.0)  # White light
+        light1.SetColor(*vtk_rgb('light_color'))
         self.renderer.AddLight(light1)
         
         light2 = vtk.vtkLight()
         light2.SetPosition(-100, -100, 100)
         light2.SetIntensity(0.5)
-        light2.SetColor(1.0, 1.0, 1.0)  # White light
+        light2.SetColor(*vtk_rgb('light_color'))
         self.renderer.AddLight(light2)
         
         # Create render window
@@ -213,6 +227,20 @@ class Viewer3DWidget(QWidget):
         
         # Create interactor
         self.interactor = self.vtk_widget.GetRenderWindow().GetInteractor()
+        # Use position-based, trackball-style camera interaction (prevents speed acceleration)
+        try:
+            style = vtk.vtkInteractorStyleTrackballCamera()
+            style.SetMotionFactor(8.0)  # sensitivity
+            self.interactor.SetInteractorStyle(style)
+            try:
+                # Tune interactor update rates for more responsive interaction
+                self.interactor.SetDesiredUpdateRate(60.0)
+                self.interactor.SetStillUpdateRate(10.0)
+            except Exception:
+                pass
+            self.logger.debug("VTK interactor style set to TrackballCamera with MotionFactor=3.0")
+        except Exception:
+            pass
         
         # Add default axes actor with better visibility
         axes = vtk.vtkAxesActor()
@@ -316,7 +344,7 @@ class Viewer3DWidget(QWidget):
         # Update button states
         self.solid_button.setChecked(mode == RenderMode.SOLID)
         self.wireframe_button.setChecked(mode == RenderMode.WIREFRAME)
-        self.points_button.setChecked(mode == RenderMode.POINTS)
+        # Points button removed from UI
         
         # Apply rendering mode if model is loaded
         if self.actor:
@@ -324,22 +352,42 @@ class Viewer3DWidget(QWidget):
         
         self.logger.info(f"Render mode changed to: {mode.value}")
     
+    def set_render_mode(self, name: str) -> None:
+        """Public API to change render mode by name: 'solid', 'wireframe', 'points'."""
+        try:
+            mapping = {
+                "solid": RenderMode.SOLID,
+                "wireframe": RenderMode.WIREFRAME,
+                "points": RenderMode.POINTS,
+            }
+            mode = mapping.get(str(name).lower().strip())
+            if mode:
+                self._set_render_mode(mode)
+        except Exception:
+            pass
+
     def _apply_render_mode(self) -> None:
         """Apply the current render mode to the model."""
         if not self.actor:
             return
-        
+
         if self.render_mode == RenderMode.WIREFRAME:
             self.actor.GetProperty().SetRepresentationToWireframe()
             self.actor.GetProperty().SetLineWidth(1.0)
+            self.actor.GetProperty().SetEdgeVisibility(0)  # Disable edges in wireframe mode
         elif self.render_mode == RenderMode.POINTS:
             self.actor.GetProperty().SetRepresentationToPoints()
             self.actor.GetProperty().SetPointSize(3.0)
+            self.actor.GetProperty().SetEdgeVisibility(0)  # Disable edges in points mode
         else:  # SOLID
             self.actor.GetProperty().SetRepresentationToSurface()
-        
+            self.actor.GetProperty().SetEdgeVisibility(0)  # Disable edges in solid mode
+
         # Update the view
         self.vtk_widget.GetRenderWindow().Render()
+
+        # Log the render mode change for debugging
+        self.logger.debug(f"Applied render mode: {self.render_mode.value}, EdgeVisibility: {self.actor.GetProperty().GetEdgeVisibility()}")
     
     def _remove_current_model(self) -> None:
         """Remove the currently loaded model from the scene."""
@@ -355,21 +403,67 @@ class Viewer3DWidget(QWidget):
     
     def _fit_camera_to_model(self, model: STLModel) -> None:
         """
-        Adjust camera position to fit the model in view.
-        
-        Args:
-            model: The model to fit in view
+        Adjust camera position to fit the model in view with a natural rotation feel.
+        Uses model bounds to center focal point and set a reasonable camera distance.
         """
-        if not model:
-            return
-        
-        # Reset camera to fit all actors
-        self.renderer.ResetCamera()
-        
-        # Update the view
-        self.vtk_widget.GetRenderWindow().Render()
-        
-        self.logger.debug("Camera positioned to fit model")
+        try:
+            if not model or not hasattr(self, "actor") or self.actor is None:
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+                self.vtk_widget.GetRenderWindow().Render()
+                self.logger.debug("Camera reset (no actor); clipping range updated")
+                return
+
+            # Compute bounds and center
+            bounds = self.actor.GetBounds()  # (xmin,xmax,ymin,ymax,zmin,zmax)
+            if not bounds:
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+                self.vtk_widget.GetRenderWindow().Render()
+                self.logger.debug("Camera reset (no bounds); clipping range updated")
+                return
+
+            xmin, xmax, ymin, ymax, zmin, zmax = bounds
+            cx = (xmin + xmax) * 0.5
+            cy = (ymin + ymax) * 0.5
+            cz = (zmin + zmax) * 0.5
+
+            # Diagonal/2 as radius heuristic
+            dx = max(1e-6, xmax - xmin)
+            dy = max(1e-6, ymax - ymin)
+            dz = max(1e-6, zmax - zmin)
+            diag = (dx * dx + dy * dy + dz * dz) ** 0.5
+            radius = max(1e-3, 0.5 * diag)
+
+            cam = self.renderer.GetActiveCamera()
+            if cam is None:
+                cam = vtk.vtkCamera()
+                self.renderer.SetActiveCamera(cam)
+
+            # Position camera along +Z looking at center; scale distance for better trackball feel
+            distance = max(1.0, radius * 2.2)
+            cam.SetFocalPoint(cx, cy, cz)
+            cam.SetPosition(cx, cy, cz + distance)
+            cam.SetViewUp(0.0, 1.0, 0.0)
+
+            # Update clipping range for current bounds
+            self.renderer.ResetCameraClippingRange()
+
+            # Render updates
+            self.vtk_widget.GetRenderWindow().Render()
+            self.logger.debug(
+                f"Camera fitted to model: center=({cx:.3f},{cy:.3f},{cz:.3f}) "
+                f"radius={radius:.3f} distance={distance:.3f}"
+            )
+        except Exception as e:
+            # Fallback to default reset on any error
+            try:
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
+            self.logger.warning(f"Fallback camera reset due to error: {e}")
     
     @log_function_call(get_logger(__name__))
     def load_model(self, model: Model) -> bool:
@@ -402,15 +496,15 @@ class Viewer3DWidget(QWidget):
             self.actor = vtk.vtkActor()
             self.actor.SetMapper(mapper)
             
-            # Set properties with better contrast
-            self.actor.GetProperty().SetColor(0.2, 0.4, 0.8)  # Darker blue for better contrast
+            # Set properties using theme colors
+            self.actor.GetProperty().SetColor(*vtk_rgb('model_surface'))
             self.actor.GetProperty().SetAmbient(0.3)  # Increased ambient lighting
             self.actor.GetProperty().SetDiffuse(0.8)  # Increased diffuse lighting
             self.actor.GetProperty().SetSpecular(0.4)
             self.actor.GetProperty().SetSpecularPower(15.0)
-            self.actor.GetProperty().SetEdgeVisibility(1)  # Show edges for better definition
-            self.actor.GetProperty().SetEdgeColor(0.0, 0.0, 0.0)  # Black edges
+            self.actor.GetProperty().SetEdgeColor(*vtk_rgb('edge_color'))
             self.actor.GetProperty().SetLineWidth(1.0)
+            # Edge visibility will be controlled by render mode in _apply_render_mode()
             
             # Add actor to renderer
             self.renderer.AddActor(self.actor)
@@ -499,3 +593,76 @@ class Viewer3DWidget(QWidget):
         """Handle widget close event."""
         self.cleanup()
         super().closeEvent(event)
+
+    # ---- Theme live-apply support ----
+    def apply_theme(self) -> None:
+        """
+        Reapply QSS and VTK colors from gui.theme at runtime.
+        Safe to call multiple times.
+        """
+        try:
+            # Re-apply widget QSS using current COLORS
+            from gui.theme import COLORS, vtk_rgb  # late import to read current theme
+            self.setStyleSheet(f"""
+                QPushButton {{
+                    padding: 6px 12px;
+                    border: 1px solid {COLORS.border};
+                    background-color: {COLORS.surface};
+                    color: {COLORS.text};
+                    border-radius: 2px;
+                    font-weight: normal;
+                }}
+                QPushButton:checked {{
+                    background-color: {COLORS.primary};
+                    color: {COLORS.primary_text};
+                    border: 1px solid {COLORS.primary};
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS.hover};
+                }}
+                QPushButton:pressed {{
+                    background-color: {COLORS.pressed};
+                }}
+                QProgressBar {{
+                    border: 1px solid {COLORS.border};
+                    border-radius: 2px;
+                    text-align: center;
+                    background-color: {COLORS.window_bg};
+                    color: {COLORS.text};
+                }}
+                QProgressBar::chunk {{
+                    background-color: {COLORS.progress_chunk};
+                    border-radius: 1px;
+                }}
+                QLabel {{
+                    color: {COLORS.text};
+                    background-color: transparent;
+                }}
+            """)
+
+            # Update renderer background
+            if hasattr(self, "renderer"):
+                self.renderer.SetBackground(*vtk_rgb('canvas_bg'))
+
+                # Update lights in the renderer
+                lights = self.renderer.GetLights()
+                if lights is not None:
+                    lights.InitTraversal()
+                    import vtk as _vtk  # type: ignore
+                    l = lights.GetNextItem()
+                    while l:
+                        l.SetColor(*vtk_rgb('light_color'))
+                        l = lights.GetNextItem()
+
+            # Update actor colors if present
+            if hasattr(self, "actor") and self.actor:
+                prop = self.actor.GetProperty()
+                prop.SetColor(*vtk_rgb('model_surface'))
+                prop.SetEdgeColor(*vtk_rgb('edge_color'))
+
+            # Render updates
+            if hasattr(self, "vtk_widget"):
+                self.vtk_widget.GetRenderWindow().Render()
+        except Exception:
+            # Fail-safe: never break UI due to theme update
+            pass

@@ -22,6 +22,7 @@ from PySide6.QtGui import QFont, QIcon, QPixmap, QPainter, QColor, QTextDocument
 from core.search_engine import get_search_engine
 from core.database_manager import get_database_manager
 from core.logging_config import get_logger
+from gui.theme import COLORS
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -656,139 +657,140 @@ class SearchWidget(QWidget):
     
     def apply_styling(self):
         """Apply Windows standard colors to the search widget."""
-        self.setStyleSheet("""
-            QLineEdit {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+        self.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 padding: 6px;
                 border-radius: 2px;
-                selection-background-color: #0078d4;
-            }
-            QLineEdit:focus {
-                border: 2px solid #0078d4;
-            }
-            QPushButton {
-                background-color: #f5f5f5;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+                selection-background-color: {COLORS.selection_bg};
+                selection-color: {COLORS.selection_text};
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {COLORS.primary};
+            }}
+            QPushButton {{
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 padding: 6px 12px;
                 border-radius: 2px;
-            }
-            QPushButton:hover {
-                background-color: #e1e1e1;
-                border: 1px solid #0078d4;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
-            QPushButton:checked {
-                background-color: #0078d4;
-                color: #ffffff;
-                border: 1px solid #0078d4;
-            }
-            QProgressBar {
-                border: 1px solid #d0d0d0;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+                border: 1px solid {COLORS.primary};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
+            QPushButton:checked {{
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
+                border: 1px solid {COLORS.primary};
+            }}
+            QProgressBar {{
+                border: 1px solid {COLORS.border};
                 border-radius: 2px;
                 text-align: center;
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QProgressBar::chunk {
-                background-color: #0078d4;
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QProgressBar::chunk {{
+                background-color: {COLORS.progress_chunk};
                 border-radius: 1px;
-            }
-            QTabWidget::pane {
-                border: 1px solid #d0d0d0;
-                background-color: #ffffff;
-            }
-            QTabBar::tab {
-                background: #f5f5f5;
+            }}
+            QTabWidget::pane {{
+                border: 1px solid {COLORS.border};
+                background-color: {COLORS.window_bg};
+            }}
+            QTabBar::tab {{
+                background: {COLORS.surface};
                 padding: 8px;
                 margin-right: 2px;
-                border: 1px solid #d0d0d0;
+                border: 1px solid {COLORS.border};
                 border-bottom: none;
-                color: #000000;
-            }
-            QTabBar::tab:selected {
-                background: #ffffff;
-                border-bottom: 2px solid #0078d4;
-                color: #000000;
-            }
-            QTabBar::tab:hover {
-                background: #e1e1e1;
-            }
-            QListWidget {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
-                selection-background-color: #0078d4;
-                selection-color: #ffffff;
-            }
-            QListWidget::item {
+                color: {COLORS.text};
+            }}
+            QTabBar::tab:selected {{
+                background: {COLORS.window_bg};
+                border-bottom: 2px solid {COLORS.tab_selected_border};
+                color: {COLORS.text};
+            }}
+            QTabBar::tab:hover {{
+                background: {COLORS.hover};
+            }}
+            QListWidget {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
+                selection-background-color: {COLORS.selection_bg};
+                selection-color: {COLORS.selection_text};
+            }}
+            QListWidget::item {{
                 padding: 5px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QListWidget::item:selected {
-                background-color: #0078d4;
-                color: #ffffff;
-            }
-            QLabel {
-                color: #000000;
+                border-bottom: 1px solid {COLORS.border_light};
+            }}
+            QListWidget::item:selected {{
+                background-color: {COLORS.selection_bg};
+                color: {COLORS.selection_text};
+            }}
+            QLabel {{
+                color: {COLORS.text};
                 background-color: transparent;
-            }
-            QGroupBox {
+            }}
+            QGroupBox {{
                 font-weight: bold;
-                border: 2px solid #d0d0d0;
+                border: 2px solid {COLORS.border};
                 border-radius: 4px;
                 margin-top: 1ex;
                 padding-top: 10px;
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QGroupBox::title {
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
-                color: #000000;
-            }
-            QCheckBox {
-                color: #000000;
+                color: {COLORS.text};
+            }}
+            QCheckBox {{
+                color: {COLORS.text};
                 background-color: transparent;
-            }
-            QSlider::groove:horizontal {
-                border: 1px solid #d0d0d0;
+            }}
+            QSlider::groove:horizontal {{
+                border: 1px solid {COLORS.border};
                 height: 8px;
-                background: #f5f5f5;
+                background: {COLORS.surface};
                 border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: #0078d4;
-                border: 1px solid #0078d4;
+            }}
+            QSlider::handle:horizontal {{
+                background: {COLORS.slider_handle};
+                border: 1px solid {COLORS.slider_handle};
                 width: 18px;
                 border-radius: 9px;
                 margin: -5px 0;
-            }
-            QSpinBox {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+            }}
+            QSpinBox {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 padding: 4px;
                 border-radius: 2px;
-            }
-            QSpinBox:focus {
-                border: 2px solid #0078d4;
-            }
-            QDateEdit {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
+            }}
+            QSpinBox:focus {{
+                border: 2px solid {COLORS.primary};
+            }}
+            QDateEdit {{
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                border: 1px solid {COLORS.border};
                 padding: 4px;
                 border-radius: 2px;
-            }
-            QDateEdit:focus {
-                border: 2px solid #0078d4;
-            }
+            }}
+            QDateEdit:focus {{
+                border: 2px solid {COLORS.primary};
+            }}
         """)
     
     def setup_search_history(self):

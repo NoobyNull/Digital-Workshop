@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from core.logging_config import get_logger, log_function_call
 from core.database_manager import get_database_manager
+from gui.theme import COLORS, qcolor
 
 
 class StarRatingWidget(QWidget):
@@ -53,10 +54,10 @@ class StarRatingWidget(QWidget):
         self.star_spacing = 5
         self.star_count = 5
         
-        # Star colors
-        self.filled_color = QColor(255, 215, 0)  # Gold
-        self.empty_color = QColor(200, 200, 200)  # Light gray
-        self.hover_color = QColor(255, 235, 100)  # Light gold
+        # Star colors (from theme)
+        self.filled_color = qcolor('star_filled')
+        self.empty_color = qcolor('star_empty')
+        self.hover_color = qcolor('star_hover')
         
         # Set widget size
         self.setFixedSize(
@@ -365,87 +366,88 @@ class MetadataEditorWidget(QWidget):
     
     def _apply_styling(self) -> None:
         """Apply styling to the widget with Windows standard colors."""
-        self.setStyleSheet("""
-            QGroupBox {
+        self.setStyleSheet(f"""
+            QGroupBox {{
                 font-weight: bold;
-                border: 2px solid #d0d0d0;
+                border: 2px solid {COLORS.border};
                 border-radius: 4px;
                 margin-top: 1ex;
                 padding-top: 10px;
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QGroupBox::title {
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
-                color: #000000;
-            }
-            QLineEdit, QTextEdit, QComboBox {
-                border: 1px solid #d0d0d0;
+                color: {COLORS.text};
+            }}
+            QLineEdit, QTextEdit, QComboBox {{
+                border: 1px solid {COLORS.border};
                 border-radius: 2px;
                 padding: 6px;
-                background-color: #ffffff;
-                color: #000000;
-                selection-background-color: #0078d4;
-            }
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-                border: 2px solid #0078d4;
+                background-color: {COLORS.window_bg};
+                color: {COLORS.text};
+                selection-background-color: {COLORS.selection_bg};
+                selection-color: {COLORS.selection_text};
+            }}
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {{
+                border: 2px solid {COLORS.primary};
                 outline: none;
-            }
-            QLineEdit:hover, QTextEdit:hover, QComboBox:hover {
-                border: 1px solid #0078d4;
-            }
-            QPushButton {
-                border: 1px solid #d0d0d0;
+            }}
+            QLineEdit:hover, QTextEdit:hover, QComboBox:hover {{
+                border: 1px solid {COLORS.primary};
+            }}
+            QPushButton {{
+                border: 1px solid {COLORS.border};
                 border-radius: 2px;
                 padding: 8px 16px;
-                background-color: #f5f5f5;
-                color: #000000;
+                background-color: {COLORS.surface};
+                color: {COLORS.text};
                 font-weight: normal;
-            }
-            QPushButton:hover {
-                background-color: #e1e1e1;
-                border: 1px solid #0078d4;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
-            QPushButton:default {
-                border: 1px solid #0078d4;
-                background-color: #0078d4;
-                color: #ffffff;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS.hover};
+                border: 1px solid {COLORS.primary};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS.pressed};
+            }}
+            QPushButton:default {{
+                border: 1px solid {COLORS.primary};
+                background-color: {COLORS.primary};
+                color: {COLORS.primary_text};
                 font-weight: bold;
-            }
-            QPushButton:default:hover {
-                background-color: #106ebe;
-            }
-            QLabel {
-                color: #000000;
+            }}
+            QPushButton:default:hover {{
+                background-color: {COLORS.primary_hover};
+            }}
+            QLabel {{
+                color: {COLORS.text};
                 background-color: transparent;
-            }
-            QScrollArea {
-                background-color: #ffffff;
+            }}
+            QScrollArea {{
+                background-color: {COLORS.window_bg};
                 border: none;
-            }
-            QComboBox::drop-down {
+            }}
+            QComboBox::drop-down {{
                 border: none;
                 width: 20px;
-            }
-            QComboBox::down-arrow {
+            }}
+            QComboBox::down-arrow {{
                 image: none;
                 border-left: 4px solid transparent;
                 border-right: 4px solid transparent;
-                border-top: 4px solid #666666;
+                border-top: 4px solid {COLORS.text_muted};
                 margin-right: 4px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #ffffff;
-                border: 1px solid #d0d0d0;
-                selection-background-color: #0078d4;
-                selection-color: #ffffff;
-                color: #000000;
-            }
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS.window_bg};
+                border: 1px solid {COLORS.border};
+                selection-background-color: {COLORS.selection_bg};
+                selection-color: {COLORS.selection_text};
+                color: {COLORS.text};
+            }}
         """)
     
     def _setup_connections(self) -> None:
