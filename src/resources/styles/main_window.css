@@ -1,8 +1,15 @@
+/* stylelint-disable */
+/* csslint ignore:start */
+/* NOTE: This is a template stylesheet. Placeholders like {{variable_name}} are replaced at runtime
+   by ThemeManager.process_css_file() and ThemeManager.process_css_template(). Static CSS linters
+   may flag these as errors; this header disables such warnings intentionally. */
+
 /**
  * Main Window Stylesheet for 3D-MM Application (Theme-enabled)
  *
  * This stylesheet uses ThemeManager variables via {{text}} placeholders.
  * All hardcoded hex colors were replaced with descriptive variables from ThemeDefaults.
+ * Template processor: ThemeManager.VARIABLE_PATTERN -> gui.theme.ThemeManager.process_css_template()
  */
 
 /* ================================
@@ -695,3 +702,6 @@ QMainWindow[darkMode="true"] QListView {
     border: 1px solid {{table_border}};
     alternate-background-color: {{table_alternate_row_bg}};
 }
+
+/* csslint ignore:end */
+/* stylelint-enable */

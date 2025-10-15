@@ -658,7 +658,33 @@ class ThemeManagerWidget(QDialog):
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(SPACING_8)
-
+        
+        # Preset controls
+        preset_row = QHBoxLayout()
+        preset_label = QLabel("Preset")
+        self.preset_combo = QComboBox()
+        self._preset_key_by_label = {"Modern": "modern", "High Contrast": "high_contrast", "Custom": "custom"}
+        for lbl in self._preset_key_by_label.keys():
+            self.preset_combo.addItem(lbl)
+        preset_row.addWidget(preset_label)
+        preset_row.addWidget(self.preset_combo, 1)
+        left_layout.addLayout(preset_row)
+        
+        custom_row = QHBoxLayout()
+        custom_row.addWidget(QLabel("Custom mode"))
+        self.custom_mode_combo = QComboBox()
+        self._custom_mode_key_by_label = {"Auto": "auto", "Light": "light", "Dark": "dark"}
+        for lbl in self._custom_mode_key_by_label.keys():
+            self.custom_mode_combo.addItem(lbl)
+        self.btn_set_primary = QPushButton("Set Primary Color")
+        custom_row.addWidget(self.custom_mode_combo)
+        custom_row.addWidget(self.btn_set_primary)
+        custom_row.addStretch(1)
+        left_layout.addLayout(custom_row)
+        
+        # initialize custom seed (UI state initialized after all widgets created)
+        self._custom_seed_hex = self.tm.get_color("primary", context="ThemeManagerWidget.init")
+        
         # Search/filter
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Search colors (name or label)...")
@@ -717,6 +743,9 @@ class ThemeManagerWidget(QDialog):
 
         # Initial stylesheet application to preview
         self.refresh_preview()
+        
+        # Initialize preset UI controls after all widgets are created
+        self._init_presets_ui()
 
     # ---------- UI builders ----------
 
@@ -739,6 +768,70 @@ class ThemeManagerWidget(QDialog):
             self.left_inner_layout.addWidget(group)
             self._category_groups[cat] = group
             self._category_items[cat] = list(names)
+
+    # ---------- Preset controls ----------
+    def _init_presets_ui(self) -> None:
+        """
+        Initialize preset combo selection based on ThemeManager state and wire events.
+        """
+        # Select current preset
+        current = getattr(self.tm, "current_preset", "custom")
+        label = next((lbl for lbl, key in self._preset_key_by_label.items() if key == current), "Custom")
+        idx = self.preset_combo.findText(label)
+        if idx >= 0:
+            self.preset_combo.setCurrentIndex(idx)
+
+        # Wire signals
+        self.preset_combo.currentIndexChanged.connect(self._on_preset_changed)
+        self.custom_mode_combo.currentIndexChanged.connect(self._on_custom_mode_changed)
+        self.btn_set_primary.clicked.connect(self._on_set_custom_primary)
+
+        # Show variable editor only for custom
+        self._set_custom_editor_visible(current == "custom")
+
+    def _on_preset_changed(self) -> None:
+        label = self.preset_combo.currentText()
+        key = self._preset_key_by_label.get(label, "custom")
+        if key != "custom":
+            # Apply built-in preset
+            self.tm.apply_preset(key)
+            self._sync_rows_from_theme()
+            self.refresh_preview()
+            self._set_custom_editor_visible(False)
+        else:
+            # Custom preset: apply with current controls
+            self._apply_custom_now()
+            self._set_custom_editor_visible(True)
+
+    def _on_custom_mode_changed(self) -> None:
+        # Re-derive palette on mode change if Custom selected
+        if self.preset_combo.currentText() == "Custom":
+            self._apply_custom_now()
+
+    def _on_set_custom_primary(self) -> None:
+        # Choose seed primary color for Custom preset
+        try:
+            r, g, b = hex_to_rgb(self._custom_seed_hex)
+            initial = QColor(r, g, b)
+        except Exception:
+            initial = QColor(0, 120, 212)
+        color = QColorDialog.getColor(initial, self, "Select primary color for Custom theme")
+        if color.isValid():
+            self._custom_seed_hex = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
+            self._apply_custom_now()
+
+    def _apply_custom_now(self) -> None:
+        # Apply derived custom theme using current mode and primary seed
+        mode_label = self.custom_mode_combo.currentText()
+        mode = self._custom_mode_key_by_label.get(mode_label, "auto")
+        self.tm.apply_preset("custom", custom_mode=mode, base_primary=self._custom_seed_hex)
+        self._sync_rows_from_theme()
+        self.refresh_preview()
+
+    def _set_custom_editor_visible(self, show: bool) -> None:
+        # Only show search and editor when custom is selected
+        self.search_edit.setVisible(show)
+        self.scroll_area.setVisible(show)
 
     # ---------- Actions ----------
 

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths
-from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QMenuBar, QToolBar, QStatusBar, QDockWidget, QLabel, QTextEdit,
@@ -109,11 +109,9 @@ class MainWindow(QMainWindow):
                 font-weight: bold;
             }}
             QDockWidget::title {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 {COLORS.surface_grad_start},
-                                            stop:1 {COLORS.surface_grad_end});
+                background-color: {COLORS.dock_title_bg};
                 padding: {SPACING_12}px {SPACING_16}px;
-                border-bottom: 1px solid {COLORS.border};
+                border-bottom: 1px solid {COLORS.dock_title_border};
                 color: {COLORS.text};
                 font-weight: 600;
                 border-top-left-radius: 4px;
@@ -136,28 +134,28 @@ class MainWindow(QMainWindow):
                 border: 1px solid {COLORS.border};
             }}
             QToolBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
-                border: 1px solid {COLORS.border};
+                background-color: {COLORS.toolbar_bg};
+                border: 1px solid {COLORS.toolbar_border};
                 spacing: {SPACING_8}px;
                 color: {COLORS.text};
             }}
             QMenuBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
-                color: {COLORS.text};
-                border-bottom: 1px solid {COLORS.border};
+                background-color: {COLORS.menubar_bg};
+                color: {COLORS.menubar_text};
+                border-bottom: 1px solid {COLORS.menubar_border};
             }}
             QMenuBar::item {{
                 background-color: transparent;
                 padding: {SPACING_4}px {SPACING_8}px;
             }}
             QMenuBar::item:selected {{
-                background-color: {COLORS.primary};
-                color: {COLORS.primary_text};
+                background-color: {COLORS.menubar_item_hover_bg};
+                color: {COLORS.menubar_item_hover_text};
             }}
             QStatusBar {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border-top: 1px solid {COLORS.border};
+                background-color: {COLORS.statusbar_bg};
+                color: {COLORS.statusbar_text};
+                border-top: 1px solid {COLORS.statusbar_border};
             }}
             QLabel {{
                 color: {COLORS.text};
@@ -215,11 +213,9 @@ class MainWindow(QMainWindow):
                 font-weight: bold;
             }}
             QDockWidget::title {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 {COLORS.surface_grad_start},
-                                            stop:1 {COLORS.surface_grad_end});
+                background-color: {COLORS.dock_title_bg};
                 padding: {SPACING_12}px {SPACING_16}px;
-                border-bottom: 1px solid {COLORS.border};
+                border-bottom: 1px solid {COLORS.dock_title_border};
                 color: {COLORS.text};
                 font-weight: 600;
                 border-top-left-radius: 4px;
@@ -242,28 +238,28 @@ class MainWindow(QMainWindow):
                 border: 1px solid {COLORS.border};
             }}
             QToolBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
-                border: 1px solid {COLORS.border};
+                background-color: {COLORS.toolbar_bg};
+                border: 1px solid {COLORS.toolbar_border};
                 spacing: {SPACING_8}px;
                 color: {COLORS.text};
             }}
             QMenuBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
-                color: {COLORS.text};
-                border-bottom: 1px solid {COLORS.border};
+                background-color: {COLORS.menubar_bg};
+                color: {COLORS.menubar_text};
+                border-bottom: 1px solid {COLORS.menubar_border};
             }}
             QMenuBar::item {{
                 background-color: transparent;
                 padding: {SPACING_4}px {SPACING_8}px;
             }}
             QMenuBar::item:selected {{
-                background-color: {COLORS.primary};
-                color: {COLORS.primary_text};
+                background-color: {COLORS.menubar_item_hover_bg};
+                color: {COLORS.menubar_item_hover_text};
             }}
             QStatusBar {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border-top: 1px solid {COLORS.border};
+                background-color: {COLORS.statusbar_bg};
+                color: {COLORS.statusbar_text};
+                border-top: 1px solid {COLORS.statusbar_border};
             }}
             QLabel {{
                 color: {COLORS.text};
@@ -287,11 +283,39 @@ class MainWindow(QMainWindow):
             tm = ThemeManager.instance()
             tm.apply_stylesheet(self)
             self.setStyleSheet(self.styleSheet() + "\n" + base_qss)
+            # Ensure child bars and dock headers re-apply their own registered styles
+            try:
+                if hasattr(self, "status_bar") and self.status_bar is not None:
+                    tm.apply_stylesheet(self.status_bar)
+                mb = self.menuBar()
+                if mb is not None:
+                    tm.apply_stylesheet(mb)
+                if hasattr(self, "main_toolbar") and self.main_toolbar is not None:
+                    tm.apply_stylesheet(self.main_toolbar)
+                if hasattr(self, "model_library_dock"):
+                    tm.apply_stylesheet(self.model_library_dock)
+                if hasattr(self, "properties_dock"):
+                    tm.apply_stylesheet(self.properties_dock)
+                if hasattr(self, "metadata_dock"):
+                    tm.apply_stylesheet(self.metadata_dock)
+                # Also apply palette to force background paints on platforms that ignore QSS for bars
+                self._apply_bar_palettes()
+            except Exception:
+                pass
         except Exception:
             self.setStyleSheet(base_qss)
         # Notify via status bar for visible validation
         try:
             self.statusBar().showMessage("Applied main_window.css", 2000)
+            # Debug: log currently applied bar colors to diagnose any swaps
+            try:
+                tm = ThemeManager.instance()
+                self.logger.debug(
+                    f"Theme bars apply: menubar_bg={tm.get_color('menubar_bg')}, "
+                    f"statusbar_bg={tm.get_color('statusbar_bg')}, dock_title_bg={tm.get_color('dock_title_bg')}"
+                )
+            except Exception:
+                pass
         except Exception:
             pass
         # Propagate to known child widgets that support re-styling
@@ -331,6 +355,11 @@ class MainWindow(QMainWindow):
         self.logger.debug("Setting up menu bar")
         
         menubar = self.menuBar()
+        try:
+            menubar.setObjectName("AppMenuBar")
+            menubar.setAttribute(Qt.WA_StyledBackground, True)
+        except Exception:
+            pass
         
         # File menu
         file_menu = menubar.addMenu("&File")
@@ -412,14 +441,79 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
         
+        # Register explicit menubar stylesheet with ThemeManager to ensure updates on preset changes
+        try:
+            tm = ThemeManager.instance()
+            _menubar_css = """
+                QMenuBar#AppMenuBar {
+                    background-color: {{menubar_bg}};
+                    color: {{menubar_text}};
+                    border-bottom: 1px solid {{menubar_border}};
+                    padding: 2px;
+                    spacing: 2px;
+                }
+                QMenuBar#AppMenuBar::item {
+                    background-color: transparent;
+                    padding: 6px 12px;
+                    border-radius: 2px;
+                    margin: 1px;
+                }
+                QMenuBar#AppMenuBar::item:selected {
+                    background-color: {{menubar_item_hover_bg}};
+                    color: {{menubar_item_hover_text}};
+                }
+                QMenuBar#AppMenuBar::item:pressed {
+                    background-color: {{menubar_item_pressed_bg}};
+                }
+            """
+            tm.register_widget(menubar, css_text=_menubar_css)
+            tm.apply_stylesheet(menubar)
+            # Also apply palettes to ensure native menubar paints themed background
+            self._apply_bar_palettes()
+            # Debug: log applied colors to identify unexpected cross-assignments
+            try:
+                self.logger.debug(
+                    f"Bars styled: menubar_bg={tm.get_color('menubar_bg')}, "
+                    f"statusbar_bg={tm.get_color('statusbar_bg')}"
+                )
+            except Exception:
+                pass
+        except Exception:
+            pass
+
         self.logger.debug("Menu bar setup completed")
     
     def _setup_toolbar(self) -> None:
         """Set up the main application toolbar with icons and fallbacks."""
         self.logger.debug("Setting up toolbar")
 
-        toolbar = self.addToolBar("Main")
+        self.main_toolbar = self.addToolBar("Main")
+        toolbar = self.main_toolbar
         toolbar.setObjectName("MainToolBar")
+        try:
+            toolbar.setAttribute(Qt.WA_StyledBackground, True)
+        except Exception:
+            pass
+        # Explicit ThemeManager toolbar styling so it doesn't inherit/bleed from other bars
+        try:
+            tm = ThemeManager.instance()
+            _toolbar_css = """
+                QToolBar#MainToolBar {
+                    background-color: {{toolbar_bg}};
+                    border: 1px solid {{toolbar_border}};
+                    spacing: 3px;
+                    padding: 4px;
+                }
+                QToolBar#MainToolBar::handle {
+                    background-color: {{toolbar_handle_bg}};
+                    width: 8px;
+                    margin: 4px;
+                }
+            """
+            tm.register_widget(toolbar, css_text=_toolbar_css)
+            tm.apply_stylesheet(toolbar)
+        except Exception:
+            pass
 
         # Attempt to import QtAwesome for icon-based actions and determine icon availability
         try:
@@ -522,7 +616,39 @@ class MainWindow(QMainWindow):
         self.logger.debug("Setting up status bar")
         
         self.status_bar = QStatusBar()
+        # Give the bar a stable objectName so we can target it precisely in QSS
+        try:
+            self.status_bar.setObjectName("AppStatusBar")
+        except Exception:
+            pass
+
         self.setStatusBar(self.status_bar)
+        # Make sure the bar paints its background, some styles require this for QSS background-color to take effect
+        try:
+            self.status_bar.setAutoFillBackground(True)
+            self.status_bar.setAttribute(Qt.WA_StyledBackground, True)
+        except Exception:
+            pass
+
+        # Apply ThemeManager-managed inline stylesheet specifically for QStatusBar so it always participates in theming
+        try:
+            tm = ThemeManager.instance()
+            _statusbar_css = """
+                QStatusBar#AppStatusBar {
+                    background-color: {{statusbar_bg}};
+                    color: {{statusbar_text}};
+                    border-top: 1px solid {{statusbar_border}};
+                    padding: 2px;
+                }
+                QStatusBar#AppStatusBar::item {
+                    border: none;
+                }
+            """
+            tm.register_widget(self.status_bar, css_text=_statusbar_css)
+            tm.apply_stylesheet(self.status_bar)
+        except Exception:
+            # Non-fatal styling path
+            pass
         
         # Permanent status message
         self.status_label = QLabel("Ready")
@@ -538,6 +664,39 @@ class MainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.memory_label)
         
         self.logger.debug("Status bar setup completed")
+
+    def _apply_bar_palettes(self) -> None:
+        """
+        Force palette-based colors for menu/status bars to ensure background
+        paints even when style engine ignores QSS for these native widgets.
+        """
+        try:
+            tm = ThemeManager.instance()
+            # Status bar
+            if hasattr(self, "status_bar") and self.status_bar is not None:
+                sp = self.status_bar.palette()
+                sp.setColor(QPalette.Window, tm.qcolor("statusbar_bg"))
+                sp.setColor(QPalette.WindowText, tm.qcolor("statusbar_text"))
+                self.status_bar.setPalette(sp)
+                self.status_bar.setAutoFillBackground(True)
+            # Menu bar
+            mb = self.menuBar()
+            if mb is not None:
+                mp = mb.palette()
+                mp.setColor(QPalette.Window, tm.qcolor("menubar_bg"))
+                mp.setColor(QPalette.WindowText, tm.qcolor("menubar_text"))
+                mb.setPalette(mp)
+                mb.setAutoFillBackground(True)
+            # Toolbar palette
+            if hasattr(self, "main_toolbar") and self.main_toolbar is not None:
+                tp = self.main_toolbar.palette()
+                tp.setColor(QPalette.Window, tm.qcolor("toolbar_bg"))
+                tp.setColor(QPalette.WindowText, tm.qcolor("text"))
+                self.main_toolbar.setPalette(tp)
+                self.main_toolbar.setAutoFillBackground(True)
+        except Exception:
+            # Never break UI if palette application fails
+            pass
     
     def _setup_dock_widgets(self) -> None:
         """Set up dockable widgets for the application."""
@@ -567,6 +726,21 @@ class MainWindow(QMainWindow):
             # Add context menu helpers for docking
             try:
                 self._setup_dock_context_menu(self.model_library_dock, Qt.LeftDockWidgetArea)
+            except Exception:
+                pass
+            # Ensure dock header uses theme variables regardless of global QSS ordering
+            try:
+                tm = ThemeManager.instance()
+                _dock_css_ml = """
+                    QDockWidget#ModelLibraryDock::title {
+                        background-color: {{dock_title_bg}};
+                        color: {{text}};
+                        border-bottom: 1px solid {{dock_title_border}};
+                        padding: 6px;
+                    }
+                """
+                tm.register_widget(self.model_library_dock, css_text=_dock_css_ml)
+                tm.apply_stylesheet(self.model_library_dock)
             except Exception:
                 pass
             self.logger.info("Model library widget created successfully")
@@ -622,6 +796,21 @@ class MainWindow(QMainWindow):
         self.properties_dock.setWidget(properties_widget)
         try:
             self._setup_dock_context_menu(self.properties_dock, Qt.RightDockWidgetArea)
+        except Exception:
+            pass
+        # Ensure properties dock header uses theme variables
+        try:
+            tm = ThemeManager.instance()
+            _dock_css_props = """
+                QDockWidget#PropertiesDock::title {
+                    background-color: {{dock_title_bg}};
+                    color: {{text}};
+                    border-bottom: 1px solid {{dock_title_border}};
+                    padding: 6px;
+                }
+            """
+            tm.register_widget(self.properties_dock, css_text=_dock_css_props)
+            tm.apply_stylesheet(self.properties_dock)
         except Exception:
             pass
         
@@ -684,6 +873,21 @@ class MainWindow(QMainWindow):
             self.metadata_dock.setWidget(self.metadata_tabs)
             try:
                 self._setup_dock_context_menu(self.metadata_dock, Qt.BottomDockWidgetArea)
+            except Exception:
+                pass
+            # Ensure metadata dock header uses theme variables
+            try:
+                tm = ThemeManager.instance()
+                _dock_css_meta = """
+                    QDockWidget#MetadataDock::title {
+                        background-color: {{dock_title_bg}};
+                        color: {{text}};
+                        border-bottom: 1px solid {{dock_title_border}};
+                        padding: 6px;
+                    }
+                """
+                tm.register_widget(self.metadata_dock, css_text=_dock_css_meta)
+                tm.apply_stylesheet(self.metadata_dock)
             except Exception:
                 pass
             self.logger.info("Metadata editor widget created successfully (tabbed)")

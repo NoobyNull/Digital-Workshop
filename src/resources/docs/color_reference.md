@@ -1,15 +1,63 @@
 # Theme Color Reference
 
-This document lists all ThemeManager color variables (148 total) and their default values derived from [ThemeDefaults](src/gui/theme.py:101). Values are used via CSS template placeholders like {{variable_name}} and resolved by ThemeManager.
+This document lists all ThemeManager color variables (148 total) and their default values derived from [ThemeDefaults](src/gui/theme.py:117). Values are used via CSS template placeholders like {{variable_name}} and resolved by ThemeManager.
 
-Usage overview:
-- In CSS files: use placeholders, e.g. `color: {{text}};`
-- In Python (apply file):
-  - `ThemeManager.instance().register_widget(widget, css_path="src/resources/styles/main_window.css")`
-  - `ThemeManager.instance().apply_stylesheet(widget)`
-- In Python (inline CSS):
-  - `ThemeManager.instance().register_widget(widget, css_text="... {{primary}} ...")`
-  - `ThemeManager.instance().apply_stylesheet(widget)`
+## Theme Presets
+
+The system includes three built-in theme presets accessible via View → Theme Manager...:
+
+### Modern (Default)
+Professional blue color scheme inspired by Microsoft Fluent Design:
+- Primary: #0078d4 (Microsoft blue)
+- Light backgrounds with subtle grays
+- High contrast for readability
+- Full 148-variable cohesive palette auto-derived
+
+### High Contrast
+Accessibility-focused theme for users with visual impairments:
+- Black backgrounds (#000000) with white text (#ffffff)
+- Yellow primary (#ffff00) for maximum visibility
+- All controls have 2px white borders
+- WCAG AAA contrast compliance
+
+### Custom
+User-configurable theme with automatic dark/light mode calculation:
+- Select seed primary color
+- Choose mode: Auto (detects from primary), Light, or Dark
+- System derives complete cohesive palette from seed color
+- All 148 variables generated harmoniously
+
+## Usage Overview
+
+### In CSS Files
+Use placeholders, e.g. `color: {{text}};` - processed by [`ThemeManager.process_css_file()`](src/gui/theme.py:752)
+
+### In Python - File-based Stylesheet
+```python
+ThemeManager.instance().register_widget(widget, css_path="src/resources/styles/main_window.css")
+ThemeManager.instance().apply_stylesheet(widget)
+```
+
+### In Python - Inline CSS Template
+```python
+css_text = "QPushButton { background: {{primary}}; color: {{primary_text}}; }"
+ThemeManager.instance().register_widget(widget, css_text=css_text)
+ThemeManager.instance().apply_stylesheet(widget)
+```
+
+### Applying Presets Programmatically
+```python
+from gui.theme import apply_theme_preset
+
+# Apply Modern preset
+apply_theme_preset("modern")
+
+# Apply High Contrast preset
+apply_theme_preset("high_contrast")
+
+# Apply Custom preset with dark mode
+apply_theme_preset("custom", custom_mode="dark", base_primary="#ff6b35")
+```
 
 ## Window & UI Elements (11 variables)
 | Variable | Default | Usage |
@@ -262,18 +310,42 @@ Usage overview:
 ---
 
 ## Fallback System
-- Undefined variables resolve to hot pink FALLBACK_COLOR: `#E31C79`.
-- ThemeManager logs a WARNING event with context when a fallback occurs.
-- See [ThemeManager.get_color](src/gui/theme.py:362) and [FALLBACK_COLOR](src/gui/theme.py:49).
+- Undefined variables resolve to hot pink FALLBACK_COLOR: `#E31C79`
+- ThemeManager logs WARNING event with context when fallback occurs
+- See [`ThemeManager.get_color()`](src/gui/theme.py:656) and [`FALLBACK_COLOR`](src/gui/theme.py:49)
 
 ## Template Processing
-- Placeholders are replaced by [ThemeManager.process_css_template](src/gui/theme.py:401) and [process_css_file](src/gui/theme.py:426), with caching.
-- Widgets register their stylesheet source via [ThemeManager.register_widget](src/gui/theme.py:459) and apply with [ThemeManager.apply_stylesheet](src/gui/theme.py:472) or [apply_to_registered](src/gui/theme.py:494).
+- Placeholders replaced by [`ThemeManager.process_css_template()`](src/gui/theme.py:727) and [`process_css_file()`](src/gui/theme.py:752)
+- CSS caching by file mtime and theme version for performance
+- Widgets register via [`ThemeManager.register_widget()`](src/gui/theme.py:785)
+- Apply with [`ThemeManager.apply_stylesheet()`](src/gui/theme.py:798) or [`apply_to_registered()`](src/gui/theme.py:820)
+
+## Preset System Architecture
+- **Built-in presets** (Modern, High Contrast): Defined in [`PRESETS`](src/gui/theme.py:597)
+- **Custom preset**: Uses [`derive_mode_palette()`](src/gui/theme.py:364) for full palette generation
+- **Color derivation**:
+  - Luminance calculation: [`_relative_luminance_from_hex()`](src/gui/theme.py:332)
+  - Text contrast selection: [`_choose_text_for_bg()`](src/gui/theme.py:343)
+  - Color mixing utilities: [`_mix_hex()`](src/gui/theme.py:347), [`_lighten()`](src/gui/theme.py:356), [`_darken()`](src/gui/theme.py:360)
+- **Application**: [`ThemeManager.apply_preset()`](src/gui/theme.py:695)
 
 ## Integration Examples
-- Main window registers file-based stylesheet in [MainWindow._init_ui](src/gui/main_window.py:100) and re-applies on theme change in [MainWindow._on_theme_applied](src/gui/main_window.py:1285).
-- Metadata and Model Library use inline template CSS registered in their `_apply_styling()` methods.
+- **Main window**: Registers file-based stylesheet in [`MainWindow._init_ui()`](src/gui/main_window.py:74), re-applies on theme change in [`MainWindow._on_theme_applied()`](src/gui/main_window.py:1313)
+- **Metadata Editor**: Inline template CSS in [`MetadataEditorWidget._apply_styling()`](src/gui/metadata_editor.py:382)
+- **Model Library**: Inline template CSS in [`ModelLibraryWidget._apply_styling()`](src/gui/model_library.py:383)
+- **VTK Viewer**: Theme-aware via [`Viewer3DWidget.apply_theme()`](src/gui/viewer_widget_vtk.py:910)
 
-## Theme Import/Export
-- Save to AppData via [ThemeManager.save_to_settings](src/gui/theme.py:521) and load via [ThemeManager.load_from_settings](src/gui/theme.py:530).
-- Export/Import JSON via [ThemeManager.export_theme](src/gui/theme.py:547) and [ThemeManager.import_theme](src/gui/theme.py:555).
+## Theme Persistence
+- **Save to AppData**: [`ThemeManager.save_to_settings()`](src/gui/theme.py:847)
+- **Load from AppData**: [`ThemeManager.load_from_settings()`](src/gui/theme.py:856)
+- **Export JSON**: [`ThemeManager.export_theme()`](src/gui/theme.py:873)
+- **Import JSON**: [`ThemeManager.import_theme()`](src/gui/theme.py:881)
+
+## Debugging Stylesheet Loading
+All stylesheet applications log DEBUG-level events with:
+- Event: `"stylesheet_applied"`
+- Widget identifier
+- CSS path (if file-based)
+- CSS text length (if inline)
+
+Check logs to verify each widget's stylesheet is loading correctly.

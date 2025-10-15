@@ -56,21 +56,36 @@ FALLBACK_COLOR = "#E31C79"  # Hot pink for undefined colors
 def _normalize_hex(h: str) -> str:
     """
     Return a normalized #rrggbb hex string for inputs that look like hex codes.
-    If the input does not represent a hex color (e.g., 'rgba(255,255,255,0.8)'),
+    If the input does not represent a hex color (e.g., 'rgba(255,255,255,0.8)' or CSS keywords like 'transparent'),
     return it unchanged.
     """
     if not h:
         return FALLBACK_COLOR
-    s = h.strip()
-    if s.startswith("rgba(") or s.startswith("rgb("):
-        # Non-hex representation - pass through unchanged
-        return s
-    if not s.startswith("#"):
-        s = "#" + s
-    if len(s) == 4:  # e.g. #abc
-        r, g, b = s[1], s[2], s[3]
-        s = f"#{r}{r}{g}{g}{b}{b}"
-    return s.lower()
+
+    s = str(h).strip()
+    lower = s.lower()
+
+    # Pass through CSS color functions and keywords without modification
+    css_keywords = {"transparent", "inherit", "initial", "unset", "currentcolor"}
+    if lower.startswith("rgba(") or lower.startswith("rgb(") or lower in css_keywords:
+        return lower
+
+    # If already a valid #rrggbb, return normalized lowercase
+    if lower.startswith("#") and len(lower) == 7 and all(c in "0123456789abcdef" for c in lower[1:]):
+        return lower
+
+    # Accept 3 or 6 hex digits with optional '#'
+    # Examples: abc, #abc, a1b2c3, #a1b2c3
+    m = re.fullmatch(r"#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})", s)
+    if m:
+        hex_digits = m.group(1)
+        if len(hex_digits) == 3:
+            r, g, b = hex_digits[0], hex_digits[1], hex_digits[2]
+            return f"#{r}{r}{g}{g}{b}{b}".lower()
+        return f"#{hex_digits}".lower()
+
+    # Unknown/unsupported format: return as-is to let QSS handle or upstream validate
+    return s
 
 
 def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
@@ -307,6 +322,289 @@ class ThemeDefaults:
 
 
 # ============================================================
+# Preset utilities and built-in presets
+# ============================================================
+
+def _srgb_to_linear(c: float) -> float:
+    """Convert 0..1 sRGB channel to linear space."""
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+def _relative_luminance_from_hex(h: str) -> float:
+    """WCAG relative luminance of a hex color."""
+    try:
+        r, g, b = hex_to_rgb(h)
+    except Exception:
+        return 0.5
+    rl = _srgb_to_linear(r / 255.0)
+    gl = _srgb_to_linear(g / 255.0)
+    bl = _srgb_to_linear(b / 255.0)
+    return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
+
+def _choose_text_for_bg(bg_hex: str) -> str:
+    """Choose black or white text for contrast against given background."""
+    return "#000000" if _relative_luminance_from_hex(bg_hex) >= 0.5 else "#ffffff"
+
+def _mix_hex(a_hex: str, b_hex: str, t: float) -> str:
+    """Linear mix of two hex colors a..b with t in [0..1]."""
+    a_r, a_g, a_b = hex_to_rgb(a_hex)
+    b_r, b_g, b_b = hex_to_rgb(b_hex)
+    r = int(round(a_r + (b_r - a_r) * t))
+    g = int(round(a_g + (b_g - a_g) * t))
+    b = int(round(a_b + (b_b - a_b) * t))
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+def _lighten(hex_code: str, amount: float) -> str:
+    """Lighten color by mixing with white."""
+    return _mix_hex(hex_code, "#ffffff", min(max(amount, 0.0), 1.0))
+
+def _darken(hex_code: str, amount: float) -> str:
+    """Darken color by mixing with black."""
+    return _mix_hex(hex_code, "#000000", min(max(amount, 0.0), 1.0))
+
+def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]:
+    """
+    Generate a cohesive palette from a seed primary color.
+    mode: 'auto' | 'light' | 'dark'
+    """
+    p = _normalize_hex(seed_primary)
+    if not p.startswith("#") or len(p) != 7:
+        p = ThemeDefaults.primary  # fallback to sane primary
+
+    # Decide dark vs light
+    if mode not in {"auto", "light", "dark"}:
+        mode = "auto"
+    if mode == "auto":
+        # Brighter primaries work well with light UI by default
+        dark = _relative_luminance_from_hex(p) < 0.35
+    else:
+        dark = (mode == "dark")
+
+    if dark:
+        window_bg = "#1e1f22"
+        surface = "#2a2d2f"
+        text = "#eaeaea"
+        border = "#3a3d40"
+        border_light = "#2f3235"
+        table_alt = "#25282a"
+        primary_hover = _lighten(p, 0.12)
+        hover = _lighten(surface, 0.06)
+        pressed = _darken(surface, 0.06)
+        input_bg = "#232527"
+        header_bg = "#2f3133"
+    else:
+        window_bg = "#ffffff"
+        surface = "#f5f6f7"
+        text = "#212529"
+        border = "#d0d0d0"
+        border_light = "#f0f0f0"
+        table_alt = "#f8f9fa"
+        primary_hover = _darken(p, 0.12)
+        hover = "#e9ecef"
+        pressed = "#dfe3e6"
+        input_bg = "#ffffff"
+        header_bg = "#f5f6f7"
+
+    selection_bg = p
+    selection_text = _choose_text_for_bg(selection_bg)
+    primary_text = _choose_text_for_bg(p)
+
+    # A practical subset that drives most of the UI cohesively
+    derived: Dict[str, str] = {
+        # Core
+        "primary": p,
+        "primary_hover": primary_hover,
+        "primary_text": primary_text,
+        "window_bg": window_bg,
+        "surface": surface,
+        "text": text,
+        "border": border,
+        "border_light": border_light,
+        "hover": hover,
+        "pressed": pressed,
+        "selection_bg": selection_bg,
+        "selection_text": selection_text,
+
+        # Menubar
+        "menubar_bg": surface,
+        "menubar_text": text,
+        "menubar_border": border,
+        "menubar_item_hover_bg": p,
+        "menubar_item_hover_text": primary_text,
+        "menubar_item_pressed_bg": primary_hover,
+
+        # Status bar
+        "statusbar_bg": surface,
+        "statusbar_text": text,
+        "statusbar_border": border,
+
+        # Toolbars
+        "toolbar_bg": surface,
+        "toolbar_border": border,
+        "toolbar_handle_bg": border,
+
+        "toolbutton_bg": "transparent",
+        "toolbutton_border": "transparent",
+        "toolbutton_hover_bg": hover,
+        "toolbutton_hover_border": p,
+        "toolbutton_pressed_bg": pressed,
+        "toolbutton_checked_bg": p,
+        "toolbutton_checked_border": p,
+        "toolbutton_checked_text": primary_text,
+
+        # Dock
+        "dock_bg": window_bg,
+        "dock_text": text,
+        "dock_border": border,
+        "dock_title_bg": surface,
+        "dock_title_border": border,
+
+        # Buttons
+        "button_bg": surface,
+        "button_text": text,
+        "button_border": border,
+        "button_hover_bg": hover,
+        "button_hover_border": p,
+        "button_pressed_bg": pressed,
+        "button_checked_bg": p,
+        "button_checked_text": primary_text,
+        "button_checked_border": p,
+        "button_default_bg": p,
+        "button_default_text": primary_text,
+        "button_default_border": p,
+        "button_default_hover_bg": primary_hover,
+        "button_disabled_bg": _mix_hex(surface, border_light, 0.5),
+        "button_disabled_text": "#9aa0a6",
+        "button_disabled_border": _lighten(border, 0.2),
+
+        # Inputs
+        "input_bg": input_bg,
+        "input_text": text,
+        "input_border": border,
+        "input_focus_border": p,
+        "input_disabled_bg": _mix_hex(input_bg, border_light, 0.3),
+        "input_disabled_text": "#9aa0a6",
+
+        # Combo
+        "combobox_bg": input_bg,
+        "combobox_text": text,
+        "combobox_border": border,
+        "combobox_focus_border": p,
+        "combobox_arrow_color": "#666666" if not dark else "#b7b7b7",
+
+        # Progress
+        "progress_bg": window_bg,
+        "progress_text": text,
+        "progress_border": border,
+        "progress_chunk": p,
+        "progress_disabled_border": _lighten(border, 0.15) if not dark else _darken(border, 0.15),
+        "progress_disabled_bg": _mix_hex(window_bg, surface, 0.5),
+        "progress_disabled_text": "#a0a0a0",
+        "progress_disabled_chunk": _mix_hex(p, surface, 0.65),
+
+        # Tabs
+        "tab_pane_border": border,
+        "tab_pane_bg": window_bg,
+        "tab_bg": surface,
+        "tab_text": text,
+        "tab_border": border,
+        "tab_selected_bg": window_bg,
+        "tab_selected_border": p,
+        "tab_hover_bg": hover,
+
+        # Tables & Lists
+        "table_bg": window_bg,
+        "table_text": text,
+        "table_border": border,
+        "table_gridline": _lighten(border, 0.2) if not dark else _darken(border, 0.2),
+        "table_alternate_row_bg": table_alt,
+        "header_bg": header_bg,
+        "header_text": text,
+        "header_border": border,
+
+        # Scrollbars
+        "scrollbar_bg": surface,
+        "scrollbar_border": border,
+        "scrollbar_handle_bg": _mix_hex(border, p, 0.10),
+        "scrollbar_handle_hover_bg": _mix_hex(border, p, 0.25),
+
+        # Splitters
+        "splitter_handle_bg": border,
+
+        # Group Boxes
+        "groupbox_border": border,
+        "groupbox_bg": window_bg,
+        "groupbox_text": text,
+        "groupbox_title_text": text,
+
+        # Slider & Spinbox
+        "slider_groove_bg": surface,
+        "slider_groove_border": border,
+        "slider_handle": p,
+        "slider_handle_border": p,
+
+        "spinbox_bg": input_bg,
+        "spinbox_text": text,
+        "spinbox_border": border,
+        "spinbox_focus_border": p,
+
+        # Date edits
+        "dateedit_bg": input_bg,
+        "dateedit_text": text,
+        "dateedit_border": border,
+        "dateedit_focus_border": p,
+
+        # Labels
+        "label_text": text,
+
+        # Focus
+        "focus_border": _mix_hex(p, "#2684ff", 0.5),
+    }
+    return derived
+
+# Modern preset - professional blue scheme
+PRESET_MODERN: Dict[str, str] = {
+    "primary": "#0078d4",
+    "primary_hover": "#106ebe",
+    "primary_text": "#ffffff",
+    "window_bg": "#ffffff",
+    "surface": "#f5f6f7",
+    "text": "#323130",
+    "border": "#edebe9",
+    "border_light": "#f4f3f2",
+    "hover": "#e9ecef",
+    "pressed": "#dfe3e6",
+    "selection_bg": "#0078d4",
+    "selection_text": "#ffffff",
+    "focus_border": "#2684ff",
+}
+
+# High contrast preset - accessibility focused
+PRESET_HIGH_CONTRAST: Dict[str, str] = {
+    "window_bg": "#000000",
+    "text": "#ffffff",
+    "primary": "#ffff00",
+    "primary_hover": "#ffea00",
+    "primary_text": "#000000",
+    "surface": "#000000",
+    "border": "#ffffff",
+    "border_light": "#e0e0e0",
+    "hover": "#ffffff",
+    "pressed": "#c0c0c0",
+    "selection_bg": "#ffff00",
+    "selection_text": "#000000",
+    "focus_border": "#ffffff",
+    "menubar_bg": "#000000",
+    "menubar_text": "#ffffff",
+    "menubar_item_hover_bg": "#ffff00",
+    "menubar_item_hover_text": "#000000",
+}
+
+PRESETS: Dict[str, Dict[str, str]] = {
+    "modern": PRESET_MODERN,
+    "high_contrast": PRESET_HIGH_CONTRAST,
+}
+
+# ============================================================
 # ThemeManager Singleton
 # ============================================================
 
@@ -329,6 +627,7 @@ class ThemeManager:
         self._logger = logging.getLogger("gui.theme")
         self._colors: Dict[str, str] = {k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()}
         self._version: int = 0  # bump whenever theme is updated
+        self._preset_name: str = "custom"  # last applied preset name
         # CSS caches
         self._css_file_cache: Dict[str, Tuple[float, int, str]] = {}  # path -> (mtime, version, processed_css)
         self._css_text_cache: Dict[str, Tuple[int, str]] = {}  # key -> (version, processed_css)
@@ -388,6 +687,50 @@ class ThemeManager:
             self._css_text_cache.clear()
             self._log_json(logging.INFO, "theme_updated", changed_keys=[k for k in overrides.keys() if k in self._colors])
 
+    # ------------- Presets API -------------
+    def available_presets(self) -> list[str]:
+        """Return list of available built-in theme presets."""
+        return sorted(list(PRESETS.keys()) + ["custom"])
+    
+    @property
+    def current_preset(self) -> str:
+        """Name of the last applied preset. 'custom' when user edited manually."""
+        return getattr(self, "_preset_name", "custom")
+
+    def apply_preset(self, preset_name: str, *, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+        """
+        Apply a named preset.
+        - preset_name: 'modern', 'high_contrast', or 'custom'
+        - custom_mode: for 'custom', one of {'auto','light','dark'}
+        - base_primary: optional primary color seed for 'custom'
+        
+        For built-in presets: derives a full palette then applies preset key colors on top
+        to ensure all 148 variables are cohesive.
+        """
+        name = (preset_name or "custom").lower()
+        if name in PRESETS:
+            preset_colors = PRESETS[name]
+            # Derive full palette from preset's primary color
+            primary = preset_colors.get("primary", ThemeDefaults.primary)
+            mode = "dark" if preset_colors.get("window_bg", "#ffffff").lower() == "#000000" else "auto"
+            derived = derive_mode_palette(primary, mode=mode)
+            
+            # Merge: derived palette first, then preset overrides on top
+            merged = {**derived, **preset_colors}
+            self.set_colors(merged)
+            
+            self._preset_name = name
+            self._log_json(logging.INFO, "theme_preset_applied", preset=name, colors_defined=len(merged))
+            return
+
+        # Custom derived theme
+        mode = (custom_mode or "auto").lower()
+        seed = base_primary or self._colors.get("primary", ThemeDefaults.primary)
+        derived = derive_mode_palette(seed, mode=mode)
+        self.set_colors(derived)
+        self._preset_name = "custom"
+        self._log_json(logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed)
+
     # ------------- QColor / VTK helpers -------------
 
     def qcolor(self, name: str) -> QColor:
@@ -398,10 +741,21 @@ class ThemeManager:
 
     # ------------- CSS template processing -------------
 
+    def _strip_css_comments(self, text: str) -> str:
+        """
+        Remove CSS block comments (/* ... */) so placeholders inside comments
+        like {{variable_name}} in documentation headers do not trigger fallback logs.
+        """
+        try:
+            return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+        except Exception:
+            return text
+
     def process_css_template(self, css_text: str) -> str:
         """
         Replace {{VARIABLE_NAME}} patterns with actual color values.
         Uses a cache keyed by text hash and theme version.
+        Strips /* ... */ comments before processing to avoid false fallbacks from examples in comments.
         """
         key = f"{hash(css_text)}"
         cached = self._css_text_cache.get(key)
@@ -416,7 +770,8 @@ class ThemeManager:
             return value
 
         try:
-            processed = re.sub(self.VARIABLE_PATTERN, replace, css_text)
+            text = self._strip_css_comments(css_text)
+            processed = re.sub(self.VARIABLE_PATTERN, replace, text)
             self._css_text_cache[key] = (self._version, processed)
             return processed
         except Exception as exc:
@@ -613,6 +968,14 @@ def set_theme(overrides: Dict[str, Any]) -> None:
     Unknown keys are ignored to preserve stability.
     """
     ThemeManager.instance().set_colors({k: str(v) for k, v in overrides.items()})
+
+def list_theme_presets() -> list[str]:
+    """List names of available theme presets."""
+    return ThemeManager.instance().available_presets()
+
+def apply_theme_preset(preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+    """Apply a theme preset via ThemeManager."""
+    ThemeManager.instance().apply_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
 
 
 def load_theme_from_settings() -> None:
