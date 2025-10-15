@@ -239,6 +239,8 @@ class BaseParser(ABC):
         # For now, we'll load synchronously
         if metadata_model.file_path:
             try:
+                # Lazy import to avoid NameError during async geometry load
+                from core.model_cache import CacheLevel
                 full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
                 
                 # Update the metadata model with geometry
