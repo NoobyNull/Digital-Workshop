@@ -37,7 +37,7 @@ from parsers import (
     STLParser, OBJParser, ThreeMFParser, STEPParser,
     FormatDetector, ModelFormat
 )
-from gui.theme import COLORS, qcolor
+from gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 
 
 class ViewMode(Enum):
@@ -226,18 +226,18 @@ class ModelLibraryWidget(QWidget):
 
     def _init_ui(self) -> None:
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
-        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
+        main_layout.setSpacing(SPACING_8)
 
         self._create_toolbar(main_layout)
         self._create_search_bar(main_layout)
 
-        content_splitter = QSplitter(Qt.Horizontal)
-        main_layout.addWidget(content_splitter)
-
-        self._create_file_browser(content_splitter)
-        self._create_model_view_area(content_splitter)
-        content_splitter.setSizes([300, 700])
+        self.content_splitter = QSplitter(Qt.Horizontal)
+        main_layout.addWidget(self.content_splitter)
+        
+        self._create_file_browser(self.content_splitter)
+        self._create_model_view_area(self.content_splitter)
+        self.content_splitter.setSizes([300, 700])
 
         self._create_status_bar(main_layout)
         self._apply_styling()
@@ -246,6 +246,7 @@ class ModelLibraryWidget(QWidget):
         toolbar_frame = QFrame()
         toolbar_layout = QHBoxLayout(toolbar_frame)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_layout.setSpacing(SPACING_8)
 
         self.list_view_button = QToolButton()
         self.list_view_button.setText("List View")
@@ -278,6 +279,7 @@ class ModelLibraryWidget(QWidget):
         controls_frame = QFrame()
         controls_layout = QHBoxLayout(controls_frame)
         controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(SPACING_8)
 
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search models...")
@@ -364,6 +366,7 @@ class ModelLibraryWidget(QWidget):
         status_frame = QFrame()
         status_layout = QHBoxLayout(status_frame)
         status_layout.setContentsMargins(0, 0, 0, 0)
+        status_layout.setSpacing(SPACING_8)
 
         self.status_label = QLabel("Ready")
         status_layout.addWidget(self.status_label)
@@ -378,85 +381,89 @@ class ModelLibraryWidget(QWidget):
         parent_layout.addWidget(status_frame)
 
     def _apply_styling(self) -> None:
-        self.setStyleSheet(f"""
-            QGroupBox {{
+        """Apply styling using ThemeManager CSS template processing."""
+        tm = ThemeManager.instance()
+        css_text = """
+            QGroupBox {
                 font-weight: bold;
-                border: 2px solid {COLORS.border};
+                border: 2px solid {{groupbox_border}};
                 border-radius: 4px;
                 margin-top: 1ex;
                 padding-top: 10px;
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QGroupBox::title {{
+                background-color: {{groupbox_bg}};
+                color: {{groupbox_text}};
+            }
+            QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
-                color: {COLORS.text};
-            }}
-            QTreeView, QTableView, QListView {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-                selection-background-color: {COLORS.selection_bg};
-                selection-color: {COLORS.selection_text};
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-            }}
-            QPushButton, QToolButton {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
+                color: {{groupbox_title_text}};
+            }
+            QTreeView, QTableView, QListView {
+                background-color: {{table_bg}};
+                color: {{table_text}};
+                border: 1px solid {{table_border}};
+                selection-background-color: {{selection_bg}};
+                selection-color: {{selection_text}};
+            }
+            QHeaderView::section {
+                background-color: {{header_bg}};
+                color: {{header_text}};
+                border: 1px solid {{header_border}};
+            }
+            QPushButton, QToolButton {
+                background-color: {{button_bg}};
+                color: {{button_text}};
+                border: 1px solid {{button_border}};
                 padding: 6px 12px;
                 border-radius: 2px;
-            }}
-            QPushButton:hover, QToolButton:hover {{
-                background-color: {COLORS.hover};
-                border: 1px solid {COLORS.primary};
-            }}
-            QPushButton:pressed, QToolButton:pressed {{
-                background-color: {COLORS.pressed};
-            }}
-            QToolButton:checked, QPushButton:checked {{
-                background-color: {COLORS.primary};
-                color: {COLORS.primary_text};
-                border: 1px solid {COLORS.primary};
-            }}
-            QProgressBar {{
-                border: 1px solid {COLORS.border};
+            }
+            QPushButton:hover, QToolButton:hover {
+                background-color: {{button_hover_bg}};
+                border: 1px solid {{button_hover_border}};
+            }
+            QPushButton:pressed, QToolButton:pressed {
+                background-color: {{button_pressed_bg}};
+            }
+            QToolButton:checked, QPushButton:checked {
+                background-color: {{button_checked_bg}};
+                color: {{button_checked_text}};
+                border: 1px solid {{button_checked_border}};
+            }
+            QProgressBar {
+                border: 1px solid {{progress_border}};
                 border-radius: 2px;
                 text-align: center;
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QProgressBar::chunk {{
-                background-color: {COLORS.progress_chunk};
+                background-color: {{progress_bg}};
+                color: {{progress_text}};
+            }
+            QProgressBar::chunk {
+                background-color: {{progress_chunk}};
                 border-radius: 1px;
-            }}
-            QTabWidget::pane {{
-                border: 1px solid {COLORS.border};
-                background-color: {COLORS.window_bg};
-            }}
-            QTabBar::tab {{
-                background: {COLORS.surface};
+            }
+            QTabWidget::pane {
+                border: 1px solid {{tab_pane_border}};
+                background-color: {{tab_pane_bg}};
+            }
+            QTabBar::tab {
+                background: {{tab_bg}};
                 padding: 8px;
                 margin-right: 2px;
-                border: 1px solid {COLORS.border};
+                border: 1px solid {{tab_border}};
                 border-bottom: none;
-                color: {COLORS.text};
-            }}
-            QTabBar::tab:selected {{
-                background: {COLORS.window_bg};
-                border-bottom: 2px solid {COLORS.tab_selected_border};
-                color: {COLORS.text};
-            }}
-            QTabBar::tab:hover {{
-                background: {COLORS.hover};
-            }}
-        """)
+                color: {{tab_text}};
+            }
+            QTabBar::tab:selected {
+                background: {{tab_selected_bg}};
+                border-bottom: 2px solid {{tab_selected_border}};
+                color: {{tab_text}};
+            }
+            QTabBar::tab:hover {
+                background: {{tab_hover_bg}};
+            }
+        """
+        tm.register_widget(self, css_text=css_text)
+        tm.apply_stylesheet(self)
 
     def _setup_connections(self) -> None:
         self.list_view_button.clicked.connect(lambda: self._set_view_mode(ViewMode.LIST))

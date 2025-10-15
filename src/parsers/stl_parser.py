@@ -220,7 +220,11 @@ class STLParser(BaseParser):
                 if triangle_count > 100000000:  # 100 million triangles is unreasonable
                     raise STLParseError(f"Invalid triangle count: {triangle_count}")
 
-                # Decide path: vectorized if NumPy available, else original loop
+                # Decide path: array-based fast path for large models, else vectorized object path
+                if (np is not None) and (triangle_count >= 100000):
+                    self.logger.info(f"Using array-based fast path for {triangle_count} triangles")
+                    return self._parse_binary_stl_arrays(file_path, progress_callback)
+
                 use_vectorized = (np is not None) and (triangle_count >= 20000)
 
                 if use_vectorized:
@@ -230,25 +234,42 @@ class STLParser(BaseParser):
 
                     # Read all triangle records: 50 bytes each
                     total_bytes = triangle_count * self.BINARY_TRIANGLE_SIZE
+                    # Detect network path (UNC) for diagnostics
+                    path_str = str(file_path)
+                    is_network = path_str.startswith('\\\\') or path_str.startswith('//')
+                    t_read0 = time.time()
                     data = file.read(total_bytes)
+                    t_read1 = time.time()
                     if len(data) != total_bytes:
                         raise STLParseError(f"Failed to read triangle block ({len(data)} of {total_bytes} bytes)")
+                    # IO diagnostics
+                    read_sec = max(1e-6, t_read1 - t_read0)
+                    mb_s = (total_bytes / (1024 * 1024)) / read_sec
+                    self.logger.info(f"IO read completed: {total_bytes} bytes in {read_sec:.2f}s ({mb_s:.2f} MB/s), source={'UNC' if is_network else 'local'}")
+                    if progress_callback:
+                        progress_callback.report(15.0, f"IO read {mb_s:.1f} MB/s ({'UNC' if is_network else 'local'})")
 
                     if progress_callback:
                         progress_callback.report(20.0, "Decoding triangle floats...")
-
+                    
                     # Convert to NumPy array and extract floats
                     # Layout per triangle: 48 bytes (12 float32) + 2 bytes (uint16 attribute)
                     # View first 48 bytes as float32 (little-endian)
+                    t_dec0 = time.time()
                     u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
                     floats = u8[:, :48].copy().view('<f4').reshape(triangle_count, 12)  # shape: (N, 12)
+                    t_dec1 = time.time()
+                    self.logger.info(f"Decode floats: {triangle_count:,} triangles in {t_dec1 - t_dec0:.2f}s")
 
                     # normals: cols 0:3, vertices: cols 3:12 as 3x3
                     verts = floats[:, 3:12].reshape(triangle_count, 3, 3)
 
                     # Compute bounds via vectorized operations
+                    t_bnd0 = time.time()
                     min_xyz = verts.reshape(-1, 3).min(axis=0)
                     max_xyz = verts.reshape(-1, 3).max(axis=0)
+                    t_bnd1 = time.time()
+                    self.logger.info(f"Bounds computed in {t_bnd1 - t_bnd0:.2f}s")
 
                     # Build Triangle dataclasses using multiple processes for large datasets
                     if progress_callback:
@@ -263,6 +284,8 @@ class STLParser(BaseParser):
                     indices = np.linspace(0, triangle_count, splits + 1, dtype=np.int64)  # type: ignore
                     chunks = [(int(indices[i]), int(indices[i + 1])) for i in range(splits) if int(indices[i]) < int(indices[i + 1])]
 
+                    self.logger.info(f"Triangle build workers: {max_workers}")
+                    t_bld0 = time.time()
                     built_total = 0
                     with ProcessPoolExecutor(max_workers=max_workers) as pool:
                         futures = []
@@ -277,8 +300,18 @@ class STLParser(BaseParser):
                                 pct = 40.0 + 55.0 * (built_total / triangle_count)
                                 progress_callback.report(pct, f"Built {built_total}/{triangle_count} triangles")
 
+                    # Finalize build timing
+                    t_bld1 = time.time()
+                    self.logger.info(f"Triangle build completed in {t_bld1 - t_bld0:.2f}s")
                     # Final GC to release worker-side memory sooner
                     gc.collect()
+                    # Memory snapshot (best-effort)
+                    try:
+                        import psutil  # type: ignore
+                        rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
+                        self.logger.info(f"Process RSS after vectorized parse: {rss_mb:.0f} MB")
+                    except Exception:
+                        pass
 
                     # Stats
                     parsing_time = time.time() - start_time
@@ -369,6 +402,133 @@ class STLParser(BaseParser):
             self.logger.error(f"Error parsing binary STL: {str(e)}")
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
     
+    def _parse_binary_stl_arrays(
+        self,
+        file_path: Path,
+        progress_callback: Optional[STLProgressCallback] = None
+    ) -> Model:
+        """
+        Array-based fast path for binary STL parsing.
+        Decodes directly into NumPy arrays and avoids creating Python Triangle objects.
+        """
+        if np is None:
+            raise STLParseError("NumPy is required for array-based STL parsing")
+
+        start_time = time.time()
+        try:
+            with open(file_path, 'rb') as file:
+                # Header
+                header_bytes = file.read(self.BINARY_HEADER_SIZE)
+                header = header_bytes.decode('utf-8', errors='ignore').strip()
+
+                # Triangle count
+                count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
+                if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
+                    raise STLParseError("Invalid binary STL: cannot read triangle count")
+
+                triangle_count = struct.unpack('<I', count_bytes)[0]
+                self.logger.info(f"Parsing binary STL with {triangle_count} triangles [array path]")
+
+                if triangle_count <= 0:
+                    raise STLParseError("Invalid triangle count in STL")
+
+                # Read all triangle records
+                total_bytes = triangle_count * self.BINARY_TRIANGLE_SIZE
+                path_str = str(file_path)
+                is_network = path_str.startswith('\\\\') or path_str.startswith('//')
+
+                if progress_callback:
+                    progress_callback.report(8.0, "Reading triangle block...")
+
+                t_read0 = time.time()
+                data = file.read(total_bytes)
+                t_read1 = time.time()
+
+                if len(data) != total_bytes:
+                    raise STLParseError(f"Failed to read triangle block ({len(data)} of {total_bytes} bytes)")
+
+                read_sec = max(1e-6, t_read1 - t_read0)
+                mb_s = (total_bytes / (1024 * 1024)) / read_sec
+                self.logger.info(f"IO read completed: {total_bytes} bytes in {read_sec:.2f}s ({mb_s:.2f} MB/s), source={'UNC' if is_network else 'local'}")
+
+                if progress_callback:
+                    progress_callback.report(22.0, "Decoding floats...")
+
+                # Decode first 48 bytes of each 50-byte record as 12 float32s
+                t_dec0 = time.time()
+                u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
+                floats = u8[:, :48].view('<f4').reshape(triangle_count, 12)  # type: ignore
+                # release reference to raw data buffer ASAP
+                del u8
+                t_dec1 = time.time()
+                self.logger.info(f"Decode floats: {triangle_count:,} triangles in {t_dec1 - t_dec0:.2f}s")
+
+                if progress_callback:
+                    progress_callback.report(35.0, "Preparing arrays...")
+
+                # normals: cols 0..2, vertices: cols 3..11 reshaped to (N,3,3)
+                verts = floats[:, 3:12].reshape(triangle_count, 3, 3)
+                vertex_array = verts.reshape(triangle_count * 3, 3).astype('float32', copy=False)
+
+                # Repeat each normal 3 times, one per vertex
+                normal_array = np.repeat(floats[:, 0:3], 3, axis=0).astype('float32', copy=False)
+
+                # Bounds
+                t_bnd0 = time.time()
+                flat = verts.reshape(-1, 3)
+                min_xyz = flat.min(axis=0)
+                max_xyz = flat.max(axis=0)
+                t_bnd1 = time.time()
+                self.logger.info(f"Bounds computed in {t_bnd1 - t_bnd0:.2f}s")
+
+                # free large temps early
+                del verts
+                del flat
+                # Do not del floats if needed later; but safe to drop to free memory
+                del floats
+                try:
+                    import psutil  # type: ignore
+                    rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
+                    self.logger.info(f"Process RSS after array parse: {rss_mb:.0f} MB")
+                except Exception:
+                    pass
+
+                # Stats
+                parsing_time = time.time() - start_time
+                file_size = file_path.stat().st_size
+                stats = ModelStats(
+                    vertex_count=triangle_count * 3,
+                    triangle_count=triangle_count,
+                    min_bounds=Vector3D(float(min_xyz[0]), float(min_xyz[1]), float(min_xyz[2])),
+                    max_bounds=Vector3D(float(max_xyz[0]), float(max_xyz[1]), float(max_xyz[2])),
+                    file_size_bytes=file_size,
+                    format_type=STLFormat.BINARY,
+                    parsing_time_seconds=parsing_time
+                )
+
+                if progress_callback:
+                    progress_callback.report(100.0, "Array-based STL parsing completed")
+
+                self.logger.info(
+                    f"Successfully parsed binary STL (array path): {triangle_count} triangles, "
+                    f"time: {parsing_time:.2f}s"
+                )
+
+                return Model(
+                    header=header,
+                    triangles=[],
+                    stats=stats,
+                    format_type=ModelFormat.STL,
+                    loading_state=LoadingState.ARRAY_GEOMETRY,
+                    file_path=str(file_path),
+                    vertex_array=vertex_array,
+                    normal_array=normal_array
+                )
+
+        except Exception as e:
+            self.logger.error(f"Error in array-based binary STL parse: {str(e)}")
+            raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
+
     def _parse_ascii_stl(
         self,
         file_path: Path,
