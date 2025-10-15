@@ -106,6 +106,10 @@ class DatabaseManager:
                 
                 # Migrate database schema if needed
                 self._migrate_database_schema(cursor)
+
+                # Create wood materials table and seed defaults
+                self._create_wood_materials_table(cursor)
+                self._seed_default_wood_materials(cursor)
                 
                 conn.commit()
                 logger.info("Database schema initialized successfully")
@@ -215,6 +219,84 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logger.warning(f"Database schema migration failed: {str(e)}")
     
+    @log_function_call(logger)
+    def _create_wood_materials_table(self, cursor: sqlite3.Cursor) -> None:
+        """
+        Create the wood_materials table if it doesn't exist.
+        Idempotent and safe to call multiple times.
+        """
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS wood_materials (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    base_color_r REAL NOT NULL,
+                    base_color_g REAL NOT NULL,
+                    base_color_b REAL NOT NULL,
+                    grain_color_r REAL NOT NULL,
+                    grain_color_g REAL NOT NULL,
+                    grain_color_b REAL NOT NULL,
+                    grain_scale REAL NOT NULL DEFAULT 1.0,
+                    grain_pattern TEXT NOT NULL DEFAULT 'ring',
+                    roughness REAL NOT NULL DEFAULT 0.5,
+                    specular REAL NOT NULL DEFAULT 0.3,
+                    is_default INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            # Helpful indexes
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_wood_materials_name ON wood_materials(name)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_wood_materials_default ON wood_materials(is_default)")
+            logger.debug("Ensured wood_materials table and indexes exist")
+        except sqlite3.Error as e:
+            logger.warning(f"Failed to create wood_materials table: {str(e)}")
+            raise
+
+    @log_function_call(logger)
+    def _seed_default_wood_materials(self, cursor: sqlite3.Cursor) -> None:
+        """
+        Seed the wood_materials table with default species if empty.
+        Defaults are inserted with is_default=1 and are immutable via public API.
+        """
+        try:
+            cursor.execute("SELECT COUNT(*) FROM wood_materials")
+            count = cursor.fetchone()[0] or 0
+            if count > 0:
+                logger.debug("wood_materials table already populated; skipping defaults seeding")
+                return
+
+            def hex_to_rgb_f(hexstr: str) -> Tuple[float, float, float]:
+                s = hexstr.lstrip('#')
+                r = int(s[0:2], 16) / 255.0
+                g = int(s[2:4], 16) / 255.0
+                b = int(s[4:6], 16) / 255.0
+                return (round(r, 6), round(g, 6), round(b, 6))
+
+            defaults = [
+                # name,   base_hex,  grain_hex, grain_scale, grain_pattern
+                ("Oak",    "#C19A6B", "#8B7355", 1.0, "ring"),
+                ("Walnut", "#5C4033", "#3E2723", 1.0, "ring"),
+                ("Cherry", "#D2691E", "#A0522D", 1.0, "ring"),
+                ("Maple",  "#E5C185", "#D2B48C", 1.0, "straight"),
+                ("Pine",   "#F5DEB3", "#DEB887", 1.0, "straight"),
+            ]
+
+            for name, base_hex, grain_hex, grain_scale, grain_pattern in defaults:
+                br, bg, bb = hex_to_rgb_f(base_hex)
+                gr, gg, gb = hex_to_rgb_f(grain_hex)
+                cursor.execute("""
+                    INSERT OR IGNORE INTO wood_materials
+                    (name, base_color_r, base_color_g, base_color_b,
+                     grain_color_r, grain_color_g, grain_color_b,
+                     grain_scale, grain_pattern, roughness, specular, is_default)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                """, (name, br, bg, bb, gr, gg, gb, grain_scale, grain_pattern, 0.5, 0.3))
+
+            logger.info("Seeded default wood materials: Oak, Walnut, Cherry, Maple, Pine")
+        except sqlite3.Error as e:
+            logger.warning(f"Failed to seed default wood materials: {str(e)}")
+            raise
+
     @log_function_call(logger)
     def _get_connection(self) -> sqlite3.Connection:
         """
@@ -736,6 +818,136 @@ class DatabaseManager:
             logger.error(f"Failed to delete category {category_id}: {str(e)}")
             raise
     
+    # Wood materials operations
+
+    @log_function_call(logger)
+    def get_wood_materials(self) -> List[Dict[str, Any]]:
+        """
+        Get all wood materials.
+
+        Returns:
+            List of wood material records as dictionaries (defaults first).
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM wood_materials
+                    ORDER BY is_default DESC, name ASC
+                """)
+                rows = cursor.fetchall()
+                materials = [dict(row) for row in rows]
+                logger.debug(f"Retrieved {len(materials)} wood materials")
+                return materials
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get wood materials: {str(e)}")
+            raise
+
+    @log_function_call(logger)
+    def get_wood_material_by_id(self, material_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific wood material by its ID.
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM wood_materials WHERE id = ?", (material_id,))
+                row = cursor.fetchone()
+                if row:
+                    logger.debug(f"Retrieved wood material id={material_id}")
+                    return dict(row)
+                logger.warning(f"Wood material id={material_id} not found")
+                return None
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get wood material id={material_id}: {str(e)}")
+            raise
+
+    @log_function_call(logger)
+    def get_wood_material_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific wood material by its name (unique).
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM wood_materials WHERE name = ?", (name,))
+                row = cursor.fetchone()
+                if row:
+                    logger.debug(f"Retrieved wood material name='{name}'")
+                    return dict(row)
+                logger.warning(f"Wood material name='{name}' not found")
+                return None
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get wood material name='{name}': {str(e)}")
+            raise
+
+    @log_function_call(logger)
+    def add_wood_material(
+        self,
+        name: str,
+        base_color: Tuple[float, float, float],
+        grain_color: Tuple[float, float, float],
+        grain_scale: float = 1.0,
+        grain_pattern: str = "ring",
+        roughness: float = 0.5,
+        specular: float = 0.3,
+    ) -> int:
+        """
+        Add a custom wood species. Default species are immutable and not created by this method.
+
+        Args:
+            name: Unique material name
+            base_color: Tuple (r,g,b) floats in [0,1]
+            grain_color: Tuple (r,g,b) floats in [0,1]
+            grain_scale: Grain scale factor (positive)
+            grain_pattern: 'ring' or 'straight' (free text allowed)
+            roughness: [0,1]
+            specular: [0,1]
+
+        Returns:
+            Inserted material ID
+
+        Raises:
+            sqlite3.IntegrityError if name already exists
+        """
+        def _clamp01(x: float) -> float:
+            try:
+                return max(0.0, min(1.0, float(x)))
+            except Exception:
+                return 0.0
+
+        try:
+            br, bg, bb = (_clamp01(base_color[0]), _clamp01(base_color[1]), _clamp01(base_color[2]))
+            gr, gg, gb = (_clamp01(grain_color[0]), _clamp01(grain_color[1]), _clamp01(grain_color[2]))
+            grain_scale = float(grain_scale) if grain_scale is not None else 1.0
+            if grain_scale <= 0.0:
+                grain_scale = 1.0
+            roughness = _clamp01(roughness)
+            specular = _clamp01(specular)
+
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO wood_materials
+                    (name, base_color_r, base_color_g, base_color_b,
+                     grain_color_r, grain_color_g, grain_color_b,
+                     grain_scale, grain_pattern, roughness, specular, is_default)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                """, (name, br, bg, bb, gr, gg, gb, grain_scale, grain_pattern, roughness, specular))
+                material_id = cursor.lastrowid
+                conn.commit()
+                logger.info(f"Added custom wood material '{name}' with ID: {material_id}")
+                return material_id
+        except sqlite3.IntegrityError as e:
+            logger.error(f"Wood material with name '{name}' already exists: {str(e)}")
+            raise
+        except sqlite3.Error as e:
+            logger.error(f"Failed to add wood material '{name}': {str(e)}")
+            raise
+
     # Search operations
     
     @log_function_call(logger)

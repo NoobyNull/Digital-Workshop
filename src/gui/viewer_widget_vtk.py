@@ -24,6 +24,7 @@ from core.model_cache import get_model_cache, CacheLevel
 from parsers.stl_parser import STLModel
 from core.data_structures import Model, LoadingState, Vector3D, Triangle
 from gui.theme import COLORS, vtk_rgb
+from gui.material_picker_widget import MaterialPickerWidget
 
 
 class RenderMode(Enum):
@@ -52,7 +53,10 @@ class Viewer3DWidget(QWidget):
     render_mode_changed = Signal(str)  # Emitted when render mode changes
     performance_updated = Signal(float)  # Emitted with FPS updates
     loading_progress_updated = Signal(float, str)  # Emitted with loading progress
-    
+
+    # New integration signals
+    lighting_panel_requested = Signal()  # Ask MainWindow to toggle lighting dock
+    material_selected = Signal(str)      # Forward selected species name to MainWindow
     def __init__(self, parent: Optional[QWidget] = None):
         """
         Initialize the 3D viewer widget.
@@ -70,6 +74,9 @@ class Viewer3DWidget(QWidget):
         self.current_model = None
         self.render_mode = RenderMode.SOLID
         self.actor = None
+        self.grid_visible = True  # Grid visibility state - MUST be set before _setup_vtk_scene()
+        self.grid_actor = None
+        self.ground_actor = None
         self.performance_timer = QTimer(self)
         self.frame_count = 0
         self.last_fps_time = time.time()
@@ -124,21 +131,36 @@ class Viewer3DWidget(QWidget):
         self.solid_button.setCheckable(True)
         self.solid_button.setChecked(True)
         self.solid_button.clicked.connect(lambda: self._set_render_mode(RenderMode.SOLID))
-        
-        self.wireframe_button = QPushButton("Wireframe")
-        self.wireframe_button.setCheckable(True)
-        self.wireframe_button.clicked.connect(lambda: self._set_render_mode(RenderMode.WIREFRAME))
-        
-        # Points mode intentionally removed per requirements (keep backend support if needed)
+
+        # Add material picker button
+        self.material_button = QPushButton("Material")
+        self.material_button.setCheckable(False)
+        self.material_button.clicked.connect(self._open_material_picker)
+
+        # Add lighting panel button
+        self.lighting_button = QPushButton("Lighting")
+        self.lighting_button.setCheckable(False)
+        self.lighting_button.clicked.connect(self._open_lighting_panel)
+
+        # Assemble controls
         control_layout.addWidget(self.solid_button)
-        control_layout.addWidget(self.wireframe_button)
-        control_layout.addStretch()
-        
+        control_layout.addWidget(self.material_button)
+        control_layout.addWidget(self.lighting_button)
+
+        # Grid toggle button
+        self.grid_button = QPushButton("Grid")
+        self.grid_button.setCheckable(True)
+        self.grid_button.setChecked(True)
+        self.grid_button.clicked.connect(self._toggle_grid)
+        control_layout.addWidget(self.grid_button)
+
         # Reset view button
         self.reset_button = QPushButton("Reset View")
         self.reset_button.clicked.connect(self.reset_view)
         control_layout.addWidget(self.reset_button)
-        
+
+        control_layout.addStretch()
+
         layout.addWidget(control_panel)
         
         # Create progress bar for loading
@@ -210,7 +232,12 @@ class Viewer3DWidget(QWidget):
         """Set up the VTK scene with renderer and interactor."""
         # Create renderer
         self.renderer = vtk.vtkRenderer()
-        self.renderer.SetBackground(*vtk_rgb('canvas_bg'))  # Theme canvas background
+        # Gradient studio-style background (darker at top, lighter at bottom)
+        self.renderer.GradientBackgroundOn()
+        bg_rgb = vtk_rgb('canvas_bg')
+        top_color = (max(0, bg_rgb[0] - 0.15), max(0, bg_rgb[1] - 0.15), max(0, bg_rgb[2] - 0.15))
+        self.renderer.SetBackground2(*top_color)  # Top (darker)
+        self.renderer.SetBackground(*bg_rgb)      # Bottom (original)
 
         # Configure VTK multi-threading to use available CPU cores
         try:
@@ -263,14 +290,76 @@ class Viewer3DWidget(QWidget):
         except Exception:
             pass
         
-        # Add default axes actor with better visibility
-        axes = vtk.vtkAxesActor()
-        self.marker = vtk.vtkOrientationMarkerWidget()
-        self.marker.SetOrientationMarker(axes)
-        self.marker.SetInteractor(self.interactor)
-        self.marker.SetEnabled(1)
-        self.marker.InteractiveOn()
-        self.marker.SetViewport(0.0, 0.0, 0.2, 0.2)  # Position in bottom-left corner
+        # Camera orientation widget in top-right corner (Fusion360-style face toggle)
+        self.camera_widget = None
+        try:
+            if hasattr(vtk, "vtkCameraOrientationWidget"):
+                # Preferred: clickable orientation cube that reorients the main camera
+                self.camera_widget = vtk.vtkCameraOrientationWidget()
+                self.camera_widget.SetInteractor(self.interactor)
+                self.camera_widget.SetParentRenderer(self.renderer)
+                try:
+                    # Put it in the upper-right corner
+                    self.camera_widget.SetViewportCorner(vtk.vtkCameraOrientationWidget.UpperRight)
+                except Exception:
+                    pass
+                # Enable interaction
+                try:
+                    self.camera_widget.SetEnableInteractivity(True)
+                except Exception:
+                    pass
+                try:
+                    self.camera_widget.SetEnabled(1)
+                except Exception:
+                    # Some VTK builds use On()
+                    self.camera_widget.On()
+            else:
+                # Fallback: annotated cube inside an orientation marker widget (less interactive)
+                cube = vtk.vtkAnnotatedCubeActor()
+                try:
+                    cube.SetFaceText(0, "X+")
+                    cube.SetFaceText(1, "X-")
+                    cube.SetFaceText(2, "Y+")
+                    cube.SetFaceText(3, "Y-")
+                    cube.SetFaceText(4, "Z+")
+                    cube.SetFaceText(5, "Z-")
+                except Exception:
+                    pass
+                # Style cube faces and edges
+                try:
+                    c = vtk_rgb('edge_color')
+                    cube.GetTextEdgesProperty().SetColor(*c)
+                    cube.GetXPlusFaceProperty().SetColor(0.85, 0.25, 0.25)
+                    cube.GetXMinusFaceProperty().SetColor(0.60, 0.15, 0.15)
+                    cube.GetYPlusFaceProperty().SetColor(0.25, 0.85, 0.25)
+                    cube.GetYMinusFaceProperty().SetColor(0.15, 0.60, 0.15)
+                    cube.GetZPlusFaceProperty().SetColor(0.25, 0.25, 0.85)
+                    cube.GetZMinusFaceProperty().SetColor(0.15, 0.15, 0.60)
+                except Exception:
+                    pass
+                self.marker = vtk.vtkOrientationMarkerWidget()
+                self.marker.SetOrientationMarker(cube)
+                self.marker.SetInteractor(self.interactor)
+                self.marker.SetEnabled(1)
+                self.marker.InteractiveOn()
+                # Position in top-right corner
+                self.marker.SetViewport(0.8, 0.8, 1.0, 1.0)
+        except Exception:
+            # Non-fatal if orientation widget setup fails
+            pass
+
+        # Add a themed grid floor (initial baseline, resized when a model loads)
+        # grid_actor and ground_actor initialized in __init__ before this point
+        try:
+            self.logger.info(f"Creating initial grid and ground with grid_visible={self.grid_visible}")
+            self._update_grid(radius=50.0, center_x=0.0, center_y=0.0)
+            self._create_ground_plane(radius=50.0, center_x=0.0, center_y=0.0)
+            self.logger.info(f"Initial grid and ground plane created - grid_actor exists: {self.grid_actor is not None}, ground_actor exists: {self.ground_actor is not None}")
+        except Exception as e:
+            self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
+        
+        # Set up shadow mapping for realistic rendering
+        self._setup_shadows()
         
         # Set up default camera
         self.renderer.ResetCamera()
@@ -279,6 +368,165 @@ class Viewer3DWidget(QWidget):
         self.interactor.Initialize()
         
         self.logger.debug("VTK scene setup completed")
+
+    def _update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
+        """
+        Create/update a studio-style, infinite-looking XY grid at Z=0 using a large planar mesh's edges.
+        The radius/center parameters are accepted for API compatibility but are not used.
+        """
+        try:
+            if self.grid_actor is None:
+                # Large plane to simulate infinite grid via perspective
+                plane = vtk.vtkPlaneSource()
+                plane.SetOrigin(-1000.0, -1000.0, 0.0)
+                plane.SetPoint1(1000.0, -1000.0, 0.0)
+                plane.SetPoint2(-1000.0, 1000.0, 0.0)
+                plane.SetResolution(100, 100)  # Dense enough for perspective falloff
+
+                # Extract only the grid lines (edges)
+                edges = vtk.vtkExtractEdges()
+                edges.SetInputConnection(plane.GetOutputPort())
+
+                mapper = vtk.vtkPolyDataMapper()
+                mapper.SetInputConnection(edges.GetOutputPort())
+
+                self.grid_actor = vtk.vtkActor()
+                self.grid_actor.SetMapper(mapper)
+
+                # Studio-style grid appearance
+                prop = self.grid_actor.GetProperty()
+                prop.SetColor(*vtk_rgb('edge_color'))
+                prop.SetOpacity(0.3)
+                prop.SetLineWidth(1.0)
+                try:
+                    prop.LightingOff()
+                except Exception:
+                    pass
+
+                self.renderer.AddActor(self.grid_actor)
+                # Respect current visibility toggle state
+                self.grid_actor.SetVisibility(self.grid_visible if hasattr(self, "grid_visible") else True)
+                self.logger.info("Studio-style infinite grid created.")
+            else:
+                # Ensure theme-aligned styling on updates
+                prop = self.grid_actor.GetProperty()
+                prop.SetColor(*vtk_rgb('edge_color'))
+                prop.SetOpacity(0.3)
+                prop.SetLineWidth(1.0)
+                if hasattr(prop, "SetRenderLinesAsTubes"):
+                    try:
+                        # Keep as lines for a clean, performant grid
+                        prop.SetRenderLinesAsTubes(False)
+                    except Exception:
+                        pass
+                if hasattr(self, "grid_visible"):
+                    self.grid_actor.SetVisibility(self.grid_visible)
+
+            # Maintain proper clipping and render
+            try:
+                self.renderer.ResetCameraClippingRange()
+            except Exception:
+                pass
+            try:
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
+        except Exception as e:
+            # Never break rendering due to grid failure
+            self.logger.warning(f"Grid update failed: {e}")
+            pass
+
+    def _create_ground_plane(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
+        """
+        Create a solid ground plane for shadow reception and better spatial reference.
+        
+        Args:
+            radius: Ground plane size
+            center_x: X coordinate of center
+            center_y: Y coordinate of center
+        """
+        try:
+            # Create a plane at Z=0 (slightly below to avoid z-fighting with grid)
+            plane = vtk.vtkPlaneSource()
+            size = radius * 2.5  # Slightly larger than grid
+            plane.SetOrigin(center_x - size, center_y - size, -0.01)  # Slightly below Z=0
+            plane.SetPoint1(center_x + size, center_y - size, -0.01)
+            plane.SetPoint2(center_x - size, center_y + size, -0.01)
+            plane.SetResolution(10, 10)  # More segments for better shadow reception
+            
+            if self.ground_actor is None:
+                mapper = vtk.vtkPolyDataMapper()
+                mapper.SetInputConnection(plane.GetOutputPort())
+                
+                self.ground_actor = vtk.vtkActor()
+                self.ground_actor.SetMapper(mapper)
+                
+                # Make ground visible with subtle color and shadow reception
+                prop = self.ground_actor.GetProperty()
+                # Use slightly darker version of canvas_bg for ground contrast
+                bg_rgb = vtk_rgb('canvas_bg')
+                ground_color = (max(0, bg_rgb[0] - 0.08), max(0, bg_rgb[1] - 0.08), max(0, bg_rgb[2] - 0.08))
+                prop.SetColor(*ground_color)
+                prop.SetOpacity(0.95)  # More opaque to be visible
+                prop.LightingOn()
+                
+                # Enable shadow reception with proper material properties
+                prop.SetAmbient(0.3)
+                prop.SetDiffuse(0.8)
+                prop.SetSpecular(0.1)
+                prop.SetSpecularPower(10.0)
+                
+                self.renderer.AddActor(self.ground_actor)
+                # Set initial visibility
+                if hasattr(self, 'grid_visible'):
+                    self.ground_actor.SetVisibility(self.grid_visible)
+                else:
+                    self.ground_actor.SetVisibility(True)
+                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, color={ground_color}")
+            else:
+                # Update existing ground plane
+                mapper = self.ground_actor.GetMapper()
+                mapper.SetInputConnection(plane.GetOutputPort())
+                
+                # Update color
+                bg_rgb = vtk_rgb('canvas_bg')
+                ground_color = (max(0, bg_rgb[0] - 0.08), max(0, bg_rgb[1] - 0.08), max(0, bg_rgb[2] - 0.08))
+                self.ground_actor.GetProperty().SetColor(*ground_color)
+                self.logger.info(f"Ground plane updated: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, color={ground_color}")
+                # Ensure visibility matches state
+                if hasattr(self, 'grid_visible'):
+                    self.ground_actor.SetVisibility(self.grid_visible)
+        except Exception as e:
+            # Never break rendering due to ground plane failure
+            self.logger.warning(f"Ground plane creation/update failed: {e}")
+
+    def _setup_shadows(self) -> None:
+        """Enable shadow mapping for realistic shadows."""
+        try:
+            # Enable shadow mapping on the renderer
+            if hasattr(vtk, 'vtkShadowMapPass'):
+                shadows = vtk.vtkShadowMapPass()
+                
+                # Create sequence pass for shadow rendering
+                seq = vtk.vtkSequencePass()
+                passes = vtk.vtkRenderPassCollection()
+                passes.AddItem(shadows.GetShadowMapBakerPass())
+                passes.AddItem(shadows)
+                seq.SetPasses(passes)
+                
+                # Create camera pass
+                cameraP = vtk.vtkCameraPass()
+                cameraP.SetDelegatePass(seq)
+                
+                # Set render pass to renderer
+                try:
+                    self.renderer.SetPass(cameraP)
+                    self.logger.info("Shadow mapping enabled")
+                except Exception as e:
+                    self.logger.debug(f"Could not set shadow pass (may not be supported): {e}")
+        except Exception as e:
+            # Shadows are optional enhancement, don't break viewer if unavailable
+            self.logger.debug(f"Shadow mapping not available: {e}")
     
     def _setup_performance_monitoring(self) -> None:
         """Set up performance monitoring for FPS tracking."""
@@ -473,8 +721,7 @@ class Viewer3DWidget(QWidget):
         
         # Update button states
         self.solid_button.setChecked(mode == RenderMode.SOLID)
-        self.wireframe_button.setChecked(mode == RenderMode.WIREFRAME)
-        # Points button removed from UI
+        # Wireframe/Points buttons are not present in the UI; backend modes remain available
         
         # Apply rendering mode if model is loaded
         if self.actor:
@@ -518,6 +765,36 @@ class Viewer3DWidget(QWidget):
 
         # Log the render mode change for debugging
         self.logger.debug(f"Applied render mode: {self.render_mode.value}, EdgeVisibility: {self.actor.GetProperty().GetEdgeVisibility()}")
+
+    def _toggle_grid(self) -> None:
+        """Toggle grid and ground plane visibility."""
+        self.grid_visible = not self.grid_visible
+        
+        self.logger.info(f"Grid toggle requested: new state={self.grid_visible}, grid_actor={self.grid_actor is not None}, ground_actor={self.ground_actor is not None}")
+        
+        # Update grid visibility
+        if self.grid_actor:
+            self.grid_actor.SetVisibility(self.grid_visible)
+            self.logger.info(f"Grid actor visibility set to {self.grid_visible}")
+        else:
+            self.logger.warning("Grid actor not found during toggle")
+        
+        # Update ground plane visibility
+        if self.ground_actor:
+            self.ground_actor.SetVisibility(self.grid_visible)
+            self.logger.info(f"Ground actor visibility set to {self.grid_visible}")
+        else:
+            self.logger.warning("Ground actor not found during toggle")
+        
+        # Update button state
+        self.grid_button.setChecked(self.grid_visible)
+        
+        # Render update
+        try:
+            self.vtk_widget.GetRenderWindow().Render()
+            self.logger.debug("Render window updated after grid toggle")
+        except Exception as e:
+            self.logger.error(f"Failed to render after grid toggle: {e}")
     
     def _remove_current_model(self) -> None:
         """Remove the currently loaded model from the scene."""
@@ -564,6 +841,13 @@ class Viewer3DWidget(QWidget):
             dz = max(1e-6, zmax - zmin)
             diag = (dx * dx + dy * dy + dz * dz) ** 0.5
             radius = max(1e-3, 0.5 * diag)
+
+            # Resize grid and ground plane to comfortably cover the scene, centered on model
+            try:
+                self._update_grid(radius, center_x=cx, center_y=cy)
+                self._create_ground_plane(radius, center_x=cx, center_y=cy)
+            except Exception:
+                pass
 
             cam = self.renderer.GetActiveCamera()
             if cam is None:
@@ -756,15 +1040,16 @@ class Viewer3DWidget(QWidget):
             self.actor = vtk.vtkActor()
             self.actor.SetMapper(mapper)
 
-            # Set properties using theme colors
-            self.actor.GetProperty().SetColor(*vtk_rgb('model_surface'))
-            self.actor.GetProperty().SetAmbient(0.3)  # Increased ambient lighting
-            self.actor.GetProperty().SetDiffuse(0.8)  # Increased diffuse lighting
-            self.actor.GetProperty().SetSpecular(0.4)
-            self.actor.GetProperty().SetSpecularPower(15.0)
-            self.actor.GetProperty().SetEdgeColor(*vtk_rgb('edge_color'))
-            self.actor.GetProperty().SetLineWidth(1.0)
-            self.actor.GetProperty().BackfaceCullingOff()
+            # Set properties using theme colors and enable shadows
+            prop = self.actor.GetProperty()
+            prop.SetColor(*vtk_rgb('model_surface'))
+            prop.SetAmbient(0.2)  # Lower ambient for better shadow contrast
+            prop.SetDiffuse(0.9)  # Higher diffuse for shadow reception
+            prop.SetSpecular(0.3)
+            prop.SetSpecularPower(15.0)
+            prop.SetEdgeColor(*vtk_rgb('edge_color'))
+            prop.SetLineWidth(1.0)
+            prop.BackfaceCullingOff()
             self.actor.VisibilityOn()
             # Ensure fully opaque and lighting enabled for visibility
             try:
@@ -786,26 +1071,6 @@ class Viewer3DWidget(QWidget):
             # Add actor to renderer
             self.renderer.AddActor(self.actor)
 
-            # Add bounding box outline for visibility diagnostics
-            try:
-                of = vtk.vtkOutlineFilter()
-                of.SetInputData(polydata)
-                of.Update()
-                omap = vtk.vtkPolyDataMapper()
-                omap.SetInputConnection(of.GetOutputPort())
-                oact = vtk.vtkActor()
-                oact.SetMapper(omap)
-                oact.GetProperty().SetColor(*vtk_rgb('edge_color'))
-                oact.GetProperty().SetLineWidth(2.0)
-                oact.PickableOff()
-                self.renderer.AddActor(oact)
-                self.logger.info(
-                    f"Added outline actor: points={of.GetOutput().GetNumberOfPoints()}, "
-                    f"lines={of.GetOutput().GetNumberOfLines()}"
-                )
-            except Exception as _ol_err:
-                self.logger.warning(f"Failed to add outline actor: {_ol_err}")
- 
             # Apply current render mode
             self._apply_render_mode()
  
@@ -965,7 +1230,15 @@ class Viewer3DWidget(QWidget):
 
             # Update renderer background
             if hasattr(self, "renderer"):
-                self.renderer.SetBackground(*vtk_rgb('canvas_bg'))
+                bg_rgb = vtk_rgb('canvas_bg')
+                # Gradient background
+                top_color = (max(0, bg_rgb[0] - 0.15), max(0, bg_rgb[1] - 0.15), max(0, bg_rgb[2] - 0.15))
+                try:
+                    self.renderer.GradientBackgroundOn()
+                except Exception:
+                    pass
+                self.renderer.SetBackground2(*top_color)
+                self.renderer.SetBackground(*bg_rgb)
 
                 # Update lights in the renderer
                 lights = self.renderer.GetLights()
@@ -983,9 +1256,51 @@ class Viewer3DWidget(QWidget):
                 prop.SetColor(*vtk_rgb('model_surface'))
                 prop.SetEdgeColor(*vtk_rgb('edge_color'))
 
+            # Update grid color/opacity if present
+            if hasattr(self, "grid_actor") and self.grid_actor:
+                try:
+                    gp = self.grid_actor.GetProperty()
+                    gp.SetColor(*vtk_rgb('edge_color'))
+                    gp.SetOpacity(0.3)
+                    gp.SetLineWidth(1.0)
+                    if hasattr(gp, "SetRenderLinesAsTubes"):
+                        gp.SetRenderLinesAsTubes(True)
+                except Exception:
+                    pass
+
+            # Update ground plane color if present
+            if hasattr(self, "ground_actor") and self.ground_actor:
+                try:
+                    bg_rgb = vtk_rgb('canvas_bg')
+                    ground_color = (max(0, bg_rgb[0] - 0.05), max(0, bg_rgb[1] - 0.05), max(0, bg_rgb[2] - 0.05))
+                    self.ground_actor.GetProperty().SetColor(*ground_color)
+                except Exception:
+                    pass
+
             # Render updates
             if hasattr(self, "vtk_widget"):
                 self.vtk_widget.GetRenderWindow().Render()
         except Exception:
             # Fail-safe: never break UI due to theme update
+            pass
+
+    # ---- UI Actions: Material / Lighting ----
+    def _open_material_picker(self) -> None:
+        """Open material picker dialog"""
+        try:
+            dlg = MaterialPickerWidget(parent=self)
+            # Forward selection to MainWindow; MainWindow's MaterialManager will apply
+            dlg.material_selected.connect(lambda species: self.material_selected.emit(species))
+            dlg.exec_()
+        except Exception as e:
+            try:
+                self.logger.error(f"Failed to open material picker: {e}")
+            except Exception:
+                pass
+
+    def _open_lighting_panel(self) -> None:
+        """Toggle lighting control panel"""
+        try:
+            self.lighting_panel_requested.emit()
+        except Exception:
             pass

@@ -115,10 +115,21 @@ class ThemingTab(QWidget):
         self._setup_ui()
 
     def _normalize_hex(self, val: str) -> str:
-        """Normalize user-entered hex to #rrggbb; returns empty string on invalid."""
+        """
+        Normalize user-entered hex to #rrggbb; returns original value for CSS keywords.
+        Returns empty string on invalid hex.
+        """
         if not val:
             return ""
         s = val.strip()
+        lower = s.lower()
+        
+        # Pass through CSS color functions and keywords without modification
+        css_keywords = {"transparent", "inherit", "initial", "unset", "currentcolor"}
+        if lower.startswith("rgba(") or lower.startswith("rgb(") or lower in css_keywords:
+            return s
+        
+        # Handle hex colors
         if not s.startswith("#"):
             s = "#" + s
         # Accept #rgb and #rrggbb
@@ -136,7 +147,8 @@ class ThemingTab(QWidget):
     def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
         """Update the 'Pick…' button swatch to match the given hex value using theme variables."""
         hex_val = self._normalize_hex(val)
-        if not hex_val:
+        # For CSS keywords, show neutral style
+        if not hex_val or not hex_val.startswith("#"):
             btn.setStyleSheet(
                 f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
             )
@@ -152,25 +164,6 @@ class ThemingTab(QWidget):
             btn.setStyleSheet(
                 f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
             )
-
-    def _normalize_hex(self, val: str) -> str:
-        """Normalize user-entered hex to #rrggbb; returns empty string on invalid."""
-        if not val:
-            return ""
-        s = val.strip()
-        if not s.startswith("#"):
-            s = "#" + s
-        # Accept #rgb and #rrggbb
-        if len(s) == 4:
-            r, g, b = s[1], s[2], s[3]
-            s = f"#{r}{r}{g}{g}{b}{b}"
-        if len(s) != 7:
-            return ""
-        try:
-            int(s[1:], 16)
-            return s.lower()
-        except Exception:
-            return ""
 
     def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
         """Update the pick button's background to match the given hex value using theme variables."""

@@ -12,7 +12,7 @@ import base64
 from pathlib import Path
 from typing import List, Optional
 
-from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths
+from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths, QSettings
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
@@ -25,7 +25,9 @@ from core.database_manager import get_database_manager
 from parsers.stl_parser import STLParser, STLProgressCallback
 from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from gui.preferences import PreferencesDialog
-
+from gui.lighting_control_panel import LightingControlPanel
+from gui.lighting_manager import LightingManager
+from gui.material_manager import MaterialManager
 
 class MainWindow(QMainWindow):
     """
@@ -820,7 +822,24 @@ class MainWindow(QMainWindow):
             self._connect_layout_autosave(self.properties_dock)
         except Exception:
             pass
-        
+
+        # Lighting control dock (right side, initially hidden)
+        try:
+            self.lighting_panel = LightingControlPanel(self)
+            self.lighting_panel.setObjectName("LightingDock")
+            self.lighting_panel.setVisible(False)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.lighting_panel)
+            # Autosave when lighting dock changes state/position
+            self._connect_layout_autosave(self.lighting_panel)
+            # Persist panel visibility via QSettings
+            try:
+                self.lighting_panel.visibilityChanged.connect(lambda _=False: self._save_lighting_panel_visibility())
+            except Exception:
+                pass
+            # TODO: Add support for multiple light sources
+        except Exception as e:
+            self.logger.warning(f"Failed to create LightingControlPanel: {e}")
+         
         # Metadata dock (bottom)
         self.metadata_dock = QDockWidget("Metadata Editor", self)
         self.metadata_dock.setObjectName("MetadataDock")
@@ -928,6 +947,15 @@ class MainWindow(QMainWindow):
             self._load_saved_layout()
         except Exception:
             pass
+        # Load persisted lighting panel visibility (in addition to dock state)
+        try:
+            if hasattr(self, "lighting_panel") and self.lighting_panel:
+                settings = QSettings()
+                visible = settings.value('lighting_panel/visible', False, type=bool)
+                self.lighting_panel.setVisible(bool(visible))
+                self.logger.info(f"Loaded lighting panel visibility: {bool(visible)}")
+        except Exception as e:
+            self.logger.warning(f"Failed to load lighting panel visibility: {e}")
         self.logger.debug("Dock widgets setup completed")
     
     def _setup_central_widget(self) -> None:
@@ -948,11 +976,57 @@ class MainWindow(QMainWindow):
 
             # Create the 3D viewer widget
             self.viewer_widget = Viewer3DWidget(self)
-
+ 
             # Connect signals
             self.viewer_widget.model_loaded.connect(self._on_model_loaded)
             self.viewer_widget.performance_updated.connect(self._on_performance_updated)
 
+            # Managers
+            try:
+                # Material manager with database
+                self.material_manager = MaterialManager(get_database_manager())
+            except Exception as e:
+                self.material_manager = None
+                self.logger.warning(f"MaterialManager unavailable: {e}")
+
+            try:
+                # Lighting manager with viewer renderer
+                renderer = getattr(self.viewer_widget, "renderer", None)
+                self.lighting_manager = LightingManager(renderer) if renderer is not None else None
+                if self.lighting_manager:
+                    self.lighting_manager.create_light()
+                    # Load persisted lighting settings
+                    try:
+                        self._load_lighting_settings()
+                    except Exception as le:
+                        self.logger.warning(f"Failed to load lighting settings: {le}")
+            except Exception as e:
+                self.lighting_manager = None
+                self.logger.warning(f"LightingManager unavailable: {e}")
+
+            # Viewer integration signals
+            if hasattr(self.viewer_widget, "lighting_panel_requested"):
+                self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
+            if hasattr(self.viewer_widget, "material_selected"):
+                self.viewer_widget.material_selected.connect(self._apply_material_species)
+
+            # Connect lighting panel controls to manager
+            try:
+                if hasattr(self, "lighting_panel") and self.lighting_panel and self.lighting_manager:
+                    self.lighting_panel.position_changed.connect(self._update_light_position)
+                    self.lighting_panel.color_changed.connect(self._update_light_color)
+                    self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
+                    # Sync panel with current manager values
+                    props = self.lighting_manager.get_properties()
+                    self.lighting_panel.set_values(
+                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
+                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
+                        intensity=float(props.get("intensity", 0.8)),
+                        emit_signals=False,
+                    )
+            except Exception as e:
+                self.logger.warning(f"Failed to connect lighting panel: {e}")
+ 
             # Apply theme to viewer if supported
             if hasattr(self.viewer_widget, "apply_theme"):
                 try:
@@ -1249,6 +1323,72 @@ class MainWindow(QMainWindow):
             self._schedule_layout_save()
         except Exception:
             pass
+    
+    # ---- Settings persistence (QSettings) ----
+    def _save_lighting_settings(self) -> None:
+        """Save current lighting settings to QSettings."""
+        try:
+            settings = QSettings()
+            if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                props = self.lighting_manager.get_properties()
+                settings.setValue('lighting/position_x', float(props['position'][0]))
+                settings.setValue('lighting/position_y', float(props['position'][1]))
+                settings.setValue('lighting/position_z', float(props['position'][2]))
+                settings.setValue('lighting/color_r', float(props['color'][0]))
+                settings.setValue('lighting/color_g', float(props['color'][1]))
+                settings.setValue('lighting/color_b', float(props['color'][2]))
+                settings.setValue('lighting/intensity', float(props['intensity']))
+                self.logger.debug("Lighting settings saved to QSettings")
+        except Exception as e:
+            self.logger.warning(f"Failed to save lighting settings: {e}")
+    
+    def _load_lighting_settings(self) -> None:
+        """Load lighting settings from QSettings and apply to manager and panel."""
+        try:
+            settings = QSettings()
+            if settings.contains('lighting/position_x'):
+                pos_x = settings.value('lighting/position_x', 100.0, type=float)
+                pos_y = settings.value('lighting/position_y', 100.0, type=float)
+                pos_z = settings.value('lighting/position_z', 100.0, type=float)
+                col_r = settings.value('lighting/color_r', 1.0, type=float)
+                col_g = settings.value('lighting/color_g', 1.0, type=float)
+                col_b = settings.value('lighting/color_b', 1.0, type=float)
+                intensity = settings.value('lighting/intensity', 0.8, type=float)
+                props = {
+                    "position": (float(pos_x), float(pos_y), float(pos_z)),
+                    "color": (float(col_r), float(col_g), float(col_b)),
+                    "intensity": float(intensity),
+                }
+                if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                    self.lighting_manager.apply_properties(props)
+                # Sync to lighting_panel without re-emitting
+                try:
+                    if hasattr(self, 'lighting_panel') and self.lighting_panel:
+                        self.lighting_panel.set_values(
+                            position=props["position"],
+                            color=props["color"],
+                            intensity=props["intensity"],
+                            emit_signals=False,
+                        )
+                except Exception:
+                    pass
+                self.logger.info("Lighting settings loaded from QSettings")
+        except Exception as e:
+            self.logger.warning(f"Failed to load lighting settings: {e}")
+    
+    def _save_lighting_panel_visibility(self) -> None:
+        """Persist the lighting panel visibility state."""
+        try:
+            if hasattr(self, 'lighting_panel') and self.lighting_panel:
+                settings = QSettings()
+                vis = bool(self.lighting_panel.isVisible())
+                settings.setValue('lighting_panel/visible', vis)
+                self.logger.debug(f"Saved lighting panel visibility: {vis}")
+        except Exception as e:
+            self.logger.warning(f"Failed to save lighting panel visibility: {e}")
+    
+    # TODO: Add material roughness/metallic sliders in picker
+    # TODO: Add export material presets feature
 
     # Menu action handlers
      
@@ -1351,6 +1491,20 @@ class MainWindow(QMainWindow):
             info: Information about the loaded model
         """
         self.logger.info(f"Viewer model loaded: {info}")
+        # Attempt to apply last-used material species
+        try:
+            settings = QSettings()
+            last_species = settings.value('material/last_species', '', type=str)
+            if last_species:
+                if hasattr(self, "material_manager") and self.material_manager:
+                    species_list = self.material_manager.get_species_list()
+                    if last_species in species_list:
+                        self.logger.info(f"Applying last material species on load: {last_species}")
+                        self._apply_material_species(last_species)
+                    else:
+                        self.logger.warning(f"Last material '{last_species}' not found; skipping reapply")
+        except Exception as e:
+            self.logger.warning(f"Failed to reapply last material species: {e}")
         
         # Update model properties dock if it exists
         if hasattr(self, 'properties_dock'):
@@ -1573,6 +1727,78 @@ class MainWindow(QMainWindow):
         )
         
         QMessageBox.about(self, "About 3D-MM", about_text)
+     
+    # Lighting/Material integrations
+    def _toggle_lighting_panel(self) -> None:
+        """Show/hide the lighting control dock."""
+        try:
+            if hasattr(self, "lighting_panel") and self.lighting_panel:
+                is_visible = self.lighting_panel.isVisible()
+                self.lighting_panel.setVisible(not is_visible)
+                if not is_visible:
+                    try:
+                        self.lighting_panel.raise_()  # type: ignore[attr-defined]
+                    except Exception:
+                        pass
+        except Exception as e:
+            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+
+    def _update_light_position(self, x: float, y: float, z: float) -> None:
+        if hasattr(self, "lighting_manager") and self.lighting_manager:
+            try:
+                self.lighting_manager.update_position(x, y, z)
+                self._save_lighting_settings()
+            except Exception as e:
+                self.logger.error(f"update_position failed: {e}")
+
+    def _update_light_color(self, r: float, g: float, b: float) -> None:
+        if hasattr(self, "lighting_manager") and self.lighting_manager:
+            try:
+                self.lighting_manager.update_color(r, g, b)
+                self._save_lighting_settings()
+            except Exception as e:
+                self.logger.error(f"update_color failed: {e}")
+
+    def _update_light_intensity(self, value: float) -> None:
+        if hasattr(self, "lighting_manager") and self.lighting_manager:
+            try:
+                self.lighting_manager.update_intensity(value)
+                self._save_lighting_settings()
+            except Exception as e:
+                self.logger.error(f"update_intensity failed: {e}")
+
+    def _apply_material_species(self, species_name: str) -> None:
+        """Apply selected material species to the current viewer actor."""
+        try:
+            if not species_name:
+                return
+            # TODO: Add UV mapping generation for models without texture coordinates
+            if not hasattr(self, "viewer_widget") or not getattr(self.viewer_widget, "actor", None):
+                self.logger.warning("No model loaded, cannot apply material")
+                return
+            if not hasattr(self, "material_manager") or self.material_manager is None:
+                self.logger.warning("MaterialManager not available")
+                return
+            ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
+            if ok:
+                # Save last selected material species
+                try:
+                    settings = QSettings()
+                    settings.setValue('material/last_species', species_name)
+                    self.logger.info(f"Saved last material species: {species_name}")
+                except Exception as se:
+                    self.logger.warning(f"Failed to persist last material species: {se}")
+                # Re-render
+                try:
+                    self.viewer_widget.vtk_widget.GetRenderWindow().Render()
+                except Exception:
+                    pass
+                try:
+                    self.statusBar().showMessage(f"Applied material: {species_name}", 2000)
+                except Exception:
+                    pass
+        except Exception as e:
+            self.logger.error(f"Failed to apply material '{species_name}': {e}")
     
     # Event handlers
 
@@ -1606,6 +1832,21 @@ class MainWindow(QMainWindow):
         
         if hasattr(self, 'model_library_widget'):
             self.model_library_widget.cleanup()
+        
+        # Memory cleanup: clear material texture cache
+        try:
+            if hasattr(self, 'material_manager') and self.material_manager:
+                self.material_manager.clear_texture_cache()
+                self.logger.info("Cleared MaterialManager texture cache on close")
+        except Exception as e:
+            self.logger.warning(f"Failed to clear material texture cache: {e}")
+        
+        # Persist final lighting settings and panel visibility on close
+        try:
+            self._save_lighting_settings()
+            self._save_lighting_panel_visibility()
+        except Exception:
+            pass
         
         # Accept the close event
         event.accept()
