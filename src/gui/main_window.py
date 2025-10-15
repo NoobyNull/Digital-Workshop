@@ -17,13 +17,13 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QMenuBar, QToolBar, QStatusBar, QDockWidget, QLabel, QTextEdit,
-    QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar
+    QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar, QTabWidget
 )
 
 from core.logging_config import get_logger
 from core.database_manager import get_database_manager
 from parsers.stl_parser import STLParser, STLProgressCallback
-from gui.theme import COLORS
+from gui.theme import COLORS, qss_tabs_lists_labels
 from gui.preferences import PreferencesDialog
 
 
@@ -108,18 +108,18 @@ class MainWindow(QMainWindow):
                 font-weight: bold;
             }}
             QDockWidget::title {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 padding: 5px;
                 border-bottom: 1px solid {COLORS.border};
             }}
             QToolBar {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 border: 1px solid {COLORS.border};
                 spacing: 3px;
                 color: {COLORS.text};
             }}
             QMenuBar {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 color: {COLORS.text};
                 border-bottom: 1px solid {COLORS.border};
             }}
@@ -169,18 +169,18 @@ class MainWindow(QMainWindow):
                 font-weight: bold;
             }}
             QDockWidget::title {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 padding: 5px;
                 border-bottom: 1px solid {COLORS.border};
             }}
             QToolBar {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 border: 1px solid {COLORS.border};
                 spacing: 3px;
                 color: {COLORS.text};
             }}
             QMenuBar {{
-                background-color: {COLORS.surface};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS.surface_grad_start}, stop:1 {COLORS.surface_grad_end});
                 color: {COLORS.text};
                 border-bottom: 1px solid {COLORS.border};
             }}
@@ -464,25 +464,54 @@ class MainWindow(QMainWindow):
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
         )
         
-        # Create metadata editor widget
+        # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
         try:
             from gui.metadata_editor import MetadataEditorWidget
             self.metadata_editor = MetadataEditorWidget(self)
-            
+
             # Connect signals
             self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
             self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
-            
-            self.metadata_dock.setWidget(self.metadata_editor)
+
+            # Bottom tabs: Metadata | Notes | History
+            self.metadata_tabs = QTabWidget(self)
+            self.metadata_tabs.setObjectName("MetadataTabs")
+            self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
+
+            # Notes tab (placeholder)
+            notes_widget = QTextEdit()
+            notes_widget.setReadOnly(True)
+            notes_widget.setPlainText(
+                "Notes\n\n"
+                "Add project or model-specific notes here.\n"
+                "Future: rich text, timestamps, and attachments."
+            )
+            self.metadata_tabs.addTab(notes_widget, "Notes")
+
+            # History tab (placeholder)
+            history_widget = QTextEdit()
+            history_widget.setReadOnly(True)
+            history_widget.setPlainText(
+                "History\n\n"
+                "Timeline of edits and metadata changes will appear here."
+            )
+            self.metadata_tabs.addTab(history_widget, "History")
+
+            # Apply themed styling to the tab widget
+            try:
+                self.metadata_tabs.setStyleSheet(qss_tabs_lists_labels())
+            except Exception:
+                pass
+
+            self.metadata_dock.setWidget(self.metadata_tabs)
             try:
                 self._setup_dock_context_menu(self.metadata_dock, Qt.BottomDockWidgetArea)
             except Exception:
                 pass
-            self.logger.info("Metadata editor widget created successfully")
-            
+            self.logger.info("Metadata editor widget created successfully (tabbed)")
         except ImportError as e:
             self.logger.warning(f"Failed to import metadata editor widget: {str(e)}")
-            
+
             # Fallback to placeholder
             metadata_widget = QTextEdit()
             metadata_widget.setReadOnly(True)

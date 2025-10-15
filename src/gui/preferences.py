@@ -134,20 +134,24 @@ class ThemingTab(QWidget):
             return ""
 
     def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
-        """Update the 'Pick…' button swatch to match the given hex value."""
+        """Update the 'Pick…' button swatch to match the given hex value using theme variables."""
         hex_val = self._normalize_hex(val)
         if not hex_val:
-            btn.setStyleSheet("QPushButton { background-color: #808080; color: #ffffff; }")
+            btn.setStyleSheet(
+                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
+            )
             return
         try:
             r, g, b = hex_to_rgb(hex_val)
             brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            text_color = "#000000" if brightness >= 0.6 else "#ffffff"
+            text_color = color_hex('text') if brightness >= 0.6 else color_hex('text_inverse')
             btn.setStyleSheet(
-                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; border: 1px solid #808080; }}"
+                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; border: 1px solid {color_hex('border')}; }}"
             )
         except Exception:
-            btn.setStyleSheet("QPushButton { background-color: #808080; color: #ffffff; }")
+            btn.setStyleSheet(
+                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
+            )
 
     def _normalize_hex(self, val: str) -> str:
         """Normalize user-entered hex to #rrggbb; returns empty string on invalid."""
@@ -169,23 +173,26 @@ class ThemingTab(QWidget):
             return ""
 
     def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
-        """Update the pick button's background to match the given hex value."""
+        """Update the pick button's background to match the given hex value using theme variables."""
         hex_val = self._normalize_hex(val)
         if not hex_val:
-            # fallback neutral styling when invalid
-            btn.setStyleSheet("QPushButton { background-color: #808080; color: #ffffff; }")
+            # fallback neutral styling when invalid (using theme variables)
+            btn.setStyleSheet(
+                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
+            )
             return
         try:
             r, g, b = hex_to_rgb(hex_val)
             # Perceived brightness to choose legible text color
             brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            text_color = "#000000" if brightness >= 0.6 else "#ffffff"
+            text_color = color_hex('text') if brightness >= 0.6 else color_hex('text_inverse')
             btn.setStyleSheet(
-                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; "
-                f"border: 1px solid #808080; }}"
+                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; border: 1px solid {color_hex('border')}; }}"
             )
         except Exception:
-            btn.setStyleSheet("QPushButton { background-color: #808080; color: #ffffff; }")
+            btn.setStyleSheet(
+                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
+            )
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)

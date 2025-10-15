@@ -60,10 +60,16 @@ class ThemeColors:
     text: str = "#000000"              # Primary text
     text_inverse: str = "#ffffff"      # Text on primary or dark surfaces
     text_muted: str = "#666666"        # Subdued text, icons
+    disabled_text: str = "#9aa0a6"     # Disabled text/icons
+
+    # Surfaces
+    toolbar_bg: str = "#f5f5f5"        # Toolbar background
+    card_bg: str = "#ffffff"           # Cards/panels inner background
 
     # Borders and dividers
     border: str = "#d0d0d0"
     border_light: str = "#f0f0f0"
+    focus_border: str = "#2684ff"      # Focus ring / active border
 
     # Accent/brand
     primary: str = "#0078d4"           # Accent / selection / primary actions
@@ -75,6 +81,11 @@ class ThemeColors:
     pressed: str = "#d0d0d0"
     selection_bg: str = "#0078d4"
     selection_text: str = "#ffffff"
+
+    # Status
+    success: str = "#52c41a"
+    warning: str = "#faad14"
+    error: str = "#ff4d4f"
 
     # Controls
     progress_chunk: str = "#0078d4"
@@ -92,6 +103,10 @@ class ThemeColors:
     star_filled: str = "#ffd700"       # Gold
     star_empty: str = "#c8c8c8"        # Light gray
     star_hover: str = "#ffeb64"        # Light gold
+
+    # Gradients
+    surface_grad_start: str = "#fafafa"
+    surface_grad_end: str = "#f2f2f2"
 
 
 # Singleton palette object (can be replaced at runtime via set_theme)
