@@ -886,21 +886,15 @@ class Viewer3DWidget(QWidget):
                     f"    Clipping Range: ({pre_clipping[0]:.3f}, {pre_clipping[1]:.3f})"
                 )
             
-            # DON'T automatically refit camera after UCS interaction
-            # The UCS widget already sets the correct camera orientation
-            # We only need to update clipping range to ensure model is visible
+            # Fit camera to model while preserving UCS orientation
             if self.current_model and self.actor:
                 bounds = self.actor.GetBounds() if self.actor else None
                 self.logger.debug(
                     f"  Model loaded: triangle_count={self.current_model.stats.triangle_count}, "
-                    f"bounds={bounds if bounds else 'None'} - Preserving UCS orientation"
+                    f"bounds={bounds if bounds else 'None'} - Preserving UCS orientation with zoom to extents"
                 )
-                # Only update clipping range, don't reset camera position
-                try:
-                    self.renderer.ResetCameraClippingRange()
-                    self.vtk_widget.GetRenderWindow().Render()
-                except Exception:
-                    pass
+                # Fit camera to model extents while preserving current orientation
+                self._fit_camera_to_model_preserving_orientation(self.current_model)
             else:
                 # No model loaded, just update clipping range
                 self.logger.debug("  No model loaded, updating clipping range only")
@@ -1049,6 +1043,117 @@ class Viewer3DWidget(QWidget):
             except Exception:
                 pass
             self.logger.warning(f"Fallback camera reset due to error: {e}")
+    
+    def _fit_camera_to_model_preserving_orientation(self, model: STLModel) -> None:
+        """
+        Fit camera to model bounds while preserving the current camera orientation.
+        This is used after UCS interactions to zoom to extents without changing orientation.
+        
+        Args:
+            model: The model to fit in view
+        """
+        try:
+            if not model or not hasattr(self, "actor") or self.actor is None:
+                self.logger.debug("No model or actor for orientation-preserving fit")
+                return
+
+            # Get current camera state
+            camera = self.renderer.GetActiveCamera()
+            if not camera:
+                self.logger.debug("No camera for orientation-preserving fit")
+                return
+
+            # Get model bounds and calculate center and radius
+            bounds = self.actor.GetBounds()
+            if not bounds:
+                self.logger.debug("No bounds for orientation-preserving fit")
+                return
+
+            xmin, xmax, ymin, ymax, zmin, zmax = bounds
+            cx = (xmin + xmax) * 0.5
+            cy = (ymin + ymax) * 0.5
+            cz = (zmin + zmax) * 0.5
+
+            # Calculate model radius (diagonal/2)
+            dx = max(1e-6, xmax - xmin)
+            dy = max(1e-6, ymax - ymin)
+            dz = max(1e-6, zmax - zmin)
+            diag = (dx * dx + dy * dy + dz * dz) ** 0.5
+            radius = max(1e-3, 0.5 * diag)
+
+            # Get current camera orientation
+            current_pos = camera.GetPosition()
+            current_focal = camera.GetFocalPoint()
+            current_view_up = camera.GetViewUp()
+            
+            # Calculate view direction (from camera to focal point)
+            view_dir_x = current_focal[0] - current_pos[0]
+            view_dir_y = current_focal[1] - current_pos[1]
+            view_dir_z = current_focal[2] - current_pos[2]
+            
+            # Normalize view direction
+            view_length = (view_dir_x**2 + view_dir_y**2 + view_dir_z**2) ** 0.5
+            if view_length < 1e-6:
+                self.logger.debug("Invalid view direction for orientation-preserving fit")
+                return
+                
+            view_dir_x /= view_length
+            view_dir_y /= view_length
+            view_dir_z /= view_length
+
+            # Calculate required distance to fit model in view
+            # Use a field of view angle of 30 degrees (typical for VTK cameras)
+            import math
+            fov_rad = math.radians(30.0)
+            required_distance = radius / math.tan(fov_rad / 2.0)
+            
+            # Add some margin (1.2x) for better framing
+            required_distance *= 1.2
+
+            # Calculate new camera position along view direction
+            # Position = model_center - (view_direction * distance)
+            new_pos_x = cx - (view_dir_x * required_distance)
+            new_pos_y = cy - (view_dir_y * required_distance)
+            new_pos_z = cz - (view_dir_z * required_distance)
+
+            # Update camera
+            camera.SetFocalPoint(cx, cy, cz)
+            camera.SetPosition(new_pos_x, new_pos_y, new_pos_z)
+            # Keep current view up unchanged to preserve orientation
+            camera.SetViewUp(current_view_up[0], current_view_up[1], current_view_up[2])
+
+            # Update clipping range
+            try:
+                near = max(0.001, required_distance - (radius * 4.0))
+                far = required_distance + (radius * 4.0)
+                if far <= near:
+                    far = near * 10.0
+                camera.SetClippingRange(near, far)
+                self.renderer.ResetCameraClippingRange()
+            except Exception:
+                pass
+
+            # Render update
+            try:
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
+
+            self.logger.debug(
+                f"Camera fitted preserving orientation: center=({cx:.3f},{cy:.3f},{cz:.3f}) "
+                f"radius={radius:.3f} distance={required_distance:.3f} "
+                f"view_dir=({view_dir_x:.3f},{view_dir_y:.3f},{view_dir_z:.3f})"
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Failed to fit camera preserving orientation: {e}")
+            # Fallback to standard camera reset
+            try:
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
     
     @log_function_call(get_logger(__name__))
     def load_model(self, model: Model) -> bool:
