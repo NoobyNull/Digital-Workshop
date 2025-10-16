@@ -1254,6 +1254,12 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
+        # Save current layout as default for fresh installations
+        try:
+            self._save_current_layout_as_default()
+        except Exception:
+            pass
+
         # Initialize autosave mechanics and attempt to restore last layout
         try:
             self._init_layout_persistence()
