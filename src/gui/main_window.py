@@ -1365,6 +1365,8 @@ class MainWindow(QMainWindow):
                 self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
             if hasattr(self.viewer_widget, "material_selected"):
                 self.viewer_widget.material_selected.connect(self._apply_material_species)
+            if hasattr(self.viewer_widget, "save_view_requested"):
+                self.viewer_widget.save_view_requested.connect(self._save_current_view)
     
             try:
                 if hasattr(self, "lighting_panel") and self.lighting_panel and self.lighting_manager:
@@ -2427,6 +2429,13 @@ class MainWindow(QMainWindow):
             info: Information about the loaded model
         """
         self.logger.info(f"Viewer model loaded: {info}")
+        # Reset save view button when new model is loaded
+        try:
+            if hasattr(self.viewer_widget, 'reset_save_view_button'):
+                self.viewer_widget.reset_save_view_button()
+        except Exception as e:
+            self.logger.warning(f"Failed to reset save view button: {e}")
+        
         # Attempt to apply last-used material species
         try:
             settings = QSettings()
@@ -2652,6 +2661,12 @@ class MainWindow(QMainWindow):
         # Forward to viewer widget if available
         if hasattr(self.viewer_widget, 'reset_view'):
             self.viewer_widget.reset_view()
+            # Reset save view button when view is reset
+            try:
+                if hasattr(self.viewer_widget, 'reset_save_view_button'):
+                    self.viewer_widget.reset_save_view_button()
+            except Exception as e:
+                self.logger.warning(f"Failed to reset save view button: {e}")
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
     
@@ -2702,6 +2717,12 @@ class MainWindow(QMainWindow):
                     if success:
                         self.status_label.setText("View saved for this model")
                         self.logger.info(f"Saved camera view for model ID {model_id}")
+                        # Reset save view button after successful save
+                        try:
+                            if hasattr(self.viewer_widget, 'reset_save_view_button'):
+                                self.viewer_widget.reset_save_view_button()
+                        except Exception as e:
+                            self.logger.warning(f"Failed to reset save view button: {e}")
                         QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
                     else:
                         QMessageBox.warning(self, "Save View", "Failed to save view to database.")
