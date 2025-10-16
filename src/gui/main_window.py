@@ -1572,9 +1572,71 @@ class MainWindow(QMainWindow):
             self._default_layout_state = None
             self._default_geometry = None
 
+    def _save_current_layout_as_default(self) -> None:
+        """Save the current layout as the default for fresh installations."""
+        try:
+            # Only save as default if no default exists yet (fresh installation)
+            settings = QSettings()
+            if not settings.contains("layout/default_saved"):
+                geom = bytes(self.saveGeometry())
+                state = bytes(self.saveState())
+                
+                # Save as default layout
+                default_payload = {
+                    "default_window_geometry": base64.b64encode(geom).decode("ascii"),
+                    "default_window_state": base64.b64encode(state).decode("ascii"),
+                    "default_layout_version": 1,
+                    "default_saved": True
+                }
+                
+                # Also save active hero tab index as default
+                try:
+                    if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
+                        default_payload["default_hero_tab_index"] = int(self.hero_tabs.currentIndex())
+                except Exception:
+                    pass
+                
+                # Merge with existing settings
+                current_settings = self._read_settings_json()
+                current_settings.update(default_payload)
+                self._write_settings_json(current_settings)
+                
+                # Mark that default has been saved
+                settings.setValue("layout/default_saved", True)
+                self.logger.info("Saved current layout as default for fresh installations")
+        except Exception as e:
+            self.logger.warning(f"Failed to save current layout as default: {e}")
+
     def _reset_dock_layout(self) -> None:
         """Restore dock widgets to their default docking layout."""
         try:
+            # First try to load saved default layout (for fresh installations)
+            settings = self._read_settings_json()
+            default_geom = settings.get("default_window_geometry")
+            default_state = settings.get("default_window_state")
+            
+            if default_geom and default_state:
+                try:
+                    geom = base64.b64decode(default_geom)
+                    state = base64.b64decode(default_state)
+                    restored = self.restoreGeometry(geom) and self.restoreState(state)
+                    if restored:
+                        self.logger.info("Restored default layout from saved defaults")
+                        # Restore default hero tab if available
+                        try:
+                            default_hero_idx = settings.get("default_hero_tab_index")
+                            if (isinstance(default_hero_idx, int) and hasattr(self, "hero_tabs") and
+                                isinstance(self.hero_tabs, QTabWidget) and
+                                0 <= default_hero_idx < self.hero_tabs.count()):
+                                self.hero_tabs.setCurrentIndex(default_hero_idx)
+                        except Exception:
+                            pass
+                        self._schedule_layout_save()
+                        return
+                except Exception:
+                    pass
+            
+            # Fallback to hardcoded defaults if no saved default
             if getattr(self, "_default_geometry", None):
                 self.restoreGeometry(self._default_geometry)
             if getattr(self, "_default_layout_state", None):
@@ -2682,6 +2744,20 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         """Handle window close event."""
         self.logger.info("Application closing")
+        
+        # Safety: Ensure layout edit mode is locked before closing
+        try:
+            if hasattr(self, 'layout_edit_mode') and self.layout_edit_mode:
+                self.logger.info("Locking layout edit mode before application close")
+                self._set_layout_edit_mode(False)
+                if hasattr(self, 'toggle_layout_edit_action'):
+                    self.toggle_layout_edit_action.setChecked(False)
+                # Persist the locked state
+                settings = QSettings()
+                settings.setValue("ui/layout_edit_mode", False)
+                self.logger.info("Layout edit mode locked for safety on close")
+        except Exception as e:
+            self.logger.warning(f"Failed to lock layout edit mode on close: {e}")
         
         # Clean up resources
         if hasattr(self, 'status_timer'):
