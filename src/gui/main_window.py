@@ -1384,20 +1384,77 @@ class MainWindow(QMainWindow):
             self.viewer_widget.setAlignment(Qt.AlignCenter)
     
         # 2) Center Hero Tabs (Model | GP | CLO | F&S | Project Cost Calculator)
-        from PySide6.QtWidgets import QTabWidget
+        from PySide6.QtWidgets import QTabWidget, QTabBar
         self.hero_tabs = QTabWidget(self)
         self.hero_tabs.setObjectName("HeroTabs")
         try:
             self.hero_tabs.setDocumentMode(True)
             self.hero_tabs.setTabsClosable(False)
             self.hero_tabs.setMovable(True)
-            self.hero_tabs.setUsesScrollButtons(True)
+            self.hero_tabs.setUsesScrollButtons(False)  # Disable scrolling to allow even spacing
+            self.hero_tabs.setElideMode(Qt.ElideNone)  # Don't truncate tab text
+            # Set expanding policy for tabs to use available space evenly
+            self.hero_tabs.setTabBarAutoHide(False)
+            
+            # Get the tab bar and set expanding policy
+            tab_bar = self.hero_tabs.tabBar()
+            if tab_bar:
+                tab_bar.setExpanding(True)  # This makes tabs expand to fill available space
+                tab_bar.setUsesScrollButtons(False)
         except Exception:
             pass
+        
+        # Apply custom styling for dynamic width tabs
         try:
-            self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
+            hero_tabs_css = f"""
+                QTabWidget#HeroTabs {{
+                    background-color: {COLORS.window_bg};
+                    border: none;
+                }}
+                QTabWidget#HeroTabs::pane {{
+                    border: 1px solid {COLORS.border};
+                    background-color: {COLORS.surface};
+                    border-radius: 4px;
+                    padding: 2px;
+                }}
+                QTabWidget#HeroTabs::tab-bar {{
+                    alignment: center;
+                }}
+                QTabBar#HeroTabs::tab {{
+                    background-color: {COLORS.surface};
+                    color: {COLORS.text};
+                    border: 1px solid {COLORS.border};
+                    border-bottom: none;
+                    border-radius: 12px;
+                    padding: {SPACING_8}px {SPACING_16}px;
+                    margin-right: 2px;
+                    min-width: 80px;
+                    /* Tabs will expand due to setExpanding(True) */
+                }}
+                QTabBar#HeroTabs::tab:selected {{
+                    background-color: {COLORS.primary};
+                    color: {COLORS.primary_text};
+                    border-color: {COLORS.primary};
+                    border-radius: 12px;
+                }}
+                QTabBar#HeroTabs::tab:hover:!selected {{
+                    background-color: {COLORS.hover};
+                    border-radius: 12px;
+                }}
+                QTabBar#HeroTabs::tab:first {{
+                    margin-left: 0;
+                }}
+                QTabBar#HeroTabs::tab:last {{
+                    margin-right: 0;
+                }}
+            """
+            self.hero_tabs.setStyleSheet(hero_tabs_css)
         except Exception:
-            pass
+            # Fallback to basic styling
+            try:
+                self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
+            except Exception:
+                pass
     
         # Add tabs: Model (viewer) + placeholders
         self.hero_tabs.addTab(self.viewer_widget, "Model")
