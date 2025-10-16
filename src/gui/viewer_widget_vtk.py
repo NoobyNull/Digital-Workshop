@@ -394,7 +394,9 @@ class Viewer3DWidget(QWidget):
             self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
         
         # Set up shadow mapping for realistic rendering
-        self._setup_shadows()
+        # TEMPORARILY DISABLED: Shadow mapping may be interfering with ground plane visibility
+        # self._setup_shadows()
+        self.logger.info("Shadow mapping temporarily disabled for ground plane debugging")
         
         # Set up default camera
         self.renderer.ResetCamera()
@@ -521,6 +523,14 @@ class Viewer3DWidget(QWidget):
                 
                 # Ensure ground renders properly by setting render order
                 self.ground_actor.SetPosition(0, 0, 0)  # Explicit position
+                
+                # Force ground to render before models (lower layer number)
+                try:
+                    self.ground_actor.SetLayerNumber(0)  # Background layer
+                    self.renderer.SetLayer(0)  # Ensure layer 0 exists
+                except Exception:
+                    # SetLayerNumber might not be available in all VTK versions
+                    pass
                 
                 self.renderer.AddActor(self.ground_actor)
                 # Set initial visibility
