@@ -967,11 +967,12 @@ class MainWindow(QMainWindow):
         """Set up dockable widgets for the application."""
         self.logger.debug("Setting up dock widgets")
         
-        # Model library dock (left side)
+        # Model library dock (flexible positioning)
         self.model_library_dock = QDockWidget("Model Library", self)
         self.model_library_dock.setObjectName("ModelLibraryDock")
+        # Allow docking to any area for maximum flexibility
         self.model_library_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.model_library_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
@@ -1028,6 +1029,7 @@ class MainWindow(QMainWindow):
             )
             self.model_library_dock.setWidget(model_library_widget)
         
+        # Default to left side but user can move anywhere
         self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
         try:
             self._register_dock_for_snapping(self.model_library_dock)
@@ -1048,11 +1050,12 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
         
-        # Properties dock (right side)
+        # Properties dock (flexible positioning)
         self.properties_dock = QDockWidget("Model Properties", self)
         self.properties_dock.setObjectName("PropertiesDock")
+        # Allow docking to any area for maximum flexibility
         self.properties_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.properties_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
@@ -1092,6 +1095,7 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
         
+        # Default to right side but user can move anywhere
         self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
         try:
             self._register_dock_for_snapping(self.properties_dock)
@@ -1103,11 +1107,19 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Lighting control dock (right side, initially hidden)
+        # Lighting control dock (flexible positioning, initially hidden)
         try:
             self.lighting_panel = LightingControlPanel(self)
             self.lighting_panel.setObjectName("LightingDock")
             self.lighting_panel.setVisible(False)
+            # Allow docking to any area for maximum flexibility
+            self.lighting_panel.setAllowedAreas(
+                Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+            )
+            self.lighting_panel.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            )
+            # Default to right side but user can move anywhere
             self.addDockWidget(Qt.RightDockWidgetArea, self.lighting_panel)
             try:
                 self._register_dock_for_snapping(self.lighting_panel)
@@ -1124,11 +1136,12 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to create LightingControlPanel: {e}")
          
-        # Metadata dock (bottom)
+        # Metadata dock (flexible positioning)
         self.metadata_dock = QDockWidget("Metadata Editor", self)
         self.metadata_dock.setObjectName("MetadataDock")
+        # Allow docking to any area for maximum flexibility
         self.metadata_dock.setAllowedAreas(
-            Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea | Qt.RightDockWidgetArea
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.metadata_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
@@ -1212,13 +1225,9 @@ class MainWindow(QMainWindow):
             )
             self.metadata_dock.setWidget(metadata_widget)
         
+        # Default to right side but user can move anywhere
         self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        # Stack Metadata under Properties on the right if Properties exists
-        try:
-            if hasattr(self, "properties_dock") and self.properties_dock:
-                self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
-        except Exception:
-            pass
+        # Don't force stacking - let users arrange as they prefer
         try:
             self._register_dock_for_snapping(self.metadata_dock)
         except Exception:
@@ -1275,19 +1284,13 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to load metadata panel visibility: {e}")
         
-        # Ensure metadata dock is properly positioned and visible
+        # Ensure metadata dock is visible but don't force positioning
         try:
             if hasattr(self, "metadata_dock") and self.metadata_dock:
-                # Make sure it's docked on the right side
-                if not self.metadata_dock.isFloating():
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-                # Ensure it's stacked under properties if properties exists
-                if hasattr(self, "properties_dock") and self.properties_dock:
-                    self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
-                # Make sure it's visible
+                # Just make sure it's visible, user can position as needed
                 if not self.metadata_dock.isVisible():
                     self.metadata_dock.setVisible(True)
-                self.logger.info("Metadata dock positioned and made visible")
+                self.logger.info("Metadata dock made visible - user can position freely")
         except Exception as e:
             self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
 
@@ -1438,22 +1441,21 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
     
-        # 3) Ensure right-column stacking: Properties on top, Metadata below (if both exist)
+        # 3) Ensure all docks are visible but don't force positioning
         try:
-            if hasattr(self, "properties_dock") and self.properties_dock and hasattr(self, "metadata_dock") and self.metadata_dock:
-                # Make sure both docks are on the right side
-                if not self.properties_dock.isFloating():
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-                if not self.metadata_dock.isFloating():
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-                # Stack metadata under properties vertically
-                self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
-                # Ensure metadata is visible
+            # Just make sure all main docks are visible, let users arrange them
+            if hasattr(self, "properties_dock") and self.properties_dock:
+                if not self.properties_dock.isVisible():
+                    self.properties_dock.setVisible(True)
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
                 if not self.metadata_dock.isVisible():
                     self.metadata_dock.setVisible(True)
-                self.logger.info("Right-column docks arranged: Properties on top, Metadata below")
+            if hasattr(self, "model_library_dock") and self.model_library_dock:
+                if not self.model_library_dock.isVisible():
+                    self.model_library_dock.setVisible(True)
+            self.logger.info("All docks made visible - user can arrange freely")
         except Exception as e:
-            self.logger.warning(f"Failed to split right column docks: {e}")
+            self.logger.warning(f"Failed to ensure dock visibility: {e}")
     
         self.logger.debug("Center Hero Tabs layout with right-column stacking completed")
     
@@ -1902,7 +1904,10 @@ class MainWindow(QMainWindow):
 
         self.metadata_dock = QDockWidget("Metadata Editor", self)
         self.metadata_dock.setObjectName("MetadataDock")
-        self.metadata_dock.setAllowedAreas(Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea)
+        # Allow docking to any area for maximum flexibility
+        self.metadata_dock.setAllowedAreas(
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+        )
         self.metadata_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
 
         try:
@@ -1973,7 +1978,7 @@ class MainWindow(QMainWindow):
             )
             self.metadata_dock.setWidget(metadata_widget)
 
-        # Attach dock
+        # Attach dock - default to right side but user can move anywhere
         self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
         try:
             self._register_dock_for_snapping(self.metadata_dock)
@@ -2010,7 +2015,7 @@ class MainWindow(QMainWindow):
                     self.metadata_dock = None  # type: ignore
                     self._create_metadata_dock()
 
-            # Dock to right and show
+            # Dock to default right side and show (user can move)
             try:
                 self._snap_dock_to_edge(self.metadata_dock, "right")
             except Exception:
@@ -2052,7 +2057,10 @@ class MainWindow(QMainWindow):
 
         self.model_library_dock = QDockWidget("Model Library", self)
         self.model_library_dock.setObjectName("ModelLibraryDock")
-        self.model_library_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        # Allow docking to any area for maximum flexibility
+        self.model_library_dock.setAllowedAreas(
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+        )
         self.model_library_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
 
         try:
@@ -2090,6 +2098,7 @@ class MainWindow(QMainWindow):
             )
             self.model_library_dock.setWidget(lib_placeholder)
 
+        # Attach dock - default to left side but user can move anywhere
         self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
         try:
             self._register_dock_for_snapping(self.model_library_dock)
@@ -2131,7 +2140,7 @@ class MainWindow(QMainWindow):
             if recreate:
                 self._create_model_library_dock()
 
-            # Dock to left and show
+            # Dock to default left side and show (user can move)
             try:
                 self._snap_dock_to_edge(self.model_library_dock, "left")
             except Exception:
