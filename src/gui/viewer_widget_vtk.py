@@ -393,8 +393,10 @@ class Viewer3DWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
         
-        # Set up shadow mapping for realistic rendering
-        self._setup_shadows()
+        # Shadow mapping disabled - interferes with ground plane visibility
+        # Can be re-enabled later with proper ground plane integration
+        # self._setup_shadows()
+        self.logger.info("Shadow mapping disabled for ground plane compatibility")
         
         # Set up default camera
         self.renderer.ResetCamera()
@@ -478,7 +480,7 @@ class Viewer3DWidget(QWidget):
             self.logger.warning(f"Grid update failed: {e}")
             pass
 
-    def _create_ground_plane(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
+    def _create_ground_plane(self, radius: float, center_x: float = 0.0, center_y: float = 0.0, z_position: float = -0.1) -> None:
         """
         Create a solid ground plane for shadow reception and better spatial reference.
         
@@ -486,14 +488,15 @@ class Viewer3DWidget(QWidget):
             radius: Ground plane size
             center_x: X coordinate of center
             center_y: Y coordinate of center
+            z_position: Z coordinate where the ground plane should be positioned
         """
         try:
-            # Create a plane at Z=-0.1 (further below grid to avoid z-fighting)
+            # Create a plane at the specified Z position (typically at model bottom)
             plane = vtk.vtkPlaneSource()
             size = max(100.0, radius * 2.0)  # Ensure adequate size for shadows
-            plane.SetOrigin(center_x - size, center_y - size, -0.1)  # Further below Z=0
-            plane.SetPoint1(center_x + size, center_y - size, -0.1)
-            plane.SetPoint2(center_x - size, center_y + size, -0.1)
+            plane.SetOrigin(center_x - size, center_y - size, z_position)
+            plane.SetPoint1(center_x + size, center_y - size, z_position)
+            plane.SetPoint2(center_x - size, center_y + size, z_position)
             plane.SetResolution(20, 20)  # Higher resolution for better shadow quality
             
             if self.ground_actor is None:
@@ -537,7 +540,7 @@ class Viewer3DWidget(QWidget):
                 else:
                     self.ground_actor.SetVisibility(True)
                     
-                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, z=-0.1")
+                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, z={z_position:.3f}")
             else:
                 # Update existing ground plane
                 mapper = self.ground_actor.GetMapper()
@@ -1020,9 +1023,13 @@ class Viewer3DWidget(QWidget):
             radius = max(1e-3, 0.5 * diag)
 
             # Resize grid and ground plane to comfortably cover the scene, centered on model
+            # Position ground plane at the bottom of the model (zmin) with a small offset
             try:
                 self._update_grid(radius, center_x=cx, center_y=cy)
-                self._create_ground_plane(radius, center_x=cx, center_y=cy)
+                # Position ground plane at model bottom with small offset to avoid z-fighting
+                ground_z = zmin - 0.5  # Small offset below model bottom
+                self._create_ground_plane(radius, center_x=cx, center_y=cy, z_position=ground_z)
+                self.logger.debug(f"Ground plane positioned at model bottom: zmin={zmin:.3f}, ground_z={ground_z:.3f}")
             except Exception:
                 pass
 
