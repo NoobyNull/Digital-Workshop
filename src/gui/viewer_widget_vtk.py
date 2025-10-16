@@ -159,6 +159,17 @@ class Viewer3DWidget(QWidget):
         self.reset_button.clicked.connect(self.reset_view)
         control_layout.addWidget(self.reset_button)
 
+        # Rotate 90° buttons (rotate around view axis)
+        self.rotate_ccw_button = QPushButton("↺ 90°")
+        self.rotate_ccw_button.setToolTip("Rotate 90° counter-clockwise around view axis")
+        self.rotate_ccw_button.clicked.connect(lambda: self._rotate_around_view_axis(90))
+        control_layout.addWidget(self.rotate_ccw_button)
+        
+        self.rotate_cw_button = QPushButton("↻ 90°")
+        self.rotate_cw_button.setToolTip("Rotate 90° clockwise around view axis")
+        self.rotate_cw_button.clicked.connect(lambda: self._rotate_around_view_axis(-90))
+        control_layout.addWidget(self.rotate_cw_button)
+
         control_layout.addStretch()
 
         layout.addWidget(control_panel)
@@ -1125,6 +1136,74 @@ class Viewer3DWidget(QWidget):
         
         # Update the view
         self.vtk_widget.GetRenderWindow().Render()
+    
+    def _rotate_around_view_axis(self, degrees: float) -> None:
+        """
+        Rotate the view 90° around the camera's view direction (the axis you're looking down).
+        
+        Args:
+            degrees: Rotation angle in degrees (positive = counter-clockwise, negative = clockwise)
+        """
+        try:
+            import math
+            camera = self.renderer.GetActiveCamera()
+            if not camera:
+                return
+            
+            # Get camera orientation
+            position = camera.GetPosition()
+            focal_point = camera.GetFocalPoint()
+            view_up = camera.GetViewUp()
+            
+            # Calculate view direction (normalized)
+            dx = focal_point[0] - position[0]
+            dy = focal_point[1] - position[1]
+            dz = focal_point[2] - position[2]
+            length = math.sqrt(dx*dx + dy*dy + dz*dz)
+            if length < 0.0001:
+                return
+            view_dir = (dx/length, dy/length, dz/length)
+            
+            # Rotate the view-up vector around the view direction by 'degrees'
+            angle = math.radians(degrees)
+            
+            # Use Rodrigues' rotation formula to rotate view_up around view_dir
+            # v_rot = v*cos(θ) + (k×v)*sin(θ) + k*(k·v)*(1-cos(θ))
+            # where k = view_dir (rotation axis), v = view_up (vector to rotate)
+            
+            k = view_dir
+            v = view_up
+            cos_a = math.cos(angle)
+            sin_a = math.sin(angle)
+            
+            # Dot product k·v
+            k_dot_v = k[0]*v[0] + k[1]*v[1] + k[2]*v[2]
+            
+            # Cross product k×v
+            k_cross_v = (
+                k[1]*v[2] - k[2]*v[1],
+                k[2]*v[0] - k[0]*v[2],
+                k[0]*v[1] - k[1]*v[0]
+            )
+            
+            # Rodrigues formula
+            new_view_up = (
+                v[0]*cos_a + k_cross_v[0]*sin_a + k[0]*k_dot_v*(1-cos_a),
+                v[1]*cos_a + k_cross_v[1]*sin_a + k[1]*k_dot_v*(1-cos_a),
+                v[2]*cos_a + k_cross_v[2]*sin_a + k[2]*k_dot_v*(1-cos_a)
+            )
+            
+            # Apply the new view-up vector
+            camera.SetViewUp(new_view_up[0], new_view_up[1], new_view_up[2])
+            
+            # Update clipping and render
+            self.renderer.ResetCameraClippingRange()
+            self.vtk_widget.GetRenderWindow().Render()
+            
+            self.logger.debug(f"Rotated view {degrees}° around view axis")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to rotate around view axis: {e}")
     
     def get_model_info(self) -> Optional[dict]:
         """

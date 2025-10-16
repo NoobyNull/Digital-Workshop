@@ -2458,8 +2458,7 @@ class MainWindow(QMainWindow):
                             f"{model_info['dimensions'][2]:.2f}\n"
                             f"File size: {model_info['file_size'] / 1024:.1f} KB\n"
                             f"Format: {model_info['format']}\n"
-                            f"Parse time: {model_info['parsing_time']:.3f} s\n"
-                            f"FPS: {model_info['current_fps']:.1f}"
+                            f"Parse time: {model_info['parsing_time']:.3f} s"
                         )
                         properties_widget.setPlainText(info_text)
     
@@ -2470,9 +2469,8 @@ class MainWindow(QMainWindow):
         Args:
             fps: Current frames per second
         """
-        # Update status with FPS if it's below threshold
-        if fps < 30.0:
-            self.status_label.setText(f"Performance: {fps:.1f} FPS (low)")
+        # Performance updates are no longer displayed in the status bar
+        pass
     
     def _on_model_selected(self, model_id: int) -> None:
         """

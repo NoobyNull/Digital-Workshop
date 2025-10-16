@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from PySide6.QtCore import (
-    Qt, QThread, Signal, QSize, QRectF, QModelIndex, QSortFilterProxyModel, QPointF
+    Qt, QThread, Signal, QSize, QRectF, QModelIndex, QSortFilterProxyModel, QPointF, QDir
 )
 from PySide6.QtGui import (
     QIcon, QPixmap, QPainter, QDragEnterEvent, QDropEvent,
@@ -39,6 +39,49 @@ from parsers import (
     FormatDetector, ModelFormat
 )
 from gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+
+
+class FileSystemProxyModel(QSortFilterProxyModel):
+    """
+    Proxy model that filters out hidden folders and handles network paths.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.home_drive = str(Path.home().drive) if hasattr(Path.home(), 'drive') else ''
+        
+    def filterAcceptsRow(self, source_row, source_parent):
+        """Override to filter out hidden folders and network paths."""
+        # Get the source model index
+        source_model = self.sourceModel()
+        if not source_model:
+            return True
+            
+        index = source_model.index(source_row, 0, source_parent)
+        if not index.isValid():
+            return True
+            
+        # Get file info
+        file_info = source_model.fileInfo(index)
+        
+        # Skip hidden files and folders
+        if file_info.isHidden():
+            return False
+            
+        # Skip files/folders starting with '.'
+        file_name = file_info.fileName()
+        if file_name.startswith('.'):
+            return False
+            
+        # Skip network paths (UNC paths starting with \\)
+        file_path = file_info.absoluteFilePath()
+        if file_path.startswith('\\\\'):
+            return False
+            
+        # Skip R drives that are not in home directory
+        if self.home_drive and file_path.startswith('R:') and not file_path.startswith(self.home_drive + '\\'):
+            return False
+            
+        return True
 
 
 class ViewMode(Enum):
@@ -311,13 +354,21 @@ class ModelLibraryWidget(QWidget):
         self.file_tree = QTreeView()
         self.file_model = QFileSystemModel()
         self.file_model.setRootPath(Path.home().as_posix())
-        self.file_tree.setModel(self.file_model)
+        # Set filters to hide hidden folders and files
+        self.file_model.setFilter(QDir.AllDirs | QDir.AllEntries | QDir.NoDotAndDotDot)
+        
+        # Create proxy model to filter out hidden folders and network paths
+        self.file_proxy_model = FileSystemProxyModel()
+        self.file_proxy_model.setSourceModel(self.file_model)
+        
+        self.file_tree.setModel(self.file_proxy_model)
         self.file_tree.setColumnHidden(1, True)
         self.file_tree.setColumnHidden(2, True)
         self.file_tree.setColumnHidden(3, True)
 
         index = self.file_model.index(Path.home().as_posix())
-        self.file_tree.setRootIndex(index)
+        proxy_index = self.file_proxy_model.mapFromSource(index)
+        self.file_tree.setRootIndex(proxy_index)
         self.path_display.setText(Path.home().as_posix())
         layout.addWidget(self.file_tree)
 
@@ -522,13 +573,16 @@ class ModelLibraryWidget(QWidget):
     def _on_file_tree_clicked(self, index: QModelIndex) -> None:
         # Update the path display when a file is clicked
         try:
-            path = self.file_model.filePath(index)
+            # Map from proxy to source model
+            source_index = self.file_proxy_model.mapToSource(index)
+            path = self.file_model.filePath(source_index)
             if hasattr(self, "path_display"):
                 self.path_display.setText(path)
         except Exception:
             # Fallback: do not raise in tests
             try:
-                self.path_display.setText(self.file_model.filePath(index))
+                source_index = self.file_proxy_model.mapToSource(index)
+                self.path_display.setText(self.file_model.filePath(source_index))
             except Exception:
                 pass
 
@@ -860,7 +914,9 @@ class ModelLibraryWidget(QWidget):
             files_to_import = []
             for index in selected_indexes:
                 if index.column() == 0:  # Only process the first column to avoid duplicates
-                    path = self.file_model.filePath(index)
+                    # Map from proxy to source model
+                    source_index = self.file_proxy_model.mapToSource(index)
+                    path = self.file_model.filePath(source_index)
                     file_path = Path(path)
                     if file_path.is_file():
                         suffix = file_path.suffix.lower()
@@ -890,7 +946,9 @@ class ModelLibraryWidget(QWidget):
             if selected_index.column() != 0:  # Make sure we're looking at the name column
                 selected_index = selected_indexes[0].sibling(selected_index.row(), 0)
                 
-            path = self.file_model.filePath(selected_index)
+            # Map from proxy to source model
+            source_index = self.file_proxy_model.mapToSource(selected_index)
+            path = self.file_model.filePath(source_index)
             folder_path = Path(path)
             
             if not folder_path.is_dir():
