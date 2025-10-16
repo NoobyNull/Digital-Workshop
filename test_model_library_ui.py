@@ -30,20 +30,20 @@ def test_model_library_ui():
         
         # Check if UI elements are loaded
         ui_elements = {
-            "list_view_button": model_library.list_view_button,
-            "grid_view_button": model_library.grid_view_button,
-            "import_button": model_library.import_button,
-            "refresh_button": model_library.refresh_button,
-            "search_widget": model_library.search_widget,
+            "search_box": model_library.search_box,
+            "category_filter": model_library.category_filter,
+            "format_filter": model_library.format_filter,
             "path_display": model_library.path_display,
             "file_tree": model_library.file_tree,
+            "import_selected_button": model_library.import_selected_button,
+            "import_folder_button": model_library.import_folder_button,
+            "internal_tabs": model_library.internal_tabs,
             "view_tabs": model_library.view_tabs,
             "list_view": model_library.list_view,
             "grid_view": model_library.grid_view,
             "status_label": model_library.status_label,
             "model_count_label": model_library.model_count_label,
             "progress_bar": model_library.progress_bar,
-            "content_splitter": model_library.content_splitter,
         }
         
         # Check each UI element

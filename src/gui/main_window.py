@@ -12,22 +12,178 @@ import base64
 from pathlib import Path
 from typing import List, Optional
 
-from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths, QSettings
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette
+from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths, QSettings, QEvent, QObject, QPoint, QRect
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette, QCursor
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-    QMenuBar, QToolBar, QStatusBar, QDockWidget, QLabel, QTextEdit,
+    QMenuBar, QToolBar, QStatusBar, QDockWidget, QLabel, QTextEdit, QPushButton,
     QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar, QTabWidget
 )
 
 from core.logging_config import get_logger
 from core.database_manager import get_database_manager
 from parsers.stl_parser import STLParser, STLProgressCallback
-from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
 from gui.preferences import PreferencesDialog
 from gui.lighting_control_panel import LightingControlPanel
 from gui.lighting_manager import LightingManager
 from gui.material_manager import MaterialManager
+
+# --- Snapping overlays and dock-drag handler helpers ---
+
+class SnapOverlayLayer(QWidget):
+    """Translucent snap-zone overlays for top/bottom/left/right edges of the main window."""
+    def __init__(self, main_window: QMainWindow):
+        super().__init__(main_window)
+        self._mw = main_window
+        self._thickness = 48
+        self._active_edge: Optional[str] = None
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.setWindowFlags(Qt.SubWindow | Qt.FramelessWindowHint)
+        self._edges: dict[str, QFrame] = {
+            "left": QFrame(self),
+            "right": QFrame(self),
+            "top": QFrame(self),
+            "bottom": QFrame(self),
+        }
+        # Theme-aware colors
+        try:
+            r, g, b = hex_to_rgb(COLORS.primary)
+        except Exception:
+            r, g, b = (0, 120, 212)
+        self._rgba_inactive = f"rgba({r}, {g}, {b}, 0.12)"
+        self._rgba_active = f"rgba({r}, {g}, {b}, 0.22)"
+        self._rgba_border = f"rgba({r}, {g}, {b}, 0.85)"
+        for f in self._edges.values():
+            f.setFrameShape(QFrame.NoFrame)
+        self.hide()
+        self.update_geometry()
+        self.set_active(None)
+
+    def update_geometry(self) -> None:
+        """Resize/position overlays to match the current main window size."""
+        if self._mw is None:
+            return
+        self.setGeometry(self._mw.rect())
+        w = self.width()
+        h = self.height()
+        t = self._thickness
+        self._edges["left"].setGeometry(0, 0, t, h)
+        self._edges["right"].setGeometry(w - t, 0, t, h)
+        self._edges["top"].setGeometry(0, 0, w, t)
+        self._edges["bottom"].setGeometry(0, h - t, w, t)
+
+    def _style_for(self, active: bool) -> str:
+        bg = self._rgba_active if active else self._rgba_inactive
+        border = f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
+        return f"background-color: {bg}; border: {border}; border-radius: 3px;"
+
+    def set_active(self, edge: Optional[str]) -> None:
+        """Highlight the given edge ('left'|'right'|'top'|'bottom') or clear when None."""
+        self._active_edge = edge
+        for name, frame in self._edges.items():
+            frame.setStyleSheet(self._style_for(active=(edge == name)))
+
+    def show_overlays(self) -> None:
+        self.update_geometry()
+        self.show()
+        self.raise_()
+
+    def hide_overlays(self) -> None:
+        self.hide()
+        self.set_active(None)
+
+    @property
+    def active_edge(self) -> Optional[str]:
+        return self._active_edge
+
+
+class DockDragHandler(QObject):
+    """Event filter that shows snap overlays while dragging floating docks and performs snap-dock."""
+    SNAP_MARGIN = 56  # px
+
+    def __init__(self, main_window: QMainWindow, dock: QDockWidget, overlay: SnapOverlayLayer, logger: logging.Logger):
+        super().__init__(dock)
+        self._mw = main_window
+        self._dock = dock
+        self._overlay = overlay
+        self._logger = logger
+        self._tracking = False
+
+    def eventFilter(self, obj, event) -> bool:
+        try:
+            et = event.type()
+            if et == QEvent.MouseButtonPress:
+                # Begin potential drag tracking when user interacts with dock.
+                self._tracking = True
+            elif et == QEvent.MouseMove:
+                if self._tracking and self._dock.isFloating():
+                    self._maybe_show_and_update_overlay()
+            elif et == QEvent.MouseButtonRelease:
+                if self._tracking:
+                    self._finish_drag()
+                    self._tracking = False
+        except Exception:
+            pass
+        return False  # do not block default behavior
+
+    def _maybe_show_and_update_overlay(self) -> None:
+        try:
+            self._overlay.show_overlays()
+            edge = self._nearest_edge_to_cursor()
+            self._overlay.set_active(edge)
+        except Exception:
+            pass
+
+    def _finish_drag(self) -> None:
+        try:
+            edge = self._overlay.active_edge
+            self._overlay.hide_overlays()
+            if not edge:
+                return
+            # Respect allowed areas
+            area_map = {
+                "left": Qt.LeftDockWidgetArea,
+                "right": Qt.RightDockWidgetArea,
+                "top": Qt.TopDockWidgetArea,
+                "bottom": Qt.BottomDockWidgetArea,
+            }
+            target_area = area_map[edge]
+            if not (self._dock.allowedAreas() & target_area):
+                return
+            # Perform snap
+            self._mw._snap_dock_to_edge(self._dock, edge)
+        except Exception as e:
+            try:
+                self._logger.warning(f"Snap finalize failed: {e}")
+            except Exception:
+                pass
+
+    def _nearest_edge_to_cursor(self) -> Optional[str]:
+        pos = QCursor.pos()
+        # Use main window frame geometry to compare in global coords
+        rect = self._mw.frameGeometry()
+        if not rect.contains(pos):
+            # Allow a small outside tolerance
+            grown = rect.adjusted(-self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN)
+            if not grown.contains(pos):
+                return None
+        # distances
+        d_left = abs(pos.x() - rect.left())
+        d_right = abs(rect.right() - pos.x())
+        d_top = abs(pos.y() - rect.top())
+        d_bottom = abs(rect.bottom() - pos.y())
+        d_min = min(d_left, d_right, d_top, d_bottom)
+        if d_min > self.SNAP_MARGIN:
+            return None
+        if d_min == d_left:
+            return "left"
+        if d_min == d_right:
+            return "right"
+        if d_min == d_top:
+            return "top"
+        return "bottom"
+
 
 class MainWindow(QMainWindow):
     """
@@ -66,6 +222,25 @@ class MainWindow(QMainWindow):
         self._setup_status_bar()
         self._setup_dock_widgets()
         self._setup_central_widget()
+        # Initialize snapping overlays and handlers
+        try:
+            self._init_snapping_system()
+        except Exception as e:
+            self.logger.warning(f"Snap system init failed: {e}")
+        # Default to locked layout mode
+        try:
+            settings = QSettings()
+            default_locked = not bool(settings.value("ui/layout_edit_mode", False, type=bool))
+            # When saved value is True, enable edit mode; otherwise lock
+            self._set_layout_edit_mode(bool(settings.value("ui/layout_edit_mode", False, type=bool)))
+            if hasattr(self, "toggle_layout_edit_action"):
+                self.toggle_layout_edit_action.setChecked(bool(settings.value("ui/layout_edit_mode", False, type=bool)))
+        except Exception:
+            # If settings fail, lock layout
+            try:
+                self._set_layout_edit_mode(False)
+            except Exception:
+                pass
         
         # Set up status update timer
         self._setup_status_timer()
@@ -175,6 +350,29 @@ class MainWindow(QMainWindow):
             QPushButton:pressed {{
                 background-color: {COLORS.pressed};
             }}
+            /* Splitters and dock separators */
+            QSplitter {{
+                background-color: {COLORS.window_bg};
+            }}
+            QSplitter::handle {{
+                background-color: {COLORS.splitter_handle_bg};
+                border: 1px solid {COLORS.border};
+                width: 7px;
+                height: 7px;
+                border-radius: 2px;
+            }}
+            QSplitter::handle:hover {{
+                background-color: {COLORS.primary};
+                border-color: {COLORS.primary_hover};
+            }}
+            QMainWindow::separator {{
+                background: {COLORS.splitter_handle_bg};
+                width: 7px;
+                height: 7px;
+            }}
+            QMainWindow::separator:hover {{
+                background: {COLORS.primary};
+            }}
         """
         # Apply ThemeManager-managed external stylesheet, then append base_qss
         try:
@@ -279,6 +477,29 @@ class MainWindow(QMainWindow):
             QPushButton:pressed {{
                 background-color: {COLORS.pressed};
             }}
+            /* Splitters and dock separators */
+            QSplitter {{
+                background-color: {COLORS.window_bg};
+            }}
+            QSplitter::handle {{
+                background-color: {COLORS.splitter_handle_bg};
+                border: 1px solid {COLORS.border};
+                width: 7px;
+                height: 7px;
+                border-radius: 2px;
+            }}
+            QSplitter::handle:hover {{
+                background-color: {COLORS.primary};
+                border-color: {COLORS.primary_hover};
+            }}
+            QMainWindow::separator {{
+                background: {COLORS.splitter_handle_bg};
+                width: 7px;
+                height: 7px;
+            }}
+            QMainWindow::separator:hover {{
+                background: {COLORS.primary};
+            }}
         """
         # Re-apply ThemeManager stylesheet and append base_qss
         try:
@@ -334,6 +555,17 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, "viewer_widget") and hasattr(self.viewer_widget, "apply_theme"):
                 self.viewer_widget.apply_theme()
+        except Exception:
+            pass
+        # Re-style tabbed areas (legacy center_tabs and new hero_tabs) on theme updates
+        try:
+            if hasattr(self, "center_tabs") and isinstance(self.center_tabs, QTabWidget):
+                self.center_tabs.setStyleSheet(qss_tabs_lists_labels())
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
+                self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
         except Exception:
             pass
 
@@ -421,6 +653,29 @@ class MainWindow(QMainWindow):
         reset_layout_action.triggered.connect(self._reset_dock_layout)
         view_menu.addAction(reset_layout_action)
 
+        # Metadata Manager restoration action
+        view_menu.addSeparator()
+        self.show_metadata_action = QAction("Show &Metadata Manager", self)
+        try:
+            self.show_metadata_action.setShortcut(QKeySequence("Ctrl+Shift+M"))
+        except Exception:
+            pass
+        self.show_metadata_action.setStatusTip("Restore the Metadata Manager panel")
+        self.show_metadata_action.setToolTip("Show the Metadata Manager (Ctrl+Shift+M)")
+        self.show_metadata_action.triggered.connect(self._restore_metadata_manager)
+        view_menu.addAction(self.show_metadata_action)
+
+        # Model Library restoration action
+        self.show_model_library_action = QAction("Show &Model Library", self)
+        try:
+            self.show_model_library_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
+        except Exception:
+            pass
+        self.show_model_library_action.setStatusTip("Restore the Model Library panel")
+        self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
+        self.show_model_library_action.triggered.connect(self._restore_model_library)
+        view_menu.addAction(self.show_model_library_action)
+
         # Reload stylesheet action
         view_menu.addSeparator()
         reload_stylesheet_action = QAction("&Reload Stylesheet", self)
@@ -433,6 +688,14 @@ class MainWindow(QMainWindow):
         theme_manager_action.setStatusTip("Open Theme Manager")
         theme_manager_action.triggered.connect(self._show_theme_manager)
         view_menu.addAction(theme_manager_action)
+        
+        # Layout Edit Mode toggle
+        view_menu.addSeparator()
+        self.toggle_layout_edit_action = QAction("Layout Edit Mode", self)
+        self.toggle_layout_edit_action.setCheckable(True)
+        self.toggle_layout_edit_action.setStatusTip("Enable rearranging docks. When off, docks are locked in place but still resize with the window.")
+        self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
+        view_menu.addAction(self.toggle_layout_edit_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -766,9 +1029,22 @@ class MainWindow(QMainWindow):
             self.model_library_dock.setWidget(model_library_widget)
         
         self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+        try:
+            self._register_dock_for_snapping(self.model_library_dock)
+        except Exception:
+            pass
         # Autosave when this dock changes state/position
         try:
             self._connect_layout_autosave(self.model_library_dock)
+        except Exception:
+            pass
+        # Keep View menu action in sync with visibility
+        try:
+            self.model_library_dock.visibilityChanged.connect(lambda _=False: self._update_library_action_state())
+        except Exception:
+            pass
+        try:
+            self._update_library_action_state()
         except Exception:
             pass
         
@@ -817,6 +1093,10 @@ class MainWindow(QMainWindow):
             pass
         
         self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+        try:
+            self._register_dock_for_snapping(self.properties_dock)
+        except Exception:
+            pass
         # Autosave when this dock changes state/position
         try:
             self._connect_layout_autosave(self.properties_dock)
@@ -829,6 +1109,10 @@ class MainWindow(QMainWindow):
             self.lighting_panel.setObjectName("LightingDock")
             self.lighting_panel.setVisible(False)
             self.addDockWidget(Qt.RightDockWidgetArea, self.lighting_panel)
+            try:
+                self._register_dock_for_snapping(self.lighting_panel)
+            except Exception:
+                pass
             # Autosave when lighting dock changes state/position
             self._connect_layout_autosave(self.lighting_panel)
             # Persist panel visibility via QSettings
@@ -844,7 +1128,7 @@ class MainWindow(QMainWindow):
         self.metadata_dock = QDockWidget("Metadata Editor", self)
         self.metadata_dock.setObjectName("MetadataDock")
         self.metadata_dock.setAllowedAreas(
-            Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea
+            Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea | Qt.RightDockWidgetArea
         )
         self.metadata_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
@@ -928,10 +1212,30 @@ class MainWindow(QMainWindow):
             )
             self.metadata_dock.setWidget(metadata_widget)
         
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.metadata_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+        # Stack Metadata under Properties on the right if Properties exists
+        try:
+            if hasattr(self, "properties_dock") and self.properties_dock:
+                self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
+        except Exception:
+            pass
+        try:
+            self._register_dock_for_snapping(self.metadata_dock)
+        except Exception:
+            pass
         # Autosave when this dock changes state/position
         try:
             self._connect_layout_autosave(self.metadata_dock)
+        except Exception:
+            pass
+        # Persist visibility and keep View menu action state in sync
+        try:
+            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._save_metadata_panel_visibility())
+            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._update_metadata_action_state())
+        except Exception:
+            pass
+        try:
+            self._update_metadata_action_state()
         except Exception:
             pass
         
@@ -956,46 +1260,71 @@ class MainWindow(QMainWindow):
                 self.logger.info(f"Loaded lighting panel visibility: {bool(visible)}")
         except Exception as e:
             self.logger.warning(f"Failed to load lighting panel visibility: {e}")
+
+        # Load persisted metadata panel visibility (in addition to dock state)
+        try:
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
+                settings = QSettings()
+                meta_visible = settings.value('metadata_panel/visible', True, type=bool)
+                self.metadata_dock.setVisible(bool(meta_visible))
+                self.logger.info(f"Loaded metadata panel visibility: {bool(meta_visible)}")
+                try:
+                    self._update_metadata_action_state()
+                except Exception:
+                    pass
+        except Exception as e:
+            self.logger.warning(f"Failed to load metadata panel visibility: {e}")
+        
+        # Ensure metadata dock is properly positioned and visible
+        try:
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
+                # Make sure it's docked on the right side
+                if not self.metadata_dock.isFloating():
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+                # Ensure it's stacked under properties if properties exists
+                if hasattr(self, "properties_dock") and self.properties_dock:
+                    self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
+                # Make sure it's visible
+                if not self.metadata_dock.isVisible():
+                    self.metadata_dock.setVisible(True)
+                self.logger.info("Metadata dock positioned and made visible")
+        except Exception as e:
+            self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
+
         self.logger.debug("Dock widgets setup completed")
     
     def _setup_central_widget(self) -> None:
-        """Set up the central widget: viewer, or viewer + metadata tabs in a vertical splitter."""
+        """Create Center Hero Tabs and ensure right-column stacking for Properties and Metadata."""
         self.logger.debug("Setting up central widget")
-
-        # Import the viewer widget
+    
+        # 1) Create the 3D viewer widget
         try:
-            # Try to import VTK-based viewer first
             try:
                 from gui.viewer_widget_vtk import Viewer3DWidget
             except ImportError:
-                # Fallback to original viewer if VTK is not available
                 try:
                     from gui.viewer_widget import Viewer3DWidget
                 except ImportError:
                     Viewer3DWidget = None
-
-            # Create the 3D viewer widget
+    
             self.viewer_widget = Viewer3DWidget(self)
- 
+    
             # Connect signals
             self.viewer_widget.model_loaded.connect(self._on_model_loaded)
             self.viewer_widget.performance_updated.connect(self._on_performance_updated)
-
+    
             # Managers
             try:
-                # Material manager with database
                 self.material_manager = MaterialManager(get_database_manager())
             except Exception as e:
                 self.material_manager = None
                 self.logger.warning(f"MaterialManager unavailable: {e}")
-
+    
             try:
-                # Lighting manager with viewer renderer
                 renderer = getattr(self.viewer_widget, "renderer", None)
                 self.lighting_manager = LightingManager(renderer) if renderer is not None else None
                 if self.lighting_manager:
                     self.lighting_manager.create_light()
-                    # Load persisted lighting settings
                     try:
                         self._load_lighting_settings()
                     except Exception as le:
@@ -1003,20 +1332,17 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.lighting_manager = None
                 self.logger.warning(f"LightingManager unavailable: {e}")
-
-            # Viewer integration signals
+    
             if hasattr(self.viewer_widget, "lighting_panel_requested"):
                 self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
             if hasattr(self.viewer_widget, "material_selected"):
                 self.viewer_widget.material_selected.connect(self._apply_material_species)
-
-            # Connect lighting panel controls to manager
+    
             try:
                 if hasattr(self, "lighting_panel") and self.lighting_panel and self.lighting_manager:
                     self.lighting_panel.position_changed.connect(self._update_light_position)
                     self.lighting_panel.color_changed.connect(self._update_light_color)
                     self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
-                    # Sync panel with current manager values
                     props = self.lighting_manager.get_properties()
                     self.lighting_panel.set_values(
                         position=tuple(props.get("position", (100.0, 100.0, 100.0))),
@@ -1026,20 +1352,17 @@ class MainWindow(QMainWindow):
                     )
             except Exception as e:
                 self.logger.warning(f"Failed to connect lighting panel: {e}")
- 
-            # Apply theme to viewer if supported
+    
             if hasattr(self.viewer_widget, "apply_theme"):
                 try:
                     self.viewer_widget.apply_theme()
                 except Exception:
                     pass
-
+    
             self.logger.info("3D viewer widget created successfully")
-
+    
         except ImportError as e:
             self.logger.warning(f"Failed to import 3D viewer widget: {str(e)}")
-
-            # Create fallback widget
             self.viewer_widget = QTextEdit()
             self.viewer_widget.setReadOnly(True)
             self.viewer_widget.setPlainText(
@@ -1056,60 +1379,83 @@ class MainWindow(QMainWindow):
                 "- Screenshot capture"
             )
             self.viewer_widget.setAlignment(Qt.AlignCenter)
-
-        # If metadata tabs exist, create a vertical splitter: viewer (top) | metadata tabs (bottom)
-        if hasattr(self, "metadata_tabs") and isinstance(self.metadata_tabs, QTabWidget):
+    
+        # 2) Center Hero Tabs (Model | GP | CLO | F&S | Project Cost Calculator)
+        from PySide6.QtWidgets import QTabWidget
+        self.hero_tabs = QTabWidget(self)
+        self.hero_tabs.setObjectName("HeroTabs")
+        try:
+            self.hero_tabs.setDocumentMode(True)
+            self.hero_tabs.setTabsClosable(False)
+            self.hero_tabs.setMovable(True)
+            self.hero_tabs.setUsesScrollButtons(True)
+        except Exception:
+            pass
+        try:
+            self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
+        except Exception:
+            pass
+    
+        # Add tabs: Model (viewer) + placeholders
+        self.hero_tabs.addTab(self.viewer_widget, "Model")
+    
+        def _placeholder(title: str, body: str) -> QWidget:
+            w = QWidget()
+            v = QVBoxLayout(w)
+            v.setContentsMargins(12, 12, 12, 12)
+            lbl = QLabel(body)
             try:
-                splitter = QSplitter(Qt.Vertical)
-                splitter.setObjectName("CentralVerticalSplitter")
-
-                # Top: 3D viewer
-                splitter.addWidget(self.viewer_widget)
-
-                # Detach tabs from dock to avoid duplication, then add to splitter
-                try:
-                    if hasattr(self, "metadata_dock") and self.metadata_dock.widget() is self.metadata_tabs:
-                        # Keep dock valid but empty to retain layout integrity; we'll hide it
-                        self.metadata_dock.setWidget(QWidget())
-                except Exception:
-                    pass
-
-                # Bottom: metadata tabs
-                splitter.addWidget(self.metadata_tabs)
-
-                # Stretch: viewer 3, metadata 1
-                splitter.setStretchFactor(0, 3)
-                splitter.setStretchFactor(1, 1)
-
-                # Set as central widget
-                self.setCentralWidget(splitter)
-
-                # Restore splitter sizes if available
-                try:
-                    settings = self._read_settings_json()
-                    sizes = settings.get("central_splitter_sizes")
-                    if isinstance(sizes, list) and sizes:
-                        splitter.setSizes([int(x) for x in sizes])
-                except Exception:
-                    pass
-
-                # Hide the original metadata dock to avoid duplication
-                try:
-                    if hasattr(self, "metadata_dock"):
-                        self.metadata_dock.hide()
-                except Exception:
-                    pass
-
-                self.logger.debug("Central splitter setup completed")
-
-            except Exception as e:
-                self.logger.warning(f"Failed to set up central splitter, falling back to viewer only: {e}")
-                self.setCentralWidget(self.viewer_widget)
-        else:
-            # No metadata tabs available, use viewer alone
-            self.setCentralWidget(self.viewer_widget)
-
-        self.logger.debug("Central widget setup completed")
+                lbl.setWordWrap(True)
+            except Exception:
+                pass
+            v.addWidget(lbl)
+            v.addStretch(1)
+            return w
+    
+        self.hero_tabs.addTab(_placeholder("GP", "G-code Previewer placeholder\n\nPreview, simulate, and inspect G-code toolpaths."), "GP")
+        self.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer placeholder\n\nPlan efficient cuts and layout."), "CLO")
+        self.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds placeholder\n\nCalculate optimal CNC feeds and speeds."), "F&S")
+        self.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
+    
+        # Persist active hero tab on change
+        try:
+            self.hero_tabs.currentChanged.connect(lambda _=0: self._schedule_layout_save())
+        except Exception:
+            pass
+    
+        # Restore last active hero tab index
+        try:
+            _settings = self._read_settings_json()
+            hidx = _settings.get("active_hero_tab_index")
+            if isinstance(hidx, int) and 0 <= hidx < self.hero_tabs.count():
+                self.hero_tabs.setCurrentIndex(int(hidx))
+        except Exception:
+            pass
+    
+        # Make Hero Tabs the central widget
+        try:
+            self.setCentralWidget(self.hero_tabs)
+        except Exception as e:
+            self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
+    
+        # 3) Ensure right-column stacking: Properties on top, Metadata below (if both exist)
+        try:
+            if hasattr(self, "properties_dock") and self.properties_dock and hasattr(self, "metadata_dock") and self.metadata_dock:
+                # Make sure both docks are on the right side
+                if not self.properties_dock.isFloating():
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+                if not self.metadata_dock.isFloating():
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+                # Stack metadata under properties vertically
+                self.splitDockWidget(self.properties_dock, self.metadata_dock, Qt.Vertical)
+                # Ensure metadata is visible
+                if not self.metadata_dock.isVisible():
+                    self.metadata_dock.setVisible(True)
+                self.logger.info("Right-column docks arranged: Properties on top, Metadata below")
+        except Exception as e:
+            self.logger.warning(f"Failed to split right column docks: {e}")
+    
+        self.logger.debug("Center Hero Tabs layout with right-column stacking completed")
     
     def _setup_status_timer(self) -> None:
         """Set up timer for periodic status updates."""
@@ -1190,7 +1536,7 @@ class MainWindow(QMainWindow):
                 self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
             if hasattr(self, "metadata_dock"):
                 self.metadata_dock.setFloating(False)
-                self.addDockWidget(Qt.BottomDockWidgetArea, self.metadata_dock)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
         except Exception as e:
             self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
 
@@ -1239,7 +1585,7 @@ class MainWindow(QMainWindow):
             pass
 
     def _save_current_layout(self) -> None:
-        """Persist current window geometry, dock layout, and central splitter sizes to settings.json."""
+        """Persist current window geometry, dock layout, and navigation state to settings.json."""
         try:
             geom = bytes(self.saveGeometry())
             state = bytes(self.saveState())
@@ -1251,13 +1597,33 @@ class MainWindow(QMainWindow):
                 "layout_version": 1,
             }
 
-            # Persist central splitter sizes if applicable
+            # Persist central splitter sizes if applicable (legacy path)
             try:
                 cw = self.centralWidget()
                 if isinstance(cw, QSplitter):
                     sizes = cw.sizes()
                     if sizes:
                         payload["central_splitter_sizes"] = [int(s) for s in sizes]
+            except Exception:
+                pass
+
+            # Persist active main tab index if available
+            try:
+                if hasattr(self, "main_tabs") and isinstance(self.main_tabs, QTabWidget):
+                    payload["active_main_tab_index"] = int(self.main_tabs.currentIndex())
+            except Exception:
+                pass
+
+            # Persist active center tab index (inside "3d Model") if available
+            try:
+                if hasattr(self, "center_tabs") and isinstance(self.center_tabs, QTabWidget):
+                    payload["active_center_tab_index"] = int(self.center_tabs.currentIndex())
+            except Exception:
+                pass
+            # Persist active hero tab index if available
+            try:
+                if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
+                    payload["active_hero_tab_index"] = int(self.hero_tabs.currentIndex())
             except Exception:
                 pass
 
@@ -1315,6 +1681,122 @@ class MainWindow(QMainWindow):
             dock.visibilityChanged.connect(lambda _=False: self._schedule_layout_save())
         except Exception:
             pass
+
+    # ---- Snapping system (overlays + edge snap) ----
+    def _init_snapping_system(self) -> None:
+        """Create snap overlays and attach drag handlers to all current docks."""
+        try:
+            if hasattr(self, "_snap_layer"):
+                return
+            self._snap_layer = SnapOverlayLayer(self)
+            self._snap_handlers: dict[str, DockDragHandler] = {}
+        except Exception:
+            # Ensure attributes exist for later safe checks
+            self._snap_handlers = {}
+            self._snap_layer = SnapOverlayLayer(self)
+
+        # Register known docks if they exist
+        for name in ("model_library_dock", "properties_dock", "metadata_dock", "lighting_panel"):
+            try:
+                dock = getattr(self, name, None)
+                if dock is not None:
+                    self._register_dock_for_snapping(dock)
+            except Exception:
+                continue
+
+    def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
+        """Install a DockDragHandler on the given dock to enable overlay-guided snapping."""
+        if dock is None:
+            return
+        key = dock.objectName() or str(id(dock))
+        if hasattr(self, "_snap_handlers") and key in getattr(self, "_snap_handlers", {}):
+            return
+        handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
+        dock.installEventFilter(handler)
+        self._snap_handlers[key] = handler
+    
+    def _iter_docks(self) -> list[QDockWidget]:
+        docks: list[QDockWidget] = []
+        for name in ("model_library_dock", "properties_dock", "metadata_dock", "lighting_panel"):
+            d = getattr(self, name, None)
+            if isinstance(d, QDockWidget):
+                docks.append(d)
+        return docks
+    
+    def _enable_snap_handlers(self, enable: bool) -> None:
+        """Enable or disable snap overlay handlers for all docks."""
+        try:
+            if enable:
+                for d in self._iter_docks():
+                    self._register_dock_for_snapping(d)
+            else:
+                # Remove event filters and clear overlays
+                if hasattr(self, "_snap_handlers"):
+                    for key, handler in list(self._snap_handlers.items()):
+                        try:
+                            dock = getattr(handler, "_dock", None)
+                            if dock:
+                                dock.removeEventFilter(handler)  # type: ignore[arg-type]
+                        except Exception:
+                            pass
+                    self._snap_handlers.clear()
+                if hasattr(self, "_snap_layer"):
+                    self._snap_layer.hide_overlays()
+        except Exception:
+            pass
+    
+    def _set_layout_edit_mode(self, enabled: bool) -> None:
+        """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable."""
+        try:
+            self.layout_edit_mode = bool(enabled)
+            for d in self._iter_docks():
+                if self.layout_edit_mode:
+                    d.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
+                else:
+                    # Locked: disable moving and floating, keep closable so user can hide/pin panels
+                    d.setFeatures(QDockWidget.DockWidgetClosable)
+            self._enable_snap_handlers(self.layout_edit_mode)
+            # Persist state for next launch
+            settings = QSettings()
+            settings.setValue("ui/layout_edit_mode", self.layout_edit_mode)
+            # Status feedback
+            try:
+                self.statusBar().showMessage("Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked", 2000)
+            except Exception:
+                pass
+        except Exception as e:
+            self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
+
+    def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> bool:
+        """Dock the provided QDockWidget to the specified edge if allowed."""
+        area_map = {
+            "left": Qt.LeftDockWidgetArea,
+            "right": Qt.RightDockWidgetArea,
+            "top": Qt.TopDockWidgetArea,
+            "bottom": Qt.BottomDockWidgetArea,
+        }
+        target_area = area_map.get(edge)
+        if target_area is None:
+            return False
+        allowed = dock.allowedAreas()
+        if not (allowed & target_area):
+            # Not permitted by this dock's allowed areas
+            return False
+        try:
+            dock.setFloating(False)
+        except Exception:
+            pass
+        # Perform docking
+        self.addDockWidget(target_area, dock)
+        try:
+            dock.raise_()
+        except Exception:
+            pass
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+        return True
 
     def _reset_dock_layout_and_save(self) -> None:
         """Reset layout to defaults and persist immediately."""
@@ -1387,8 +1869,309 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to save lighting panel visibility: {e}")
     
-    # TODO: Add material roughness/metallic sliders in picker
-    # TODO: Add export material presets feature
+    def _update_metadata_action_state(self) -> None:
+        """Enable/disable 'Show Metadata Manager' based on panel visibility."""
+        try:
+            visible = False
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
+                visible = bool(self.metadata_dock.isVisible())
+            if hasattr(self, "show_metadata_action") and self.show_metadata_action:
+                self.show_metadata_action.setEnabled(not visible)
+        except Exception:
+            pass
+
+    def _save_metadata_panel_visibility(self) -> None:
+        """Persist the metadata panel visibility state."""
+        try:
+            if hasattr(self, 'metadata_dock') and self.metadata_dock:
+                settings = QSettings()
+                vis = bool(self.metadata_dock.isVisible())
+                settings.setValue('metadata_panel/visible', vis)
+                self.logger.debug(f"Saved metadata panel visibility: {vis}")
+        except Exception as e:
+            self.logger.warning(f"Failed to save metadata panel visibility: {e}")
+
+    def _create_metadata_dock(self) -> None:
+        """Create the Metadata Manager dock and integrate it into the UI."""
+        try:
+            # Avoid recreating if it already exists
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
+                return
+        except Exception:
+            pass
+
+        self.metadata_dock = QDockWidget("Metadata Editor", self)
+        self.metadata_dock.setObjectName("MetadataDock")
+        self.metadata_dock.setAllowedAreas(Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea)
+        self.metadata_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
+
+        try:
+            from gui.metadata_editor import MetadataEditorWidget
+            self.metadata_editor = MetadataEditorWidget(self)
+
+            # Connect signals
+            self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
+            self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
+
+            # Bottom tabs: Metadata | Notes | History
+            self.metadata_tabs = QTabWidget(self)
+            self.metadata_tabs.setObjectName("MetadataTabs")
+            self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
+
+            # Notes tab (placeholder)
+            notes_widget = QTextEdit()
+            notes_widget.setReadOnly(True)
+            notes_widget.setPlainText(
+                "Notes\n\n"
+                "Add project or model-specific notes here.\n"
+                "Future: rich text, timestamps, and attachments."
+            )
+            self.metadata_tabs.addTab(notes_widget, "Notes")
+
+            # History tab (placeholder)
+            history_widget = QTextEdit()
+            history_widget.setReadOnly(True)
+            history_widget.setPlainText(
+                "History\n\n"
+                "Timeline of edits and metadata changes will appear here."
+            )
+            self.metadata_tabs.addTab(history_widget, "History")
+
+            # Apply themed styling to the tab widget
+            try:
+                self.metadata_tabs.setStyleSheet(qss_tabs_lists_labels())
+            except Exception:
+                pass
+
+            self.metadata_dock.setWidget(self.metadata_tabs)
+
+            # Ensure metadata dock header uses theme variables
+            try:
+                tm = ThemeManager.instance()
+                _dock_css_meta = """
+                    QDockWidget#MetadataDock::title {
+                        background-color: {{dock_title_bg}};
+                        color: {{text}};
+                        border-bottom: 1px solid {{dock_title_border}};
+                        padding: 6px;
+                    }
+                """
+                tm.register_widget(self.metadata_dock, css_text=_dock_css_meta)
+                tm.apply_stylesheet(self.metadata_dock)
+            except Exception:
+                pass
+            self.logger.info("Metadata editor widget created successfully (restored)")
+        except Exception as e:
+            self.logger.warning(f"Failed to create MetadataEditorWidget during restore: {e}")
+
+            # Fallback to placeholder
+            metadata_widget = QTextEdit()
+            metadata_widget.setReadOnly(True)
+            metadata_widget.setPlainText(
+                "Metadata Editor\n\n"
+                "Component unavailable."
+            )
+            self.metadata_dock.setWidget(metadata_widget)
+
+        # Attach dock
+        self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+        try:
+            self._register_dock_for_snapping(self.metadata_dock)
+        except Exception:
+            pass
+        try:
+            self._connect_layout_autosave(self.metadata_dock)
+        except Exception:
+            pass
+        # Persist visibility and keep View menu action state in sync
+        try:
+            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._save_metadata_panel_visibility())
+            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._update_metadata_action_state())
+        except Exception:
+            pass
+
+    def _restore_metadata_manager(self) -> None:
+        """Restore and show the Metadata Manager panel if it was closed or missing."""
+        try:
+            # Create or recreate the dock as needed
+            if not hasattr(self, "metadata_dock") or self.metadata_dock is None:
+                self._create_metadata_dock()
+            else:
+                # Ensure it has a widget; recreate contents if missing
+                try:
+                    has_widget = self.metadata_dock.widget() is not None
+                except Exception:
+                    has_widget = False
+                if not has_widget:
+                    try:
+                        self.removeDockWidget(self.metadata_dock)
+                    except Exception:
+                        pass
+                    self.metadata_dock = None  # type: ignore
+                    self._create_metadata_dock()
+
+            # Dock to right and show
+            try:
+                self._snap_dock_to_edge(self.metadata_dock, "right")
+            except Exception:
+                pass
+            try:
+                self.metadata_dock.show()
+                self.metadata_dock.raise_()
+            except Exception:
+                pass
+
+            # Persist visibility and menu state
+            try:
+                self._save_metadata_panel_visibility()
+            except Exception:
+                pass
+            try:
+                self._update_metadata_action_state()
+            except Exception:
+                pass
+            try:
+                self._schedule_layout_save()
+            except Exception:
+                pass
+
+            try:
+                self.statusBar().showMessage("Metadata Manager restored", 2000)
+            except Exception:
+                pass
+        except Exception as e:
+            self.logger.error(f"Failed to restore Metadata Manager: {e}")
+
+    def _create_model_library_dock(self) -> None:
+        """Create the Model Library dock and integrate it into the UI."""
+        try:
+            if hasattr(self, "model_library_dock") and self.model_library_dock:
+                return
+        except Exception:
+            pass
+
+        self.model_library_dock = QDockWidget("Model Library", self)
+        self.model_library_dock.setObjectName("ModelLibraryDock")
+        self.model_library_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.model_library_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
+
+        try:
+            from gui.model_library import ModelLibraryWidget
+            self.model_library_widget = ModelLibraryWidget(self)
+
+            # Connect signals
+            self.model_library_widget.model_selected.connect(self._on_model_selected)
+            self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
+            self.model_library_widget.models_added.connect(self._on_models_added)
+
+            self.model_library_dock.setWidget(self.model_library_widget)
+
+            # Theme the dock header
+            try:
+                tm = ThemeManager.instance()
+                _dock_css_ml = """
+                    QDockWidget#ModelLibraryDock::title {
+                        background-color: {{dock_title_bg}};
+                        color: {{text}};
+                        border-bottom: 1px solid {{dock_title_border}};
+                        padding: 6px;
+                    }
+                """
+                tm.register_widget(self.model_library_dock, css_text=_dock_css_ml)
+                tm.apply_stylesheet(self.model_library_dock)
+            except Exception:
+                pass
+        except Exception as e:
+            # Fallback widget
+            lib_placeholder = QTextEdit()
+            lib_placeholder.setReadOnly(True)
+            lib_placeholder.setPlainText(
+                "Model Library\n\nComponent unavailable."
+            )
+            self.model_library_dock.setWidget(lib_placeholder)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+        try:
+            self._register_dock_for_snapping(self.model_library_dock)
+        except Exception:
+            pass
+        try:
+            self._connect_layout_autosave(self.model_library_dock)
+        except Exception:
+            pass
+        try:
+            self.model_library_dock.visibilityChanged.connect(lambda _=False: self._update_library_action_state())
+        except Exception:
+            pass
+        try:
+            self._update_library_action_state()
+        except Exception:
+            pass
+
+    def _restore_model_library(self) -> None:
+        """Restore and show the Model Library panel if it was closed or missing."""
+        try:
+            # Create or recreate the dock as needed
+            recreate = False
+            if not hasattr(self, "model_library_dock") or self.model_library_dock is None:
+                recreate = True
+            else:
+                try:
+                    has_widget = self.model_library_dock.widget() is not None
+                except Exception:
+                    has_widget = False
+                if not has_widget:
+                    try:
+                        self.removeDockWidget(self.model_library_dock)
+                    except Exception:
+                        pass
+                    self.model_library_dock = None  # type: ignore
+                    recreate = True
+
+            if recreate:
+                self._create_model_library_dock()
+
+            # Dock to left and show
+            try:
+                self._snap_dock_to_edge(self.model_library_dock, "left")
+            except Exception:
+                pass
+            try:
+                self.model_library_dock.show()
+                self.model_library_dock.raise_()
+            except Exception:
+                pass
+
+            # Persist menu/action state and layout
+            try:
+                self._update_library_action_state()
+            except Exception:
+                pass
+            try:
+                self._schedule_layout_save()
+            except Exception:
+                pass
+
+            try:
+                self.statusBar().showMessage("Model Library restored", 2000)
+            except Exception:
+                pass
+        except Exception as e:
+            self.logger.error(f"Failed to restore Model Library: {e}")
+
+    def _update_library_action_state(self) -> None:
+        """Enable/disable 'Show Model Library' based on panel visibility."""
+        try:
+            visible = False
+            if hasattr(self, "model_library_dock") and self.model_library_dock:
+                visible = bool(self.model_library_dock.isVisible())
+            if hasattr(self, "show_model_library_action") and self.show_model_library_action:
+                self.show_model_library_action.setEnabled(not visible)
+        except Exception:
+            pass
+
+        # TODO: Add material roughness/metallic sliders in picker
+        # TODO: Add export material presets feature
 
     # Menu action handlers
      
@@ -1806,6 +2589,12 @@ class MainWindow(QMainWindow):
         """Autosave geometry changes on resize (debounced)."""
         try:
             self._schedule_layout_save()
+        except Exception:
+            pass
+        # Keep snap overlays aligned with the window
+        try:
+            if hasattr(self, "_snap_layer"):
+                self._snap_layer.update_geometry()
         except Exception:
             pass
         return super().resizeEvent(event)

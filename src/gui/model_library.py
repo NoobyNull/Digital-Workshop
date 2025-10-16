@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTreeView, QListView,
     QTableView, QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
     QGroupBox, QTabWidget, QFrame, QMenu, QMessageBox, QHeaderView,
-    QFileSystemModel, QButtonGroup, QToolButton
+    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox
 )
 
 from core.logging_config import get_logger
@@ -221,59 +221,54 @@ class ModelLibraryWidget(QWidget):
         self._disposed = False
 
         self._init_ui()
+        self._initialize_view_mode()
         self._setup_connections()
         self._load_models_from_database()
 
     def _init_ui(self) -> None:
+        # Top-level layout for the combined widget
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
         main_layout.setSpacing(SPACING_8)
 
-        self._create_toolbar(main_layout)
+        # Global controls that persist across internal tabs
         self._create_search_bar(main_layout)
 
-        self.content_splitter = QSplitter(Qt.Horizontal)
-        main_layout.addWidget(self.content_splitter)
-        
-        self._create_file_browser(self.content_splitter)
-        self._create_model_view_area(self.content_splitter)
-        self.content_splitter.setSizes([300, 700])
+        # Internal tabs: Library | Files (combined widget)
+        self.internal_tabs = QTabWidget()
+        main_layout.addWidget(self.internal_tabs)
 
-        self._create_status_bar(main_layout)
+        # --- Library tab: Model Library functionality without file browser ---
+        library_container = QWidget()
+        library_layout = QVBoxLayout(library_container)
+        library_layout.setContentsMargins(0, 0, 0, 0)
+        library_layout.setSpacing(SPACING_8)
+
+        # Model views only (no file browser)
+        self._create_model_view_area(library_layout)
+
+        # Status bar for library operations
+        self._create_status_bar(library_layout)
+
+        self.internal_tabs.addTab(library_container, "Library")
+
+        # --- Files tab: Dedicated file browser ---
+        files_container = QWidget()
+        files_layout = QVBoxLayout(files_container)
+        files_layout.setContentsMargins(0, 0, 0, 0)
+        files_layout.setSpacing(SPACING_8)
+
+        # File browser in its own tab
+        self._create_file_browser(files_layout)
+
+        self.internal_tabs.addTab(files_container, "Files")
+
+        # Apply theming/styling
         self._apply_styling()
 
-    def _create_toolbar(self, parent_layout: QVBoxLayout) -> None:
-        toolbar_frame = QFrame()
-        toolbar_layout = QHBoxLayout(toolbar_frame)
-        toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(SPACING_8)
-
-        self.list_view_button = QToolButton()
-        self.list_view_button.setText("List View")
-        self.list_view_button.setCheckable(True)
-        self.list_view_button.setChecked(True)
-
-        self.grid_view_button = QToolButton()
-        self.grid_view_button.setText("Grid View")
-        self.grid_view_button.setCheckable(True)
-
-        group = QButtonGroup(self)
-        group.addButton(self.list_view_button, 0)
-        group.addButton(self.grid_view_button, 1)
-        group.setExclusive(True)
-
-        toolbar_layout.addWidget(QLabel("View:"))
-        toolbar_layout.addWidget(self.list_view_button)
-        toolbar_layout.addWidget(self.grid_view_button)
-        toolbar_layout.addWidget(QFrame())
-
-        self.import_button = QPushButton("Import Models...")
-        toolbar_layout.addWidget(self.import_button)
-
-        self.refresh_button = QPushButton("Refresh")
-        toolbar_layout.addWidget(self.refresh_button)
-
-        parent_layout.addWidget(toolbar_frame)
+    def _initialize_view_mode(self) -> None:
+        """Initialize default view mode."""
+        self.view_mode = ViewMode.LIST
 
     def _create_search_bar(self, parent_layout: QVBoxLayout) -> None:
         controls_frame = QFrame()
@@ -299,7 +294,7 @@ class ModelLibraryWidget(QWidget):
 
         parent_layout.addWidget(controls_frame)
 
-    def _create_file_browser(self, parent_splitter: QSplitter) -> None:
+    def _create_file_browser(self, parent_layout: QVBoxLayout) -> None:
         group = QGroupBox("File Browser")
         layout = QVBoxLayout(group)
 
@@ -324,9 +319,25 @@ class ModelLibraryWidget(QWidget):
         self.path_display.setText(Path.home().as_posix())
         layout.addWidget(self.file_tree)
 
-        parent_splitter.addWidget(group)
+        # Import buttons at the bottom of file browser
+        import_frame = QFrame()
+        import_layout = QHBoxLayout(import_frame)
+        import_layout.setContentsMargins(0, SPACING_8, 0, 0)
+        
+        self.import_selected_button = QPushButton("Import Selected")
+        self.import_selected_button.setToolTip("Import selected file(s)")
+        import_layout.addWidget(self.import_selected_button)
+        
+        self.import_folder_button = QPushButton("Import Folder")
+        self.import_folder_button.setToolTip("Import the selected folder")
+        import_layout.addWidget(self.import_folder_button)
+        
+        import_layout.addStretch()
+        layout.addWidget(import_frame)
 
-    def _create_model_view_area(self, parent_splitter: QSplitter) -> None:
+        parent_layout.addWidget(group)
+
+    def _create_model_view_area(self, parent_layout: QVBoxLayout) -> None:
         group = QGroupBox("Models")
         layout = QVBoxLayout(group)
 
@@ -360,7 +371,7 @@ class ModelLibraryWidget(QWidget):
         self.view_tabs.addTab(self.grid_view, "Grid")
 
         layout.addWidget(self.view_tabs)
-        parent_splitter.addWidget(group)
+        parent_layout.addWidget(group)
 
     def _create_status_bar(self, parent_layout: QVBoxLayout) -> None:
         status_frame = QFrame()
@@ -466,48 +477,58 @@ class ModelLibraryWidget(QWidget):
         tm.apply_stylesheet(self)
 
     def _setup_connections(self) -> None:
-        self.list_view_button.clicked.connect(lambda: self._set_view_mode(ViewMode.LIST))
-        self.grid_view_button.clicked.connect(lambda: self._set_view_mode(ViewMode.GRID))
-        self.import_button.clicked.connect(self._import_models)
-        self.refresh_button.clicked.connect(self._refresh_models)
+        # View mode connections are handled by the tab widget directly
+        # Connect tab changes to update view mode
+        self.view_tabs.currentChanged.connect(self._on_tab_changed)
+
+        # File browser click handlers (Files tab)
         self.file_tree.clicked.connect(self._on_file_tree_clicked)
+        
+        # Import button handlers (Files tab)
+        self.import_selected_button.clicked.connect(self._import_selected_files)
+        self.import_folder_button.clicked.connect(self._import_selected_folder)
+
+        # Model list/grid interactions
         self.list_view.clicked.connect(self._on_model_clicked)
         self.list_view.doubleClicked.connect(self._on_model_double_clicked)
         self.grid_view.clicked.connect(self._on_model_clicked)
         self.grid_view.doubleClicked.connect(self._on_model_double_clicked)
 
+        # Filters / search (maintained across views)
         self.search_box.textChanged.connect(self._apply_filters)
         self.category_filter.currentIndexChanged.connect(self._apply_filters)
         self.format_filter.currentIndexChanged.connect(self._apply_filters)
 
+        # Drag-and-drop
         self.setAcceptDrops(True)
         self.list_view.setAcceptDrops(True)
         self.grid_view.setAcceptDrops(True)
 
+        # Context menus
         self.list_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_view.customContextMenuRequested.connect(self._show_context_menu)
         self.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.grid_view.customContextMenuRequested.connect(self._show_context_menu)
 
-    def _set_view_mode(self, mode: ViewMode) -> None:
-        self.view_mode = mode
-        # Toggle button checked states to reflect current mode explicitly
-        if hasattr(self, 'list_view_button') and hasattr(self, 'grid_view_button'):
-            if mode == ViewMode.GRID:
-                self.grid_view_button.setChecked(True)
-                self.list_view_button.setChecked(False)
-            else:
-                self.list_view_button.setChecked(True)
-                self.grid_view_button.setChecked(False)
-        # Switch the view tab
-        if mode == ViewMode.LIST:
-            self.view_tabs.setCurrentIndex(0)
+    def _on_tab_changed(self, index: int) -> None:
+        """Handle tab change to update view mode."""
+        if index == 0:
+            self.view_mode = ViewMode.LIST
         else:
-            self.view_tabs.setCurrentIndex(1)
+            self.view_mode = ViewMode.GRID
 
     def _on_file_tree_clicked(self, index: QModelIndex) -> None:
-        path = self.file_model.filePath(index)
-        self.path_display.setText(path)
+        # Update the path display when a file is clicked
+        try:
+            path = self.file_model.filePath(index)
+            if hasattr(self, "path_display"):
+                self.path_display.setText(path)
+        except Exception:
+            # Fallback: do not raise in tests
+            try:
+                self.path_display.setText(self.file_model.filePath(index))
+            except Exception:
+                pass
 
     def _apply_filters(self) -> None:
         if self._disposed or not hasattr(self, "proxy_model"):
@@ -770,6 +791,89 @@ class ModelLibraryWidget(QWidget):
     def _import_models(self) -> None:
         # Tests trigger import via _load_models or DnD, so this can be a stub
         self.status_label.setText("Use drag-and-drop to import models.")
+
+    def _import_selected_files(self) -> None:
+        """Import selected files from the file tree."""
+        try:
+            selected_indexes = self.file_tree.selectedIndexes()
+            if not selected_indexes:
+                QMessageBox.information(self, "Import", "Please select one or more files to import.")
+                return
+
+            files_to_import = []
+            for index in selected_indexes:
+                if index.column() == 0:  # Only process the first column to avoid duplicates
+                    path = self.file_model.filePath(index)
+                    file_path = Path(path)
+                    if file_path.is_file():
+                        suffix = file_path.suffix.lower()
+                        if suffix in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                            files_to_import.append(path)
+
+            if not files_to_import:
+                QMessageBox.warning(self, "Import", "No supported model files selected.\nSupported formats: STL, OBJ, 3MF, STEP")
+                return
+
+            self._load_models(files_to_import)
+            
+        except Exception as e:
+            self.logger.error(f"Error importing selected files: {e}")
+            QMessageBox.critical(self, "Import Error", f"Failed to import files: {e}")
+
+    def _import_selected_folder(self) -> None:
+        """Import selected folder from the file tree with recursive option."""
+        try:
+            selected_indexes = self.file_tree.selectedIndexes()
+            if not selected_indexes:
+                QMessageBox.information(self, "Import", "Please select a folder to import.")
+                return
+
+            # Get the selected folder path
+            selected_index = selected_indexes[0]  # Take the first selection
+            if selected_index.column() != 0:  # Make sure we're looking at the name column
+                selected_index = selected_indexes[0].sibling(selected_index.row(), 0)
+                
+            path = self.file_model.filePath(selected_index)
+            folder_path = Path(path)
+            
+            if not folder_path.is_dir():
+                QMessageBox.warning(self, "Import", "Please select a folder, not a file.")
+                return
+
+            # Ask about recursive import
+            reply = QMessageBox.question(
+                self,
+                "Recursive Import",
+                "Do you want to import files recursively from subfolders?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            # Find all model files in the folder
+            files_to_import = []
+            supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
+            
+            if reply == QMessageBox.Yes:
+                # Recursive search
+                for ext in supported_extensions:
+                    files_to_import.extend(folder_path.rglob(f"*{ext}"))
+            else:
+                # Non-recursive search (only immediate folder)
+                for ext in supported_extensions:
+                    files_to_import.extend(folder_path.glob(f"*{ext}"))
+
+            # Convert Path objects to strings
+            files_to_import = [str(f) for f in files_to_import]
+
+            if not files_to_import:
+                QMessageBox.information(self, "Import", f"No supported model files found in the selected folder.\nSupported formats: {', '.join(supported_extensions)}")
+                return
+
+            self._load_models(files_to_import)
+            
+        except Exception as e:
+            self.logger.error(f"Error importing selected folder: {e}")
+            QMessageBox.critical(self, "Import Error", f"Failed to import folder: {e}")
 
     def cleanup(self) -> None:
         self._disposed = True
