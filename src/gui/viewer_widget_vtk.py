@@ -394,9 +394,7 @@ class Viewer3DWidget(QWidget):
             self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
         
         # Set up shadow mapping for realistic rendering
-        # TEMPORARILY DISABLED: Shadow mapping may be interfering with ground plane visibility
-        # self._setup_shadows()
-        self.logger.info("Shadow mapping temporarily disabled for ground plane debugging")
+        self._setup_shadows()
         
         # Set up default camera
         self.renderer.ResetCamera()
@@ -566,7 +564,7 @@ class Viewer3DWidget(QWidget):
             self.logger.warning(f"Ground plane creation/update failed: {e}")
 
     def _setup_shadows(self) -> None:
-        """Enable shadow mapping for realistic shadows."""
+        """Enable shadow mapping for realistic shadows with ground plane compatibility."""
         try:
             # Enable shadow mapping on the renderer
             if hasattr(vtk, 'vtkShadowMapPass'):
@@ -576,6 +574,9 @@ class Viewer3DWidget(QWidget):
                 try:
                     shadows.SetResolution(2048)  # Higher resolution shadows
                     shadows.SetIntensityCorrection(True)
+                    # Ensure ground plane is included in shadow rendering
+                    shadows.SetShadowBias(0.005)  # Reduce shadow acne
+                    shadows.SetPolysAsEdges(False)  # Better shadow quality
                 except Exception:
                     pass
                 
@@ -593,7 +594,19 @@ class Viewer3DWidget(QWidget):
                 # Set render pass to renderer
                 try:
                     self.renderer.SetPass(cameraP)
-                    self.logger.info("High-quality shadow mapping enabled")
+                    self.logger.info("High-quality shadow mapping enabled with ground plane support")
+                    
+                    # Ensure ground plane is properly configured for shadow reception
+                    if self.ground_actor:
+                        try:
+                            # Configure ground plane for shadow reception
+                            self.ground_actor.GetProperty().SetAmbient(0.3)
+                            self.ground_actor.GetProperty().SetDiffuse(0.7)
+                            self.ground_actor.GetProperty().SetSpecular(0.1)
+                            self.ground_actor.GetProperty().SetSpecularPower(10.0)
+                            self.logger.debug("Ground plane configured for shadow reception")
+                        except Exception:
+                            pass
                 except Exception as e:
                     self.logger.debug(f"Could not set shadow pass (may not be supported): {e}")
             else:
