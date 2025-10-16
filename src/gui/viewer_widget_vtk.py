@@ -376,8 +376,19 @@ class Viewer3DWidget(QWidget):
         # grid_actor and ground_actor initialized in __init__ before this point
         try:
             self.logger.info(f"Creating initial grid and ground with grid_visible={self.grid_visible}")
-            self._update_grid(radius=50.0, center_x=0.0, center_y=0.0)
-            self._create_ground_plane(radius=50.0, center_x=0.0, center_y=0.0)
+            # Force grid to be visible initially for debugging
+            self.grid_visible = True
+            self._update_grid(radius=100.0, center_x=0.0, center_y=0.0)
+            self._create_ground_plane(radius=100.0, center_x=0.0, center_y=0.0)
+            
+            # Ensure visibility is set correctly
+            if self.grid_actor:
+                self.grid_actor.SetVisibility(True)
+                self.logger.info("Grid actor visibility set to True")
+            if self.ground_actor:
+                self.ground_actor.SetVisibility(True)
+                self.logger.info("Ground actor visibility set to True")
+                
             self.logger.info(f"Initial grid and ground plane created - grid_actor exists: {self.grid_actor is not None}, ground_actor exists: {self.ground_actor is not None}")
         except Exception as e:
             self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
