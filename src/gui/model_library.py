@@ -39,6 +39,7 @@ from parsers import (
     FormatDetector, ModelFormat
 )
 from gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 
 class FileSystemProxyModel(QSortFilterProxyModel):
@@ -179,7 +180,7 @@ class ThumbnailGenerator:
     def generate_thumbnail(self, model_info: Dict[str, Any]) -> QPixmap:
         try:
             pixmap = QPixmap(self.size)
-            pixmap.fill(Qt.transparent)
+            pixmap.fill(QColor(0, 0, 0, 0))  # Use QColor for transparent
 
             painter = QPainter(pixmap)
             painter.setRenderHint(QPainter.Antialiasing)
@@ -215,7 +216,7 @@ class ThumbnailGenerator:
                 radius = min(norm_w, norm_h) / 2
                 painter.drawEllipse(QPointF(cx, cy), radius, radius)
                 painter.setPen(QPen(qcolor('primary_text'), 1))
-                painter.setBrush(Qt.NoBrush)
+                painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.7, radius * 0.7)
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.4, radius * 0.4)
             
@@ -308,6 +309,12 @@ class ModelLibraryWidget(QWidget):
 
         self.internal_tabs.addTab(files_container, "Files")
 
+        # Validate root folder reachability after UI is set up
+        self._validate_root_folders()
+
+        # Set up context menu for file tree
+        self._show_file_tree_context_menu = self._show_file_tree_context_menu
+
         # Apply theming/styling
         self._apply_styling()
 
@@ -343,49 +350,43 @@ class ModelLibraryWidget(QWidget):
         group = QGroupBox("File Browser")
         layout = QVBoxLayout(group)
 
-        path_frame = QFrame()
-        path_layout = QHBoxLayout(path_frame)
-        path_layout.setContentsMargins(0, 0, 0, 0)
-        path_layout.addWidget(QLabel("Path:"))
-        self.path_display = QLabel()
-        path_layout.addWidget(self.path_display)
-        layout.addWidget(path_frame)
-
-        self.file_tree = QTreeView()
-        self.file_model = QFileSystemModel()
-        self.file_model.setRootPath(Path.home().as_posix())
-        # Set filters to hide hidden folders and files
-        self.file_model.setFilter(QDir.AllDirs | QDir.AllEntries | QDir.NoDotAndDotDot)
-        
-        # Create proxy model to filter out hidden folders and network paths
+        # Create multi-root file system model
+        self.file_model = MultiRootFileSystemModel()
         self.file_proxy_model = FileSystemProxyModel()
         self.file_proxy_model.setSourceModel(self.file_model)
-        
-        self.file_tree.setModel(self.file_proxy_model)
-        self.file_tree.setColumnHidden(1, True)
-        self.file_tree.setColumnHidden(2, True)
-        self.file_tree.setColumnHidden(3, True)
 
-        index = self.file_model.index(Path.home().as_posix())
-        proxy_index = self.file_proxy_model.mapFromSource(index)
-        self.file_tree.setRootIndex(proxy_index)
-        self.path_display.setText(Path.home().as_posix())
+        # Connect to file model signals for status updates
+        self.file_model.indexing_started.connect(self._on_indexing_started)
+        self.file_model.indexing_completed.connect(self._on_indexing_completed)
+
+        self.file_tree = QTreeView()
+        self.file_tree.setModel(self.file_proxy_model)
+        self.file_tree.setColumnHidden(1, True)  # Hide size column
+        self.file_tree.setColumnHidden(2, True)  # Hide type column
+        self.file_tree.setColumnHidden(3, True)  # Hide modified column
+
         layout.addWidget(self.file_tree)
 
         # Import buttons at the bottom of file browser
         import_frame = QFrame()
         import_layout = QHBoxLayout(import_frame)
         import_layout.setContentsMargins(0, SPACING_8, 0, 0)
-        
+
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setToolTip("Refresh directory index")
+        self.refresh_button.clicked.connect(self._refresh_file_browser)
+        import_layout.addWidget(self.refresh_button)
+
+        import_layout.addStretch()
+
         self.import_selected_button = QPushButton("Import Selected")
         self.import_selected_button.setToolTip("Import selected file(s)")
         import_layout.addWidget(self.import_selected_button)
-        
+
         self.import_folder_button = QPushButton("Import Folder")
         self.import_folder_button.setToolTip("Import the selected folder")
         import_layout.addWidget(self.import_folder_button)
-        
-        import_layout.addStretch()
+
         layout.addWidget(import_frame)
 
         parent_layout.addWidget(group)
@@ -563,6 +564,10 @@ class ModelLibraryWidget(QWidget):
         self.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.grid_view.customContextMenuRequested.connect(self._show_context_menu)
 
+        # File tree context menu
+        self.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.file_tree.customContextMenuRequested.connect(self._show_file_tree_context_menu)
+
     def _on_tab_changed(self, index: int) -> None:
         """Handle tab change to update view mode."""
         if index == 0:
@@ -575,16 +580,12 @@ class ModelLibraryWidget(QWidget):
         try:
             # Map from proxy to source model
             source_index = self.file_proxy_model.mapToSource(index)
-            path = self.file_model.filePath(source_index)
-            if hasattr(self, "path_display"):
+            path = self.file_model.get_file_path(source_index)
+            if hasattr(self, "path_display") and path:
                 self.path_display.setText(path)
         except Exception:
             # Fallback: do not raise in tests
-            try:
-                source_index = self.file_proxy_model.mapToSource(index)
-                self.path_display.setText(self.file_model.filePath(source_index))
-            except Exception:
-                pass
+            pass
 
     def _apply_filters(self) -> None:
         if self._disposed or not hasattr(self, "proxy_model"):
@@ -726,7 +727,19 @@ class ModelLibraryWidget(QWidget):
             return
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(int(progress_percent))
-        self.status_label.setText(message)
+
+        # Calculate current item number from progress
+        total_files = len(self.model_loader.file_paths)
+        current_item = int((progress_percent / 100.0) * total_files) + 1
+        current_item = min(current_item, total_files)  # Don't exceed total
+
+        # Enhanced status message with progress details
+        if total_files > 1:
+            status_text = f"{message} ({current_item} of {total_files} = {int(progress_percent)}%)"
+        else:
+            status_text = f"{message} ({int(progress_percent)}%)"
+
+        self.status_label.setText(status_text)
 
     def _on_load_error(self, error_message: str) -> None:
         if self._disposed or self.model_loader is None:
@@ -838,17 +851,90 @@ class ModelLibraryWidget(QWidget):
             open_action = QAction("Open", self)
             open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
             menu.addAction(open_action)
-            
+
             # Add separator and remove action
             menu.addSeparator()
             remove_action = QAction("Remove", self)
             remove_action.triggered.connect(lambda: self._remove_model(int(model_id)))
             menu.addAction(remove_action)
-            
+
             menu.exec_(view.mapToGlobal(position))
         except Exception:
             # Fail silently in tests if something goes wrong with context menu
             pass
+
+    def _show_file_tree_context_menu(self, position) -> None:
+        """Show context menu for the file tree with import and open options."""
+        try:
+            index = self.file_tree.indexAt(position)
+            if not index.isValid():
+                return
+
+            # Map from proxy to source model
+            source_index = self.file_proxy_model.mapToSource(index)
+            path = self.file_model.get_file_path(source_index)
+            if not path:
+                return
+
+            menu = QMenu(self)
+
+            # Import action (for files and folders)
+            import_action = QAction("Import", self)
+            import_action.triggered.connect(lambda: self._import_from_context_menu(path))
+            menu.addAction(import_action)
+
+            # Open in native app action (for files only)
+            if Path(path).is_file():
+                menu.addSeparator()
+                open_action = QAction("Open in Native App", self)
+                open_action.triggered.connect(lambda: self._open_in_native_app(path))
+                menu.addAction(open_action)
+
+            menu.exec_(self.file_tree.mapToGlobal(position))
+
+        except Exception as e:
+            self.logger.error(f"Error showing file tree context menu: {e}")
+
+    def _import_from_context_menu(self, path: str) -> None:
+        """Import files/folders from context menu selection."""
+        try:
+            p = Path(path)
+            if p.is_file():
+                # Import single file
+                if p.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                    self._load_models([path])
+                else:
+                    QMessageBox.warning(self, "Import", f"Unsupported file format: {p.suffix}")
+            elif p.is_dir():
+                # Import folder recursively
+                files_to_import = []
+                supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
+                for ext in supported_extensions:
+                    files_to_import.extend(p.rglob(f"*{ext}"))
+
+                if files_to_import:
+                    files_to_import = [str(f) for f in files_to_import]
+                    self._load_models(files_to_import)
+                else:
+                    QMessageBox.information(self, "Import", f"No supported model files found in {p.name}")
+
+        except Exception as e:
+            self.logger.error(f"Error importing from context menu: {e}")
+            QMessageBox.critical(self, "Import Error", f"Failed to import: {e}")
+
+    def _open_in_native_app(self, file_path: str) -> None:
+        """Open file in its native application."""
+        try:
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QDesktopServices
+
+            url = QUrl.fromLocalFile(file_path)
+            if not QDesktopServices.openUrl(url):
+                QMessageBox.warning(self, "Open File", f"Could not open file: {file_path}")
+
+        except Exception as e:
+            self.logger.error(f"Error opening file in native app: {e}")
+            QMessageBox.critical(self, "Open File", f"Failed to open file: {e}")
 
     def _remove_model(self, model_id: int) -> None:
         """Remove a model from the library after confirmation."""
@@ -899,6 +985,51 @@ class ModelLibraryWidget(QWidget):
     def _refresh_models(self) -> None:
         self._load_models_from_database()
 
+    def _refresh_file_browser(self) -> None:
+        """Refresh the file browser by re-indexing directories."""
+        try:
+            self.file_model.refresh_index()
+            self.status_label.setText("Indexing directories...")
+            self.logger.info("Manual file browser refresh initiated")
+        except Exception as e:
+            self.logger.error(f"Error refreshing file browser: {e}")
+            self.status_label.setText("Error refreshing directories")
+
+    def _on_indexing_started(self) -> None:
+        """Handle indexing started signal."""
+        self.status_label.setText("Indexing directories...")
+
+    def _on_indexing_completed(self) -> None:
+        """Handle indexing completed signal."""
+        self.status_label.setText("Ready")
+
+    def _validate_root_folders(self) -> None:
+        """Validate that configured root folders are accessible."""
+        try:
+            enabled_folders = self.root_folder_manager.get_enabled_folders()
+            inaccessible_folders = []
+
+            for folder in enabled_folders:
+                if not Path(folder.path).exists():
+                    inaccessible_folders.append(f"{folder.display_name} ({folder.path})")
+                    self.logger.warning(f"Root folder not accessible: {folder.display_name} ({folder.path})")
+
+            if inaccessible_folders:
+                folder_list = "\n".join(f"• {folder}" for folder in inaccessible_folders)
+                QMessageBox.warning(
+                    self,
+                    "Inaccessible Root Folders",
+                    f"The following configured root folders are not accessible:\n\n{folder_list}\n\n"
+                    "Please check that the folders exist and you have permission to access them.\n"
+                    "You can update root folder settings in Preferences > Files."
+                )
+            else:
+                self.logger.debug(f"All {len(enabled_folders)} root folders are accessible")
+
+        except Exception as e:
+            self.logger.error(f"Error validating root folders: {e}")
+            # Don't show error dialog for validation failures to avoid startup blocking
+
     def _import_models(self) -> None:
         # Tests trigger import via _load_models or DnD, so this can be a stub
         self.status_label.setText("Use drag-and-drop to import models.")
@@ -916,10 +1047,9 @@ class ModelLibraryWidget(QWidget):
                 if index.column() == 0:  # Only process the first column to avoid duplicates
                     # Map from proxy to source model
                     source_index = self.file_proxy_model.mapToSource(index)
-                    path = self.file_model.filePath(source_index)
-                    file_path = Path(path)
-                    if file_path.is_file():
-                        suffix = file_path.suffix.lower()
+                    path = self.file_model.get_file_path(source_index)
+                    if path and Path(path).is_file():
+                        suffix = Path(path).suffix.lower()
                         if suffix in [".stl", ".obj", ".3mf", ".step", ".stp"]:
                             files_to_import.append(path)
 
@@ -928,7 +1058,7 @@ class ModelLibraryWidget(QWidget):
                 return
 
             self._load_models(files_to_import)
-            
+
         except Exception as e:
             self.logger.error(f"Error importing selected files: {e}")
             QMessageBox.critical(self, "Import Error", f"Failed to import files: {e}")

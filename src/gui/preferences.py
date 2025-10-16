@@ -27,6 +27,7 @@ from gui.theme import (
     COLORS,
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
+from gui.files_tab import FilesTab
 
 
 class PreferencesDialog(QDialog):
@@ -53,7 +54,7 @@ class PreferencesDialog(QDialog):
         # Placeholder tabs for scope expansion
         self.display_tab = DisplayTab(on_reset_layout=self.on_reset_layout)
         self.system_tab = PlaceholderTab("System settings (coming soon)")
-        self.files_tab = PlaceholderTab("File and path settings (coming soon)")
+        self.files_tab = FilesTab()
 
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
 
