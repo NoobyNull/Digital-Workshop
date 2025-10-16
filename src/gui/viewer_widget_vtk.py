@@ -488,12 +488,12 @@ class Viewer3DWidget(QWidget):
             center_y: Y coordinate of center
         """
         try:
-            # Create a plane at Z=0 (slightly below to avoid z-fighting with grid)
+            # Create a plane at Z=-0.1 (further below grid to avoid z-fighting)
             plane = vtk.vtkPlaneSource()
             size = max(100.0, radius * 2.0)  # Ensure adequate size for shadows
-            plane.SetOrigin(center_x - size, center_y - size, -0.02)  # Slightly below Z=0
-            plane.SetPoint1(center_x + size, center_y - size, -0.02)
-            plane.SetPoint2(center_x - size, center_y + size, -0.02)
+            plane.SetOrigin(center_x - size, center_y - size, -0.1)  # Further below Z=0
+            plane.SetPoint1(center_x + size, center_y - size, -0.1)
+            plane.SetPoint2(center_x - size, center_y + size, -0.1)
             plane.SetResolution(20, 20)  # Higher resolution for better shadow quality
             
             if self.ground_actor is None:
@@ -503,20 +503,24 @@ class Viewer3DWidget(QWidget):
                 self.ground_actor = vtk.vtkActor()
                 self.ground_actor.SetMapper(mapper)
                 
-                # Make ground visible with subtle color and shadow reception
+                # Make ground more visible with better contrast
                 prop = self.ground_actor.GetProperty()
-                # Use slightly darker version of canvas_bg for ground contrast
+                # Use much darker version of canvas_bg for ground contrast
                 bg_rgb = vtk_rgb('canvas_bg')
-                ground_color = (max(0, bg_rgb[0] - 0.12), max(0, bg_rgb[1] - 0.12), max(0, bg_rgb[2] - 0.12))
+                # Increase contrast significantly - make it 0.35 darker for better visibility
+                ground_color = (max(0, bg_rgb[0] - 0.35), max(0, bg_rgb[1] - 0.35), max(0, bg_rgb[2] - 0.35))
                 prop.SetColor(*ground_color)
-                prop.SetOpacity(0.98)  # Nearly opaque for good shadow reception
+                prop.SetOpacity(0.85)  # Slightly transparent to show it's a reference plane
                 prop.LightingOn()
                 
                 # Enable shadow reception with proper material properties
-                prop.SetAmbient(0.2)  # Lower ambient for better shadows
-                prop.SetDiffuse(0.9)  # Higher diffuse for shadow reception
-                prop.SetSpecular(0.05)  # Low specular to avoid hot spots
-                prop.SetSpecularPower(5.0)
+                prop.SetAmbient(0.3)  # Higher ambient to make it more visible
+                prop.SetDiffuse(0.7)  # Lower diffuse to avoid being too bright
+                prop.SetSpecular(0.1)  # Low specular to avoid hot spots
+                prop.SetSpecularPower(10.0)
+                
+                # Ensure ground renders properly by setting render order
+                self.ground_actor.SetPosition(0, 0, 0)  # Explicit position
                 
                 self.renderer.AddActor(self.ground_actor)
                 # Set initial visibility
@@ -524,16 +528,19 @@ class Viewer3DWidget(QWidget):
                     self.ground_actor.SetVisibility(self.grid_visible)
                 else:
                     self.ground_actor.SetVisibility(True)
-                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}")
+                    
+                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, z=-0.1")
             else:
                 # Update existing ground plane
                 mapper = self.ground_actor.GetMapper()
                 mapper.SetInputConnection(plane.GetOutputPort())
                 
-                # Update color
+                # Update color with increased contrast
                 bg_rgb = vtk_rgb('canvas_bg')
-                ground_color = (max(0, bg_rgb[0] - 0.12), max(0, bg_rgb[1] - 0.12), max(0, bg_rgb[2] - 0.12))
+                ground_color = (max(0, bg_rgb[0] - 0.35), max(0, bg_rgb[1] - 0.35), max(0, bg_rgb[2] - 0.35))
                 self.ground_actor.GetProperty().SetColor(*ground_color)
+                self.ground_actor.GetProperty().SetOpacity(0.85)
+                
                 # Ensure visibility matches state
                 if hasattr(self, 'grid_visible'):
                     self.ground_actor.SetVisibility(self.grid_visible)
@@ -1598,8 +1605,10 @@ class Viewer3DWidget(QWidget):
             if hasattr(self, "ground_actor") and self.ground_actor:
                 try:
                     bg_rgb = vtk_rgb('canvas_bg')
-                    ground_color = (max(0, bg_rgb[0] - 0.05), max(0, bg_rgb[1] - 0.05), max(0, bg_rgb[2] - 0.05))
+                    # Use the same increased contrast as in _create_ground_plane
+                    ground_color = (max(0, bg_rgb[0] - 0.35), max(0, bg_rgb[1] - 0.35), max(0, bg_rgb[2] - 0.35))
                     self.ground_actor.GetProperty().SetColor(*ground_color)
+                    self.ground_actor.GetProperty().SetOpacity(0.85)
                 except Exception:
                     pass
 
