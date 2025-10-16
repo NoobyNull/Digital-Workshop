@@ -863,19 +863,82 @@ class Viewer3DWidget(QWidget):
             obj: The VTK object that triggered the event
             event: The event type
         """
+        import time
+        start_time = time.time()
+        
         try:
+            # Capture camera state before interaction
+            camera = self.renderer.GetActiveCamera()
+            if camera:
+                pre_position = camera.GetPosition()
+                pre_focal = camera.GetFocalPoint()
+                pre_viewup = camera.GetViewUp()
+                pre_clipping = camera.GetClippingRange()
+                
+                self.logger.debug(
+                    f"UCS INTERACTION START - Event: {event}, Object: {obj.__class__.__name__ if obj else 'None'}"
+                )
+                self.logger.debug(
+                    f"  PRE-INTERACTION Camera State:\n"
+                    f"    Position: ({pre_position[0]:.3f}, {pre_position[1]:.3f}, {pre_position[2]:.3f})\n"
+                    f"    Focal Point: ({pre_focal[0]:.3f}, {pre_focal[1]:.3f}, {pre_focal[2]:.3f})\n"
+                    f"    View Up: ({pre_viewup[0]:.3f}, {pre_viewup[1]:.3f}, {pre_viewup[2]:.3f})\n"
+                    f"    Clipping Range: ({pre_clipping[0]:.3f}, {pre_clipping[1]:.3f})"
+                )
+            
             # After orientation change, fit camera to model bounds
             if self.current_model and self.actor:
+                bounds = self.actor.GetBounds() if self.actor else None
+                self.logger.debug(
+                    f"  Model loaded: triangle_count={self.current_model.stats.triangle_count}, "
+                    f"bounds={bounds if bounds else 'None'}"
+                )
                 self._fit_camera_to_model(self.current_model)
             else:
                 # No model loaded, just reset camera normally
+                self.logger.debug("  No model loaded, performing standard camera reset")
                 self.renderer.ResetCamera()
                 self.renderer.ResetCameraClippingRange()
                 self.vtk_widget.GetRenderWindow().Render()
             
-            self.logger.debug(f"Camera adjusted after UCS widget interaction: {event}")
+            # Capture camera state after interaction
+            if camera:
+                post_position = camera.GetPosition()
+                post_focal = camera.GetFocalPoint()
+                post_viewup = camera.GetViewUp()
+                post_clipping = camera.GetClippingRange()
+                
+                elapsed = (time.time() - start_time) * 1000  # Convert to ms
+                
+                self.logger.debug(
+                    f"  POST-INTERACTION Camera State:\n"
+                    f"    Position: ({post_position[0]:.3f}, {post_position[1]:.3f}, {post_position[2]:.3f})\n"
+                    f"    Focal Point: ({post_focal[0]:.3f}, {post_focal[1]:.3f}, {post_focal[2]:.3f})\n"
+                    f"    View Up: ({post_viewup[0]:.3f}, {post_viewup[1]:.3f}, {post_viewup[2]:.3f})\n"
+                    f"    Clipping Range: ({post_clipping[0]:.3f}, {post_clipping[1]:.3f})\n"
+                    f"  Duration: {elapsed:.2f}ms"
+                )
+                
+                # Calculate changes for easier analysis
+                pos_delta = ((post_position[0]-pre_position[0])**2 +
+                             (post_position[1]-pre_position[1])**2 +
+                             (post_position[2]-pre_position[2])**2)**0.5
+                focal_delta = ((post_focal[0]-pre_focal[0])**2 +
+                               (post_focal[1]-pre_focal[1])**2 +
+                               (post_focal[2]-pre_focal[2])**2)**0.5
+                
+                self.logger.debug(
+                    f"  CHANGES: Position delta={pos_delta:.3f}, Focal point delta={focal_delta:.3f}"
+                )
+            
+            self.logger.debug("UCS INTERACTION COMPLETE")
+            
         except Exception as e:
-            self.logger.error(f"Failed to adjust camera after UCS interaction: {e}")
+            elapsed = (time.time() - start_time) * 1000
+            self.logger.error(
+                f"UCS INTERACTION FAILED after {elapsed:.2f}ms - Error: {e}",
+                exc_info=True
+            )
     
     def _remove_current_model(self) -> None:
         """Remove the currently loaded model from the scene."""
