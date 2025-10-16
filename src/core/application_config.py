@@ -43,7 +43,7 @@ class ApplicationConfig:
     minimum_window_height: int = 600
     
     # Logging Configuration
-    log_level: str = "INFO"
+    log_level: str = "DEBUG"
     enable_file_logging: bool = True
     log_retention_days: int = 30
     
