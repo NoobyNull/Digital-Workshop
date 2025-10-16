@@ -319,6 +319,13 @@ class Viewer3DWidget(QWidget):
                     self.camera_widget.SetEnableInteractivity(True)
                 except Exception:
                     pass
+                
+                # Add observer to fit camera after orientation change
+                try:
+                    self.camera_widget.AddObserver("EndInteractionEvent", self._on_orientation_widget_interaction)
+                except Exception:
+                    pass
+                
                 try:
                     self.camera_widget.SetEnabled(1)
                 except Exception:
@@ -355,6 +362,12 @@ class Viewer3DWidget(QWidget):
                 self.marker.InteractiveOn()
                 # Position in top-right corner
                 self.marker.SetViewport(0.8, 0.8, 1.0, 1.0)
+                
+                # Add observer to fit camera after interaction
+                try:
+                    self.marker.AddObserver("EndInteractionEvent", self._on_orientation_widget_interaction)
+                except Exception:
+                    pass
         except Exception:
             # Non-fatal if orientation widget setup fails
             pass
@@ -806,6 +819,29 @@ class Viewer3DWidget(QWidget):
             self.logger.debug("Render window updated after grid toggle")
         except Exception as e:
             self.logger.error(f"Failed to render after grid toggle: {e}")
+    
+    def _on_orientation_widget_interaction(self, obj, event) -> None:
+        """
+        Callback for when the UCS orientation widget is clicked.
+        Resets camera to properly frame the model after orientation change.
+        
+        Args:
+            obj: The VTK object that triggered the event
+            event: The event type
+        """
+        try:
+            # After orientation change, fit camera to model bounds
+            if self.current_model and self.actor:
+                self._fit_camera_to_model(self.current_model)
+            else:
+                # No model loaded, just reset camera normally
+                self.renderer.ResetCamera()
+                self.renderer.ResetCameraClippingRange()
+                self.vtk_widget.GetRenderWindow().Render()
+            
+            self.logger.debug(f"Camera adjusted after UCS widget interaction: {event}")
+        except Exception as e:
+            self.logger.error(f"Failed to adjust camera after UCS interaction: {e}")
     
     def _remove_current_model(self) -> None:
         """Remove the currently loaded model from the scene."""
