@@ -61,28 +61,45 @@ class LightingManager:
         """
         t0 = time.perf_counter()
         try:
-            if self.light is None:
-                self.light = vtk.vtkLight()
-                # Use a directional-style scene light for general illumination
-                try:
-                    self.light.SetLightTypeToSceneLight()
-                except Exception:
-                    pass
-                try:
-                    self.light.SetPositional(False)
-                except Exception:
-                    pass
-                self.light.SetPosition(*self.position)
-                self.light.SetColor(*self.color)
-                self.light.SetIntensity(float(self.intensity))
-                if self.renderer:
-                    self.renderer.AddLight(self.light)
-                self.logger.info("LightingManager created light and added to renderer")
-            else:
-                # Ensure existing light matches current properties
-                self.light.SetPosition(*self.position)
-                self.light.SetColor(*self.color)
-                self.light.SetIntensity(float(self.intensity))
+            # Clear existing lights first to avoid conflicts
+            if self.renderer:
+                self.renderer.RemoveAllLights()
+            
+            # Create primary key light
+            self.light = vtk.vtkLight()
+            try:
+                self.light.SetLightTypeToSceneLight()
+            except Exception:
+                pass
+            try:
+                self.light.SetPositional(False)  # Directional light for better shadows
+            except Exception:
+                pass
+            self.light.SetPosition(*self.position)
+            self.light.SetColor(*self.color)
+            self.light.SetIntensity(float(self.intensity))
+            
+            # Create fill light for better overall illumination
+            fill_light = vtk.vtkLight()
+            try:
+                fill_light.SetLightTypeToSceneLight()
+            except Exception:
+                pass
+            try:
+                fill_light.SetPositional(False)
+            except Exception:
+                pass
+            # Position fill light opposite to key light
+            fill_pos = [-p * 0.5 for p in self.position]
+            fill_light.SetPosition(*fill_pos)
+            fill_light.SetColor(0.8, 0.8, 0.9)  # Slightly cool fill light
+            fill_light.SetIntensity(float(self.intensity * 0.3))  # Lower intensity
+            
+            # Add lights to renderer
+            if self.renderer:
+                self.renderer.AddLight(self.light)
+                self.renderer.AddLight(fill_light)
+                self.logger.info("LightingManager created key and fill lights and added to renderer")
 
             # Immediate render for responsive UX
             self._render_now()
@@ -99,10 +116,8 @@ class LightingManager:
         t0 = time.perf_counter()
         try:
             self.position = [float(x), float(y), float(z)]
-            if self.light is None:
-                self.create_light()
-            else:
-                self.light.SetPosition(*self.position)
+            # Recreate lights to ensure proper positioning
+            self.create_light()
             self._render_now()
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
@@ -118,10 +133,8 @@ class LightingManager:
             g = self._clamp(g, 0.0, 1.0)
             b = self._clamp(b, 0.0, 1.0)
             self.color = [r, g, b]
-            if self.light is None:
-                self.create_light()
-            else:
-                self.light.SetColor(r, g, b)
+            # Recreate lights to ensure proper color application
+            self.create_light()
             self._render_now()
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
@@ -135,10 +148,8 @@ class LightingManager:
         try:
             val = self._clamp(value, 0.0, 2.0)
             self.intensity = val
-            if self.light is None:
-                self.create_light()
-            else:
-                self.light.SetIntensity(val)
+            # Recreate lights to ensure proper intensity
+            self.create_light()
             self._render_now()
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"

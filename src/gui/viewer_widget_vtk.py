@@ -396,16 +396,18 @@ class Viewer3DWidget(QWidget):
     def _update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
         """
         Create/update a studio-style, infinite-looking XY grid at Z=0 using a large planar mesh's edges.
-        The radius/center parameters are accepted for API compatibility but are not used.
+        Uses the radius and center parameters to properly size the grid around the model.
         """
         try:
+            grid_size = max(100.0, radius * 3.0)  # Ensure grid is large enough
+            
             if self.grid_actor is None:
-                # Large plane to simulate infinite grid via perspective
+                # Create properly sized grid plane
                 plane = vtk.vtkPlaneSource()
-                plane.SetOrigin(-1000.0, -1000.0, 0.0)
-                plane.SetPoint1(1000.0, -1000.0, 0.0)
-                plane.SetPoint2(-1000.0, 1000.0, 0.0)
-                plane.SetResolution(100, 100)  # Dense enough for perspective falloff
+                plane.SetOrigin(center_x - grid_size, center_y - grid_size, 0.0)
+                plane.SetPoint1(center_x + grid_size, center_y - grid_size, 0.0)
+                plane.SetPoint2(center_x - grid_size, center_y + grid_size, 0.0)
+                plane.SetResolution(50, 50)  # Good balance of detail and performance
 
                 # Extract only the grid lines (edges)
                 edges = vtk.vtkExtractEdges()
@@ -420,37 +422,42 @@ class Viewer3DWidget(QWidget):
                 # Studio-style grid appearance
                 prop = self.grid_actor.GetProperty()
                 prop.SetColor(*vtk_rgb('edge_color'))
-                prop.SetOpacity(0.3)
+                prop.SetOpacity(0.4)  # Slightly more visible
                 prop.SetLineWidth(1.0)
                 try:
                     prop.LightingOff()
+                    # Ensure grid renders on top of ground plane
+                    prop.SetRenderLinesAsTubes(False)
                 except Exception:
                     pass
 
                 self.renderer.AddActor(self.grid_actor)
                 # Respect current visibility toggle state
                 self.grid_actor.SetVisibility(self.grid_visible if hasattr(self, "grid_visible") else True)
-                self.logger.info("Studio-style infinite grid created.")
+                self.logger.info(f"Studio-style infinite grid created with size {grid_size:.2f}")
             else:
+                # Update existing grid with new size/position
+                plane = vtk.vtkPlaneSource()
+                plane.SetOrigin(center_x - grid_size, center_y - grid_size, 0.0)
+                plane.SetPoint1(center_x + grid_size, center_y - grid_size, 0.0)
+                plane.SetPoint2(center_x - grid_size, center_y + grid_size, 0.0)
+                plane.SetResolution(50, 50)
+                
+                edges = vtk.vtkExtractEdges()
+                edges.SetInputConnection(plane.GetOutputPort())
+                
+                mapper = self.grid_actor.GetMapper()
+                mapper.SetInputConnection(edges.GetOutputPort())
+                
                 # Ensure theme-aligned styling on updates
                 prop = self.grid_actor.GetProperty()
                 prop.SetColor(*vtk_rgb('edge_color'))
-                prop.SetOpacity(0.3)
+                prop.SetOpacity(0.4)
                 prop.SetLineWidth(1.0)
-                if hasattr(prop, "SetRenderLinesAsTubes"):
-                    try:
-                        # Keep as lines for a clean, performant grid
-                        prop.SetRenderLinesAsTubes(False)
-                    except Exception:
-                        pass
                 if hasattr(self, "grid_visible"):
                     self.grid_actor.SetVisibility(self.grid_visible)
 
-            # Maintain proper clipping and render
-            try:
-                self.renderer.ResetCameraClippingRange()
-            except Exception:
-                pass
+            # Force render update
             try:
                 self.vtk_widget.GetRenderWindow().Render()
             except Exception:
@@ -472,11 +479,11 @@ class Viewer3DWidget(QWidget):
         try:
             # Create a plane at Z=0 (slightly below to avoid z-fighting with grid)
             plane = vtk.vtkPlaneSource()
-            size = radius * 2.5  # Slightly larger than grid
-            plane.SetOrigin(center_x - size, center_y - size, -0.01)  # Slightly below Z=0
-            plane.SetPoint1(center_x + size, center_y - size, -0.01)
-            plane.SetPoint2(center_x - size, center_y + size, -0.01)
-            plane.SetResolution(10, 10)  # More segments for better shadow reception
+            size = max(100.0, radius * 2.0)  # Ensure adequate size for shadows
+            plane.SetOrigin(center_x - size, center_y - size, -0.02)  # Slightly below Z=0
+            plane.SetPoint1(center_x + size, center_y - size, -0.02)
+            plane.SetPoint2(center_x - size, center_y + size, -0.02)
+            plane.SetResolution(20, 20)  # Higher resolution for better shadow quality
             
             if self.ground_actor is None:
                 mapper = vtk.vtkPolyDataMapper()
@@ -489,16 +496,16 @@ class Viewer3DWidget(QWidget):
                 prop = self.ground_actor.GetProperty()
                 # Use slightly darker version of canvas_bg for ground contrast
                 bg_rgb = vtk_rgb('canvas_bg')
-                ground_color = (max(0, bg_rgb[0] - 0.08), max(0, bg_rgb[1] - 0.08), max(0, bg_rgb[2] - 0.08))
+                ground_color = (max(0, bg_rgb[0] - 0.12), max(0, bg_rgb[1] - 0.12), max(0, bg_rgb[2] - 0.12))
                 prop.SetColor(*ground_color)
-                prop.SetOpacity(0.95)  # More opaque to be visible
+                prop.SetOpacity(0.98)  # Nearly opaque for good shadow reception
                 prop.LightingOn()
                 
                 # Enable shadow reception with proper material properties
-                prop.SetAmbient(0.3)
-                prop.SetDiffuse(0.8)
-                prop.SetSpecular(0.1)
-                prop.SetSpecularPower(10.0)
+                prop.SetAmbient(0.2)  # Lower ambient for better shadows
+                prop.SetDiffuse(0.9)  # Higher diffuse for shadow reception
+                prop.SetSpecular(0.05)  # Low specular to avoid hot spots
+                prop.SetSpecularPower(5.0)
                 
                 self.renderer.AddActor(self.ground_actor)
                 # Set initial visibility
@@ -506,7 +513,7 @@ class Viewer3DWidget(QWidget):
                     self.ground_actor.SetVisibility(self.grid_visible)
                 else:
                     self.ground_actor.SetVisibility(True)
-                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, color={ground_color}")
+                self.logger.info(f"Ground plane created and added: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}")
             else:
                 # Update existing ground plane
                 mapper = self.ground_actor.GetMapper()
@@ -514,12 +521,18 @@ class Viewer3DWidget(QWidget):
                 
                 # Update color
                 bg_rgb = vtk_rgb('canvas_bg')
-                ground_color = (max(0, bg_rgb[0] - 0.08), max(0, bg_rgb[1] - 0.08), max(0, bg_rgb[2] - 0.08))
+                ground_color = (max(0, bg_rgb[0] - 0.12), max(0, bg_rgb[1] - 0.12), max(0, bg_rgb[2] - 0.12))
                 self.ground_actor.GetProperty().SetColor(*ground_color)
-                self.logger.info(f"Ground plane updated: center=({center_x:.2f}, {center_y:.2f}), size={size:.2f}, color={ground_color}")
                 # Ensure visibility matches state
                 if hasattr(self, 'grid_visible'):
                     self.ground_actor.SetVisibility(self.grid_visible)
+                    
+            # Force render update
+            try:
+                self.vtk_widget.GetRenderWindow().Render()
+            except Exception:
+                pass
+                
         except Exception as e:
             # Never break rendering due to ground plane failure
             self.logger.warning(f"Ground plane creation/update failed: {e}")
@@ -530,6 +543,13 @@ class Viewer3DWidget(QWidget):
             # Enable shadow mapping on the renderer
             if hasattr(vtk, 'vtkShadowMapPass'):
                 shadows = vtk.vtkShadowMapPass()
+                
+                # Configure shadow parameters for better quality
+                try:
+                    shadows.SetResolution(2048)  # Higher resolution shadows
+                    shadows.SetIntensityCorrection(True)
+                except Exception:
+                    pass
                 
                 # Create sequence pass for shadow rendering
                 seq = vtk.vtkSequencePass()
@@ -545,12 +565,15 @@ class Viewer3DWidget(QWidget):
                 # Set render pass to renderer
                 try:
                     self.renderer.SetPass(cameraP)
-                    self.logger.info("Shadow mapping enabled")
+                    self.logger.info("High-quality shadow mapping enabled")
                 except Exception as e:
                     self.logger.debug(f"Could not set shadow pass (may not be supported): {e}")
+            else:
+                # Fallback: ensure proper lighting for depth perception
+                self.logger.debug("Shadow mapping not available in this VTK build")
         except Exception as e:
             # Shadows are optional enhancement, don't break viewer if unavailable
-            self.logger.debug(f"Shadow mapping not available: {e}")
+            self.logger.debug(f"Shadow mapping setup failed: {e}")
     
     def _setup_performance_monitoring(self) -> None:
         """Set up performance monitoring for FPS tracking."""
