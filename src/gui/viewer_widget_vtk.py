@@ -886,20 +886,29 @@ class Viewer3DWidget(QWidget):
                     f"    Clipping Range: ({pre_clipping[0]:.3f}, {pre_clipping[1]:.3f})"
                 )
             
-            # After orientation change, fit camera to model bounds
+            # DON'T automatically refit camera after UCS interaction
+            # The UCS widget already sets the correct camera orientation
+            # We only need to update clipping range to ensure model is visible
             if self.current_model and self.actor:
                 bounds = self.actor.GetBounds() if self.actor else None
                 self.logger.debug(
                     f"  Model loaded: triangle_count={self.current_model.stats.triangle_count}, "
-                    f"bounds={bounds if bounds else 'None'}"
+                    f"bounds={bounds if bounds else 'None'} - Preserving UCS orientation"
                 )
-                self._fit_camera_to_model(self.current_model)
+                # Only update clipping range, don't reset camera position
+                try:
+                    self.renderer.ResetCameraClippingRange()
+                    self.vtk_widget.GetRenderWindow().Render()
+                except Exception:
+                    pass
             else:
-                # No model loaded, just reset camera normally
-                self.logger.debug("  No model loaded, performing standard camera reset")
-                self.renderer.ResetCamera()
-                self.renderer.ResetCameraClippingRange()
-                self.vtk_widget.GetRenderWindow().Render()
+                # No model loaded, just update clipping range
+                self.logger.debug("  No model loaded, updating clipping range only")
+                try:
+                    self.renderer.ResetCameraClippingRange()
+                    self.vtk_widget.GetRenderWindow().Render()
+                except Exception:
+                    pass
             
             # Capture camera state after interaction
             if camera:
