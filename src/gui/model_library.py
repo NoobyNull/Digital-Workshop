@@ -33,6 +33,7 @@ from core.logging_config import get_logger
 from core.database_manager import get_database_manager
 from core.performance_monitor import get_performance_monitor, monitor_operation
 from core.model_cache import get_model_cache, CacheLevel
+from utils.file_hash import calculate_file_hash
 from parsers import (
     STLParser, OBJParser, ThreeMFParser, STEPParser,
     FormatDetector, ModelFormat
@@ -103,6 +104,7 @@ class ModelLoadWorker(QThread):
                     "filename": filename,
                     "format": model.format_type.value,
                     "file_size": model.stats.file_size_bytes,
+                    "file_hash": None,
                     "triangle_count": model.stats.triangle_count,
                     "vertex_count": model.stats.vertex_count,
                     "dimensions": model.stats.get_dimensions(),
@@ -649,11 +651,13 @@ class ModelLibraryWidget(QWidget):
         if self._disposed or self.model_loader is None:
             return
         try:
+            # Add to database without hash (will be hashed in background)
             model_id = self.db_manager.add_model(
                 filename=model_info["filename"],
                 format=model_info["format"],
                 file_path=model_info["file_path"],
-                file_size=model_info["file_size"]
+                file_size=model_info["file_size"],
+                file_hash=None
             )
             self.db_manager.add_model_metadata(model_id=model_id, title=model_info["filename"], description="")
             thumb = self.thumbnail_generator.generate_thumbnail(model_info)
@@ -780,10 +784,63 @@ class ModelLibraryWidget(QWidget):
             open_action = QAction("Open", self)
             open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
             menu.addAction(open_action)
+            
+            # Add separator and remove action
+            menu.addSeparator()
+            remove_action = QAction("Remove", self)
+            remove_action.triggered.connect(lambda: self._remove_model(int(model_id)))
+            menu.addAction(remove_action)
+            
             menu.exec_(view.mapToGlobal(position))
         except Exception:
             # Fail silently in tests if something goes wrong with context menu
             pass
+
+    def _remove_model(self, model_id: int) -> None:
+        """Remove a model from the library after confirmation."""
+        try:
+            # Get model details for confirmation dialog
+            model_info = self.db_manager.get_model(model_id)
+            if not model_info:
+                self.logger.warning(f"Model with ID {model_id} not found")
+                return
+                
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
+            
+            # Show confirmation dialog
+            reply = QMessageBox.question(
+                self,
+                "Confirm Removal",
+                f"Are you sure you want to remove '{model_name}' from the library?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                # Remove from database
+                success = self.db_manager.delete_model(model_id)
+                
+                if success:
+                    # Remove from cache if present
+                    if model_info.get("file_path"):
+                        try:
+                            self.model_cache.remove(model_info["file_path"])
+                        except Exception:
+                            # Continue even if cache removal fails
+                            pass
+                    
+                    # Update UI
+                    self.status_label.setText(f"Removed '{model_name}' from library")
+                    self._load_models_from_database()
+                    
+                    self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
+                else:
+                    self.status_label.setText(f"Failed to remove '{model_name}'")
+                    self.logger.error(f"Failed to remove model with ID {model_id}")
+                    
+        except Exception as e:
+            self.logger.error(f"Error removing model: {e}")
+            QMessageBox.warning(self, "Error", f"Failed to remove model: {str(e)}")
 
     def _refresh_models(self) -> None:
         self._load_models_from_database()

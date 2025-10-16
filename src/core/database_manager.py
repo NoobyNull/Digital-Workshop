@@ -62,6 +62,7 @@ class DatabaseManager:
                         format TEXT NOT NULL,           -- 'stl', 'mf3', 'obj', 'step'
                         file_path TEXT NOT NULL,
                         file_size INTEGER,
+                        file_hash TEXT,                 -- BLAKE2 hash for duplicate detection and recovery
                         date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
                         last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
@@ -80,6 +81,15 @@ class DatabaseManager:
                         rating INTEGER CHECK(rating >= 0 AND rating <= 5),
                         view_count INTEGER DEFAULT 0,
                         last_viewed DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        camera_position_x REAL,         -- Saved camera X position
+                        camera_position_y REAL,         -- Saved camera Y position
+                        camera_position_z REAL,         -- Saved camera Z position
+                        camera_focal_x REAL,            -- Saved camera focal point X
+                        camera_focal_y REAL,            -- Saved camera focal point Y
+                        camera_focal_z REAL,            -- Saved camera focal point Z
+                        camera_view_up_x REAL,          -- Saved camera view up X
+                        camera_view_up_y REAL,          -- Saved camera view up Y
+                        camera_view_up_z REAL,          -- Saved camera view up Z
                         UNIQUE(model_id)
                     )
                 """)
@@ -94,18 +104,19 @@ class DatabaseManager:
                     )
                 """)
                 
+                # Migrate database schema if needed (BEFORE creating indexes)
+                self._migrate_database_schema(cursor)
+                
                 # Create indexes for better performance
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_metadata_model_id ON model_metadata(model_id)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_metadata_category ON model_metadata(category)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)")
                 
                 # Insert default categories if they don't exist
                 self._insert_default_categories(cursor)
-                
-                # Migrate database schema if needed
-                self._migrate_database_schema(cursor)
 
                 # Create wood materials table and seed defaults
                 self._create_wood_materials_table(cursor)
@@ -154,7 +165,18 @@ class DatabaseManager:
             cursor: SQLite cursor object
         """
         try:
-            # Check if we need to migrate the rating constraint
+            # Migration 1: Add file_hash column to models table if it doesn't exist
+            cursor.execute("PRAGMA table_info(models)")
+            model_columns = cursor.fetchall()
+            has_file_hash = any(col[1] == 'file_hash' for col in model_columns)
+            
+            if not has_file_hash:
+                logger.info("Adding file_hash column to models table")
+                cursor.execute("ALTER TABLE models ADD COLUMN file_hash TEXT")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)")
+                logger.info("file_hash column added successfully")
+            
+            # Migration 2: Check if we need to migrate the rating constraint
             cursor.execute("PRAGMA table_info(model_metadata)")
             columns = cursor.fetchall()
             
@@ -332,8 +354,8 @@ class DatabaseManager:
     # Models table operations
     
     @log_function_call(logger)
-    def add_model(self, filename: str, format: str, file_path: str, 
-                  file_size: Optional[int] = None) -> int:
+    def add_model(self, filename: str, format: str, file_path: str,
+                  file_size: Optional[int] = None, file_hash: Optional[str] = None) -> int:
         """
         Add a new model to the database.
         
@@ -342,6 +364,7 @@ class DatabaseManager:
             format: Model format ('stl', 'mf3', 'obj', 'step')
             file_path: Full path to the model file
             file_size: File size in bytes
+            file_hash: BLAKE2 hash of file content
             
         Returns:
             ID of the inserted model
@@ -353,19 +376,143 @@ class DatabaseManager:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO models (filename, format, file_path, file_size, last_modified)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """, (filename, format, file_path, file_size))
+                    INSERT INTO models (filename, format, file_path, file_size, file_hash, last_modified)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, (filename, format, file_path, file_size, file_hash))
                 
                 model_id = cursor.lastrowid
                 conn.commit()
                 
-                logger.info(f"Added model '{filename}' with ID: {model_id}")
+                logger.info(f"Added model '{filename}' with ID: {model_id}, hash: {file_hash[:16] if file_hash else 'None'}...")
                 return model_id
                 
         except sqlite3.Error as e:
             logger.error(f"Failed to add model '{filename}': {str(e)}")
             raise
+    
+    @log_function_call(logger)
+    def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
+        """
+        Find a model by its file hash.
+        
+        Args:
+            file_hash: BLAKE2 hash to search for
+            
+        Returns:
+            Model dict if found, None otherwise
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
+                           mm.source, mm.rating, mm.view_count, mm.last_viewed
+                    FROM models m
+                    LEFT JOIN model_metadata mm ON m.id = mm.model_id
+                    WHERE m.file_hash = ?
+                """, (file_hash,))
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except sqlite3.Error as e:
+            logger.error(f"Failed to find model by hash: {e}")
+            return None
+    
+    @log_function_call(logger)
+    def update_model_path(self, model_id: int, new_path: str) -> bool:
+        """
+        Update file path for a model (for file recovery).
+        
+        Args:
+            model_id: Model ID
+            new_path: New file path
+            
+        Returns:
+            True if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE models SET file_path = ?, last_modified = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (new_path, model_id))
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info(f"Updated file path for model {model_id} to: {new_path}")
+                return success
+        except sqlite3.Error as e:
+            logger.error(f"Failed to update model path: {e}")
+            return False
+    
+    @log_function_call(logger)
+    def get_unhashed_models(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Get models that don't have a file hash yet (for background hashing).
+        
+        Args:
+            limit: Maximum number of models to return (None for all)
+            
+        Returns:
+            List of model dictionaries without hashes
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                query = """
+                    SELECT m.*, mm.title, mm.description, mm.category
+                    FROM models m
+                    LEFT JOIN model_metadata mm ON m.id = mm.model_id
+                    WHERE m.file_hash IS NULL
+                    ORDER BY m.date_added ASC
+                """
+                
+                params = []
+                if limit:
+                    query += " LIMIT ?"
+                    params.append(limit)
+                
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+                
+                models = [dict(row) for row in rows]
+                logger.debug(f"Retrieved {len(models)} unhashed models")
+                return models
+                
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get unhashed models: {str(e)}")
+            return []
+    
+    @log_function_call(logger)
+    def update_file_hash(self, model_id: int, file_hash: str) -> bool:
+        """
+        Update file hash for a model (used by background hasher).
+        
+        Args:
+            model_id: Model ID
+            file_hash: BLAKE2 hash to set
+            
+        Returns:
+            True if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE models SET file_hash = ?, last_modified = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (file_hash, model_id))
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info(f"Updated file hash for model {model_id}: {file_hash[:16]}...")
+                return success
+        except sqlite3.Error as e:
+            logger.error(f"Failed to update file hash for model {model_id}: {e}")
+            return False
     
     @log_function_call(logger)
     def get_model(self, model_id: int) -> Optional[Dict[str, Any]]:
@@ -636,6 +783,71 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logger.error(f"Failed to update metadata for model {model_id}: {str(e)}")
             raise
+    
+    @log_function_call(logger)
+    def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
+        """
+        Save camera orientation for a model.
+        
+        Args:
+            model_id: Model ID
+            camera_data: Dict with keys: position_x/y/z, focal_x/y/z, view_up_x/y/z
+            
+        Returns:
+            True if save was successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE model_metadata
+                    SET camera_position_x = ?, camera_position_y = ?, camera_position_z = ?,
+                        camera_focal_x = ?, camera_focal_y = ?, camera_focal_z = ?,
+                        camera_view_up_x = ?, camera_view_up_y = ?, camera_view_up_z = ?
+                    WHERE model_id = ?
+                """, (
+                    camera_data.get('position_x'), camera_data.get('position_y'), camera_data.get('position_z'),
+                    camera_data.get('focal_x'), camera_data.get('focal_y'), camera_data.get('focal_z'),
+                    camera_data.get('view_up_x'), camera_data.get('view_up_y'), camera_data.get('view_up_z'),
+                    model_id
+                ))
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info(f"Saved camera orientation for model {model_id}")
+                return success
+        except sqlite3.Error as e:
+            logger.error(f"Failed to save camera orientation: {e}")
+            return False
+    
+    @log_function_call(logger)
+    def get_camera_orientation(self, model_id: int) -> Optional[Dict[str, float]]:
+        """
+        Get saved camera orientation for a model.
+        
+        Args:
+            model_id: Model ID
+            
+        Returns:
+            Dict with camera data or None if not saved
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT camera_position_x, camera_position_y, camera_position_z,
+                           camera_focal_x, camera_focal_y, camera_focal_z,
+                           camera_view_up_x, camera_view_up_y, camera_view_up_z
+                    FROM model_metadata WHERE model_id = ?
+                """, (model_id,))
+                row = cursor.fetchone()
+                if row and row['camera_position_x'] is not None:
+                    return dict(row)
+                return None
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get camera orientation: {e}")
+            return None
     
     @log_function_call(logger)
     def increment_view_count(self, model_id: int) -> bool:

@@ -646,6 +646,13 @@ class MainWindow(QMainWindow):
         reset_view_action.setStatusTip("Reset the 3D view to default")
         reset_view_action.triggered.connect(self._reset_view)
         view_menu.addAction(reset_view_action)
+        
+        # Save view action
+        save_view_action = QAction("&Save View", self)
+        save_view_action.setShortcut(QKeySequence("Ctrl+S"))
+        save_view_action.setStatusTip("Save current camera view for this model")
+        save_view_action.triggered.connect(self._save_current_view)
+        view_menu.addAction(save_view_action)
 
         # Reset dock layout action (helps when a floating dock is hard to re-dock)
         reset_layout_action = QAction("Reset &Layout", self)
@@ -924,9 +931,21 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.status_bar.addPermanentWidget(self.progress_bar)
         
+        # Hash indicator button
+        self.hash_indicator = QPushButton("#")
+        self.hash_indicator.setFixedSize(20, 20)
+        self.hash_indicator.setToolTip("Background hashing idle - Click to start/pause")
+        self.hash_indicator.setVisible(False)
+        self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
+        self.hash_indicator.clicked.connect(self._toggle_background_hasher)
+        self.status_bar.addPermanentWidget(self.hash_indicator)
+        
         # Memory usage indicator
         self.memory_label = QLabel("Memory: N/A")
         self.status_bar.addPermanentWidget(self.memory_label)
+        
+        # Initialize background hasher
+        self.background_hasher = None
         
         self.logger.debug("Status bar setup completed")
 
@@ -2506,8 +2525,14 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setVisible(True)
                 self.progress_bar.setRange(0, 0)  # Indeterminate progress
                 
+                # Store model ID for save view functionality
+                self.current_model_id = model_id
+                
                 # Load the model using STL parser
                 self._load_stl_model(file_path)
+                
+                # After model loads, restore saved camera orientation if available
+                QTimer.singleShot(500, lambda: self._restore_saved_camera(model_id))
             else:
                 self.logger.warning(f"Model with ID {model_id} not found in database")
                 
@@ -2526,6 +2551,9 @@ class MainWindow(QMainWindow):
         # Update status
         if model_ids:
             self.status_label.setText(f"Added {len(model_ids)} models to library")
+            
+            # Start background hasher to process new models
+            self._start_background_hasher()
             
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
@@ -2629,6 +2657,104 @@ class MainWindow(QMainWindow):
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
     
+    def _save_current_view(self) -> None:
+        """Save the current camera view for the loaded model."""
+        try:
+            # Check if a model is currently loaded
+            if not hasattr(self.viewer_widget, 'current_model') or not self.viewer_widget.current_model:
+                QMessageBox.information(self, "Save View", "No model is currently loaded.")
+                return
+            
+            # Get the model ID from the current model
+            model = self.viewer_widget.current_model
+            if not hasattr(model, 'file_path') or not model.file_path:
+                QMessageBox.warning(self, "Save View", "Cannot save view: model file path not found.")
+                return
+            
+            # Find the model ID in the database by file path
+            db_manager = get_database_manager()
+            models = db_manager.get_all_models()
+            model_id = None
+            for m in models:
+                if m.get('file_path') == model.file_path:
+                    model_id = m.get('id')
+                    break
+            
+            if not model_id:
+                QMessageBox.warning(self, "Save View", "Model not found in database.")
+                return
+            
+            # Get camera state from viewer
+            if hasattr(self.viewer_widget, 'renderer'):
+                camera = self.viewer_widget.renderer.GetActiveCamera()
+                if camera:
+                    pos = camera.GetPosition()
+                    focal = camera.GetFocalPoint()
+                    view_up = camera.GetViewUp()
+                    
+                    camera_data = {
+                        'position_x': pos[0], 'position_y': pos[1], 'position_z': pos[2],
+                        'focal_x': focal[0], 'focal_y': focal[1], 'focal_z': focal[2],
+                        'view_up_x': view_up[0], 'view_up_y': view_up[1], 'view_up_z': view_up[2]
+                    }
+                    
+                    # Save to database
+                    success = db_manager.save_camera_orientation(model_id, camera_data)
+                    
+                    if success:
+                        self.status_label.setText("View saved for this model")
+                        self.logger.info(f"Saved camera view for model ID {model_id}")
+                        QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+                    else:
+                        QMessageBox.warning(self, "Save View", "Failed to save view to database.")
+                else:
+                    QMessageBox.warning(self, "Save View", "Camera not available.")
+            else:
+                QMessageBox.warning(self, "Save View", "Viewer not initialized.")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to save current view: {e}")
+            QMessageBox.warning(self, "Save View", f"Failed to save view: {str(e)}")
+    
+    def _restore_saved_camera(self, model_id: int) -> None:
+        """Restore saved camera orientation for a model."""
+        try:
+            db_manager = get_database_manager()
+            camera_data = db_manager.get_camera_orientation(model_id)
+            
+            if camera_data and hasattr(self.viewer_widget, 'renderer'):
+                camera = self.viewer_widget.renderer.GetActiveCamera()
+                if camera:
+                    # Restore camera position, focal point, and view up
+                    camera.SetPosition(
+                        camera_data['camera_position_x'],
+                        camera_data['camera_position_y'],
+                        camera_data['camera_position_z']
+                    )
+                    camera.SetFocalPoint(
+                        camera_data['camera_focal_x'],
+                        camera_data['camera_focal_y'],
+                        camera_data['camera_focal_z']
+                    )
+                    camera.SetViewUp(
+                        camera_data['camera_view_up_x'],
+                        camera_data['camera_view_up_y'],
+                        camera_data['camera_view_up_z']
+                    )
+                    
+                    # Update clipping range and render
+                    self.viewer_widget.renderer.ResetCameraClippingRange()
+                    self.viewer_widget.vtk_widget.GetRenderWindow().Render()
+                    
+                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
+                    self.status_label.setText("Restored saved view")
+                    QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+            else:
+                self.logger.debug(f"No saved camera view for model ID {model_id}")
+                
+        except Exception as e:
+            self.logger.warning(f"Failed to restore saved camera: {e}")
+    
     def _show_about(self) -> None:
         """Show about dialog."""
         self.logger.info("Showing about dialog")
@@ -2717,6 +2843,115 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to apply material '{species_name}': {e}")
     
+    # Background hashing methods
+    
+    def _start_background_hasher(self) -> None:
+        """Start the background hasher thread."""
+        try:
+            if self.background_hasher and self.background_hasher.isRunning():
+                self.logger.debug("Background hasher already running")
+                return
+                
+            from gui.background_hasher import BackgroundHasher
+            
+            self.background_hasher = BackgroundHasher(self)
+            self.background_hasher.hash_progress.connect(self._on_hash_progress)
+            self.background_hasher.model_hashed.connect(self._on_model_hashed)
+            self.background_hasher.duplicate_found.connect(self._on_duplicate_found)
+            self.background_hasher.all_complete.connect(self._on_hashing_complete)
+            
+            self.background_hasher.start()
+            
+            # Update indicator - solid when hashing
+            self.hash_indicator.setVisible(True)
+            self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when hashing
+            self.hash_indicator.setToolTip("Background hashing active - Click to pause")
+            
+            self.logger.info("Background hasher started")
+        except Exception as e:
+            self.logger.error(f"Failed to start background hasher: {e}")
+    
+    def _toggle_background_hasher(self) -> None:
+        """Toggle pause/resume of background hasher."""
+        try:
+            if not self.background_hasher or not self.background_hasher.isRunning():
+                # Not running, start it
+                self._start_background_hasher()
+                return
+                
+            if self.background_hasher.is_paused():
+                # Resume
+                self.background_hasher.resume()
+                self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when running
+                self.hash_indicator.setToolTip("Background hashing active - Click to pause")
+                self.statusBar().showMessage("Background hashing resumed", 2000)
+            else:
+                # Pause
+                self.background_hasher.pause()
+                self.hash_indicator.setStyleSheet("opacity: 0.5;")  # Semi-transparent when paused
+                self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
+                self.statusBar().showMessage("Background hashing paused", 2000)
+        except Exception as e:
+            self.logger.error(f"Failed to toggle background hasher: {e}")
+    
+    def _on_hash_progress(self, filename: str) -> None:
+        """Handle hash progress update."""
+        try:
+            self.statusBar().showMessage(f"Hashing: {filename}", 1000)
+        except Exception:
+            pass
+    
+    def _on_model_hashed(self, model_id: int, file_hash: str) -> None:
+        """Handle model hashed successfully."""
+        try:
+            self.logger.debug(f"Model {model_id} hashed: {file_hash[:16]}...")
+        except Exception:
+            pass
+    
+    def _on_duplicate_found(self, new_model_id: int, existing_id: int, new_path: str, old_path: str) -> None:
+        """Handle duplicate file detected - prompt user for action."""
+        try:
+            reply = QMessageBox.question(
+                self,
+                "File Location Changed",
+                f"This file already exists in the library but has moved:\n\n"
+                f"Old: {old_path}\n"
+                f"New: {new_path}\n\n"
+                f"Update to new location?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            
+            if reply == QMessageBox.Yes:
+                # Update to new path, delete old entry
+                db_manager = get_database_manager()
+                db_manager.update_model_path(existing_id, new_path)
+                db_manager.delete_model(new_model_id)
+                self.logger.info(f"Updated file path for model {existing_id}, removed duplicate {new_model_id}")
+                
+                # Refresh model library if available
+                if hasattr(self, 'model_library_widget'):
+                    self.model_library_widget._load_models_from_database()
+            else:
+                # Keep duplicate, just mark it as hashed with the same hash
+                db_manager = get_database_manager()
+                existing = db_manager.get_model(existing_id)
+                if existing and existing.get('file_hash'):
+                    db_manager.update_file_hash(new_model_id, existing['file_hash'])
+                    
+        except Exception as e:
+            self.logger.error(f"Failed to handle duplicate: {e}")
+    
+    def _on_hashing_complete(self) -> None:
+        """Handle all hashing complete."""
+        try:
+            self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
+            self.hash_indicator.setToolTip("Background hashing idle - Click to start")
+            self.statusBar().showMessage("Background hashing complete", 2000)
+            self.logger.info("Background hashing completed")
+        except Exception:
+            pass
+    
     # Event handlers
 
     def resizeEvent(self, event) -> None:
@@ -2744,6 +2979,16 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         """Handle window close event."""
         self.logger.info("Application closing")
+        
+        # Stop background hasher if running
+        if self.background_hasher and self.background_hasher.isRunning():
+            try:
+                self.logger.info("Stopping background hasher...")
+                self.background_hasher.stop()
+                self.background_hasher.wait(3000)  # Wait up to 3 seconds
+                self.logger.info("Background hasher stopped")
+            except Exception as e:
+                self.logger.warning(f"Failed to stop background hasher cleanly: {e}")
         
         # Safety: Ensure layout edit mode is locked before closing
         try:
