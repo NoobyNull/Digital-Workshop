@@ -1,11 +1,14 @@
-from __future__ import annotations
+"""
+Improved lighting control panel with sliders for position, color, and intensity.
+This replaces the spinboxes with more intuitive sliders.
+"""
 
 from typing import Tuple
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QDialog,
+    QDockWidget,
     QWidget,
     QVBoxLayout,
     QGroupBox,
@@ -19,8 +22,8 @@ from PySide6.QtWidgets import (
 from gui.theme import COLORS
 
 
-class LightingControlPanel(QDialog):
-    """Floating dialog panel for lighting controls with sliders"""
+class LightingControlPanel(QDockWidget):
+    """Improved lighting control panel with sliders for position, color, and intensity."""
 
     # Signals
     position_changed = Signal(float, float, float)  # X, Y, Z
@@ -28,21 +31,25 @@ class LightingControlPanel(QDialog):
     intensity_changed = Signal(float)  # 0-2.0
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Lighting Controls")
+        super().__init__("Lighting", parent)
         self.setObjectName("LightingControlPanel")
-        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
-        self.resize(400, 400)
+        self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.setFeatures(
+            QDockWidget.DockWidgetMovable
+            | QDockWidget.DockWidgetFloatable
+            | QDockWidget.DockWidgetClosable
+        )
 
-        # Current values (defaults) - using angle-based positions (0-180 deg, 90 = center)
-        self._pos_x = 90.0  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_y = 90.0  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_z = 90.0  # degrees, 90 = center (maps to 100 actual position)
+        # Current values (defaults)
+        self._pos_x = 100.0
+        self._pos_y = 100.0
+        self._pos_z = 100.0
         self._color = (1.0, 1.0, 1.0)  # normalized RGB
         self._intensity = 0.8
 
         # Build UI
-        root_layout = QVBoxLayout(self)
+        container = QWidget(self)
+        root_layout = QVBoxLayout(container)
         root_layout.setContentsMargins(10, 10, 10, 10)
         root_layout.setSpacing(10)
 
@@ -52,39 +59,39 @@ class LightingControlPanel(QDialog):
         pos_layout.setContentsMargins(10, 10, 10, 10)
         pos_layout.setSpacing(8)
 
-        # X Position slider (0-180 degrees, 90 = center)
+        # X Position slider
         x_layout = QHBoxLayout()
-        x_label = QLabel("X Angle:")
+        x_label = QLabel("X Position:")
         x_label.setMinimumWidth(80)
-        self.x_slider = self._make_pos_slider("X", 0, 180, self._pos_x)
-        self.x_value = QLabel(f"{self._pos_x:.0f}°")
-        self.x_value.setMinimumWidth(50)
+        self.x_slider = self._make_pos_slider("X", -200.0, 200.0, self._pos_x)
+        self.x_value = QLabel(f"{self._pos_x:.0f}")
+        self.x_value.setMinimumWidth(40)
         self.x_value.setAlignment(Qt.AlignRight)
         x_layout.addWidget(x_label)
         x_layout.addWidget(self.x_slider, 1)
         x_layout.addWidget(self.x_value)
         pos_layout.addLayout(x_layout)
 
-        # Y Position slider (0-180 degrees, 90 = center)
+        # Y Position slider
         y_layout = QHBoxLayout()
-        y_label = QLabel("Y Angle:")
+        y_label = QLabel("Y Position:")
         y_label.setMinimumWidth(80)
-        self.y_slider = self._make_pos_slider("Y", 0, 180, self._pos_y)
-        self.y_value = QLabel(f"{self._pos_y:.0f}°")
-        self.y_value.setMinimumWidth(50)
+        self.y_slider = self._make_pos_slider("Y", -200.0, 200.0, self._pos_y)
+        self.y_value = QLabel(f"{self._pos_y:.0f}")
+        self.y_value.setMinimumWidth(40)
         self.y_value.setAlignment(Qt.AlignRight)
         y_layout.addWidget(y_label)
         y_layout.addWidget(self.y_slider, 1)
         y_layout.addWidget(self.y_value)
         pos_layout.addLayout(y_layout)
 
-        # Z Position slider (0-180 degrees, 90 = center)
+        # Z Position slider
         z_layout = QHBoxLayout()
-        z_label = QLabel("Z Angle:")
+        z_label = QLabel("Z Position:")
         z_label.setMinimumWidth(80)
-        self.z_slider = self._make_pos_slider("Z", 0, 180, self._pos_z)
-        self.z_value = QLabel(f"{self._pos_z:.0f}°")
-        self.z_value.setMinimumWidth(50)
+        self.z_slider = self._make_pos_slider("Z", -200.0, 200.0, self._pos_z)
+        self.z_value = QLabel(f"{self._pos_z:.0f}")
+        self.z_value.setMinimumWidth(40)
         self.z_value.setAlignment(Qt.AlignRight)
         z_layout.addWidget(z_label)
         z_layout.addWidget(self.z_slider, 1)
@@ -107,19 +114,22 @@ class LightingControlPanel(QDialog):
         color_layout.addWidget(self.color_button)
         color_layout.addStretch()
 
-        # Intensity group
+        # Intensity group with slider
         self.intensity_group = QGroupBox("Intensity")
         intensity_layout = QHBoxLayout(self.intensity_group)
         intensity_layout.setContentsMargins(10, 10, 10, 10)
         intensity_layout.setSpacing(8)
 
         self.intensity_label = QLabel("Intensity:")
+        self.intensity_label.setMinimumWidth(80)
         self.intensity_slider = QSlider(Qt.Horizontal)
         self.intensity_slider.setRange(0, 200)  # maps to 0.0 .. 2.0
         self.intensity_slider.setSingleStep(1)
         self.intensity_slider.setPageStep(10)
         self.intensity_slider.setValue(int(round(self._intensity * 100.0)))
         self.intensity_value = QLabel(f"{self._intensity:.1f}")
+        self.intensity_value.setMinimumWidth(40)
+        self.intensity_value.setAlignment(Qt.AlignRight)
 
         self.intensity_slider.valueChanged.connect(self._on_intensity_changed)
 
@@ -145,7 +155,8 @@ class LightingControlPanel(QDialog):
         root_layout.addWidget(self.actions_group)
         root_layout.addStretch()
 
-        self._apply_theme_styles(self)
+        self._apply_theme_styles(container)
+        self.setWidget(container)
 
     # ---- Public API ----
     def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
@@ -166,18 +177,13 @@ class LightingControlPanel(QDialog):
             self.y_slider.blockSignals(True)
             self.z_slider.blockSignals(True)
             
-            # Convert actual position to angle (0-180)
-            x_angle = self._pos_to_angle(self._pos_x)
-            y_angle = self._pos_to_angle(self._pos_y)
-            z_angle = self._pos_to_angle(self._pos_z)
+            self.x_slider.setValue(int(self._pos_x))
+            self.y_slider.setValue(int(self._pos_y))
+            self.z_slider.setValue(int(self._pos_z))
             
-            self.x_slider.setValue(int(x_angle))
-            self.y_slider.setValue(int(y_angle))
-            self.z_slider.setValue(int(z_angle))
-            
-            self.x_value.setText(f"{x_angle:.0f}°")
-            self.y_value.setText(f"{y_angle:.0f}°")
-            self.z_value.setText(f"{z_angle:.0f}°")
+            self.x_value.setText(f"{self._pos_x:.0f}")
+            self.y_value.setText(f"{self._pos_y:.0f}")
+            self.z_value.setText(f"{self._pos_z:.0f}")
             
             self.x_slider.blockSignals(False)
             self.y_slider.blockSignals(False)
@@ -222,52 +228,42 @@ class LightingControlPanel(QDialog):
         # Apply styling
         slider.setStyleSheet(
             f"""
-            QSlider::groove:horizontal {{
+            QSlider::horizontal {{
                 background-color: {COLORS.input_bg};
                 border: 1px solid {COLORS.input_border};
                 border-radius: 3px;
                 height: 8px;
+                margin: 2px 0;
             }}
             QSlider::handle:horizontal {{
                 background-color: {COLORS.primary};
                 border: 1px solid {COLORS.primary};
-                border-radius: 6px;
+                border-radius: 4px;
                 width: 16px;
-                margin: -4px 0;
+                margin: -6px 0;
             }}
             QSlider::handle:horizontal:hover {{
-                background-color: {COLORS.primary_hover};
-                border-color: {COLORS.primary_hover};
+                background-color: {COLORS.button_hover_bg};
+                border-color: {COLORS.button_hover_border};
             }}
             """
         )
         
         return slider
 
-    def _angle_to_pos(self, angle: float) -> float:
-        """Convert angle (0-180) to position (-200 to 200), with 90 = 0."""
-        return (angle - 90.0) * (400.0 / 180.0)  # Maps 0->-200, 90->0, 180->200
-    
-    def _pos_to_angle(self, pos: float) -> float:
-        """Convert position (-200 to 200) to angle (0-180), with 0 = 90."""
-        return (pos / (400.0 / 180.0)) + 90.0  # Maps -200->0, 0->90, 200->180
-
     def _on_x_position_changed(self, value: int) -> None:
-        angle = float(value)
-        self._pos_x = self._angle_to_pos(angle)
-        self.x_value.setText(f"{angle:.0f}°")
+        self._pos_x = float(value)
+        self.x_value.setText(f"{self._pos_x:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_y_position_changed(self, value: int) -> None:
-        angle = float(value)
-        self._pos_y = self._angle_to_pos(angle)
-        self.y_value.setText(f"{angle:.0f}°")
+        self._pos_y = float(value)
+        self.y_value.setText(f"{self._pos_y:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_z_position_changed(self, value: int) -> None:
-        angle = float(value)
-        self._pos_z = self._angle_to_pos(angle)
-        self.z_value.setText(f"{angle:.0f}°")
+        self._pos_z = float(value)
+        self.z_value.setText(f"{self._pos_z:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _pick_color(self) -> None:
@@ -289,9 +285,9 @@ class LightingControlPanel(QDialog):
         self.intensity_changed.emit(self._intensity)
 
     def _reset_defaults(self) -> None:
-        # Defaults: (0, 0, 0) actual position (which is 90° on sliders), white, 0.8
+        # Defaults: (100,100,100), white, 0.8
         self.set_values(
-            position=(0.0, 0.0, 100.0),  # Centered XY, slightly positive Z
+            position=(100.0, 100.0, 100.0),
             color=(1.0, 1.0, 1.0),
             intensity=0.8,
             emit_signals=True,
@@ -336,9 +332,9 @@ class LightingControlPanel(QDialog):
             """
         )
 
-    def _apply_theme_styles(self, dialog: QWidget) -> None:
+    def _apply_theme_styles(self, container: QWidget) -> None:
         # Group boxes and labels theme
-        dialog.setStyleSheet(
+        container.setStyleSheet(
             f"""
             QGroupBox {{
                 font-weight: bold;

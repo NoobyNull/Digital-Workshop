@@ -1126,32 +1126,13 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Lighting control dock (flexible positioning, initially hidden)
+        # Lighting control dialog (floating, initially hidden)
         try:
             self.lighting_panel = LightingControlPanel(self)
-            self.lighting_panel.setObjectName("LightingDock")
-            self.lighting_panel.setVisible(False)
-            # Allow docking to any area for maximum flexibility
-            self.lighting_panel.setAllowedAreas(
-                Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-            )
-            self.lighting_panel.setFeatures(
-                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
-            )
-            # Default to right side but user can move anywhere
-            self.addDockWidget(Qt.RightDockWidgetArea, self.lighting_panel)
-            try:
-                self._register_dock_for_snapping(self.lighting_panel)
-            except Exception:
-                pass
-            # Autosave when lighting dock changes state/position
-            self._connect_layout_autosave(self.lighting_panel)
-            # Persist panel visibility via QSettings
-            try:
-                self.lighting_panel.visibilityChanged.connect(lambda _=False: self._save_lighting_panel_visibility())
-            except Exception:
-                pass
-            # TODO: Add support for multiple light sources
+            self.lighting_panel.setObjectName("LightingDialog")
+            self.lighting_panel.hide()
+            # Dialog will float above main window when shown
+            self.logger.info("Lighting control panel created as floating dialog")
         except Exception as e:
             self.logger.warning(f"Failed to create LightingControlPanel: {e}")
          
@@ -1285,15 +1266,8 @@ class MainWindow(QMainWindow):
             self._load_saved_layout()
         except Exception:
             pass
-        # Load persisted lighting panel visibility (in addition to dock state)
-        try:
-            if hasattr(self, "lighting_panel") and self.lighting_panel:
-                settings = QSettings()
-                visible = settings.value('lighting_panel/visible', False, type=bool)
-                self.lighting_panel.setVisible(bool(visible))
-                self.logger.info(f"Loaded lighting panel visibility: {bool(visible)}")
-        except Exception as e:
-            self.logger.warning(f"Failed to load lighting panel visibility: {e}")
+        # Lighting panel is now a floating dialog, visibility is not persisted across sessions
+        # It will be hidden by default and shown only when user clicks the Lighting button
 
         # Load persisted metadata panel visibility (in addition to dock state)
         try:
@@ -1843,8 +1817,8 @@ class MainWindow(QMainWindow):
             self._snap_handlers = {}
             self._snap_layer = SnapOverlayLayer(self)
 
-        # Register known docks if they exist
-        for name in ("model_library_dock", "properties_dock", "metadata_dock", "lighting_panel"):
+        # Register known docks if they exist (lighting_panel is now a dialog, not a dock)
+        for name in ("model_library_dock", "properties_dock", "metadata_dock"):
             try:
                 dock = getattr(self, name, None)
                 if dock is not None:
@@ -1865,7 +1839,7 @@ class MainWindow(QMainWindow):
     
     def _iter_docks(self) -> list[QDockWidget]:
         docks: list[QDockWidget] = []
-        for name in ("model_library_dock", "properties_dock", "metadata_dock", "lighting_panel"):
+        for name in ("model_library_dock", "properties_dock", "metadata_dock"):
             d = getattr(self, name, None)
             if isinstance(d, QDockWidget):
                 docks.append(d)
@@ -2007,15 +1981,8 @@ class MainWindow(QMainWindow):
             self.logger.warning(f"Failed to load lighting settings: {e}")
     
     def _save_lighting_panel_visibility(self) -> None:
-        """Persist the lighting panel visibility state."""
-        try:
-            if hasattr(self, 'lighting_panel') and self.lighting_panel:
-                settings = QSettings()
-                vis = bool(self.lighting_panel.isVisible())
-                settings.setValue('lighting_panel/visible', vis)
-                self.logger.debug(f"Saved lighting panel visibility: {vis}")
-        except Exception as e:
-            self.logger.warning(f"Failed to save lighting panel visibility: {e}")
+        """Lighting panel is now a floating dialog, visibility is not persisted."""
+        pass
     
     def _update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
@@ -2792,16 +2759,15 @@ class MainWindow(QMainWindow):
      
     # Lighting/Material integrations
     def _toggle_lighting_panel(self) -> None:
-        """Show/hide the lighting control dock."""
+        """Show/hide the floating lighting control dialog."""
         try:
             if hasattr(self, "lighting_panel") and self.lighting_panel:
-                is_visible = self.lighting_panel.isVisible()
-                self.lighting_panel.setVisible(not is_visible)
-                if not is_visible:
-                    try:
-                        self.lighting_panel.raise_()  # type: ignore[attr-defined]
-                    except Exception:
-                        pass
+                if self.lighting_panel.isVisible():
+                    self.lighting_panel.hide()
+                else:
+                    self.lighting_panel.show()
+                    self.lighting_panel.raise_()
+                    self.lighting_panel.activateWindow()
         except Exception as e:
             self.logger.warning(f"Failed to toggle lighting panel: {e}")
 
@@ -3042,10 +3008,9 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to clear material texture cache: {e}")
         
-        # Persist final lighting settings and panel visibility on close
+        # Persist final lighting settings on close
         try:
             self._save_lighting_settings()
-            self._save_lighting_panel_visibility()
         except Exception:
             pass
         

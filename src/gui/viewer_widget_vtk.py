@@ -393,10 +393,9 @@ class Viewer3DWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
         
-        # Shadow mapping disabled - interferes with ground plane visibility
-        # Can be re-enabled later with proper ground plane integration
+        # Shadow mapping disabled - causes visual artifacts
         # self._setup_shadows()
-        self.logger.info("Shadow mapping disabled for ground plane compatibility")
+        self.logger.info("Shadow mapping disabled (causes visual artifacts)")
         
         # Set up default camera
         self.renderer.ResetCamera()
