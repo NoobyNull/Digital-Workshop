@@ -10,9 +10,16 @@ Responsibilities:
 
 Performance targets:
 - 512x512 texture generation < 100ms on typical desktop
+
+DEBUGGING MTL FILE ISSUES:
+This module is being debugged for MTL file application problems. Added comprehensive logging to:
+- MaterialProvider._parse_mtl_file: Track MTL parsing and path resolution
+- MaterialManager.generate_wood_texture: Track texture loading vs procedural generation
+- MaterialManager.apply_material_to_actor: Track VTK texture application process
 """
 
 import time
+from pathlib import Path
 from typing import Tuple, Dict, Optional, Any, List
 
 import numpy as np
@@ -20,6 +27,7 @@ import vtk
 from vtk.util import numpy_support as vtk_np
 
 from core.logging_config import get_logger
+from core.material_provider import MaterialProvider
 
 
 class MaterialManager:
@@ -28,23 +36,33 @@ class MaterialManager:
         self.db = database_manager
         self.logger = get_logger(__name__)
         self.texture_cache: Dict[Tuple[str, Tuple[int, int]], np.ndarray] = {}  # Cache generated textures
+        self.material_provider = MaterialProvider()  # For texture discovery
 
     # -------------------------
     # Public API
     # -------------------------
 
     def get_species_list(self) -> List[str]:
-        """Get all wood species from database."""
+        """Get all wood species from database and material provider."""
         try:
-            rows = self.db.get_wood_materials()
-            return [str(r.get("name")) for r in rows]
+            # Get database species
+            db_species = [str(r.get("name")) for r in self.db.get_wood_materials()]
+
+            # Get texture materials
+            texture_materials = self.material_provider.get_available_materials()
+            texture_names = [m['name'] for m in texture_materials]
+
+            # Combine and deduplicate
+            all_species = list(set(db_species + texture_names))
+            return sorted(all_species)
         except Exception as e:
             self.logger.error(f"get_species_list failed: {e}")
             return []
 
     def generate_wood_texture(self, species_name: str, size: Tuple[int, int] = (512, 512)) -> np.ndarray:
         """
-        Generate procedural wood texture as an RGB uint8 numpy array (H, W, 3).
+        Generate wood texture as an RGB uint8 numpy array (H, W, 3).
+        First tries to load from material provider, raises error if not found.
         Uses cached result when available.
         """
         try:
@@ -57,24 +75,38 @@ class MaterialManager:
                 self.logger.debug(f"Texture cache hit for species='{species_name}' size={w}x{h}")
                 return self.texture_cache[key]
 
-            species = self._get_species(species_name)
-            if species is None:
-                self.logger.warning(f"Species '{species_name}' not found; using fallback 'Oak'")
-                species = self._fallback_species()
+            # Load from material provider - no fallback to procedural generation
+            material = self.material_provider.get_material_by_name(species_name)
+            if material:
+                self.logger.debug(f"Material provider returned material for '{species_name}': {material}")
+                texture_path = material.get('texture_path')
+                if texture_path:
+                    self.logger.info(f"Found texture path for '{species_name}': {texture_path}")
+                    try:
+                        # Load actual texture image
+                        img = self._load_texture_image(texture_path, (w, h))
+                        self.logger.info(f"Successfully loaded texture image for '{species_name}' from {texture_path}, shape: {img.shape}")
+                        self.texture_cache[key] = img
+                        return img
+                    except Exception as e:
+                        error_msg = f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
+                        self.logger.error(error_msg)
+                        raise RuntimeError(error_msg)
+                else:
+                    error_msg = f"No texture_path found for '{species_name}' in material: {material}"
+                    self.logger.error(error_msg)
+                    raise RuntimeError(error_msg)
+            else:
+                error_msg = f"No material found for '{species_name}' from material provider"
+                self.logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
-            t0 = time.perf_counter()
-            img = self._generate_wood_texture_impl(species, (w, h))
-            dt_ms = (time.perf_counter() - t0) * 1000.0
-            self.logger.info(f"Generated wood texture for '{species.get('name','?')}' in {dt_ms:.2f} ms ({w}x{h})")
-
-            # Cache
-            self.texture_cache[key] = img
-            return img
+            # No fallback to procedural generation
+            raise RuntimeError(f"MTL texture loading is mandatory - no procedural fallback available for '{species_name}'")
         except Exception as e:
             self.logger.error(f"generate_wood_texture error: {e}", exc_info=True)
-            # Fallback to a flat color image (light grey) to avoid breaking rendering
-            w, h = int(size[0]), int(size[1])
-            return np.full((h, w, 3), 200, dtype=np.uint8)
+            # No fallback - MTL texture loading is mandatory
+            raise RuntimeError(f"MTL texture loading failed: {e}")
 
     def apply_material_to_actor(self, actor: vtk.vtkActor, species_name: str) -> bool:
         """
@@ -88,46 +120,190 @@ class MaterialManager:
             return False
 
         try:
-            species = self._get_species(species_name)
-            if species is None:
-                self.logger.warning(f"Species '{species_name}' not found; using fallback 'Oak'")
-                species = self._fallback_species()
+            self.logger.info(f"Starting to apply material '{species_name}' to actor")
+            
+            # DIAGNOSTIC LOG: Check if actor has UV coordinates (needed for texture mapping)
+            has_uv_coords = False
+            mapper = actor.GetMapper()
+            if mapper:
+                input_data = mapper.GetInput()
+                if input_data:
+                    point_data = input_data.GetPointData()
+                    if point_data:
+                        has_uv_coords = point_data.GetTCoords() is not None
+                        self.logger.debug(f"[STL_TEXTURE_DEBUG] Actor has UV coordinates: {has_uv_coords}")
+            
+            # For STL files, we'll apply texture even without UV coordinates
+            if not has_uv_coords:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor missing UV coordinates - applying texture without UV mapping")
 
-            # Generate (or fetch cached) texture data
-            img = self.generate_wood_texture(species.get("name", species_name), size=(512, 512))
+            # Get material from material provider to check for texture
+            material = self.material_provider.get_material_by_name(species_name)
+            if material:
+                self.logger.debug(f"[STL_TEXTURE_DEBUG] Material found: {material}")
+                texture_path = material.get('texture_path')
+                if texture_path:
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture path: {texture_path}")
+                else:
+                    self.logger.warning(f"[STL_TEXTURE_DEBUG] Material has no texture path")
+            else:
+                self.logger.warning(f"[STL_TEXTURE_DEBUG] No material found for species: {species_name}")
 
-            # Convert to vtkImageData
-            vtk_img = self._numpy_to_vtk_image(img)
-
-            # Create vtkTexture
-            texture = vtk.vtkTexture()
-            texture.SetInputData(vtk_img)
+            # For STL models, use MTL properties instead of database species
+            # This ensures the texture and material properties match
+            if material and material.get('properties') and material.get('texture_path'):
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Using MTL properties for '{species_name}' instead of database")
+                # Create a species dict from MTL properties
+                mtl_props = material.get('properties', {})
+                species = {
+                    'name': species_name,
+                    'base_color_r': mtl_props.get('diffuse', (0.7, 0.7, 0.7))[0],
+                    'base_color_g': mtl_props.get('diffuse', (0.7, 0.7, 0.7))[1],
+                    'base_color_b': mtl_props.get('diffuse', (0.7, 0.7, 0.7))[2],
+                    'grain_color_r': mtl_props.get('specular', (0.5, 0.5, 0.5))[0],
+                    'grain_color_g': mtl_props.get('specular', (0.5, 0.5, 0.5))[1],
+                    'grain_color_b': mtl_props.get('specular', (0.5, 0.5, 0.5))[2],
+                    'grain_scale': 1.0,
+                    'grain_pattern': 'ring',
+                    'roughness': 0.5,
+                    'specular': mtl_props.get('specular', (0.5, 0.5, 0.5))[0],
+                    'shininess': mtl_props.get('shininess', 50.0) / 50.0  # Normalize to [0,1]
+                }
+                self.logger.debug(f"[STL_TEXTURE_DEBUG] Created species from MTL: {species}")
+                
+                # Use the MTL texture directly instead of calling generate_wood_texture
+                # which would fall back to procedural generation
+                try:
+                    texture_path = material.get('texture_path')
+                    if texture_path:
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] ===== LOADING MTL TEXTURE =====")
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] Loading MTL texture directly from: {texture_path}")
+                        
+                        # NEW DIAGNOSTIC: Check if file exists and get file info
+                        import os
+                        if os.path.exists(texture_path):
+                            file_size = os.path.getsize(texture_path)
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Texture file exists, size: {file_size} bytes")
+                        else:
+                            self.logger.error(f"[STL_TEXTURE_DEBUG] Texture file NOT found: {texture_path}")
+                            return False
+                        
+                        img = self._load_texture_image(texture_path, (512, 512))
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] Successfully loaded MTL texture, shape: {img.shape}, dtype: {img.dtype}")
+                        
+                        # Convert to vtkImageData
+                        self.logger.info("[STL_TEXTURE_DEBUG] Converting numpy array to VTK image data")
+                        vtk_img = self._numpy_to_vtk_image(img)
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] VTK image dimensions: {vtk_img.GetDimensions()}")
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] VTK image scalar type: {vtk_img.GetScalarType()}")
+                        
+                        # Create vtkTexture
+                        self.logger.info("[STL_TEXTURE_DEBUG] Creating VTK texture")
+                        texture = vtk.vtkTexture()
+                        texture.SetInputData(vtk_img)
+                        
+                        # Configure texture properties
+                        try:
+                            texture.InterpolateOn()
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
+                        except Exception as e:
+                            self.logger.warning(f"Failed to enable texture interpolation: {e}")
+                        
+                        try:
+                            texture.MipmapOn()
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
+                        except Exception as e:
+                            self.logger.warning(f"Failed to enable texture mipmaps: {e}")
+                        
+                        try:
+                            texture.RepeatOn()
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
+                        except Exception as e:
+                            self.logger.warning(f"Failed to enable texture repeat: {e}")
+                        
+                        # NEW DIAGNOSTIC: Check texture before assignment
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] Texture before assignment - Interpolate: {texture.GetInterpolate()}, Mipmap: {texture.GetMipmap()}, Repeat: {texture.GetRepeat()}")
+                        
+                        # Assign texture
+                        self.logger.info("[STL_TEXTURE_DEBUG] Assigning MTL texture to actor")
+                        actor.SetTexture(texture)
+                        self.logger.info("[STL_TEXTURE_DEBUG] MTL texture assigned to actor")
+                        
+                        # Configure material/shading - SPECIAL HANDLING FOR STL TEXTURES
+                        self.logger.info("[STL_TEXTURE_DEBUG] Applying MTL material properties to actor")
+                        self._apply_material_properties_for_texture(actor, species)
+                        
+                        # Best-effort: request a render if we can find a renderer
+                        self._render_actor_scene(actor)
+                        
+                        self.logger.info(f"Successfully applied MTL material '{species.get('name','?')}' to actor")
+                        
+                        # DIAGNOSTIC LOG: Check if texture is properly bound
+                        self.logger.info("[STL_TEXTURE_DEBUG] ===== VERIFYING TEXTURE BINDING =====")
+                        if actor.GetTexture() is not None:
+                            self.logger.info("[STL_TEXTURE_DEBUG] MTL texture successfully bound to actor")
+                            # Check texture properties
+                            bound_texture = actor.GetTexture()
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Bound texture dimensions: {bound_texture.GetInput().GetDimensions()}")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Bound texture interpolation: {bound_texture.GetInterpolate()}")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Bound texture repeat: {bound_texture.GetRepeat()}")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Bound texture mipmap: {bound_texture.GetMipmap()}")
+                            
+                            # NEW DIAGNOSTIC: Check actor properties
+                            prop = actor.GetProperty()
+                            if prop:
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor has property, lighting: {prop.GetLighting()}")
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor diffuse color: {prop.GetDiffuseColor()}")
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor specular color: {prop.GetSpecularColor()}")
+                            
+                        else:
+                            self.logger.error("[STL_TEXTURE_DEBUG] MTL texture failed to bind to actor")
+                            
+                        self.logger.info("[STL_TEXTURE_DEBUG] ===== MTL TEXTURE APPLICATION COMPLETE =====")
+                        return True
+                except Exception as e:
+                    self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to apply MTL texture: {e}", exc_info=True)
+                    # Fall through to solid color approach
+            else:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] No valid MTL material with texture found for '{species_name}', applying solid color")
+                
+            # No MTL material found, apply a solid color instead of falling back to database
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Applying solid color for '{species_name}' (no database fallback)")
+            
+            # Use a default solid color (light gray)
             try:
-                texture.InterpolateOn()
-            except Exception:
-                pass
-            try:
-                texture.MipmapOn()
-            except Exception:
-                pass
-            try:
-                texture.RepeatOn()
-            except Exception:
-                pass
-
-            # Assign texture
-            actor.SetTexture(texture)
-
-            # Configure material/shading
-            self._apply_material_properties(actor, species)
-
-            # Best-effort: request a render if we can find a renderer
-            self._render_actor_scene(actor)
-
-            self.logger.info(f"Applied material '{species.get('name','?')}' to actor")
-            return True
+                # Get material properties if available, otherwise use defaults
+                if material and material.get('properties'):
+                    mtl_props = material.get('properties', {})
+                    diffuse_color = mtl_props.get('diffuse', (0.7, 0.7, 0.7))
+                    specular_color = mtl_props.get('specular', (0.5, 0.5, 0.5))
+                    shininess = mtl_props.get('shininess', 50.0)
+                else:
+                    # Default gray material
+                    diffuse_color = (0.7, 0.7, 0.7)
+                    specular_color = (0.5, 0.5, 0.5)
+                    shininess = 50.0
+                
+                # Apply solid color material
+                prop = actor.GetProperty()
+                prop.SetDiffuseColor(diffuse_color)
+                prop.SetSpecularColor(specular_color)
+                prop.SetAmbientColor(0.2, 0.2, 0.2)
+                prop.SetSpecular(shininess / 100.0)  # Normalize to [0,1]
+                prop.SetShininess(shininess)
+                prop.LightingOn()
+                
+                # Remove any existing texture
+                actor.SetTexture(None)
+                
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Applied solid color material for '{species_name}'")
+                return True
+                
+            except Exception as e:
+                self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to apply solid color: {e}", exc_info=True)
+                return False
         except Exception as e:
-            self.logger.error(f"apply_material_to_actor error: {e}", exc_info=True)
+            self.logger.error(f"apply_material_to_actor error for species '{species_name}': {e}", exc_info=True)
             return False
 
     def clear_texture_cache(self) -> None:
@@ -349,6 +525,48 @@ class MaterialManager:
         except Exception as e:
             self.logger.warning(f"_apply_material_properties failed: {e}")
 
+    def _apply_material_properties_for_texture(self, actor: vtk.vtkActor, species: Dict[str, Any]) -> None:
+        """
+        Configure actor properties for textured materials.
+        This is a special version that preserves texture visibility while still applying
+        appropriate material properties for lighting and shininess.
+        """
+        try:
+            self.logger.info("[STL_TEXTURE_DEBUG] Applying texture-safe material properties")
+            
+            roughness = float(species.get("roughness", 0.5))
+            roughness = max(0.0, min(1.0, roughness))
+            
+            specular = float(species.get("specular", 0.3))
+            specular = max(0.0, min(1.0, specular))
+            
+            prop = actor.GetProperty()
+            
+            # KEY FIX: For textured materials, we need to set the base color to white
+            # and let the texture provide the actual color. Setting diffuse to non-white
+            # will tint/override the texture.
+            prop.SetAmbientColor(1.0, 1.0, 1.0)  # White ambient
+            prop.SetDiffuseColor(1.0, 1.0, 1.0)   # White diffuse - KEY FIX!
+            prop.SetSpecularColor(specular, specular, specular)  # Use specular from material
+            
+            # Set shininess from material
+            shininess = float(species.get("shininess", 5.0))
+            shininess = max(1.0, min(100.0, shininess))
+            prop.SetShininess(shininess)
+            
+            # Enable lighting but ensure texture is visible
+            prop.LightingOn()
+            
+            # Set appropriate specular power for textured materials
+            spec_power = 40.0 - (roughness * 35.0)
+            prop.SetSpecularPower(spec_power)
+            
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Applied texture-safe properties: shininess={shininess}, specular={specular}")
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Actor colors after texture-safe application: diffuse={prop.GetDiffuseColor()}, ambient={prop.GetAmbientColor()}")
+            
+        except Exception as e:
+            self.logger.warning(f"_apply_material_properties_for_texture failed: {e}")
+
     def _apply_classic_shading(self, prop: vtk.vtkProperty, roughness: float, specular: float) -> None:
         """
         Approximate roughness via specular power mapping for classic shading.
@@ -366,6 +584,55 @@ class MaterialManager:
                 pass
         except Exception:
             pass
+
+    def _load_texture_image(self, texture_path: Path, size: Tuple[int, int]) -> np.ndarray:
+        """
+        Load and resize a texture image from file.
+
+        Args:
+            texture_path: Path to the texture image file
+            size: Desired output size (width, height)
+
+        Returns:
+            RGB uint8 numpy array (H, W, 3)
+        """
+        try:
+            from PIL import Image
+            import cv2
+
+            # Load image with PIL
+            img = Image.open(texture_path)
+
+            # Convert to RGB if needed
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            # Resize to requested size
+            img = img.resize(size, Image.Resampling.LANCZOS)
+
+            # Convert to numpy array
+            img_array = np.array(img)
+
+            return img_array
+
+        except ImportError:
+            # Fallback to OpenCV if PIL not available
+            try:
+                import cv2
+                img = cv2.imread(str(texture_path))
+                if img is None:
+                    raise ValueError(f"Could not load image: {texture_path}")
+
+                # Convert BGR to RGB
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+                # Resize
+                img = cv2.resize(img, size, interpolation=cv2.INTER_LANCZOS4)
+
+                return img
+
+            except ImportError:
+                raise ImportError("Neither PIL nor OpenCV available for image loading")
 
     def _render_actor_scene(self, actor: vtk.vtkActor) -> None:
         """

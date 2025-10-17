@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from core.logging_config import get_logger
 from core.database_manager import get_database_manager
+from core.data_structures import ModelFormat
 from parsers.stl_parser import STLParser, STLProgressCallback
 from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
 from gui.preferences import PreferencesDialog
@@ -2814,33 +2815,265 @@ class MainWindow(QMainWindow):
         try:
             if not species_name:
                 return
-            # TODO: Add UV mapping generation for models without texture coordinates
+
             if not hasattr(self, "viewer_widget") or not getattr(self.viewer_widget, "actor", None):
                 self.logger.warning("No model loaded, cannot apply material")
                 return
             if not hasattr(self, "material_manager") or self.material_manager is None:
                 self.logger.warning("MaterialManager not available")
                 return
-            ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
-            if ok:
-                # Save last selected material species
-                try:
-                    settings = QSettings()
-                    settings.setValue('material/last_species', species_name)
-                    self.logger.info(f"Saved last material species: {species_name}")
-                except Exception as se:
-                    self.logger.warning(f"Failed to persist last material species: {se}")
-                # Re-render
-                try:
-                    self.viewer_widget.vtk_widget.GetRenderWindow().Render()
-                except Exception:
-                    pass
-                try:
-                    self.statusBar().showMessage(f"Applied material: {species_name}", 2000)
-                except Exception:
-                    pass
+
+            # Check if this material is already applied to prevent duplicates
+            current_material = getattr(self, "_current_applied_material", None)
+            if current_material == species_name:
+                self.logger.debug(f"[STL_TEXTURE_DEBUG] Material '{species_name}' already applied, skipping")
+                return
+
+            # Get current model to determine format
+            current_model = getattr(self.viewer_widget, "current_model", None)
+            if not current_model:
+                self.logger.warning("No current model information available")
+                return
+
+            model_format = getattr(current_model, "format_type", None)
+            if not model_format:
+                self.logger.warning("Cannot determine model format")
+                return
+
+            # DIAGNOSTIC LOG: Track material application process
+            self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STARTING MATERIAL APPLICATION =====")
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Material: '{species_name}', Model format: {model_format}")
+            
+            # Get detailed material information for diagnosis
+            material_info = {}
+            try:
+                material = self.material_manager.material_provider.get_material_by_name(species_name)
+                if material:
+                    material_info = {
+                        'name': material.get('name', 'Unknown'),
+                        'mtl_path': material.get('mtl_path', None),
+                        'texture_path': material.get('texture_path', None),
+                        'has_mtl': bool(material.get('mtl_path')),
+                        'has_texture': bool(material.get('texture_path'))
+                    }
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Material info: {material_info}")
+                else:
+                    self.logger.error(f"[STL_TEXTURE_DEBUG] Material '{species_name}' not found in material provider")
+            except Exception as e:
+                self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to get material info: {e}")
+            
+            # Check if model has UV coordinates (needed for texture mapping)
+            has_uv_coords = False
+            if hasattr(self.viewer_widget, "actor") and self.viewer_widget.actor:
+                mapper = self.viewer_widget.actor.GetMapper()
+                if mapper:
+                    input_data = mapper.GetInput()
+                    if input_data:
+                        point_data = input_data.GetPointData()
+                        if point_data:
+                            has_uv_coords = point_data.GetTCoords() is not None
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
+            
+            # Check if material has texture
+            material_has_texture = material_info.get('has_texture', False)
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
+            if material_has_texture:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Texture path: {material_info.get('texture_path')}")
+
+            # Apply material based on model format
+            if model_format == ModelFormat.STL:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STL FORMAT DETECTED =====")
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
+                
+                if not material_has_texture:
+                    self.logger.warning("[STL_TEXTURE_DEBUG] Material missing texture - only colors will be applied")
+                    # STL files: Apply only material properties (colors, shininess) - no textures
+                    self._apply_stl_material_properties(self.viewer_widget.actor, species_name)
+                    self.statusBar().showMessage(f"Applied STL material properties: {species_name}", 2000)
+                    self.logger.info(f"Applied STL material properties for '{species_name}'")
+                else:
+                    # STL files: Apply full texture without UV mapping
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Applying full texture to STL model (no UV mapping)")
+                    
+                    # NEW DIAGNOSTIC: Check if texture file actually exists
+                    texture_path = material_info.get('texture_path')
+                    if texture_path:
+                        import os
+                        if os.path.exists(texture_path):
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Texture file exists: {texture_path}")
+                            file_size = os.path.getsize(texture_path)
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Texture file size: {file_size} bytes")
+                        else:
+                            self.logger.error(f"[STL_TEXTURE_DEBUG] Texture file NOT found: {texture_path}")
+                    
+                    # Apply full material with texture
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Calling material_manager.apply_material_to_actor for STL")
+                    ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] apply_material_to_actor returned: {ok}")
+                    
+                    # NEW DIAGNOSTIC: Check if material properties were applied correctly after texture
+                    try:
+                        prop = self.viewer_widget.actor.GetProperty()
+                        if prop:
+                            diffuse_color = prop.GetDiffuseColor()
+                            ambient_color = prop.GetAmbientColor()
+                            specular_color = prop.GetSpecularColor()
+                            self.logger.info(f"[STL_TEXTURE_DEBUG] Actor material properties after texture application:")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse: {diffuse_color}")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Ambient: {ambient_color}")
+                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Specular: {specular_color}")
+                            
+                            # Check if diffuse color is white (as expected for textured materials)
+                            if len(diffuse_color) >= 3:
+                                is_white_diffuse = (abs(diffuse_color[0] - 1.0) < 0.01 and
+                                                  abs(diffuse_color[1] - 1.0) < 0.01 and
+                                                  abs(diffuse_color[2] - 1.0) < 0.01)
+                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse is white (good for texture): {is_white_diffuse}")
+                                if not is_white_diffuse:
+                                    self.logger.error(f"[STL_TEXTURE_DEBUG]   PROBLEM: Diffuse color is not white - this will tint the texture!")
+                    except Exception as e:
+                        self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check actor properties: {e}")
+                    
+                    if ok:
+                        self.statusBar().showMessage(f"Applied STL material with texture: {species_name}", 2000)
+                        self.logger.info(f"Applied STL material with texture for '{species_name}'")
+                        
+                        # NEW DIAGNOSTIC: Check if texture was actually applied to VTK actor
+                        try:
+                            actor_texture = self.viewer_widget.actor.GetTexture()
+                            if actor_texture:
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] VTK actor has texture applied")
+                            else:
+                                self.logger.error(f"[STL_TEXTURE_DEBUG] VTK actor has NO texture applied after apply_material_to_actor")
+                        except Exception as e:
+                            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check VTK actor texture: {e}")
+                    else:
+                        self.statusBar().showMessage(f"Failed to apply STL material: {species_name}", 3000)
+                        self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to apply STL material: {species_name}")
+                        return
+            else:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== NON-STL FORMAT DETECTED =====")
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Applying full material with texture support")
+                # OBJ files: Apply full MTL textures with UV mapping
+                ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
+                if ok:
+                    self.statusBar().showMessage(f"Applied OBJ material with texture: {species_name}", 2000)
+                    self.logger.info(f"Applied OBJ material with texture for '{species_name}'")
+                else:
+                    self.statusBar().showMessage(f"Failed to apply OBJ material: {species_name}", 3000)
+                    return
+
+            # Save last selected material species
+            try:
+                settings = QSettings()
+                settings.setValue('material/last_species', species_name)
+                self.logger.info(f"Saved last material species: {species_name}")
+            except Exception as se:
+                self.logger.warning(f"Failed to persist last material species: {se}")
+
+            # Track the currently applied material to prevent duplicates
+            self._current_applied_material = species_name
+
+            # Re-render
+            try:
+                self.viewer_widget.vtk_widget.GetRenderWindow().Render()
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Re-rendered after material application")
+            except Exception as e:
+                self.logger.warning(f"Failed to render after material application: {e}")
+
+            self.logger.info(f"[STL_TEXTURE_DEBUG] ===== MATERIAL APPLICATION COMPLETE =====")
+
         except Exception as e:
             self.logger.error(f"Failed to apply material '{species_name}': {e}")
+            self.statusBar().showMessage(f"Error applying material: {species_name}", 3000)
+
+    def _apply_stl_material_properties(self, actor, species_name: str) -> None:
+        """Apply MTL material properties directly to STL models using VTK approach."""
+        try:
+            # Get material from provider to access MTL file
+            material = self.material_manager.material_provider.get_material_by_name(species_name)
+
+            if not material or not material.get('mtl_path'):
+                self.logger.warning(f"No MTL file found for STL material '{species_name}'")
+                return
+
+            # Parse MTL file directly using VTK approach
+            mtl_props = self._parse_mtl_direct(material['mtl_path'])
+
+            # Apply properties to VTK actor
+            prop = actor.GetProperty()
+
+            # Set material colors from MTL
+            kd_color = mtl_props.get("Kd", (0.8, 0.8, 0.8))  # diffuse color
+            ks_color = mtl_props.get("Ks", (0.0, 0.0, 0.0))  # specular color
+            ns_value = mtl_props.get("Ns", 10.0)              # shininess
+            d_value = mtl_props.get("d", 1.0)                 # opacity
+
+            # Apply colors and properties
+            prop.SetColor(*kd_color)
+            prop.SetSpecularColor(*ks_color)
+            prop.SetSpecular(0.5 if sum(ks_color) > 0 else 0.0)  # Enable specular if color is set
+            prop.SetSpecularPower(ns_value)
+            prop.SetOpacity(d_value)
+
+            # Set reasonable defaults for STL rendering
+            prop.SetAmbient(0.2)
+            prop.SetDiffuse(0.8)
+
+            self.logger.info(f"Applied MTL properties to STL for '{species_name}': Kd={kd_color}, Ks={ks_color}, Ns={ns_value}, d={d_value}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to apply MTL properties to STL for '{species_name}': {e}")
+            # Fallback to default material
+            try:
+                prop = actor.GetProperty()
+                prop.SetColor(0.7, 0.7, 0.7)  # Default gray
+                prop.SetAmbient(0.2)
+                prop.SetDiffuse(0.8)
+                prop.SetSpecular(0.3)
+                prop.SetSpecularPower(20.0)
+                prop.SetOpacity(1.0)
+            except Exception:
+                pass
+
+    def _parse_mtl_direct(self, mtl_path) -> dict:
+        """Parse MTL file directly to extract material properties for STL application."""
+        material = {
+            "Kd": (0.8, 0.8, 0.8),   # diffuse color default
+            "Ks": (0.0, 0.0, 0.0),   # specular color default
+            "Ns": 10.0,              # shininess default
+            "d": 1.0                 # opacity default
+        }
+
+        try:
+            with open(mtl_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+
+                    if line.startswith("Kd "):  # diffuse color
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            material["Kd"] = tuple(map(float, parts[1:4]))
+                    elif line.startswith("Ks "):  # specular color
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            material["Ks"] = tuple(map(float, parts[1:4]))
+                    elif line.startswith("Ns "):  # shininess
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            material["Ns"] = float(parts[1])
+                    elif line.startswith("d "):   # opacity
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            material["d"] = float(parts[1])
+
+        except Exception as e:
+            self.logger.warning(f"Failed to parse MTL file {mtl_path}: {e}")
+
+        return material
     
     # Background hashing methods
     
