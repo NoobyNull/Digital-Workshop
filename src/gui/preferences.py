@@ -23,11 +23,11 @@ from PySide6.QtWidgets import (
     QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox
 )
 
-from gui.theme import (
+from src.gui.theme import (
     COLORS,
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
-from gui.files_tab import FilesTab
+from src.gui.files_tab import FilesTab
 
 
 class PreferencesDialog(QDialog):

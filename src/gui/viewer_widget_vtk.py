@@ -57,6 +57,7 @@ class Viewer3DWidget(QWidget):
     # New integration signals
     lighting_panel_requested = Signal()  # Ask MainWindow to toggle lighting dock
     material_selected = Signal(str)      # Forward selected species name to MainWindow
+    save_view_requested = Signal()      # Ask MainWindow to save current camera view
     def __init__(self, parent: Optional[QWidget] = None):
         """
         Initialize the 3D viewer widget.
@@ -158,6 +159,11 @@ class Viewer3DWidget(QWidget):
         self.reset_button = QPushButton("Reset View")
         self.reset_button.clicked.connect(self.reset_view)
         control_layout.addWidget(self.reset_button)
+        
+        # Save view button
+        self.save_view_button = QPushButton("Save View")
+        self.save_view_button.clicked.connect(self._save_view_requested)
+        control_layout.addWidget(self.save_view_button)
 
         # Rotate 90° buttons (rotate around view axis)
         self.rotate_ccw_button = QPushButton("↺ 90°")
@@ -648,6 +654,9 @@ class Viewer3DWidget(QWidget):
         """
         self.logger.info(f"Creating VTK polydata for {len(model.triangles)} triangles")
         
+        # DIAGNOSTIC LOG: Track UV coordinate generation for STL models
+        self.logger.debug(f"[STL_TEXTURE_DEBUG] Creating VTK polydata from STL model - checking for UV coordinate generation")
+        
         # Create points
         points = vtk.vtkPoints()
         
@@ -685,7 +694,78 @@ class Viewer3DWidget(QWidget):
         polydata.SetPolys(triangles)
         polydata.GetPointData().SetNormals(normals)
         
+        # Generate simple UV coordinates for STL models using planar projection
+        self.logger.info("[STL_TEXTURE_DEBUG] Generating UV coordinates for STL model using planar projection")
+        self._generate_uv_coordinates(polydata)
+        
+        # DIAGNOSTIC LOG: Check if UV coordinates are generated for STL models
+        has_uv_coords = polydata.GetPointData().GetTCoords() is not None
+        self.logger.debug(f"[STL_TEXTURE_DEBUG] STL polydata created with UV coordinates: {has_uv_coords}")
+        
+        if not has_uv_coords:
+            self.logger.warning("[STL_TEXTURE_DEBUG] Failed to generate UV coordinates for STL model")
+        else:
+            self.logger.info("[STL_TEXTURE_DEBUG] Successfully generated UV coordinates for STL model")
+        
         return polydata
+    
+    def _generate_uv_coordinates(self, polydata: vtk.vtkPolyData) -> None:
+        """
+        Generate simple UV coordinates for a polydata using planar projection.
+        
+        This method creates UV coordinates by projecting the 3D model onto a 2D plane.
+        The X and Y coordinates are normalized to [0,1] range for UV mapping.
+        
+        Args:
+            polydata: The VTK polydata to add UV coordinates to
+        """
+        try:
+            points = polydata.GetPoints()
+            if not points:
+                self.logger.warning("[STL_TEXTURE_DEBUG] No points found for UV coordinate generation")
+                return
+            
+            num_points = points.GetNumberOfPoints()
+            self.logger.debug(f"[STL_TEXTURE_DEBUG] Generating UV coordinates for {num_points} points")
+            
+            # Find the bounds of the model
+            bounds = polydata.GetBounds()
+            if not bounds or len(bounds) < 6:
+                self.logger.warning("[STL_TEXTURE_DEBUG] Invalid bounds for UV coordinate generation")
+                return
+                
+            x_min, x_max, y_min, y_max, z_min, z_max = bounds
+            x_range = x_max - x_min
+            y_range = y_max - y_min
+            
+            # Avoid division by zero
+            if x_range < 0.0001:
+                x_range = 0.0001
+            if y_range < 0.0001:
+                y_range = 0.0001
+            
+            # Create UV coordinates array
+            uv_coords = vtk.vtkFloatArray()
+            uv_coords.SetNumberOfComponents(2)
+            uv_coords.SetName("TCoords")
+            
+            # Generate UV coordinates using planar projection (X->U, Y->V)
+            for i in range(num_points):
+                point = points.GetPoint(i)
+                x, y, z = point
+                
+                # Normalize X and Y to [0,1] range
+                u = (x - x_min) / x_range
+                v = (y - y_min) / y_range
+                
+                uv_coords.InsertNextTuple2(u, v)
+            
+            # Add UV coordinates to the polydata
+            polydata.GetPointData().SetTCoords(uv_coords)
+            self.logger.debug(f"[STL_TEXTURE_DEBUG] Generated {num_points} UV coordinates")
+            
+        except Exception as e:
+            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to generate UV coordinates: {e}", exc_info=True)
 
     def _create_vtk_polydata_from_arrays(self, model: Model) -> vtk.vtkPolyData:
         """
@@ -790,6 +870,11 @@ class Viewer3DWidget(QWidget):
                 f"PolyData created: points={polydata.GetNumberOfPoints()}, polys={polydata.GetNumberOfPolys()}, "
                 f"expected_points={total_vertices}, expected_polys={tri_count}"
             )
+            
+            # Generate UV coordinates for STL models
+            self.logger.info("[STL_TEXTURE_DEBUG] Generating UV coordinates for STL array-based polydata")
+            self._generate_uv_coordinates(polydata)
+            
             return polydata
         except Exception as e:
             # Fail-safe: log and fallback
@@ -1652,7 +1737,12 @@ class Viewer3DWidget(QWidget):
     def _open_material_picker(self) -> None:
         """Open material picker dialog"""
         try:
-            dlg = MaterialPickerWidget(parent=self)
+            # Get current model format to pass to Material Picker
+            model_format = None
+            if self.current_model and hasattr(self.current_model, 'format_type'):
+                model_format = self.current_model.format_type
+
+            dlg = MaterialPickerWidget(model_format=model_format, parent=self)
             # Forward selection to MainWindow; MainWindow's MaterialManager will apply
             dlg.material_selected.connect(lambda species: self.material_selected.emit(species))
             dlg.exec_()
@@ -1666,5 +1756,24 @@ class Viewer3DWidget(QWidget):
         """Toggle lighting control panel"""
         try:
             self.lighting_panel_requested.emit()
+        except Exception:
+            pass
+    
+    def _save_view_requested(self) -> None:
+        """Emit signal to request saving current camera view"""
+        try:
+            self.save_view_requested.emit()
+        except Exception:
+            pass
+    
+    def reset_save_view_button(self) -> None:
+        """Reset the save view button state after saving"""
+        try:
+            if hasattr(self, 'save_view_button'):
+                # Flash the button to indicate save was successful
+                original_style = self.save_view_button.styleSheet()
+                self.save_view_button.setStyleSheet("background-color: #4CAF50; color: white;")
+                # Reset after 1 second
+                QTimer.singleShot(1000, lambda: self.save_view_button.setStyleSheet(original_style))
         except Exception:
             pass

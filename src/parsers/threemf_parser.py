@@ -17,7 +17,7 @@ from .base_parser import (
     BaseParser, Model, ModelFormat, Triangle, Vector3D, 
     ParseError, ProgressCallback
 )
-from core.logging_config import get_logger
+from src.core.logging_config import get_logger
 
 
 @dataclass

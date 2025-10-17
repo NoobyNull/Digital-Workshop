@@ -47,6 +47,11 @@ class ApplicationConfig:
     enable_file_logging: bool = True
     log_retention_days: int = 30
     
+    # Thumbnail Generation Configuration
+    thumbnail_bg_color: str = "#F5F5F5"  # Light gray default background
+    thumbnail_bg_image: Optional[str] = None  # Path to custom background image
+    thumbnail_material: Optional[str] = None  # Wood species name for thumbnail material (e.g., 'Oak', 'Walnut')
+    
     @classmethod
     def get_default(cls) -> "ApplicationConfig":
         """Get the default application configuration."""

@@ -20,15 +20,15 @@ from PySide6.QtWidgets import (
     QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar, QTabWidget
 )
 
-from core.logging_config import get_logger
-from core.database_manager import get_database_manager
-from core.data_structures import ModelFormat
-from parsers.stl_parser import STLParser, STLProgressCallback
-from gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
-from gui.preferences import PreferencesDialog
-from gui.lighting_control_panel import LightingControlPanel
-from gui.lighting_manager import LightingManager
-from gui.material_manager import MaterialManager
+from src.core.logging_config import get_logger
+from src.core.database_manager import get_database_manager
+from src.core.data_structures import ModelFormat
+from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
+from src.gui.preferences import PreferencesDialog
+from src.gui.lighting_control_panel import LightingControlPanel
+from src.gui.lighting_manager import LightingManager
+from src.gui.material_manager import MaterialManager
 
 # --- Snapping overlays and dock-drag handler helpers ---
 
@@ -2840,45 +2840,52 @@ class MainWindow(QMainWindow):
                 self.logger.warning("Cannot determine model format")
                 return
 
-            # DIAGNOSTIC LOG: Track material application process
-            self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STARTING MATERIAL APPLICATION =====")
-            self.logger.info(f"[STL_TEXTURE_DEBUG] Material: '{species_name}', Model format: {model_format}")
-            
-            # Get detailed material information for diagnosis
-            material_info = {}
-            try:
+            # DIAGNOSTIC LOG: Track material application process (DISABLED - set ENABLE_STL_TEXTURE_DEBUG = True to enable)
+            ENABLE_STL_TEXTURE_DEBUG = False
+            if ENABLE_STL_TEXTURE_DEBUG:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STARTING MATERIAL APPLICATION =====")
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Material: '{species_name}', Model format: {model_format}")
+                
+                # Get detailed material information for diagnosis
+                material_info = {}
+                try:
+                    material = self.material_manager.material_provider.get_material_by_name(species_name)
+                    if material:
+                        material_info = {
+                            'name': material.get('name', 'Unknown'),
+                            'mtl_path': material.get('mtl_path', None),
+                            'texture_path': material.get('texture_path', None),
+                            'has_mtl': bool(material.get('mtl_path')),
+                            'has_texture': bool(material.get('texture_path'))
+                        }
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] Material info: {material_info}")
+                    else:
+                        self.logger.error(f"[STL_TEXTURE_DEBUG] Material '{species_name}' not found in material provider")
+                except Exception as e:
+                    self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to get material info: {e}")
+                
+                # Check if model has UV coordinates (needed for texture mapping)
+                has_uv_coords = False
+                if hasattr(self.viewer_widget, "actor") and self.viewer_widget.actor:
+                    mapper = self.viewer_widget.actor.GetMapper()
+                    if mapper:
+                        input_data = mapper.GetInput()
+                        if input_data:
+                            point_data = input_data.GetPointData()
+                            if point_data:
+                                has_uv_coords = point_data.GetTCoords() is not None
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
+                
+                # Check if material has texture
+                material_has_texture = material_info.get('has_texture', False)
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
+                if material_has_texture:
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Texture path: {material_info.get('texture_path')}")
+            else:
+                # Get basic material info for normal operation
                 material = self.material_manager.material_provider.get_material_by_name(species_name)
-                if material:
-                    material_info = {
-                        'name': material.get('name', 'Unknown'),
-                        'mtl_path': material.get('mtl_path', None),
-                        'texture_path': material.get('texture_path', None),
-                        'has_mtl': bool(material.get('mtl_path')),
-                        'has_texture': bool(material.get('texture_path'))
-                    }
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] Material info: {material_info}")
-                else:
-                    self.logger.error(f"[STL_TEXTURE_DEBUG] Material '{species_name}' not found in material provider")
-            except Exception as e:
-                self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to get material info: {e}")
-            
-            # Check if model has UV coordinates (needed for texture mapping)
-            has_uv_coords = False
-            if hasattr(self.viewer_widget, "actor") and self.viewer_widget.actor:
-                mapper = self.viewer_widget.actor.GetMapper()
-                if mapper:
-                    input_data = mapper.GetInput()
-                    if input_data:
-                        point_data = input_data.GetPointData()
-                        if point_data:
-                            has_uv_coords = point_data.GetTCoords() is not None
-                            self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
-            
-            # Check if material has texture
-            material_has_texture = material_info.get('has_texture', False)
-            self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
-            if material_has_texture:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Texture path: {material_info.get('texture_path')}")
+                material_has_texture = bool(material and material.get('texture_path')) if material else False
+                material_info = {'has_texture': material_has_texture}
 
             # Apply material based on model format
             if model_format == ModelFormat.STL:
@@ -2913,27 +2920,28 @@ class MainWindow(QMainWindow):
                     self.logger.info(f"[STL_TEXTURE_DEBUG] apply_material_to_actor returned: {ok}")
                     
                     # NEW DIAGNOSTIC: Check if material properties were applied correctly after texture
-                    try:
-                        prop = self.viewer_widget.actor.GetProperty()
-                        if prop:
-                            diffuse_color = prop.GetDiffuseColor()
-                            ambient_color = prop.GetAmbientColor()
-                            specular_color = prop.GetSpecularColor()
-                            self.logger.info(f"[STL_TEXTURE_DEBUG] Actor material properties after texture application:")
-                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse: {diffuse_color}")
-                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Ambient: {ambient_color}")
-                            self.logger.info(f"[STL_TEXTURE_DEBUG]   Specular: {specular_color}")
-                            
-                            # Check if diffuse color is white (as expected for textured materials)
-                            if len(diffuse_color) >= 3:
-                                is_white_diffuse = (abs(diffuse_color[0] - 1.0) < 0.01 and
-                                                  abs(diffuse_color[1] - 1.0) < 0.01 and
-                                                  abs(diffuse_color[2] - 1.0) < 0.01)
-                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse is white (good for texture): {is_white_diffuse}")
-                                if not is_white_diffuse:
-                                    self.logger.error(f"[STL_TEXTURE_DEBUG]   PROBLEM: Diffuse color is not white - this will tint the texture!")
-                    except Exception as e:
-                        self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check actor properties: {e}")
+                    if ENABLE_STL_TEXTURE_DEBUG:
+                        try:
+                            prop = self.viewer_widget.actor.GetProperty()
+                            if prop:
+                                diffuse_color = prop.GetDiffuseColor()
+                                ambient_color = prop.GetAmbientColor()
+                                specular_color = prop.GetSpecularColor()
+                                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor material properties after texture application:")
+                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse: {diffuse_color}")
+                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Ambient: {ambient_color}")
+                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Specular: {specular_color}")
+                                
+                                # Check if diffuse color is white (as expected for textured materials)
+                                if len(diffuse_color) >= 3:
+                                    is_white_diffuse = (abs(diffuse_color[0] - 1.0) < 0.01 and
+                                                      abs(diffuse_color[1] - 1.0) < 0.01 and
+                                                      abs(diffuse_color[2] - 1.0) < 0.01)
+                                    self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse is white (good for texture): {is_white_diffuse}")
+                                    if not is_white_diffuse:
+                                        self.logger.error(f"[STL_TEXTURE_DEBUG]   PROBLEM: Diffuse color is not white - this will tint the texture!")
+                        except Exception as e:
+                            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check actor properties: {e}")
                     
                     if ok:
                         self.statusBar().showMessage(f"Applied STL material with texture: {species_name}", 2000)
@@ -2978,11 +2986,13 @@ class MainWindow(QMainWindow):
             # Re-render
             try:
                 self.viewer_widget.vtk_widget.GetRenderWindow().Render()
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Re-rendered after material application")
+                if ENABLE_STL_TEXTURE_DEBUG:
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Re-rendered after material application")
             except Exception as e:
                 self.logger.warning(f"Failed to render after material application: {e}")
 
-            self.logger.info(f"[STL_TEXTURE_DEBUG] ===== MATERIAL APPLICATION COMPLETE =====")
+            if ENABLE_STL_TEXTURE_DEBUG:
+                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== MATERIAL APPLICATION COMPLETE =====")
 
         except Exception as e:
             self.logger.error(f"Failed to apply material '{species_name}': {e}")

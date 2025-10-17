@@ -19,6 +19,11 @@ vtk>=9.2.0
 # Optional: Numerical operations for geometry processing
 numpy>=1.24.0
 
+# Required: Image processing for MTL texture loading
+Pillow>=10.0.0
+opencv-python>=4.7.0,<4.8.0
+numpy>=1.24.0,<2.0.0
+
 # Optional: XML parsing for advanced formats
 lxml>=4.6.0
 

@@ -63,6 +63,7 @@ class DatabaseManager:
                         file_path TEXT NOT NULL,
                         file_size INTEGER,
                         file_hash TEXT,                 -- BLAKE2 hash for duplicate detection and recovery
+                        thumbnail_path TEXT,            -- Path to generated thumbnail PNG
                         date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
                         last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
@@ -111,6 +112,7 @@ class DatabaseManager:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_thumbnail_path ON models(thumbnail_path)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_metadata_model_id ON model_metadata(model_id)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_metadata_category ON model_metadata(category)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)")
@@ -175,6 +177,15 @@ class DatabaseManager:
                 cursor.execute("ALTER TABLE models ADD COLUMN file_hash TEXT")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)")
                 logger.info("file_hash column added successfully")
+            
+            # Migration 3: Add thumbnail_path column if it doesn't exist
+            has_thumbnail_path = any(col[1] == 'thumbnail_path' for col in model_columns)
+            
+            if not has_thumbnail_path:
+                logger.info("Adding thumbnail_path column to models table")
+                cursor.execute("ALTER TABLE models ADD COLUMN thumbnail_path TEXT")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_thumbnail_path ON models(thumbnail_path)")
+                logger.info("thumbnail_path column added successfully")
             
             # Migration 2: Check if we need to migrate the rating constraint
             cursor.execute("PRAGMA table_info(model_metadata)")
@@ -1327,6 +1338,73 @@ class DatabaseManager:
             self._connection.close()
             self._connection = None
             logger.info("Database connection closed")
+    
+    @log_function_call(logger)
+    def get_thumbs_directory(self) -> Path:
+        """
+        Get the thumbnails directory path (database_location/thumbs).
+        Creates the directory if it doesn't exist.
+        
+        Returns:
+            Path to thumbs directory
+        """
+        try:
+            thumbs_dir = self.db_path.parent / "thumbs"
+            thumbs_dir.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Thumbs directory: {thumbs_dir}")
+            return thumbs_dir
+        except Exception as e:
+            logger.error(f"Failed to create thumbs directory: {e}")
+            raise
+    
+    @log_function_call(logger)
+    def update_thumbnail_path(self, model_id: int, thumbnail_path: str) -> bool:
+        """
+        Update thumbnail path for a model.
+        
+        Args:
+            model_id: Model ID
+            thumbnail_path: Path to thumbnail file
+            
+        Returns:
+            True if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE models SET thumbnail_path = ?, last_modified = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (thumbnail_path, model_id))
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info(f"Updated thumbnail path for model {model_id}: {thumbnail_path}")
+                return success
+        except sqlite3.Error as e:
+            logger.error(f"Failed to update thumbnail path for model {model_id}: {e}")
+            return False
+    
+    @log_function_call(logger)
+    def get_thumbnail_path(self, model_id: int) -> Optional[str]:
+        """
+        Get thumbnail path for a model.
+        
+        Args:
+            model_id: Model ID
+            
+        Returns:
+            Thumbnail path or None if not set
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT thumbnail_path FROM models WHERE id = ?", (model_id,))
+                row = cursor.fetchone()
+                return row[0] if row and row[0] else None
+        except sqlite3.Error as e:
+            logger.error(f"Failed to get thumbnail path for model {model_id}: {e}")
+            return None
 
 
 # Singleton instance for application-wide use

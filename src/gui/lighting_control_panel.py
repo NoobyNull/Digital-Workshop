@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
 )
 
-from gui.theme import COLORS
+from src.gui.theme import COLORS
 
 
 class LightingControlPanel(QDialog):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPixmap
@@ -22,15 +23,11 @@ from PySide6.QtWidgets import (
 )
 
 from core.database_manager import get_database_manager
+from core.logging_config import get_logger
 from gui.material_manager import MaterialManager
 from gui.theme import COLORS
 
 
-def _rgbf_to_hex(rgb: Tuple[float, float, float]) -> str:
-    r = max(0, min(255, int(round(float(rgb[0]) * 255.0))))
-    g = max(0, min(255, int(round(float(rgb[1]) * 255.0))))
-    b = max(0, min(255, int(round(float(rgb[2]) * 255.0))))
-    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 class MaterialPickerWidget(QDialog):
@@ -43,6 +40,7 @@ class MaterialPickerWidget(QDialog):
         self,
         db_manager=None,
         material_manager: Optional[MaterialManager] = None,
+        model_format=None,  # Add model format parameter
         parent: Optional[QWidget] = None,
     ):
         super().__init__(parent)
@@ -52,6 +50,10 @@ class MaterialPickerWidget(QDialog):
 
         self.db = db_manager or get_database_manager()
         self.material_manager = material_manager or MaterialManager(self.db)
+        self.model_format = model_format  # Store model format
+
+        # Initialize logger
+        self.logger = get_logger(__name__)
 
         self._species_records: Dict[str, Dict] = {}
 
@@ -101,33 +103,16 @@ class MaterialPickerWidget(QDialog):
         self.preview_label.setScaledContents(True)
         prev_layout.addWidget(self.preview_label, alignment=Qt.AlignCenter)
 
-        # Properties group
-        self.props_group = QGroupBox("Material Properties")
-        props_form = QFormLayout(self.props_group)
-        props_form.setLabelAlignment(Qt.AlignRight)
+        # Material info group (replaces properties for MTL files)
+        self.info_group = QGroupBox("Material Information")
+        info_layout = QVBoxLayout(self.info_group)
+        info_layout.setContentsMargins(10, 10, 10, 10)
+        info_layout.setSpacing(8)
 
-        self.base_color_edit = QLineEdit()
-        self.grain_color_edit = QLineEdit()
-        self.grain_pattern_edit = QLineEdit()
-        self.grain_scale_edit = QLineEdit()
-        self.roughness_edit = QLineEdit()
-        self.specular_edit = QLineEdit()
-        for w in [
-            self.base_color_edit,
-            self.grain_color_edit,
-            self.grain_pattern_edit,
-            self.grain_scale_edit,
-            self.roughness_edit,
-            self.specular_edit,
-        ]:
-            w.setReadOnly(True)
-
-        props_form.addRow("Base Color (hex):", self.base_color_edit)
-        props_form.addRow("Grain Color (hex):", self.grain_color_edit)
-        props_form.addRow("Grain Pattern:", self.grain_pattern_edit)
-        props_form.addRow("Grain Scale:", self.grain_scale_edit)
-        props_form.addRow("Roughness:", self.roughness_edit)
-        props_form.addRow("Specular:", self.specular_edit)
+        self.material_info_label = QLabel("Select a material to view texture information.")
+        self.material_info_label.setWordWrap(True)
+        self.material_info_label.setStyleSheet(f"color: {COLORS.text}; background-color: {COLORS.surface}; padding: 8px; border-radius: 3px;")
+        info_layout.addWidget(self.material_info_label)
 
         # Buttons
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
@@ -142,7 +127,7 @@ class MaterialPickerWidget(QDialog):
         # Assemble
         layout.addWidget(self.selection_group)
         layout.addWidget(self.preview_group)
-        layout.addWidget(self.props_group)
+        layout.addWidget(self.info_group)
         layout.addWidget(self.buttons)
 
     def _apply_theme_styles(self) -> None:
@@ -204,22 +189,44 @@ class MaterialPickerWidget(QDialog):
 
     # ---- Data loading and updates ----
     def _load_species(self) -> None:
+        """Load only MTL file-based materials, not database wood species."""
         self._species_records.clear()
         self.species_combo.blockSignals(True)
         self.species_combo.clear()
-        try:
-            rows = self.db.get_wood_materials()
-        except Exception as e:
-            QMessageBox.warning(self, "Database Error", f"Failed to load materials:\n{e}")
-            rows = []
 
-        for rec in rows:
-            name = str(rec.get("name", "Unknown"))
-            is_default = int(rec.get("is_default", 0)) == 1
-            label = f"{name} (Default)" if is_default else name
-            # Store real name in userData for clean emission
-            self.species_combo.addItem(label, userData=name)
-            self._species_records[name] = rec
+        try:
+            # Get MTL file-based materials only (not database wood species)
+            mtl_materials = self.material_manager.material_provider.get_available_materials()
+
+            if not mtl_materials:
+                self.species_combo.addItem("No MTL materials found", userData=None)
+                self.species_combo.blockSignals(False)
+                return
+
+            valid_materials = 0
+            for material in mtl_materials:
+                name = material['name']
+                texture_path = material.get('texture_path')
+                mtl_path = material.get('mtl_path')
+
+                # Only show materials that have both MTL file and texture
+                if mtl_path and texture_path and mtl_path.exists() and texture_path.exists():
+                    # Store material info for later use
+                    self.species_combo.addItem(name, userData=name)
+                    self._species_records[name] = material
+                    valid_materials += 1
+                    self.logger.debug(f"Added MTL material '{name}' with texture {texture_path.name}")
+                else:
+                    self.logger.debug(f"Skipping material '{name}' - missing MTL or texture file")
+
+            self.logger.info(f"Loaded {valid_materials} valid MTL materials (from {len(mtl_materials)} total)")
+
+            if valid_materials == 0:
+                self.species_combo.addItem("No valid MTL materials found", userData=None)
+
+        except Exception as e:
+            self.logger.error(f"Failed to load MTL materials: {e}")
+            self.species_combo.addItem("Error loading materials", userData=None)
 
         self.species_combo.blockSignals(False)
 
@@ -233,51 +240,122 @@ class MaterialPickerWidget(QDialog):
         name = self._current_species_name()
         if not name:
             self.preview_label.clear()
-            for w in [
-                self.base_color_edit,
-                self.grain_color_edit,
-                self.grain_pattern_edit,
-                self.grain_scale_edit,
-                self.roughness_edit,
-                self.specular_edit,
-            ]:
-                w.clear()
+            self.material_info_label.setText("Select a material to view texture information.")
             return
 
-        rec = self._species_records.get(name, {})
-        # Update properties
-        base = (
-            float(rec.get("base_color_r", 0.7)),
-            float(rec.get("base_color_g", 0.55)),
-            float(rec.get("base_color_b", 0.4)),
-        )
-        grain = (
-            float(rec.get("grain_color_r", 0.5)),
-            float(rec.get("grain_color_g", 0.4)),
-            float(rec.get("grain_color_b", 0.3)),
-        )
-        grain_pattern = str(rec.get("grain_pattern", "ring"))
-        grain_scale = float(rec.get("grain_scale", 1.0))
-        roughness = float(rec.get("roughness", 0.5))
-        specular = float(rec.get("specular", 0.3))
-
-        self.base_color_edit.setText(_rgbf_to_hex(base))
-        self.grain_color_edit.setText(_rgbf_to_hex(grain))
-        self.grain_pattern_edit.setText(grain_pattern)
-        self.grain_scale_edit.setText(f"{grain_scale:.2f}")
-        self.roughness_edit.setText(f"{roughness:.2f}")
-        self.specular_edit.setText(f"{specular:.2f}")
-
-        # Update preview (256x256)
+        # Update material info for MTL files
         try:
+            if self.model_format:
+                from core.data_structures import ModelFormat
+
+                if self.model_format == ModelFormat.STL:
+                    # STL files: Show MTL material properties
+                    material = self._species_records.get(name)
+                    if material and material.get('mtl_path'):
+                        mtl_path = material['mtl_path']
+                        # Parse MTL to show properties
+                        mtl_props = self._parse_mtl_for_display(mtl_path)
+
+                        info_text = f"""
+                        <b>Material:</b> {name}<br>
+                        <b>Model Format:</b> <span style='color: blue;'>STL</span><br>
+                        <b>MTL File:</b> {Path(mtl_path).name}<br>
+                        <b>Diffuse Color:</b> <span style='color: rgb{mtl_props.get('Kd', (0.8, 0.8, 0.8))}; background-color: rgb{mtl_props.get('Kd', (0.8, 0.8, 0.8))};'>#{int(mtl_props['Kd'][0]*255):02x}{int(mtl_props['Kd'][1]*255):02x}{int(mtl_props['Kd'][2]*255):02x}</span><br>
+                        <b>Specular:</b> {mtl_props.get('Ks', (0,0,0))}<br>
+                        <b>Shininess:</b> {mtl_props.get('Ns', 10)}<br>
+                        <b>Status:</b> <span style='color: green;'>MTL properties applied</span>
+                        """
+                    else:
+                        info_text = f"""
+                        <b>Material:</b> {name}<br>
+                        <b>Model Format:</b> <span style='color: blue;'>STL</span><br>
+                        <b>Status:</b> <span style='color: red;'>No MTL file found</span><br>
+                        <i>STL files require MTL files for material properties.</i>
+                        """
+                else:
+                    # OBJ files: Show MTL texture information
+                    material = self._species_records.get(name)
+                    if material and material.get('texture_path'):
+                        texture_path = material['texture_path']
+                        mtl_path = material.get('mtl_path', 'N/A')
+
+                        info_text = f"""
+                        <b>Material:</b> {name}<br>
+                        <b>Model Format:</b> <span style='color: blue;'>OBJ</span><br>
+                        <b>Texture File:</b> {texture_path.name}<br>
+                        <b>MTL File:</b> {Path(mtl_path).name if mtl_path != 'N/A' else 'N/A'}<br>
+                        <b>Status:</b> <span style='color: green;'>Full MTL texture support</span>
+                        """
+                    else:
+                        info_text = f"""
+                        <b>Material:</b> {name}<br>
+                        <b>Model Format:</b> <span style='color: blue;'>OBJ</span><br>
+                        <b>Status:</b> <span style='color: orange;'>No MTL texture found</span><br>
+                        <i>OBJ files support full MTL textures with UV mapping.</i>
+                        """
+            else:
+                # Unknown format
+                info_text = f"""
+                <b>Material:</b> {name}<br>
+                <b>Model Format:</b> <span style='color: gray;'>Unknown</span><br>
+                <b>Status:</b> <span style='color: orange;'>Cannot determine format</span>
+                """
+
+            self.material_info_label.setText(info_text)
+
+            # Update preview (256x256) - this will load the actual MTL texture
             img = self.material_manager.generate_wood_texture(name, size=(256, 256))
             h, w, ch = img.shape
             qimg = QImage(img.data, w, h, ch * w, QImage.Format_RGB888)
             pix = QPixmap.fromImage(qimg)
             self.preview_label.setPixmap(pix)
+
         except Exception as e:
             self.preview_label.clear()
-            QMessageBox.warning(self, "Preview Error", f"Failed to generate preview:\n{e}")
+            error_text = f"""
+            <b>Material:</b> {name}<br>
+            <b>Status:</b> <span style='color: red;'>Error loading texture</span><br>
+            <b>Error:</b> {str(e)}
+            """
+            self.material_info_label.setText(error_text)
+
+    def _parse_mtl_for_display(self, mtl_path) -> dict:
+        """Parse MTL file to extract properties for display in the UI."""
+        material = {
+            "Kd": (0.8, 0.8, 0.8),   # diffuse color default
+            "Ks": (0.0, 0.0, 0.0),   # specular color default
+            "Ns": 10.0,              # shininess default
+            "d": 1.0                 # opacity default
+        }
+
+        try:
+            with open(mtl_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+
+                    if line.startswith("Kd "):  # diffuse color
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            material["Kd"] = tuple(map(float, parts[1:4]))
+                    elif line.startswith("Ks "):  # specular color
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            material["Ks"] = tuple(map(float, parts[1:4]))
+                    elif line.startswith("Ns "):  # shininess
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            material["Ns"] = float(parts[1])
+                    elif line.startswith("d "):   # opacity
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            material["d"] = float(parts[1])
+
+        except Exception as e:
+            self.logger.warning(f"Failed to parse MTL file for display {mtl_path}: {e}")
+
+        return material
 
     # ---- Actions ----
     def _on_apply(self) -> None:

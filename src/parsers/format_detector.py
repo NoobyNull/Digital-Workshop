@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 import struct
 
 from .base_parser import ModelFormat
-from core.logging_config import get_logger
+from src.core.logging_config import get_logger
 
 
 class FormatDetector:

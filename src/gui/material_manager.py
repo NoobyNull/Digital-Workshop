@@ -26,8 +26,8 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support as vtk_np
 
-from core.logging_config import get_logger
-from core.material_provider import MaterialProvider
+from src.core.logging_config import get_logger
+from src.core.material_provider import MaterialProvider
 
 
 class MaterialManager:

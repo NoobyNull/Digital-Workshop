@@ -1,0 +1,896 @@
+2025-10-16 20:36:19,198 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'maple', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'maple.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\maple.png'}
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\paduc.mtl
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl paduc
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Found material name: paduc
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,199 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd paduc.png
+2025-10-16 20:36:19,200 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: paduc.png
+2025-10-16 20:36:19,201 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: paduc.png -> D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:19,201 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:19,201 - 3D-MM.core.material_provider - INFO - Parsed MTL file: paduc.mtl with 7 properties
+2025-10-16 20:36:19,201 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'paduc', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'paduc.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\paduc.png'}
+2025-10-16 20:36:19,202 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\pine.mtl
+2025-10-16 20:36:19,202 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl pine
+2025-10-16 20:36:19,202 - 3D-MM.core.material_provider - DEBUG - Found material name: pine
+2025-10-16 20:36:19,202 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:19,203 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd pine.png
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: pine.png
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: pine.png -> D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:19,204 - 3D-MM.core.material_provider - INFO - Parsed MTL file: pine.mtl with 7 properties
+2025-10-16 20:36:19,205 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'pine', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'pine.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\pine.png'}
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\purpleheart.mtl
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl purpleheart
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Found material name: purpleheart
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,206 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd purpleheart.png
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: purpleheart.png
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: purpleheart.png -> D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:19,207 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:19,208 - 3D-MM.core.material_provider - INFO - Parsed MTL file: purpleheart.mtl with 7 properties
+2025-10-16 20:36:19,208 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'purpleheart', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'purpleheart.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\purpleheart.png'}
+2025-10-16 20:36:19,209 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\red_oak.mtl
+2025-10-16 20:36:19,209 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl red_oak
+2025-10-16 20:36:19,209 - 3D-MM.core.material_provider - DEBUG - Found material name: red_oak
+2025-10-16 20:36:19,209 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd red_oak.png
+2025-10-16 20:36:19,210 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: red_oak.png
+2025-10-16 20:36:19,211 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: red_oak.png -> D:\Candy-Cadence\src\resources\materials\red_oak.png       
+2025-10-16 20:36:19,211 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\red_oak.png
+2025-10-16 20:36:19,211 - 3D-MM.core.material_provider - INFO - Parsed MTL file: red_oak.mtl with 7 properties
+2025-10-16 20:36:19,211 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'red_oak', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'red_oak.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\red_oak.png'}
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\sapele.mtl
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl sapele
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Found material name: sapele
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:19,212 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:19,213 - 3D-MM.core.material_provider - INFO - Parsed MTL file: sapele.mtl with 7 properties
+2025-10-16 20:36:19,215 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'sapele.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\sapele.png'}
+2025-10-16 20:36:19,216 - 3D-MM.core.material_provider - DEBUG - Found 8 material textures
+2025-10-16 20:36:19,216 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Found 8 available materials
+2025-10-16 20:36:19,216 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Checking material: 'bambu_board'
+2025-10-16 20:36:19,216 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Checking material: 'cherry'
+2025-10-16 20:36:19,216 - 3D-MM.core.material_provider - INFO - [STL_TEXTURE_DEBUG] Found material 'Cherry' with texture_path: D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:19,217 - 3D-MM.gui.material_manager - DEBUG - Material provider returned material for 'Cherry': {'name': 'cherry', 'texture_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/cherry.png'), 'mtl_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/cherry.mtl'), 'properties': {'material_name': 'cherry', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'cherry.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\cherry.png'}}
+2025-10-16 20:36:19,217 - 3D-MM.gui.material_manager - INFO - Found texture path for 'Cherry': D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:19,292 - 3D-MM.gui.material_manager - INFO - Successfully loaded texture image for 'Cherry' from D:\Candy-Cadence\src\resources\materials\cherry.png, shape: (512, 512, 3)
+2025-10-16 20:36:19,292 - 3D-MM.gui.material_manager - DEBUG - Generated texture shape: (512, 512, 3), dtype: uint8
+2025-10-16 20:36:19,293 - 3D-MM.gui.material_manager - DEBUG - Converting numpy array to VTK image data
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - VTK image dimensions: (512, 512, 1)
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Creating VTK texture
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Enabled texture interpolation
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Enabled texture mipmaps
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Enabled texture repeat
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Assigning texture to actor
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Texture assigned to actor
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - DEBUG - Applying material properties to actor
+2025-10-16 20:36:19,294 - 3D-MM.gui.material_manager - INFO - Successfully applied material 'Cherry' to actor
+2025-10-16 20:36:19,295 - 3D-MM.gui.material_manager - INFO - [STL_TEXTURE_DEBUG] Texture successfully bound to actor
+2025-10-16 20:36:19,295 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture dimensions: (512, 512, 1)
+2025-10-16 20:36:19,296 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture interpolation: 1
+2025-10-16 20:36:19,296 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture repeat: 1
+2025-10-16 20:36:19,296 - 3D-MM.gui.main_window - INFO - Applied STL material with texture for 'bambu_board'
+2025-10-16 20:36:19,297 - 3D-MM.gui.main_window - INFO - Saved last material species: bambu_board
+2025-10-16 20:36:19,381 - 3D-MM.gui.viewer_widget_vtk - INFO - Model loaded successfully: 3808182 triangles, 11424546 vertices, polydata points=11424546, polys=3808182
+2025-10-16 20:36:19,381 - 3D-MM.gui.viewer_widget_vtk - DEBUG - Completed load_model
+2025-10-16 20:36:19,382 - 3D-MM.gui.main_window - INFO - Model loaded successfully: 1790. Fishing Sign.stl
+2025-10-16 20:36:19,880 - 3D-MM.core.database_manager - DEBUG - Calling get_camera_orientation
+2025-10-16 20:36:19,881 - 3D-MM.core.database_manager - DEBUG - Calling _get_connection
+2025-10-16 20:36:19,882 - 3D-MM.core.database_manager - DEBUG - Completed _get_connection
+2025-10-16 20:36:19,882 - 3D-MM.core.database_manager - ERROR - Failed to get camera orientation: no such column: camera_position_x
+2025-10-16 20:36:19,882 - 3D-MM.core.database_manager - DEBUG - Completed get_camera_orientation
+2025-10-16 20:36:19,882 - 3D-MM.gui.main_window - DEBUG - No saved camera view for model ID 862
+2025-10-16 20:36:21,642 - 3D-MM.core.material_provider - INFO - MaterialProvider initialized
+2025-10-16 20:36:21,649 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\bambu_board.mtl
+2025-10-16 20:36:21,650 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl bambu_board
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Found material name: bambu_board
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,651 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd bambu_board.png
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: bambu_board.png
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: bambu_board.png -> D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,652 - 3D-MM.core.material_provider - INFO - Parsed MTL file: bambu_board.mtl with 7 properties
+2025-10-16 20:36:21,653 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\cherry.mtl
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl cherry
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Found material name: cherry
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,654 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd cherry.png
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: cherry.png
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: cherry.png -> D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:21,655 - 3D-MM.core.material_provider - INFO - Parsed MTL file: cherry.mtl with 7 properties
+2025-10-16 20:36:21,656 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'cherry', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'cherry.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\cherry.png'}
+2025-10-16 20:36:21,657 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\maple.mtl
+2025-10-16 20:36:21,657 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl maple
+2025-10-16 20:36:21,657 - 3D-MM.core.material_provider - DEBUG - Found material name: maple
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd maple.png
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: maple.png
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: maple.png -> D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:21,659 - 3D-MM.core.material_provider - INFO - Parsed MTL file: maple.mtl with 7 properties
+2025-10-16 20:36:21,660 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'maple', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'maple.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\maple.png'}
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\paduc.mtl
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl paduc
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Found material name: paduc
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,661 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd paduc.png
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: paduc.png
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: paduc.png -> D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:21,662 - 3D-MM.core.material_provider - INFO - Parsed MTL file: paduc.mtl with 7 properties
+2025-10-16 20:36:21,663 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'paduc', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'paduc.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\paduc.png'}
+2025-10-16 20:36:21,663 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\pine.mtl
+2025-10-16 20:36:21,663 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl pine
+2025-10-16 20:36:21,663 - 3D-MM.core.material_provider - DEBUG - Found material name: pine
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd pine.png
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: pine.png
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: pine.png -> D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:21,665 - 3D-MM.core.material_provider - INFO - Parsed MTL file: pine.mtl with 7 properties
+2025-10-16 20:36:21,666 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'pine', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'pine.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\pine.png'}
+2025-10-16 20:36:21,666 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\purpleheart.mtl
+2025-10-16 20:36:21,666 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl purpleheart
+2025-10-16 20:36:21,666 - 3D-MM.core.material_provider - DEBUG - Found material name: purpleheart
+2025-10-16 20:36:21,666 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,668 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd purpleheart.png
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: purpleheart.png
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: purpleheart.png -> D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:21,669 - 3D-MM.core.material_provider - INFO - Parsed MTL file: purpleheart.mtl with 7 properties
+2025-10-16 20:36:21,670 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'purpleheart', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'purpleheart.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\purpleheart.png'}
+2025-10-16 20:36:21,670 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\red_oak.mtl
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl red_oak
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Found material name: red_oak
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd red_oak.png
+2025-10-16 20:36:21,672 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: red_oak.png
+2025-10-16 20:36:21,672 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: red_oak.png -> D:\Candy-Cadence\src\resources\materials\red_oak.png       
+2025-10-16 20:36:21,672 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\red_oak.png
+2025-10-16 20:36:21,672 - 3D-MM.core.material_provider - INFO - Parsed MTL file: red_oak.mtl with 7 properties
+2025-10-16 20:36:21,673 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'red_oak', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'red_oak.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\red_oak.png'}
+2025-10-16 20:36:21,674 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\sapele.mtl
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl sapele
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Found material name: sapele
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:21,676 - 3D-MM.core.material_provider - INFO - Parsed MTL file: sapele.mtl with 7 properties
+2025-10-16 20:36:21,677 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'sapele.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\sapele.png'}
+2025-10-16 20:36:21,677 - 3D-MM.core.material_provider - DEBUG - Found 8 material textures
+2025-10-16 20:36:21,677 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'bambu_board' with texture bambu_board.png
+2025-10-16 20:36:21,677 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'cherry' with texture cherry.png
+2025-10-16 20:36:21,677 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'maple' with texture maple.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'paduc' with texture paduc.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'pine' with texture pine.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'purpleheart' with texture purpleheart.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'red_oak' with texture red_oak.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - DEBUG - Added MTL material 'sapele' with texture sapele.png
+2025-10-16 20:36:21,678 - 3D-MM.gui.material_picker_widget - INFO - Loaded 8 valid MTL materials (from 8 total)
+2025-10-16 20:36:21,679 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Looking for material with name: 'bambu_board'
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\bambu_board.mtl
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl bambu_board
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Found material name: bambu_board
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,680 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd bambu_board.png
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: bambu_board.png
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: bambu_board.png -> D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - INFO - Parsed MTL file: bambu_board.mtl with 7 properties
+2025-10-16 20:36:21,682 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}
+2025-10-16 20:36:21,683 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\cherry.mtl
+2025-10-16 20:36:21,683 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl cherry
+2025-10-16 20:36:21,683 - 3D-MM.core.material_provider - DEBUG - Found material name: cherry
+2025-10-16 20:36:21,683 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,684 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd cherry.png
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: cherry.png
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: cherry.png -> D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - INFO - Parsed MTL file: cherry.mtl with 7 properties
+2025-10-16 20:36:21,685 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'cherry', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'cherry.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\cherry.png'}
+2025-10-16 20:36:21,686 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\maple.mtl
+2025-10-16 20:36:21,686 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl maple
+2025-10-16 20:36:21,686 - 3D-MM.core.material_provider - DEBUG - Found material name: maple
+2025-10-16 20:36:21,686 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd maple.png
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: maple.png
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: maple.png -> D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:21,687 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:21,689 - 3D-MM.core.material_provider - INFO - Parsed MTL file: maple.mtl with 7 properties
+2025-10-16 20:36:21,689 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'maple', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'maple.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\maple.png'}
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\paduc.mtl
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl paduc
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Found material name: paduc
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,691 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd paduc.png
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: paduc.png
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: paduc.png -> D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - INFO - Parsed MTL file: paduc.mtl with 7 properties
+2025-10-16 20:36:21,692 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'paduc', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'paduc.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\paduc.png'}
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\pine.mtl
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl pine
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Found material name: pine
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd pine.png
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: pine.png
+2025-10-16 20:36:21,694 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: pine.png -> D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:21,695 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:21,695 - 3D-MM.core.material_provider - INFO - Parsed MTL file: pine.mtl with 7 properties
+2025-10-16 20:36:21,695 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'pine', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'pine.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\pine.png'}
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\purpleheart.mtl
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl purpleheart
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Found material name: purpleheart
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,697 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd purpleheart.png
+2025-10-16 20:36:21,698 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: purpleheart.png
+2025-10-16 20:36:21,699 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: purpleheart.png -> D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:21,699 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:21,699 - 3D-MM.core.material_provider - INFO - Parsed MTL file: purpleheart.mtl with 7 properties
+2025-10-16 20:36:21,699 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'purpleheart', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'purpleheart.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\purpleheart.png'}
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\red_oak.mtl
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl red_oak
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Found material name: red_oak
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,700 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,702 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd red_oak.png
+2025-10-16 20:36:21,702 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: red_oak.png
+2025-10-16 20:36:21,702 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: red_oak.png -> D:\Candy-Cadence\src\resources\materials\red_oak.png       
+2025-10-16 20:36:21,702 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\red_oak.png
+2025-10-16 20:36:21,702 - 3D-MM.core.material_provider - INFO - Parsed MTL file: red_oak.mtl with 7 properties
+2025-10-16 20:36:21,703 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'red_oak', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'red_oak.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\red_oak.png'}
+2025-10-16 20:36:21,703 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\sapele.mtl
+2025-10-16 20:36:21,703 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl sapele
+2025-10-16 20:36:21,703 - 3D-MM.core.material_provider - DEBUG - Found material name: sapele
+2025-10-16 20:36:21,703 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:21,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - INFO - Parsed MTL file: sapele.mtl with 7 properties
+2025-10-16 20:36:21,705 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'sapele.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\sapele.png'}
+2025-10-16 20:36:21,706 - 3D-MM.core.material_provider - DEBUG - Found 8 material textures
+2025-10-16 20:36:21,706 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Found 8 available materials
+2025-10-16 20:36:21,706 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Checking material: 'bambu_board'
+2025-10-16 20:36:21,707 - 3D-MM.core.material_provider - INFO - [STL_TEXTURE_DEBUG] Found material 'bambu_board' with texture_path: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,707 - 3D-MM.gui.material_manager - DEBUG - Material provider returned material for 'bambu_board': {'name': 'bambu_board', 'texture_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/bambu_board.png'), 'mtl_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/bambu_board.mtl'), 'properties': {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}}
+2025-10-16 20:36:21,708 - 3D-MM.gui.material_manager - INFO - Found texture path for 'bambu_board': D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:21,724 - 3D-MM.gui.material_manager - INFO - Successfully loaded texture image for 'bambu_board' from D:\Candy-Cadence\src\resources\materials\bambu_board.png, shape: (256, 256, 3)
+2025-10-16 20:36:25,654 - 3D-MM.gui.main_window - DEBUG - [STL_TEXTURE_DEBUG] Applying material 'bambu_board' to model format: ModelFormat.STL
+2025-10-16 20:36:25,655 - 3D-MM.gui.main_window - DEBUG - [STL_TEXTURE_DEBUG] Model has UV coordinates: True
+2025-10-16 20:36:25,657 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Looking for material with name: 'bambu_board'
+2025-10-16 20:36:25,657 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\bambu_board.mtl
+2025-10-16 20:36:25,657 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl bambu_board
+2025-10-16 20:36:25,657 - 3D-MM.core.material_provider - DEBUG - Found material name: bambu_board
+2025-10-16 20:36:25,657 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,658 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd bambu_board.png
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: bambu_board.png
+2025-10-16 20:36:25,659 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: bambu_board.png -> D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,660 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,660 - 3D-MM.core.material_provider - INFO - Parsed MTL file: bambu_board.mtl with 7 properties
+2025-10-16 20:36:25,660 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}
+2025-10-16 20:36:25,661 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\cherry.mtl
+2025-10-16 20:36:25,661 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl cherry
+2025-10-16 20:36:25,661 - 3D-MM.core.material_provider - DEBUG - Found material name: cherry
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,662 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd cherry.png
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: cherry.png
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: cherry.png -> D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - INFO - Parsed MTL file: cherry.mtl with 7 properties
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'cherry', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'cherry.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\cherry.png'}
+2025-10-16 20:36:25,663 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\maple.mtl
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl maple
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Found material name: maple
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,664 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd maple.png
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: maple.png
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: maple.png -> D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:25,665 - 3D-MM.core.material_provider - INFO - Parsed MTL file: maple.mtl with 7 properties
+2025-10-16 20:36:25,666 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'maple', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'maple.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\maple.png'}
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\paduc.mtl
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl paduc
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Found material name: paduc
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,667 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd paduc.png
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: paduc.png
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: paduc.png -> D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:25,669 - 3D-MM.core.material_provider - INFO - Parsed MTL file: paduc.mtl with 7 properties
+2025-10-16 20:36:25,670 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'paduc', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'paduc.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\paduc.png'}
+2025-10-16 20:36:25,670 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\pine.mtl
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl pine
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Found material name: pine
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,671 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd pine.png
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: pine.png
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: pine.png -> D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - INFO - Parsed MTL file: pine.mtl with 7 properties
+2025-10-16 20:36:25,672 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'pine', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'pine.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\pine.png'}
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\purpleheart.mtl
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl purpleheart
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Found material name: purpleheart
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,673 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,674 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd purpleheart.png
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: purpleheart.png
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: purpleheart.png -> D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:25,675 - 3D-MM.core.material_provider - INFO - Parsed MTL file: purpleheart.mtl with 7 properties
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'purpleheart', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'purpleheart.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\purpleheart.png'}
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\red_oak.mtl
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl red_oak
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Found material name: red_oak
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,676 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd red_oak.png
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: red_oak.png
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: red_oak.png -> D:\Candy-Cadence\src\resources\materials\red_oak.png       
+2025-10-16 20:36:25,678 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\red_oak.png
+2025-10-16 20:36:25,679 - 3D-MM.core.material_provider - INFO - Parsed MTL file: red_oak.mtl with 7 properties
+2025-10-16 20:36:25,679 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'red_oak', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'red_oak.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\red_oak.png'}
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\sapele.mtl
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl sapele
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Found material name: sapele
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,680 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:25,681 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,682 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,682 - 3D-MM.core.material_provider - INFO - Parsed MTL file: sapele.mtl with 7 properties
+2025-10-16 20:36:25,682 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'sapele.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\sapele.png'}
+2025-10-16 20:36:25,682 - 3D-MM.core.material_provider - DEBUG - Found 8 material textures
+2025-10-16 20:36:25,682 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Found 8 available materials
+2025-10-16 20:36:25,683 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Checking material: 'bambu_board'
+2025-10-16 20:36:25,683 - 3D-MM.core.material_provider - INFO - [STL_TEXTURE_DEBUG] Found material 'bambu_board' with texture_path: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,683 - 3D-MM.gui.main_window - DEBUG - [STL_TEXTURE_DEBUG] Material has texture: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,683 - 3D-MM.gui.main_window - INFO - [STL_TEXTURE_DEBUG] STL FORMAT DETECTED - Applying texture without UV mapping
+2025-10-16 20:36:25,685 - 3D-MM.gui.main_window - INFO - [STL_TEXTURE_DEBUG] - Model has UV coordinates: True
+2025-10-16 20:36:25,685 - 3D-MM.gui.main_window - INFO - [STL_TEXTURE_DEBUG] - Material has texture: True
+2025-10-16 20:36:25,685 - 3D-MM.gui.main_window - INFO - [STL_TEXTURE_DEBUG] Applying full texture to STL model (no UV mapping)
+2025-10-16 20:36:25,685 - 3D-MM.gui.material_manager - INFO - Starting to apply material 'bambu_board' to actor
+2025-10-16 20:36:25,685 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Actor has UV coordinates: True
+2025-10-16 20:36:25,686 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Looking for material with name: 'bambu_board'
+2025-10-16 20:36:25,686 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\bambu_board.mtl
+2025-10-16 20:36:25,686 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl bambu_board
+2025-10-16 20:36:25,686 - 3D-MM.core.material_provider - DEBUG - Found material name: bambu_board
+2025-10-16 20:36:25,686 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd bambu_board.png
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: bambu_board.png
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: bambu_board.png -> D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,687 - 3D-MM.core.material_provider - INFO - Parsed MTL file: bambu_board.mtl with 7 properties
+2025-10-16 20:36:25,688 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\cherry.mtl
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl cherry
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Found material name: cherry
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,689 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd cherry.png
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: cherry.png
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: cherry.png -> D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\cherry.png
+2025-10-16 20:36:25,690 - 3D-MM.core.material_provider - INFO - Parsed MTL file: cherry.mtl with 7 properties
+2025-10-16 20:36:25,691 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'cherry', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'cherry.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\cherry.png'}
+2025-10-16 20:36:25,691 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\maple.mtl
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl maple
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Found material name: maple
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,692 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd maple.png
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: maple.png
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: maple.png -> D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\maple.png
+2025-10-16 20:36:25,693 - 3D-MM.core.material_provider - INFO - Parsed MTL file: maple.mtl with 7 properties
+2025-10-16 20:36:25,694 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'maple', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'maple.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\maple.png'}
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\paduc.mtl
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl paduc
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Found material name: paduc
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,695 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd paduc.png
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: paduc.png
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: paduc.png -> D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\paduc.png
+2025-10-16 20:36:25,696 - 3D-MM.core.material_provider - INFO - Parsed MTL file: paduc.mtl with 7 properties
+2025-10-16 20:36:25,697 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'paduc', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'paduc.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\paduc.png'}
+2025-10-16 20:36:25,697 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\pine.mtl
+2025-10-16 20:36:25,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl pine
+2025-10-16 20:36:25,698 - 3D-MM.core.material_provider - DEBUG - Found material name: pine
+2025-10-16 20:36:25,698 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,698 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd pine.png
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: pine.png
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: pine.png -> D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\pine.png
+2025-10-16 20:36:25,699 - 3D-MM.core.material_provider - INFO - Parsed MTL file: pine.mtl with 7 properties
+2025-10-16 20:36:25,700 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'pine', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'pine.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\pine.png'}
+2025-10-16 20:36:25,700 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\purpleheart.mtl
+2025-10-16 20:36:25,700 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl purpleheart
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Found material name: purpleheart
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,701 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd purpleheart.png
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: purpleheart.png
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: purpleheart.png -> D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\purpleheart.png
+2025-10-16 20:36:25,702 - 3D-MM.core.material_provider - INFO - Parsed MTL file: purpleheart.mtl with 7 properties
+2025-10-16 20:36:25,703 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'purpleheart', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'purpleheart.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\purpleheart.png'}
+2025-10-16 20:36:25,703 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\red_oak.mtl
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl red_oak
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Found material name: red_oak
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,704 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd red_oak.png
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: red_oak.png
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: red_oak.png -> D:\Candy-Cadence\src\resources\materials\red_oak.png       
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\red_oak.png
+2025-10-16 20:36:25,705 - 3D-MM.core.material_provider - INFO - Parsed MTL file: red_oak.mtl with 7 properties
+2025-10-16 20:36:25,706 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'red_oak', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'red_oak.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\red_oak.png'}
+2025-10-16 20:36:25,706 - 3D-MM.core.material_provider - DEBUG - Starting to parse MTL file: D:\Candy-Cadence\src\resources\materials\sapele.mtl
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 4: newmtl sapele
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found material name: sapele
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 5: Ns 250.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found shininess: 250.0
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 6: Ka 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found ambient color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 7: Kd 1.000000 1.000000 1.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found diffuse color: (1.0, 1.0, 1.0)
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 8: Ks 0.500000 0.500000 0.500000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Found specular color: (0.5, 0.5, 0.5)
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 9: Ke 0.000000 0.000000 0.000000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 10: Ni 1.450000
+2025-10-16 20:36:25,707 - 3D-MM.core.material_provider - DEBUG - Parsing line 11: d 1.000000
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Parsing line 12: illum 2
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Parsing line 13: map_Kd sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Found diffuse texture map: sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Resolved relative texture path: sapele.png -> D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - DEBUG - Resolved texture path exists: D:\Candy-Cadence\src\resources\materials\sapele.png
+2025-10-16 20:36:25,709 - 3D-MM.core.material_provider - INFO - Parsed MTL file: sapele.mtl with 7 properties
+2025-10-16 20:36:25,710 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (2025-10-16 20:36:25,710 - 3D-MM.core.material_provider - DEBUG - Final properties: {'material_name': 'sapele', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'sapele.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\sapele.png'}
+2025-10-16 20:36:25,710 - 3D-MM.core.material_provider - DEBUG - Found 8 material textures
+2025-10-16 20:36:25,711 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Found 8 available materials
+2025-10-16 20:36:25,711 - 3D-MM.core.material_provider - DEBUG - [STL_TEXTURE_DEBUG] Checking material: 'bambu_board'
+2025-10-16 20:36:25,711 - 3D-MM.core.material_provider - INFO - [STL_TEXTURE_DEBUG] Found material 'bambu_board' with texture_path: D:\Candy-Cadence\src\resources\materials\bambu_board.png
+2025-10-16 20:36:25,711 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Material found: {'name': 'bambu_board', 'texture_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/bambu_board.png'), 'mtl_path': WindowsPath('D:/Candy-Cadence/src/resources/materials/bambu_board.mtl'), 'properties': {'material_name': 'bambu_board', 'shininess': 250.0, 'ambient': (1.0, 1.0, 1.0), 'diffuse': (1.0, 1.0, 1.0), 'specular': (0.5, 0.5, 0.5), 'diffuse_map': 'bambu_board.png', 'diffuse_map_resolved': 'D:\\Candy-Cadence\\src\\resources\\materials\\bambu_board.png'}}
+2025-10-16 20:36:25,712 - 3D-MM.gui.material_manager - INFO - [STL_TEXTURE_DEBUG] Material has texture path: D:\Candy-Cadence\src\resources\materials\bambu_board.png      
+2025-10-16 20:36:25,712 - 3D-MM.core.database_manager - DEBUG - Calling get_wood_material_by_name
+2025-10-16 20:36:25,712 - 3D-MM.core.database_manager - DEBUG - Calling _get_connection
+2025-10-16 20:36:25,713 - 3D-MM.core.database_manager - DEBUG - Completed _get_connection
+2025-10-16 20:36:25,713 - 3D-MM.core.database_manager - WARNING - Wood material name='bambu_board' not found
+2025-10-16 20:36:25,714 - 3D-MM.core.database_manager - DEBUG - Completed get_wood_material_by_name
+2025-10-16 20:36:25,714 - 3D-MM.gui.material_manager - WARNING - Species 'bambu_board' not found; using fallback 'Oak'
+2025-10-16 20:36:25,715 - 3D-MM.core.database_manager - DEBUG - Calling get_wood_materials
+2025-10-16 20:36:25,716 - 3D-MM.core.database_manager - DEBUG - Calling _get_connection
+2025-10-16 20:36:25,716 - 3D-MM.core.database_manager - DEBUG - Completed _get_connection
+2025-10-16 20:36:25,717 - 3D-MM.core.database_manager - DEBUG - Retrieved 6 wood materials
+2025-10-16 20:36:25,717 - 3D-MM.core.database_manager - DEBUG - Completed get_wood_materials
+2025-10-16 20:36:25,717 - 3D-MM.gui.material_manager - DEBUG - Using species: {'id': 3, 'name': 'Cherry', 'base_color_r': 0.823529, 'base_color_g': 0.411765, 'base_color_b': 0.117647, 'grain_color_r': 0.627451, 'grain_color_g': 0.321569, 'grain_color_b': 0.176471, 'grain_scale': 1.0, 'grain_pattern': 'ring', 'roughness': 0.5, 'specular': 0.3, 'is_default': 1, 'created_at': '2025-10-15 20:32:16'}
+2025-10-16 20:36:25,717 - 3D-MM.gui.material_manager - DEBUG - Generating texture for species 'Cherry'
+2025-10-16 20:36:25,717 - 3D-MM.gui.material_manager - DEBUG - Texture cache hit for species='Cherry' size=512x512
+2025-10-16 20:36:25,717 - 3D-MM.gui.material_manager - DEBUG - Generated texture shape: (512, 512, 3), dtype: uint8
+2025-10-16 20:36:25,717 - 3D-MM.gui.material_manager - DEBUG - Converting numpy array to VTK image data
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - VTK image dimensions: (512, 512, 1)
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Creating VTK texture
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Enabled texture interpolation
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Enabled texture mipmaps
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Enabled texture repeat
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Assigning texture to actor
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Texture assigned to actor
+2025-10-16 20:36:25,718 - 3D-MM.gui.material_manager - DEBUG - Applying material properties to actor
+2025-10-16 20:36:25,719 - 3D-MM.gui.material_manager - INFO - Successfully applied material 'Cherry' to actor
+2025-10-16 20:36:25,719 - 3D-MM.gui.material_manager - INFO - [STL_TEXTURE_DEBUG] Texture successfully bound to actor
+2025-10-16 20:36:25,719 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture dimensions: (512, 512, 1)
+2025-10-16 20:36:25,720 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture interpolation: 1
+2025-10-16 20:36:25,720 - 3D-MM.gui.material_manager - DEBUG - [STL_TEXTURE_DEBUG] Bound texture repeat: 1
+2025-10-16 20:36:25,720 - 3D-MM.gui.main_window - INFO - Applied STL material with texture for 'bambu_board'
+2025-10-16 20:36:25,721 - 3D-MM.gui.main_window - INFO - Saved last material species: bambu_board
+2025-10-16 20:41:20,143 - 3D-MM.gui.main_window - DEBUG - Saved metadata panel visibility: False
+2025-10-16 20:41:20,167 - 3D-MM.gui.main_window - DEBUG - Saved metadata panel visibility: False

@@ -14,9 +14,9 @@ from PySide6.QtWidgets import (
     QGroupBox, QInputDialog, QFrame, QSizePolicy
 )
 
-from core.logging_config import get_logger
-from core.root_folder_manager import RootFolderManager, RootFolder
-from gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
+from src.core.logging_config import get_logger
+from src.core.root_folder_manager import RootFolderManager, RootFolder
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
 
 
 class FilesTab(QWidget):

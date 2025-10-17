@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 import gc
 
-from core.logging_config import get_logger
-from core.performance_monitor import get_performance_monitor, monitor_operation
-from core.data_structures import (
+from src.core.logging_config import get_logger
+from src.core.performance_monitor import get_performance_monitor, monitor_operation
+from src.core.data_structures import (
     Model, ModelFormat, Triangle, Vector3D, ModelStats,
     LoadingState
 )
@@ -74,7 +74,7 @@ class BaseParser(ABC):
     def model_cache(self):
         """Lazy initialization of model_cache to avoid circular imports."""
         if self._model_cache is None:
-            from core.model_cache import get_model_cache
+            from src.core.model_cache import get_model_cache
             self._model_cache = get_model_cache()
         return self._model_cache
     
@@ -112,7 +112,7 @@ class BaseParser(ABC):
             if lazy_loading:
                 # Try to get cached model
                 # Import CacheLevel lazily to avoid circular imports
-                from core.model_cache import CacheLevel
+                from src.core.model_cache import CacheLevel
                 cached_model = self.model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
                 if cached_model:
                     self.logger.info(f"Loaded model from cache: {file_path}")
@@ -181,7 +181,7 @@ class BaseParser(ABC):
         
         # Check cache first
         # Import CacheLevel lazily to avoid circular imports
-        from core.model_cache import CacheLevel
+        from src.core.model_cache import CacheLevel
         cached_metadata = self.model_cache.get(file_path, CacheLevel.METADATA)
         if cached_metadata:
             return cached_metadata
@@ -240,7 +240,7 @@ class BaseParser(ABC):
         if metadata_model.file_path:
             try:
                 # Lazy import to avoid NameError during async geometry load
-                from core.model_cache import CacheLevel
+                from src.core.model_cache import CacheLevel
                 full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
 
                 # Merge geometry into the metadata model

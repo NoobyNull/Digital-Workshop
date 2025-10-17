@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict
 
 from PySide6.QtCore import QObject, Signal
 
-from core.logging_config import get_logger
+from src.core.logging_config import get_logger
 from PySide6.QtCore import QSettings
 
 

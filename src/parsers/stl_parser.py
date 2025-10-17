@@ -41,8 +41,8 @@ from .base_parser import (
     BaseParser, Model, ModelFormat, Triangle, Vector3D,
     ModelStats, ParseError, ProgressCallback, LoadingState
 )
-from core.logging_config import get_logger, log_function_call
-from core.hardware_acceleration import get_acceleration_manager, AccelBackend
+from src.core.logging_config import get_logger, log_function_call
+from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 
 
 class STLFormat(Enum):
