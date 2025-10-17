@@ -9,12 +9,13 @@ It uses the new modular Application class for initialization and execution.
 import sys
 import os
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the parent directory to the Python path so we can import from src
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dir)
 
-from core.application import Application
-from core.application_config import ApplicationConfig
-from core.exception_handler import ExceptionHandler
+from src.core.application import Application
+from src.core.application_config import ApplicationConfig
+from src.core.exception_handler import ExceptionHandler
 
 
 def main():

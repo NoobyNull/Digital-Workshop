@@ -95,9 +95,12 @@ class PreferencesDialog(QDialog):
 
     def _reset_to_defaults(self):
         # Build defaults from the dataclass defaults
-        default_map = {k: v for k, v in asdict(COLORS.__class__()).items()}  # type: ignore
-        # Fallback: if introspection doesn't work cross-runtime, use initial theme_to_dict()
-        if not default_map:
+        try:
+            # Get default values from the ThemeDefaults dataclass
+            from src.gui.theme import ThemeDefaults
+            default_map = asdict(ThemeDefaults())
+        except Exception:
+            # Fallback: if introspection doesn't work cross-runtime, use initial theme_to_dict()
             default_map = theme_to_dict()
         set_theme(default_map)
         self.theming_tab.reload_from_current()

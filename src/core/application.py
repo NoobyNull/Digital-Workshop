@@ -16,7 +16,7 @@ from .application_config import ApplicationConfig
 from .application_bootstrap import ApplicationBootstrap
 from .exception_handler import ExceptionHandler
 from .system_initializer import SystemInitializer
-from gui.main_window import MainWindow
+from src.gui.main_window import MainWindow
 
 
 class Application:
