@@ -40,6 +40,7 @@ class LightingControlPanel(QDialog):
         self._pos_z = 90.0  # degrees, 90 = center (maps to 100 actual position)
         self._color = (1.0, 1.0, 1.0)  # normalized RGB
         self._intensity = 0.8
+        self._cone_angle = 30.0  # Cone angle in degrees (1-90)
 
         # Build UI
         root_layout = QVBoxLayout(self)
@@ -127,6 +128,29 @@ class LightingControlPanel(QDialog):
         intensity_layout.addWidget(self.intensity_slider, 1)
         intensity_layout.addWidget(self.intensity_value)
 
+        # Cone Angle group with slider (spread/fan control)
+        self.cone_group = QGroupBox("Spotlight Cone")
+        cone_layout = QHBoxLayout(self.cone_group)
+        cone_layout.setContentsMargins(10, 10, 10, 10)
+        cone_layout.setSpacing(8)
+
+        self.cone_label = QLabel("Cone Angle:")
+        self.cone_label.setMinimumWidth(80)
+        self.cone_slider = QSlider(Qt.Horizontal)
+        self.cone_slider.setRange(1, 90)  # 1-90 degrees
+        self.cone_slider.setSingleStep(1)
+        self.cone_slider.setPageStep(10)
+        self.cone_slider.setValue(int(round(self._cone_angle)))
+        self.cone_value = QLabel(f"{self._cone_angle:.0f}°")
+        self.cone_value.setMinimumWidth(50)
+        self.cone_value.setAlignment(Qt.AlignRight)
+
+        self.cone_slider.valueChanged.connect(self._on_cone_angle_changed)
+
+        cone_layout.addWidget(self.cone_label)
+        cone_layout.addWidget(self.cone_slider, 1)
+        cone_layout.addWidget(self.cone_value)
+
         # Actions group (Reset)
         self.actions_group = QGroupBox("Actions")
         actions_layout = QHBoxLayout(self.actions_group)
@@ -142,21 +166,26 @@ class LightingControlPanel(QDialog):
         root_layout.addWidget(self.position_group)
         root_layout.addWidget(self.color_group)
         root_layout.addWidget(self.intensity_group)
+        root_layout.addWidget(self.cone_group)
         root_layout.addWidget(self.actions_group)
         root_layout.addStretch()
 
         self._apply_theme_styles(self)
 
     # ---- Public API ----
-    def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
-        """Return (position(x,y,z), color(r,g,b normalized), intensity)"""
-        return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity
+    # New signal for cone angle
+    cone_angle_changed = Signal(float)  # 1-90 degrees
+    
+    def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float, float]:
+        """Return (position(x,y,z), color(r,g,b normalized), intensity, cone_angle)"""
+        return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity, self._cone_angle
 
     def set_values(
         self,
         position: Tuple[float, float, float] | None = None,
         color: Tuple[float, float, float] | None = None,
         intensity: float | None = None,
+        cone_angle: float | None = None,
         emit_signals: bool = False,
     ) -> None:
         """Programmatically set control values. Use emit_signals=True to propagate."""
@@ -200,6 +229,15 @@ class LightingControlPanel(QDialog):
             self.intensity_value.setText(f"{self._intensity:.1f}")
             if emit_signals:
                 self.intensity_changed.emit(self._intensity)
+
+        if cone_angle is not None:
+            self._cone_angle = float(max(1.0, min(90.0, cone_angle)))
+            self.cone_slider.blockSignals(True)
+            self.cone_slider.setValue(int(round(self._cone_angle)))
+            self.cone_slider.blockSignals(False)
+            self.cone_value.setText(f"{self._cone_angle:.0f}°")
+            if emit_signals:
+                self.cone_angle_changed.emit(self._cone_angle)
 
     # ---- Internals ----
     def _make_pos_slider(self, name: str, min_val: float, max_val: float, initial: float) -> QSlider:
@@ -288,12 +326,18 @@ class LightingControlPanel(QDialog):
         self.intensity_value.setText(f"{self._intensity:.1f}")
         self.intensity_changed.emit(self._intensity)
 
+    def _on_cone_angle_changed(self, value: int) -> None:
+        self._cone_angle = float(value)  # 1.0 .. 90.0 degrees
+        self.cone_value.setText(f"{self._cone_angle:.0f}°")
+        self.cone_angle_changed.emit(self._cone_angle)
+
     def _reset_defaults(self) -> None:
-        # Defaults: (0, 0, 0) actual position (which is 90° on sliders), white, 0.8
+        # Defaults: (0, 0, 100) actual position (90° on XY sliders), white, 0.8 intensity, 30° cone
         self.set_values(
             position=(0.0, 0.0, 100.0),  # Centered XY, slightly positive Z
             color=(1.0, 1.0, 1.0),
             intensity=0.8,
+            cone_angle=30.0,
             emit_signals=True,
         )
 

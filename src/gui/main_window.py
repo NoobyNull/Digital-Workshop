@@ -1347,11 +1347,13 @@ class MainWindow(QMainWindow):
                     self.lighting_panel.position_changed.connect(self._update_light_position)
                     self.lighting_panel.color_changed.connect(self._update_light_color)
                     self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
+                    self.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
                     props = self.lighting_manager.get_properties()
                     self.lighting_panel.set_values(
                         position=tuple(props.get("position", (100.0, 100.0, 100.0))),
                         color=tuple(props.get("color", (1.0, 1.0, 1.0))),
                         intensity=float(props.get("intensity", 0.8)),
+                        cone_angle=float(props.get("cone_angle", 30.0)),
                         emit_signals=False,
                     )
             except Exception as e:
@@ -1942,6 +1944,7 @@ class MainWindow(QMainWindow):
                 settings.setValue('lighting/color_g', float(props['color'][1]))
                 settings.setValue('lighting/color_b', float(props['color'][2]))
                 settings.setValue('lighting/intensity', float(props['intensity']))
+                settings.setValue('lighting/cone_angle', float(props.get('cone_angle', 30.0)))
                 self.logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings: {e}")
@@ -1958,10 +1961,12 @@ class MainWindow(QMainWindow):
                 col_g = settings.value('lighting/color_g', 1.0, type=float)
                 col_b = settings.value('lighting/color_b', 1.0, type=float)
                 intensity = settings.value('lighting/intensity', 0.8, type=float)
+                cone_angle = settings.value('lighting/cone_angle', 30.0, type=float)
                 props = {
                     "position": (float(pos_x), float(pos_y), float(pos_z)),
                     "color": (float(col_r), float(col_g), float(col_b)),
                     "intensity": float(intensity),
+                    "cone_angle": float(cone_angle),
                 }
                 if hasattr(self, 'lighting_manager') and self.lighting_manager:
                     self.lighting_manager.apply_properties(props)
@@ -1972,6 +1977,7 @@ class MainWindow(QMainWindow):
                             position=props["position"],
                             color=props["color"],
                             intensity=props["intensity"],
+                            cone_angle=props["cone_angle"],
                             emit_signals=False,
                         )
                 except Exception:
@@ -2794,6 +2800,14 @@ class MainWindow(QMainWindow):
                 self._save_lighting_settings()
             except Exception as e:
                 self.logger.error(f"update_intensity failed: {e}")
+
+    def _update_light_cone_angle(self, angle: float) -> None:
+        if hasattr(self, "lighting_manager") and self.lighting_manager:
+            try:
+                self.lighting_manager.update_cone_angle(angle)
+                self._save_lighting_settings()
+            except Exception as e:
+                self.logger.error(f"update_cone_angle failed: {e}")
 
     def _apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current viewer actor."""

@@ -29,6 +29,8 @@ class LightingManager:
         self.position = [100.0, 100.0, 100.0]  # X, Y, Z
         self.color = [1.0, 1.0, 1.0]  # RGB normalized
         self.intensity = 0.8
+        self.cone_angle = 30.0  # Cone angle in degrees (for spotlight)
+        self.positional = True  # Use positional light for cone effect
 
     def _render_now(self) -> None:
         """Trigger an immediate render if possible."""
@@ -65,17 +67,25 @@ class LightingManager:
             if self.renderer:
                 self.renderer.RemoveAllLights()
             
-            # Create primary key light
+            # Create primary key light as positional spotlight with cone
             self.light = vtk.vtkLight()
             try:
                 self.light.SetLightTypeToSceneLight()
             except Exception:
                 pass
             try:
-                self.light.SetPositional(False)  # Directional light for better shadows
+                self.light.SetPositional(self.positional)  # Positional for cone effect
+            except Exception:
+                pass
+            try:
+                # Set cone angle for spotlight effect
+                self.light.SetConeAngle(float(self.cone_angle))
+                # Set focus/falloff (lower = softer edges, higher = harder edges)
+                self.light.SetExponent(2.0)  # Moderate falloff
             except Exception:
                 pass
             self.light.SetPosition(*self.position)
+            self.light.SetFocalPoint(0, 0, 0)  # Point light at origin
             self.light.SetColor(*self.color)
             self.light.SetIntensity(float(self.intensity))
             
@@ -157,6 +167,21 @@ class LightingManager:
         except Exception as e:
             self.logger.error(f"update_intensity error: {e}")
 
+    def update_cone_angle(self, angle: float) -> None:
+        """Update spotlight cone angle (1-90 degrees)."""
+        t0 = time.perf_counter()
+        try:
+            angle = self._clamp(angle, 1.0, 90.0)
+            self.cone_angle = angle
+            # Recreate lights to ensure proper cone angle
+            self.create_light()
+            self._render_now()
+            dt_ms = (time.perf_counter() - t0) * 1000.0
+            level = "warning" if dt_ms > 16.0 else "debug"
+            getattr(self.logger, level)(f"update_cone_angle took {dt_ms:.2f} ms")
+        except Exception as e:
+            self.logger.error(f"update_cone_angle error: {e}")
+
     def get_properties(self) -> Dict[str, Any]:
         """Return current light properties as dict."""
         try:
@@ -176,7 +201,8 @@ class LightingManager:
                     inten = float(self.light.GetIntensity())
                 except Exception:
                     pass
-            props = {"position": pos, "color": col, "intensity": inten}
+            cone = float(self.cone_angle)
+            props = {"position": pos, "color": col, "intensity": inten, "cone_angle": cone}
             self.logger.debug(f"get_properties -> {props}")
             return props
         except Exception as e:
@@ -198,5 +224,7 @@ class LightingManager:
                     self.update_color(c[0], c[1], c[2])
             if "intensity" in props and props["intensity"] is not None:
                 self.update_intensity(props["intensity"])
+            if "cone_angle" in props and props["cone_angle"] is not None:
+                self.update_cone_angle(props["cone_angle"])
         except Exception as e:
             self.logger.error(f"apply_properties error: {e}")
