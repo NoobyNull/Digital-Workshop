@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
 )
 
-from src.gui.theme import COLORS
+
 
 
 class LightingControlPanel(QDockWidget):
@@ -225,29 +225,7 @@ class LightingControlPanel(QDockWidget):
         elif name == "Z":
             slider.valueChanged.connect(self._on_z_position_changed)
 
-        # Apply styling
-        slider.setStyleSheet(
-            f"""
-            QSlider::horizontal {{
-                background-color: {COLORS.input_bg};
-                border: 1px solid {COLORS.input_border};
-                border-radius: 3px;
-                height: 8px;
-                margin: 2px 0;
-            }}
-            QSlider::handle:horizontal {{
-                background-color: {COLORS.primary};
-                border: 1px solid {COLORS.primary};
-                border-radius: 4px;
-                width: 16px;
-                margin: -6px 0;
-            }}
-            QSlider::handle:horizontal:hover {{
-                background-color: {COLORS.button_hover_bg};
-                border-color: {COLORS.button_hover_border};
-            }}
-            """
-        )
+
 
         return slider
 
@@ -293,67 +271,11 @@ class LightingControlPanel(QDockWidget):
             emit_signals=True,
         )
 
-    # ---- Styling helpers ----
-    def _apply_button_style(self, button: QPushButton) -> None:
-        button.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {COLORS.button_bg};
-                color: {COLORS.button_text};
-                border: 1px solid {COLORS.button_border};
-                padding: 6px 12px;
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS.button_hover_bg};
-                border-color: {COLORS.button_hover_border};
-            }}
-            """
-        )
-
     def _update_color_button_bg(self, color_norm: Tuple[float, float, float]) -> None:
         # Convert normalized to hex
         r = max(0, min(255, int(round(color_norm[0] * 255.0))))
         g = max(0, min(255, int(round(color_norm[1] * 255.0))))
         b = max(0, min(255, int(round(color_norm[2] * 255.0))))
         hex_col = f"#{r:02x}{g:02x}{b:02x}"
-        self.color_button.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {hex_col};
-                color: {COLORS.button_text};
-                border: 1px solid {COLORS.button_border};
-                padding: 6px 12px;
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                border-color: {COLORS.button_hover_border};
-            }}
-            """
-        )
-
-    def _apply_theme_styles(self, container: QWidget) -> None:
-        # Group boxes and labels theme
-        container.setStyleSheet(
-            f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {COLORS.groupbox_border};
-                border-radius: 4px;
-                margin-top: 8px;
-                padding-top: 10px;
-                background-color: {COLORS.groupbox_bg};
-                color: {COLORS.groupbox_text};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-                color: {COLORS.groupbox_title_text};
-            }}
-            QLabel {{
-                color: {COLORS.label_text};
-                background-color: transparent;
-            }}
-            """
-        )
+        # Set background color only, let qt-material handle other styling
+        self.color_button.setStyleSheet(f"background-color: {hex_col};")
