@@ -28,11 +28,11 @@ class VTKWidget(QWidget):
         
         # Connect renderer to interactor
         self.vtk_widget.GetRenderWindow().AddRenderer(renderer.get_renderer())
-        
-        # Setup interactor style
+
+        # Setup interactor style (QVTKRenderWindowInteractor is the interactor)
         interactor_style = vtk.vtkInteractorStyleTrackballCamera()
-        self.vtk_widget.GetInteractorStyle().SetInteractorStyle(interactor_style)
-        
+        self.vtk_widget.SetInteractorStyle(interactor_style)
+
         # Initialize interactor
         self.vtk_widget.Initialize()
         self.vtk_widget.Start()
