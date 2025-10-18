@@ -424,6 +424,14 @@ class MaterialPickerWidget(QDialog):
         btns.accepted.connect(_save)
         btns.rejected.connect(dlg.reject)
 
-
-
         dlg.exec_()
+
+    def _style_button(self, button: QPushButton) -> None:
+        """Apply qt-material styling to a button."""
+        # Qt-material handles styling automatically, no custom stylesheet needed
+        pass
+
+    def _apply_theme_styles(self) -> None:
+        """Apply theme styles to the dialog."""
+        # Qt-material handles all styling automatically
+        pass
