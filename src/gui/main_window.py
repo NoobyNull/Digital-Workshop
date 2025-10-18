@@ -27,7 +27,6 @@ from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
 from src.parsers.stl_parser import STLParser, STLProgressCallback
-from src.gui.theme import COLORS, ThemeManager, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
 from src.gui.preferences import PreferencesDialog
 from src.gui.lighting_control_panel import LightingControlPanel
 from src.gui.lighting_manager import LightingManager
@@ -651,22 +650,6 @@ class MainWindow(QMainWindow):
             # No need to apply custom stylesheets here
 
             self.metadata_dock.setWidget(self.metadata_tabs)
-
-            # Ensure metadata dock header uses theme variables
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_meta = """
-                    QDockWidget#MetadataDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.metadata_dock, css_text=_dock_css_meta)
-                tm.apply_stylesheet(self.metadata_dock)
-            except Exception:
-                pass
             self.logger.info("Metadata editor widget created successfully (restored)")
         except Exception as e:
             self.logger.warning(f"Failed to create MetadataEditorWidget during restore: {e}")
@@ -775,22 +758,6 @@ class MainWindow(QMainWindow):
             self.model_library_widget.models_added.connect(self._on_models_added)
 
             self.model_library_dock.setWidget(self.model_library_widget)
-
-            # Theme the dock header
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_ml = """
-                    QDockWidget#ModelLibraryDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.model_library_dock, css_text=_dock_css_ml)
-                tm.apply_stylesheet(self.model_library_dock)
-            except Exception:
-                pass
         except Exception as e:
             # Fallback widget
             lib_placeholder = QTextEdit()

@@ -250,47 +250,8 @@ class ThemingTab(QWidget):
             pass
 
     def _apply_theme_styling(self) -> None:
-        """Apply theme styling to the tab."""
-        try:
-            from src.gui.theme import ThemeManager
-            tm = ThemeManager.instance()
-
-            # Get theme colors
-            bg_color = tm.hex("window_bg")
-            text_color = tm.hex("text")
-
-            # Apply stylesheet to this widget
-            stylesheet = f"""
-                QWidget {{
-                    background-color: {bg_color};
-                    color: {text_color};
-                }}
-                QLabel {{
-                    color: {text_color};
-                }}
-                QComboBox {{
-                    background-color: {tm.hex("surface")};
-                    color: {text_color};
-                    border: 1px solid {tm.hex("border")};
-                    padding: 4px;
-                    border-radius: 2px;
-                }}
-                QComboBox::drop-down {{
-                    border: none;
-                }}
-                QComboBox::down-arrow {{
-                    image: none;
-                }}
-                QFrame {{
-                    background-color: {bg_color};
-                    border: 1px solid {tm.hex("border")};
-                    border-radius: 4px;
-                    padding: 8px;
-                }}
-            """
-            self.setStyleSheet(stylesheet)
-        except Exception:
-            pass
+        """Apply theme styling (no-op - qt-material handles this)."""
+        pass
 
     def _on_theme_mode_changed(self, index: int) -> None:
         """Handle theme mode change (Dark/Light/Auto)."""
@@ -454,9 +415,6 @@ class ImagePreferencesTab(QWidget):
         self.preview_label = QLabel()
         self.preview_label.setMinimumHeight(100)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setStyleSheet(
-            "border: 1px solid #ccc; background-color: #f5f5f5;"
-        )
         preview_layout.addWidget(self.preview_label)
 
         layout.addWidget(preview_group)

@@ -196,59 +196,6 @@ class LibraryUIManager:
         parent_layout.addWidget(status_frame)
 
     def apply_styling(self) -> None:
-        """Apply CSS styling to UI elements."""
-        tm = ThemeManager.instance()
-        css_text = """
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid {{groupbox_border}};
-                border-radius: 4px;
-                margin-top: 1ex;
-                padding-top: 10px;
-                background-color: {{groupbox_bg}};
-                color: {{groupbox_text}};
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                color: {{groupbox_title_text}};
-            }
-            QTreeView, QTableView, QListView {
-                background-color: {{table_bg}};
-                color: {{table_text}};
-                border: 1px solid {{table_border}};
-                selection-background-color: {{selection_bg}};
-                selection-color: {{selection_text}};
-            }
-            QHeaderView::section {
-                background-color: {{header_bg}};
-                color: {{header_text}};
-                border: 1px solid {{header_border}};
-            }
-            QPushButton, QToolButton {
-                background-color: {{button_bg}};
-                color: {{button_text}};
-                border: 1px solid {{button_border}};
-                padding: 6px 12px;
-                border-radius: 2px;
-            }
-            QPushButton:hover, QToolButton:hover {
-                background-color: {{button_hover_bg}};
-                border: 1px solid {{button_hover_border}};
-            }
-            QPushButton:pressed, QToolButton:pressed {
-                background-color: {{button_pressed_bg}};
-            }
-            QProgressBar {
-                border: 1px solid {{progress_border}};
-                background-color: {{progress_bg}};
-                text-align: center;
-            }
-            QProgressBar::chunk {
-                background-color: {{progress_chunk}};
-            }
-        """
-        processed_css = tm.process_css_template(css_text)
-        self.library_widget.setStyleSheet(processed_css)
+        """Apply CSS styling (no-op - qt-material handles this)."""
+        pass
 
