@@ -467,6 +467,11 @@ class MainWindow(QMainWindow):
             # Persist state for next launch
             settings = QSettings()
             settings.setValue("ui/layout_edit_mode", self.layout_edit_mode)
+            # Update status bar indicator
+            try:
+                self.status_bar_manager.update_layout_edit_mode(self.layout_edit_mode)
+            except Exception:
+                pass
             # Status feedback
             try:
                 self.statusBar().showMessage("Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked", 2000)
