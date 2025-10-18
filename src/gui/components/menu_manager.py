@@ -222,19 +222,8 @@ class MenuManager:
         self.logger.debug("Menu bar setup completed")
 
     def _apply_bar_palettes(self) -> None:
-        """Apply palette colors to ensure proper theming of native menu bars."""
-        try:
-            tm = ThemeManager.instance()
-            # Menu bar
-            mb = self.main_window.menuBar()
-            if mb is not None:
-                mp = mb.palette()
-                mp.setColor(QPalette.Window, tm.qcolor("menubar_bg"))
-                mp.setColor(QPalette.WindowText, tm.qcolor("menubar_text"))
-                mb.setPalette(mp)
-                mb.setAutoFillBackground(True)
-        except Exception:
-            pass
+        """Apply palette colors (no-op - qt-material handles this)."""
+        pass
 
     # Action handler methods (these would need to be connected to actual implementations)
     def _open_model(self) -> None:

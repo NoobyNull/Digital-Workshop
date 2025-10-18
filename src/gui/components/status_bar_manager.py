@@ -97,7 +97,6 @@ class StatusBarManager:
         self.hash_indicator.setFixedSize(20, 20)
         self.hash_indicator.setToolTip("Background hashing idle - Click to start/pause")
         self.hash_indicator.setVisible(False)
-        self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
         self.hash_indicator.clicked.connect(self._toggle_background_hasher)
         self.status_bar.addPermanentWidget(self.hash_indicator)
 
@@ -107,7 +106,6 @@ class StatusBarManager:
 
         # Layout Edit Mode indicator
         self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
-        self.layout_edit_indicator.setStyleSheet("color: gray;")
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
 
         # Initialize background hasher
@@ -166,13 +164,11 @@ class StatusBarManager:
             if self.background_hasher.is_paused():
                 # Resume
                 self.background_hasher.resume()
-                self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when running
                 self.hash_indicator.setToolTip("Background hashing active - Click to pause")
                 self.main_window.statusBar().showMessage("Background hashing resumed", 2000)
             else:
                 # Pause
                 self.background_hasher.pause()
-                self.hash_indicator.setStyleSheet("opacity: 0.5;")  # Semi-transparent when paused
                 self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
                 self.main_window.statusBar().showMessage("Background hashing paused", 2000)
         except Exception as e:
@@ -197,7 +193,6 @@ class StatusBarManager:
 
             # Update indicator - solid when hashing
             self.hash_indicator.setVisible(True)
-            self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when hashing
             self.hash_indicator.setToolTip("Background hashing active - Click to pause")
 
             self.logger.info("Background hasher started")
@@ -255,7 +250,6 @@ class StatusBarManager:
     def _on_hashing_complete(self) -> None:
         """Handle all hashing complete."""
         try:
-            self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
             self.hash_indicator.setToolTip("Background hashing idle - Click to start")
             self.main_window.statusBar().showMessage("Background hashing complete", 2000)
             self.logger.info("Background hashing completed")
@@ -272,10 +266,8 @@ class StatusBarManager:
         try:
             if is_enabled:
                 self.layout_edit_indicator.setText("Layout Edit Mode: ON")
-                self.layout_edit_indicator.setStyleSheet("color: green; font-weight: bold;")
             else:
                 self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
-                self.layout_edit_indicator.setStyleSheet("color: gray;")
         except Exception as e:
             self.logger.warning(f"Failed to update layout edit mode indicator: {e}")
 
