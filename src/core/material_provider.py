@@ -9,34 +9,34 @@ from pathlib import Path
 from typing import List, Optional, Dict
 import re
 
-from core.logging_config import get_logger
+from src.core.logging_config import get_logger
 
 
 class MaterialProvider:
     """
     Manage material textures by discovering them from the resources/materials directory.
-    
+
     Features:
     - Dynamic discovery of material texture images
     - No hardcoded filenames
     - Supports PNG, JPG texture files
     - MTL file parsing for material properties
     """
-    
+
     # Default materials directory
     DEFAULT_MATERIALS_DIR = Path(__file__).parent.parent / "resources" / "materials"
-    
+
     def __init__(self):
         """Initialize the material provider."""
         self.logger = get_logger(__name__)
         self.logger.info("MaterialProvider initialized")
-        
+
     def get_available_materials(self) -> List[Dict[str, any]]:
         """
         Dynamically discover all available material textures.
-        
+
         Scans the materials directory for PNG/JPG files and MTL files.
-        
+
         Returns:
             List of material dictionaries with name, texture_path, and properties
         """
@@ -44,48 +44,48 @@ class MaterialProvider:
             if not self.DEFAULT_MATERIALS_DIR.exists():
                 self.logger.warning(f"Materials directory not found: {self.DEFAULT_MATERIALS_DIR}")
                 return []
-                
+
             materials = []
-            
+
             # Find all texture images
             image_extensions = {'.png', '.jpg', '.jpeg'}
             texture_files = [
                 f for f in self.DEFAULT_MATERIALS_DIR.iterdir()
                 if f.is_file() and f.suffix.lower() in image_extensions
             ]
-            
+
             # For each texture, check if there's a matching MTL file
             for texture_file in texture_files:
                 material_name = texture_file.stem
                 mtl_file = texture_file.with_suffix('.mtl')
-                
+
                 material_info = {
                     'name': material_name,
                     'texture_path': texture_file,
                     'mtl_path': mtl_file if mtl_file.exists() else None
                 }
-                
+
                 # Parse MTL file if it exists
                 if mtl_file.exists():
                     properties = self._parse_mtl_file(mtl_file)
                     material_info['properties'] = properties
-                    
+
                 materials.append(material_info)
-                
+
             self.logger.debug(f"Found {len(materials)} material textures")
             return sorted(materials, key=lambda m: m['name'])
-            
+
         except Exception as e:
             self.logger.error(f"Error discovering materials: {e}", exc_info=True)
             return []
-            
+
     def get_material_by_name(self, name: str) -> Optional[Dict[str, any]]:
         """
         Get a specific material by name.
-        
+
         Args:
             name: Material name (filename without extension)
-            
+
         Returns:
             Material info dictionary or None if not found
         """
@@ -93,27 +93,27 @@ class MaterialProvider:
             self.logger.debug(f"[STL_TEXTURE_DEBUG] Looking for material with name: '{name}'")
             materials = self.get_available_materials()
             self.logger.debug(f"[STL_TEXTURE_DEBUG] Found {len(materials)} available materials")
-            
+
             for material in materials:
                 self.logger.debug(f"[STL_TEXTURE_DEBUG] Checking material: '{material['name']}'")
                 if material['name'].lower() == name.lower():
                     self.logger.info(f"[STL_TEXTURE_DEBUG] Found material '{name}' with texture_path: {material.get('texture_path')}")
                     return material
-                    
+
             self.logger.warning(f"[STL_TEXTURE_DEBUG] Material '{name}' not found in {len(materials)} materials")
             return None
-            
+
         except Exception as e:
             self.logger.error(f"[STL_TEXTURE_DEBUG] Error getting material '{name}': {e}", exc_info=True)
             return None
-            
+
     def get_material_texture_path(self, name: str) -> Optional[Path]:
         """
         Get the texture image path for a material.
-        
+
         Args:
             name: Material name
-            
+
         Returns:
             Path to texture image or None if not found
         """
@@ -121,7 +121,7 @@ class MaterialProvider:
         if material:
             return material.get('texture_path')
         return None
-        
+
     def _parse_mtl_file(self, mtl_path: Path) -> Dict[str, any]:
         """
         Parse an MTL file to extract material properties.
@@ -217,14 +217,14 @@ class MaterialProvider:
             self.logger.error(f"Error parsing MTL file {mtl_path}: {e}", exc_info=True)
 
         return properties
-        
+
     def validate_texture(self, texture_path: Path) -> bool:
         """
         Validate that a texture file exists and is readable.
-        
+
         Args:
             texture_path: Path to texture file
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -232,19 +232,19 @@ class MaterialProvider:
             if not texture_path.exists():
                 self.logger.warning(f"Texture file not found: {texture_path}")
                 return False
-                
+
             if not texture_path.is_file():
                 self.logger.warning(f"Texture path is not a file: {texture_path}")
                 return False
-                
+
             # Check extension
             supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp'}
             if texture_path.suffix.lower() not in supported_extensions:
                 self.logger.warning(f"Unsupported texture format: {texture_path.suffix}")
                 return False
-                
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Error validating texture: {e}", exc_info=True)
             return False

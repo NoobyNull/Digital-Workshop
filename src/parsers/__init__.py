@@ -6,7 +6,7 @@ Each parser handles format-specific loading and validation.
 """
 
 from .base_parser import (
-    BaseParser, Model, ModelFormat, Triangle, Vector3D, 
+    BaseParser, Model, ModelFormat, Triangle, Vector3D,
     ModelStats, ParseError, ProgressCallback
 )
 from .stl_parser import STLParser, STLFormat, STLModel, STLProgressCallback
@@ -19,19 +19,19 @@ __all__ = [
     # Base classes and utilities
     'BaseParser', 'Model', 'ModelFormat', 'Triangle', 'Vector3D',
     'ModelStats', 'ParseError', 'ProgressCallback',
-    
+
     # STL parser
     'STLParser', 'STLFormat', 'STLModel', 'STLProgressCallback',
-    
+
     # OBJ parser
     'OBJParser', 'OBJMaterial', 'OBJFace',
-    
+
     # 3MF parser
     'ThreeMFParser', 'ThreeMFObject', 'ThreeMFComponent', 'ThreeMFBuildItem',
-    
+
     # STEP parser
     'STEPParser', 'STEPEntity', 'STEPCartesianPoint', 'STEPDirection',
-    
+
     # Format detection
     'FormatDetector'
 ]

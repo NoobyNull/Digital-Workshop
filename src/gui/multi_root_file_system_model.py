@@ -15,8 +15,8 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStyle
 
-from core.logging_config import get_logger
-from core.root_folder_manager import RootFolderManager, RootFolder
+from src.core.logging_config import get_logger
+from src.core.root_folder_manager import RootFolderManager, RootFolder
 
 
 @dataclass

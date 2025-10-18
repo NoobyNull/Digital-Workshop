@@ -22,22 +22,22 @@ def main():
     """Main function to start the 3D-MM application."""
     # Create application configuration
     config = ApplicationConfig.get_default()
-    
+
     # Create exception handler for startup errors
     exception_handler = ExceptionHandler()
-    
+
     try:
         # Create and initialize application
         app = Application(config)
-        
+
         if not app.initialize():
             print("Failed to initialize application")
             return 1
-        
+
         # Run the application
         exit_code = app.run()
         return exit_code
-        
+
     except RuntimeError as e:
         # Handle any exceptions during startup
         exception_handler.handle_startup_error(e)

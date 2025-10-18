@@ -12,7 +12,10 @@ import base64
 from pathlib import Path
 from typing import List, Optional
 
-from PySide6.QtCore import Qt, QSize, QTimer, Signal, QStandardPaths, QSettings, QEvent, QObject, QPoint, QRect
+from PySide6.QtCore import (
+    Qt, QSize, QTimer, Signal, QStandardPaths, QSettings, QEvent, QObject,
+    QPoint, QRect
+)
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette, QCursor
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
@@ -24,205 +27,109 @@ from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
 from src.parsers.stl_parser import STLParser, STLProgressCallback
-from src.gui.theme import COLORS, ThemeManager, qss_tabs_lists_labels, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
+from src.gui.theme import COLORS, ThemeManager, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24, hex_to_rgb
 from src.gui.preferences import PreferencesDialog
 from src.gui.lighting_control_panel import LightingControlPanel
 from src.gui.lighting_manager import LightingManager
 from src.gui.material_manager import MaterialManager
 
-# --- Snapping overlays and dock-drag handler helpers ---
-
-class SnapOverlayLayer(QWidget):
-    """Translucent snap-zone overlays for top/bottom/left/right edges of the main window."""
-    def __init__(self, main_window: QMainWindow):
-        super().__init__(main_window)
-        self._mw = main_window
-        self._thickness = 48
-        self._active_edge: Optional[str] = None
-        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.setWindowFlags(Qt.SubWindow | Qt.FramelessWindowHint)
-        self._edges: dict[str, QFrame] = {
-            "left": QFrame(self),
-            "right": QFrame(self),
-            "top": QFrame(self),
-            "bottom": QFrame(self),
-        }
-        # Theme-aware colors
-        try:
-            r, g, b = hex_to_rgb(COLORS.primary)
-        except Exception:
-            r, g, b = (0, 120, 212)
-        self._rgba_inactive = f"rgba({r}, {g}, {b}, 0.12)"
-        self._rgba_active = f"rgba({r}, {g}, {b}, 0.22)"
-        self._rgba_border = f"rgba({r}, {g}, {b}, 0.85)"
-        for f in self._edges.values():
-            f.setFrameShape(QFrame.NoFrame)
-        self.hide()
-        self.update_geometry()
-        self.set_active(None)
-
-    def update_geometry(self) -> None:
-        """Resize/position overlays to match the current main window size."""
-        if self._mw is None:
-            return
-        self.setGeometry(self._mw.rect())
-        w = self.width()
-        h = self.height()
-        t = self._thickness
-        self._edges["left"].setGeometry(0, 0, t, h)
-        self._edges["right"].setGeometry(w - t, 0, t, h)
-        self._edges["top"].setGeometry(0, 0, w, t)
-        self._edges["bottom"].setGeometry(0, h - t, w, t)
-
-    def _style_for(self, active: bool) -> str:
-        bg = self._rgba_active if active else self._rgba_inactive
-        border = f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
-        return f"background-color: {bg}; border: {border}; border-radius: 3px;"
-
-    def set_active(self, edge: Optional[str]) -> None:
-        """Highlight the given edge ('left'|'right'|'top'|'bottom') or clear when None."""
-        self._active_edge = edge
-        for name, frame in self._edges.items():
-            frame.setStyleSheet(self._style_for(active=(edge == name)))
-
-    def show_overlays(self) -> None:
-        self.update_geometry()
-        self.show()
-        self.raise_()
-
-    def hide_overlays(self) -> None:
-        self.hide()
-        self.set_active(None)
-
-    @property
-    def active_edge(self) -> Optional[str]:
-        return self._active_edge
-
-
-class DockDragHandler(QObject):
-    """Event filter that shows snap overlays while dragging floating docks and performs snap-dock."""
-    SNAP_MARGIN = 56  # px
-
-    def __init__(self, main_window: QMainWindow, dock: QDockWidget, overlay: SnapOverlayLayer, logger: logging.Logger):
-        super().__init__(dock)
-        self._mw = main_window
-        self._dock = dock
-        self._overlay = overlay
-        self._logger = logger
-        self._tracking = False
-
-    def eventFilter(self, obj, event) -> bool:
-        try:
-            et = event.type()
-            if et == QEvent.MouseButtonPress:
-                # Begin potential drag tracking when user interacts with dock.
-                self._tracking = True
-            elif et == QEvent.MouseMove:
-                if self._tracking and self._dock.isFloating():
-                    self._maybe_show_and_update_overlay()
-            elif et == QEvent.MouseButtonRelease:
-                if self._tracking:
-                    self._finish_drag()
-                    self._tracking = False
-        except Exception:
-            pass
-        return False  # do not block default behavior
-
-    def _maybe_show_and_update_overlay(self) -> None:
-        try:
-            self._overlay.show_overlays()
-            edge = self._nearest_edge_to_cursor()
-            self._overlay.set_active(edge)
-        except Exception:
-            pass
-
-    def _finish_drag(self) -> None:
-        try:
-            edge = self._overlay.active_edge
-            self._overlay.hide_overlays()
-            if not edge:
-                return
-            # Respect allowed areas
-            area_map = {
-                "left": Qt.LeftDockWidgetArea,
-                "right": Qt.RightDockWidgetArea,
-                "top": Qt.TopDockWidgetArea,
-                "bottom": Qt.BottomDockWidgetArea,
-            }
-            target_area = area_map[edge]
-            if not (self._dock.allowedAreas() & target_area):
-                return
-            # Perform snap
-            self._mw._snap_dock_to_edge(self._dock, edge)
-        except Exception as e:
-            try:
-                self._logger.warning(f"Snap finalize failed: {e}")
-            except Exception:
-                pass
-
-    def _nearest_edge_to_cursor(self) -> Optional[str]:
-        pos = QCursor.pos()
-        # Use main window frame geometry to compare in global coords
-        rect = self._mw.frameGeometry()
-        if not rect.contains(pos):
-            # Allow a small outside tolerance
-            grown = rect.adjusted(-self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN)
-            if not grown.contains(pos):
-                return None
-        # distances
-        d_left = abs(pos.x() - rect.left())
-        d_right = abs(rect.right() - pos.x())
-        d_top = abs(pos.y() - rect.top())
-        d_bottom = abs(rect.bottom() - pos.y())
-        d_min = min(d_left, d_right, d_top, d_bottom)
-        if d_min > self.SNAP_MARGIN:
-            return None
-        if d_min == d_left:
-            return "left"
-        if d_min == d_right:
-            return "right"
-        if d_min == d_top:
-            return "top"
-        return "bottom"
 
 
 class MainWindow(QMainWindow):
     """
     Main application window for 3D Model Manager.
-    
+
     Provides the primary interface with menu bar, toolbar, status bar,
     and dockable widgets for model management and 3D visualization.
     """
-    
+
     # Custom signals for application events
     model_loaded = Signal(str)  # Emitted when a model is loaded
     model_selected = Signal(int)  # Emitted when a model is selected
-    
+
     def __init__(self, parent: Optional[QWidget] = None):
         """
         Initialize the main window.
-        
+
         Args:
             parent: Parent widget (typically None for main window)
         """
         super().__init__(parent)
-        
+
         # Initialize logger
         self.logger = get_logger(__name__)
         self.logger.info("Initializing main window")
-        
+
+        # Hide window during initialization to prevent blinking
+        self.hide()
+
         # Window properties
         self.setWindowTitle("3D-MM - 3D Model Manager")
         self.setMinimumSize(1200, 800)
         self.resize(1600, 1000)  # Default size for desktop
-        
+
         # Initialize UI components
         self._init_ui()
-        self._setup_menu_bar()
-        self._setup_toolbar()
-        self._setup_status_bar()
-        self._setup_dock_widgets()
-        self._setup_central_widget()
+
+    def _init_ui(self) -> None:
+        """Initialize basic UI properties and styling."""
+        # Set application style for Windows desktop
+        QApplication.setStyle("Fusion")  # Modern look and feel
+
+        # Enable dock widget features for better layout management
+        options = (
+            QMainWindow.AllowNestedDocks |
+            QMainWindow.AllowTabbedDocks |
+            QMainWindow.AnimatedDocks
+        )
+        # Grouped dragging (if available) improves docking behavior when tabs are involved
+        if hasattr(QMainWindow, "GroupedDragging"):
+            options |= QMainWindow.GroupedDragging
+        self.setDockOptions(options)
+        # Explicitly enable nesting (no-op on some styles, harmless)
+        try:
+            self.setDockNestingEnabled(True)
+        except Exception:
+            pass
+
+        # Initialize extracted managers
+        from src.gui.components.menu_manager import MenuManager
+        from src.gui.components.toolbar_manager import ToolbarManager
+        from src.gui.components.status_bar_manager import StatusBarManager
+
+        self.menu_manager = MenuManager(self, self.logger)
+        self.toolbar_manager = ToolbarManager(self, self.logger)
+        self.status_bar_manager = StatusBarManager(self, self.logger)
+
+        self.menu_manager.setup_menu_bar()
+        self.toolbar_manager.setup_toolbar()
+        self.status_bar_manager.setup_status_bar()
+
+        # Expose status bar components for easy access
+        self.status_label = self.status_bar_manager.status_label
+        self.progress_bar = self.status_bar_manager.progress_bar
+        self.hash_indicator = self.status_bar_manager.hash_indicator
+        self.memory_label = self.status_bar_manager.memory_label
+
+        # Expose menu manager actions for easy access
+        self.toggle_layout_edit_action = self.menu_manager.toggle_layout_edit_action
+        self.show_metadata_action = self.menu_manager.show_metadata_action
+        self.show_model_library_action = self.menu_manager.show_model_library_action
+
+        # Initialize dock manager
+        from src.gui.window.dock_manager import DockManager
+        self.dock_manager = DockManager(self, self.logger)
+        self.dock_manager.setup_dock_widgets()
+
+        # Initialize central widget manager
+        from src.gui.window.central_widget_manager import CentralWidgetManager
+        self.central_widget_manager = CentralWidgetManager(self, self.logger)
+        self.central_widget_manager.setup_central_widget()
+
+        # Initialize model loader
+        from src.gui.model.model_loader import ModelLoader
+        self.model_loader_manager = ModelLoader(self, self.logger)
+
         # Initialize snapping overlays and handlers
         try:
             self._init_snapping_system()
@@ -242,1377 +149,35 @@ class MainWindow(QMainWindow):
                 self._set_layout_edit_mode(False)
             except Exception:
                 pass
-        
+
         # Set up status update timer
-        self._setup_status_timer()
-        
+        self.status_bar_manager.setup_status_timer()
+
         # Log window initialization
         self.logger.info("Main window initialized successfully")
-    
-    def _init_ui(self) -> None:
-        """Initialize basic UI properties and styling."""
-        # Set window icon if available
-        # self.setWindowIcon(QIcon(":/icons/app_icon.png"))
-        
-        # Set application style for Windows desktop
-        QApplication.setStyle("Fusion")  # Modern look and feel
-        
-        # Enable dock widget features for better layout management
-        options = (
-            QMainWindow.AllowNestedDocks |
-            QMainWindow.AllowTabbedDocks |
-            QMainWindow.AnimatedDocks
-        )
-        # Grouped dragging (if available) improves docking behavior when tabs are involved
-        if hasattr(QMainWindow, "GroupedDragging"):
-            options |= QMainWindow.GroupedDragging
-        self.setDockOptions(options)
-        # Explicitly enable nesting (no-op on some styles, harmless)
-        try:
-            self.setDockNestingEnabled(True)
-        except Exception:
-            pass
-        
-        # Set central widget background using theme variables (spacing aligned to theme scale)
-        # Base theme stylesheet
-        base_qss = f"""
-            QMainWindow {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QDockWidget {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-                font-weight: bold;
-            }}
-            QDockWidget::title {{
-                background-color: {COLORS.dock_title_bg};
-                padding: {SPACING_12}px {SPACING_16}px;
-                border-bottom: 1px solid {COLORS.dock_title_border};
-                color: {COLORS.text};
-                font-weight: 600;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }}
-            QDockWidget::title:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 {COLORS.hover},
-                                            stop:1 {COLORS.surface});
-            }}
-            QDockWidget::close-button, QDockWidget::float-button {{
-                border: 1px solid transparent;
-                background: transparent;
-                margin: 2px;
-                padding: 2px;
-                border-radius: 3px;
-            }}
-            QDockWidget::close-button:hover, QDockWidget::float-button:hover {{
-                background: {COLORS.hover};
-                border: 1px solid {COLORS.border};
-            }}
-            QToolBar {{
-                background-color: {COLORS.toolbar_bg};
-                border: 1px solid {COLORS.toolbar_border};
-                spacing: {SPACING_8}px;
-                color: {COLORS.text};
-            }}
-            QMenuBar {{
-                background-color: {COLORS.menubar_bg};
-                color: {COLORS.menubar_text};
-                border-bottom: 1px solid {COLORS.menubar_border};
-            }}
-            QMenuBar::item {{
-                background-color: transparent;
-                padding: {SPACING_4}px {SPACING_8}px;
-            }}
-            QMenuBar::item:selected {{
-                background-color: {COLORS.menubar_item_hover_bg};
-                color: {COLORS.menubar_item_hover_text};
-            }}
-            QStatusBar {{
-                background-color: {COLORS.statusbar_bg};
-                color: {COLORS.statusbar_text};
-                border-top: 1px solid {COLORS.statusbar_border};
-            }}
-            QLabel {{
-                color: {COLORS.text};
-            }}
-            QPushButton {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-                padding: {SPACING_8}px {SPACING_16}px;
-                border-radius: 2px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS.hover};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS.pressed};
-            }}
-            /* Splitters and dock separators */
-            QSplitter {{
-                background-color: {COLORS.window_bg};
-            }}
-            QSplitter::handle {{
-                background-color: {COLORS.splitter_handle_bg};
-                border: 1px solid {COLORS.border};
-                width: 7px;
-                height: 7px;
-                border-radius: 2px;
-            }}
-            QSplitter::handle:hover {{
-                background-color: {COLORS.primary};
-                border-color: {COLORS.primary_hover};
-            }}
-            QMainWindow::separator {{
-                background: {COLORS.splitter_handle_bg};
-                width: 7px;
-                height: 7px;
-            }}
-            QMainWindow::separator:hover {{
-                background: {COLORS.primary};
-            }}
-        """
-        # Apply ThemeManager-managed external stylesheet, then append base_qss
-        try:
-            tm = ThemeManager.instance()
-            css_abs_path = str(Path(__file__).resolve().parents[1] / "resources" / "styles" / "main_window.css")
-            tm.register_widget(self, css_path=css_abs_path)
-            tm.apply_stylesheet(self)
-            # Append base_qss overrides
-            self.setStyleSheet(self.styleSheet() + "\n" + base_qss)
-        except Exception:
-            # Fallback: apply base_qss only
-            self.setStyleSheet(base_qss)
-        # Notify via status bar for visible validation
-        try:
-            self.statusBar().showMessage("Applied main_window.css", 2000)
-        except Exception:
-            pass
-        # Apply extended theme styling and confirm
-        try:
-            self._apply_theme_styles()
-            self.statusBar().showMessage("Modern UI styling applied", 2500)
-        except Exception:
-            pass
-    
-    def _apply_theme_styles(self) -> None:
-        """Apply theme to MainWindow and child widgets."""
-        # Main window, menus, docks, labels, buttons (spacing aligned to theme scale)
-        # Base theme stylesheet
-        base_qss = f"""
-            QMainWindow {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QDockWidget {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-                font-weight: bold;
-            }}
-            QDockWidget::title {{
-                background-color: {COLORS.dock_title_bg};
-                padding: {SPACING_12}px {SPACING_16}px;
-                border-bottom: 1px solid {COLORS.dock_title_border};
-                color: {COLORS.text};
-                font-weight: 600;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }}
-            QDockWidget::title:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 {COLORS.hover},
-                                            stop:1 {COLORS.surface});
-            }}
-            QDockWidget::close-button, QDockWidget::float-button {{
-                border: 1px solid transparent;
-                background: transparent;
-                margin: 2px;
-                padding: 2px;
-                border-radius: 3px;
-            }}
-            QDockWidget::close-button:hover, QDockWidget::float-button:hover {{
-                background: {COLORS.hover};
-                border: 1px solid {COLORS.border};
-            }}
-            QToolBar {{
-                background-color: {COLORS.toolbar_bg};
-                border: 1px solid {COLORS.toolbar_border};
-                spacing: {SPACING_8}px;
-                color: {COLORS.text};
-            }}
-            QMenuBar {{
-                background-color: {COLORS.menubar_bg};
-                color: {COLORS.menubar_text};
-                border-bottom: 1px solid {COLORS.menubar_border};
-            }}
-            QMenuBar::item {{
-                background-color: transparent;
-                padding: {SPACING_4}px {SPACING_8}px;
-            }}
-            QMenuBar::item:selected {{
-                background-color: {COLORS.menubar_item_hover_bg};
-                color: {COLORS.menubar_item_hover_text};
-            }}
-            QStatusBar {{
-                background-color: {COLORS.statusbar_bg};
-                color: {COLORS.statusbar_text};
-                border-top: 1px solid {COLORS.statusbar_border};
-            }}
-            QLabel {{
-                color: {COLORS.text};
-            }}
-            QPushButton {{
-                background-color: {COLORS.surface};
-                color: {COLORS.text};
-                border: 1px solid {COLORS.border};
-                padding: {SPACING_8}px {SPACING_16}px;
-                border-radius: 2px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS.hover};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS.pressed};
-            }}
-            /* Splitters and dock separators */
-            QSplitter {{
-                background-color: {COLORS.window_bg};
-            }}
-            QSplitter::handle {{
-                background-color: {COLORS.splitter_handle_bg};
-                border: 1px solid {COLORS.border};
-                width: 7px;
-                height: 7px;
-                border-radius: 2px;
-            }}
-            QSplitter::handle:hover {{
-                background-color: {COLORS.primary};
-                border-color: {COLORS.primary_hover};
-            }}
-            QMainWindow::separator {{
-                background: {COLORS.splitter_handle_bg};
-                width: 7px;
-                height: 7px;
-            }}
-            QMainWindow::separator:hover {{
-                background: {COLORS.primary};
-            }}
-        """
-        # Re-apply ThemeManager stylesheet and append base_qss
-        try:
-            tm = ThemeManager.instance()
-            tm.apply_stylesheet(self)
-            self.setStyleSheet(self.styleSheet() + "\n" + base_qss)
-            # Ensure child bars and dock headers re-apply their own registered styles
-            try:
-                if hasattr(self, "status_bar") and self.status_bar is not None:
-                    tm.apply_stylesheet(self.status_bar)
-                mb = self.menuBar()
-                if mb is not None:
-                    tm.apply_stylesheet(mb)
-                if hasattr(self, "main_toolbar") and self.main_toolbar is not None:
-                    tm.apply_stylesheet(self.main_toolbar)
-                if hasattr(self, "model_library_dock"):
-                    tm.apply_stylesheet(self.model_library_dock)
-                if hasattr(self, "properties_dock"):
-                    tm.apply_stylesheet(self.properties_dock)
-                if hasattr(self, "metadata_dock"):
-                    tm.apply_stylesheet(self.metadata_dock)
-                # Also apply palette to force background paints on platforms that ignore QSS for bars
-                self._apply_bar_palettes()
-            except Exception:
-                pass
-        except Exception:
-            self.setStyleSheet(base_qss)
-        # Notify via status bar for visible validation
-        try:
-            self.statusBar().showMessage("Applied main_window.css", 2000)
-            # Debug: log currently applied bar colors to diagnose any swaps
-            try:
-                tm = ThemeManager.instance()
-                self.logger.debug(
-                    f"Theme bars apply: menubar_bg={tm.get_color('menubar_bg')}, "
-                    f"statusbar_bg={tm.get_color('statusbar_bg')}, dock_title_bg={tm.get_color('dock_title_bg')}"
-                )
-            except Exception:
-                pass
-        except Exception:
-            pass
-        # Propagate to known child widgets that support re-styling
-        try:
-            if hasattr(self, "model_library_widget") and hasattr(self.model_library_widget, "_apply_styling"):
-                self.model_library_widget._apply_styling()
-        except Exception:
-            pass
-        try:
-            if hasattr(self, "metadata_editor") and hasattr(self.metadata_editor, "_apply_styling"):
-                self.metadata_editor._apply_styling()
-        except Exception:
-            pass
-        try:
-            if hasattr(self, "viewer_widget") and hasattr(self.viewer_widget, "apply_theme"):
-                self.viewer_widget.apply_theme()
-        except Exception:
-            pass
-        # Re-style tabbed areas (legacy center_tabs and new hero_tabs) on theme updates
-        try:
-            if hasattr(self, "center_tabs") and isinstance(self.center_tabs, QTabWidget):
-                self.center_tabs.setStyleSheet(qss_tabs_lists_labels())
-        except Exception:
-            pass
-        try:
-            if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
-                self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
-        except Exception:
-            pass
 
-    def _load_external_stylesheet(self) -> None:
-        """Append external CSS from resources/styles/main_window.css to current stylesheet."""
-        css_path = Path(__file__).resolve().parents[1] / "resources" / "styles" / "main_window.css"
-        try:
-            self.logger.info(f"External CSS path: {css_path}")
-            self.logger.info(f"External CSS exists: {css_path.exists()}")
-            if not css_path.exists():
-                return
-            with css_path.open("r", encoding="utf-8") as f:
-                css = f.read()
-            if css:
-                self.setStyleSheet(self.styleSheet() + "\n" + css)
-        except Exception as e:
-            self.logger.warning(f"Failed to load external CSS from {css_path}: {e}")
 
-    def _setup_menu_bar(self) -> None:
-        """Set up the application menu bar."""
-        self.logger.debug("Setting up menu bar")
-        
-        menubar = self.menuBar()
-        try:
-            menubar.setObjectName("AppMenuBar")
-            menubar.setAttribute(Qt.WA_StyledBackground, True)
-        except Exception:
-            pass
-        
-        # File menu
-        file_menu = menubar.addMenu("&File")
-        
-        # Open action
-        open_action = QAction("&Open Model...", self)
-        open_action.setShortcut(QKeySequence.Open)
-        open_action.setStatusTip("Open a 3D model file")
-        open_action.triggered.connect(self._open_model)
-        file_menu.addAction(open_action)
-        
-        file_menu.addSeparator()
-        
-        # Exit action
-        exit_action = QAction("E&xit", self)
-        exit_action.setShortcut(QKeySequence.Quit)
-        exit_action.setStatusTip("Exit the application")
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
-        
-        # Edit menu
-        edit_menu = menubar.addMenu("&Edit")
-        
-        # Preferences action
-        prefs_action = QAction("&Preferences...", self)
-        prefs_action.setStatusTip("Open application preferences")
-        prefs_action.triggered.connect(self._show_preferences)
-        edit_menu.addAction(prefs_action)
-        
-        # View menu
-        view_menu = menubar.addMenu("&View")
-        
-        # Zoom actions
-        zoom_in_action = QAction("Zoom &In", self)
-        zoom_in_action.setShortcut(QKeySequence.ZoomIn)
-        zoom_in_action.setStatusTip("Zoom in on the 3D view")
-        zoom_in_action.triggered.connect(self._zoom_in)
-        view_menu.addAction(zoom_in_action)
-        
-        zoom_out_action = QAction("Zoom &Out", self)
-        zoom_out_action.setShortcut(QKeySequence.ZoomOut)
-        zoom_out_action.setStatusTip("Zoom out from the 3D view")
-        zoom_out_action.triggered.connect(self._zoom_out)
-        view_menu.addAction(zoom_out_action)
-        
-        view_menu.addSeparator()
-        
-        # Reset view action
-        reset_view_action = QAction("&Reset View", self)
-        reset_view_action.setStatusTip("Reset the 3D view to default")
-        reset_view_action.triggered.connect(self._reset_view)
-        view_menu.addAction(reset_view_action)
-        
-        # Save view action
-        save_view_action = QAction("&Save View", self)
-        save_view_action.setShortcut(QKeySequence("Ctrl+S"))
-        save_view_action.setStatusTip("Save current camera view for this model")
-        save_view_action.triggered.connect(self._save_current_view)
-        view_menu.addAction(save_view_action)
 
-        # Reset dock layout action (helps when a floating dock is hard to re-dock)
-        reset_layout_action = QAction("Reset &Layout", self)
-        reset_layout_action.setStatusTip("Restore default dock layout")
-        reset_layout_action.triggered.connect(self._reset_dock_layout)
-        view_menu.addAction(reset_layout_action)
 
-        # Metadata Manager restoration action
-        view_menu.addSeparator()
-        self.show_metadata_action = QAction("Show &Metadata Manager", self)
-        try:
-            self.show_metadata_action.setShortcut(QKeySequence("Ctrl+Shift+M"))
-        except Exception:
-            pass
-        self.show_metadata_action.setStatusTip("Restore the Metadata Manager panel")
-        self.show_metadata_action.setToolTip("Show the Metadata Manager (Ctrl+Shift+M)")
-        self.show_metadata_action.triggered.connect(self._restore_metadata_manager)
-        view_menu.addAction(self.show_metadata_action)
 
-        # Model Library restoration action
-        self.show_model_library_action = QAction("Show &Model Library", self)
-        try:
-            self.show_model_library_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
-        except Exception:
-            pass
-        self.show_model_library_action.setStatusTip("Restore the Model Library panel")
-        self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
-        self.show_model_library_action.triggered.connect(self._restore_model_library)
-        view_menu.addAction(self.show_model_library_action)
 
-        # Reload stylesheet action
-        view_menu.addSeparator()
-        reload_stylesheet_action = QAction("&Reload Stylesheet", self)
-        reload_stylesheet_action.setStatusTip("Reload and apply the main stylesheet")
-        reload_stylesheet_action.triggered.connect(self._reload_stylesheet_action)
-        view_menu.addAction(reload_stylesheet_action)
 
-        # Theme Manager
-        theme_manager_action = QAction("Theme Manager...", self)
-        theme_manager_action.setStatusTip("Open Theme Manager")
-        theme_manager_action.triggered.connect(self._show_theme_manager)
-        view_menu.addAction(theme_manager_action)
-        
-        # Layout Edit Mode toggle
-        view_menu.addSeparator()
-        self.toggle_layout_edit_action = QAction("Layout Edit Mode", self)
-        self.toggle_layout_edit_action.setCheckable(True)
-        self.toggle_layout_edit_action.setStatusTip("Enable rearranging docks. When off, docks are locked in place but still resize with the window.")
-        self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
-        view_menu.addAction(self.toggle_layout_edit_action)
-        
-        # Help menu
-        help_menu = menubar.addMenu("&Help")
-        
-        # About action
-        about_action = QAction("&About 3D-MM", self)
-        about_action.setStatusTip("Show information about 3D-MM")
-        about_action.triggered.connect(self._show_about)
-        help_menu.addAction(about_action)
-        
-        # Register explicit menubar stylesheet with ThemeManager to ensure updates on preset changes
-        try:
-            tm = ThemeManager.instance()
-            _menubar_css = """
-                QMenuBar#AppMenuBar {
-                    background-color: {{menubar_bg}};
-                    color: {{menubar_text}};
-                    border-bottom: 1px solid {{menubar_border}};
-                    padding: 2px;
-                    spacing: 2px;
-                }
-                QMenuBar#AppMenuBar::item {
-                    background-color: transparent;
-                    padding: 6px 12px;
-                    border-radius: 2px;
-                    margin: 1px;
-                }
-                QMenuBar#AppMenuBar::item:selected {
-                    background-color: {{menubar_item_hover_bg}};
-                    color: {{menubar_item_hover_text}};
-                }
-                QMenuBar#AppMenuBar::item:pressed {
-                    background-color: {{menubar_item_pressed_bg}};
-                }
-            """
-            tm.register_widget(menubar, css_text=_menubar_css)
-            tm.apply_stylesheet(menubar)
-            # Also apply palettes to ensure native menubar paints themed background
-            self._apply_bar_palettes()
-            # Debug: log applied colors to identify unexpected cross-assignments
-            try:
-                self.logger.debug(
-                    f"Bars styled: menubar_bg={tm.get_color('menubar_bg')}, "
-                    f"statusbar_bg={tm.get_color('statusbar_bg')}"
-                )
-            except Exception:
-                pass
-        except Exception:
-            pass
 
-        self.logger.debug("Menu bar setup completed")
-    
-    def _setup_toolbar(self) -> None:
-        """Set up the main application toolbar with icons and fallbacks."""
-        self.logger.debug("Setting up toolbar")
+    # ===== END_EXTRACT_TO: src/gui/window/dock_manager.py =====
 
-        self.main_toolbar = self.addToolBar("Main")
-        toolbar = self.main_toolbar
-        toolbar.setObjectName("MainToolBar")
-        try:
-            toolbar.setAttribute(Qt.WA_StyledBackground, True)
-        except Exception:
-            pass
-        # Explicit ThemeManager toolbar styling so it doesn't inherit/bleed from other bars
-        try:
-            tm = ThemeManager.instance()
-            _toolbar_css = """
-                QToolBar#MainToolBar {
-                    background-color: {{toolbar_bg}};
-                    border: 1px solid {{toolbar_border}};
-                    spacing: 3px;
-                    padding: 4px;
-                }
-                QToolBar#MainToolBar::handle {
-                    background-color: {{toolbar_handle_bg}};
-                    width: 8px;
-                    margin: 4px;
-                }
-            """
-            tm.register_widget(toolbar, css_text=_toolbar_css)
-            tm.apply_stylesheet(toolbar)
-        except Exception:
-            pass
+    # ===== END_EXTRACT_TO: src/gui/window/central_widget_manager.py =====
 
-        # Attempt to import QtAwesome for icon-based actions and determine icon availability
-        try:
-            import qtawesome as qta  # type: ignore
-            has_qta = True
-        except Exception:
-            qta = None  # type: ignore
-            has_qta = False
-
-        # Determine if icons can actually be built
-        icons_ok = False
-        if has_qta and qta is not None:
-            try:
-                # Validate all icons we plan to use can be created
-                icon_names = ["fa5s.folder-open", "fa5s.search-plus", "fa5s.search-minus", "fa5s.sync"]
-                for _name in icon_names:
-                    test_icon = qta.icon(_name, color=COLORS.text)
-                    if test_icon.isNull():
-                        raise ValueError(f"qtawesome returned null icon for '{_name}'")
-                icons_ok = True
-            except Exception:
-                icons_ok = False
-        else:
-            icons_ok = False
-
-        # Configure toolbar presentation based on actual icon availability
-        if icons_ok:
-            toolbar.setToolButtonStyle(Qt.ToolButtonIconOnly)
-            toolbar.setIconSize(QSize(16, 16))
-            self.logger.info("Toolbar set to icon-only mode")
-        else:
-            toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
-            self.logger.info("Toolbar in text-only mode (qtawesome unavailable)")
-
-        def _icon(name: str):
-            if not icons_ok or qta is None:
-                return QIcon()
-            try:
-                # Use theme text color to keep icons legible in light/dark modes
-                return qta.icon(name, color=COLORS.text)
-            except Exception:
-                return QIcon()
-
-        def _add_action(text: str, icon_name: str, slot, tooltip: str) -> QAction:
-            if icons_ok:
-                action = QAction(_icon(icon_name), text, self)
-            else:
-                action = QAction(text, self)
-            action.setToolTip(tooltip)
-            action.setStatusTip(tooltip)
-            action.triggered.connect(slot)
-            toolbar.addAction(action)
-            return action
-
-        # Open
-        _add_action(
-            "Open",
-            "fa5s.folder-open",
-            self._open_model,
-            "Open a 3D model file",
-        )
-
-        toolbar.addSeparator()
-
-        # Zoom controls
-        _add_action(
-            "Zoom In",
-            "fa5s.search-plus",
-            self._zoom_in,
-            "Zoom in on the 3D view",
-        )
-        _add_action(
-            "Zoom Out",
-            "fa5s.search-minus",
-            self._zoom_out,
-            "Zoom out from the 3D view",
-        )
-
-        # Reset view
-        _add_action(
-            "Reset View",
-            "fa5s.sync",
-            self._reset_view,
-            "Reset the 3D view to default",
-        )
-
-        # Show toolbar mode in status bar for immediate visual feedback
-        try:
-            if icons_ok:
-                self.statusBar().showMessage("Toolbar icons active", 2000)
-            else:
-                self.statusBar().showMessage("Toolbar text-only (no qtawesome)", 2000)
-        except Exception:
-            pass
-
-        self.logger.debug("Toolbar setup completed")
-    
-    def _setup_status_bar(self) -> None:
-        """Set up the application status bar."""
-        self.logger.debug("Setting up status bar")
-        
-        self.status_bar = QStatusBar()
-        # Give the bar a stable objectName so we can target it precisely in QSS
-        try:
-            self.status_bar.setObjectName("AppStatusBar")
-        except Exception:
-            pass
-
-        self.setStatusBar(self.status_bar)
-        # Make sure the bar paints its background, some styles require this for QSS background-color to take effect
-        try:
-            self.status_bar.setAutoFillBackground(True)
-            self.status_bar.setAttribute(Qt.WA_StyledBackground, True)
-        except Exception:
-            pass
-
-        # Apply ThemeManager-managed inline stylesheet specifically for QStatusBar so it always participates in theming
-        try:
-            tm = ThemeManager.instance()
-            _statusbar_css = """
-                QStatusBar#AppStatusBar {
-                    background-color: {{statusbar_bg}};
-                    color: {{statusbar_text}};
-                    border-top: 1px solid {{statusbar_border}};
-                    padding: 2px;
-                }
-                QStatusBar#AppStatusBar::item {
-                    border: none;
-                }
-            """
-            tm.register_widget(self.status_bar, css_text=_statusbar_css)
-            tm.apply_stylesheet(self.status_bar)
-        except Exception:
-            # Non-fatal styling path
-            pass
-        
-        # Permanent status message
-        self.status_label = QLabel("Ready")
-        self.status_bar.addWidget(self.status_label)
-        
-        # Progress bar for long operations
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        self.status_bar.addPermanentWidget(self.progress_bar)
-        
-        # Hash indicator button
-        self.hash_indicator = QPushButton("#")
-        self.hash_indicator.setFixedSize(20, 20)
-        self.hash_indicator.setToolTip("Background hashing idle - Click to start/pause")
-        self.hash_indicator.setVisible(False)
-        self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
-        self.hash_indicator.clicked.connect(self._toggle_background_hasher)
-        self.status_bar.addPermanentWidget(self.hash_indicator)
-        
-        # Memory usage indicator
-        self.memory_label = QLabel("Memory: N/A")
-        self.status_bar.addPermanentWidget(self.memory_label)
-        
-        # Initialize background hasher
-        self.background_hasher = None
-        
-        self.logger.debug("Status bar setup completed")
-
-    def _apply_bar_palettes(self) -> None:
-        """
-        Force palette-based colors for menu/status bars to ensure background
-        paints even when style engine ignores QSS for these native widgets.
-        """
-        try:
-            tm = ThemeManager.instance()
-            # Status bar
-            if hasattr(self, "status_bar") and self.status_bar is not None:
-                sp = self.status_bar.palette()
-                sp.setColor(QPalette.Window, tm.qcolor("statusbar_bg"))
-                sp.setColor(QPalette.WindowText, tm.qcolor("statusbar_text"))
-                self.status_bar.setPalette(sp)
-                self.status_bar.setAutoFillBackground(True)
-            # Menu bar
-            mb = self.menuBar()
-            if mb is not None:
-                mp = mb.palette()
-                mp.setColor(QPalette.Window, tm.qcolor("menubar_bg"))
-                mp.setColor(QPalette.WindowText, tm.qcolor("menubar_text"))
-                mb.setPalette(mp)
-                mb.setAutoFillBackground(True)
-            # Toolbar palette
-            if hasattr(self, "main_toolbar") and self.main_toolbar is not None:
-                tp = self.main_toolbar.palette()
-                tp.setColor(QPalette.Window, tm.qcolor("toolbar_bg"))
-                tp.setColor(QPalette.WindowText, tm.qcolor("text"))
-                self.main_toolbar.setPalette(tp)
-                self.main_toolbar.setAutoFillBackground(True)
-        except Exception:
-            # Never break UI if palette application fails
-            pass
-    
-    def _setup_dock_widgets(self) -> None:
-        """Set up dockable widgets for the application."""
-        self.logger.debug("Setting up dock widgets")
-        
-        # Model library dock (flexible positioning)
-        self.model_library_dock = QDockWidget("Model Library", self)
-        self.model_library_dock.setObjectName("ModelLibraryDock")
-        # Allow docking to any area for maximum flexibility
-        self.model_library_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-        )
-        self.model_library_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
-        )
-        
-        # Create model library widget
-        try:
-            from gui.model_library import ModelLibraryWidget
-            self.model_library_widget = ModelLibraryWidget(self)
-            
-            # Connect signals
-            self.model_library_widget.model_selected.connect(self._on_model_selected)
-            self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
-            self.model_library_widget.models_added.connect(self._on_models_added)
-            
-            self.model_library_dock.setWidget(self.model_library_widget)
-            # Add context menu helpers for docking
-            try:
-                self._setup_dock_context_menu(self.model_library_dock, Qt.LeftDockWidgetArea)
-            except Exception:
-                pass
-            # Ensure dock header uses theme variables regardless of global QSS ordering
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_ml = """
-                    QDockWidget#ModelLibraryDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.model_library_dock, css_text=_dock_css_ml)
-                tm.apply_stylesheet(self.model_library_dock)
-            except Exception:
-                pass
-            self.logger.info("Model library widget created successfully")
-            
-        except ImportError as e:
-            self.logger.warning(f"Failed to import model library widget: {str(e)}")
-            
-            # Fallback to placeholder
-            model_library_widget = QTextEdit()
-            model_library_widget.setReadOnly(True)
-            model_library_widget.setPlainText(
-                "Model Library\n\n"
-                "Failed to load model library component.\n"
-                "Please ensure all dependencies are properly installed.\n\n"
-                "Features will include:\n"
-                "- Model list with thumbnails\n"
-                "- Category filtering\n"
-                "- Search functionality\n"
-                "- Import/export options"
-            )
-            self.model_library_dock.setWidget(model_library_widget)
-        
-        # Default to left side but user can move anywhere
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
-        try:
-            self._register_dock_for_snapping(self.model_library_dock)
-        except Exception:
-            pass
-        # Autosave when this dock changes state/position
-        try:
-            self._connect_layout_autosave(self.model_library_dock)
-        except Exception:
-            pass
-        # Keep View menu action in sync with visibility
-        try:
-            self.model_library_dock.visibilityChanged.connect(lambda _=False: self._update_library_action_state())
-        except Exception:
-            pass
-        try:
-            self._update_library_action_state()
-        except Exception:
-            pass
-        
-        # Properties dock (flexible positioning)
-        self.properties_dock = QDockWidget("Model Properties", self)
-        self.properties_dock.setObjectName("PropertiesDock")
-        # Allow docking to any area for maximum flexibility
-        self.properties_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-        )
-        self.properties_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
-        )
-        
-        # Placeholder for model properties
-        properties_widget = QTextEdit()
-        properties_widget.setReadOnly(True)
-        properties_widget.setPlainText(
-            "Model Properties\n\n"
-            "This panel will display properties and metadata\n"
-            "for the selected 3D model.\n"
-            "Features will include:\n"
-            "- Model information\n"
-            "- Metadata editing\n"
-            "- Tag management\n"
-            "- Export settings"
-        )
-        self.properties_dock.setWidget(properties_widget)
-        try:
-            self._setup_dock_context_menu(self.properties_dock, Qt.RightDockWidgetArea)
-        except Exception:
-            pass
-        # Ensure properties dock header uses theme variables
-        try:
-            tm = ThemeManager.instance()
-            _dock_css_props = """
-                QDockWidget#PropertiesDock::title {
-                    background-color: {{dock_title_bg}};
-                    color: {{text}};
-                    border-bottom: 1px solid {{dock_title_border}};
-                    padding: 6px;
-                }
-            """
-            tm.register_widget(self.properties_dock, css_text=_dock_css_props)
-            tm.apply_stylesheet(self.properties_dock)
-        except Exception:
-            pass
-        
-        # Default to right side but user can move anywhere
-        self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-        try:
-            self._register_dock_for_snapping(self.properties_dock)
-        except Exception:
-            pass
-        # Autosave when this dock changes state/position
-        try:
-            self._connect_layout_autosave(self.properties_dock)
-        except Exception:
-            pass
-
-        # Lighting control dialog (floating, initially hidden)
-        try:
-            self.lighting_panel = LightingControlPanel(self)
-            self.lighting_panel.setObjectName("LightingDialog")
-            self.lighting_panel.hide()
-            # Dialog will float above main window when shown
-            self.logger.info("Lighting control panel created as floating dialog")
-        except Exception as e:
-            self.logger.warning(f"Failed to create LightingControlPanel: {e}")
-         
-        # Metadata dock (flexible positioning)
-        self.metadata_dock = QDockWidget("Metadata Editor", self)
-        self.metadata_dock.setObjectName("MetadataDock")
-        # Allow docking to any area for maximum flexibility
-        self.metadata_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-        )
-        self.metadata_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
-        )
-        
-        # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
-        try:
-            from gui.metadata_editor import MetadataEditorWidget
-            self.metadata_editor = MetadataEditorWidget(self)
-
-            # Connect signals
-            self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
-            self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
-
-            # Bottom tabs: Metadata | Notes | History
-            self.metadata_tabs = QTabWidget(self)
-            self.metadata_tabs.setObjectName("MetadataTabs")
-            self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
-
-            # Notes tab (placeholder)
-            notes_widget = QTextEdit()
-            notes_widget.setReadOnly(True)
-            notes_widget.setPlainText(
-                "Notes\n\n"
-                "Add project or model-specific notes here.\n"
-                "Future: rich text, timestamps, and attachments."
-            )
-            self.metadata_tabs.addTab(notes_widget, "Notes")
-
-            # History tab (placeholder)
-            history_widget = QTextEdit()
-            history_widget.setReadOnly(True)
-            history_widget.setPlainText(
-                "History\n\n"
-                "Timeline of edits and metadata changes will appear here."
-            )
-            self.metadata_tabs.addTab(history_widget, "History")
-
-            # Apply themed styling to the tab widget
-            try:
-                self.metadata_tabs.setStyleSheet(qss_tabs_lists_labels())
-            except Exception:
-                pass
-
-            self.metadata_dock.setWidget(self.metadata_tabs)
-            try:
-                self._setup_dock_context_menu(self.metadata_dock, Qt.BottomDockWidgetArea)
-            except Exception:
-                pass
-            # Ensure metadata dock header uses theme variables
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_meta = """
-                    QDockWidget#MetadataDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.metadata_dock, css_text=_dock_css_meta)
-                tm.apply_stylesheet(self.metadata_dock)
-            except Exception:
-                pass
-            self.logger.info("Metadata editor widget created successfully (tabbed)")
-        except ImportError as e:
-            self.logger.warning(f"Failed to import metadata editor widget: {str(e)}")
-
-            # Fallback to placeholder
-            metadata_widget = QTextEdit()
-            metadata_widget.setReadOnly(True)
-            metadata_widget.setPlainText(
-                "Metadata Editor\n\n"
-                "Failed to load metadata editor component.\n"
-                "Please ensure all dependencies are properly installed.\n\n"
-                "Features will include:\n"
-                "- Title and description editing\n"
-                "- Category assignment\n"
-                "- Keyword tagging\n"
-                "- Custom properties"
-            )
-            self.metadata_dock.setWidget(metadata_widget)
-        
-        # Default to right side but user can move anywhere
-        self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        # Don't force stacking - let users arrange as they prefer
-        try:
-            self._register_dock_for_snapping(self.metadata_dock)
-        except Exception:
-            pass
-        # Autosave when this dock changes state/position
-        try:
-            self._connect_layout_autosave(self.metadata_dock)
-        except Exception:
-            pass
-        # Persist visibility and keep View menu action state in sync
-        try:
-            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._save_metadata_panel_visibility())
-            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._update_metadata_action_state())
-        except Exception:
-            pass
-        try:
-            self._update_metadata_action_state()
-        except Exception:
-            pass
-        
-        # Capture the default layout as the baseline for future resets
-        try:
-            self._save_default_layout_state()
-        except Exception:
-            pass
-
-        # Save current layout as default for fresh installations
-        try:
-            self._save_current_layout_as_default()
-        except Exception:
-            pass
-
-        # Initialize autosave mechanics and attempt to restore last layout
-        try:
-            self._init_layout_persistence()
-            self._load_saved_layout()
-        except Exception:
-            pass
-        # Lighting panel is now a floating dialog, visibility is not persisted across sessions
-        # It will be hidden by default and shown only when user clicks the Lighting button
-
-        # Load persisted metadata panel visibility (in addition to dock state)
-        try:
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                settings = QSettings()
-                meta_visible = settings.value('metadata_panel/visible', True, type=bool)
-                self.metadata_dock.setVisible(bool(meta_visible))
-                self.logger.info(f"Loaded metadata panel visibility: {bool(meta_visible)}")
-                try:
-                    self._update_metadata_action_state()
-                except Exception:
-                    pass
-        except Exception as e:
-            self.logger.warning(f"Failed to load metadata panel visibility: {e}")
-        
-        # Ensure metadata dock is visible but don't force positioning
-        try:
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                # Just make sure it's visible, user can position as needed
-                if not self.metadata_dock.isVisible():
-                    self.metadata_dock.setVisible(True)
-                self.logger.info("Metadata dock made visible - user can position freely")
-        except Exception as e:
-            self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
-
-        self.logger.debug("Dock widgets setup completed")
-    
-    def _setup_central_widget(self) -> None:
-        """Create Center Hero Tabs and ensure right-column stacking for Properties and Metadata."""
-        self.logger.debug("Setting up central widget")
-    
-        # 1) Create the 3D viewer widget
-        try:
-            try:
-                from gui.viewer_widget_vtk import Viewer3DWidget
-            except ImportError:
-                try:
-                    from gui.viewer_widget import Viewer3DWidget
-                except ImportError:
-                    Viewer3DWidget = None
-    
-            self.viewer_widget = Viewer3DWidget(self)
-    
-            # Connect signals
-            self.viewer_widget.model_loaded.connect(self._on_model_loaded)
-            self.viewer_widget.performance_updated.connect(self._on_performance_updated)
-    
-            # Managers
-            try:
-                self.material_manager = MaterialManager(get_database_manager())
-            except Exception as e:
-                self.material_manager = None
-                self.logger.warning(f"MaterialManager unavailable: {e}")
-    
-            try:
-                renderer = getattr(self.viewer_widget, "renderer", None)
-                self.lighting_manager = LightingManager(renderer) if renderer is not None else None
-                if self.lighting_manager:
-                    self.lighting_manager.create_light()
-                    try:
-                        self._load_lighting_settings()
-                    except Exception as le:
-                        self.logger.warning(f"Failed to load lighting settings: {le}")
-            except Exception as e:
-                self.lighting_manager = None
-                self.logger.warning(f"LightingManager unavailable: {e}")
-    
-            if hasattr(self.viewer_widget, "lighting_panel_requested"):
-                self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
-            if hasattr(self.viewer_widget, "material_selected"):
-                self.viewer_widget.material_selected.connect(self._apply_material_species)
-            if hasattr(self.viewer_widget, "save_view_requested"):
-                self.viewer_widget.save_view_requested.connect(self._save_current_view)
-    
-            try:
-                if hasattr(self, "lighting_panel") and self.lighting_panel and self.lighting_manager:
-                    self.lighting_panel.position_changed.connect(self._update_light_position)
-                    self.lighting_panel.color_changed.connect(self._update_light_color)
-                    self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
-                    self.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
-                    props = self.lighting_manager.get_properties()
-                    self.lighting_panel.set_values(
-                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
-                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
-                        intensity=float(props.get("intensity", 0.8)),
-                        cone_angle=float(props.get("cone_angle", 30.0)),
-                        emit_signals=False,
-                    )
-            except Exception as e:
-                self.logger.warning(f"Failed to connect lighting panel: {e}")
-    
-            if hasattr(self.viewer_widget, "apply_theme"):
-                try:
-                    self.viewer_widget.apply_theme()
-                except Exception:
-                    pass
-    
-            self.logger.info("3D viewer widget created successfully")
-    
-        except ImportError as e:
-            self.logger.warning(f"Failed to import 3D viewer widget: {str(e)}")
-            self.viewer_widget = QTextEdit()
-            self.viewer_widget.setReadOnly(True)
-            self.viewer_widget.setPlainText(
-                "3D Model Viewer\n\n"
-                "Failed to load 3D viewer component.\n"
-                "Please ensure VTK or PyQt3D is properly installed.\n\n"
-                "Features will include:\n"
-                "- Interactive 3D model rendering\n"
-                "- Multiple view modes (wireframe, solid, textured)\n"
-                "- Camera controls (orbit, pan, zoom)\n"
-                "- Lighting controls\n"
-                "- Measurement tools\n"
-                "- Animation playback\n"
-                "- Screenshot capture"
-            )
-            self.viewer_widget.setAlignment(Qt.AlignCenter)
-    
-        # 2) Center Hero Tabs (Model | GP | CLO | F&S | Project Cost Calculator)
-        from PySide6.QtWidgets import QTabWidget, QTabBar
-        self.hero_tabs = QTabWidget(self)
-        self.hero_tabs.setObjectName("HeroTabs")
-        try:
-            self.hero_tabs.setDocumentMode(True)
-            self.hero_tabs.setTabsClosable(False)
-            self.hero_tabs.setMovable(True)
-            self.hero_tabs.setUsesScrollButtons(False)  # Disable scrolling to allow even spacing
-            self.hero_tabs.setElideMode(Qt.ElideNone)  # Don't truncate tab text
-            # Set expanding policy for tabs to use available space evenly
-            self.hero_tabs.setTabBarAutoHide(False)
-            
-            # Get the tab bar and set expanding policy
-            tab_bar = self.hero_tabs.tabBar()
-            if tab_bar:
-                tab_bar.setExpanding(True)  # This makes tabs expand to fill available space
-                tab_bar.setUsesScrollButtons(False)
-        except Exception:
-            pass
-        
-        # Apply custom styling for dynamic width tabs
-        try:
-            hero_tabs_css = f"""
-                QTabWidget#HeroTabs {{
-                    background-color: {COLORS.window_bg};
-                    border: none;
-                }}
-                QTabWidget#HeroTabs::pane {{
-                    border: 1px solid {COLORS.border};
-                    background-color: {COLORS.surface};
-                    border-radius: 4px;
-                    padding: 2px;
-                }}
-                QTabWidget#HeroTabs::tab-bar {{
-                    alignment: center;
-                }}
-                QTabBar#HeroTabs::tab {{
-                    background-color: {COLORS.surface};
-                    color: {COLORS.text};
-                    border: 1px solid {COLORS.border};
-                    border-bottom: none;
-                    border-radius: 12px;
-                    padding: {SPACING_8}px {SPACING_16}px;
-                    margin-right: 2px;
-                    min-width: 80px;
-                    /* Tabs will expand due to setExpanding(True) */
-                }}
-                QTabBar#HeroTabs::tab:selected {{
-                    background-color: {COLORS.primary};
-                    color: {COLORS.primary_text};
-                    border-color: {COLORS.primary};
-                    border-radius: 12px;
-                }}
-                QTabBar#HeroTabs::tab:hover:!selected {{
-                    background-color: {COLORS.hover};
-                    border-radius: 12px;
-                }}
-                QTabBar#HeroTabs::tab:first {{
-                    margin-left: 0;
-                }}
-                QTabBar#HeroTabs::tab:last {{
-                    margin-right: 0;
-                }}
-            """
-            self.hero_tabs.setStyleSheet(hero_tabs_css)
-        except Exception:
-            # Fallback to basic styling
-            try:
-                self.hero_tabs.setStyleSheet(qss_tabs_lists_labels())
-            except Exception:
-                pass
-    
-        # Add tabs: Model (viewer) + placeholders
-        self.hero_tabs.addTab(self.viewer_widget, "Model")
-    
-        def _placeholder(title: str, body: str) -> QWidget:
-            w = QWidget()
-            v = QVBoxLayout(w)
-            v.setContentsMargins(12, 12, 12, 12)
-            lbl = QLabel(body)
-            try:
-                lbl.setWordWrap(True)
-            except Exception:
-                pass
-            v.addWidget(lbl)
-            v.addStretch(1)
-            return w
-    
-        self.hero_tabs.addTab(_placeholder("GP", "G-code Previewer placeholder\n\nPreview, simulate, and inspect G-code toolpaths."), "GP")
-        self.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer placeholder\n\nPlan efficient cuts and layout."), "CLO")
-        self.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds placeholder\n\nCalculate optimal CNC feeds and speeds."), "F&S")
-        self.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
-    
-        # Persist active hero tab on change
-        try:
-            self.hero_tabs.currentChanged.connect(lambda _=0: self._schedule_layout_save())
-        except Exception:
-            pass
-    
-        # Restore last active hero tab index
-        try:
-            _settings = self._read_settings_json()
-            hidx = _settings.get("active_hero_tab_index")
-            if isinstance(hidx, int) and 0 <= hidx < self.hero_tabs.count():
-                self.hero_tabs.setCurrentIndex(int(hidx))
-        except Exception:
-            pass
-    
-        # Make Hero Tabs the central widget
-        try:
-            self.setCentralWidget(self.hero_tabs)
-        except Exception as e:
-            self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
-    
-        # 3) Ensure all docks are visible but don't force positioning
-        try:
-            # Just make sure all main docks are visible, let users arrange them
-            if hasattr(self, "properties_dock") and self.properties_dock:
-                if not self.properties_dock.isVisible():
-                    self.properties_dock.setVisible(True)
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                if not self.metadata_dock.isVisible():
-                    self.metadata_dock.setVisible(True)
-            if hasattr(self, "model_library_dock") and self.model_library_dock:
-                if not self.model_library_dock.isVisible():
-                    self.model_library_dock.setVisible(True)
-            self.logger.info("All docks made visible - user can arrange freely")
-        except Exception as e:
-            self.logger.warning(f"Failed to ensure dock visibility: {e}")
-    
-        self.logger.debug("Center Hero Tabs layout with right-column stacking completed")
-    
-    def _setup_status_timer(self) -> None:
-        """Set up timer for periodic status updates."""
-        # Update memory usage every 5 seconds
-        self.status_timer = QTimer(self)
-        self.status_timer.timeout.connect(self._update_status)
-        self.status_timer.start(5000)  # 5 seconds
-        
-        # Initial update
-        self._update_status()
-    
-    def _update_status(self) -> None:
-        """Update status bar information."""
-        try:
-            # Check if current status message is an important UI feedback message
-            current_message = self.status_label.text()
-            important_messages = [
-                "Applied main_window.css",
-                "Modern UI styling applied",
-                "Stylesheet reloaded",
-                "Toolbar icons active",
-                "Loading:",
-                "Metadata saved",
-                "Added"
-            ]
-
-            # Don't override important UI feedback messages
-            is_important = any(msg in current_message for msg in important_messages)
-            if not is_important:
-                import psutil
-                process = psutil.Process()
-                memory_mb = process.memory_info().rss / 1024 / 1024
-                self.memory_label.setText(f"Memory: {memory_mb:.1f} MB")
-        except ImportError:
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
-                self.memory_label.setText("Memory: N/A (psutil not available)")
-        except Exception as e:
-            self.logger.warning(f"Failed to update memory status: {str(e)}")
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
-                self.memory_label.setText("Memory: Error")
-    
     # --- Dock layout helpers ---
-    def _save_default_layout_state(self) -> None:
-        """Save the default geometry/state for later restore."""
-        try:
-            self._default_layout_state = self.saveState()
-            self._default_geometry = self.saveGeometry()
-        except Exception:
-            self._default_layout_state = None
-            self._default_geometry = None
+    # ===== END_EXTRACT_TO: src/gui/window/layout_persistence.py =====
 
-    def _save_current_layout_as_default(self) -> None:
-        """Save the current layout as the default for fresh installations."""
-        try:
-            # Only save as default if no default exists yet (fresh installation)
-            settings = QSettings()
-            if not settings.contains("layout/default_saved"):
-                geom = bytes(self.saveGeometry())
-                state = bytes(self.saveState())
-                
-                # Save as default layout
-                default_payload = {
-                    "default_window_geometry": base64.b64encode(geom).decode("ascii"),
-                    "default_window_state": base64.b64encode(state).decode("ascii"),
-                    "default_layout_version": 1,
-                    "default_saved": True
-                }
-                
-                # Also save active hero tab index as default
-                try:
-                    if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
-                        default_payload["default_hero_tab_index"] = int(self.hero_tabs.currentIndex())
-                except Exception:
-                    pass
-                
-                # Merge with existing settings
-                current_settings = self._read_settings_json()
-                current_settings.update(default_payload)
-                self._write_settings_json(current_settings)
-                
-                # Mark that default has been saved
-                settings.setValue("layout/default_saved", True)
-                self.logger.info("Saved current layout as default for fresh installations")
-        except Exception as e:
-            self.logger.warning(f"Failed to save current layout as default: {e}")
-
-    def _reset_dock_layout(self) -> None:
+    def _connect_layout_autosave(self, dock: QDockWidget) -> None:
         """Restore dock widgets to their default docking layout."""
         try:
             # First try to load saved default layout (for fresh installations)
             settings = self._read_settings_json()
             default_geom = settings.get("default_window_geometry")
             default_state = settings.get("default_window_state")
-            
+
             if default_geom and default_state:
                 try:
                     geom = base64.b64decode(default_geom)
@@ -1633,7 +198,8 @@ class MainWindow(QMainWindow):
                         return
                 except Exception:
                     pass
-            
+            # ===== END_EXTRACT_TO: src/gui/services/background_processor.py =====
+
             # Fallback to hardcoded defaults if no saved default
             if getattr(self, "_default_geometry", None):
                 self.restoreGeometry(self._default_geometry)
@@ -1795,6 +361,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to load saved layout: {e}")
             return False
+    # ===== END_EXTRACT_TO: src/gui/window/layout_persistence.py =====
 
     def _connect_layout_autosave(self, dock: QDockWidget) -> None:
         """Connect signals from a dock to trigger autosave."""
@@ -1839,7 +406,7 @@ class MainWindow(QMainWindow):
         handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
         dock.installEventFilter(handler)
         self._snap_handlers[key] = handler
-    
+
     def _iter_docks(self) -> list[QDockWidget]:
         docks: list[QDockWidget] = []
         for name in ("model_library_dock", "properties_dock", "metadata_dock"):
@@ -1847,7 +414,7 @@ class MainWindow(QMainWindow):
             if isinstance(d, QDockWidget):
                 docks.append(d)
         return docks
-    
+
     def _enable_snap_handlers(self, enable: bool) -> None:
         """Enable or disable snap overlay handlers for all docks."""
         try:
@@ -1869,7 +436,7 @@ class MainWindow(QMainWindow):
                     self._snap_layer.hide_overlays()
         except Exception:
             pass
-    
+
     def _set_layout_edit_mode(self, enabled: bool) -> None:
         """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable."""
         try:
@@ -1930,7 +497,7 @@ class MainWindow(QMainWindow):
             self._schedule_layout_save()
         except Exception:
             pass
-    
+
     # ---- Settings persistence (QSettings) ----
     def _save_lighting_settings(self) -> None:
         """Save current lighting settings to QSettings."""
@@ -1949,7 +516,7 @@ class MainWindow(QMainWindow):
                 self.logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings: {e}")
-    
+
     def _load_lighting_settings(self) -> None:
         """Load lighting settings from QSettings and apply to manager and panel."""
         try:
@@ -1986,11 +553,11 @@ class MainWindow(QMainWindow):
                 self.logger.info("Lighting settings loaded from QSettings")
         except Exception as e:
             self.logger.warning(f"Failed to load lighting settings: {e}")
-    
+
     def _save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
         pass
-    
+
     def _update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
         try:
@@ -2031,7 +598,7 @@ class MainWindow(QMainWindow):
         self.metadata_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
 
         try:
-            from gui.metadata_editor import MetadataEditorWidget
+            from src.gui.metadata_editor import MetadataEditorWidget
             self.metadata_editor = MetadataEditorWidget(self)
 
             # Connect signals
@@ -2062,11 +629,8 @@ class MainWindow(QMainWindow):
             )
             self.metadata_tabs.addTab(history_widget, "History")
 
-            # Apply themed styling to the tab widget
-            try:
-                self.metadata_tabs.setStyleSheet(qss_tabs_lists_labels())
-            except Exception:
-                pass
+            # Material Design theme is applied globally via ThemeService
+            # No need to apply custom stylesheets here
 
             self.metadata_dock.setWidget(self.metadata_tabs)
 
@@ -2184,7 +748,7 @@ class MainWindow(QMainWindow):
         self.model_library_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
 
         try:
-            from gui.model_library import ModelLibraryWidget
+            from src.gui.model_library import ModelLibraryWidget
             self.model_library_widget = ModelLibraryWidget(self)
 
             # Connect signals
@@ -2303,190 +867,19 @@ class MainWindow(QMainWindow):
         # TODO: Add export material presets feature
 
     # Menu action handlers
-     
-    def _reload_stylesheet_action(self) -> None:
-        """Reload and re-apply the external stylesheet via theme helper."""
-        self._apply_theme_styles()
-        self.logger.info("Reloaded external stylesheet")
-        self.statusBar().showMessage("Stylesheet reloaded", 2000)
 
-    def _open_model(self) -> None:
-        """Handle open model action."""
-        self.logger.info("Opening model file dialog")
-        
-        file_dialog = QFileDialog(self)
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter(
-            "3D Model Files (*.stl *.obj *.step *.stp *.mf3);;All Files (*)"
-        )
-        
-        if file_dialog.exec_():
-            file_path = file_dialog.selectedFiles()[0]
-            self.logger.info(f"Selected model file: {file_path}")
-            
-            # Update status
-            self.status_label.setText(f"Loading: {Path(file_path).name}")
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setRange(0, 0)  # Indeterminate progress
-            
-            # Load the model using STL parser
-            self._load_stl_model(file_path)
-    
-    def _finish_model_loading(self, file_path: str, success: bool = True, error_message: str = "") -> None:
-        """Finish model loading process."""
-        filename = Path(file_path).name
-        
-        if success:
-            self.status_label.setText(f"Loaded: {filename}")
-            self.logger.info(f"Model loaded successfully: {filename}")
-        else:
-            self.status_label.setText(f"Failed to load: {filename}")
-            self.logger.error(f"Failed to load model: {filename} - {error_message}")
-            QMessageBox.warning(
-                self,
-                "Load Error",
-                f"Failed to load model {filename}:\n{error_message}"
-            )
-        
-        self.progress_bar.setVisible(False)
-        
-        # Emit signal
-        self.model_loaded.emit(file_path)
-    
-    def _load_stl_model(self, file_path: str) -> None:
-        """
-        Load an STL model using the STL parser and display it in the viewer.
-        
-        Args:
-            file_path: Path to the STL file to load
-        """
-        try:
-            # Create STL parser
-            parser = STLParser()
-            
-            # Create progress callback
-            progress_callback = STLProgressCallback(
-                callback_func=lambda progress, message: self._update_loading_progress(progress, message)
-            )
-            
-            # Parse the file
-            model = parser.parse_file(file_path, progress_callback)
-            
-            # Load model into viewer if available
-            if hasattr(self.viewer_widget, 'load_model'):
-                success = self.viewer_widget.load_model(model)
-                self._finish_model_loading(file_path, success, "" if success else "Failed to load model into viewer")
-            else:
-                self._finish_model_loading(file_path, False, "3D viewer not available")
-                
-        except Exception as e:
-            self._finish_model_loading(file_path, False, str(e))
-    
-    def _update_loading_progress(self, progress_percent: float, message: str) -> None:
-        """
-        Update loading progress in the UI.
-        
-        Args:
-            progress_percent: Progress percentage (0-100)
-            message: Progress message
-        """
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(int(progress_percent))
-        if message:
-            self.status_label.setText(f"Loading: {message}")
-    
-    def _on_model_loaded(self, info: str) -> None:
-        """
-        Handle model loaded signal from viewer widget.
-        
-        Args:
-            info: Information about the loaded model
-        """
-        self.logger.info(f"Viewer model loaded: {info}")
-        # Reset save view button when new model is loaded
-        try:
-            if hasattr(self.viewer_widget, 'reset_save_view_button'):
-                self.viewer_widget.reset_save_view_button()
-        except Exception as e:
-            self.logger.warning(f"Failed to reset save view button: {e}")
-        
-        # Attempt to apply last-used material species
-        try:
-            settings = QSettings()
-            last_species = settings.value('material/last_species', '', type=str)
-            if last_species:
-                if hasattr(self, "material_manager") and self.material_manager:
-                    species_list = self.material_manager.get_species_list()
-                    if last_species in species_list:
-                        self.logger.info(f"Applying last material species on load: {last_species}")
-                        self._apply_material_species(last_species)
-                    else:
-                        self.logger.warning(f"Last material '{last_species}' not found; skipping reapply")
-        except Exception as e:
-            self.logger.warning(f"Failed to reapply last material species: {e}")
-        
-        # Update model properties dock if it exists
-        if hasattr(self, 'properties_dock'):
-            properties_widget = self.properties_dock.widget()
-            if isinstance(properties_widget, QTextEdit):
-                if hasattr(self.viewer_widget, 'get_model_info'):
-                    model_info = self.viewer_widget.get_model_info()
-                    if model_info:
-                        info_text = (
-                            f"Model Properties\n\n"
-                            f"Triangles: {model_info['triangle_count']:,}\n"
-                            f"Vertices: {model_info['vertex_count']:,}\n"
-                            f"Dimensions: {model_info['dimensions'][0]:.2f} x "
-                            f"{model_info['dimensions'][1]:.2f} x "
-                            f"{model_info['dimensions'][2]:.2f}\n"
-                            f"File size: {model_info['file_size'] / 1024:.1f} KB\n"
-                            f"Format: {model_info['format']}\n"
-                            f"Parse time: {model_info['parsing_time']:.3f} s"
-                        )
-                        properties_widget.setPlainText(info_text)
-    
-    def _on_performance_updated(self, fps: float) -> None:
-        """
-        Handle performance update signal from viewer widget.
-        
-        Args:
-            fps: Current frames per second
-        """
-        # Performance updates are no longer displayed in the status bar
-        pass
-    
-    def _on_model_selected(self, model_id: int) -> None:
-        """
-        Handle model selection from the model library.
-        
-        Args:
-            model_id: ID of the selected model
-        """
-        try:
-            # Get model information from database
-            db_manager = get_database_manager()
-            model = db_manager.get_model(model_id)
-            
-            if model:
-                self.logger.info(f"Model selected from library: {model['filename']} (ID: {model_id})")
-                self.model_selected.emit(model_id)
-                
-                # Load metadata in the metadata editor
-                if hasattr(self, 'metadata_editor'):
-                    self.metadata_editor.load_model_metadata(model_id)
-                
-                # Update view count
-                db_manager.increment_view_count(model_id)
-            else:
-                self.logger.warning(f"Model with ID {model_id} not found in database")
-                
-        except Exception as e:
-            self.logger.error(f"Failed to handle model selection: {str(e)}")
-    
+    def _reload_stylesheet_action(self) -> None:
+        """Reload and re-apply the Material Design theme."""
+        # Theme is managed by ThemeService and applied globally
+        self.logger.info("Theme is managed by Material Design system")
+        self.statusBar().showMessage("Material Design theme active", 2000)
+
+    # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
+
     def _on_model_double_clicked(self, model_id: int) -> None:
         """
         Handle model double-click from the model library.
-        
+
         Args:
             model_id: ID of the double-clicked model
         """
@@ -2494,76 +887,77 @@ class MainWindow(QMainWindow):
             # Get model information from database
             db_manager = get_database_manager()
             model = db_manager.get_model(model_id)
-            
+
             if model:
                 file_path = model['file_path']
                 self.logger.info(f"Loading model from library: {file_path}")
-                
+
                 # Update status
                 from pathlib import Path
                 filename = Path(file_path).name
                 self.status_label.setText(f"Loading: {filename}")
                 self.progress_bar.setVisible(True)
                 self.progress_bar.setRange(0, 0)  # Indeterminate progress
-                
+
                 # Store model ID for save view functionality
                 self.current_model_id = model_id
-                
-                # Load the model using STL parser
-                self._load_stl_model(file_path)
-                
+
+                # Load the model using the model loader
+                self.model_loader_manager.load_stl_model(file_path)
+
                 # After model loads, restore saved camera orientation if available
                 QTimer.singleShot(500, lambda: self._restore_saved_camera(model_id))
             else:
                 self.logger.warning(f"Model with ID {model_id} not found in database")
-                
+
         except Exception as e:
             self.logger.error(f"Failed to handle model double-click: {str(e)}")
-    
+    # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
+
     def _on_models_added(self, model_ids: List[int]) -> None:
         """
         Handle models added to the library.
-        
+
         Args:
             model_ids: List of IDs of added models
         """
         self.logger.info(f"Added {len(model_ids)} models to library")
-        
+
         # Update status
         if model_ids:
             self.status_label.setText(f"Added {len(model_ids)} models to library")
-            
+
             # Start background hasher to process new models
             self._start_background_hasher()
-            
+
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
-    
+
     def _on_metadata_saved(self, model_id: int) -> None:
         """
         Handle metadata saved event from the metadata editor.
-        
+
         Args:
             model_id: ID of the model whose metadata was saved
         """
         try:
             self.logger.info(f"Metadata saved for model ID: {model_id}")
             self.status_label.setText("Metadata saved")
-            
+
             # Update the model library to reflect changes
             if hasattr(self, 'model_library_widget'):
                 self.model_library_widget._load_models_from_database()
-            
+
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
-            
+
         except Exception as e:
             self.logger.error(f"Failed to handle metadata saved event: {str(e)}")
-    
+
     def _on_metadata_changed(self, model_id: int) -> None:
         """
         Handle metadata changed event from the metadata editor.
-        
+
         Args:
             model_id: ID of the model whose metadata changed
         """
@@ -2571,67 +965,59 @@ class MainWindow(QMainWindow):
             self.logger.debug(f"Metadata changed for model ID: {model_id}")
             # Update status to indicate unsaved changes
             self.status_label.setText("Metadata modified (unsaved changes)")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to handle metadata changed event: {str(e)}")
-    
+
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
         self.logger.info("Opening preferences dialog")
         dlg = PreferencesDialog(self, on_reset_layout=self._reset_dock_layout_and_save)
-        # Live theme apply
-        dlg.theme_changed.connect(self._apply_theme_styles)
         dlg.exec_()
-    
+
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
         try:
-            from gui.theme_manager_widget import ThemeManagerWidget
-            dlg = ThemeManagerWidget(self)
-            dlg.themeApplied.connect(self._on_theme_applied)
-            dlg.show()
+            from src.gui.theme import ThemeDialog
+            dlg = ThemeDialog(self)
+            dlg.theme_applied.connect(self._on_theme_applied)
+            dlg.exec()
         except Exception as e:
             self.logger.error(f"Failed to open Theme Manager: {e}")
             QMessageBox.warning(self, "Theme Manager", f"Failed to open Theme Manager:\n{e}")
 
-    def _on_theme_applied(self, _colors: dict) -> None:
-        """Re-apply styles after a theme change."""
-        try:
-            ThemeManager.instance().apply_to_registered()
-        except Exception:
-            pass
-        try:
-            self._apply_theme_styles()
-        except Exception:
-            pass
+    def _on_theme_applied(self, preset_name: str) -> None:
+        """Handle theme change notification."""
+        # Theme is managed by ThemeService and applied globally
+        self.logger.info(f"Theme changed: {preset_name}")
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
         self.logger.debug("Zoom in requested")
         self.status_label.setText("Zoomed in")
-        
+
         # Forward to viewer widget if available
         if hasattr(self.viewer_widget, 'zoom_in'):
             self.viewer_widget.zoom_in()
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
-    
+
     def _zoom_out(self) -> None:
         """Handle zoom out action."""
         self.logger.debug("Zoom out requested")
         self.status_label.setText("Zoomed out")
-        
+
         # Forward to viewer widget if available
         if hasattr(self.viewer_widget, 'zoom_out'):
             self.viewer_widget.zoom_out()
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
-    
+
     def _reset_view(self) -> None:
         """Handle reset view action."""
         self.logger.debug("Reset view requested")
         self.status_label.setText("View reset")
-        
+
         # Forward to viewer widget if available
         if hasattr(self.viewer_widget, 'reset_view'):
             self.viewer_widget.reset_view()
@@ -2643,7 +1029,7 @@ class MainWindow(QMainWindow):
                 self.logger.warning(f"Failed to reset save view button: {e}")
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
-    
+
     def _save_current_view(self) -> None:
         """Save the current camera view for the loaded model."""
         try:
@@ -2651,13 +1037,13 @@ class MainWindow(QMainWindow):
             if not hasattr(self.viewer_widget, 'current_model') or not self.viewer_widget.current_model:
                 QMessageBox.information(self, "Save View", "No model is currently loaded.")
                 return
-            
+
             # Get the model ID from the current model
             model = self.viewer_widget.current_model
             if not hasattr(model, 'file_path') or not model.file_path:
                 QMessageBox.warning(self, "Save View", "Cannot save view: model file path not found.")
                 return
-            
+
             # Find the model ID in the database by file path
             db_manager = get_database_manager()
             models = db_manager.get_all_models()
@@ -2666,11 +1052,11 @@ class MainWindow(QMainWindow):
                 if m.get('file_path') == model.file_path:
                     model_id = m.get('id')
                     break
-            
+
             if not model_id:
                 QMessageBox.warning(self, "Save View", "Model not found in database.")
                 return
-            
+
             # Get camera state from viewer
             if hasattr(self.viewer_widget, 'renderer'):
                 camera = self.viewer_widget.renderer.GetActiveCamera()
@@ -2678,16 +1064,16 @@ class MainWindow(QMainWindow):
                     pos = camera.GetPosition()
                     focal = camera.GetFocalPoint()
                     view_up = camera.GetViewUp()
-                    
+
                     camera_data = {
                         'position_x': pos[0], 'position_y': pos[1], 'position_z': pos[2],
                         'focal_x': focal[0], 'focal_y': focal[1], 'focal_z': focal[2],
                         'view_up_x': view_up[0], 'view_up_y': view_up[1], 'view_up_z': view_up[2]
                     }
-                    
+
                     # Save to database
                     success = db_manager.save_camera_orientation(model_id, camera_data)
-                    
+
                     if success:
                         self.status_label.setText("View saved for this model")
                         self.logger.info(f"Saved camera view for model ID {model_id}")
@@ -2704,17 +1090,17 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(self, "Save View", "Camera not available.")
             else:
                 QMessageBox.warning(self, "Save View", "Viewer not initialized.")
-                
+
         except Exception as e:
             self.logger.error(f"Failed to save current view: {e}")
             QMessageBox.warning(self, "Save View", f"Failed to save view: {str(e)}")
-    
+
     def _restore_saved_camera(self, model_id: int) -> None:
         """Restore saved camera orientation for a model."""
         try:
             db_manager = get_database_manager()
             camera_data = db_manager.get_camera_orientation(model_id)
-            
+
             if camera_data and hasattr(self.viewer_widget, 'renderer'):
                 camera = self.viewer_widget.renderer.GetActiveCamera()
                 if camera:
@@ -2734,24 +1120,24 @@ class MainWindow(QMainWindow):
                         camera_data['camera_view_up_y'],
                         camera_data['camera_view_up_z']
                     )
-                    
+
                     # Update clipping range and render
                     self.viewer_widget.renderer.ResetCameraClippingRange()
                     self.viewer_widget.vtk_widget.GetRenderWindow().Render()
-                    
+
                     self.logger.info(f"Restored saved camera view for model ID {model_id}")
                     self.status_label.setText("Restored saved view")
                     QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
             else:
                 self.logger.debug(f"No saved camera view for model ID {model_id}")
-                
+
         except Exception as e:
             self.logger.warning(f"Failed to restore saved camera: {e}")
-    
+
     def _show_about(self) -> None:
         """Show about dialog."""
         self.logger.info("Showing about dialog")
-        
+
         about_text = (
             "<h3>3D-MM - 3D Model Manager</h3>"
             "<p>Version 1.0.0</p>"
@@ -2761,517 +1147,138 @@ class MainWindow(QMainWindow):
             "<br>"
             "<p>&copy; 2023 3D-MM Development Team</p>"
         )
-        
+
         QMessageBox.about(self, "About 3D-MM", about_text)
-     
-    # Lighting/Material integrations
-    def _toggle_lighting_panel(self) -> None:
-        """Show/hide the floating lighting control dialog."""
+
+    def _generate_library_screenshots(self) -> None:
+        """Generate screenshots for all models in the library with applied materials."""
         try:
-            if hasattr(self, "lighting_panel") and self.lighting_panel:
-                if self.lighting_panel.isVisible():
-                    self.lighting_panel.hide()
-                else:
-                    self.lighting_panel.show()
-                    self.lighting_panel.raise_()
-                    self.lighting_panel.activateWindow()
-        except Exception as e:
-            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+            from src.gui.batch_screenshot_worker import BatchScreenshotWorker
+            from src.core.application_config import ApplicationConfig
 
-    def _update_light_position(self, x: float, y: float, z: float) -> None:
-        if hasattr(self, "lighting_manager") and self.lighting_manager:
-            try:
-                self.lighting_manager.update_position(x, y, z)
-                self._save_lighting_settings()
-            except Exception as e:
-                self.logger.error(f"update_position failed: {e}")
-
-    def _update_light_color(self, r: float, g: float, b: float) -> None:
-        if hasattr(self, "lighting_manager") and self.lighting_manager:
-            try:
-                self.lighting_manager.update_color(r, g, b)
-                self._save_lighting_settings()
-            except Exception as e:
-                self.logger.error(f"update_color failed: {e}")
-
-    def _update_light_intensity(self, value: float) -> None:
-        if hasattr(self, "lighting_manager") and self.lighting_manager:
-            try:
-                self.lighting_manager.update_intensity(value)
-                self._save_lighting_settings()
-            except Exception as e:
-                self.logger.error(f"update_intensity failed: {e}")
-
-    def _update_light_cone_angle(self, angle: float) -> None:
-        if hasattr(self, "lighting_manager") and self.lighting_manager:
-            try:
-                self.lighting_manager.update_cone_angle(angle)
-                self._save_lighting_settings()
-            except Exception as e:
-                self.logger.error(f"update_cone_angle failed: {e}")
-
-    def _apply_material_species(self, species_name: str) -> None:
-        """Apply selected material species to the current viewer actor."""
-        try:
-            if not species_name:
+            # Check if material manager is available
+            if not hasattr(self, 'material_manager') or self.material_manager is None:
+                QMessageBox.warning(
+                    self,
+                    "Screenshot Generation",
+                    "Material manager not available. Cannot generate screenshots."
+                )
                 return
 
-            if not hasattr(self, "viewer_widget") or not getattr(self.viewer_widget, "actor", None):
-                self.logger.warning("No model loaded, cannot apply material")
-                return
-            if not hasattr(self, "material_manager") or self.material_manager is None:
-                self.logger.warning("MaterialManager not available")
-                return
+            # Load thumbnail settings
+            config = ApplicationConfig.get_default()
+            bg_image = config.thumbnail_bg_image
+            material = config.thumbnail_material
 
-            # Check if this material is already applied to prevent duplicates
-            current_material = getattr(self, "_current_applied_material", None)
-            if current_material == species_name:
-                self.logger.debug(f"[STL_TEXTURE_DEBUG] Material '{species_name}' already applied, skipping")
-                return
-
-            # Get current model to determine format
-            current_model = getattr(self.viewer_widget, "current_model", None)
-            if not current_model:
-                self.logger.warning("No current model information available")
-                return
-
-            model_format = getattr(current_model, "format_type", None)
-            if not model_format:
-                self.logger.warning("Cannot determine model format")
-                return
-
-            # DIAGNOSTIC LOG: Track material application process (DISABLED - set ENABLE_STL_TEXTURE_DEBUG = True to enable)
-            ENABLE_STL_TEXTURE_DEBUG = False
-            if ENABLE_STL_TEXTURE_DEBUG:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STARTING MATERIAL APPLICATION =====")
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Material: '{species_name}', Model format: {model_format}")
-                
-                # Get detailed material information for diagnosis
-                material_info = {}
-                try:
-                    material = self.material_manager.material_provider.get_material_by_name(species_name)
-                    if material:
-                        material_info = {
-                            'name': material.get('name', 'Unknown'),
-                            'mtl_path': material.get('mtl_path', None),
-                            'texture_path': material.get('texture_path', None),
-                            'has_mtl': bool(material.get('mtl_path')),
-                            'has_texture': bool(material.get('texture_path'))
-                        }
-                        self.logger.info(f"[STL_TEXTURE_DEBUG] Material info: {material_info}")
-                    else:
-                        self.logger.error(f"[STL_TEXTURE_DEBUG] Material '{species_name}' not found in material provider")
-                except Exception as e:
-                    self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to get material info: {e}")
-                
-                # Check if model has UV coordinates (needed for texture mapping)
-                has_uv_coords = False
-                if hasattr(self.viewer_widget, "actor") and self.viewer_widget.actor:
-                    mapper = self.viewer_widget.actor.GetMapper()
-                    if mapper:
-                        input_data = mapper.GetInput()
-                        if input_data:
-                            point_data = input_data.GetPointData()
-                            if point_data:
-                                has_uv_coords = point_data.GetTCoords() is not None
-                                self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
-                
-                # Check if material has texture
-                material_has_texture = material_info.get('has_texture', False)
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
-                if material_has_texture:
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] Texture path: {material_info.get('texture_path')}")
-            else:
-                # Get basic material info for normal operation
-                material = self.material_manager.material_provider.get_material_by_name(species_name)
-                material_has_texture = bool(material and material.get('texture_path')) if material else False
-                material_info = {'has_texture': material_has_texture}
-
-            # Apply material based on model format
-            if model_format == ModelFormat.STL:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== STL FORMAT DETECTED =====")
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Model has UV coordinates: {has_uv_coords}")
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Material has texture: {material_has_texture}")
-                
-                if not material_has_texture:
-                    self.logger.warning("[STL_TEXTURE_DEBUG] Material missing texture - only colors will be applied")
-                    # STL files: Apply only material properties (colors, shininess) - no textures
-                    self._apply_stl_material_properties(self.viewer_widget.actor, species_name)
-                    self.statusBar().showMessage(f"Applied STL material properties: {species_name}", 2000)
-                    self.logger.info(f"Applied STL material properties for '{species_name}'")
-                else:
-                    # STL files: Apply full texture without UV mapping
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] Applying full texture to STL model (no UV mapping)")
-                    
-                    # NEW DIAGNOSTIC: Check if texture file actually exists
-                    texture_path = material_info.get('texture_path')
-                    if texture_path:
-                        import os
-                        if os.path.exists(texture_path):
-                            self.logger.info(f"[STL_TEXTURE_DEBUG] Texture file exists: {texture_path}")
-                            file_size = os.path.getsize(texture_path)
-                            self.logger.info(f"[STL_TEXTURE_DEBUG] Texture file size: {file_size} bytes")
-                        else:
-                            self.logger.error(f"[STL_TEXTURE_DEBUG] Texture file NOT found: {texture_path}")
-                    
-                    # Apply full material with texture
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] Calling material_manager.apply_material_to_actor for STL")
-                    ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] apply_material_to_actor returned: {ok}")
-                    
-                    # NEW DIAGNOSTIC: Check if material properties were applied correctly after texture
-                    if ENABLE_STL_TEXTURE_DEBUG:
-                        try:
-                            prop = self.viewer_widget.actor.GetProperty()
-                            if prop:
-                                diffuse_color = prop.GetDiffuseColor()
-                                ambient_color = prop.GetAmbientColor()
-                                specular_color = prop.GetSpecularColor()
-                                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor material properties after texture application:")
-                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse: {diffuse_color}")
-                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Ambient: {ambient_color}")
-                                self.logger.info(f"[STL_TEXTURE_DEBUG]   Specular: {specular_color}")
-                                
-                                # Check if diffuse color is white (as expected for textured materials)
-                                if len(diffuse_color) >= 3:
-                                    is_white_diffuse = (abs(diffuse_color[0] - 1.0) < 0.01 and
-                                                      abs(diffuse_color[1] - 1.0) < 0.01 and
-                                                      abs(diffuse_color[2] - 1.0) < 0.01)
-                                    self.logger.info(f"[STL_TEXTURE_DEBUG]   Diffuse is white (good for texture): {is_white_diffuse}")
-                                    if not is_white_diffuse:
-                                        self.logger.error(f"[STL_TEXTURE_DEBUG]   PROBLEM: Diffuse color is not white - this will tint the texture!")
-                        except Exception as e:
-                            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check actor properties: {e}")
-                    
-                    if ok:
-                        self.statusBar().showMessage(f"Applied STL material with texture: {species_name}", 2000)
-                        self.logger.info(f"Applied STL material with texture for '{species_name}'")
-                        
-                        # NEW DIAGNOSTIC: Check if texture was actually applied to VTK actor
-                        try:
-                            actor_texture = self.viewer_widget.actor.GetTexture()
-                            if actor_texture:
-                                self.logger.info(f"[STL_TEXTURE_DEBUG] VTK actor has texture applied")
-                            else:
-                                self.logger.error(f"[STL_TEXTURE_DEBUG] VTK actor has NO texture applied after apply_material_to_actor")
-                        except Exception as e:
-                            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to check VTK actor texture: {e}")
-                    else:
-                        self.statusBar().showMessage(f"Failed to apply STL material: {species_name}", 3000)
-                        self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to apply STL material: {species_name}")
-                        return
-            else:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== NON-STL FORMAT DETECTED =====")
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Applying full material with texture support")
-                # OBJ files: Apply full MTL textures with UV mapping
-                ok = self.material_manager.apply_material_to_actor(self.viewer_widget.actor, species_name)
-                if ok:
-                    self.statusBar().showMessage(f"Applied OBJ material with texture: {species_name}", 2000)
-                    self.logger.info(f"Applied OBJ material with texture for '{species_name}'")
-                else:
-                    self.statusBar().showMessage(f"Failed to apply OBJ material: {species_name}", 3000)
-                    return
-
-            # Save last selected material species
-            try:
-                settings = QSettings()
-                settings.setValue('material/last_species', species_name)
-                self.logger.info(f"Saved last material species: {species_name}")
-            except Exception as se:
-                self.logger.warning(f"Failed to persist last material species: {se}")
-
-            # Track the currently applied material to prevent duplicates
-            self._current_applied_material = species_name
-
-            # Re-render
-            try:
-                self.viewer_widget.vtk_widget.GetRenderWindow().Render()
-                if ENABLE_STL_TEXTURE_DEBUG:
-                    self.logger.info(f"[STL_TEXTURE_DEBUG] Re-rendered after material application")
-            except Exception as e:
-                self.logger.warning(f"Failed to render after material application: {e}")
-
-            if ENABLE_STL_TEXTURE_DEBUG:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] ===== MATERIAL APPLICATION COMPLETE =====")
-
-        except Exception as e:
-            self.logger.error(f"Failed to apply material '{species_name}': {e}")
-            self.statusBar().showMessage(f"Error applying material: {species_name}", 3000)
-
-    def _apply_stl_material_properties(self, actor, species_name: str) -> None:
-        """Apply MTL material properties directly to STL models using VTK approach."""
-        try:
-            # Get material from provider to access MTL file
-            material = self.material_manager.material_provider.get_material_by_name(species_name)
-
-            if not material or not material.get('mtl_path'):
-                self.logger.warning(f"No MTL file found for STL material '{species_name}'")
-                return
-
-            # Parse MTL file directly using VTK approach
-            mtl_props = self._parse_mtl_direct(material['mtl_path'])
-
-            # Apply properties to VTK actor
-            prop = actor.GetProperty()
-
-            # Set material colors from MTL
-            kd_color = mtl_props.get("Kd", (0.8, 0.8, 0.8))  # diffuse color
-            ks_color = mtl_props.get("Ks", (0.0, 0.0, 0.0))  # specular color
-            ns_value = mtl_props.get("Ns", 10.0)              # shininess
-            d_value = mtl_props.get("d", 1.0)                 # opacity
-
-            # Apply colors and properties
-            prop.SetColor(*kd_color)
-            prop.SetSpecularColor(*ks_color)
-            prop.SetSpecular(0.5 if sum(ks_color) > 0 else 0.0)  # Enable specular if color is set
-            prop.SetSpecularPower(ns_value)
-            prop.SetOpacity(d_value)
-
-            # Set reasonable defaults for STL rendering
-            prop.SetAmbient(0.2)
-            prop.SetDiffuse(0.8)
-
-            self.logger.info(f"Applied MTL properties to STL for '{species_name}': Kd={kd_color}, Ks={ks_color}, Ns={ns_value}, d={d_value}")
-
-        except Exception as e:
-            self.logger.error(f"Failed to apply MTL properties to STL for '{species_name}': {e}")
-            # Fallback to default material
-            try:
-                prop = actor.GetProperty()
-                prop.SetColor(0.7, 0.7, 0.7)  # Default gray
-                prop.SetAmbient(0.2)
-                prop.SetDiffuse(0.8)
-                prop.SetSpecular(0.3)
-                prop.SetSpecularPower(20.0)
-                prop.SetOpacity(1.0)
-            except Exception:
-                pass
-
-    def _parse_mtl_direct(self, mtl_path) -> dict:
-        """Parse MTL file directly to extract material properties for STL application."""
-        material = {
-            "Kd": (0.8, 0.8, 0.8),   # diffuse color default
-            "Ks": (0.0, 0.0, 0.0),   # specular color default
-            "Ns": 10.0,              # shininess default
-            "d": 1.0                 # opacity default
-        }
-
-        try:
-            with open(mtl_path, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-
-                    if line.startswith("Kd "):  # diffuse color
-                        parts = line.split()
-                        if len(parts) >= 4:
-                            material["Kd"] = tuple(map(float, parts[1:4]))
-                    elif line.startswith("Ks "):  # specular color
-                        parts = line.split()
-                        if len(parts) >= 4:
-                            material["Ks"] = tuple(map(float, parts[1:4]))
-                    elif line.startswith("Ns "):  # shininess
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            material["Ns"] = float(parts[1])
-                    elif line.startswith("d "):   # opacity
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            material["d"] = float(parts[1])
-
-        except Exception as e:
-            self.logger.warning(f"Failed to parse MTL file {mtl_path}: {e}")
-
-        return material
-    
-    # Background hashing methods
-    
-    def _start_background_hasher(self) -> None:
-        """Start the background hasher thread."""
-        try:
-            if self.background_hasher and self.background_hasher.isRunning():
-                self.logger.debug("Background hasher already running")
-                return
-                
-            from gui.background_hasher import BackgroundHasher
-            
-            self.background_hasher = BackgroundHasher(self)
-            self.background_hasher.hash_progress.connect(self._on_hash_progress)
-            self.background_hasher.model_hashed.connect(self._on_model_hashed)
-            self.background_hasher.duplicate_found.connect(self._on_duplicate_found)
-            self.background_hasher.all_complete.connect(self._on_hashing_complete)
-            
-            self.background_hasher.start()
-            
-            # Update indicator - solid when hashing
-            self.hash_indicator.setVisible(True)
-            self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when hashing
-            self.hash_indicator.setToolTip("Background hashing active - Click to pause")
-            
-            self.logger.info("Background hasher started")
-        except Exception as e:
-            self.logger.error(f"Failed to start background hasher: {e}")
-    
-    def _toggle_background_hasher(self) -> None:
-        """Toggle pause/resume of background hasher."""
-        try:
-            if not self.background_hasher or not self.background_hasher.isRunning():
-                # Not running, start it
-                self._start_background_hasher()
-                return
-                
-            if self.background_hasher.is_paused():
-                # Resume
-                self.background_hasher.resume()
-                self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when running
-                self.hash_indicator.setToolTip("Background hashing active - Click to pause")
-                self.statusBar().showMessage("Background hashing resumed", 2000)
-            else:
-                # Pause
-                self.background_hasher.pause()
-                self.hash_indicator.setStyleSheet("opacity: 0.5;")  # Semi-transparent when paused
-                self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
-                self.statusBar().showMessage("Background hashing paused", 2000)
-        except Exception as e:
-            self.logger.error(f"Failed to toggle background hasher: {e}")
-    
-    def _on_hash_progress(self, filename: str) -> None:
-        """Handle hash progress update."""
-        try:
-            self.statusBar().showMessage(f"Hashing: {filename}", 1000)
-        except Exception:
-            pass
-    
-    def _on_model_hashed(self, model_id: int, file_hash: str) -> None:
-        """Handle model hashed successfully."""
-        try:
-            self.logger.debug(f"Model {model_id} hashed: {file_hash[:16]}...")
-        except Exception:
-            pass
-    
-    def _on_duplicate_found(self, new_model_id: int, existing_id: int, new_path: str, old_path: str) -> None:
-        """Handle duplicate file detected - prompt user for action."""
-        try:
-            reply = QMessageBox.question(
-                self,
-                "File Location Changed",
-                f"This file already exists in the library but has moved:\n\n"
-                f"Old: {old_path}\n"
-                f"New: {new_path}\n\n"
-                f"Update to new location?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
+            # Create and start the batch screenshot worker
+            self.screenshot_worker = BatchScreenshotWorker(
+                material_manager=self.material_manager,
+                screenshot_size=256,
+                background_image=bg_image,
+                material_name=material
             )
-            
-            if reply == QMessageBox.Yes:
-                # Update to new path, delete old entry
-                db_manager = get_database_manager()
-                db_manager.update_model_path(existing_id, new_path)
-                db_manager.delete_model(new_model_id)
-                self.logger.info(f"Updated file path for model {existing_id}, removed duplicate {new_model_id}")
-                
-                # Refresh model library if available
-                if hasattr(self, 'model_library_widget'):
-                    self.model_library_widget._load_models_from_database()
-            else:
-                # Keep duplicate, just mark it as hashed with the same hash
-                db_manager = get_database_manager()
-                existing = db_manager.get_model(existing_id)
-                if existing and existing.get('file_hash'):
-                    db_manager.update_file_hash(new_model_id, existing['file_hash'])
-                    
-        except Exception as e:
-            self.logger.error(f"Failed to handle duplicate: {e}")
-    
-    def _on_hashing_complete(self) -> None:
-        """Handle all hashing complete."""
-        try:
-            self.hash_indicator.setStyleSheet("opacity: 0.3;")  # Subdued when idle
-            self.hash_indicator.setToolTip("Background hashing idle - Click to start")
-            self.statusBar().showMessage("Background hashing complete", 2000)
-            self.logger.info("Background hashing completed")
-        except Exception:
-            pass
-    
-    # Event handlers
 
-    def resizeEvent(self, event) -> None:
-        """Autosave geometry changes on resize (debounced)."""
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-        # Keep snap overlays aligned with the window
-        try:
-            if hasattr(self, "_snap_layer"):
-                self._snap_layer.update_geometry()
-        except Exception:
-            pass
-        return super().resizeEvent(event)
+            # Connect signals
+            self.screenshot_worker.progress_updated.connect(self._on_screenshot_progress)
+            self.screenshot_worker.screenshot_generated.connect(self._on_screenshot_generated)
+            self.screenshot_worker.error_occurred.connect(self._on_screenshot_error)
+            self.screenshot_worker.finished_batch.connect(self._on_screenshots_finished)
 
-    def moveEvent(self, event) -> None:
-        """Autosave geometry changes on move (debounced)."""
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-        return super().moveEvent(event)
-     
-    def closeEvent(self, event) -> None:
-        """Handle window close event."""
-        self.logger.info("Application closing")
-        
-        # Stop background hasher if running
-        if self.background_hasher and self.background_hasher.isRunning():
-            try:
-                self.logger.info("Stopping background hasher...")
-                self.background_hasher.stop()
-                self.background_hasher.wait(3000)  # Wait up to 3 seconds
-                self.logger.info("Background hasher stopped")
-            except Exception as e:
-                self.logger.warning(f"Failed to stop background hasher cleanly: {e}")
-        
-        # Safety: Ensure layout edit mode is locked before closing
-        try:
-            if hasattr(self, 'layout_edit_mode') and self.layout_edit_mode:
-                self.logger.info("Locking layout edit mode before application close")
-                self._set_layout_edit_mode(False)
-                if hasattr(self, 'toggle_layout_edit_action'):
-                    self.toggle_layout_edit_action.setChecked(False)
-                # Persist the locked state
-                settings = QSettings()
-                settings.setValue("ui/layout_edit_mode", False)
-                self.logger.info("Layout edit mode locked for safety on close")
+            # Show progress dialog
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(0)
+            self.status_label.setText("Generating screenshots for all models...")
+
+            # Start worker
+            self.screenshot_worker.start()
+            self.logger.info("Started batch screenshot generation")
+
         except Exception as e:
-            self.logger.warning(f"Failed to lock layout edit mode on close: {e}")
-        
-        # Clean up resources
-        if hasattr(self, 'status_timer'):
-            self.status_timer.stop()
-        
-        # Clean up widgets
-        if hasattr(self, 'metadata_editor'):
-            self.metadata_editor.cleanup()
-        
-        if hasattr(self, 'model_library_widget'):
-            self.model_library_widget.cleanup()
-        
-        # Memory cleanup: clear material texture cache
+            self.logger.error(f"Failed to start screenshot generation: {e}")
+            QMessageBox.critical(
+                self,
+                "Screenshot Generation Error",
+                f"Failed to start screenshot generation:\n{e}"
+            )
+
+    def _on_screenshot_progress(self, current: int, total: int) -> None:
+        """Handle screenshot generation progress."""
         try:
-            if hasattr(self, 'material_manager') and self.material_manager:
-                self.material_manager.clear_texture_cache()
-                self.logger.info("Cleared MaterialManager texture cache on close")
+            if total > 0:
+                progress = int((current / total) * 100)
+                self.progress_bar.setValue(progress)
+                self.status_label.setText(f"Generating screenshots: {current}/{total}")
         except Exception as e:
-            self.logger.warning(f"Failed to clear material texture cache: {e}")
-        
-        # Persist final lighting settings on close
+            self.logger.warning(f"Failed to update progress: {e}")
+
+    def _on_screenshot_generated(self, model_id: int, screenshot_path: str) -> None:
+        """Handle screenshot generated event."""
         try:
-            self._save_lighting_settings()
-        except Exception:
-            pass
-        
-        # Accept the close event
-        event.accept()
-        
-        self.logger.info("Application closed")
+            self.logger.debug(f"Screenshot generated for model {model_id}: {screenshot_path}")
+        except Exception as e:
+            self.logger.warning(f"Failed to handle screenshot generated event: {e}")
+
+    def _on_screenshot_error(self, error_message: str) -> None:
+        """Handle screenshot generation error."""
+        try:
+            self.logger.error(f"Screenshot generation error: {error_message}")
+            self.status_label.setText(f"Error: {error_message}")
+        except Exception as e:
+            self.logger.warning(f"Failed to handle screenshot error: {e}")
+
+    def _on_screenshots_finished(self) -> None:
+        """Handle batch screenshot generation completion."""
+        try:
+            self.progress_bar.setVisible(False)
+            self.status_label.setText("Screenshots generated successfully")
+
+            # Reload model library to display new thumbnails
+            if hasattr(self, 'model_library_widget') and self.model_library_widget:
+                self.model_library_widget._load_models_from_database()
+
+            QMessageBox.information(
+                self,
+                "Screenshot Generation Complete",
+                "All model screenshots have been generated successfully!"
+            )
+
+            self.logger.info("Batch screenshot generation completed")
+
+            # Clear status after a delay
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle screenshots finished event: {e}")
+
+    # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
+
+    # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
+
+    # ===== END_EXTRACT_TO: src/gui/services/background_processor.py =====
+        """Start the background hasher thread."""
+        # try:
+        #     if self.background_hasher and self.background_hasher.isRunning():
+        #         self.logger.debug("Background hasher already running")
+        #         return
+
+        #     from gui.background_hasher import BackgroundHasher
+
+        #     self.background_hasher = BackgroundHasher(self)
+        #     self.background_hasher.hash_progress.connect(self._on_hash_progress)
+        #     self.background_hasher.model_hashed.connect(self._on_model_hashed)
+        #     self.background_hasher.duplicate_found.connect(self._on_duplicate_found)
+        #     self.background_hasher.all_complete.connect(self._on_hashing_complete)
+
+        #     self.background_hasher.start()
+
+        #     # Update indicator - solid when hashing
+        #     self.hash_indicator.setVisible(True)
+        #     self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when hashing
+        #     self.hash_indicator.setToolTip("Background hashing active - Click to pause")
+
+        #     self.logger.info("Background hasher started")
+        # except Exception as e:
+        #     self.logger.error(f"Failed to start background hasher: {e}")
+
+    # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====

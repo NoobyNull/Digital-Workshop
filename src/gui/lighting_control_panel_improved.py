@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
 )
 
-from gui.theme import COLORS
+from src.gui.theme import COLORS
 
 
 class LightingControlPanel(QDockWidget):
@@ -176,15 +176,15 @@ class LightingControlPanel(QDockWidget):
             self.x_slider.blockSignals(True)
             self.y_slider.blockSignals(True)
             self.z_slider.blockSignals(True)
-            
+
             self.x_slider.setValue(int(self._pos_x))
             self.y_slider.setValue(int(self._pos_y))
             self.z_slider.setValue(int(self._pos_z))
-            
+
             self.x_value.setText(f"{self._pos_x:.0f}")
             self.y_value.setText(f"{self._pos_y:.0f}")
             self.z_value.setText(f"{self._pos_z:.0f}")
-            
+
             self.x_slider.blockSignals(False)
             self.y_slider.blockSignals(False)
             self.z_slider.blockSignals(False)
@@ -216,7 +216,7 @@ class LightingControlPanel(QDockWidget):
         slider.setValue(int(initial))
         slider.setSingleStep(5)
         slider.setPageStep(20)
-        
+
         # Connect to appropriate handler
         if name == "X":
             slider.valueChanged.connect(self._on_x_position_changed)
@@ -224,7 +224,7 @@ class LightingControlPanel(QDockWidget):
             slider.valueChanged.connect(self._on_y_position_changed)
         elif name == "Z":
             slider.valueChanged.connect(self._on_z_position_changed)
-            
+
         # Apply styling
         slider.setStyleSheet(
             f"""
@@ -248,7 +248,7 @@ class LightingControlPanel(QDockWidget):
             }}
             """
         )
-        
+
         return slider
 
     def _on_x_position_changed(self, value: int) -> None:

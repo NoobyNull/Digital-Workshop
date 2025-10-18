@@ -29,17 +29,18 @@ from PySide6.QtWidgets import (
     QFileSystemModel, QButtonGroup, QToolButton, QCheckBox
 )
 
-from core.logging_config import get_logger
-from core.database_manager import get_database_manager
-from core.performance_monitor import get_performance_monitor, monitor_operation
-from core.model_cache import get_model_cache, CacheLevel
-from utils.file_hash import calculate_file_hash
-from parsers import (
-    STLParser, OBJParser, ThreeMFParser, STEPParser,
-    FormatDetector, ModelFormat
-)
-from gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
-from gui.multi_root_file_system_model import MultiRootFileSystemModel
+from src.core.logging_config import get_logger
+from src.core.database_manager import get_database_manager
+from src.core.performance_monitor import get_performance_monitor, monitor_operation
+from src.core.model_cache import get_model_cache, CacheLevel
+from src.utils.file_hash import calculate_file_hash
+from src.parsers.stl_parser import STLParser
+from src.parsers.obj_parser import OBJParser
+from src.parsers.threemf_parser import ThreeMFParser
+from src.parsers.step_parser import STEPParser
+from src.parsers.format_detector import FormatDetector, ModelFormat
+from src.gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 
 class FileSystemProxyModel(QSortFilterProxyModel):
@@ -49,39 +50,39 @@ class FileSystemProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.home_drive = str(Path.home().drive) if hasattr(Path.home(), 'drive') else ''
-        
+
     def filterAcceptsRow(self, source_row, source_parent):
         """Override to filter out hidden folders and network paths."""
         # Get the source model index
         source_model = self.sourceModel()
         if not source_model:
             return True
-            
+
         index = source_model.index(source_row, 0, source_parent)
         if not index.isValid():
             return True
-            
+
         # Get file info
         file_info = source_model.fileInfo(index)
-        
+
         # Skip hidden files and folders
         if file_info.isHidden():
             return False
-            
+
         # Skip files/folders starting with '.'
         file_name = file_info.fileName()
         if file_name.startswith('.'):
             return False
-            
+
         # Skip network paths (UNC paths starting with \\)
         file_path = file_info.absoluteFilePath()
         if file_path.startswith('\\\\'):
             return False
-            
+
         # Skip R drives that are not in home directory
         if self.home_drive and file_path.startswith('R:') and not file_path.startswith(self.home_drive + '\\'):
             return False
-            
+
         return True
 
 
@@ -219,7 +220,7 @@ class ThumbnailGenerator:
                 painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.7, radius * 0.7)
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.4, radius * 0.4)
-            
+
             painter.setPen(QPen(qcolor('primary_text'), 1))
             c4 = qcolor('model_ambient'); c4.setAlpha(200)
             painter.setBrush(QBrush(c4))
@@ -537,7 +538,7 @@ class ModelLibraryWidget(QWidget):
 
         # File browser click handlers (Files tab)
         self.file_tree.clicked.connect(self._on_file_tree_clicked)
-        
+
         # Import button handlers (Files tab)
         self.import_selected_button.clicked.connect(self._import_selected_files)
         self.import_folder_button.clicked.connect(self._import_selected_folder)
@@ -617,6 +618,15 @@ class ModelLibraryWidget(QWidget):
         for model in self.current_models:
             name_item = QStandardItem(model.get("title") or model.get("filename", "Unknown"))
             name_item.setData(model.get("id"), Qt.UserRole)
+
+            # Set icon from thumbnail if available
+            thumbnail_path = model.get("thumbnail_path")
+            if thumbnail_path and Path(thumbnail_path).exists():
+                try:
+                    icon = QIcon(thumbnail_path)
+                    name_item.setIcon(icon)
+                except Exception as e:
+                    self.logger.warning(f"Failed to load thumbnail icon: {e}")
 
             fmt = (model.get("format") or "Unknown").upper()
             format_item = QStandardItem(fmt)
@@ -790,7 +800,8 @@ class ModelLibraryWidget(QWidget):
         self.progress_bar.setVisible(False)
         self.status_label.setText("Ready")
 
-        self._update_model_view()
+        # Reload models from database to ensure all metadata is loaded
+        self._load_models_from_database()
 
         added_ids = [m["id"] for m in self.current_models if "id" in m]
         if added_ids:
@@ -944,9 +955,9 @@ class ModelLibraryWidget(QWidget):
             if not model_info:
                 self.logger.warning(f"Model with ID {model_id} not found")
                 return
-                
+
             model_name = model_info.get("title") or model_info.get("filename", "Unknown")
-            
+
             # Show confirmation dialog
             reply = QMessageBox.question(
                 self,
@@ -955,11 +966,11 @@ class ModelLibraryWidget(QWidget):
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
-            
+
             if reply == QMessageBox.Yes:
                 # Remove from database
                 success = self.db_manager.delete_model(model_id)
-                
+
                 if success:
                     # Remove from cache if present
                     if model_info.get("file_path"):
@@ -968,16 +979,16 @@ class ModelLibraryWidget(QWidget):
                         except Exception:
                             # Continue even if cache removal fails
                             pass
-                    
+
                     # Update UI
                     self.status_label.setText(f"Removed '{model_name}' from library")
                     self._load_models_from_database()
-                    
+
                     self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
                 else:
                     self.status_label.setText(f"Failed to remove '{model_name}'")
                     self.logger.error(f"Failed to remove model with ID {model_id}")
-                    
+
         except Exception as e:
             self.logger.error(f"Error removing model: {e}")
             QMessageBox.warning(self, "Error", f"Failed to remove model: {str(e)}")
@@ -1075,12 +1086,12 @@ class ModelLibraryWidget(QWidget):
             selected_index = selected_indexes[0]  # Take the first selection
             if selected_index.column() != 0:  # Make sure we're looking at the name column
                 selected_index = selected_indexes[0].sibling(selected_index.row(), 0)
-                
+
             # Map from proxy to source model
             source_index = self.file_proxy_model.mapToSource(selected_index)
             path = self.file_model.filePath(source_index)
             folder_path = Path(path)
-            
+
             if not folder_path.is_dir():
                 QMessageBox.warning(self, "Import", "Please select a folder, not a file.")
                 return
@@ -1097,7 +1108,7 @@ class ModelLibraryWidget(QWidget):
             # Find all model files in the folder
             files_to_import = []
             supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
-            
+
             if reply == QMessageBox.Yes:
                 # Recursive search
                 for ext in supported_extensions:
@@ -1115,7 +1126,7 @@ class ModelLibraryWidget(QWidget):
                 return
 
             self._load_models(files_to_import)
-            
+
         except Exception as e:
             self.logger.error(f"Error importing selected folder: {e}")
             QMessageBox.critical(self, "Import Error", f"Failed to import folder: {e}")

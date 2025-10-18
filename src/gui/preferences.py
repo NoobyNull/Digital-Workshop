@@ -14,13 +14,15 @@ to AppData and loaded on next startup.
 
 from dataclasses import asdict
 from typing import Dict, List, Callable
+from pathlib import Path
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QColor, QIcon
+from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLabel, QPushButton, QLineEdit, QColorDialog, QTableWidget, QTableWidgetItem,
-    QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox
+    QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox,
+    QComboBox, QListWidget, QListWidgetItem, QScrollArea
 )
 
 from src.gui.theme import (
@@ -55,12 +57,14 @@ class PreferencesDialog(QDialog):
         self.display_tab = DisplayTab(on_reset_layout=self.on_reset_layout)
         self.system_tab = PlaceholderTab("System settings (coming soon)")
         self.files_tab = FilesTab()
+        self.thumbnail_tab = ThumbnailSettingsTab()
 
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
 
         self.tabs.addTab(self.display_tab, "Display")
         self.tabs.addTab(self.system_tab, "System")
         self.tabs.addTab(self.files_tab, "Files")
+        self.tabs.addTab(self.thumbnail_tab, "Thumbnails")
         self.tabs.addTab(self.theming_tab, "Theming")
 
         # Dialog action buttons
@@ -89,9 +93,14 @@ class PreferencesDialog(QDialog):
     def _save_and_notify(self):
         try:
             save_theme_to_settings()
-            QMessageBox.information(self, "Saved", "Theme settings saved.")
+
+            # Save thumbnail settings
+            if hasattr(self, 'thumbnail_tab'):
+                self.thumbnail_tab.save_settings()
+
+            QMessageBox.information(self, "Saved", "All settings saved successfully.")
         except Exception as e:
-            QMessageBox.warning(self, "Save Failed", f"Failed to save theme settings:\n{e}")
+            QMessageBox.warning(self, "Save Failed", f"Failed to save settings:\n{e}")
 
     def _reset_to_defaults(self):
         # Build defaults from the dataclass defaults
@@ -111,11 +120,13 @@ class ThemingTab(QWidget):
     """
     Theming editor that lists all color variables with editable hex values
     and a color picker per row. Applies live changes via on_live_apply callback.
+    Also includes qt-material theme variant selection.
     """
 
     def __init__(self, on_live_apply=None, parent=None):
         super().__init__(parent)
         self.on_live_apply = on_live_apply
+        self.service = None
         self._setup_ui()
 
     def _normalize_hex(self, val: str) -> str:
@@ -127,12 +138,12 @@ class ThemingTab(QWidget):
             return ""
         s = val.strip()
         lower = s.lower()
-        
+
         # Pass through CSS color functions and keywords without modification
         css_keywords = {"transparent", "inherit", "initial", "unset", "currentcolor"}
         if lower.startswith("rgba(") or lower.startswith("rgb(") or lower in css_keywords:
             return s
-        
+
         # Handle hex colors
         if not s.startswith("#"):
             s = "#" + s
@@ -198,6 +209,9 @@ class ThemingTab(QWidget):
         hdr.setWordWrap(True)
         layout.addWidget(hdr)
 
+        # Qt-Material theme variant selector
+        self._setup_material_theme_selector(layout)
+
         # Live apply toggle
         self.live_apply_checkbox = QCheckBox("Apply changes live")
         self.live_apply_checkbox.setChecked(True)
@@ -224,6 +238,84 @@ class ThemingTab(QWidget):
         self.btn_apply_all.clicked.connect(self._apply_from_table)
 
         self.reload_from_current()
+
+    def _setup_material_theme_selector(self, parent_layout: QVBoxLayout) -> None:
+        """Setup qt-material theme variant selector."""
+        try:
+            from src.gui.theme.simple_service import ThemeService
+            self.service = ThemeService.instance()
+
+            # Material theme group
+            mat_group = QFrame()
+            mat_layout = QVBoxLayout(mat_group)
+            mat_layout.setContentsMargins(0, 0, 0, 0)
+
+            mat_label = QLabel("<b>Qt-Material Theme Variant</b>")
+            mat_layout.addWidget(mat_label)
+
+            mat_desc = QLabel("Select a Material Design color variant:")
+            mat_desc.setWordWrap(True)
+            mat_layout.addWidget(mat_desc)
+
+            # Variant selector
+            variant_layout = QHBoxLayout()
+            variant_layout.addWidget(QLabel("Variant:"))
+
+            self.variant_combo = QComboBox()
+            self._populate_material_variants()
+            self.variant_combo.currentTextChanged.connect(self._on_material_variant_changed)
+            variant_layout.addWidget(self.variant_combo)
+            variant_layout.addStretch()
+
+            mat_layout.addLayout(variant_layout)
+            parent_layout.addWidget(mat_group)
+
+        except Exception as e:
+            # Silently fail if ThemeService not available
+            pass
+
+    def _populate_material_variants(self) -> None:
+        """Populate material variant combo."""
+        try:
+            if not self.service:
+                return
+
+            self.variant_combo.blockSignals(True)
+            self.variant_combo.clear()
+
+            # Get current theme type
+            theme_type, _ = self.service.get_current_theme()
+            variants = self.service.get_qt_material_variants(theme_type)
+
+            for variant in variants:
+                # Extract color name from variant (e.g., "dark_blue" -> "blue")
+                color_name = variant.split("_", 1)[1] if "_" in variant else variant
+                self.variant_combo.addItem(color_name.title(), variant)
+
+            self.variant_combo.blockSignals(False)
+        except Exception:
+            pass
+
+    def _on_material_variant_changed(self, variant_name: str) -> None:
+        """Handle material variant change."""
+        try:
+            if not self.service or not variant_name:
+                return
+
+            # Get the full variant name
+            current_theme, _ = self.service.get_current_theme()
+            theme_prefix = "dark" if current_theme == "dark" else "light"
+            full_variant = f"{theme_prefix}_{variant_name.lower()}"
+
+            # Set the variant and apply theme
+            self.service.set_qt_material_variant(variant_name.lower())
+            self.service.apply_theme(current_theme, "qt-material")
+
+            # Notify parent of theme change
+            if callable(self.on_live_apply):
+                self.on_live_apply()
+        except Exception:
+            pass
 
     def _color_keys(self) -> List[str]:
         # keep ordering stable and user-friendly
@@ -353,6 +445,216 @@ class DisplayTab(QWidget):
                 QMessageBox.information(self, "Layout Reset", "Window layout has been reset to defaults.")
         except Exception as e:
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
+
+
+class ThumbnailSettingsTab(QWidget):
+    """Thumbnail generation settings tab."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+
+    def _setup_ui(self) -> None:
+        """Set up the user interface."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        # Header
+        header = QLabel("Configure thumbnail generation settings")
+        header.setWordWrap(True)
+        layout.addWidget(header)
+
+        desc = QLabel(
+            "Choose background image and material for all generated thumbnails. "
+            "These settings apply to all thumbnail generation operations."
+        )
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Background selection group
+        bg_group = QFrame()
+        bg_layout = QVBoxLayout(bg_group)
+
+        bg_label = QLabel("<b>Background Image</b>")
+        bg_layout.addWidget(bg_label)
+
+        bg_desc = QLabel("Select a background image for thumbnails:")
+        bg_desc.setWordWrap(True)
+        bg_layout.addWidget(bg_desc)
+
+        # Background list
+        self.bg_list = QListWidget()
+        self.bg_list.setMaximumHeight(150)
+        self._populate_backgrounds()
+        bg_layout.addWidget(self.bg_list)
+
+        layout.addWidget(bg_group)
+
+        # Material selection group
+        mat_group = QFrame()
+        mat_layout = QVBoxLayout(mat_group)
+
+        mat_label = QLabel("<b>Material</b>")
+        mat_layout.addWidget(mat_label)
+
+        mat_desc = QLabel("Select a material to apply to all thumbnails:")
+        mat_desc.setWordWrap(True)
+        mat_layout.addWidget(mat_desc)
+
+        # Material combo
+        self.material_combo = QComboBox()
+        self._populate_materials()
+        mat_layout.addWidget(self.material_combo)
+
+        layout.addWidget(mat_group)
+
+        # Preview group
+        preview_group = QFrame()
+        preview_layout = QVBoxLayout(preview_group)
+
+        preview_label = QLabel("<b>Preview</b>")
+        preview_layout.addWidget(preview_label)
+
+        self.preview_label = QLabel()
+        self.preview_label.setMinimumHeight(100)
+        self.preview_label.setAlignment(Qt.AlignCenter)
+        self.preview_label.setStyleSheet(
+            "border: 1px solid #ccc; background-color: #f5f5f5;"
+        )
+        preview_layout.addWidget(self.preview_label)
+
+        layout.addWidget(preview_group)
+
+        layout.addStretch()
+
+        # Connect signals
+        self.bg_list.itemSelectionChanged.connect(self._on_background_selected)
+        self.material_combo.currentIndexChanged.connect(self._update_preview)
+
+    def _populate_backgrounds(self) -> None:
+        """Populate background list from resources/backgrounds."""
+        try:
+            bg_dir = Path(__file__).parent.parent / "resources" / "backgrounds"
+            if bg_dir.exists():
+                for bg_file in sorted(bg_dir.glob("*.png")):
+                    item = QListWidgetItem(bg_file.stem)
+                    item.setData(Qt.UserRole, str(bg_file))
+                    self.bg_list.addItem(item)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to populate backgrounds: {e}")
+
+    def _populate_materials(self) -> None:
+        """Populate material combo from resources/materials."""
+        try:
+            self.material_combo.addItem("None (Default)", None)
+
+            mat_dir = Path(__file__).parent.parent / "resources" / "materials"
+            if mat_dir.exists():
+                for mat_file in sorted(mat_dir.glob("*.mtl")):
+                    material_name = mat_file.stem
+                    self.material_combo.addItem(material_name, material_name)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to populate materials: {e}")
+
+    def _load_settings(self) -> None:
+        """Load current settings."""
+        try:
+            from src.core.application_config import ApplicationConfig
+
+            config = ApplicationConfig.get_default()
+
+            # Load background
+            if config.thumbnail_bg_image:
+                for i in range(self.bg_list.count()):
+                    item = self.bg_list.item(i)
+                    if item.data(Qt.UserRole) == config.thumbnail_bg_image:
+                        self.bg_list.setCurrentItem(item)
+                        break
+
+            # Load material
+            if config.thumbnail_material:
+                idx = self.material_combo.findData(config.thumbnail_material)
+                if idx >= 0:
+                    self.material_combo.setCurrentIndex(idx)
+
+            self._update_preview()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load settings: {e}")
+
+    def _on_background_selected(self) -> None:
+        """Handle background selection."""
+        self._update_preview()
+
+    def _update_preview(self) -> None:
+        """Update preview image."""
+        try:
+            current_item = self.bg_list.currentItem()
+            if current_item:
+                bg_path = current_item.data(Qt.UserRole)
+                pixmap = QPixmap(bg_path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaledToHeight(
+                        100, Qt.SmoothTransformation
+                    )
+                    self.preview_label.setPixmap(scaled)
+                    return
+
+            self.preview_label.setText("No background selected")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to update preview: {e}")
+            self.preview_label.setText("Error loading preview")
+
+    def get_settings(self) -> dict:
+        """Get current thumbnail settings."""
+        settings = {
+            "background_image": None,
+            "material": None
+        }
+
+        try:
+            current_item = self.bg_list.currentItem()
+            if current_item:
+                settings["background_image"] = current_item.data(Qt.UserRole)
+
+            settings["material"] = self.material_combo.currentData()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to get settings: {e}")
+
+        return settings
+
+    def save_settings(self) -> None:
+        """Save thumbnail settings to application config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+
+            config = ApplicationConfig.get_default()
+            settings = self.get_settings()
+
+            config.thumbnail_bg_image = settings["background_image"]
+            config.thumbnail_material = settings["material"]
+
+            if self.logger:
+                self.logger.info(
+                    f"Saved thumbnail settings: "
+                    f"bg={settings['background_image']}, "
+                    f"material={settings['material']}"
+                )
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save settings: {e}")
 
 class PlaceholderTab(QWidget):
     """Simple placeholder content for non-implemented tabs."""

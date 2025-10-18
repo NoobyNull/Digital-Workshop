@@ -26,11 +26,11 @@ class Vector3D:
     x: float
     y: float
     z: float
-    
+
     def __iter__(self):
         """Allow unpacking as tuple."""
         return iter((self.x, self.y, self.z))
-    
+
     def __getitem__(self, index):
         """Allow indexing like tuple."""
         return [self.x, self.y, self.z][index]
@@ -44,7 +44,7 @@ class Triangle:
     vertex2: Vector3D
     vertex3: Vector3D
     attribute_byte_count: int = 0
-    
+
     def get_vertices(self) -> List[Vector3D]:
         """Get all vertices as a list."""
         return [self.vertex1, self.vertex2, self.vertex3]
@@ -60,7 +60,7 @@ class ModelStats:
     file_size_bytes: int
     format_type: ModelFormat
     parsing_time_seconds: float
-    
+
     def get_dimensions(self) -> Tuple[float, float, float]:
         """Get model dimensions (width, height, depth)."""
         return (
@@ -91,14 +91,14 @@ class Model:
     # Use Any to avoid hard dependency on NumPy in core structures.
     vertex_array: Optional[Any] = None  # Expected shape: (N*3, 3) float32
     normal_array: Optional[Any] = None  # Expected shape: (N*3, 3) float32
-    
+
     def get_vertices(self) -> List[Vector3D]:
         """Get all unique vertices from all triangles."""
         vertices = []
         for triangle in self.triangles:
             vertices.extend(triangle.get_vertices())
         return vertices
-    
+
     def get_memory_usage(self) -> int:
         """Estimate memory usage in bytes."""
         # Note: This is a rough estimate and does not include NumPy array buffers.
@@ -107,11 +107,11 @@ class Model:
             len(self.triangles) * (50 + 4 * 9) +  # Rough estimate for Triangle objects
             100  # Stats and other data
         )
-    
+
     def is_fully_loaded(self) -> bool:
         """Check if model is fully loaded."""
         return self.loading_state == LoadingState.FULL_GEOMETRY
-    
+
     def needs_geometry_loading(self) -> bool:
         """Check if model geometry needs to be loaded."""
         return self.loading_state == LoadingState.METADATA_ONLY

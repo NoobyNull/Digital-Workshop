@@ -24,7 +24,7 @@ class LightingManager:
         self.renderer = renderer
         self.light = None
         self.logger = get_logger(__name__)
-        
+
         # Default light properties
         self.position = [100.0, 100.0, 100.0]  # X, Y, Z
         self.color = [1.0, 1.0, 1.0]  # RGB normalized
@@ -66,7 +66,7 @@ class LightingManager:
             # Clear existing lights first to avoid conflicts
             if self.renderer:
                 self.renderer.RemoveAllLights()
-            
+
             # Create primary key light as positional spotlight with cone
             self.light = vtk.vtkLight()
             try:
@@ -88,7 +88,7 @@ class LightingManager:
             self.light.SetFocalPoint(0, 0, 0)  # Point light at origin
             self.light.SetColor(*self.color)
             self.light.SetIntensity(float(self.intensity))
-            
+
             # Create fill light for better overall illumination
             fill_light = vtk.vtkLight()
             try:
@@ -104,7 +104,7 @@ class LightingManager:
             fill_light.SetPosition(*fill_pos)
             fill_light.SetColor(0.8, 0.8, 0.9)  # Slightly cool fill light
             fill_light.SetIntensity(float(self.intensity * 0.3))  # Lower intensity
-            
+
             # Add lights to renderer
             if self.renderer:
                 self.renderer.AddLight(self.light)

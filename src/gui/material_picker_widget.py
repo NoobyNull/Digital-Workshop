@@ -22,10 +22,10 @@ from PySide6.QtWidgets import (
     QColorDialog,
 )
 
-from core.database_manager import get_database_manager
-from core.logging_config import get_logger
-from gui.material_manager import MaterialManager
-from gui.theme import COLORS
+from src.core.database_manager import get_database_manager
+from src.core.logging_config import get_logger
+from src.gui.material_manager import MaterialManager
+from src.gui.theme import COLORS
 
 
 

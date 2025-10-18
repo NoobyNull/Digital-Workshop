@@ -175,7 +175,7 @@ class LightingControlPanel(QDialog):
     # ---- Public API ----
     # New signal for cone angle
     cone_angle_changed = Signal(float)  # 1-90 degrees
-    
+
     def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float, float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity, cone_angle)"""
         return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity, self._cone_angle
@@ -194,20 +194,20 @@ class LightingControlPanel(QDialog):
             self.x_slider.blockSignals(True)
             self.y_slider.blockSignals(True)
             self.z_slider.blockSignals(True)
-            
+
             # Convert actual position to angle (0-180)
             x_angle = self._pos_to_angle(self._pos_x)
             y_angle = self._pos_to_angle(self._pos_y)
             z_angle = self._pos_to_angle(self._pos_z)
-            
+
             self.x_slider.setValue(int(x_angle))
             self.y_slider.setValue(int(y_angle))
             self.z_slider.setValue(int(z_angle))
-            
+
             self.x_value.setText(f"{x_angle:.0f}°")
             self.y_value.setText(f"{y_angle:.0f}°")
             self.z_value.setText(f"{z_angle:.0f}°")
-            
+
             self.x_slider.blockSignals(False)
             self.y_slider.blockSignals(False)
             self.z_slider.blockSignals(False)
@@ -248,7 +248,7 @@ class LightingControlPanel(QDialog):
         slider.setValue(int(initial))
         slider.setSingleStep(5)
         slider.setPageStep(20)
-        
+
         # Connect to appropriate handler
         if name == "X":
             slider.valueChanged.connect(self._on_x_position_changed)
@@ -256,7 +256,7 @@ class LightingControlPanel(QDialog):
             slider.valueChanged.connect(self._on_y_position_changed)
         elif name == "Z":
             slider.valueChanged.connect(self._on_z_position_changed)
-            
+
         # Apply styling
         slider.setStyleSheet(
             f"""
@@ -279,13 +279,13 @@ class LightingControlPanel(QDialog):
             }}
             """
         )
-        
+
         return slider
 
     def _angle_to_pos(self, angle: float) -> float:
         """Convert angle (0-180) to position (-200 to 200), with 90 = 0."""
         return (angle - 90.0) * (400.0 / 180.0)  # Maps 0->-200, 90->0, 180->200
-    
+
     def _pos_to_angle(self, pos: float) -> float:
         """Convert position (-200 to 200) to angle (0-180), with 0 = 90."""
         return (pos / (400.0 / 180.0)) + 90.0  # Maps -200->0, 0->90, 200->180

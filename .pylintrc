@@ -1,0 +1,183 @@
+[MASTER]
+# Specify a configuration file
+# rcfile=
+
+# Python code to execute, usually for sys.path manipulation such as
+# using the current directory as the initial sys.path element. Be
+# aware that changes to sys.path are not persistent and only last for
+# the lifetime of the running Pylint process.
+# init-hook=
+
+# Append files or directories to the blacklist. They should be base
+# names, not paths.
+ignore=CVS
+
+# Append files or directories to ignore the full path.
+ignore-paths=
+
+# Files or directories matching the regex patterns are skipped. The
+# regex matches against base names, not paths. The default value is
+# file or directory names that do not begin with a '.' and that do
+# not end with a '_pb2.py'.
+ignore-patterns=
+
+# List of module names for which member attributes should not be
+# checked (useful for modules/projects where namespaces are
+# manipulated during runtime and thus existing member attributes
+# cannot be deduced by static analysis). It supports qualified
+# module names, as well as Unix pattern matching.
+ignored-modules=PySide6
+
+# List of class names to ignore when using the disable=fixme option.
+# This is useful for suppressing false positives related to
+# docstrings containing author names such as ".. samp:`Pierre Salagnac`".
+# Default: empty
+# ignored-classes=
+
+# List of module names for which member attributes should not be
+# checked (useful for modules/projects where namespaces are
+# manipulated during runtime and thus existing member attributes
+# cannot be deduced by static analysis). It supports qualified
+# module names, as well as Unix pattern matching.
+extension-pkg-allow-list=PySide6
+
+[MESSAGES CONTROL]
+# Only show warnings with the listed confidence levels. Leave empty to
+# show all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED.
+confidence=
+
+# Disable the message, report, category or checker with the given id(s).
+disable=
+    # PySide6 false positives
+    no-name-in-module,
+    import-error,
+    
+    # Too strict for this project
+    missing-docstring,
+    too-few-public-methods,
+    too-many-instance-attributes,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    
+    # Handled by other tools
+    line-too-long,
+    trailing-whitespace,
+    trailing-newline,
+    missing-final-newline,
+
+[REPORTS]
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class e.g.
+# mypackage.mymodule.MyReporterClass --output-format=text
+output-format=text
+
+# Tells whether to display a full report or only the messages
+reports=yes
+
+# Activate the evaluation score.
+score=yes
+
+[REFACTORING]
+# Maximum number of nested blocks for function / method body
+max-nested-blocks=6
+
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma
+good-names=i,j,k,ex,Run,_,id,x,y,z,df,ax,fig
+
+# Bad variable names which should always be refused, separated by a comma
+bad-names=foo,bar,baz,toto,tutu,tata
+
+# Include a hint for the correct naming format with invalid-name
+include-naming-hint=yes
+
+# Regular expression matching correct function names
+function-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression matching correct variable names
+variable-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression matching correct constant names
+const-rgx=(([A-Z_][A-Z0-9_]*)|([a-z_][a-z0-9_]*)|(__.*__)|(_.*))$
+
+# Regular expression matching correct attribute names
+attr-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression matching correct argument names
+argument-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression matching correct class attribute names
+class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,}|(__.*__)|(_.*))$
+
+# Regular expression matching correct inline iteration names
+inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
+
+# Regular expression matching correct class names
+class-rgx=[A-Z_][a-zA-Z0-9]+$
+
+# Regular expression matching correct module names
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+
+# Regular expression matching correct method names
+method-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression which should only match function or class names that do
+# not require a docstring.
+no-docstring-rgx=^_
+
+# Minimum line length for functions/classes that require docstrings, shorter
+# ones are exempt.
+docstring-min-length=-1
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=100
+
+# Regexp for a line that is allowed to be longer than the limit.
+long-line-comment-only=no
+
+# Allow the body of a class to be on the same line as the declaration if body
+# contains single statement.
+single-line-class-stmt=no
+
+# Allow the body of an if to be on the same line as the test if there is no
+# else.
+single-line-if-stmt=no
+
+[LOGGING]
+# The type of string formatting that logging methods do. `old` for %
+# formatting, `new` for {} formatting and `fstring` for f-strings.
+logging-format-style=old
+
+# Format template used to check logging format string.
+logging-modules=logging
+
+[VARIABLES]
+# List of additional names supposed to be defined in builtins. Remember that
+# you should avoid to define new builtins when possible.
+additional-builtins=
+
+# Tells whether unused global variables should be treated as a violation.
+allow-global-unused-variables=yes
+
+# List of strings which can identify a callback function by name. A callback
+# name must start or end with one of those strings.
+callbacks=cb_,_cb
+
+# A regular expression matching the name of dummy variables (i.e. expected to
+# not be used).
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|^ignored_|^unused_
+
+# Argument names that match this expression will be ignored. Default to name
+# with leading underscore.
+ignored-argument-names=_.*|^ignored_|^unused_
+
+# Tells whether we should check for unused import in __init__ files.
+init-import=no
+
+# List of qualified module names which can have objects that can change
+# sys.modules content.
+overgeneral-exceptions=Exception
+

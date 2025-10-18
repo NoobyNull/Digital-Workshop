@@ -69,7 +69,7 @@ class PerformanceProfile:
 class PerformanceMonitor:
     """
     Performance monitoring system for tracking and optimizing application performance.
-    
+
     Features:
     - Real-time memory usage monitoring
     - Operation timing and bottleneck identification
@@ -77,43 +77,43 @@ class PerformanceMonitor:
     - Performance logging and analysis
     - Memory leak detection
     """
-    
+
     def __init__(self):
         """Initialize the performance monitor."""
         self.logger = get_logger(__name__)
         self.logger.info("Initializing performance monitor")
-        
+
         # Monitoring state
         self.is_monitoring = False
         self.monitoring_thread = None
         self.monitoring_interval = 1.0  # seconds
         self.memory_history = []
         self.max_history_size = 1000
-        
+
         # Operation tracking
         self.active_operations = {}
         self.completed_operations = []
         self.max_operations_history = 500
-        
+
         # Performance profile
         self.performance_profile = self._detect_system_capabilities()
-        
+
         # Performance thresholds
         self.memory_warning_threshold = 80.0  # percent
         self.memory_critical_threshold = 90.0  # percent
         self.operation_slow_threshold = 5.0  # seconds
-        
+
         # Callbacks for performance events
         self.memory_warning_callback = None
         self.memory_critical_callback = None
         self.slow_operation_callback = None
-        
+
         self.logger.info(f"Performance monitor initialized with {self.performance_profile.performance_level.value} profile")
-    
+
     def _detect_system_capabilities(self) -> PerformanceProfile:
         """
         Detect system capabilities and create appropriate performance profile.
-        
+
         Returns:
             Performance profile based on system capabilities
         """
@@ -121,10 +121,10 @@ class PerformanceMonitor:
             # Get system memory
             memory = psutil.virtual_memory()
             total_memory_gb = memory.total / (1024 ** 3)
-            
+
             # Get CPU info
             cpu_count = psutil.cpu_count()
-            
+
             # Determine performance level
             if total_memory_gb < 4 or cpu_count < 4:
                 performance_level = PerformanceLevel.MINIMAL
@@ -154,7 +154,7 @@ class PerformanceMonitor:
                 max_triangles = 1000000
                 thread_count = min(16, cpu_count)
                 chunk_size = 20000
-            
+
             profile = PerformanceProfile(
                 performance_level=performance_level,
                 max_memory_mb=max_memory_mb,
@@ -164,14 +164,14 @@ class PerformanceMonitor:
                 background_thread_count=thread_count,
                 chunk_size=chunk_size
             )
-            
+
             self.logger.info(
                 f"Detected system: {total_memory_gb:.1f}GB RAM, {cpu_count} CPU cores, "
                 f"performance level: {performance_level.value}"
             )
-            
+
             return profile
-            
+
         except Exception as e:
             self.logger.error(f"Failed to detect system capabilities: {str(e)}")
             # Return conservative default profile
@@ -184,28 +184,28 @@ class PerformanceMonitor:
                 background_thread_count=2,
                 chunk_size=1000
             )
-    
+
     def start_monitoring(self) -> None:
         """Start performance monitoring in background thread."""
         if self.is_monitoring:
             self.logger.warning("Performance monitoring is already running")
             return
-        
+
         self.is_monitoring = True
         self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitoring_thread.start()
         self.logger.info("Performance monitoring started")
-    
+
     def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         if not self.is_monitoring:
             return
-        
+
         self.is_monitoring = False
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=2.0)
         self.logger.info("Performance monitoring stopped")
-    
+
     def _monitoring_loop(self) -> None:
         """Background monitoring loop."""
         while self.is_monitoring:
@@ -213,11 +213,11 @@ class PerformanceMonitor:
                 # Record memory stats
                 memory_stats = self._get_memory_stats()
                 self.memory_history.append(memory_stats)
-                
+
                 # Trim history if needed
                 if len(self.memory_history) > self.max_history_size:
                     self.memory_history = self.memory_history[-self.max_history_size:]
-                
+
                 # Check memory thresholds
                 if memory_stats.percent_used >= self.memory_critical_threshold:
                     self.logger.critical(
@@ -233,29 +233,29 @@ class PerformanceMonitor:
                     )
                     if self.memory_warning_callback:
                         self.memory_warning_callback(memory_stats)
-                
+
                 # Sleep until next iteration
                 time.sleep(self.monitoring_interval)
-                
+
             except Exception as e:
                 self.logger.error(f"Error in monitoring loop: {str(e)}")
                 time.sleep(self.monitoring_interval)
-    
+
     def _get_memory_stats(self) -> MemoryStats:
         """
         Get current memory statistics.
-        
+
         Returns:
             Current memory statistics
         """
         try:
             # System memory
             memory = psutil.virtual_memory()
-            
+
             # Process memory
             process = psutil.Process()
             process_memory = process.memory_info().rss / (1024 * 1024)  # MB
-            
+
             return MemoryStats(
                 total_mb=memory.total / (1024 * 1024),
                 used_mb=memory.used / (1024 * 1024),
@@ -263,26 +263,26 @@ class PerformanceMonitor:
                 percent_used=memory.percent,
                 process_mb=process_memory
             )
-            
+
         except Exception as e:
             self.logger.error(f"Failed to get memory stats: {str(e)}")
             return MemoryStats(0, 0, 0, 0, 0)
-    
+
     def start_operation(self, operation_name: str, metadata: Optional[Dict[str, Any]] = None) -> str:
         """
         Start tracking an operation.
-        
+
         Args:
             operation_name: Name of the operation
             metadata: Optional metadata about the operation
-            
+
         Returns:
             Operation ID for tracking
         """
         operation_id = f"{operation_name}_{int(time.time() * 1000000)}"
-        
+
         memory_before = self._get_memory_stats().process_mb
-        
+
         self.active_operations[operation_id] = {
             'operation_name': operation_name,
             'start_time': time.time(),
@@ -290,35 +290,35 @@ class PerformanceMonitor:
             'memory_peak_mb': memory_before,
             'metadata': metadata or {}
         }
-        
+
         self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
         return operation_id
-    
-    def end_operation(self, operation_id: str, success: bool = True, 
+
+    def end_operation(self, operation_id: str, success: bool = True,
                      error_message: Optional[str] = None) -> Optional[OperationMetrics]:
         """
         End tracking an operation and record metrics.
-        
+
         Args:
             operation_id: ID of the operation to end
             success: Whether the operation was successful
             error_message: Error message if operation failed
-            
+
         Returns:
             Operation metrics if found, None otherwise
         """
         if operation_id not in self.active_operations:
             self.logger.warning(f"Operation ID not found: {operation_id}")
             return None
-        
+
         operation = self.active_operations.pop(operation_id)
         end_time = time.time()
         memory_after = self._get_memory_stats().process_mb
-        
+
         # Calculate metrics
         duration_ms = (end_time - operation['start_time']) * 1000
         memory_peak = max(operation['memory_peak_mb'], memory_after)
-        
+
         metrics = OperationMetrics(
             operation_name=operation['operation_name'],
             start_time=operation['start_time'],
@@ -331,12 +331,12 @@ class PerformanceMonitor:
             error_message=error_message,
             metadata=operation['metadata']
         )
-        
+
         # Store in completed operations
         self.completed_operations.append(metrics)
         if len(self.completed_operations) > self.max_operations_history:
             self.completed_operations = self.completed_operations[-self.max_operations_history:]
-        
+
         # Log operation completion
         if success:
             self.logger.info(
@@ -348,7 +348,7 @@ class PerformanceMonitor:
                 f"Operation failed: {metrics.operation_name} after {duration_ms:.1f}ms, "
                 f"error: {error_message}"
             )
-        
+
         # Check for slow operations
         duration_seconds = duration_ms / 1000
         if duration_seconds > self.operation_slow_threshold:
@@ -357,13 +357,13 @@ class PerformanceMonitor:
             )
             if self.slow_operation_callback:
                 self.slow_operation_callback(metrics)
-        
+
         return metrics
-    
+
     def update_operation_peak_memory(self, operation_id: str) -> None:
         """
         Update the peak memory usage for an active operation.
-        
+
         Args:
             operation_id: ID of the operation
         """
@@ -373,90 +373,90 @@ class PerformanceMonitor:
                 self.active_operations[operation_id]['memory_peak_mb'],
                 current_memory
             )
-    
+
     def get_current_memory_stats(self) -> MemoryStats:
         """
         Get current memory statistics.
-        
+
         Returns:
             Current memory statistics
         """
         return self._get_memory_stats()
-    
+
     def get_performance_profile(self) -> PerformanceProfile:
         """
         Get the current performance profile.
-        
+
         Returns:
             Current performance profile
         """
         return self.performance_profile
-    
-    def get_operation_metrics(self, operation_name: Optional[str] = None, 
+
+    def get_operation_metrics(self, operation_name: Optional[str] = None,
                             limit: int = 100) -> List[OperationMetrics]:
         """
         Get metrics for completed operations.
-        
+
         Args:
             operation_name: Filter by operation name (optional)
             limit: Maximum number of metrics to return
-            
+
         Returns:
             List of operation metrics
         """
         metrics = self.completed_operations
-        
+
         if operation_name:
             metrics = [m for m in metrics if m.operation_name == operation_name]
-        
+
         # Return most recent metrics
         return sorted(metrics, key=lambda x: x.end_time, reverse=True)[:limit]
-    
+
     def get_average_operation_time(self, operation_name: str) -> Optional[float]:
         """
         Get average time for an operation type.
-        
+
         Args:
             operation_name: Name of the operation
-            
+
         Returns:
             Average time in milliseconds, or None if no operations found
         """
         metrics = self.get_operation_metrics(operation_name)
         if not metrics:
             return None
-        
+
         successful_metrics = [m for m in metrics if m.success]
         if not successful_metrics:
             return None
-        
+
         return sum(m.duration_ms for m in successful_metrics) / len(successful_metrics)
-    
+
     def detect_memory_leak(self, operation_name: str, threshold_mb: float = 50.0) -> bool:
         """
         Detect potential memory leaks for an operation type.
-        
+
         Args:
             operation_name: Name of the operation to check
             threshold_mb: Memory increase threshold in MB
-            
+
         Returns:
             True if potential memory leak detected
         """
         metrics = self.get_operation_metrics(operation_name, limit=10)
         if len(metrics) < 3:
             return False  # Not enough data
-        
+
         successful_metrics = [m for m in metrics if m.success]
         if len(successful_metrics) < 3:
             return False
-        
+
         # Calculate memory deltas
         memory_deltas = [
-            m.memory_after_mb - m.memory_before_mb 
+            m.memory_after_mb - m.memory_before_mb
             for m in successful_metrics
         ]
-        
+
         # Check if memory is consistently increasing
         avg_delta = sum(memory_deltas) / len(memory_deltas)
         if avg_delta > threshold_mb:
@@ -465,23 +465,23 @@ class PerformanceMonitor:
                 f"average memory increase of {avg_delta:.1f}MB per operation"
             )
             return True
-        
+
         return False
-    
+
     def force_garbage_collection(self) -> None:
         """Force garbage collection and log memory changes."""
         memory_before = self._get_memory_stats().process_mb
         gc.collect()
         memory_after = self._get_memory_stats().process_mb
-        
+
         freed_mb = memory_before - memory_after
         if freed_mb > 1.0:  # Only log if significant
             self.logger.info(f"Garbage collection freed {freed_mb:.1f}MB")
-    
+
     def export_performance_report(self, file_path: str) -> None:
         """
         Export performance report to JSON file.
-        
+
         Args:
             file_path: Path to save the report
         """
@@ -501,13 +501,13 @@ class PerformanceMonitor:
                 'memory_history': [m.__dict__ for m in self.memory_history[-100:]],  # Last 100 entries
                 'operation_summary': {}
             }
-            
+
             # Add operation summaries
             operation_names = set(m.operation_name for m in self.completed_operations)
             for op_name in operation_names:
                 op_metrics = [m for m in self.completed_operations if m.operation_name == op_name]
                 successful_ops = [m for m in op_metrics if m.success]
-                
+
                 if successful_ops:
                     report['operation_summary'][op_name] = {
                         'total_operations': len(op_metrics),
@@ -519,16 +519,16 @@ class PerformanceMonitor:
                             m.memory_after_mb - m.memory_before_mb for m in successful_ops
                         ) / len(successful_ops)
                     }
-            
+
             # Write report
             with open(file_path, 'w') as f:
                 json.dump(report, f, indent=2)
-            
+
             self.logger.info(f"Performance report exported to {file_path}")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to export performance report: {str(e)}")
-    
+
     def cleanup(self) -> None:
         """Clean up resources."""
         self.stop_monitoring()
@@ -545,7 +545,7 @@ _performance_monitor = None
 def get_performance_monitor() -> PerformanceMonitor:
     """
     Get the global performance monitor instance.
-    
+
     Returns:
         Global performance monitor instance
     """
@@ -569,10 +569,10 @@ def stop_performance_monitoring() -> None:
 def monitor_operation(operation_name: str):
     """
     Decorator to monitor function performance.
-    
+
     Args:
         operation_name: Name for the operation
-        
+
     Returns:
         Decorator function
     """
@@ -580,7 +580,7 @@ def monitor_operation(operation_name: str):
         def wrapper(*args, **kwargs):
             monitor = get_performance_monitor()
             operation_id = monitor.start_operation(operation_name)
-            
+
             try:
                 result = func(*args, **kwargs)
                 monitor.end_operation(operation_id, success=True)
@@ -588,6 +588,6 @@ def monitor_operation(operation_name: str):
             except Exception as e:
                 monitor.end_operation(operation_id, success=False, error_message=str(e))
                 raise
-        
+
         return wrapper
     return decorator

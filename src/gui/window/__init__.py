@@ -1,0 +1,1 @@
+# Window-specific management module
