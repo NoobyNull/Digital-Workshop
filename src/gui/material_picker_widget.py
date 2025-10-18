@@ -25,7 +25,6 @@ from PySide6.QtWidgets import (
 from src.core.database_manager import get_database_manager
 from src.core.logging_config import get_logger
 from src.gui.material_manager import MaterialManager
-from src.gui.theme import COLORS
 
 
 
@@ -112,7 +111,6 @@ class MaterialPickerWidget(QDialog):
         self.preview_label = QLabel()
         self.preview_label.setFixedSize(256, 256)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setStyleSheet(f"border: 1px solid {COLORS.border}; background-color: {COLORS.surface};")
         self.preview_label.setScaledContents(True)
         prev_layout.addWidget(self.preview_label, alignment=Qt.AlignCenter)
 
@@ -124,7 +122,6 @@ class MaterialPickerWidget(QDialog):
 
         self.material_info_label = QLabel("Select a material to view texture information.")
         self.material_info_label.setWordWrap(True)
-        self.material_info_label.setStyleSheet(f"color: {COLORS.text}; background-color: {COLORS.surface}; padding: 8px; border-radius: 3px;")
         info_layout.addWidget(self.material_info_label)
 
         # Buttons
@@ -143,62 +140,9 @@ class MaterialPickerWidget(QDialog):
         layout.addWidget(self.info_group)
         layout.addWidget(self.buttons)
 
-    def _apply_theme_styles(self) -> None:
-        # Minimal theme-aware styling
-        self.setStyleSheet(
-            f"""
-            QDialog {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {COLORS.groupbox_border};
-                border-radius: 4px;
-                margin-top: 8px;
-                padding-top: 10px;
-                background-color: {COLORS.groupbox_bg};
-                color: {COLORS.groupbox_text};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-                color: {COLORS.groupbox_title_text};
-            }}
-            QLabel {{
-                color: {COLORS.label_text};
-                background-color: transparent;
-            }}
-            QComboBox, QLineEdit {{
-                background-color: {COLORS.input_bg};
-                color: {COLORS.input_text};
-                border: 1px solid {COLORS.input_border};
-                padding: 6px;
-                border-radius: 3px;
-            }}
-            QComboBox:focus, QLineEdit:focus {{
-                border: 1px solid {COLORS.input_focus_border};
-            }}
-            """
-        )
 
-    def _style_button(self, button: QPushButton) -> None:
-        button.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {COLORS.button_bg};
-                color: {COLORS.button_text};
-                border: 1px solid {COLORS.button_border};
-                padding: 6px 12px;
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS.button_hover_bg};
-                border-color: {COLORS.button_hover_border};
-            }}
-            """
-        )
+
+
 
     # ---- Data loading and updates ----
     def _load_species(self) -> None:
@@ -389,44 +333,21 @@ class MaterialPickerWidget(QDialog):
         name_edit = QLineEdit()
         base_btn = QPushButton("Pick Base Color")
         grain_btn = QPushButton("Pick Grain Color")
-        self._style_button(base_btn)
-        self._style_button(grain_btn)
 
         base_color = QColor(193, 154, 107)  # Oak-ish default
         grain_color = QColor(139, 115, 85)
-
-        def _apply_color_style(btn: QPushButton, qc: QColor) -> None:
-            btn.setStyleSheet(
-                f"""
-                QPushButton {{
-                    background-color: {qc.name()};
-                    color: {COLORS.button_text};
-                    border: 1px solid {COLORS.button_border};
-                    padding: 6px 12px;
-                    border-radius: 4px;
-                }}
-                QPushButton:hover {{
-                    border-color: {COLORS.button_hover_border};
-                }}
-                """
-            )
-
-        _apply_color_style(base_btn, base_color)
-        _apply_color_style(grain_btn, grain_color)
 
         def _pick_base():
             nonlocal base_color
             c = QColorDialog.getColor(base_color, self, "Pick Base Color")
             if c.isValid():
                 base_color = c
-                _apply_color_style(base_btn, base_color)
 
         def _pick_grain():
             nonlocal grain_color
             c = QColorDialog.getColor(grain_color, self, "Pick Grain Color")
             if c.isValid():
                 grain_color = c
-                _apply_color_style(grain_btn, grain_color)
 
         base_btn.clicked.connect(_pick_base)
         grain_btn.clicked.connect(_pick_grain)
@@ -503,28 +424,6 @@ class MaterialPickerWidget(QDialog):
         btns.accepted.connect(_save)
         btns.rejected.connect(dlg.reject)
 
-        # Theme for the dialog
-        dlg.setStyleSheet(
-            f"""
-            QDialog {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QLineEdit, QComboBox, QDoubleSpinBox {{
-                background-color: {COLORS.input_bg};
-                color: {COLORS.input_text};
-                border: 1px solid {COLORS.input_border};
-                padding: 6px;
-                border-radius: 3px;
-            }}
-            QDoubleSpinBox:focus, QLineEdit:focus, QComboBox:focus {{
-                border: 1px solid {COLORS.input_focus_border};
-            }}
-            QLabel {{
-                color: {COLORS.label_text};
-                background-color: transparent;
-            }}
-            """
-        )
+
 
         dlg.exec_()
