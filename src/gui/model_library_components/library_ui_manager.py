@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.logging_config import get_logger
-from src.gui.theme import COLORS, ThemeManager, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 from .file_system_proxy import FileSystemProxyModel

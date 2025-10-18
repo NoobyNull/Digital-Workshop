@@ -14,7 +14,7 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget
 
-from src.gui.theme import COLORS, qss_tabs_lists_labels, SPACING_8, SPACING_16
+from src.gui.theme import qss_tabs_lists_labels, SPACING_8, SPACING_16
 
 
 class CentralWidgetManager:

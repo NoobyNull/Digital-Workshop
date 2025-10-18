@@ -22,7 +22,8 @@ from PyQt3D.Qt3DRender import QClearBuffers, QBuffer, QAttribute, QGeometryRende
 from PyQt3D.Qt3DInput import QInputSettings
 
 from src.core.logging_config import get_logger, log_function_call
-from src.gui.theme import COLORS, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
+from src.gui.theme_core import get_theme_color
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.stl_parser import STLModel
@@ -105,7 +106,7 @@ class Viewer3DWidget(QWidget):
 
         # Create 3D window
         self.view = Qt3DWindow()
-        self.view.defaultFrameGraph().setClearColor(qcolor('canvas_bg'))
+        self.view.defaultFrameGraph().setClearColor(get_theme_color('canvas_bg'))
 
         # Create container widget for the 3D window, wrapped in a framed container for styling
         self.container = QWidget.createWindowContainer(self.view)
@@ -205,9 +206,9 @@ class Viewer3DWidget(QWidget):
 
         # Create material (theme-based)
         self.default_material = QPhongMaterial()
-        self.default_material.setDiffuse(qcolor('model_surface'))
-        self.default_material.setAmbient(qcolor('model_ambient'))
-        self.default_material.setSpecular(qcolor('model_specular'))
+        self.default_material.setDiffuse(get_theme_color('model_surface'))
+        self.default_material.setAmbient(get_theme_color('model_ambient'))
+        self.default_material.setSpecular(get_theme_color('model_specular'))
 
         # Create transform
         self.default_transform = QTransform()
@@ -221,7 +222,7 @@ class Viewer3DWidget(QWidget):
         """Set up configurable lighting for the scene."""
         # Main directional light (like sunlight)
         self.directional_light = QDirectionalLight()
-        self.directional_light.setColor(qcolor('light_color'))
+        self.directional_light.setColor(get_theme_color('light_color'))
         self.directional_light.setIntensity(0.8)
         self.directional_light.setWorldDirection(QVector3D(-1, -1, -1))
 
@@ -231,7 +232,7 @@ class Viewer3DWidget(QWidget):
 
         # Point light (for better illumination)
         self.point_light = QPointLight()
-        self.point_light.setColor(qcolor('light_color'))
+        self.point_light.setColor(get_theme_color('light_color'))
         self.point_light.setIntensity(0.5)
         self.point_light.setConstantAttenuation(1.0)
         self.point_light.setLinearAttenuation(0.1)
@@ -555,9 +556,9 @@ class Viewer3DWidget(QWidget):
 
             # Create material for the model
             material = QPhongMaterial()
-            material.setDiffuse(qcolor('model_surface'))
-            material.setAmbient(qcolor('model_ambient'))
-            material.setSpecular(qcolor('model_specular'))
+            material.setDiffuse(get_theme_color('model_surface'))
+            material.setAmbient(get_theme_color('model_ambient'))
+            material.setSpecular(get_theme_color('model_specular'))
             material.setShininess(100.0)
 
             # Create transform
@@ -767,10 +768,9 @@ class Viewer3DWidget(QWidget):
         Safe to call multiple times.
         """
         try:
-            from gui.theme import qcolor  # late import to reflect current theme
             # Update canvas background color
             if hasattr(self, "view"):
-                self.view.defaultFrameGraph().setClearColor(qcolor('canvas_bg'))
+                self.view.defaultFrameGraph().setClearColor(get_theme_color('canvas_bg'))
             # Material Design theme is applied globally via ThemeService
             # No need to apply hardcoded stylesheets here
         except Exception:

@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QFrame
 from PySide6.QtGui import QCursor
 
-from src.gui.theme import hex_to_rgb, COLORS
+from src.gui.theme import hex_to_rgb
 
 
 class SnapOverlayLayer(QWidget):
@@ -47,11 +47,8 @@ class SnapOverlayLayer(QWidget):
             "top": QFrame(self),
             "bottom": QFrame(self),
         }
-        # Theme-aware colors
-        try:
-            r, g, b = hex_to_rgb(COLORS.primary)
-        except Exception:
-            r, g, b = (0, 120, 212)
+        # Theme-aware colors (use default primary blue)
+        r, g, b = (0, 120, 212)  # Default primary blue
         self._rgba_inactive = f"rgba({r}, {g}, {b}, 0.12)"
         self._rgba_active = f"rgba({r}, {g}, {b}, 0.22)"
         self._rgba_border = f"rgba({r}, {g}, {b}, 0.85)"
