@@ -424,12 +424,9 @@ class MainWindow(QMainWindow):
         self._snap_handlers[key] = handler
 
     def _iter_docks(self) -> list[QDockWidget]:
-        docks: list[QDockWidget] = []
-        for name in ("model_library_dock", "properties_dock", "metadata_dock"):
-            d = getattr(self, name, None)
-            if isinstance(d, QDockWidget):
-                docks.append(d)
-        return docks
+        """Get all dock widgets in the main window."""
+        # Use findChildren to get ALL dock widgets, not just the known ones
+        return self.findChildren(QDockWidget)
 
     def _enable_snap_handlers(self, enable: bool) -> None:
         """Enable or disable snap overlay handlers for all docks."""
