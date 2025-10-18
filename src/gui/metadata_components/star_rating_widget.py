@@ -11,7 +11,7 @@ from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPolygonF
 from PySide6.QtWidgets import QWidget
 
 from src.core.logging_config import get_logger
-from src.gui.theme import qcolor
+from src.gui.theme_core import get_theme_color
 
 
 class StarRatingWidget(QWidget):
@@ -46,9 +46,9 @@ class StarRatingWidget(QWidget):
         self.star_count = 5
 
         # Star colors (from theme)
-        self.filled_color = qcolor('star_filled')
-        self.empty_color = qcolor('star_empty')
-        self.hover_color = qcolor('star_hover')
+        self.filled_color = get_theme_color('star_filled')
+        self.empty_color = get_theme_color('star_empty')
+        self.hover_color = get_theme_color('star_hover')
 
         # Set widget size
         self.setFixedSize(

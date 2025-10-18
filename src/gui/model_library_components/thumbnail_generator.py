@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, QPointF, QRectF, QSize
 from PySide6.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
 
 from src.core.logging_config import get_logger
-from src.gui.theme import qcolor
+from src.gui.theme_core import get_theme_color
 
 
 logger = get_logger(__name__)
@@ -56,36 +56,36 @@ class ThumbnailGenerator:
 
             tri_count = model_info.get("triangle_count", 0)
             if tri_count < 1000:
-                painter.setPen(QPen(qcolor("text_muted"), 1))
+                painter.setPen(QPen(get_theme_color("text_muted"), 1))
                 rect = QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w, norm_h)
                 painter.drawRect(rect)
                 painter.drawLine(rect.topLeft(), rect.bottomRight())
                 painter.drawLine(rect.topRight(), rect.bottomLeft())
             elif tri_count < 10000:
-                painter.setPen(QPen(qcolor("edge_color"), 1))
-                c = qcolor("model_surface")
+                painter.setPen(QPen(get_theme_color("edge_color"), 1))
+                c = get_theme_color("model_surface")
                 c.setAlpha(180)
                 painter.setBrush(QBrush(c))
                 rect = QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w, norm_h)
                 painter.drawRect(rect)
-                c2 = qcolor("text_inverse")
+                c2 = get_theme_color("text_inverse")
                 c2.setAlpha(100)
                 painter.setBrush(QBrush(c2))
                 painter.drawRect(QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3))
             else:
-                painter.setPen(QPen(qcolor("edge_color"), 1))
-                c3 = qcolor("primary")
+                painter.setPen(QPen(get_theme_color("edge_color"), 1))
+                c3 = get_theme_color("primary")
                 c3.setAlpha(180)
                 painter.setBrush(QBrush(c3))
                 radius = min(norm_w, norm_h) / 2
                 painter.drawEllipse(QPointF(cx, cy), radius, radius)
-                painter.setPen(QPen(qcolor("primary_text"), 1))
+                painter.setPen(QPen(get_theme_color("primary_text"), 1))
                 painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.7, radius * 0.7)
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.4, radius * 0.4)
 
-            painter.setPen(QPen(qcolor("primary_text"), 1))
-            c4 = qcolor("model_ambient")
+            painter.setPen(QPen(get_theme_color("primary_text"), 1))
+            c4 = get_theme_color("model_ambient")
             c4.setAlpha(200)
             painter.setBrush(QBrush(c4))
             indicator_rect = QRectF(self.size.width() - 25, self.size.height() - 15, 20, 12)
