@@ -14,8 +14,6 @@ from typing import Optional, List
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget
 
-from src.gui.theme import ThemeManager
-
 
 class DockManager:
     """
@@ -68,21 +66,7 @@ class DockManager:
                 self._setup_dock_context_menu(self.model_library_dock, Qt.LeftDockWidgetArea)
             except Exception:
                 pass
-            # Ensure dock header uses theme variables regardless of global QSS ordering
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_ml = """
-                    QDockWidget#ModelLibraryDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.model_library_dock, css_text=_dock_css_ml)
-                tm.apply_stylesheet(self.model_library_dock)
-            except Exception:
-                pass
+            # Let qt-material handle all dock styling
             self.logger.info("Model library widget created successfully")
 
         except ImportError as e:
@@ -153,21 +137,7 @@ class DockManager:
             self._setup_dock_context_menu(self.properties_dock, Qt.RightDockWidgetArea)
         except Exception:
             pass
-        # Ensure properties dock header uses theme variables
-        try:
-            tm = ThemeManager.instance()
-            _dock_css_props = """
-                QDockWidget#PropertiesDock::title {
-                    background-color: {{dock_title_bg}};
-                    color: {{text}};
-                    border-bottom: 1px solid {{dock_title_border}};
-                    padding: 6px;
-                }
-            """
-            tm.register_widget(self.properties_dock, css_text=_dock_css_props)
-            tm.apply_stylesheet(self.properties_dock)
-        except Exception:
-            pass
+        # Let qt-material handle all dock styling
 
         # Default to right side but user can move anywhere
         self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
@@ -243,21 +213,7 @@ class DockManager:
                 self._setup_dock_context_menu(self.metadata_dock, Qt.BottomDockWidgetArea)
             except Exception:
                 pass
-            # Ensure metadata dock header uses theme variables
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_meta = """
-                    QDockWidget#MetadataDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.metadata_dock, css_text=_dock_css_meta)
-                tm.apply_stylesheet(self.metadata_dock)
-            except Exception:
-                pass
+            # Let qt-material handle all dock styling
             self.logger.info("Metadata editor widget created successfully (tabbed)")
         except ImportError as e:
             self.logger.warning(f"Failed to import metadata editor widget: {str(e)}")
@@ -493,21 +449,7 @@ class DockManager:
 
             self.main_window.metadata_dock.setWidget(self.main_window.metadata_tabs)
 
-            # Ensure metadata dock header uses theme variables
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_meta = """
-                    QDockWidget#MetadataDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.main_window.metadata_dock, css_text=_dock_css_meta)
-                tm.apply_stylesheet(self.main_window.metadata_dock)
-            except Exception:
-                pass
+            # Let qt-material handle all dock styling
             self.logger.info("Metadata editor widget created successfully (restored)")
         except Exception as e:
             self.logger.warning(f"Failed to create MetadataEditorWidget during restore: {e}")
@@ -617,21 +559,7 @@ class DockManager:
 
             self.main_window.model_library_dock.setWidget(self.main_window.model_library_widget)
 
-            # Theme the dock header
-            try:
-                tm = ThemeManager.instance()
-                _dock_css_ml = """
-                    QDockWidget#ModelLibraryDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.main_window.model_library_dock, css_text=_dock_css_ml)
-                tm.apply_stylesheet(self.main_window.model_library_dock)
-            except Exception:
-                pass
+            # Let qt-material handle all dock styling
         except Exception as e:
             # Fallback widget
             lib_placeholder = QTextEdit()
