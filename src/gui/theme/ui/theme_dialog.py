@@ -54,6 +54,9 @@ class ThemeDialog(QDialog):
         self.setMinimumWidth(600)
         self.setMinimumHeight(500)
 
+        # Use native title bar (removed frameless window flag)
+        # This allows the OS to handle the title bar and window controls
+
         try:
             self._setup_ui()
             self._load_current_theme()
@@ -294,6 +297,16 @@ class ThemeDialog(QDialog):
             self._load_current_theme()
             self.preset_combo.setCurrentIndex(0)
             self.theme_applied.emit("light")
+
+    def _toggle_maximize(self) -> None:
+        """Toggle window maximize/restore state."""
+        try:
+            if self.isMaximized():
+                self.showNormal()
+            else:
+                self.showMaximized()
+        except Exception:
+            pass
 
     def _on_toggle_system_detection(self) -> None:
         """Toggle system theme detection."""

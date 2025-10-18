@@ -29,12 +29,12 @@ class SearchEngine:
     search history, and saved searches functionality.
     """
 
-    def __init__(self, db_path: str = "data/3dmm.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize the search engine.
 
         Args:
-            db_path: Path to the SQLite database file
+            db_path: Path to the SQLite database file. If None, uses AppData location.
         """
         self.db_manager = get_database_manager(db_path)
         self._lock = threading.Lock()
@@ -737,12 +737,12 @@ _search_engine: Optional[SearchEngine] = None
 _search_lock = threading.Lock()
 
 
-def get_search_engine(db_path: str = "data/3dmm.db") -> SearchEngine:
+def get_search_engine(db_path: Optional[str] = None) -> SearchEngine:
     """
     Get the singleton search engine instance.
 
     Args:
-        db_path: Path to the SQLite database file
+        db_path: Path to the SQLite database file. If None, uses AppData location.
 
     Returns:
         SearchEngine instance

@@ -9,7 +9,10 @@ and categories with proper error handling and logging integration.
 """
 
 import threading
+from pathlib import Path
 from typing import Optional
+
+from PySide6.QtCore import QStandardPaths
 
 from .logging_config import get_logger
 
@@ -24,12 +27,31 @@ _database_manager: Optional[DatabaseManager] = None
 _db_lock = threading.Lock()
 
 
-def get_database_manager(db_path: str = "data/3dmm.db") -> DatabaseManager:
+def _get_default_db_path() -> str:
+    """
+    Get the default database path using AppData location.
+
+    This ensures the database is always in the same location regardless
+    of the current working directory.
+
+    Returns:
+        Absolute path to the database file
+    """
+    try:
+        app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+        app_data.mkdir(parents=True, exist_ok=True)
+        return str(app_data / "3dmm.db")
+    except Exception as e:
+        logger.warning(f"Failed to get AppData path: {e}, falling back to relative path")
+        return "data/3dmm.db"
+
+
+def get_database_manager(db_path: Optional[str] = None) -> DatabaseManager:
     """
     Get the singleton database manager instance.
 
     Args:
-        db_path: Path to the SQLite database file
+        db_path: Path to the SQLite database file. If None, uses AppData location.
 
     Returns:
         DatabaseManager instance
@@ -38,6 +60,9 @@ def get_database_manager(db_path: str = "data/3dmm.db") -> DatabaseManager:
 
     with _db_lock:
         if _database_manager is None:
+            # Use AppData path if no path provided
+            if db_path is None:
+                db_path = _get_default_db_path()
             _database_manager = DatabaseManager(db_path)
 
         return _database_manager

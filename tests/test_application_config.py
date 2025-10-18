@@ -73,13 +73,60 @@ class TestApplicationConfig(unittest.TestCase):
     def test_immutability(self):
         """Test that configuration is immutable."""
         config = ApplicationConfig.get_default()
-        
+
         # Attempting to modify should raise an exception
         with self.assertRaises(Exception):
             config.name = "New Name"
-        
+
         with self.assertRaises(Exception):
             config.version = "2.0.0"
+
+    def test_memory_override_settings(self):
+        """Test memory override configuration fields."""
+        config = ApplicationConfig.get_default()
+        self.assertFalse(config.use_manual_memory_override)
+        self.assertIsNone(config.manual_memory_override_mb)
+        self.assertEqual(config.min_memory_specification_mb, 512)
+        self.assertEqual(config.system_memory_reserve_percent, 20)
+
+    def test_effective_memory_limit_auto_mode(self):
+        """Test smart memory calculation in auto mode."""
+        config = ApplicationConfig.get_default()
+        available_mb = 6144  # 6GB available
+        total_mb = 8192     # 8GB total
+        limit = config.get_effective_memory_limit_mb(available_mb, total_mb)
+        # min(1024, 3072, 6553) = 1024
+        self.assertEqual(limit, 1024)
+
+    def test_effective_memory_limit_manual_override(self):
+        """Test manual override takes precedence."""
+        config = ApplicationConfig(
+            use_manual_memory_override=True,
+            manual_memory_override_mb=2048
+        )
+        available_mb = 6144
+        total_mb = 8192
+        limit = config.get_effective_memory_limit_mb(available_mb, total_mb)
+        # Should return manual override value
+        self.assertEqual(limit, 2048)
+
+    def test_effective_memory_limit_high_end_system(self):
+        """Test memory calculation on high-end system (128GB)."""
+        config = ApplicationConfig.get_default()
+        available_mb = 82874   # ~80GB available
+        total_mb = 130785      # ~128GB total
+        limit = config.get_effective_memory_limit_mb(available_mb, total_mb)
+        # min(1024, 41437, 104628) = 1024
+        self.assertEqual(limit, 1024)
+
+    def test_effective_memory_limit_respects_minimum(self):
+        """Test that calculated limit respects minimum."""
+        config = ApplicationConfig.get_default()
+        available_mb = 256  # Very low available memory
+        total_mb = 512      # Very low total
+        limit = config.get_effective_memory_limit_mb(available_mb, total_mb)
+        # Should not go below min_memory_specification_mb (512)
+        self.assertGreaterEqual(limit, config.min_memory_specification_mb)
 
 
 if __name__ == "__main__":

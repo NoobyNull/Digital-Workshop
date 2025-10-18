@@ -48,6 +48,9 @@ class MaterialPickerWidget(QDialog):
         self.setObjectName("MaterialPickerWidget")
         self.setModal(True)
 
+        # Use native title bar (removed frameless window flag)
+        # This allows the OS to handle the title bar and window controls
+
         self.db = db_manager or get_database_manager()
         self.material_manager = material_manager or MaterialManager(self.db)
         self.model_format = model_format  # Store model format
@@ -65,6 +68,16 @@ class MaterialPickerWidget(QDialog):
         if self.species_combo.count() > 0:
             self.species_combo.setCurrentIndex(0)
             self._update_preview_and_properties()
+
+    def _toggle_maximize(self) -> None:
+        """Toggle window maximize/restore state."""
+        try:
+            if self.isMaximized():
+                self.showNormal()
+            else:
+                self.showMaximized()
+        except Exception:
+            pass
 
     # ---- UI construction ----
     def _build_ui(self) -> None:

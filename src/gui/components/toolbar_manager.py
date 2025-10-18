@@ -155,15 +155,8 @@ class ToolbarManager:
             "Reset the 3D view to default",
         )
 
-        # Add theme switcher
-        toolbar.addSeparator()
-        try:
-            from src.gui.theme.ui.simple_theme_switcher import SimpleThemeSwitcher
-            self.theme_switcher = SimpleThemeSwitcher(self.main_window)
-            toolbar.addWidget(self.theme_switcher)
-            self.logger.debug("Theme switcher added to toolbar")
-        except Exception as e:
-            self.logger.warning(f"Failed to add theme switcher: {e}")
+        # Theme switcher moved to Preferences > Theming tab
+        # (removed from toolbar to reduce clutter)
 
         # Show toolbar mode in status bar for immediate visual feedback
         try:

@@ -110,6 +110,64 @@ class PerformanceMonitor:
 
         self.logger.info(f"Performance monitor initialized with {self.performance_profile.performance_level.value} profile")
 
+    def _detect_gpu_info(self) -> Dict[str, Any]:
+        """
+        Detect GPU information including VRAM.
+
+        Returns:
+            Dictionary with GPU info: has_dedicated_gpu, vram_mb, gpu_name
+        """
+        try:
+            from src.core.hardware_acceleration import HardwareAccelerator
+            accelerator = HardwareAccelerator()
+
+            # Check if CUDA is available (dedicated GPU)
+            if accelerator.is_cuda_available():
+                try:
+                    import torch
+                    vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))
+                    gpu_name = torch.cuda.get_device_name(0)
+                    return {
+                        'has_dedicated_gpu': True,
+                        'vram_mb': vram_mb,
+                        'gpu_name': gpu_name
+                    }
+                except Exception:
+                    pass
+
+            # Check for integrated GPU (shared memory)
+            try:
+                import wmi
+                gpu_list = wmi.WMI().Win32_VideoController()
+                for gpu in gpu_list:
+                    if gpu.Name and any(x in gpu.Name for x in ['Intel', 'AMD', 'Radeon']):
+                        memory = psutil.virtual_memory()
+                        shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
+                        return {
+                            'has_dedicated_gpu': False,
+                            'vram_mb': shared_vram_mb,
+                            'gpu_name': gpu.Name
+                        }
+            except Exception:
+                pass
+
+            # Fallback: assume integrated GPU with 25% of system RAM
+            memory = psutil.virtual_memory()
+            shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
+            return {
+                'has_dedicated_gpu': False,
+                'vram_mb': shared_vram_mb,
+                'gpu_name': 'Unknown (Integrated)'
+            }
+        except Exception as e:
+            self.logger.debug(f"Failed to detect GPU info: {e}")
+            memory = psutil.virtual_memory()
+            return {
+                'has_dedicated_gpu': False,
+                'vram_mb': int(memory.total / (1024 ** 2) * 0.25),
+                'gpu_name': 'Unknown'
+            }
+
     def _detect_system_capabilities(self) -> PerformanceProfile:
         """
         Detect system capabilities and create appropriate performance profile.
@@ -120,36 +178,45 @@ class PerformanceMonitor:
         try:
             # Get system memory
             memory = psutil.virtual_memory()
+            total_memory_mb = int(memory.total / (1024 ** 2))
+            available_memory_mb = int(memory.available / (1024 ** 2))
             total_memory_gb = memory.total / (1024 ** 3)
 
             # Get CPU info
             cpu_count = psutil.cpu_count()
 
+            # Get GPU info
+            gpu_info = self._detect_gpu_info()
+
+            # Use smart memory calculation from ApplicationConfig
+            from .application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            max_memory_mb = config.get_effective_memory_limit_mb(
+                available_memory_mb=available_memory_mb,
+                total_system_memory_mb=total_memory_mb
+            )
+
             # Determine performance level
             if total_memory_gb < 4 or cpu_count < 4:
                 performance_level = PerformanceLevel.MINIMAL
-                max_memory_mb = 1024  # 1GB
                 cache_size_mb = 100
                 max_triangles = 50000
                 thread_count = 2
                 chunk_size = 1000
             elif total_memory_gb < 8 or cpu_count < 8:
                 performance_level = PerformanceLevel.STANDARD
-                max_memory_mb = 1536  # 1.5GB
                 cache_size_mb = 256
                 max_triangles = 100000
                 thread_count = 4
                 chunk_size = 5000
             elif total_memory_gb < 16 or cpu_count < 16:
                 performance_level = PerformanceLevel.HIGH
-                max_memory_mb = 2048  # 2GB
                 cache_size_mb = 512
                 max_triangles = 500000
                 thread_count = 8
                 chunk_size = 10000
             else:
                 performance_level = PerformanceLevel.ULTRA
-                max_memory_mb = 3072  # 3GB
                 cache_size_mb = 1024
                 max_triangles = 1000000
                 thread_count = min(16, cpu_count)
@@ -166,8 +233,10 @@ class PerformanceMonitor:
             )
 
             self.logger.info(
-                f"Detected system: {total_memory_gb:.1f}GB RAM, {cpu_count} CPU cores, "
-                f"performance level: {performance_level.value}"
+                f"Detected system: {total_memory_gb:.1f}GB RAM ({available_memory_mb}MB available), "
+                f"{cpu_count} CPU cores, GPU: {gpu_info['gpu_name']} ({gpu_info['vram_mb']}MB VRAM), "
+                f"performance level: {performance_level.value}, "
+                f"memory limit: {max_memory_mb}MB"
             )
 
             return profile

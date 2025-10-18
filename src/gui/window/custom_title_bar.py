@@ -94,16 +94,43 @@ class CustomTitleBar(QWidget):
             service = ThemeService.instance()
             theme, _ = service.get_current_theme()
 
-            # Set background color based on theme
+            # Set colors based on theme
             if theme == "dark":
                 bg_color = "#1e1e1e"
+                text_color = "#ffffff"
+                border_color = "#333333"
             else:
                 bg_color = "#f5f5f5"
+                text_color = "#000000"
+                border_color = "#cccccc"
 
+            # Update title label color
+            self.title_label.setStyleSheet(f"color: {text_color}; font-weight: bold;")
+
+            # Update button styles
+            button_stylesheet = f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {text_color};
+                    border: none;
+                    font-size: 14px;
+                    padding: 0px;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(255, 255, 255, 0.1);
+                }}
+                QPushButton:pressed {{
+                    background-color: rgba(255, 255, 255, 0.2);
+                }}
+            """
+            for btn in [self.minimize_btn, self.maximize_btn, self.close_btn]:
+                btn.setStyleSheet(button_stylesheet)
+
+            # Update title bar background
             self.setStyleSheet(f"""
                 CustomTitleBar {{
                     background-color: {bg_color};
-                    border-bottom: 1px solid #cccccc;
+                    border-bottom: 1px solid {border_color};
                 }}
             """)
         except Exception:
@@ -111,7 +138,7 @@ class CustomTitleBar(QWidget):
             self.setStyleSheet("""
                 CustomTitleBar {
                     background-color: #1e1e1e;
-                    border-bottom: 1px solid #cccccc;
+                    border-bottom: 1px solid #333333;
                 }
             """)
 

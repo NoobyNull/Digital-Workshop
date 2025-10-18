@@ -148,17 +148,16 @@ class MenuManager:
         reload_stylesheet_action.triggered.connect(self._reload_stylesheet_action)
         view_menu.addAction(reload_stylesheet_action)
 
-        # Theme Manager
-        theme_manager_action = QAction("Theme Manager...", self.main_window)
-        theme_manager_action.setStatusTip("Open Theme Manager")
-        theme_manager_action.triggered.connect(self._show_theme_manager)
-        view_menu.addAction(theme_manager_action)
-
         # Layout Edit Mode toggle
         view_menu.addSeparator()
         self.toggle_layout_edit_action = QAction("Layout Edit Mode", self.main_window)
         self.toggle_layout_edit_action.setCheckable(True)
+        try:
+            self.toggle_layout_edit_action.setShortcut(QKeySequence("Ctrl+Shift+E"))
+        except Exception:
+            pass
         self.toggle_layout_edit_action.setStatusTip("Enable rearranging docks. When off, docks are locked in place but still resize with the window.")
+        self.toggle_layout_edit_action.setToolTip("Toggle Layout Edit Mode (Ctrl+Shift+E)")
         self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
         view_menu.addAction(self.toggle_layout_edit_action)
 
@@ -288,11 +287,6 @@ class MenuManager:
         """Handle reload stylesheet action."""
         if hasattr(self.main_window, '_reload_stylesheet_action'):
             self.main_window._reload_stylesheet_action()
-
-    def _show_theme_manager(self) -> None:
-        """Handle show theme manager action."""
-        if hasattr(self.main_window, '_show_theme_manager'):
-            self.main_window._show_theme_manager()
 
     def _set_layout_edit_mode(self, enabled: bool) -> None:
         """Handle layout edit mode toggle."""

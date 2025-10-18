@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QDialog, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLabel, QPushButton, QLineEdit, QColorDialog, QTableWidget, QTableWidgetItem,
     QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox,
-    QComboBox, QListWidget, QListWidgetItem, QScrollArea
+    QComboBox, QListWidget, QListWidgetItem, QScrollArea, QSlider
 )
 
 from src.gui.theme import (
@@ -45,6 +45,11 @@ class PreferencesDialog(QDialog):
         self.setModal(True)
         self.setMinimumWidth(560)
         self.on_reset_layout = on_reset_layout
+
+        # Remove native title bar and frame - we'll use custom title bar
+        # Use native title bar (removed frameless window flag)
+        # This allows the OS to handle the title bar and window controls
+
         self._setup_ui()
 
     def _setup_ui(self):
@@ -57,14 +62,16 @@ class PreferencesDialog(QDialog):
         self.display_tab = DisplayTab(on_reset_layout=self.on_reset_layout)
         self.system_tab = PlaceholderTab("System settings (coming soon)")
         self.files_tab = FilesTab()
-        self.thumbnail_tab = ThumbnailSettingsTab()
+        self.image_preferences_tab = ImagePreferencesTab()
+        self.performance_tab = PerformanceSettingsTab()
 
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
 
         self.tabs.addTab(self.display_tab, "Display")
         self.tabs.addTab(self.system_tab, "System")
         self.tabs.addTab(self.files_tab, "Files")
-        self.tabs.addTab(self.thumbnail_tab, "Thumbnails")
+        self.tabs.addTab(self.image_preferences_tab, "Image Preferences")
+        self.tabs.addTab(self.performance_tab, "Performance")
         self.tabs.addTab(self.theming_tab, "Theming")
 
         # Dialog action buttons
@@ -86,6 +93,16 @@ class PreferencesDialog(QDialog):
         self.btn_save.clicked.connect(self._save_and_notify)
         self.btn_reset.clicked.connect(self._reset_to_defaults)
 
+    def _toggle_maximize(self) -> None:
+        """Toggle window maximize/restore state."""
+        try:
+            if self.isMaximized():
+                self.showNormal()
+            else:
+                self.showMaximized()
+        except Exception:
+            pass
+
     def _on_theme_live_applied(self):
         # Bubble up to MainWindow so it can re-render stylesheets on key widgets
         self.theme_changed.emit()
@@ -94,9 +111,13 @@ class PreferencesDialog(QDialog):
         try:
             save_theme_to_settings()
 
-            # Save thumbnail settings
-            if hasattr(self, 'thumbnail_tab'):
-                self.thumbnail_tab.save_settings()
+            # Save image preferences settings
+            if hasattr(self, 'image_preferences_tab'):
+                self.image_preferences_tab.save_settings()
+
+            # Save performance settings
+            if hasattr(self, 'performance_tab'):
+                self.performance_tab.save_settings()
 
             QMessageBox.information(self, "Saved", "All settings saved successfully.")
         except Exception as e:
@@ -118,9 +139,11 @@ class PreferencesDialog(QDialog):
 
 class ThemingTab(QWidget):
     """
-    Theming editor that lists all color variables with editable hex values
-    and a color picker per row. Applies live changes via on_live_apply callback.
-    Also includes qt-material theme variant selection.
+    Simplified theming tab with Material Design theme selection.
+
+    Provides options to select:
+    - Theme mode: Dark, Light, or Auto (system)
+    - Material Design color variant
     """
 
     def __init__(self, on_live_apply=None, parent=None):
@@ -129,118 +152,30 @@ class ThemingTab(QWidget):
         self.service = None
         self._setup_ui()
 
-    def _normalize_hex(self, val: str) -> str:
-        """
-        Normalize user-entered hex to #rrggbb; returns original value for CSS keywords.
-        Returns empty string on invalid hex.
-        """
-        if not val:
-            return ""
-        s = val.strip()
-        lower = s.lower()
 
-        # Pass through CSS color functions and keywords without modification
-        css_keywords = {"transparent", "inherit", "initial", "unset", "currentcolor"}
-        if lower.startswith("rgba(") or lower.startswith("rgb(") or lower in css_keywords:
-            return s
-
-        # Handle hex colors
-        if not s.startswith("#"):
-            s = "#" + s
-        # Accept #rgb and #rrggbb
-        if len(s) == 4:
-            r, g, b = s[1], s[2], s[3]
-            s = f"#{r}{r}{g}{g}{b}{b}"
-        if len(s) != 7:
-            return ""
-        try:
-            int(s[1:], 16)
-            return s.lower()
-        except Exception:
-            return ""
-
-    def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
-        """Update the 'Pick…' button swatch to match the given hex value using theme variables."""
-        hex_val = self._normalize_hex(val)
-        # For CSS keywords, show neutral style
-        if not hex_val or not hex_val.startswith("#"):
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
-            )
-            return
-        try:
-            r, g, b = hex_to_rgb(hex_val)
-            brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            text_color = color_hex('text') if brightness >= 0.6 else color_hex('text_inverse')
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; border: 1px solid {color_hex('border')}; }}"
-            )
-        except Exception:
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
-            )
-
-    def _update_pick_button_color(self, btn: QPushButton, val: str) -> None:
-        """Update the pick button's background to match the given hex value using theme variables."""
-        hex_val = self._normalize_hex(val)
-        if not hex_val:
-            # fallback neutral styling when invalid (using theme variables)
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
-            )
-            return
-        try:
-            r, g, b = hex_to_rgb(hex_val)
-            # Perceived brightness to choose legible text color
-            brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            text_color = color_hex('text') if brightness >= 0.6 else color_hex('text_inverse')
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {hex_val}; color: {text_color}; border: 1px solid {color_hex('border')}; }}"
-            )
-        except Exception:
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {color_hex('surface')}; color: {color_hex('text')}; border: 1px solid {color_hex('border')}; }}"
-            )
 
     def _setup_ui(self):
+        """Setup simplified theming UI with Material Design theme selector."""
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
-        hdr = QLabel("Adjust UI colors. Changes apply immediately. Click 'Save' in Preferences to persist.")
+        # Header
+        hdr = QLabel("Select your preferred theme mode and color variant.")
         hdr.setWordWrap(True)
         layout.addWidget(hdr)
 
-        # Qt-Material theme variant selector
+        # Qt-Material theme selector
         self._setup_material_theme_selector(layout)
 
-        # Live apply toggle
-        self.live_apply_checkbox = QCheckBox("Apply changes live")
-        self.live_apply_checkbox.setChecked(True)
-        layout.addWidget(self.live_apply_checkbox)
+        # Add stretch to push everything to the top
+        layout.addStretch()
 
-        # Table for colors
-        self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels(["Name", "Hex", "Pick"])
-        self.table.horizontalHeader().setStretchLastSection(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setShowGrid(True)
-        layout.addWidget(self.table)
-
-        # Buttons row
-        row = QHBoxLayout()
-        row.addStretch(1)
-        self.btn_apply_all = QPushButton("Apply Now")
-        row.addWidget(self.btn_apply_all)
-        layout.addLayout(row)
-
-        self.btn_apply_all.clicked.connect(self._apply_from_table)
-
-        self.reload_from_current()
+        # Apply theme styling
+        self._apply_theme_styling()
 
     def _setup_material_theme_selector(self, parent_layout: QVBoxLayout) -> None:
-        """Setup qt-material theme variant selector."""
+        """Setup qt-material theme mode and variant selector."""
         try:
             from src.gui.theme.simple_service import ThemeService
             self.service = ThemeService.instance()
@@ -250,14 +185,32 @@ class ThemingTab(QWidget):
             mat_layout = QVBoxLayout(mat_group)
             mat_layout.setContentsMargins(0, 0, 0, 0)
 
-            mat_label = QLabel("<b>Qt-Material Theme Variant</b>")
+            mat_label = QLabel("<b>Qt-Material Theme</b>")
             mat_layout.addWidget(mat_label)
 
+            # Theme mode selector (Dark/Light/Auto)
+            mode_layout = QHBoxLayout()
+            mode_layout.addWidget(QLabel("Mode:"))
+
+            self.mode_combo = QComboBox()
+            self.mode_combo.addItem("Dark", "dark")
+            self.mode_combo.addItem("Light", "light")
+            self.mode_combo.addItem("Auto (System)", "auto")
+
+            # Set current mode
+            current_theme, _ = self.service.get_current_theme()
+            self.mode_combo.setCurrentIndex({"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0))
+            self.mode_combo.currentIndexChanged.connect(self._on_theme_mode_changed)
+
+            mode_layout.addWidget(self.mode_combo)
+            mode_layout.addStretch()
+            mat_layout.addLayout(mode_layout)
+
+            # Variant selector
             mat_desc = QLabel("Select a Material Design color variant:")
             mat_desc.setWordWrap(True)
             mat_layout.addWidget(mat_desc)
 
-            # Variant selector
             variant_layout = QHBoxLayout()
             variant_layout.addWidget(QLabel("Variant:"))
 
@@ -296,20 +249,67 @@ class ThemingTab(QWidget):
         except Exception:
             pass
 
-    def _on_material_variant_changed(self, variant_name: str) -> None:
-        """Handle material variant change."""
+    def _apply_theme_styling(self) -> None:
+        """Apply theme styling to the tab."""
         try:
-            if not self.service or not variant_name:
+            from src.gui.theme import ThemeManager
+            tm = ThemeManager.instance()
+
+            # Get theme colors
+            bg_color = tm.hex("window_bg")
+            text_color = tm.hex("text")
+
+            # Apply stylesheet to this widget
+            stylesheet = f"""
+                QWidget {{
+                    background-color: {bg_color};
+                    color: {text_color};
+                }}
+                QLabel {{
+                    color: {text_color};
+                }}
+                QComboBox {{
+                    background-color: {tm.hex("surface")};
+                    color: {text_color};
+                    border: 1px solid {tm.hex("border")};
+                    padding: 4px;
+                    border-radius: 2px;
+                }}
+                QComboBox::drop-down {{
+                    border: none;
+                }}
+                QComboBox::down-arrow {{
+                    image: none;
+                }}
+                QFrame {{
+                    background-color: {bg_color};
+                    border: 1px solid {tm.hex("border")};
+                    border-radius: 4px;
+                    padding: 8px;
+                }}
+            """
+            self.setStyleSheet(stylesheet)
+        except Exception:
+            pass
+
+    def _on_theme_mode_changed(self, index: int) -> None:
+        """Handle theme mode change (Dark/Light/Auto)."""
+        try:
+            if not self.service:
                 return
 
-            # Get the full variant name
-            current_theme, _ = self.service.get_current_theme()
-            theme_prefix = "dark" if current_theme == "dark" else "light"
-            full_variant = f"{theme_prefix}_{variant_name.lower()}"
+            mode = self.mode_combo.itemData(index)
+            if not mode:
+                return
 
-            # Set the variant and apply theme
-            self.service.set_qt_material_variant(variant_name.lower())
-            self.service.apply_theme(current_theme, "qt-material")
+            # Apply the new theme mode
+            self.service.apply_theme(mode, "qt-material")
+
+            # Update variant selector to show correct variants for new mode
+            self._populate_material_variants()
+
+            # Reapply styling to this tab
+            self._apply_theme_styling()
 
             # Notify parent of theme change
             if callable(self.on_live_apply):
@@ -317,99 +317,27 @@ class ThemingTab(QWidget):
         except Exception:
             pass
 
-    def _color_keys(self) -> List[str]:
-        # keep ordering stable and user-friendly
-        keys = list(theme_to_dict().keys())
-        # Optional: promote common ones to top
-        preferred = [
-            "window_bg", "surface", "canvas_bg",
-            "text", "text_muted", "text_inverse",
-            "primary", "primary_hover", "primary_text",
-            "border", "border_light",
-            "hover", "pressed",
-            "selection_bg", "selection_text",
-        ]
-        ordered = preferred + [k for k in keys if k not in preferred]
-        # Deduplicate while preserving order
-        seen = set()
-        result = []
-        for k in ordered:
-            if k not in seen:
-                result.append(k)
-                seen.add(k)
-        return result
+    def _on_material_variant_changed(self, variant_name: str) -> None:
+        """Handle material variant change."""
+        try:
+            if not self.service or not variant_name:
+                return
 
-    def reload_from_current(self):
-        data = theme_to_dict()
-        keys = self._color_keys()
+            # Set the variant and apply theme
+            self.service.set_qt_material_variant(variant_name.lower())
+            current_theme, _ = self.service.get_current_theme()
+            self.service.apply_theme(current_theme, "qt-material")
 
-        self.table.setRowCount(0)
-        for key in keys:
-            self._add_color_row(key, data.get(key, ""))
+            # Reapply styling to this tab
+            self._apply_theme_styling()
 
-    def _add_color_row(self, key: str, hex_value: str):
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-
-        name_item = QTableWidgetItem(key)
-        name_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-        self.table.setItem(row, 0, name_item)
-
-        hex_edit = QLineEdit(hex_value)
-        hex_edit.setObjectName(f"hex_{key}")
-        self.table.setCellWidget(row, 1, hex_edit)
-
-        pick_btn = QPushButton("Pick…")
-        pick_btn.setObjectName(f"pick_{key}")
-        self.table.setCellWidget(row, 2, pick_btn)
-
-        # Initialize picker button color
-        self._update_pick_button_color(pick_btn, hex_value)
-
-        # Connect changes
-        # Update button swatch while typing
-        hex_edit.textChanged.connect(lambda text, btn=pick_btn: self._update_pick_button_color(btn, text))
-        hex_edit.editingFinished.connect(self._maybe_apply_live)
-        # Pass pick button so we can update its color after selection
-        pick_btn.clicked.connect(lambda: self._pick_color_for_row(key, hex_edit, pick_btn))
-
-    def _pick_color_for_row(self, key: str, hex_edit: QLineEdit, pick_btn: QPushButton):
-        initial = QColor(hex_edit.text() or color_hex(key))
-        c = QColorDialog.getColor(initial, self, f"Pick color for {key}")
-        if c and c.isValid():
-            hex_edit.setText(c.name())  # #rrggbb
-            # Update the button swatch immediately
-            self._update_pick_button_color(pick_btn, c.name())
-            self._maybe_apply_live()
-
-    def _collect_overrides(self) -> Dict[str, str]:
-        overrides: Dict[str, str] = {}
-        for row in range(self.table.rowCount()):
-            key = self.table.item(row, 0).text()
-            hex_widget = self.table.cellWidget(row, 1)
-            if isinstance(hex_widget, QLineEdit):
-                val = hex_widget.text().strip()
-                if val:
-                    if not val.startswith("#"):
-                        val = f"#{val}"
-                    overrides[key] = val
-        return overrides
-
-    def _apply_overrides(self):
-        overrides = self._collect_overrides()
-        if overrides:
-            set_theme(overrides)
-
-    def _maybe_apply_live(self):
-        if self.live_apply_checkbox.isChecked():
-            self._apply_overrides()
+            # Notify parent of theme change
             if callable(self.on_live_apply):
                 self.on_live_apply()
+        except Exception:
+            pass
 
-    def _apply_from_table(self):
-        self._apply_overrides()
-        if callable(self.on_live_apply):
-            self.on_live_apply()
+
 
 
 class DisplayTab(QWidget):
@@ -447,7 +375,7 @@ class DisplayTab(QWidget):
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
 
 
-class ThumbnailSettingsTab(QWidget):
+class ImagePreferencesTab(QWidget):
     """Thumbnail generation settings tab."""
 
     def __init__(self, parent=None):
@@ -655,6 +583,188 @@ class ThumbnailSettingsTab(QWidget):
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to save settings: {e}")
+
+class PerformanceSettingsTab(QWidget):
+    """Performance settings tab for memory allocation and system optimization."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+
+    def _setup_ui(self) -> None:
+        """Set up the performance settings UI."""
+        layout = QVBoxLayout(self)
+
+        # Header
+        header = QLabel("<b>Memory Allocation Settings</b>")
+        layout.addWidget(header)
+
+        desc = QLabel(
+            "Configure how much system memory the application can use. "
+            "Smart calculation: min(doubled_minimum, 50% available, total - 20%)"
+        )
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Mode selection group
+        mode_group = QFrame()
+        mode_layout = QVBoxLayout(mode_group)
+
+        mode_label = QLabel("<b>Memory Mode</b>")
+        mode_layout.addWidget(mode_label)
+
+        self.auto_radio = QCheckBox("Auto (Smart Calculation)")
+        self.auto_radio.setChecked(True)
+        mode_layout.addWidget(self.auto_radio)
+
+        self.manual_radio = QCheckBox("Manual Override")
+        mode_layout.addWidget(self.manual_radio)
+
+        layout.addWidget(mode_group)
+
+        # Manual override group
+        override_group = QFrame()
+        override_layout = QVBoxLayout(override_group)
+
+        override_label = QLabel("<b>Manual Memory Limit (MB)</b>")
+        override_layout.addWidget(override_label)
+
+        slider_layout = QHBoxLayout()
+        self.memory_slider = QSlider(Qt.Horizontal)
+        self.memory_slider.setMinimum(512)
+        self.memory_slider.setMaximum(4096)
+        self.memory_slider.setValue(1024)
+        self.memory_slider.setTickPosition(QSlider.TicksBelow)
+        self.memory_slider.setTickInterval(512)
+        slider_layout.addWidget(self.memory_slider)
+
+        self.memory_value_label = QLabel("1024 MB")
+        self.memory_value_label.setMinimumWidth(80)
+        slider_layout.addWidget(self.memory_value_label)
+
+        override_layout.addLayout(slider_layout)
+        layout.addWidget(override_group)
+
+        # System info group
+        info_group = QFrame()
+        info_layout = QVBoxLayout(info_group)
+
+        info_label = QLabel("<b>System Information</b>")
+        info_layout.addWidget(info_label)
+
+        self.system_info_label = QLabel()
+        self.system_info_label.setWordWrap(True)
+        info_layout.addWidget(self.system_info_label)
+
+        layout.addWidget(info_group)
+
+        layout.addStretch()
+
+        # Connect signals
+        self.auto_radio.toggled.connect(self._on_mode_changed)
+        self.manual_radio.toggled.connect(self._on_mode_changed)
+        self.memory_slider.valueChanged.connect(self._on_slider_changed)
+
+        # Update system info
+        self._update_system_info()
+
+    def _on_mode_changed(self) -> None:
+        """Handle mode change."""
+        is_manual = self.manual_radio.isChecked()
+        self.memory_slider.setEnabled(is_manual)
+        self._update_system_info()
+
+    def _on_slider_changed(self, value: int) -> None:
+        """Handle slider change."""
+        self.memory_value_label.setText(f"{value} MB")
+        self._update_system_info()
+
+    def _update_system_info(self) -> None:
+        """Update system information display."""
+        try:
+            import psutil
+            from src.core.application_config import ApplicationConfig
+
+            memory = psutil.virtual_memory()
+            total_mb = int(memory.total / (1024 ** 2))
+            available_mb = int(memory.available / (1024 ** 2))
+
+            config = ApplicationConfig.get_default()
+
+            if self.manual_radio.isChecked():
+                limit_mb = self.memory_slider.value()
+                info_text = (
+                    f"Manual Override: {limit_mb} MB\n"
+                    f"System Total: {total_mb} MB\n"
+                    f"Available: {available_mb} MB\n"
+                    f"Reserve: {config.system_memory_reserve_percent}%"
+                )
+            else:
+                limit_mb = config.get_effective_memory_limit_mb(available_mb, total_mb)
+                hard_max = int(total_mb * (100 - config.system_memory_reserve_percent) / 100)
+                fifty_percent = available_mb // 2
+                doubled_min = config.min_memory_specification_mb * 2
+
+                info_text = (
+                    f"Smart Calculation: {limit_mb} MB\n"
+                    f"System Total: {total_mb} MB | Available: {available_mb} MB\n"
+                    f"Candidates: min({doubled_min}, {fifty_percent}, {hard_max})\n"
+                    f"Reserve: {config.system_memory_reserve_percent}%"
+                )
+
+            self.system_info_label.setText(info_text)
+        except Exception as e:
+            self.system_info_label.setText(f"Error: {e}")
+
+    def _load_settings(self) -> None:
+        """Load current settings."""
+        try:
+            from src.core.application_config import ApplicationConfig
+
+            config = ApplicationConfig.get_default()
+
+            if config.use_manual_memory_override:
+                self.manual_radio.setChecked(True)
+                self.auto_radio.setChecked(False)
+                if config.manual_memory_override_mb:
+                    self.memory_slider.setValue(config.manual_memory_override_mb)
+            else:
+                self.auto_radio.setChecked(True)
+                self.manual_radio.setChecked(False)
+
+            self._on_mode_changed()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load settings: {e}")
+
+    def save_settings(self) -> None:
+        """Save performance settings."""
+        try:
+            from src.core.application_config import ApplicationConfig
+
+            config = ApplicationConfig.get_default()
+            config.use_manual_memory_override = self.manual_radio.isChecked()
+
+            if self.manual_radio.isChecked():
+                config.manual_memory_override_mb = self.memory_slider.value()
+
+            if self.logger:
+                self.logger.info(
+                    f"Saved performance settings: "
+                    f"manual={config.use_manual_memory_override}, "
+                    f"override_mb={config.manual_memory_override_mb}"
+                )
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save settings: {e}")
+
 
 class PlaceholderTab(QWidget):
     """Simple placeholder content for non-implemented tabs."""

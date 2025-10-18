@@ -40,6 +40,9 @@ class QtMaterialColorPicker(QDialog):
         self.setMinimumWidth(500)
         self.setMinimumHeight(600)
 
+        # Use native title bar (removed frameless window flag)
+        # This allows the OS to handle the title bar and window controls
+
         self.color_swatches: Dict[str, QPushButton] = {}
         self._setup_ui()
         self._load_colors()
@@ -241,4 +244,14 @@ class QtMaterialColorPicker(QDialog):
             self.theme_changed.emit(full_variant)
         except Exception as e:
             print(f"Error changing variant: {e}")
+
+    def _toggle_maximize(self) -> None:
+        """Toggle window maximize/restore state."""
+        try:
+            if self.isMaximized():
+                self.showNormal()
+            else:
+                self.showMaximized()
+        except Exception:
+            pass
 

@@ -105,6 +105,11 @@ class StatusBarManager:
         self.memory_label = QLabel("Memory: N/A")
         self.status_bar.addPermanentWidget(self.memory_label)
 
+        # Layout Edit Mode indicator
+        self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
+        self.layout_edit_indicator.setStyleSheet("color: gray;")
+        self.status_bar.addPermanentWidget(self.layout_edit_indicator)
+
         # Initialize background hasher
         self.background_hasher = None
 
@@ -256,6 +261,23 @@ class StatusBarManager:
             self.logger.info("Background hashing completed")
         except Exception:
             pass
+
+    def update_layout_edit_mode(self, is_enabled: bool) -> None:
+        """
+        Update the layout edit mode indicator.
+
+        Args:
+            is_enabled: Whether layout edit mode is enabled
+        """
+        try:
+            if is_enabled:
+                self.layout_edit_indicator.setText("Layout Edit Mode: ON")
+                self.layout_edit_indicator.setStyleSheet("color: green; font-weight: bold;")
+            else:
+                self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
+                self.layout_edit_indicator.setStyleSheet("color: gray;")
+        except Exception as e:
+            self.logger.warning(f"Failed to update layout edit mode indicator: {e}")
 
 
 # Convenience function for easy status bar setup

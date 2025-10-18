@@ -76,6 +76,9 @@ class MainWindow(QMainWindow):
         # Set application style for Windows desktop
         QApplication.setStyle("Fusion")  # Modern look and feel
 
+        # Use native title bar (removed frameless window flag)
+        # This allows the OS to handle the title bar and window controls
+
         # Enable dock widget features for better layout management
         options = (
             QMainWindow.AllowNestedDocks |
@@ -124,6 +127,19 @@ class MainWindow(QMainWindow):
         # Initialize central widget manager
         from src.gui.window.central_widget_manager import CentralWidgetManager
         self.central_widget_manager = CentralWidgetManager(self, self.logger)
+
+        # Ensure main window gets the application stylesheet
+        # This is needed for frameless windows to properly inherit the Material Design theme
+        try:
+            app = QApplication.instance()
+            if app:
+                # Get the current stylesheet from the application
+                app_stylesheet = app.styleSheet()
+                if app_stylesheet:
+                    # Apply it to the main window
+                    self.setStyleSheet(app_stylesheet)
+        except Exception as e:
+            self.logger.debug(f"Could not apply app stylesheet to main window: {e}")
         self.central_widget_manager.setup_central_widget()
 
         # Initialize model loader
@@ -973,7 +989,23 @@ class MainWindow(QMainWindow):
         """Show preferences dialog."""
         self.logger.info("Opening preferences dialog")
         dlg = PreferencesDialog(self, on_reset_layout=self._reset_dock_layout_and_save)
+        # Connect theme change signal to update main window stylesheet
+        dlg.theme_changed.connect(self._on_theme_changed)
         dlg.exec_()
+
+    def _on_theme_changed(self) -> None:
+        """Handle theme change from preferences dialog."""
+        try:
+            # Get the updated stylesheet from the application
+            app = QApplication.instance()
+            if app:
+                new_stylesheet = app.styleSheet()
+                if new_stylesheet:
+                    # Apply the new stylesheet to the main window
+                    self.setStyleSheet(new_stylesheet)
+                    self.logger.debug("Main window stylesheet updated after theme change")
+        except Exception as e:
+            self.logger.debug(f"Error updating main window stylesheet: {e}")
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
@@ -1250,6 +1282,16 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to handle screenshots finished event: {e}")
+
+    def _toggle_maximize(self) -> None:
+        """Toggle window maximize/restore state."""
+        try:
+            if self.isMaximized():
+                self.showNormal()
+            else:
+                self.showMaximized()
+        except Exception as e:
+            self.logger.warning(f"Failed to toggle maximize: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 

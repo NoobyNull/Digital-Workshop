@@ -124,6 +124,15 @@ class ThemeService:
             self._current_theme = theme
             self._current_library = "qt-material"
             self._save_theme()
+
+            # Notify WindowTitleBarManager to update all title bars
+            try:
+                from src.gui.window.title_bar_manager import WindowTitleBarManager
+                manager = WindowTitleBarManager.instance()
+                manager.update_all_title_bars(theme)
+            except Exception:
+                pass  # Title bar manager may not be initialized yet
+
             return True
 
         except ImportError:
