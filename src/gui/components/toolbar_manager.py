@@ -15,8 +15,6 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QMainWindow, QToolBar
 
-from src.gui.theme import ThemeManager, COLORS
-
 
 class ToolbarManager:
     """
@@ -49,26 +47,6 @@ class ToolbarManager:
             toolbar.setAttribute(Qt.WA_StyledBackground, True)
         except Exception:
             pass
-        # Explicit ThemeManager toolbar styling so it doesn't inherit/bleed from other bars
-        try:
-            tm = ThemeManager.instance()
-            _toolbar_css = """
-                QToolBar#MainToolBar {
-                    background-color: {{toolbar_bg}};
-                    border: 1px solid {{toolbar_border}};
-                    spacing: 3px;
-                    padding: 4px;
-                }
-                QToolBar#MainToolBar::handle {
-                    background-color: {{toolbar_handle_bg}};
-                    width: 8px;
-                    margin: 4px;
-                }
-            """
-            tm.register_widget(toolbar, css_text=_toolbar_css)
-            tm.apply_stylesheet(toolbar)
-        except Exception:
-            pass
 
         # Attempt to import QtAwesome for icon-based actions and determine icon availability
         try:
@@ -85,7 +63,7 @@ class ToolbarManager:
                 # Validate all icons we plan to use can be created
                 icon_names = ["fa5s.folder-open", "fa5s.search-plus", "fa5s.search-minus", "fa5s.sync"]
                 for _name in icon_names:
-                    test_icon = qta.icon(_name, color=COLORS.text)
+                    test_icon = qta.icon(_name)
                     if test_icon.isNull():
                         raise ValueError(f"qtawesome returned null icon for '{_name}'")
                 icons_ok = True
@@ -107,8 +85,8 @@ class ToolbarManager:
             if not icons_ok or qta is None:
                 return QIcon()
             try:
-                # Use theme text color to keep icons legible in light/dark modes
-                return qta.icon(name, color=COLORS.text)
+                # qtawesome will use theme colors automatically
+                return qta.icon(name)
             except Exception:
                 return QIcon()
 

@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMainWindow, QMenuBar
 
-from src.gui.theme import ThemeManager
+
 
 
 class MenuManager:
@@ -179,46 +179,7 @@ class MenuManager:
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 
-        # Register explicit menubar stylesheet with ThemeManager to ensure updates on preset changes
-        try:
-            tm = ThemeManager.instance()
-            _menubar_css = """
-                QMenuBar#AppMenuBar {
-                    background-color: {{menubar_bg}};
-                    color: {{menubar_text}};
-                    border-bottom: 1px solid {{menubar_border}};
-                    padding: 2px;
-                    spacing: 2px;
-                }
-                QMenuBar#AppMenuBar::item {
-                    background-color: transparent;
-                    padding: 6px 12px;
-                    border-radius: 2px;
-                    margin: 1px;
-                }
-                QMenuBar#AppMenuBar::item:selected {
-                    background-color: {{menubar_item_hover_bg}};
-                    color: {{menubar_item_hover_text}};
-                }
-                QMenuBar#AppMenuBar::item:pressed {
-                    background-color: {{menubar_item_pressed_bg}};
-                }
-            """
-            tm.register_widget(menubar, css_text=_menubar_css)
-            tm.apply_stylesheet(menubar)
-            # Also apply palettes to ensure native menubar paints themed background
-            self._apply_bar_palettes()
-            # Debug: log applied colors to identify unexpected cross-assignments
-            try:
-                self.logger.debug(
-                    f"Bars styled: menubar_bg={tm.get_color('menubar_bg')}, "
-                    f"statusbar_bg={tm.get_color('statusbar_bg')}"
-                )
-            except Exception:
-                pass
-        except Exception:
-            pass
-
+        # qt-material handles menubar styling automatically
         self.logger.debug("Menu bar setup completed")
 
     def _apply_bar_palettes(self) -> None:

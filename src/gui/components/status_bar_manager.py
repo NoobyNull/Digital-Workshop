@@ -14,7 +14,6 @@ from typing import Optional
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QMainWindow, QStatusBar, QLabel, QProgressBar, QPushButton, QMessageBox
 
-from src.gui.theme import ThemeManager
 from src.core.database_manager import get_database_manager
 
 
@@ -63,25 +62,7 @@ class StatusBarManager:
         except Exception:
             pass
 
-        # Apply ThemeManager-managed inline stylesheet specifically for QStatusBar so it always participates in theming
-        try:
-            tm = ThemeManager.instance()
-            _statusbar_css = """
-                QStatusBar#AppStatusBar {
-                    background-color: {{statusbar_bg}};
-                    color: {{statusbar_text}};
-                    border-top: 1px solid {{statusbar_border}};
-                    padding: 2px;
-                }
-                QStatusBar#AppStatusBar::item {
-                    border: none;
-                }
-            """
-            tm.register_widget(self.status_bar, css_text=_statusbar_css)
-            tm.apply_stylesheet(self.status_bar)
-        except Exception:
-            # Non-fatal styling path
-            pass
+        # qt-material handles statusbar styling automatically
 
         # Permanent status message
         self.status_label = QLabel("Ready")
