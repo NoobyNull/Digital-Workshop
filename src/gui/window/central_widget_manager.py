@@ -167,7 +167,15 @@ class CentralWidgetManager:
             v.addStretch(1)
             return w
 
-        self.main_window.hero_tabs.addTab(_placeholder("GP", "G-code Previewer placeholder\n\nPreview, simulate, and inspect G-code toolpaths."), "GP")
+        # Create G-code Previewer widget
+        try:
+            from src.gui.gcode_previewer_components import GcodePreviewerWidget
+            self.main_window.gcode_previewer_widget = GcodePreviewerWidget(self.main_window)
+            self.main_window.hero_tabs.addTab(self.main_window.gcode_previewer_widget, "GP")
+            self.logger.info("G-code Previewer widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create G-code Previewer widget: {e}")
+            self.main_window.hero_tabs.addTab(_placeholder("GP", "G-code Previewer\n\nComponent unavailable."), "GP")
 
         # Create CLO widget
         try:
