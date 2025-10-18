@@ -228,8 +228,15 @@ class GcodePreviewerWidget(QWidget):
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
 
-            # Parse G-code
-            self.moves = self.parser.parse_file(filepath)
+            # Get file info
+            file_size_mb = Path(filepath).stat().st_size / (1024 * 1024)
+            total_lines = self.parser.get_file_line_count(filepath)
+
+            # Parse G-code with sampling for large files
+            use_sampling = total_lines > 400  # Sample if > 400 lines
+            # Use larger sample size for better visualization of huge files
+            sample_size = min(1000, max(100, total_lines // 10000))
+            self.moves = self.parser.parse_file(filepath, sample_mode=use_sampling, sample_size=sample_size)
             self.current_file = filepath
 
             # Initialize animation controller
@@ -239,8 +246,13 @@ class GcodePreviewerWidget(QWidget):
             self.layer_analyzer.analyze(self.moves)
             self._update_layer_combo()
 
-            # Update UI
-            self.file_label.setText(f"Loaded: {Path(filepath).name}")
+            # Update UI with file info
+            file_name = Path(filepath).name
+            if use_sampling:
+                info_text = f"Loaded: {file_name} ({file_size_mb:.1f}MB, {total_lines:,} lines, sampled)"
+            else:
+                info_text = f"Loaded: {file_name} ({file_size_mb:.1f}MB, {total_lines:,} lines)"
+            self.file_label.setText(info_text)
             self.file_label.setStyleSheet("color: green;")
 
             # Render toolpath
@@ -259,7 +271,7 @@ class GcodePreviewerWidget(QWidget):
             self._update_moves_table()
 
             self.gcode_loaded.emit(filepath)
-            self.logger.info(f"Loaded G-code file: {filepath}")
+            self.logger.info(f"Loaded G-code file: {filepath} ({total_lines:,} lines, sampled={use_sampling})")
 
         except Exception as e:
             self.logger.error(f"Failed to load G-code file: {e}")

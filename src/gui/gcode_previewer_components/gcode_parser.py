@@ -29,18 +29,36 @@ class GcodeParser:
         self.current_position = (0.0, 0.0, 0.0)
         self.current_feed_rate = 0.0
         self.current_spindle_speed = 0.0
+        self.current_g_code = 1  # Default to G01 (cutting move)
         self.bounds = {
             'min_x': float('inf'), 'max_x': float('-inf'),
             'min_y': float('inf'), 'max_y': float('-inf'),
             'min_z': float('inf'), 'max_z': float('-inf'),
         }
 
-    def parse_file(self, filepath: str) -> List[GcodeMove]:
-        """Parse a G-code file and return list of moves."""
+    def parse_file(self, filepath: str, sample_mode: bool = True, sample_size: int = 100) -> List[GcodeMove]:
+        """
+        Parse a G-code file and return list of moves.
+
+        Args:
+            filepath: Path to G-code file
+            sample_mode: If True, sample large files (first N + last N lines)
+            sample_size: Number of lines to sample from start and end (default 100)
+
+        Returns:
+            List of parsed moves
+        """
         try:
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                 lines = f.readlines()
-            return self.parse_lines(lines)
+
+            # For large files, sample intelligently
+            if sample_mode and len(lines) > sample_size * 4:
+                # Keep first N and last N lines, skip the middle
+                sampled_lines = lines[:sample_size] + lines[-sample_size:]
+                return self.parse_lines(sampled_lines)
+            else:
+                return self.parse_lines(lines)
         except Exception as e:
             raise ValueError(f"Failed to parse G-code file: {e}")
 
@@ -48,18 +66,19 @@ class GcodeParser:
         """Parse G-code lines and extract moves."""
         self.moves = []
         self.current_position = (0.0, 0.0, 0.0)
+        self.current_g_code = 1  # Reset to G01
 
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
-            
+
             # Skip empty lines and comments
             if not line or line.startswith(';') or line.startswith('%'):
                 continue
-            
+
             # Remove inline comments
             if ';' in line:
                 line = line.split(';')[0].strip()
-            
+
             move = self._parse_line(line, line_num)
             if move:
                 self.moves.append(move)
@@ -70,13 +89,18 @@ class GcodeParser:
     def _parse_line(self, line: str, line_num: int) -> Optional[GcodeMove]:
         """Parse a single G-code line."""
         move = GcodeMove(line_number=line_num, raw_command=line)
-        
+
         # Extract G-code command
         g_match = re.search(r'G(\d+)', line, re.IGNORECASE)
-        if not g_match:
-            return None
-        
-        g_code = int(g_match.group(1))
+        if g_match:
+            g_code = int(g_match.group(1))
+            self.current_g_code = g_code  # Update current G-code
+        else:
+            # No G-code in this line, use the current G-code (modal command)
+            g_code = self.current_g_code
+            # If line has no coordinates and no G-code, skip it
+            if not re.search(r'[XYZ]', line, re.IGNORECASE):
+                return None
         
         # Determine move type
         if g_code == 0:
@@ -147,7 +171,7 @@ class GcodeParser:
         rapid_moves = sum(1 for m in self.moves if m.is_rapid)
         cutting_moves = sum(1 for m in self.moves if m.is_cutting)
         arc_moves = sum(1 for m in self.moves if m.is_arc)
-        
+
         return {
             'total_moves': len(self.moves),
             'rapid_moves': rapid_moves,
@@ -155,4 +179,12 @@ class GcodeParser:
             'arc_moves': arc_moves,
             'bounds': self.bounds,
         }
+
+    def get_file_line_count(self, filepath: str) -> int:
+        """Get total line count in G-code file without parsing."""
+        try:
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                return sum(1 for _ in f)
+        except Exception:
+            return 0
 
