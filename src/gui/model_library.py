@@ -39,7 +39,8 @@ from src.parsers.obj_parser import OBJParser
 from src.parsers.threemf_parser import ThreeMFParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.format_detector import FormatDetector, ModelFormat
-from src.gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme_core import get_theme_color
 from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 
@@ -196,33 +197,33 @@ class ThumbnailGenerator:
 
             tri_count = model_info.get("triangle_count", 0)
             if tri_count < 1000:
-                painter.setPen(QPen(qcolor('text_muted'), 1))
+                painter.setPen(QPen(get_theme_color('text_muted'), 1))
                 rect = QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w, norm_h)
                 painter.drawRect(rect)
                 painter.drawLine(rect.topLeft(), rect.bottomRight())
                 painter.drawLine(rect.topRight(), rect.bottomLeft())
             elif tri_count < 10000:
-                painter.setPen(QPen(qcolor('edge_color'), 1))
-                c = qcolor('model_surface'); c.setAlpha(180)
+                painter.setPen(QPen(get_theme_color('edge_color'), 1))
+                c = get_theme_color('model_surface'); c.setAlpha(180)
                 painter.setBrush(QBrush(c))
                 rect = QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w, norm_h)
                 painter.drawRect(rect)
-                c2 = qcolor('text_inverse'); c2.setAlpha(100)
+                c2 = get_theme_color('text_inverse'); c2.setAlpha(100)
                 painter.setBrush(QBrush(c2))
                 painter.drawRect(QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3))
             else:
-                painter.setPen(QPen(qcolor('edge_color'), 1))
-                c3 = qcolor('primary'); c3.setAlpha(180)
+                painter.setPen(QPen(get_theme_color('edge_color'), 1))
+                c3 = get_theme_color('primary'); c3.setAlpha(180)
                 painter.setBrush(QBrush(c3))
                 radius = min(norm_w, norm_h) / 2
                 painter.drawEllipse(QPointF(cx, cy), radius, radius)
-                painter.setPen(QPen(qcolor('primary_text'), 1))
+                painter.setPen(QPen(get_theme_color('primary_text'), 1))
                 painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.7, radius * 0.7)
                 painter.drawEllipse(QPointF(cx, cy), radius * 0.4, radius * 0.4)
 
-            painter.setPen(QPen(qcolor('primary_text'), 1))
-            c4 = qcolor('model_ambient'); c4.setAlpha(200)
+            painter.setPen(QPen(get_theme_color('primary_text'), 1))
+            c4 = get_theme_color('model_ambient'); c4.setAlpha(200)
             painter.setBrush(QBrush(c4))
             indicator_rect = QRectF(self.size.width() - 25, self.size.height() - 15, 20, 12)
             painter.drawRect(indicator_rect)
@@ -315,9 +316,6 @@ class ModelLibraryWidget(QWidget):
 
         # Set up context menu for file tree
         self._show_file_tree_context_menu = self._show_file_tree_context_menu
-
-        # Apply theming/styling
-        self._apply_styling()
 
     def _initialize_view_mode(self) -> None:
         """Initialize default view mode."""
@@ -447,89 +445,8 @@ class ModelLibraryWidget(QWidget):
         parent_layout.addWidget(status_frame)
 
     def _apply_styling(self) -> None:
-        """Apply styling using ThemeManager CSS template processing."""
-        tm = ThemeManager.instance()
-        css_text = """
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid {{groupbox_border}};
-                border-radius: 4px;
-                margin-top: 1ex;
-                padding-top: 10px;
-                background-color: {{groupbox_bg}};
-                color: {{groupbox_text}};
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                color: {{groupbox_title_text}};
-            }
-            QTreeView, QTableView, QListView {
-                background-color: {{table_bg}};
-                color: {{table_text}};
-                border: 1px solid {{table_border}};
-                selection-background-color: {{selection_bg}};
-                selection-color: {{selection_text}};
-            }
-            QHeaderView::section {
-                background-color: {{header_bg}};
-                color: {{header_text}};
-                border: 1px solid {{header_border}};
-            }
-            QPushButton, QToolButton {
-                background-color: {{button_bg}};
-                color: {{button_text}};
-                border: 1px solid {{button_border}};
-                padding: 6px 12px;
-                border-radius: 2px;
-            }
-            QPushButton:hover, QToolButton:hover {
-                background-color: {{button_hover_bg}};
-                border: 1px solid {{button_hover_border}};
-            }
-            QPushButton:pressed, QToolButton:pressed {
-                background-color: {{button_pressed_bg}};
-            }
-            QToolButton:checked, QPushButton:checked {
-                background-color: {{button_checked_bg}};
-                color: {{button_checked_text}};
-                border: 1px solid {{button_checked_border}};
-            }
-            QProgressBar {
-                border: 1px solid {{progress_border}};
-                border-radius: 2px;
-                text-align: center;
-                background-color: {{progress_bg}};
-                color: {{progress_text}};
-            }
-            QProgressBar::chunk {
-                background-color: {{progress_chunk}};
-                border-radius: 1px;
-            }
-            QTabWidget::pane {
-                border: 1px solid {{tab_pane_border}};
-                background-color: {{tab_pane_bg}};
-            }
-            QTabBar::tab {
-                background: {{tab_bg}};
-                padding: 8px;
-                margin-right: 2px;
-                border: 1px solid {{tab_border}};
-                border-bottom: none;
-                color: {{tab_text}};
-            }
-            QTabBar::tab:selected {
-                background: {{tab_selected_bg}};
-                border-bottom: 2px solid {{tab_selected_border}};
-                color: {{tab_text}};
-            }
-            QTabBar::tab:hover {
-                background: {{tab_hover_bg}};
-            }
-        """
-        tm.register_widget(self, css_text=css_text)
-        tm.apply_stylesheet(self)
+        """Apply styling (no-op - qt-material handles all styling)."""
+        pass
 
     def _setup_connections(self) -> None:
         # View mode connections are handled by the tab widget directly

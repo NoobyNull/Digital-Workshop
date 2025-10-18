@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 
 from src.core.logging_config import get_logger, log_function_call
 from src.core.database_manager import get_database_manager
-from src.gui.theme import COLORS, ThemeManager, qcolor, SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from .star_rating_widget import StarRatingWidget
 
 
@@ -213,93 +213,8 @@ class MetadataEditorWidget(QWidget):
         parent_layout.addWidget(button_frame)
 
     def _apply_styling(self) -> None:
-        """Apply styling using ThemeManager CSS template processing."""
-        tm = ThemeManager.instance()
-        css_text = """
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid {{border}};
-                border-radius: 4px;
-                margin-top: 1ex;
-                padding-top: 12px;
-                background-color: {{window_bg}};
-                color: {{text}};
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 8px 0 8px;
-                color: {{text}};
-            }
-            QLineEdit, QTextEdit, QComboBox {
-                border: 1px solid {{border}};
-                border-radius: 2px;
-                padding: 8px;
-                background-color: {{window_bg}};
-                color: {{text}};
-                selection-background-color: {{selection_bg}};
-                selection-color: {{selection_text}};
-            }
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-                border: 2px solid {{primary}};
-                outline: none;
-            }
-            QLineEdit:hover, QTextEdit:hover, QComboBox:hover {
-                border: 1px solid {{primary}};
-            }
-            QPushButton {
-                border: 1px solid {{border}};
-                border-radius: 2px;
-                padding: 8px 16px;
-                background-color: {{surface}};
-                color: {{text}};
-                font-weight: normal;
-            }
-            QPushButton:hover {
-                background-color: {{hover}};
-                border: 1px solid {{primary}};
-            }
-            QPushButton:pressed {
-                background-color: {{pressed}};
-            }
-            QPushButton:default {
-                border: 1px solid {{primary}};
-                background-color: {{primary}};
-                color: {{primary_text}};
-                font-weight: bold;
-            }
-            QPushButton:default:hover {
-                background-color: {{primary_hover}};
-            }
-            QLabel {
-                color: {{text}};
-                background-color: transparent;
-            }
-            QScrollArea {
-                background-color: {{window_bg}};
-                border: none;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 20px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 4px solid transparent;
-                border-right: 4px solid transparent;
-                border-top: 4px solid {{text_muted}};
-                margin-right: 8px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: {{window_bg}};
-                border: 1px solid {{border}};
-                selection-background-color: {{selection_bg}};
-                selection-color: {{selection_text}};
-                color: {{text}};
-            }
-        """
-        tm.register_widget(self, css_text=css_text)
-        tm.apply_stylesheet(self)
+        """Apply styling (no-op - qt-material handles all styling)."""
+        pass
 
     def _setup_connections(self) -> None:
         """Set up signal connections."""
