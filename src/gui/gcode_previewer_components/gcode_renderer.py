@@ -13,12 +13,24 @@ class GcodeRenderer:
         self.renderer = vtk.vtkRenderer()
         self.render_window = vtk.vtkRenderWindow()
         self.render_window.AddRenderer(self.renderer)
-        
+
         # Set background color (dark theme)
         self.renderer.SetBackground(0.2, 0.2, 0.2)
-        
+
         self.actors = []
         self.bounds = None
+
+        # For incremental rendering
+        self.rapid_points = vtk.vtkPoints()
+        self.cutting_points = vtk.vtkPoints()
+        self.arc_points = vtk.vtkPoints()
+        self.rapid_lines = vtk.vtkCellArray()
+        self.cutting_lines = vtk.vtkCellArray()
+        self.arc_lines = vtk.vtkCellArray()
+        self.prev_point = None
+        self.rapid_actor = None
+        self.cutting_actor = None
+        self.arc_actor = None
 
     def render_toolpath(self, moves: List[GcodeMove]) -> None:
         """Render a list of G-code moves as a 3D toolpath."""
@@ -135,4 +147,70 @@ class GcodeRenderer:
     def set_background_color(self, r: float, g: float, b: float) -> None:
         """Set renderer background color."""
         self.renderer.SetBackground(r, g, b)
+
+    def clear_incremental(self) -> None:
+        """Clear incremental rendering data."""
+        self.rapid_points = vtk.vtkPoints()
+        self.cutting_points = vtk.vtkPoints()
+        self.arc_points = vtk.vtkPoints()
+        self.rapid_lines = vtk.vtkCellArray()
+        self.cutting_lines = vtk.vtkCellArray()
+        self.arc_lines = vtk.vtkCellArray()
+        self.prev_point = None
+
+        # Remove old actors
+        if self.rapid_actor:
+            self.renderer.RemoveActor(self.rapid_actor)
+        if self.cutting_actor:
+            self.renderer.RemoveActor(self.cutting_actor)
+        if self.arc_actor:
+            self.renderer.RemoveActor(self.arc_actor)
+
+        self.rapid_actor = None
+        self.cutting_actor = None
+        self.arc_actor = None
+
+    def add_moves_incremental(self, moves: List[GcodeMove]) -> None:
+        """Add moves incrementally and update visualization."""
+        for move in moves:
+            if move.x is None or move.y is None or move.z is None:
+                continue
+
+            current_point = (move.x, move.y, move.z)
+
+            if self.prev_point is not None:
+                if move.is_rapid:
+                    self._add_line_segment(self.rapid_points, self.rapid_lines, self.prev_point, current_point)
+                elif move.is_cutting:
+                    self._add_line_segment(self.cutting_points, self.cutting_lines, self.prev_point, current_point)
+                elif move.is_arc:
+                    self._add_line_segment(self.arc_points, self.arc_lines, self.prev_point, current_point)
+
+            self.prev_point = current_point
+
+        # Update actors
+        self._update_incremental_actors()
+
+    def _update_incremental_actors(self) -> None:
+        """Update the incremental rendering actors."""
+        # Remove old actors
+        if self.rapid_actor:
+            self.renderer.RemoveActor(self.rapid_actor)
+        if self.cutting_actor:
+            self.renderer.RemoveActor(self.cutting_actor)
+        if self.arc_actor:
+            self.renderer.RemoveActor(self.arc_actor)
+
+        # Create new actors
+        if self.rapid_points.GetNumberOfPoints() > 0:
+            self.rapid_actor = self._create_actor(self.rapid_points, self.rapid_lines, (1.0, 0.5, 0.0), 2.0)
+            self.renderer.AddActor(self.rapid_actor)
+
+        if self.cutting_points.GetNumberOfPoints() > 0:
+            self.cutting_actor = self._create_actor(self.cutting_points, self.cutting_lines, (0.0, 1.0, 0.0), 3.0)
+            self.renderer.AddActor(self.cutting_actor)
+
+        if self.arc_points.GetNumberOfPoints() > 0:
+            self.arc_actor = self._create_actor(self.arc_points, self.arc_lines, (0.0, 0.5, 1.0), 2.5)
+            self.renderer.AddActor(self.arc_actor)
 

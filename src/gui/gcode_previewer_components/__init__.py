@@ -8,6 +8,7 @@ from .layer_analyzer import LayerAnalyzer, Layer
 from .feed_speed_visualizer import FeedSpeedVisualizer
 from .export_manager import ExportManager
 from .gcode_editor import GcodeEditorWidget, GcodeSyntaxHighlighter
+from .gcode_loader_thread import GcodeLoaderThread
 
 __all__ = [
     'GcodePreviewerWidget',
@@ -22,5 +23,6 @@ __all__ = [
     'ExportManager',
     'GcodeEditorWidget',
     'GcodeSyntaxHighlighter',
+    'GcodeLoaderThread',
 ]
 

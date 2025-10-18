@@ -20,6 +20,7 @@ from .layer_analyzer import LayerAnalyzer
 from .feed_speed_visualizer import FeedSpeedVisualizer
 from .export_manager import ExportManager
 from .gcode_editor import GcodeEditorWidget
+from .gcode_loader_thread import GcodeLoaderThread
 
 
 class GcodePreviewerWidget(QWidget):
@@ -38,11 +39,13 @@ class GcodePreviewerWidget(QWidget):
         self.layer_analyzer = LayerAnalyzer()
         self.feed_speed_visualizer = FeedSpeedVisualizer()
         self.export_manager = ExportManager()
+        self.loader_thread: Optional[GcodeLoaderThread] = None
 
         self.current_file = None
         self.moves = []
         self.current_layer = 0
         self.visualization_mode = "default"  # "default", "feed_rate", "spindle_speed"
+        self.total_file_lines = 0
 
         self._init_ui()
         self._connect_signals()
@@ -223,55 +226,45 @@ class GcodePreviewerWidget(QWidget):
             self.load_gcode_file(filepath)
     
     def load_gcode_file(self, filepath: str) -> None:
-        """Load and display a G-code file."""
+        """Load and display a G-code file in background."""
         try:
+            # Stop any existing loader
+            if self.loader_thread and self.loader_thread.isRunning():
+                self.loader_thread.stop()
+                self.loader_thread.wait()
+
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
 
             # Get file info
             file_size_mb = Path(filepath).stat().st_size / (1024 * 1024)
-            total_lines = self.parser.get_file_line_count(filepath)
-
-            # Parse G-code - parse everything, no sampling
-            self.moves = self.parser.parse_file(filepath, sample_mode=False)
-            self.current_file = filepath
-
-            # Initialize animation controller
-            self.animation_controller.set_moves(self.moves)
-
-            # Analyze layers
-            self.layer_analyzer.analyze(self.moves)
-            self._update_layer_combo()
+            self.total_file_lines = self.parser.get_file_line_count(filepath)
 
             # Update UI with file info
             file_name = Path(filepath).name
-            info_text = f"Loaded: {file_name} ({file_size_mb:.1f}MB, {total_lines:,} lines)"
+            info_text = f"Loading: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines)..."
             self.file_label.setText(info_text)
-            self.file_label.setStyleSheet("color: green;")
+            self.file_label.setStyleSheet("color: orange;")
 
-            # Render toolpath
-            self.renderer.render_toolpath(self.moves)
-            self.export_manager.set_render_window(self.renderer.get_render_window())
+            self.current_file = filepath
+            self.moves = []
+
+            # Clear renderer for incremental rendering
+            self.renderer.clear_incremental()
             self.vtk_widget.update_render()
 
-            # Update frame slider
-            self.frame_slider.setMaximum(len(self.moves) - 1)
-            self.frame_slider.setValue(0)
-
-            # Update statistics
-            self._update_statistics()
-
-            # Update moves table
-            self._update_moves_table()
-
-            self.gcode_loaded.emit(filepath)
-            self.logger.info(f"Loaded G-code file: {filepath} ({total_lines:,} lines, {len(self.moves)} moves)")
+            # Start background loader
+            self.loader_thread = GcodeLoaderThread(filepath, batch_size=5000)
+            self.loader_thread.progress.connect(self._on_loader_progress)
+            self.loader_thread.moves_loaded.connect(self._on_moves_batch_loaded)
+            self.loader_thread.finished_loading.connect(self._on_loader_finished)
+            self.loader_thread.error_occurred.connect(self._on_loader_error)
+            self.loader_thread.start()
 
         except Exception as e:
-            self.logger.error(f"Failed to load G-code file: {e}")
+            self.logger.error(f"Failed to start loading G-code file: {e}")
             self.file_label.setText(f"Error: {str(e)}")
             self.file_label.setStyleSheet("color: red;")
-        finally:
             self.progress_bar.setVisible(False)
     
     def _update_statistics(self) -> None:
@@ -463,4 +456,62 @@ class GcodePreviewerWidget(QWidget):
             self.layer_combo.addItem(f"Layer {layer.layer_number} (Z={layer.z_height:.2f})")
 
         self.layer_combo.blockSignals(False)
+
+    def _on_loader_progress(self, current_line: int, total_lines: int) -> None:
+        """Handle loader progress update."""
+        if total_lines > 0:
+            progress = int((current_line / total_lines) * 100)
+            self.progress_bar.setValue(progress)
+
+    def _on_moves_batch_loaded(self, moves: list) -> None:
+        """Handle batch of moves loaded from background thread."""
+        self.moves.extend(moves)
+
+        # Add moves to renderer incrementally
+        self.renderer.add_moves_incremental(moves)
+        self.vtk_widget.update_render()
+
+        # Update statistics
+        self._update_statistics()
+
+    def _on_loader_finished(self, all_moves: list) -> None:
+        """Handle loader finished."""
+        self.moves = all_moves
+
+        # Initialize animation controller
+        self.animation_controller.set_moves(self.moves)
+
+        # Analyze layers
+        self.layer_analyzer.analyze(self.moves)
+        self._update_layer_combo()
+
+        # Update UI
+        file_name = Path(self.current_file).name
+        file_size_mb = Path(self.current_file).stat().st_size / (1024 * 1024)
+        info_text = f"Loaded: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines, {len(self.moves):,} moves)"
+        self.file_label.setText(info_text)
+        self.file_label.setStyleSheet("color: green;")
+
+        # Update frame slider
+        self.frame_slider.setMaximum(len(self.moves) - 1)
+        self.frame_slider.setValue(0)
+
+        # Update moves table
+        self._update_moves_table()
+
+        # Add axes
+        self.renderer._add_axes()
+        self.renderer.reset_camera()
+        self.vtk_widget.update_render()
+
+        self.gcode_loaded.emit(self.current_file)
+        self.logger.info(f"Finished loading G-code: {len(self.moves):,} moves")
+        self.progress_bar.setVisible(False)
+
+    def _on_loader_error(self, error_msg: str) -> None:
+        """Handle loader error."""
+        self.logger.error(f"Loader error: {error_msg}")
+        self.file_label.setText(f"Error: {error_msg}")
+        self.file_label.setStyleSheet("color: red;")
+        self.progress_bar.setVisible(False)
 
