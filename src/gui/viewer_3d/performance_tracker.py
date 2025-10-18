@@ -59,8 +59,6 @@ class PerformanceTracker:
             if self.update_callback:
                 self.update_callback(self.current_fps)
 
-            logger.debug(f"FPS: {self.current_fps:.1f}")
-
     def get_fps(self) -> float:
         """Get current FPS."""
         return self.current_fps
