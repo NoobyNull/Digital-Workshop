@@ -168,7 +168,17 @@ class CentralWidgetManager:
             return w
 
         self.main_window.hero_tabs.addTab(_placeholder("GP", "G-code Previewer placeholder\n\nPreview, simulate, and inspect G-code toolpaths."), "GP")
-        self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer placeholder\n\nPlan efficient cuts and layout."), "CLO")
+
+        # Create CLO widget
+        try:
+            from src.gui.CLO import CutListOptimizerWidget
+            self.main_window.clo_widget = CutListOptimizerWidget()
+            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "CLO")
+            self.logger.info("CLO widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create CLO widget: {e}")
+            self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "CLO")
+
         self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds placeholder\n\nCalculate optimal CNC feeds and speeds."), "F&S")
         self.main_window.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
 
