@@ -8,13 +8,13 @@ Provides:
 - Save or replace options
 """
 
+import tempfile
 from pathlib import Path
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QPushButton, QLabel,
-    QMessageBox, QTextEdit, QScrollArea
+    QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QMessageBox, QTextEdit
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QColor
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel
@@ -62,55 +62,11 @@ class ModelAnalyzerDialog(QDialog):
         title.setFont(title_font)
         layout.addWidget(title)
 
-        # Scrollable content area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_content = QVBoxLayout()
-
-        # Original model stats
-        stats_group = QGroupBox("Original Model Statistics")
-        stats_layout = QVBoxLayout()
-        self.stats_text = QTextEdit()
-        self.stats_text.setReadOnly(True)
-        self.stats_text.setMaximumHeight(100)
-        stats_layout.addWidget(self.stats_text)
-        stats_group.setLayout(stats_layout)
-        scroll_content.addWidget(stats_group)
-
-        # Error detection results
-        error_group = QGroupBox("Error Detection Results")
-        error_layout = QVBoxLayout()
-        self.error_text = QTextEdit()
-        self.error_text.setReadOnly(True)
-        self.error_text.setMaximumHeight(150)
-        error_layout.addWidget(self.error_text)
-        error_group.setLayout(error_layout)
-        scroll_content.addWidget(error_group)
-
-        # Fixed model stats (hidden initially)
-        self.fixed_stats_group = QGroupBox("Fixed Model Statistics")
-        fixed_stats_layout = QVBoxLayout()
-        self.fixed_stats_text = QTextEdit()
-        self.fixed_stats_text.setReadOnly(True)
-        self.fixed_stats_text.setMaximumHeight(100)
-        fixed_stats_layout.addWidget(self.fixed_stats_text)
-        self.fixed_stats_group.setLayout(fixed_stats_layout)
-        self.fixed_stats_group.setVisible(False)
-        scroll_content.addWidget(self.fixed_stats_group)
-
-        # Fixes applied (hidden initially)
-        self.fixes_group = QGroupBox("Fixes Applied")
-        fixes_layout = QVBoxLayout()
-        self.fixes_text = QTextEdit()
-        self.fixes_text.setReadOnly(True)
-        self.fixes_text.setMaximumHeight(100)
-        fixes_layout.addWidget(self.fixes_text)
-        self.fixes_group.setLayout(fixes_layout)
-        self.fixes_group.setVisible(False)
-        scroll_content.addWidget(self.fixes_group)
-
-        scroll.setLayout(scroll_content)
-        layout.addWidget(scroll)
+        # Single text display for all information
+        self.info_text = QTextEdit()
+        self.info_text.setReadOnly(True)
+        self.info_text.setMinimumHeight(400)
+        layout.addWidget(self.info_text)
 
         # Buttons
         button_layout = QHBoxLayout()
@@ -129,6 +85,8 @@ class ModelAnalyzerDialog(QDialog):
         self.replace_btn.setVisible(False)
         button_layout.addWidget(self.replace_btn)
 
+        button_layout.addStretch()
+
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.reject)
         button_layout.addWidget(close_btn)
@@ -139,13 +97,10 @@ class ModelAnalyzerDialog(QDialog):
     def _analyze_model(self) -> None:
         """Analyze the model for errors."""
         try:
-            # Display original stats
-            self._display_original_stats()
-
             # Check if model has triangles
             if not self.model or not self.model.triangles:
                 self.logger.warning("Model has no triangles to analyze")
-                self.error_text.setText("⚠️ Model has no triangles to analyze")
+                self.info_text.setText("⚠️ Model has no triangles to analyze")
                 self.fix_btn.setEnabled(False)
                 return
 
@@ -153,27 +108,16 @@ class ModelAnalyzerDialog(QDialog):
             detector = ModelErrorDetector(self.model)
             errors = detector.detect_all_errors()
 
-            # Display error results
-            self._display_error_results(errors)
+            # Display all information in single text
+            self._display_analysis_results(errors)
 
         except Exception as e:
             self.logger.error(f"Failed to analyze model: {e}", exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {e}")
 
-    def _display_original_stats(self) -> None:
-        """Display original model statistics."""
+    def _display_analysis_results(self, errors) -> None:
+        """Display all analysis results in a single text display."""
         stats = self.model.stats
-        text = f"""
-Triangles: {len(self.model.triangles):,}
-Vertices: {stats.vertex_count:,}
-File Size: {stats.file_size_bytes:,} bytes
-Format: {stats.format_type.value}
-        """.strip()
-        self.stats_text.setText(text)
-
-    def _display_error_results(self, errors) -> None:
-        """Display error detection results for all error types."""
-        # Define all error types
         error_types = {
             "non_manifold": "Non-Manifold Edges",
             "hole": "Holes",
@@ -182,13 +126,23 @@ Format: {stats.format_type.value}
             "hollow": "Hollow Areas"
         }
 
-        # Create a map of detected errors
         detected_map = {error.error_type: error for error in errors}
 
-        text = "Error Detection Results:\n\n"
+        # Build complete analysis text
+        text = "═" * 60 + "\n"
+        text += "ORIGINAL MODEL STATISTICS\n"
+        text += "═" * 60 + "\n"
+        text += f"Triangles: {len(self.model.triangles):,}\n"
+        text += f"Vertices: {stats.vertex_count:,}\n"
+        text += f"File Size: {stats.file_size_bytes:,} bytes\n"
+        text += f"Format: {stats.format_type.value}\n\n"
+
+        text += "═" * 60 + "\n"
+        text += "ERROR DETECTION RESULTS\n"
+        text += "═" * 60 + "\n"
 
         if not errors:
-            text += "✅ No errors detected!\n\n"
+            text += "✅ No errors detected!\n"
             self.fix_btn.setEnabled(False)
         else:
             text += f"Found {len(errors)} error type(s):\n\n"
@@ -202,9 +156,8 @@ Format: {stats.format_type.value}
                 text += f"   {error.description}\n"
             else:
                 text += f"✅ {error_name}: None\n"
-            text += "\n"
 
-        self.error_text.setText(text)
+        self.info_text.setText(text)
 
     def _fix_errors(self) -> None:
         """Fix all detected errors."""
@@ -212,54 +165,53 @@ Format: {stats.format_type.value}
             fixer = ModelErrorFixer(self.model)
             self.fixed_model, self.fixes_applied = fixer.fix_all_errors()
 
-            # Display fixed stats
-            self._display_fixed_stats()
-
-            # Display fixes applied
-            self._display_fixes_applied()
+            # Display all results in single text
+            self._display_fix_results()
 
             # Show save/replace buttons
             self.fix_btn.setVisible(False)
             self.save_btn.setVisible(True)
             self.replace_btn.setVisible(True)
-            self.fixed_stats_group.setVisible(True)
-            self.fixes_group.setVisible(True)
 
         except Exception as e:
             self.logger.error(f"Failed to fix errors: {e}")
             QMessageBox.critical(self, "Error", f"Failed to fix errors: {e}")
 
-    def _display_fixed_stats(self) -> None:
-        """Display fixed model statistics."""
-        stats = self.fixed_model.stats
+    def _display_fix_results(self) -> None:
+        """Display fix results in single text display."""
+        fixed_stats = self.fixed_model.stats
         original_triangles = len(self.model.triangles)
         fixed_triangles = len(self.fixed_model.triangles)
         removed = original_triangles - fixed_triangles
 
-        text = f"""
-Triangles: {fixed_triangles:,} (removed: {removed})
-Vertices: {stats.vertex_count:,}
-File Size: {stats.file_size_bytes:,} bytes
-        """.strip()
-        self.fixed_stats_text.setText(text)
+        # Get current text and append fix results
+        current_text = self.info_text.toPlainText()
 
-    def _display_fixes_applied(self) -> None:
-        """Display summary of fixes applied."""
-        text = "Fixes Applied:\n\n"
+        text = current_text + "\n"
+        text += "═" * 60 + "\n"
+        text += "FIXED MODEL STATISTICS\n"
+        text += "═" * 60 + "\n"
+        text += f"Triangles: {fixed_triangles:,} (removed: {removed})\n"
+        text += f"Vertices: {fixed_stats.vertex_count:,}\n"
+        text += f"File Size: {fixed_stats.file_size_bytes:,} bytes\n\n"
+
+        text += "═" * 60 + "\n"
+        text += "FIXES APPLIED\n"
+        text += "═" * 60 + "\n"
         for fix_type, count in self.fixes_applied.items():
             if count > 0:
                 text += f"✓ {fix_type}: {count}\n"
 
-        self.fixes_text.setText(text)
+        self.info_text.setText(text)
 
     def _save_as(self) -> None:
         """Save fixed model as new file."""
         try:
             from PySide6.QtWidgets import QFileDialog
-            
+
             original_path = Path(self.file_path)
             default_name = f"{original_path.stem} - Fixed{original_path.suffix}"
-            
+
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Save Fixed Model",
@@ -280,24 +232,57 @@ File Size: {stats.file_size_bytes:,} bytes
             QMessageBox.critical(self, "Error", f"Failed to save model: {e}")
 
     def _replace_original(self) -> None:
-        """Replace original file with fixed model."""
+        """Replace original file with fixed model using temp storage."""
         try:
             reply = QMessageBox.warning(
                 self,
                 "Replace Original",
-                f"Replace original file?\n{self.file_path}",
+                f"Replace original file?\n{self.file_path}\n\n"
+                "This will unload the model, replace the file, and reload it.",
                 QMessageBox.Yes | QMessageBox.No
             )
 
-            if reply == QMessageBox.Yes:
-                success = STLWriter.write(self.fixed_model, self.file_path, binary=True)
-                if success:
-                    QMessageBox.information(self, "Success", "Original file replaced with fixed model")
-                    self.accept()
-                else:
-                    QMessageBox.critical(self, "Error", "Failed to replace file")
+            if reply != QMessageBox.Yes:
+                return
+
+            original_path = Path(self.file_path)
+
+            # Step 1: Write to temp file first
+            with tempfile.NamedTemporaryFile(
+                suffix=original_path.suffix,
+                delete=False,
+                dir=original_path.parent
+            ) as temp_file:
+                temp_path = temp_file.name
+
+            try:
+                # Write fixed model to temp file
+                success = STLWriter.write(self.fixed_model, temp_path, binary=True)
+                if not success:
+                    QMessageBox.critical(self, "Error", "Failed to write fixed model to temp file")
+                    Path(temp_path).unlink(missing_ok=True)
+                    return
+
+                # Step 2: Replace original file with temp file
+                # Remove original and rename temp to original
+                original_path.unlink()
+                Path(temp_path).rename(original_path)
+
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Original file replaced successfully.\n\n"
+                    f"File: {self.file_path}\n"
+                    f"Triangles: {len(self.fixed_model.triangles):,}\n"
+                    f"Removed: {len(self.model.triangles) - len(self.fixed_model.triangles)}"
+                )
+                self.accept()
+
+            except Exception:
+                # Clean up temp file if something went wrong
+                Path(temp_path).unlink(missing_ok=True)
+                raise
 
         except Exception as e:
-            self.logger.error(f"Failed to replace file: {e}")
+            self.logger.error(f"Failed to replace file: {e}", exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to replace file: {e}")
-
