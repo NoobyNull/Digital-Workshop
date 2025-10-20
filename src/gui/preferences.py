@@ -58,22 +58,20 @@ class PreferencesDialog(QDialog):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
 
-        # Placeholder tabs for scope expansion
-        self.display_tab = DisplayTab(on_reset_layout=self.on_reset_layout)
-        self.system_tab = PlaceholderTab("System settings (coming soon)")
-        self.files_tab = FilesTab()
-        self.image_preferences_tab = ImagePreferencesTab()
+        # Create tabs in logical order
+        self.window_layout_tab = WindowLayoutTab(on_reset_layout=self.on_reset_layout)
+        self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
+        self.thumbnail_settings_tab = ThumbnailSettingsTab()
         self.performance_tab = PerformanceSettingsTab()
+        self.files_tab = FilesTab()
         self.advanced_tab = AdvancedTab()
 
-        self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
-
-        self.tabs.addTab(self.display_tab, "Display")
-        self.tabs.addTab(self.system_tab, "System")
-        self.tabs.addTab(self.files_tab, "Files")
-        self.tabs.addTab(self.image_preferences_tab, "Image Preferences")
-        self.tabs.addTab(self.performance_tab, "Performance")
+        # Add tabs in logical order: UI → Content → System → Advanced
+        self.tabs.addTab(self.window_layout_tab, "Window & Layout")
         self.tabs.addTab(self.theming_tab, "Theming")
+        self.tabs.addTab(self.thumbnail_settings_tab, "Thumbnail Settings")
+        self.tabs.addTab(self.performance_tab, "Performance")
+        self.tabs.addTab(self.files_tab, "Files")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
         # Dialog action buttons
@@ -113,9 +111,9 @@ class PreferencesDialog(QDialog):
         try:
             save_theme_to_settings()
 
-            # Save image preferences settings
-            if hasattr(self, 'image_preferences_tab'):
-                self.image_preferences_tab.save_settings()
+            # Save thumbnail settings
+            if hasattr(self, 'thumbnail_settings_tab'):
+                self.thumbnail_settings_tab.save_settings()
 
             # Save performance settings
             if hasattr(self, 'performance_tab'):
@@ -303,14 +301,14 @@ class ThemingTab(QWidget):
 
 
 
-class DisplayTab(QWidget):
-    """Display settings tab: reset window/dock layout."""
+class WindowLayoutTab(QWidget):
+    """Window and layout settings tab: reset window/dock layout."""
     def __init__(self, on_reset_layout: Callable | None = None, parent=None):
         super().__init__(parent)
         self.on_reset_layout = on_reset_layout
         layout = QVBoxLayout(self)
 
-        header = QLabel("Window layout and docking")
+        header = QLabel("Window Layout and Docking")
         header.setWordWrap(True)
         layout.addWidget(header)
 
@@ -338,7 +336,7 @@ class DisplayTab(QWidget):
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
 
 
-class ImagePreferencesTab(QWidget):
+class ThumbnailSettingsTab(QWidget):
     """Thumbnail generation settings tab."""
 
     def __init__(self, parent=None):
@@ -359,7 +357,7 @@ class ImagePreferencesTab(QWidget):
         layout.setSpacing(12)
 
         # Header
-        header = QLabel("Configure thumbnail generation settings")
+        header = QLabel("Thumbnail Generation Settings")
         header.setWordWrap(True)
         layout.addWidget(header)
 
@@ -886,13 +884,3 @@ class AdvancedTab(QWidget):
                 f"An error occurred during system reset:\n\n{str(e)}"
             )
 
-
-class PlaceholderTab(QWidget):
-    """Simple placeholder content for non-implemented tabs."""
-    def __init__(self, text: str, parent=None):
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        label = QLabel(text)
-        label.setWordWrap(True)
-        layout.addWidget(label)
-        layout.addStretch(1)
