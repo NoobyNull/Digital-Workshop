@@ -148,22 +148,32 @@ class WalkthroughManager:
 
 class WalkthroughDialog(QDialog):
     """Dialog for displaying walkthrough and tutorial content."""
-    
+
     def __init__(self, parent=None, tip: Optional[TutorialTip] = None):
         super().__init__(parent)
         self.setWindowTitle("3D-MM Tutorial")
         self.setMinimumWidth(500)
         self.setMinimumHeight(300)
         self.setModal(True)
-        
+
         self.tip = tip or WalkthroughManager.get_random_tip()
+        self.main_layout = None
         self._setup_ui()
-    
+
     def _setup_ui(self) -> None:
         """Setup the dialog UI."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        # Clear existing layout if present
+        if self.main_layout is not None:
+            while self.main_layout.count():
+                child = self.main_layout.takeAt(0)
+                if child.widget():
+                    child.widget().deleteLater()
+        else:
+            self.main_layout = QVBoxLayout(self)
+            self.main_layout.setContentsMargins(20, 20, 20, 20)
+            self.main_layout.setSpacing(15)
+
+        layout = self.main_layout
         
         # Header with emoji and title
         header_layout = QHBoxLayout()
