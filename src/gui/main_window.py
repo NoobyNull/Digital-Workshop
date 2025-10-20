@@ -1095,7 +1095,7 @@ class MainWindow(QMainWindow):
 
             # Load the model file
             parser = STLParser()
-            model = parser.parse(model_data['file_path'])
+            model = parser.parse_file(model_data['file_path'])
 
             if not model:
                 from PySide6.QtWidgets import QMessageBox

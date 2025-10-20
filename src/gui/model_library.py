@@ -1104,7 +1104,7 @@ class ModelLibraryWidget(QWidget):
             # Load the model file
             from src.parsers.stl_parser import STLParser
             parser = STLParser()
-            model = parser.parse(model_data.file_path)
+            model = parser.parse_file(model_data.file_path)
 
             if not model:
                 QMessageBox.critical(self, "Error", f"Failed to load model: {model_data.file_path}")
