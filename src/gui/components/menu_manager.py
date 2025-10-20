@@ -173,6 +173,15 @@ class MenuManager:
         # Help menu
         help_menu = menubar.addMenu("&Help")
 
+        # Search help action
+        search_help_action = QAction("&Search Documentation", self.main_window)
+        search_help_action.setShortcut(QKeySequence("Ctrl+H"))
+        search_help_action.setStatusTip("Search application documentation")
+        search_help_action.triggered.connect(self._show_help)
+        help_menu.addAction(search_help_action)
+
+        help_menu.addSeparator()
+
         # About action
         about_action = QAction("&About 3D-MM", self.main_window)
         about_action.setStatusTip("Show information about 3D-MM")
@@ -242,6 +251,11 @@ class MenuManager:
         """Handle layout edit mode toggle."""
         if hasattr(self.main_window, '_set_layout_edit_mode'):
             self.main_window._set_layout_edit_mode(enabled)
+
+    def _show_help(self) -> None:
+        """Handle show help action."""
+        if hasattr(self.main_window, '_show_help'):
+            self.main_window._show_help()
 
     def _show_about(self) -> None:
         """Handle show about action."""

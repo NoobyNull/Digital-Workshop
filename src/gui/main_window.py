@@ -1248,6 +1248,20 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to restore saved camera: {e}")
 
+    def _show_help(self) -> None:
+        """Show searchable help dialog."""
+        try:
+            from src.gui.help_system import HelpDialog
+            help_dialog = HelpDialog(self)
+            help_dialog.exec()
+        except Exception as e:
+            self.logger.error(f"Error showing help dialog: {e}")
+            QMessageBox.warning(
+                self,
+                "Help Error",
+                f"Could not open help system: {e}"
+            )
+
     def _show_about(self) -> None:
         """Show about dialog."""
         self.logger.info("Showing about dialog")
