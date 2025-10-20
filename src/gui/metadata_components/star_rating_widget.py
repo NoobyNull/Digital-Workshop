@@ -5,6 +5,7 @@ Provides an interactive 5-star rating system with visual feedback and hover effe
 """
 
 from typing import Optional
+import math
 
 from PySide6.QtCore import Qt, Signal, QPointF
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPolygonF
@@ -115,7 +116,7 @@ class StarRatingWidget(QWidget):
 
     def _draw_star(self, painter: QPainter, x: int, y: int, size: int, color: QColor) -> None:
         """
-        Draw a star shape.
+        Draw a proper 5-pointed star shape.
 
         Args:
             painter: QPainter object
@@ -127,7 +128,7 @@ class StarRatingWidget(QWidget):
         painter.setPen(QPen(color.darker(120), 1))
         painter.setBrush(QBrush(color))
 
-        # Create star path
+        # Create star path with proper geometry
         center_x = x + size / 2
         center_y = y + size / 2
         outer_radius = size / 2
@@ -135,14 +136,18 @@ class StarRatingWidget(QWidget):
 
         points = []
         for i in range(10):
-            angle = 3.14159 * i / 5 - 3.14159 / 2
+            # Alternate between outer and inner radius
             if i % 2 == 0:
                 radius = outer_radius
             else:
                 radius = inner_radius
 
-            px = center_x + radius * (angle if i % 4 < 2 else -angle)
-            py = center_y + radius * (1 if i % 4 < 2 else -1)
+            # Calculate angle for each point (5 outer points + 5 inner points)
+            # Start from top (-90 degrees) and go clockwise
+            angle = math.pi / 2 + (i * math.pi / 5)
+
+            px = center_x + radius * math.cos(angle)
+            py = center_y - radius * math.sin(angle)
             points.append(QPointF(px, py))
 
         painter.drawPolygon(QPolygonF(points))

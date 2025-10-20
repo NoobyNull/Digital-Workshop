@@ -1,0 +1,331 @@
+{
+  "benchmark_info": {
+    "network_path": "\\\\Synology\\stl\\Massive CNC Router STL Clipart Collection Ripped From Random Google Drive 1100+ STL",
+    "num_files_tested": 10,
+    "iterations_per_file": 3,
+    "total_iterations": 60
+  },
+  "system_info": {
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "platform": "win32",
+    "numpy_version": "1.26.4",
+    "cpu_count": 24,
+    "memory_gb": 127.7203598022461
+  },
+  "file_summary": [
+    {
+      "file_name": "0635. Halloween.STL",
+      "file_size_mb": 95.54670715332031,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.5656946500142416,
+        "mean_memory": 150.03515625,
+        "triangles": 2003758
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.41452503204345703,
+        "mean_memory": 137.59375,
+        "triangles": 2003758
+      },
+      "comparison": {
+        "time_difference_percent": -26.722829704502026,
+        "memory_difference_percent": -8.292327319117915,
+        "faster_precision": "integer",
+        "lower_memory_precision": "integer"
+      }
+    },
+    {
+      "file_name": "0705. Camper.stl",
+      "file_size_mb": 67.89120101928711,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.31384793917338055,
+        "mean_memory": 97.765625,
+        "triangles": 1423780
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.3715180555979411,
+        "mean_memory": 97.76171875,
+        "triangles": 1423780
+      },
+      "comparison": {
+        "time_difference_percent": 18.37517766611861,
+        "memory_difference_percent": -0.003995525011986575,
+        "faster_precision": "float",
+        "lower_memory_precision": "integer"
+      }
+    },
+    {
+      "file_name": "1703. Christmas bells.STL",
+      "file_size_mb": 147.89827728271484,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.7151622772216797,
+        "mean_memory": 212.9765625,
+        "triangles": 3101650
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.6329213778177897,
+        "mean_memory": 212.9765625,
+        "triangles": 3101650
+      },
+      "comparison": {
+        "time_difference_percent": -11.499613727304817,
+        "memory_difference_percent": 0.0,
+        "faster_precision": "integer",
+        "lower_memory_precision": "equal"
+      }
+    },
+    {
+      "file_name": "0564. Cross.STL",
+      "file_size_mb": 110.80749893188477,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.5723513762156168,
+        "mean_memory": 159.5703125,
+        "triangles": 2323800
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.6890196800231934,
+        "mean_memory": 159.5703125,
+        "triangles": 2323800
+      },
+      "comparison": {
+        "time_difference_percent": 20.384034817734957,
+        "memory_difference_percent": 0.0,
+        "faster_precision": "float",
+        "lower_memory_precision": "equal"
+      }
+    },
+    {
+      "file_name": "1656. 1911 USA Army grip_original_right.stl",
+      "file_size_mb": 293.23633575439453,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 1.5921976566314697,
+        "mean_memory": 422.265625,
+        "triangles": 6149610
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 1.990900993347168,
+        "mean_memory": 422.2630208333333,
+        "triangles": 6149610
+      },
+      "comparison": {
+        "time_difference_percent": 25.04107043840363,
+        "memory_difference_percent": -0.000616712920140164,
+        "faster_precision": "float",
+        "lower_memory_precision": "integer"
+      }
+    },
+    {
+      "file_name": "0614. Eagle.STL",
+      "file_size_mb": 138.16998863220215,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.8042723337809244,
+        "mean_memory": 198.96875,
+        "triangles": 2897633
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.595251719156901,
+        "mean_memory": 198.96875,
+        "triangles": 2897633
+      },
+      "comparison": {
+        "time_difference_percent": -25.98878586826518,
+        "memory_difference_percent": 0.0,
+        "faster_precision": "integer",
+        "lower_memory_precision": "equal"
+      }
+    },
+    {
+      "file_name": "0743. Skull_axes.stl",
+      "file_size_mb": 268.6912384033203,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 1.1552940209706624,
+        "mean_memory": 386.921875,
+        "triangles": 5634862
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 1.1886576016743977,
+        "mean_memory": 386.921875,
+        "triangles": 5634862
+      },
+      "comparison": {
+        "time_difference_percent": 2.887886555121589,
+        "memory_difference_percent": 0.0,
+        "faster_precision": "float",
+        "lower_memory_precision": "equal"
+      }
+    },
+    {
+      "file_name": "1484. Canadian Forces Base North Bay.STL",
+      "file_size_mb": 89.51815032958984,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.41514166196187335,
+        "mean_memory": 128.90625,
+        "triangles": 1877330
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.39261309305826825,
+        "mean_memory": 128.90625,
+        "triangles": 1877330
+      },
+      "comparison": {
+        "time_difference_percent": -5.426718387439065,
+        "memory_difference_percent": 0.0,
+        "faster_precision": "integer",
+        "lower_memory_precision": "equal"
+      }
+    },
+    {
+      "file_name": "0380. Wolf.stl",
+      "file_size_mb": 495.65571212768555,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 2.0781302452087402,
+        "mean_memory": 713.7513020833334,
+        "triangles": 10394652
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 2.259822368621826,
+        "mean_memory": 713.75,
+        "triangles": 10394652
+      },
+      "comparison": {
+        "time_difference_percent": 8.743057555318707,
+        "memory_difference_percent": -0.0001824281552370752,
+        "faster_precision": "float",
+        "lower_memory_precision": "integer"
+      }
+    },
+    {
+      "file_name": "0496. Wedding.stl",
+      "file_size_mb": 197.40017318725586,
+      "float_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.8518250783284506,
+        "mean_memory": 284.2578125,
+        "triangles": 4139780
+      },
+      "integer_precision": {
+        "success_rate": 1.0,
+        "mean_time": 0.8408811887105306,
+        "mean_memory": 284.2591145833333,
+        "triangles": 4139780
+      },
+      "comparison": {
+        "time_difference_percent": -1.284757856553752,
+        "memory_difference_percent": 0.0004580642205970629,
+        "faster_precision": "integer",
+        "lower_memory_precision": "float"
+      }
+    }
+  ],
+  "configurations": {
+    "float_precision": {
+      "success_rate": 1.0,
+      "iterations_total": 30,
+      "iterations_successful": 30,
+      "iterations_failed": 0,
+      "files": {
+        "count": 10,
+        "size_mb": {
+          "mean": 190.48152828216553,
+          "median": 143.0341329574585,
+          "min": 67.89120101928711,
+          "max": 495.65571212768555
+        }
+      },
+      "models": {
+        "triangles": {
+          "mean": 3994685.5,
+          "median": 2999641.5,
+          "min": 1423780,
+          "max": 10394652,
+          "total": 119840565
+        }
+      },
+      "timing": {
+        "mean_seconds": 0.9063917239507039,
+        "median_seconds": 0.817973256111145,
+        "min_seconds": 0.29564857482910156,
+        "max_seconds": 2.096299886703491,
+        "std_dev_seconds": 0.5555564860243982
+      },
+      "memory": {
+        "mean_mb": 275.54192708333335,
+        "median_mb": 205.97265625,
+        "min_mb": 97.765625,
+        "max_mb": 713.75390625,
+        "std_dev_mb": 181.49722514019123
+      },
+      "performance": {
+        "triangles_per_second": 4407239.601204986,
+        "mb_per_second": 210.15364907780787,
+        "memory_per_triangle_bytes": 72.32775940266971
+      }
+    },
+    "integer_precision": {
+      "success_rate": 1.0,
+      "iterations_total": 30,
+      "iterations_successful": 30,
+      "iterations_failed": 0,
+      "files": {
+        "count": 10,
+        "size_mb": {
+          "mean": 190.48152828216553,
+          "median": 143.0341329574585,
+          "min": 67.89120101928711,
+          "max": 495.65571212768555
+        }
+      },
+      "models": {
+        "triangles": {
+          "mean": 3994685.5,
+          "median": 2999641.5,
+          "min": 1423780,
+          "max": 10394652,
+          "total": 119840565
+        }
+      },
+      "timing": {
+        "mean_seconds": 0.9376111110051473,
+        "median_seconds": 0.6345306634902954,
+        "min_seconds": 0.30205750465393066,
+        "max_seconds": 2.5055036544799805,
+        "std_dev_seconds": 0.6607443734674197
+      },
+      "memory": {
+        "mean_mb": 274.29713541666666,
+        "median_mb": 205.97265625,
+        "min_mb": 97.75390625,
+        "max_mb": 713.75,
+        "std_dev_mb": 182.33661478172678
+      },
+      "performance": {
+        "triangles_per_second": 4260492.919839204,
+        "mb_per_second": 203.1562190831587,
+        "memory_per_triangle_bytes": 72.00101060938756
+      }
+    }
+  },
+  "overall_comparison": {
+    "time_difference_percent": 3.444359235581603,
+    "memory_difference_percent": -0.4517612545731444,
+    "faster_config": "float_precision",
+    "lower_memory_config": "integer_precision"
+  }
+}
