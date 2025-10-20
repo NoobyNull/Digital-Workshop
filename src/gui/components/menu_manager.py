@@ -164,6 +164,14 @@ class MenuManager:
         # Tools menu
         tools_menu = menubar.addMenu("&Tools")
 
+        # Run deduplication action
+        dedupe_action = QAction("&Run Deduplication", self.main_window)
+        dedupe_action.setStatusTip("Scan library for duplicate models and resolve them")
+        dedupe_action.triggered.connect(self._run_deduplication)
+        tools_menu.addAction(dedupe_action)
+
+        tools_menu.addSeparator()
+
         # Generate screenshots action
         generate_screenshots_action = QAction("Generate &Screenshots for Library", self.main_window)
         generate_screenshots_action.setStatusTip("Generate screenshots of all models in the library with applied materials")
@@ -266,6 +274,11 @@ class MenuManager:
         """Handle generate library screenshots action."""
         if hasattr(self.main_window, '_generate_library_screenshots'):
             self.main_window._generate_library_screenshots()
+
+    def _run_deduplication(self) -> None:
+        """Handle run deduplication action."""
+        if hasattr(self.main_window, '_run_manual_deduplication'):
+            self.main_window._run_manual_deduplication()
 
 
 # Convenience function for easy menu setup

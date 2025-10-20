@@ -1576,4 +1576,41 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to show deduplication dialog: {e}")
             QMessageBox.critical(self, "Error", f"Failed to show deduplication dialog: {e}")
 
+    def _run_manual_deduplication(self) -> None:
+        """Run manual deduplication from Tools menu."""
+        try:
+            if not self.dedup_service:
+                QMessageBox.warning(self, "Error", "Deduplication service not initialized")
+                return
+
+            # Show progress dialog
+            progress_dialog = QMessageBox(self)
+            progress_dialog.setWindowTitle("Scanning for Duplicates")
+            progress_dialog.setText("Scanning library for duplicate models...\n\nThis may take a moment.")
+            progress_dialog.setStandardButtons(QMessageBox.NoButton)
+            progress_dialog.show()
+            QApplication.processEvents()
+
+            # Find all duplicates
+            duplicates = self.dedup_service.dedup_manager.find_all_duplicates()
+            duplicate_count = self.dedup_service.dedup_manager.get_duplicate_count()
+
+            progress_dialog.close()
+
+            if duplicate_count == 0:
+                QMessageBox.information(self, "No Duplicates",
+                                      "No duplicate models found in the library.")
+                return
+
+            # Update service with duplicates
+            self.dedup_service.pending_duplicates = duplicates
+            self.dedup_service.duplicates_found.emit(duplicate_count)
+
+            # Show deduplication dialog
+            self._show_deduplication_dialog()
+
+        except Exception as e:
+            self.logger.error(f"Failed to run manual deduplication: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to run deduplication: {e}")
+
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====
