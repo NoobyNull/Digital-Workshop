@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         self.progress_bar = self.status_bar_manager.progress_bar
         self.hash_indicator = self.status_bar_manager.hash_indicator
         self.memory_label = self.status_bar_manager.memory_label
+        self.dedup_status_widget = self.status_bar_manager.dedup_status_widget
 
         # Expose menu manager actions for easy access
         self.toggle_layout_edit_action = self.menu_manager.toggle_layout_edit_action
@@ -162,6 +163,25 @@ class MainWindow(QMainWindow):
         # Initialize model loader
         from src.gui.model.model_loader import ModelLoader
         self.model_loader_manager = ModelLoader(self, self.logger)
+
+        # Initialize deduplication service
+        try:
+            from src.gui.services.deduplication_service import DeduplicationService
+            db_manager = get_database_manager()
+            self.dedup_service = DeduplicationService(db_manager)
+
+            # Connect deduplication service signals to status widget
+            self.dedup_service.hashing_progress.connect(self.dedup_status_widget.set_hashing_progress)
+            self.dedup_service.hashing_complete.connect(self.dedup_status_widget.set_hashing_complete)
+            self.dedup_service.duplicates_found.connect(self.dedup_status_widget.set_duplicate_count)
+
+            # Connect duplicate button click to show deduplication dialog
+            self.dedup_status_widget.duplicate_clicked.connect(self._show_deduplication_dialog)
+
+            self.logger.info("Deduplication service initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize deduplication service: {e}")
+            self.dedup_service = None
 
         # Initialize snapping overlays and handlers
         try:
@@ -1511,5 +1531,49 @@ class MainWindow(QMainWindow):
         #     self.logger.info("Background hasher started")
         # except Exception as e:
         #     self.logger.error(f"Failed to start background hasher: {e}")
+
+    def _show_deduplication_dialog(self) -> None:
+        """Show deduplication dialog when duplicate indicator is clicked."""
+        try:
+            if not self.dedup_service:
+                self.logger.warning("Deduplication service not initialized")
+                return
+
+            # Get all duplicates
+            duplicates = self.dedup_service.get_pending_duplicate_groups()
+            if not duplicates:
+                QMessageBox.information(self, "No Duplicates", "No duplicate models found.")
+                return
+
+            # Show deduplication dialog
+            from src.gui.deduplication_dialog import DeduplicationDialog
+
+            # Flatten duplicates for display
+            all_duplicate_models = []
+            for _, models in duplicates.items():
+                if len(models) > 1:
+                    all_duplicate_models.extend(models)
+
+            if not all_duplicate_models:
+                QMessageBox.information(self, "No Duplicates", "No duplicate models found.")
+                return
+
+            dialog = DeduplicationDialog(all_duplicate_models, self)
+            if dialog.exec() == QMessageBox.Accepted:
+                # Get selected strategy
+                strategy = dialog.get_keep_strategy()
+
+                # Deduplicate
+                self.dedup_service.deduplicate_all(strategy)
+
+                # Refresh model library
+                if hasattr(self, 'model_library_widget'):
+                    self.model_library_widget._load_models_from_database()
+
+                QMessageBox.information(self, "Deduplication Complete",
+                                      "Models have been deduplicated successfully.")
+        except Exception as e:
+            self.logger.error(f"Failed to show deduplication dialog: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to show deduplication dialog: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====

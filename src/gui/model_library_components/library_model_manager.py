@@ -233,3 +233,31 @@ class LibraryModelManager:
         self.update_model_view()
         self.library_widget.performance_monitor.end_operation(self.library_widget._load_operation_id, success=True)
 
+        # Trigger post-import deduplication
+        self._trigger_post_import_deduplication()
+
+    def _trigger_post_import_deduplication(self) -> None:
+        """Trigger deduplication after models are imported."""
+        try:
+            # Get main window reference
+            main_window = self.library_widget.window()
+            if not main_window or not hasattr(main_window, 'dedup_service'):
+                self.logger.debug("Main window or dedup_service not available")
+                return
+
+            # Start hashing for newly imported models
+            if hasattr(main_window, 'dedup_service') and main_window.dedup_service:
+                self.logger.info("Starting post-import deduplication")
+                main_window.dedup_service.start_hashing()
+
+                # Find duplicates
+                duplicates = main_window.dedup_service.dedup_manager.find_all_duplicates()
+                duplicate_count = main_window.dedup_service.dedup_manager.get_duplicate_count()
+
+                if duplicate_count > 0:
+                    main_window.dedup_service.pending_duplicates = duplicates
+                    main_window.dedup_service.duplicates_found.emit(duplicate_count)
+                    self.logger.info(f"Found {duplicate_count} duplicate models after import")
+        except Exception as e:
+            self.logger.error(f"Failed to trigger post-import deduplication: {e}")
+

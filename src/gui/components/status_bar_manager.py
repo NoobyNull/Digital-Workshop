@@ -15,6 +15,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QMainWindow, QStatusBar, QLabel, QProgressBar, QPushButton, QMessageBox
 
 from src.core.database_manager import get_database_manager
+from src.gui.components.deduplication_status_widget import DeduplicationStatusWidget
 
 
 class StatusBarManager:
@@ -88,6 +89,10 @@ class StatusBarManager:
         # Layout Edit Mode indicator
         self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
+
+        # Deduplication status widget
+        self.dedup_status_widget = DeduplicationStatusWidget()
+        self.status_bar.addPermanentWidget(self.dedup_status_widget)
 
         # Initialize background hasher
         self.background_hasher = None

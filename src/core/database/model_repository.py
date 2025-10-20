@@ -184,7 +184,8 @@ class ModelRepository:
     def get_all_models(
         self,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
+        exclude_duplicates: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Get all models from the database.
@@ -192,6 +193,7 @@ class ModelRepository:
         Args:
             limit: Maximum number of models to return
             offset: Number of models to skip
+            exclude_duplicates: If True, exclude models with linked_model_id (duplicates)
 
         Returns:
             List of model dictionaries
@@ -206,8 +208,12 @@ class ModelRepository:
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
-                    ORDER BY m.date_added DESC
                 """
+
+                if exclude_duplicates:
+                    query += " WHERE m.linked_model_id IS NULL"
+
+                query += " ORDER BY m.date_added DESC"
 
                 params = []
                 if limit:
