@@ -94,9 +94,21 @@ class ModelCache:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
 
-        # Memory limits
+        # Memory limits - check for user override first
         if max_memory_mb is None:
-            self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
+            # Check if user has set a manual override in config
+            try:
+                from .application_config import ApplicationConfig
+                config = ApplicationConfig.get_default()
+                if config.use_manual_memory_override and config.manual_memory_override_mb:
+                    self.max_memory_bytes = config.manual_memory_override_mb * 1024 * 1024
+                    self.logger.info(f"Using manual memory override: {config.manual_memory_override_mb}MB")
+                else:
+                    # Use adaptive cache size from performance profile
+                    self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
+            except Exception as e:
+                self.logger.warning(f"Failed to check config override, using adaptive: {e}")
+                self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
         else:
             self.max_memory_bytes = max_memory_mb * 1024 * 1024
 
@@ -114,12 +126,14 @@ class ModelCache:
         self.stats = CacheStats()
 
         # Adaptive settings based on performance level
-        self.max_disk_cache_mb = perf_profile.recommended_cache_size_mb * 2
+        # Disk cache is 2x the memory cache size
+        self.max_disk_cache_mb = (self.max_memory_bytes / (1024 * 1024)) * 2
         self.compression_enabled = perf_profile.performance_level != PerformanceLevel.ULTRA
         self.aggressive_eviction = perf_profile.performance_level == PerformanceLevel.MINIMAL
 
         self.logger.info(
             f"Model cache initialized: {self.max_memory_bytes / (1024*1024):.1f}MB memory limit, "
+            f"{self.max_disk_cache_mb:.1f}MB disk limit, "
             f"compression: {self.compression_enabled}"
         )
 
