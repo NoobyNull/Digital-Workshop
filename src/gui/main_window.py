@@ -535,6 +535,24 @@ class MainWindow(QMainWindow):
             pass
         return True
 
+    def _reset_dock_layout(self) -> None:
+        """Restore dock widgets to their default docking layout."""
+        try:
+            if getattr(self, "_default_geometry", None):
+                self.restoreGeometry(self._default_geometry)
+            if getattr(self, "_default_layout_state", None):
+                # restoreState returns bool; ignore on failure
+                self.restoreState(self._default_layout_state)
+        except Exception:
+            pass
+        # Fallback: programmatically re-dock common widgets
+        self._redock_all()
+        # Persist the reset layout
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+
     def _reset_dock_layout_and_save(self) -> None:
         """Reset layout to defaults and persist immediately."""
         self._reset_dock_layout()
