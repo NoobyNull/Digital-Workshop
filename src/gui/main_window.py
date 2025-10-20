@@ -888,6 +888,9 @@ class MainWindow(QMainWindow):
             self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
             self.model_library_widget.models_added.connect(self._on_models_added)
 
+            # Connect model library progress updates to main window status bar
+            self._connect_model_library_status_updates()
+
             self.model_library_dock.setWidget(self.model_library_widget)
         except Exception as e:
             # Fallback widget
@@ -1060,6 +1063,66 @@ class MainWindow(QMainWindow):
                 self.logger.warning("Status bar manager does not have start_background_hasher method")
         except Exception as e:
             self.logger.error(f"Failed to start background hasher: {e}")
+
+    def _connect_model_library_status_updates(self) -> None:
+        """Connect model library progress updates to main window status bar."""
+        try:
+            if not hasattr(self.model_library_widget, 'model_loader'):
+                return
+
+            # We need to monitor the model loader when it's created
+            # Store reference to original _load_models method
+            original_load_models = self.model_library_widget._load_models
+
+            def _load_models_with_status_update(file_paths):
+                """Wrapper to connect status updates when loading starts."""
+                # Call original method
+                original_load_models(file_paths)
+
+                # Connect progress signals if model_loader exists
+                if hasattr(self.model_library_widget, 'model_loader') and self.model_library_widget.model_loader:
+                    try:
+                        self.model_library_widget.model_loader.progress_updated.connect(
+                            self._on_model_library_progress
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"Could not connect progress signal: {e}")
+
+            # Replace the method
+            self.model_library_widget._load_models = _load_models_with_status_update
+
+            self.logger.debug("Model library status updates connected")
+        except Exception as e:
+            self.logger.warning(f"Failed to connect model library status updates: {e}")
+
+    def _on_model_library_progress(self, progress_percent: float, message: str) -> None:
+        """Handle progress updates from model library."""
+        try:
+            # Update main window status bar
+            if hasattr(self, 'status_label'):
+                # Get total files from model loader if available
+                if (hasattr(self.model_library_widget, 'model_loader') and
+                    self.model_library_widget.model_loader):
+                    total_files = len(self.model_library_widget.model_loader.file_paths)
+                    current_item = int((progress_percent / 100.0) * total_files) + 1
+                    current_item = min(current_item, total_files)
+
+                    if total_files > 1:
+                        status_text = f"{message} ({current_item} of {total_files} = {int(progress_percent)}%)"
+                    else:
+                        status_text = f"{message} ({int(progress_percent)}%)"
+                else:
+                    status_text = f"{message} ({int(progress_percent)}%)"
+
+                self.status_label.setText(status_text)
+
+            # Update progress bar
+            if hasattr(self, 'progress_bar'):
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setRange(0, 100)
+                self.progress_bar.setValue(int(progress_percent))
+        except Exception as e:
+            self.logger.debug(f"Failed to update status from model library: {e}")
 
     def _on_metadata_saved(self, model_id: int) -> None:
         """
