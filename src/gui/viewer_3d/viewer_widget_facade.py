@@ -246,7 +246,12 @@ class Viewer3DWidget(QWidget):
     def _open_material_picker(self) -> None:
         """Open material picker dialog."""
         try:
-            picker = MaterialPickerWidget(self)
+            # Get current model format if available
+            model_format = None
+            if self.current_model and hasattr(self.current_model, 'stats'):
+                model_format = self.current_model.stats.format_type
+
+            picker = MaterialPickerWidget(model_format=model_format, parent=self)
             if picker.exec():
                 selected = picker.get_selected_species()
                 if selected:

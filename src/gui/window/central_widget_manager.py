@@ -80,6 +80,15 @@ class CentralWidgetManager:
                 self.main_window.lighting_manager = None
                 self.logger.warning(f"LightingManager unavailable: {e}")
 
+            # Create MaterialLightingIntegrator for material and lighting integration
+            try:
+                from src.gui.materials.integration import MaterialLightingIntegrator
+                self.main_window.material_lighting_integrator = MaterialLightingIntegrator(self.main_window)
+                self.logger.info("MaterialLightingIntegrator created successfully")
+            except Exception as e:
+                self.main_window.material_lighting_integrator = None
+                self.logger.warning(f"MaterialLightingIntegrator unavailable: {e}")
+
             if hasattr(self.main_window.viewer_widget, "lighting_panel_requested"):
                 self.main_window.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
             if hasattr(self.main_window.viewer_widget, "material_selected"):

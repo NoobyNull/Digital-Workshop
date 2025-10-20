@@ -593,6 +593,7 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, 'lighting_manager') and self.lighting_manager:
                 self.lighting_manager.update_position(x, y, z)
+                self._save_lighting_settings()
         except Exception as e:
             self.logger.warning(f"Failed to update light position: {e}")
 
@@ -601,6 +602,7 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, 'lighting_manager') and self.lighting_manager:
                 self.lighting_manager.update_color(r, g, b)
+                self._save_lighting_settings()
         except Exception as e:
             self.logger.warning(f"Failed to update light color: {e}")
 
@@ -609,6 +611,7 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, 'lighting_manager') and self.lighting_manager:
                 self.lighting_manager.update_intensity(value)
+                self._save_lighting_settings()
         except Exception as e:
             self.logger.warning(f"Failed to update light intensity: {e}")
 
@@ -617,8 +620,32 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, 'lighting_manager') and self.lighting_manager:
                 self.lighting_manager.update_cone_angle(angle)
+                self._save_lighting_settings()
         except Exception as e:
             self.logger.warning(f"Failed to update light cone angle: {e}")
+
+    def _apply_material_species(self, species_name: str) -> None:
+        """Apply selected material species to the current model."""
+        try:
+            if not species_name:
+                return
+
+            # Use MaterialLightingIntegrator if available
+            if hasattr(self, 'material_lighting_integrator') and self.material_lighting_integrator:
+                self.material_lighting_integrator.apply_material_species(species_name)
+            else:
+                self.logger.warning("MaterialLightingIntegrator not available for applying material")
+        except Exception as e:
+            self.logger.error(f"Failed to apply material species '{species_name}': {e}")
+
+    def closeEvent(self, event) -> None:
+        """Handle window close event - save settings before closing."""
+        try:
+            self._save_lighting_settings()
+            self.logger.info("Lighting settings saved on app close")
+        except Exception as e:
+            self.logger.warning(f"Failed to save lighting settings on close: {e}")
+        super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
