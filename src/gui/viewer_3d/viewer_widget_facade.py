@@ -247,67 +247,71 @@ class Viewer3DWidget(QWidget):
         """Apply theme styling."""
         self.ui_manager.apply_theme()
 
+    def _reload_model_in_viewer(self) -> None:
+        """Reload the current model in the viewer with updated geometry."""
+        try:
+            if not self.current_model:
+                return
+
+            # Remove existing model from renderer
+            self.model_renderer.remove_model()
+
+            # Re-render with updated geometry
+            self.model_renderer.load_model(self.current_model)
+            self.actor = self.model_renderer.get_actor()
+
+            # Fit camera to model
+            self.camera_controller.fit_camera_to_model(
+                self.current_model,
+                self.actor
+            )
+
+            # Render the scene
+            self.scene_manager.render()
+            self.logger.info("Model reloaded in viewer with updated geometry")
+
+        except Exception as e:
+            self.logger.error(f"Failed to reload model in viewer: {e}", exc_info=True)
+
     def _set_z_up(self) -> None:
-        """Set Z-axis pointing up by adjusting camera orientation."""
+        """Set Z-axis pointing up by rotating model geometry and re-rendering."""
         try:
             if not self.current_model or not self.actor:
                 self.logger.warning("No model loaded to set Z-up")
                 return
 
-            camera = self.renderer.GetActiveCamera()
-            if not camera:
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+
+            # Create editor and detect Z-up rotation needed
+            editor = ModelEditor(self.current_model)
+            axis_str, degrees = editor.analyzer.get_z_up_recommendation()
+
+            self.logger.info(f"Z-up recommendation: rotate {degrees}° around {axis_str} axis")
+
+            if degrees == 0:
+                self.logger.info("Model is already Z-up oriented")
+                self.z_up_pending_save = True
                 return
 
-            # Get current camera state
-            cam_pos = camera.GetPosition()
-            focal_point = camera.GetFocalPoint()
-            current_view_up = camera.GetViewUp()
-
-            # Check if already Z-up (within tolerance)
-            if abs(current_view_up[0]) < 0.01 and abs(current_view_up[1]) < 0.01 and current_view_up[2] > 0.99:
-                self.logger.info("Camera is already Z-up")
+            # Apply rotation to model geometry
+            try:
+                axis = RotationAxis[axis_str]
+                rotated_model = editor.rotate_model(axis, degrees)
+                self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
+            except Exception as e:
+                self.logger.error(f"Failed to rotate model: {e}", exc_info=True)
                 return
 
-            # Calculate view direction
-            view_x = focal_point[0] - cam_pos[0]
-            view_y = focal_point[1] - cam_pos[1]
-            view_z = focal_point[2] - cam_pos[2]
+            # Update current model with rotated geometry
+            self.current_model = rotated_model
 
-            view_length = (view_x**2 + view_y**2 + view_z**2) ** 0.5
-            if view_length < 1e-6:
-                return
-
-            # Normalize view direction
-            view_x /= view_length
-            view_y /= view_length
-            view_z /= view_length
-
-            # Calculate distance from focal point
-            distance = view_length
-
-            # Set camera to view from front with Z-up
-            # Position camera in front of the model, looking at it
-            # with Z pointing up
-            new_pos_x = focal_point[0] - (view_x * distance)
-            new_pos_y = focal_point[1] - (view_y * distance)
-            new_pos_z = focal_point[2] - (view_z * distance)
-
-            # Set camera with Z-up orientation
-            camera.SetPosition(new_pos_x, new_pos_y, new_pos_z)
-            camera.SetFocalPoint(focal_point[0], focal_point[1], focal_point[2])
-            camera.SetViewUp(0.0, 0.0, 1.0)  # Z-up
-
-            # Fit camera to model while preserving Z-up orientation
-            self.camera_controller.fit_camera_preserving_orientation(
-                self.current_model,
-                self.actor
-            )
+            # Re-render the model with new geometry
+            self._reload_model_in_viewer()
 
             # Mark that Z-up is pending save
             self.z_up_pending_save = True
 
-            self.scene_manager.render()
-            self.logger.info("Set Z-up: Camera oriented with Z-axis pointing up (pending save)")
+            self.logger.info(f"Set Z-up: Model rotated {degrees}° around {axis_str} axis (pending save)")
 
             # Emit signal to notify UI that Z-up was set
             self.z_up_orientation_set.emit()

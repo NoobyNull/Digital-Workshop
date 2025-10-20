@@ -187,26 +187,59 @@ class ModelGeometryAnalyzer:
 
     def get_z_up_recommendation(self) -> Tuple[str, float]:
         """
-        Get recommendation for Z-up orientation.
+        Get recommendation for Z-up orientation based on model's current orientation.
+
+        Analyzes which axis is currently pointing "up" and calculates the rotation
+        needed to make Z point up.
 
         Returns:
             Tuple of (axis, rotation_degrees) to achieve Z-up
         """
-        # Find the most descriptive face
-        descriptive_face = self.get_most_descriptive_face()
-        if not descriptive_face:
+        if not self.triangles:
             return ("Z", 0)
 
-        normal = descriptive_face.normal
-        
-        # Calculate angle from Z-axis
-        z_angle = math.acos(min(1.0, max(-1.0, normal.z)))
-        
-        # If already pointing up, no rotation needed
-        if z_angle < math.radians(15):
+        # Calculate the dominant axis by analyzing face normals
+        # Count how many faces point in each direction
+        x_up_count = 0  # Faces pointing in +X direction
+        y_up_count = 0  # Faces pointing in +Y direction
+        z_up_count = 0  # Faces pointing in +Z direction
+
+        for face in self.faces:
+            normal = face.normal
+
+            # Get absolute values to determine which axis is dominant
+            abs_x = abs(normal.x)
+            abs_y = abs(normal.y)
+            abs_z = abs(normal.z)
+
+            # Find which axis is most dominant
+            if abs_x > abs_y and abs_x > abs_z:
+                if normal.x > 0:
+                    x_up_count += 1
+            elif abs_y > abs_x and abs_y > abs_z:
+                if normal.y > 0:
+                    y_up_count += 1
+            elif abs_z > abs_x and abs_z > abs_y:
+                if normal.z > 0:
+                    z_up_count += 1
+
+        # Determine which axis is currently pointing "up"
+        max_count = max(x_up_count, y_up_count, z_up_count)
+
+        if max_count == 0:
             return ("Z", 0)
 
-        # Recommend rotation to align with Z-axis
-        # This is a simplified recommendation
-        return ("Z", 90)
+        # If Z is already pointing up, no rotation needed
+        if z_up_count == max_count:
+            return ("Z", 0)
+
+        # If Y is pointing up, rotate 90° around X to make Z point up
+        if y_up_count == max_count:
+            return ("X", 90)
+
+        # If X is pointing up, rotate 90° around Y to make Z point up
+        if x_up_count == max_count:
+            return ("Y", 90)
+
+        return ("Z", 0)
 
