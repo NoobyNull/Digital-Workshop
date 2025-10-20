@@ -67,6 +67,10 @@ class DatabaseManager:
         """Update file hash for a model."""
         return self._model_repo.update_file_hash(model_id, file_hash)
 
+    def link_duplicate_model(self, duplicate_id: int, keep_id: int) -> bool:
+        """Link a duplicate model to the model being kept."""
+        return self._model_repo.link_duplicate_model(duplicate_id, keep_id)
+
     def get_model(self, model_id: int) -> Optional[Dict[str, Any]]:
         """Get model information by ID."""
         return self._model_repo.get_model(model_id)

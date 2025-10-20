@@ -198,6 +198,15 @@ class DatabaseOperations:
                 cursor.execute("ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0")
                 logger.info("sort_order column added successfully")
 
+            # Migration 4: Add linked_model_id for deduplication tracking
+            has_linked_model_id = any(col[1] == 'linked_model_id' for col in model_columns)
+
+            if not has_linked_model_id:
+                logger.info("Adding linked_model_id column to models table")
+                cursor.execute("ALTER TABLE models ADD COLUMN linked_model_id INTEGER REFERENCES models(id)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_linked_model_id ON models(linked_model_id)")
+                logger.info("linked_model_id column added successfully")
+
         except sqlite3.Error as e:
             logger.error(f"Failed to migrate database schema: {str(e)}")
             raise

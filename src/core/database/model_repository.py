@@ -122,6 +122,34 @@ class ModelRepository:
             return False
 
     @log_function_call(logger)
+    def link_duplicate_model(self, duplicate_id: int, keep_id: int) -> bool:
+        """
+        Link a duplicate model to the model being kept.
+
+        Args:
+            duplicate_id: ID of duplicate model to link
+            keep_id: ID of model to keep
+
+        Returns:
+            True if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE models SET linked_model_id = ?
+                    WHERE id = ?
+                """, (keep_id, duplicate_id))
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info(f"Linked duplicate model {duplicate_id} to {keep_id}")
+                return success
+        except sqlite3.Error as e:
+            logger.error(f"Failed to link duplicate model: {e}")
+            return False
+
+    @log_function_call(logger)
     def get_model(self, model_id: int) -> Optional[Dict[str, Any]]:
         """
         Get model information by ID.
