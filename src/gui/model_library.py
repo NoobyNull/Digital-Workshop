@@ -784,6 +784,11 @@ class ModelLibraryWidget(QWidget):
             open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
             menu.addAction(open_action)
 
+            # Add edit model action
+            edit_action = QAction("Edit Orientation...", self)
+            edit_action.triggered.connect(lambda: self._edit_model_orientation(int(model_id)))
+            menu.addAction(edit_action)
+
             # Add separator and remove action
             menu.addSeparator()
             remove_action = QAction("Remove", self)
@@ -1083,6 +1088,43 @@ class ModelLibraryWidget(QWidget):
         except Exception:
             pass
         gc.collect()
+
+    def _edit_model_orientation(self, model_id: int) -> None:
+        """Edit model orientation and rotation."""
+        try:
+            # Get the model from database
+            from src.core.database_manager import get_database_manager
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(model_id)
+
+            if not model_data:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Load the model file
+            from src.parsers.stl_parser import STLParser
+            parser = STLParser()
+            model = parser.parse(model_data.file_path)
+
+            if not model:
+                QMessageBox.critical(self, "Error", f"Failed to load model: {model_data.file_path}")
+                return
+
+            # Open model editor dialog
+            from src.gui.model_editor.model_editor_dialog import ModelEditorDialog
+            dialog = ModelEditorDialog(model, self)
+
+            if dialog.exec() == QDialog.Accepted:
+                # Model was saved, reload it
+                if dialog.saved_path:
+                    # Emit signal to reload the model in viewer
+                    self.model_double_clicked.emit(model_id)
+                    QMessageBox.information(self, "Success",
+                                          f"Model saved to:\n{dialog.saved_path}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to edit model orientation: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to edit model: {str(e)}")
 
     def closeEvent(self, event) -> None:
         self.cleanup()

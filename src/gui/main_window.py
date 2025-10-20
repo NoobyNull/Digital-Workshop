@@ -1052,6 +1052,73 @@ class MainWindow(QMainWindow):
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
+    def _on_model_selected(self, model_id: int) -> None:
+        """
+        Handle model selection from the model library.
+
+        Args:
+            model_id: ID of the selected model
+        """
+        try:
+            # Store the current model ID
+            self.current_model_id = model_id
+
+            # Enable the Edit Model action
+            if hasattr(self.menu_manager, 'edit_model_action'):
+                self.menu_manager.edit_model_action.setEnabled(True)
+            if hasattr(self.toolbar_manager, 'edit_model_action'):
+                self.toolbar_manager.edit_model_action.setEnabled(True)
+
+            self.logger.debug(f"Model selected: {model_id}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle model selection: {e}")
+
+    def _edit_model(self) -> None:
+        """Edit the currently selected model's orientation and rotation."""
+        try:
+            # Check if a model is currently selected
+            if not hasattr(self, 'current_model_id') or self.current_model_id is None:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(self, "No Model Selected",
+                                      "Please select a model from the library first.")
+                return
+
+            # Get the model from database
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(self.current_model_id)
+
+            if not model_data:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Load the model file
+            parser = STLParser()
+            model = parser.parse(model_data['file_path'])
+
+            if not model:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.critical(self, "Error",
+                                   f"Failed to load model: {model_data['file_path']}")
+                return
+
+            # Open model editor dialog
+            from src.gui.model_editor.model_editor_dialog import ModelEditorDialog
+            dialog = ModelEditorDialog(model, self)
+
+            if dialog.exec() == 1:  # QDialog.Accepted
+                # Model was saved, reload it
+                if dialog.saved_path:
+                    self.logger.info(f"Model saved to: {dialog.saved_path}")
+                    # Reload the model in the viewer
+                    self._on_model_double_clicked(self.current_model_id)
+
+        except Exception as e:
+            self.logger.error(f"Failed to edit model: {e}")
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to edit model: {str(e)}")
+
     def _start_background_hasher(self) -> None:
         """Start the background hasher thread to process unhashed models."""
         try:
