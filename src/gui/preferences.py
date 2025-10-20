@@ -1209,15 +1209,46 @@ class AdvancedTab(QWidget):
         header.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout.addWidget(header)
 
+        # Database Reset Section
+        db_section = QFrame()
+        db_layout = QVBoxLayout(db_section)
+
+        db_title = QLabel("<b>Database Management</b>")
+        db_layout.addWidget(db_title)
+
+        db_warning = QLabel(
+            "Reset the application database. This will clear all model records, "
+            "metadata, and library information. The database will be recreated on next startup."
+        )
+        db_warning.setWordWrap(True)
+        db_warning.setStyleSheet("color: #ffa500; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+        db_layout.addWidget(db_warning)
+
+        reset_db_button = QPushButton("Reset Database")
+        reset_db_button.setStyleSheet(
+            "QPushButton { background-color: #ffa500; color: white; padding: 8px; border-radius: 4px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #ff8c00; }"
+        )
+        reset_db_button.clicked.connect(self._perform_database_reset)
+        db_layout.addWidget(reset_db_button)
+
+        layout.addWidget(db_section)
+
+        # System Reset Section
+        system_section = QFrame()
+        system_layout = QVBoxLayout(system_section)
+
+        system_title = QLabel("<b>Complete System Reset</b>")
+        system_layout.addWidget(system_title)
+
         # Warning message
         warning = QLabel(
-            "⚠️ Complete System Reset\n\n"
             "This will reset all application settings, clear the cache, and restore "
             "the application to its default state. This action cannot be undone."
         )
         warning.setWordWrap(True)
         warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
-        layout.addWidget(warning)
+        system_layout.addWidget(warning)
 
         # Reset button
         reset_button = QPushButton("Complete System Reset")
@@ -1226,9 +1257,92 @@ class AdvancedTab(QWidget):
             "QPushButton:hover { background-color: #ff5252; }"
         )
         reset_button.clicked.connect(self._perform_system_reset)
-        layout.addWidget(reset_button)
+        system_layout.addWidget(reset_button)
+
+        layout.addWidget(system_section)
 
         layout.addStretch(1)
+
+    def _perform_database_reset(self) -> None:
+        """Perform database reset with confirmation."""
+        # First verification: Simple confirmation
+        reply1 = QMessageBox.warning(
+            self,
+            "Reset Database - Confirmation 1/2",
+            "Are you sure you want to reset the database?\n\n"
+            "This will delete all model records, metadata, and library information.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply1 != QMessageBox.Yes:
+            return
+
+        # Second verification: Text input
+        text, ok = QInputDialog.getText(
+            self,
+            "Reset Database - Confirmation 2/2",
+            "Type 'RESET DATABASE' to confirm:",
+            QLineEdit.Normal,
+            ""
+        )
+
+        if not ok or text.strip().upper() != "RESET DATABASE":
+            QMessageBox.information(
+                self,
+                "Reset Cancelled",
+                "Database reset cancelled. No changes were made."
+            )
+            return
+
+        # All verifications passed - perform reset
+        self._execute_database_reset()
+
+    def _execute_database_reset(self) -> None:
+        """Execute the actual database reset."""
+        try:
+            from PySide6.QtCore import QStandardPaths
+            from pathlib import Path
+
+            # Close database manager to release file locks
+            try:
+                from src.core.database_manager import close_database_manager
+                close_database_manager()
+            except Exception as e:
+                print(f"Warning: Could not close database manager: {e}")
+
+            # Delete database file
+            try:
+                app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+                db_file = app_data / "3dmm.db"
+                if db_file.exists():
+                    db_file.unlink()
+                    print(f"✓ Deleted database: {db_file}")
+
+                # Also delete WAL and SHM files if they exist
+                wal_file = app_data / "3dmm.db-wal"
+                shm_file = app_data / "3dmm.db-shm"
+                if wal_file.exists():
+                    wal_file.unlink()
+                if shm_file.exists():
+                    shm_file.unlink()
+            except Exception as e:
+                print(f"Warning: Could not delete database file: {e}")
+
+            # Show success message
+            QMessageBox.information(
+                self,
+                "Database Reset Complete",
+                "✓ Database reset completed successfully!\n\n"
+                "The database will be recreated on next startup."
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Reset Failed",
+                f"An error occurred during database reset:\n\n{str(e)}"
+            )
 
     def _perform_system_reset(self) -> None:
         """Perform complete system reset with triple verification."""
