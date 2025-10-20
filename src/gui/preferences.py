@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QDialog, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLabel, QPushButton, QLineEdit, QColorDialog, QTableWidget, QTableWidgetItem,
     QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox,
-    QComboBox, QListWidget, QListWidgetItem, QScrollArea, QSlider
+    QComboBox, QListWidget, QListWidgetItem, QScrollArea, QSlider, QInputDialog
 )
 
 from src.gui.theme import (
@@ -64,6 +64,7 @@ class PreferencesDialog(QDialog):
         self.files_tab = FilesTab()
         self.image_preferences_tab = ImagePreferencesTab()
         self.performance_tab = PerformanceSettingsTab()
+        self.advanced_tab = AdvancedTab()
 
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
 
@@ -73,6 +74,7 @@ class PreferencesDialog(QDialog):
         self.tabs.addTab(self.image_preferences_tab, "Image Preferences")
         self.tabs.addTab(self.performance_tab, "Performance")
         self.tabs.addTab(self.theming_tab, "Theming")
+        self.tabs.addTab(self.advanced_tab, "Advanced")
 
         # Dialog action buttons
         buttons_row = QHBoxLayout()
@@ -722,6 +724,136 @@ class PerformanceSettingsTab(QWidget):
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to save settings: {e}")
+
+
+class AdvancedTab(QWidget):
+    """Advanced settings tab with system reset functionality."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        """Setup the advanced settings UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        # Header
+        header = QLabel("Advanced Settings")
+        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        layout.addWidget(header)
+
+        # Warning message
+        warning = QLabel(
+            "⚠️ Complete System Reset\n\n"
+            "This will reset all application settings, clear the cache, and restore "
+            "the application to its default state. This action cannot be undone."
+        )
+        warning.setWordWrap(True)
+        warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
+        layout.addWidget(warning)
+
+        # Reset button
+        reset_button = QPushButton("Complete System Reset")
+        reset_button.setStyleSheet(
+            "QPushButton { background-color: #ff6b6b; color: white; padding: 8px; border-radius: 4px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #ff5252; }"
+        )
+        reset_button.clicked.connect(self._perform_system_reset)
+        layout.addWidget(reset_button)
+
+        layout.addStretch(1)
+
+    def _perform_system_reset(self) -> None:
+        """Perform complete system reset with triple verification."""
+        # First verification: Simple confirmation
+        reply1 = QMessageBox.warning(
+            self,
+            "System Reset - Confirmation 1/3",
+            "Are you sure you want to reset the entire system?\n\n"
+            "This will delete all settings, cache, and restore defaults.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply1 != QMessageBox.Yes:
+            return
+
+        # Second verification: More serious warning
+        reply2 = QMessageBox.critical(
+            self,
+            "System Reset - Confirmation 2/3",
+            "⚠️ WARNING ⚠️\n\n"
+            "This action will:\n"
+            "• Delete all application settings\n"
+            "• Clear the model cache\n"
+            "• Reset window layout\n"
+            "• Reset all preferences\n\n"
+            "This CANNOT be undone. Continue?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply2 != QMessageBox.Yes:
+            return
+
+        # Third verification: Text input
+        text, ok = QInputDialog.getText(
+            self,
+            "System Reset - Confirmation 3/3",
+            "Type 'RESET' to confirm complete system reset:",
+            QLineEdit.Normal,
+            ""
+        )
+
+        if not ok or text.strip().upper() != "RESET":
+            QMessageBox.information(
+                self,
+                "Reset Cancelled",
+                "System reset cancelled. No changes were made."
+            )
+            return
+
+        # All verifications passed - perform reset
+        self._execute_system_reset()
+
+    def _execute_system_reset(self) -> None:
+        """Execute the actual system reset."""
+        try:
+            from PySide6.QtCore import QSettings
+
+            # Clear QSettings
+            settings = QSettings()
+            settings.clear()
+            settings.sync()
+
+            # Clear model cache
+            try:
+                from src.core.model_cache import ModelCache
+                cache = ModelCache.get_instance()
+                cache.clear()
+            except Exception as e:
+                print(f"Warning: Could not clear model cache: {e}")
+
+            # Show success message
+            QMessageBox.information(
+                self,
+                "System Reset Complete",
+                "✓ System reset completed successfully!\n\n"
+                "The application will now close. Please restart it to apply all changes."
+            )
+
+            # Close the application
+            from PySide6.QtWidgets import QApplication
+            QApplication.instance().quit()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Reset Failed",
+                f"An error occurred during system reset:\n\n{str(e)}"
+            )
 
 
 class PlaceholderTab(QWidget):
