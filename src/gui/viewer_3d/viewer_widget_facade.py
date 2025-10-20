@@ -313,17 +313,25 @@ class Viewer3DWidget(QWidget):
                 self.logger.info("Z-axis is pointing down (negative), rotating 180° around X")
                 return ("X", 180)
 
-            # If Y is pointing up, rotate 90° around X to make Z point up
-            if abs_y > abs_x and abs_y > abs_z:
-                direction = "up" if view_up[1] > 0 else "down"
-                self.logger.info(f"Y-axis is pointing {direction}, rotating 90° around X")
+            # If Y is pointing up (positive), rotate 90° around X to make Z point up
+            if abs_y > abs_x and abs_y > abs_z and view_up[1] > 0:
+                self.logger.info("Y-axis is pointing up (positive), rotating 90° around X")
                 return ("X", 90)
 
-            # If X is pointing up, rotate 90° around Y to make Z point up
-            if abs_x > abs_y and abs_x > abs_z:
-                direction = "up" if view_up[0] > 0 else "down"
-                self.logger.info(f"X-axis is pointing {direction}, rotating 90° around Y")
+            # If Y is pointing down (negative), rotate -90° (or 270°) around X to make Z point up
+            if abs_y > abs_x and abs_y > abs_z and view_up[1] < 0:
+                self.logger.info("Y-axis is pointing down (negative), rotating -90° around X")
+                return ("X", -90)
+
+            # If X is pointing up (positive), rotate 90° around Y to make Z point up
+            if abs_x > abs_y and abs_x > abs_z and view_up[0] > 0:
+                self.logger.info("X-axis is pointing up (positive), rotating 90° around Y")
                 return ("Y", 90)
+
+            # If X is pointing down (negative), rotate -90° (or 270°) around Y to make Z point up
+            if abs_x > abs_y and abs_x > abs_z and view_up[0] < 0:
+                self.logger.info("X-axis is pointing down (negative), rotating -90° around Y")
+                return ("Y", -90)
 
             # Default: no rotation
             return ("Z", 0)
