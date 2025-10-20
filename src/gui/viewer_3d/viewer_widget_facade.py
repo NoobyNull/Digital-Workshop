@@ -11,7 +11,7 @@ import time
 from typing import Optional, Any
 
 from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QDialog
 
 import vtk
 
@@ -337,7 +337,105 @@ class Viewer3DWidget(QWidget):
 
     def _save_view_requested(self) -> None:
         """Request save view."""
-        self.save_view_requested.emit()
+        # If Z-up is pending, show special dialog
+        if self.z_up_pending_save:
+            self._handle_z_up_save()
+        else:
+            self.save_view_requested.emit()
+
+    def _handle_z_up_save(self) -> None:
+        """Handle Z-up save workflow with dialog."""
+        try:
+            from .z_up_save_dialog import ZUpSaveDialog
+            from src.parsers.stl_writer import STLWriter
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+
+            if not self.current_model:
+                self.logger.warning("No model loaded for Z-up save")
+                return
+
+            # Get model filename
+            model_filename = getattr(self.current_model, 'header', 'model.stl')
+
+            # Show dialog
+            dialog = ZUpSaveDialog(model_filename, self.ui_manager.viewer_widget if hasattr(self.ui_manager, 'viewer_widget') else None)
+            if dialog.exec() != QDialog.Accepted:
+                return
+
+            option = dialog.get_selected_option()
+
+            if option == ZUpSaveDialog.SAVE_VIEW_ONLY:
+                # Just save camera view
+                self.save_view_requested.emit()
+                self.z_up_pending_save = False
+
+            elif option == ZUpSaveDialog.SAVE_AND_REPLACE:
+                # Rotate model and save to original file
+                self._rotate_and_save_model(model_filename, replace_original=True)
+                self.z_up_pending_save = False
+
+            elif option == ZUpSaveDialog.SAVE_AS_NEW:
+                # Rotate model and save as new file
+                new_path = dialog.get_new_filepath()
+                self._rotate_and_save_model(new_path, replace_original=False)
+                self.z_up_pending_save = False
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle Z-up save: {e}", exc_info=True)
+
+    def _rotate_and_save_model(self, output_path: str, replace_original: bool = False) -> None:
+        """
+        Rotate model to Z-up and save to file.
+
+        Args:
+            output_path: Path to save the model
+            replace_original: If True, replaces original file
+        """
+        try:
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+            from src.parsers.stl_writer import STLWriter
+            from PySide6.QtWidgets import QMessageBox
+
+            if not self.current_model:
+                return
+
+            # Create editor and detect Z-up rotation needed
+            editor = ModelEditor(self.current_model)
+            axis_str, degrees = editor.analyzer.get_z_up_recommendation()
+
+            if degrees != 0:
+                # Apply rotation
+                axis = RotationAxis[axis_str]
+                rotated_model = editor.rotate_model(axis, degrees)
+                self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
+            else:
+                rotated_model = self.current_model
+                self.logger.info("Model already Z-up, no rotation needed")
+
+            # Save model
+            success = STLWriter.write(rotated_model, output_path, binary=True)
+
+            if success:
+                self.logger.info(f"Saved Z-up model to {output_path}")
+                if replace_original:
+                    QMessageBox.information(
+                        None,
+                        "Success",
+                        f"Model rotated to Z-up and saved:\n{output_path}"
+                    )
+                else:
+                    QMessageBox.information(
+                        None,
+                        "Success",
+                        f"Model rotated to Z-up and saved as:\n{output_path}"
+                    )
+            else:
+                QMessageBox.critical(None, "Error", f"Failed to save model to {output_path}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to rotate and save model: {e}", exc_info=True)
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(None, "Error", f"Failed to save model: {str(e)}")
 
     def reset_save_view_button(self) -> None:
         """Reset save view button."""
