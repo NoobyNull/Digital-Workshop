@@ -347,7 +347,7 @@ class Viewer3DWidget(QWidget):
         """Handle Z-up save workflow with dialog."""
         try:
             from .z_up_save_dialog import ZUpSaveDialog
-            from src.parsers.stl_writer import STLWriter
+            from src.gui.model_editor.stl_writer import STLWriter
             from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
 
             if not self.current_model:
@@ -393,7 +393,7 @@ class Viewer3DWidget(QWidget):
         """
         try:
             from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
-            from src.parsers.stl_writer import STLWriter
+            from src.gui.model_editor.stl_writer import STLWriter
             from PySide6.QtWidgets import QMessageBox
 
             if not self.current_model:
