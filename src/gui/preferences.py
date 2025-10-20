@@ -821,12 +821,38 @@ class AdvancedTab(QWidget):
     def _execute_system_reset(self) -> None:
         """Execute the actual system reset."""
         try:
-            from PySide6.QtCore import QSettings
+            from PySide6.QtCore import QSettings, QStandardPaths
+            from pathlib import Path
+
+            # Close database manager to release file locks
+            try:
+                from src.core.database_manager import close_database_manager
+                close_database_manager()
+            except Exception as e:
+                print(f"Warning: Could not close database manager: {e}")
 
             # Clear QSettings
             settings = QSettings()
             settings.clear()
             settings.sync()
+
+            # Delete database file
+            try:
+                app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+                db_file = app_data / "3dmm.db"
+                if db_file.exists():
+                    db_file.unlink()
+                    print(f"✓ Deleted database: {db_file}")
+
+                # Also delete WAL and SHM files if they exist
+                wal_file = app_data / "3dmm.db-wal"
+                shm_file = app_data / "3dmm.db-shm"
+                if wal_file.exists():
+                    wal_file.unlink()
+                if shm_file.exists():
+                    shm_file.unlink()
+            except Exception as e:
+                print(f"Warning: Could not delete database file: {e}")
 
             # Clear model cache
             try:
@@ -841,8 +867,13 @@ class AdvancedTab(QWidget):
                 self,
                 "System Reset Complete",
                 "✓ System reset completed successfully!\n\n"
-                "The application will now close. Please restart it to apply all changes."
+                "The application will now close and restart."
             )
+
+            # Relaunch the application
+            import subprocess
+            import sys
+            subprocess.Popen([sys.executable, sys.argv[0]])
 
             # Close the application
             from PySide6.QtWidgets import QApplication
