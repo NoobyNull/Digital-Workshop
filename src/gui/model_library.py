@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTreeView, QListView,
     QTableView, QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
     QGroupBox, QTabWidget, QFrame, QMenu, QMessageBox, QHeaderView,
-    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox
+    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox, QDialog
 )
 
 from src.core.logging_config import get_logger
@@ -1120,8 +1120,19 @@ class ModelLibraryWidget(QWidget):
             dialog = ModelAnalyzerDialog(model, file_path, self)
 
             if dialog.exec() == QDialog.Accepted:
-                # Model was fixed and saved, reload it
-                self.model_double_clicked.emit(model_id)
+                # Model was fixed and saved
+                # Update database with new file hash
+                try:
+                    from src.utils.file_hash import calculate_file_hash
+                    new_hash = calculate_file_hash(file_path)
+
+                    # Update model file hash in database
+                    db_manager.update_file_hash(model_id, new_hash)
+
+                    # Reload the model in viewer
+                    self.model_double_clicked.emit(model_id)
+                except Exception as e:
+                    self.logger.error(f"Failed to update database after fix: {e}")
 
         except Exception as e:
             self.logger.error(f"Failed to analyze model: {e}")

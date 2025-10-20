@@ -142,6 +142,13 @@ class ModelAnalyzerDialog(QDialog):
             # Display original stats
             self._display_original_stats()
 
+            # Check if model has triangles
+            if not self.model or not self.model.triangles:
+                self.logger.warning("Model has no triangles to analyze")
+                self.error_text.setText("⚠️ Model has no triangles to analyze")
+                self.fix_btn.setEnabled(False)
+                return
+
             # Detect errors
             detector = ModelErrorDetector(self.model)
             errors = detector.detect_all_errors()
@@ -150,7 +157,7 @@ class ModelAnalyzerDialog(QDialog):
             self._display_error_results(errors)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze model: {e}")
+            self.logger.error(f"Failed to analyze model: {e}", exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {e}")
 
     def _display_original_stats(self) -> None:
@@ -165,19 +172,37 @@ Format: {stats.format_type.value}
         self.stats_text.setText(text)
 
     def _display_error_results(self, errors) -> None:
-        """Display error detection results."""
+        """Display error detection results for all error types."""
+        # Define all error types
+        error_types = {
+            "non_manifold": "Non-Manifold Edges",
+            "hole": "Holes",
+            "overlap": "Overlapping Triangles",
+            "self_intersect": "Self-Intersecting Triangles",
+            "hollow": "Hollow Areas"
+        }
+
+        # Create a map of detected errors
+        detected_map = {error.error_type: error for error in errors}
+
+        text = "Error Detection Results:\n\n"
+
         if not errors:
-            text = "✅ No errors detected!"
+            text += "✅ No errors detected!\n\n"
             self.fix_btn.setEnabled(False)
         else:
-            text = f"Found {len(errors)} error type(s):\n\n"
-            for error in errors:
+            text += f"Found {len(errors)} error type(s):\n\n"
+
+        # Show status for all error types
+        for error_key, error_name in error_types.items():
+            if error_key in detected_map:
+                error = detected_map[error_key]
                 icon = "🔴" if error.severity == "critical" else "🟡" if error.severity == "warning" else "🔵"
-                text += f"{icon} {error.error_type.upper()}\n"
+                text += f"{icon} {error_name}: {error.count} found\n"
                 text += f"   {error.description}\n"
-                if error.affected_triangles:
-                    text += f"   Count: {len(error.affected_triangles)}\n"
-                text += "\n"
+            else:
+                text += f"✅ {error_name}: None\n"
+            text += "\n"
 
         self.error_text.setText(text)
 
