@@ -53,6 +53,7 @@ class Viewer3DWidget(QWidget):
     lighting_panel_requested = Signal()
     material_selected = Signal(str)
     save_view_requested = Signal()
+    z_up_orientation_set = Signal()  # Emitted when Z-up is set, before save
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Initialize the 3D viewer widget."""
@@ -64,6 +65,7 @@ class Viewer3DWidget(QWidget):
         # State
         self.current_model = None
         self.loading_in_progress = False
+        self.z_up_pending_save = False  # Track if Z-up was just set and needs saving
 
         # Performance settings
         self.adaptive_quality = True
@@ -301,8 +303,14 @@ class Viewer3DWidget(QWidget):
                 self.actor
             )
 
+            # Mark that Z-up is pending save
+            self.z_up_pending_save = True
+
             self.scene_manager.render()
-            self.logger.info("Set Z-up: Camera oriented with Z-axis pointing up")
+            self.logger.info("Set Z-up: Camera oriented with Z-axis pointing up (pending save)")
+
+            # Emit signal to notify UI that Z-up was set
+            self.z_up_orientation_set.emit()
 
         except Exception as e:
             self.logger.error(f"Failed to set Z-up: {e}", exc_info=True)
