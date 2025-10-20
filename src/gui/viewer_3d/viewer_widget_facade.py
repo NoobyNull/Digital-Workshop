@@ -6,6 +6,7 @@ while maintaining backward compatibility with the original API.
 """
 
 import gc
+import math
 import time
 from typing import Optional, Any
 
@@ -18,7 +19,7 @@ from src.core.logging_config import get_logger, log_function_call
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.stl_parser import STLModel
-from src.core.data_structures import Model, LoadingState
+from src.core.data_structures import Model, LoadingState, Triangle, Vector3D
 from src.gui.theme import vtk_rgb
 from src.gui.material_picker_widget import MaterialPickerWidget
 
@@ -94,6 +95,7 @@ class Viewer3DWidget(QWidget):
             on_save_view_clicked=self._save_view_requested,
             on_rotate_ccw_clicked=lambda: self._rotate_around_view_axis(90),
             on_rotate_cw_clicked=lambda: self._rotate_around_view_axis(-90),
+            on_set_z_up_clicked=self._set_z_up,
         )
 
     def _init_modules(self) -> None:
@@ -242,6 +244,143 @@ class Viewer3DWidget(QWidget):
     def apply_theme(self) -> None:
         """Apply theme styling."""
         self.ui_manager.apply_theme()
+
+    def _set_z_up(self) -> None:
+        """Set Z-axis pointing up by rotating the model."""
+        try:
+            if not self.current_model or not self.actor:
+                self.logger.warning("No model loaded to set Z-up")
+                return
+
+            # Get camera's current view direction
+            camera = self.renderer.GetActiveCamera()
+            if not camera:
+                return
+
+            # Get camera position and focal point
+            cam_pos = camera.GetPosition()
+            focal_point = camera.GetFocalPoint()
+
+            # Calculate view direction (from camera to focal point)
+            view_x = focal_point[0] - cam_pos[0]
+            view_y = focal_point[1] - cam_pos[1]
+            view_z = focal_point[2] - cam_pos[2]
+
+            # Normalize view direction
+            view_length = (view_x**2 + view_y**2 + view_z**2) ** 0.5
+            if view_length < 1e-6:
+                return
+
+            view_x /= view_length
+            view_y /= view_length
+            view_z /= view_length
+
+            # Get camera's up vector
+            view_up = camera.GetViewUp()
+
+            # Calculate right vector (cross product of view_up and view direction)
+            right_x = view_up[1] * view_z - view_up[2] * view_y
+            right_y = view_up[2] * view_x - view_up[0] * view_z
+            right_z = view_up[0] * view_y - view_up[1] * view_x
+
+            # Normalize right vector
+            right_length = (right_x**2 + right_y**2 + right_z**2) ** 0.5
+            if right_length < 1e-6:
+                return
+
+            right_x /= right_length
+            right_y /= right_length
+            right_z /= right_length
+
+            # Create rotation matrix to align current view_up with Z-axis (0, 0, 1)
+            # We need to rotate the model so that what's currently "up" becomes Z-up
+
+            # Calculate rotation axis and angle
+            # Current up vector should become (0, 0, 1)
+            target_z = (0, 0, 1)
+
+            # Rotation axis is perpendicular to both current up and target
+            axis_x = view_up[1] * target_z[2] - view_up[2] * target_z[1]
+            axis_y = view_up[2] * target_z[0] - view_up[0] * target_z[2]
+            axis_z = view_up[0] * target_z[1] - view_up[1] * target_z[0]
+
+            axis_length = (axis_x**2 + axis_y**2 + axis_z**2) ** 0.5
+
+            if axis_length < 1e-6:
+                # Already aligned or opposite
+                dot = view_up[0] * target_z[0] + view_up[1] * target_z[1] + view_up[2] * target_z[2]
+                if dot > 0.99:
+                    self.logger.info("Model is already Z-up")
+                    return
+                else:
+                    # Opposite direction, rotate 180 degrees around right vector
+                    axis_x, axis_y, axis_z = right_x, right_y, right_z
+                    angle = 180.0
+            else:
+                # Normalize axis
+                axis_x /= axis_length
+                axis_y /= axis_length
+                axis_z /= axis_length
+
+                # Calculate angle
+                dot = view_up[0] * target_z[0] + view_up[1] * target_z[1] + view_up[2] * target_z[2]
+                dot = max(-1.0, min(1.0, dot))
+                angle = math.degrees(math.acos(dot))
+
+            # Create VTK transform
+            transform = vtk.vtkTransform()
+            transform.RotateWXYZ(angle, axis_x, axis_y, axis_z)
+
+            # Apply transformation to all triangles
+            rotated_triangles = []
+            for triangle in self.current_model.triangles:
+                # Transform normal
+                normal = triangle.normal
+                normal_pt = vtk.vtkPoints()
+                normal_pt.InsertNextPoint(normal.x, normal.y, normal.z)
+                transform.TransformPoints(normal_pt, normal_pt)
+                new_normal_pt = normal_pt.GetPoint(0)
+
+                # Transform vertices
+                vertices = triangle.get_vertices()
+                rotated_vertices = []
+                for vertex in vertices:
+                    vertex_pt = vtk.vtkPoints()
+                    vertex_pt.InsertNextPoint(vertex.x, vertex.y, vertex.z)
+                    transform.TransformPoints(vertex_pt, vertex_pt)
+                    new_vertex_pt = vertex_pt.GetPoint(0)
+                    rotated_vertices.append(Vector3D(new_vertex_pt[0], new_vertex_pt[1], new_vertex_pt[2]))
+
+                # Create rotated triangle
+                rotated_tri = Triangle(
+                    normal=Vector3D(new_normal_pt[0], new_normal_pt[1], new_normal_pt[2]),
+                    vertex1=rotated_vertices[0],
+                    vertex2=rotated_vertices[1],
+                    vertex3=rotated_vertices[2],
+                    attribute_byte_count=triangle.attribute_byte_count
+                )
+                rotated_triangles.append(rotated_tri)
+
+            # Update model
+            self.current_model = STLModel(
+                header=self.current_model.header,
+                triangles=rotated_triangles,
+                stats=self.current_model.stats
+            )
+
+            # Re-render the model
+            self.model_renderer.remove_model()
+            polydata = self.model_renderer.create_vtk_polydata(self.current_model)
+            self.model_renderer.create_actor(polydata)
+            self.actor = self.model_renderer.actor
+
+            # Reset camera view
+            self.reset_view()
+
+            self.logger.info(f"Set Z-up: rotated {angle:.1f}° around axis ({axis_x:.2f}, {axis_y:.2f}, {axis_z:.2f})")
+
+        except Exception as e:
+            self.logger.error(f"Failed to set Z-up: {e}", exc_info=True)
 
     def _open_material_picker(self) -> None:
         """Open material picker dialog."""
