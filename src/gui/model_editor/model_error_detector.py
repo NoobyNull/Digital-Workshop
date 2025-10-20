@@ -48,9 +48,8 @@ class ModelErrorDetector:
 
     def _detect_non_manifold_edges(self) -> None:
         """Detect edges shared by more than 2 triangles."""
-        edge_count: Dict[Tuple, int] = {}
-        affected_triangles: Set[int] = set()
-        
+        edge_triangles: Dict[Tuple, List[int]] = {}
+
         for tri_idx, triangle in enumerate(self.triangles):
             vertices = triangle.get_vertices()
             edges = [
@@ -58,27 +57,34 @@ class ModelErrorDetector:
                 self._normalize_edge(vertices[1], vertices[2]),
                 self._normalize_edge(vertices[2], vertices[0]),
             ]
-            
+
             for edge in edges:
-                edge_count[edge] = edge_count.get(edge, 0) + 1
-                if edge_count[edge] > 2:
-                    affected_triangles.add(tri_idx)
-        
-        non_manifold_edges = sum(1 for count in edge_count.values() if count > 2)
-        
-        if non_manifold_edges > 0:
+                if edge not in edge_triangles:
+                    edge_triangles[edge] = []
+                edge_triangles[edge].append(tri_idx)
+
+        # Find edges shared by more than 2 triangles
+        non_manifold_edges = []
+        affected_triangles: Set[int] = set()
+
+        for edge, tri_list in edge_triangles.items():
+            if len(tri_list) > 2:
+                non_manifold_edges.append(edge)
+                affected_triangles.update(tri_list)
+
+        if non_manifold_edges:
             self.errors.append(MeshError(
                 error_type="non_manifold",
-                count=non_manifold_edges,
-                description=f"Found {non_manifold_edges} non-manifold edges (shared by >2 triangles)",
+                count=len(non_manifold_edges),
+                description=f"Found {len(non_manifold_edges)} non-manifold edges (shared by >2 triangles)",
                 severity="critical",
                 affected_triangles=list(affected_triangles)
             ))
 
     def _detect_holes(self) -> None:
-        """Detect holes (open edges not shared by exactly 2 triangles)."""
+        """Detect holes (open edges shared by only 1 triangle)."""
         edge_count: Dict[Tuple, int] = {}
-        
+
         for triangle in self.triangles:
             vertices = triangle.get_vertices()
             edges = [
@@ -86,45 +92,47 @@ class ModelErrorDetector:
                 self._normalize_edge(vertices[1], vertices[2]),
                 self._normalize_edge(vertices[2], vertices[0]),
             ]
-            
+
             for edge in edges:
                 edge_count[edge] = edge_count.get(edge, 0) + 1
-        
-        open_edges = sum(1 for count in edge_count.values() if count != 2)
-        
-        if open_edges > 0:
+
+        # Holes are edges shared by only 1 triangle (open edges)
+        open_edges = [edge for edge, count in edge_count.items() if count == 1]
+
+        if open_edges:
             self.errors.append(MeshError(
                 error_type="hole",
-                count=open_edges,
-                description=f"Found {open_edges} open edges (holes in mesh)",
-                severity="warning",
+                count=len(open_edges),
+                description=f"Found {len(open_edges)} open edges (holes in mesh)",
+                severity="critical",
                 affected_triangles=[]
             ))
 
     def _detect_overlapping_triangles(self) -> None:
-        """Detect overlapping triangles (same vertices)."""
-        seen_triangles: Set[Tuple] = set()
+        """Detect overlapping/duplicate triangles (exact same vertices)."""
+        seen_triangles: Dict[Tuple, int] = {}
         duplicates = 0
         affected_triangles: Set[int] = set()
-        
+
         for tri_idx, triangle in enumerate(self.triangles):
             vertices = triangle.get_vertices()
-            # Create a normalized representation
+            # Create a normalized representation (sorted vertices)
             tri_key = tuple(sorted([
                 self._vertex_to_tuple(v) for v in vertices
             ]))
-            
+
             if tri_key in seen_triangles:
                 duplicates += 1
                 affected_triangles.add(tri_idx)
+                affected_triangles.add(seen_triangles[tri_key])
             else:
-                seen_triangles.add(tri_key)
-        
+                seen_triangles[tri_key] = tri_idx
+
         if duplicates > 0:
             self.errors.append(MeshError(
                 error_type="overlap",
                 count=duplicates,
-                description=f"Found {duplicates} overlapping/duplicate triangles",
+                description=f"Found {duplicates} duplicate triangles with identical vertices",
                 severity="warning",
                 affected_triangles=list(affected_triangles)
             ))
@@ -152,25 +160,58 @@ class ModelErrorDetector:
             ))
 
     def _detect_hollow_areas(self) -> None:
-        """Detect hollow areas (inconsistent normals)."""
-        # Check if normals are consistently pointing outward
-        # This is a simplified check based on normal consistency
-        inconsistent_normals = 0
-        
+        """Detect hollow areas (faces with inconsistent normals or inward-facing)."""
+        # Calculate model center
+        if not self.triangles:
+            return
+
+        all_vertices = []
         for triangle in self.triangles:
-            normal = triangle.normal
-            # Check if normal has reasonable magnitude
-            magnitude = (normal.x**2 + normal.y**2 + normal.z**2) ** 0.5
-            if magnitude < 0.1:  # Very small normal
-                inconsistent_normals += 1
-        
-        if inconsistent_normals > 0:
+            all_vertices.extend(triangle.get_vertices())
+
+        if not all_vertices:
+            return
+
+        center_x = sum(v.x for v in all_vertices) / len(all_vertices)
+        center_y = sum(v.y for v in all_vertices) / len(all_vertices)
+        center_z = sum(v.z for v in all_vertices) / len(all_vertices)
+        center = Vector3D(center_x, center_y, center_z)
+
+        # Check for inward-facing normals
+        inward_facing = 0
+        affected_triangles: Set[int] = set()
+
+        for tri_idx, triangle in enumerate(self.triangles):
+            vertices = triangle.get_vertices()
+            # Calculate triangle center
+            tri_center_x = sum(v.x for v in vertices) / 3
+            tri_center_y = sum(v.y for v in vertices) / 3
+            tri_center_z = sum(v.z for v in vertices) / 3
+
+            # Vector from model center to triangle center
+            to_tri = Vector3D(
+                tri_center_x - center.x,
+                tri_center_y - center.y,
+                tri_center_z - center.z
+            )
+
+            # Dot product with normal
+            dot = (triangle.normal.x * to_tri.x +
+                   triangle.normal.y * to_tri.y +
+                   triangle.normal.z * to_tri.z)
+
+            # If dot product is negative, normal points inward (hollow)
+            if dot < 0:
+                inward_facing += 1
+                affected_triangles.add(tri_idx)
+
+        if inward_facing > 0:
             self.errors.append(MeshError(
                 error_type="hollow",
-                count=inconsistent_normals,
-                description=f"Found {inconsistent_normals} areas with inconsistent normals",
+                count=inward_facing,
+                description=f"Found {inward_facing} inward-facing normals (hollow areas)",
                 severity="warning",
-                affected_triangles=[]
+                affected_triangles=list(affected_triangles)
             ))
 
     @staticmethod
