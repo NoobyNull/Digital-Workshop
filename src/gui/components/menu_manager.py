@@ -75,9 +75,9 @@ class MenuManager:
         # Edit menu
         edit_menu = menubar.addMenu("&Edit")
 
-        # Edit Model action
-        self.edit_model_action = QAction("&Edit Model Orientation...", self.main_window)
-        self.edit_model_action.setStatusTip("Edit model rotation and orientation")
+        # Analyze Model action
+        self.edit_model_action = QAction("&Analyze & Fix Errors...", self.main_window)
+        self.edit_model_action.setStatusTip("Analyze model for errors and fix them")
         self.edit_model_action.setEnabled(False)
         self.edit_model_action.triggered.connect(self._edit_model)
         edit_menu.addAction(self.edit_model_action)

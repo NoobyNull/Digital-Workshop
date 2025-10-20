@@ -1075,7 +1075,7 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to handle model selection: {e}")
 
     def _edit_model(self) -> None:
-        """Edit the currently selected model's orientation and rotation."""
+        """Analyze the currently selected model for errors."""
         try:
             # Check if a model is currently selected
             if not hasattr(self, 'current_model_id') or self.current_model_id is None:
@@ -1089,12 +1089,14 @@ class MainWindow(QMainWindow):
             model_data = db_manager.get_model(self.current_model_id)
 
             if not model_data:
+                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, "Error", "Model not found in database")
                 return
 
             # Load the model file
             file_path = model_data.get('file_path')
             if not file_path:
+                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, "Error", "Model file path not found")
                 return
 
@@ -1103,25 +1105,23 @@ class MainWindow(QMainWindow):
 
             if not model:
                 from PySide6.QtWidgets import QMessageBox
-                QMessageBox.critical(self, "Error",
-                                   f"Failed to load model: {model_data['file_path']}")
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
                 return
 
-            # Open model editor dialog
-            from src.gui.model_editor.model_editor_dialog import ModelEditorDialog
-            dialog = ModelEditorDialog(model, self)
+            # Open model analyzer dialog
+            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
+            dialog = ModelAnalyzerDialog(model, file_path, self)
 
             if dialog.exec() == 1:  # QDialog.Accepted
-                # Model was saved, reload it
-                if dialog.saved_path:
-                    self.logger.info(f"Model saved to: {dialog.saved_path}")
-                    # Reload the model in the viewer
-                    self._on_model_double_clicked(self.current_model_id)
+                # Model was fixed and saved, reload it
+                self.logger.info(f"Model analyzed and fixed")
+                # Reload the model in the viewer
+                self._on_model_double_clicked(self.current_model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to edit model: {e}")
+            self.logger.error(f"Failed to analyze model: {e}")
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Failed to edit model: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
 
     def _start_background_hasher(self) -> None:
         """Start the background hasher thread to process unhashed models."""

@@ -109,12 +109,12 @@ class ToolbarManager:
             "Open a 3D model file",
         )
 
-        # Edit Model
+        # Analyze Model
         self.edit_model_action = _add_action(
-            "Edit",
-            "fa5s.edit",
+            "Analyze",
+            "fa5s.stethoscope",
             self._edit_model,
-            "Edit model orientation and rotation",
+            "Analyze model for errors and fix them",
         )
         self.edit_model_action.setEnabled(False)
 
