@@ -817,17 +817,45 @@ class ThumbnailSettingsTab(QWidget):
 
         layout.addWidget(mat_group)
 
-        # Preview group
+        # Preview group - side by side layout
         preview_group = QFrame()
         preview_layout = QVBoxLayout(preview_group)
 
         preview_label = QLabel("<b>Preview</b>")
         preview_layout.addWidget(preview_label)
 
+        # Horizontal layout for side-by-side previews
+        preview_h_layout = QHBoxLayout()
+
+        # Background preview
+        bg_preview_container = QVBoxLayout()
+        bg_preview_title = QLabel("Background")
+        bg_preview_title.setAlignment(Qt.AlignCenter)
+        bg_preview_container.addWidget(bg_preview_title)
+
         self.preview_label = QLabel()
-        self.preview_label.setMinimumHeight(100)
+        self.preview_label.setMinimumHeight(120)
+        self.preview_label.setMinimumWidth(120)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        preview_layout.addWidget(self.preview_label)
+        self.preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        bg_preview_container.addWidget(self.preview_label)
+
+        # Material preview
+        mat_preview_container = QVBoxLayout()
+        mat_preview_title = QLabel("Material")
+        mat_preview_title.setAlignment(Qt.AlignCenter)
+        mat_preview_container.addWidget(mat_preview_title)
+
+        self.material_preview_label = QLabel()
+        self.material_preview_label.setMinimumHeight(120)
+        self.material_preview_label.setMinimumWidth(120)
+        self.material_preview_label.setAlignment(Qt.AlignCenter)
+        self.material_preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        mat_preview_container.addWidget(self.material_preview_label)
+
+        preview_h_layout.addLayout(bg_preview_container)
+        preview_h_layout.addLayout(mat_preview_container)
+        preview_layout.addLayout(preview_h_layout)
 
         layout.addWidget(preview_group)
 
@@ -895,24 +923,51 @@ class ThumbnailSettingsTab(QWidget):
         self._update_preview()
 
     def _update_preview(self) -> None:
-        """Update preview image."""
+        """Update preview images for both background and material."""
         try:
+            # Update background preview
             current_item = self.bg_list.currentItem()
             if current_item:
                 bg_path = current_item.data(Qt.UserRole)
                 pixmap = QPixmap(bg_path)
                 if not pixmap.isNull():
                     scaled = pixmap.scaledToHeight(
-                        100, Qt.SmoothTransformation
+                        120, Qt.SmoothTransformation
                     )
                     self.preview_label.setPixmap(scaled)
-                    return
-
-            self.preview_label.setText("No background selected")
+                else:
+                    self.preview_label.setText("Error loading\nbackground")
+            else:
+                self.preview_label.setText("No background\nselected")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to update preview: {e}")
-            self.preview_label.setText("Error loading preview")
+                self.logger.error(f"Failed to update background preview: {e}")
+            self.preview_label.setText("Error loading\npreview")
+
+        # Update material preview
+        try:
+            material_name = self.material_combo.currentData()
+            if material_name:
+                # Look for material texture image
+                mat_dir = Path(__file__).parent.parent / "resources" / "materials"
+                mat_image_path = mat_dir / f"{material_name}.png"
+
+                if mat_image_path.exists():
+                    pixmap = QPixmap(str(mat_image_path))
+                    if not pixmap.isNull():
+                        scaled = pixmap.scaledToHeight(
+                            120, Qt.SmoothTransformation
+                        )
+                        self.material_preview_label.setPixmap(scaled)
+                        return
+
+                self.material_preview_label.setText(f"{material_name}\n(no preview)")
+            else:
+                self.material_preview_label.setText("No material\nselected")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to update material preview: {e}")
+            self.material_preview_label.setText("Error loading\nmaterial")
 
     def get_settings(self) -> dict:
         """Get current thumbnail settings."""
