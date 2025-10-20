@@ -17,7 +17,8 @@ import vtk
 from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger
-from src.parsers.stl_parser import STLModel, STLParser, Triangle, Vector3D
+from src.core.data_structures import Triangle, Vector3D
+from src.parsers.stl_parser import STLModel, STLParser
 from .model_geometry_analyzer import ModelGeometryAnalyzer
 
 

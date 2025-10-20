@@ -13,7 +13,8 @@ from dataclasses import dataclass
 import math
 
 from src.core.logging_config import get_logger
-from src.parsers.stl_parser import STLModel, Triangle, Vector3D
+from src.core.data_structures import Triangle, Vector3D
+from src.parsers.stl_parser import STLModel
 
 
 logger = get_logger(__name__)
