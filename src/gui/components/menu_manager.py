@@ -173,6 +173,14 @@ class MenuManager:
         # Help menu
         help_menu = menubar.addMenu("&Help")
 
+        # Tips & Tricks action
+        tips_action = QAction("&Tips & Tricks", self.main_window)
+        tips_action.setStatusTip("View helpful tips and tutorials")
+        tips_action.triggered.connect(self._show_tips)
+        help_menu.addAction(tips_action)
+
+        help_menu.addSeparator()
+
         # About action
         about_action = QAction("&About 3D-MM", self.main_window)
         about_action.setStatusTip("Show information about 3D-MM")
@@ -242,6 +250,15 @@ class MenuManager:
         """Handle layout edit mode toggle."""
         if hasattr(self.main_window, '_set_layout_edit_mode'):
             self.main_window._set_layout_edit_mode(enabled)
+
+    def _show_tips(self) -> None:
+        """Show tips and tricks dialog."""
+        try:
+            from src.gui.walkthrough import WalkthroughDialog
+            dialog = WalkthroughDialog(self.main_window)
+            dialog.exec()
+        except Exception as e:
+            self.logger.error(f"Failed to show tips dialog: {e}")
 
     def _show_about(self) -> None:
         """Handle show about action."""

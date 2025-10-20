@@ -169,6 +169,9 @@ class MainWindow(QMainWindow):
         # Log window initialization
         self.logger.info("Main window initialized successfully")
 
+        # Track if startup tips have been shown
+        self._startup_tips_shown = False
+
 
 
 
@@ -1365,3 +1368,28 @@ class MainWindow(QMainWindow):
         #     self.logger.error(f"Failed to start background hasher: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====
+
+    def showEvent(self, event) -> None:
+        """Show event handler - display startup tips on first show."""
+        super().showEvent(event)
+
+        # Show startup tips only once on first show
+        if not self._startup_tips_shown:
+            self._startup_tips_shown = True
+            QTimer.singleShot(500, self._show_startup_tips)
+
+    def _show_startup_tips(self) -> None:
+        """Show startup tips dialog if enabled."""
+        try:
+            from src.gui.startup_tips import StartupTipsDialog
+
+            # Check if user wants to see startup tips
+            if StartupTipsDialog.should_show_on_startup():
+                dialog = StartupTipsDialog(self)
+                dialog.exec()
+
+                # Save user preference
+                if not dialog.should_show_again():
+                    StartupTipsDialog.save_preference(False)
+        except Exception as e:
+            self.logger.warning(f"Failed to show startup tips: {e}")
