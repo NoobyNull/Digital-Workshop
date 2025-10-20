@@ -30,6 +30,23 @@ class CameraController:
         self.renderer = renderer
         self.render_window = render_window
 
+        # Load camera settings from config
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            self.mouse_sensitivity = config.mouse_sensitivity
+            self.fps_limit = config.fps_limit
+            self.zoom_speed = config.zoom_speed
+            self.pan_speed = config.pan_speed
+            self.auto_fit_on_load = config.auto_fit_on_load
+        except Exception as e:
+            logger.warning(f"Failed to load camera settings from config: {e}")
+            self.mouse_sensitivity = 1.0
+            self.fps_limit = 0
+            self.zoom_speed = 1.0
+            self.pan_speed = 1.0
+            self.auto_fit_on_load = True
+
     @log_function_call(logger)
     def fit_camera_to_model(
         self,

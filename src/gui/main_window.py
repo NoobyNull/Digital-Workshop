@@ -62,8 +62,28 @@ class MainWindow(QMainWindow):
 
         # Window properties
         self.setWindowTitle("3D-MM - 3D Model Manager")
-        self.setMinimumSize(1200, 800)
-        self.resize(1600, 1000)  # Default size for desktop
+
+        # Load window settings from config
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            min_width = config.minimum_window_width
+            min_height = config.minimum_window_height
+            default_width = config.default_window_width
+            default_height = config.default_window_height
+            self.maximize_on_startup = config.maximize_on_startup
+            self.remember_window_size = config.remember_window_size
+        except Exception as e:
+            self.logger.warning(f"Failed to load window settings from config: {e}")
+            min_width = 800
+            min_height = 600
+            default_width = 1200
+            default_height = 800
+            self.maximize_on_startup = False
+            self.remember_window_size = True
+
+        self.setMinimumSize(min_width, min_height)
+        self.resize(default_width, default_height)
 
         # Initialize UI components
         self._init_ui()
@@ -169,7 +189,17 @@ class MainWindow(QMainWindow):
         # Log window initialization
         self.logger.info("Main window initialized successfully")
 
+    def showEvent(self, event: QEvent) -> None:
+        """Handle window show event to apply startup settings."""
+        super().showEvent(event)
 
+        # Apply maximize on startup setting if configured
+        try:
+            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
+                self.showMaximized()
+                self.logger.debug("Window maximized on startup")
+        except Exception as e:
+            self.logger.warning(f"Failed to apply maximize on startup: {e}")
 
 
 
