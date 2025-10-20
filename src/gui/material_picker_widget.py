@@ -193,6 +193,10 @@ class MaterialPickerWidget(QDialog):
             return None
         return self.species_combo.itemData(idx)
 
+    def get_selected_species(self) -> Optional[str]:
+        """Get the currently selected species name."""
+        return self._current_species_name()
+
     def _update_preview_and_properties(self) -> None:
         name = self._current_species_name()
         if not name:
