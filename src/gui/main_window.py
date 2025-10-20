@@ -1049,6 +1049,18 @@ class MainWindow(QMainWindow):
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
+    def _start_background_hasher(self) -> None:
+        """Start the background hasher thread to process unhashed models."""
+        try:
+            # Use the status bar manager's background hasher if available
+            if hasattr(self.status_bar_manager, 'start_background_hasher'):
+                self.status_bar_manager.start_background_hasher()
+                self.logger.info("Background hasher started via status bar manager")
+            else:
+                self.logger.warning("Status bar manager does not have start_background_hasher method")
+        except Exception as e:
+            self.logger.error(f"Failed to start background hasher: {e}")
+
     def _on_metadata_saved(self, model_id: int) -> None:
         """
         Handle metadata saved event from the metadata editor.
