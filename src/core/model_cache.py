@@ -98,11 +98,19 @@ class ModelCache:
         if max_memory_mb is None:
             # Check if user has set a manual override in config
             try:
+                import psutil
                 from .application_config import ApplicationConfig
                 config = ApplicationConfig.get_default()
-                if config.use_manual_memory_override and config.manual_memory_override_mb:
-                    self.max_memory_bytes = config.manual_memory_override_mb * 1024 * 1024
-                    self.logger.info(f"Using manual memory override: {config.manual_memory_override_mb}MB")
+
+                if config.use_manual_memory_override:
+                    # Calculate cache limit as percentage of total system RAM
+                    total_system_memory_mb = int(psutil.virtual_memory().total / (1024 ** 2))
+                    cache_limit_mb = int(total_system_memory_mb * (config.manual_cache_limit_percent / 100))
+                    self.max_memory_bytes = cache_limit_mb * 1024 * 1024
+                    self.logger.info(
+                        f"Using manual cache limit: {config.manual_cache_limit_percent}% of "
+                        f"{total_system_memory_mb}MB system RAM = {cache_limit_mb}MB"
+                    )
                 else:
                     # Use adaptive cache size from performance profile
                     self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024

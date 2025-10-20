@@ -38,7 +38,7 @@ class ApplicationConfig:
 
     # Memory Override Settings
     use_manual_memory_override: bool = False
-    manual_memory_override_mb: Optional[int] = None
+    manual_cache_limit_percent: int = 80  # Allow cache to use up to 80% of total system RAM
     min_memory_specification_mb: int = 512
     system_memory_reserve_percent: int = 20
 
