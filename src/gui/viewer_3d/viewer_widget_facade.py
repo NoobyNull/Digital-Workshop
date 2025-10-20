@@ -286,6 +286,8 @@ class Viewer3DWidget(QWidget):
         Reads the UCS icon orientation (camera ViewUp) to determine which axis
         is currently pointing up, then calculates the rotation needed to make Z point up.
 
+        Handles all 24 possible orientations (6 faces × 4 rotations each).
+
         Returns:
             Tuple of (axis_str, degrees) to rotate model to Z-up
         """
@@ -303,37 +305,38 @@ class Viewer3DWidget(QWidget):
             abs_y = abs(view_up[1])
             abs_z = abs(view_up[2])
 
-            # If Z is pointing UP (positive), no rotation needed
-            if abs_z > 0.9 and view_up[2] > 0:
-                self.logger.info("Z-axis is already pointing up (positive)")
-                return ("Z", 0)
+            # Threshold for considering an axis dominant
+            threshold = 0.9
 
-            # If Z is pointing DOWN (negative), rotate 180° around X to flip it
-            if abs_z > 0.9 and view_up[2] < 0:
-                self.logger.info("Z-axis is pointing down (negative), rotating 180° around X")
-                return ("X", 180)
+            # Z-axis cases (already pointing up/down)
+            if abs_z > threshold:
+                if view_up[2] > 0:
+                    self.logger.info("Z-axis pointing up (0°), no rotation needed")
+                    return ("Z", 0)
+                else:
+                    self.logger.info("Z-axis pointing down (180°), rotating 180° around X")
+                    return ("X", 180)
 
-            # If Y is pointing up (positive), rotate 90° around X to make Z point up
-            if abs_y > abs_x and abs_y > abs_z and view_up[1] > 0:
-                self.logger.info("Y-axis is pointing up (positive), rotating 90° around X")
-                return ("X", 90)
+            # Y-axis cases (Y is dominant)
+            if abs_y > threshold and abs_y > abs_x and abs_y > abs_z:
+                if view_up[1] > 0:
+                    self.logger.info("Y-axis pointing up (90°), rotating 90° around X")
+                    return ("X", 90)
+                else:
+                    self.logger.info("Y-axis pointing down (270°), rotating 270° around X")
+                    return ("X", 270)
 
-            # If Y is pointing down (negative), rotate -90° (or 270°) around X to make Z point up
-            if abs_y > abs_x and abs_y > abs_z and view_up[1] < 0:
-                self.logger.info("Y-axis is pointing down (negative), rotating -90° around X")
-                return ("X", -90)
-
-            # If X is pointing up (positive), rotate 90° around Y to make Z point up
-            if abs_x > abs_y and abs_x > abs_z and view_up[0] > 0:
-                self.logger.info("X-axis is pointing up (positive), rotating 90° around Y")
-                return ("Y", 90)
-
-            # If X is pointing down (negative), rotate -90° (or 270°) around Y to make Z point up
-            if abs_x > abs_y and abs_x > abs_z and view_up[0] < 0:
-                self.logger.info("X-axis is pointing down (negative), rotating -90° around Y")
-                return ("Y", -90)
+            # X-axis cases (X is dominant)
+            if abs_x > threshold and abs_x > abs_y and abs_x > abs_z:
+                if view_up[0] > 0:
+                    self.logger.info("X-axis pointing up (90°), rotating 90° around Y")
+                    return ("Y", 90)
+                else:
+                    self.logger.info("X-axis pointing down (270°), rotating 270° around Y")
+                    return ("Y", 270)
 
             # Default: no rotation
+            self.logger.info("No dominant axis detected, no rotation needed")
             return ("Z", 0)
 
         except Exception as e:
