@@ -371,8 +371,8 @@ class Viewer3DWidget(QWidget):
             # Re-render the model
             self.model_renderer.remove_model()
             polydata = self.model_renderer.create_vtk_polydata(self.current_model)
-            self.model_renderer.create_actor(polydata)
-            self.actor = self.model_renderer.actor
+            self.model_renderer.load_model(polydata)
+            self.actor = self.model_renderer.get_actor()
 
             # Reset camera view
             self.reset_view()
