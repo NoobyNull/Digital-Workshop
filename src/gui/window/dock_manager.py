@@ -14,6 +14,8 @@ from typing import Optional, List
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget
 
+from src.gui.lighting_control_panel import LightingControlPanel
+
 
 class DockManager:
     """
@@ -153,9 +155,9 @@ class DockManager:
 
         # Lighting control dialog (floating, initially hidden)
         try:
-            self.lighting_panel = LightingControlPanel(self.main_window)
-            self.lighting_panel.setObjectName("LightingDialog")
-            self.lighting_panel.hide()
+            self.main_window.lighting_panel = LightingControlPanel(self.main_window)
+            self.main_window.lighting_panel.setObjectName("LightingDialog")
+            self.main_window.lighting_panel.hide()
             # Dialog will float above main window when shown
             self.logger.info("Lighting control panel created as floating dialog")
         except Exception as e:

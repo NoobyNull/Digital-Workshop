@@ -321,6 +321,16 @@ class LightingControlPanel(QDialog):
 
 
 
+    def _apply_button_style(self, button: QPushButton) -> None:
+        """Apply styling to a button using qt-material theme."""
+        # Let qt-material handle the styling, just ensure button is visible
+        button.setMinimumHeight(32)
+
+    def _apply_theme_styles(self, widget) -> None:
+        """Apply theme styles to the widget."""
+        # Let qt-material handle the styling
+        pass
+
     def _update_color_button_bg(self, color_norm: Tuple[float, float, float]) -> None:
         # Convert normalized to hex
         r = max(0, min(255, int(round(color_norm[0] * 255.0))))

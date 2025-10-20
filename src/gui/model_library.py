@@ -265,6 +265,10 @@ class ModelLibraryWidget(QWidget):
         self.performance_monitor = get_performance_monitor()
         self.model_cache = get_model_cache()
 
+        # Initialize root folder manager for validation
+        from src.core.root_folder_manager import RootFolderManager
+        self.root_folder_manager = RootFolderManager.get_instance()
+
         self.loading_in_progress = False
         self._disposed = False
 

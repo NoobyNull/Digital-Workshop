@@ -258,7 +258,15 @@ class ModelRenderer:
         # Create actor
         self.actor = vtk.vtkActor()
         self.actor.SetMapper(mapper)
-        self.actor.GetProperty().SetColor(0.8, 0.8, 0.8)
+
+        # Set material properties for proper lighting
+        prop = self.actor.GetProperty()
+        prop.SetColor(0.8, 0.8, 0.8)
+        prop.SetAmbient(0.3)      # Ambient lighting
+        prop.SetDiffuse(0.7)      # Diffuse lighting
+        prop.SetSpecular(0.4)     # Specular highlights
+        prop.SetSpecularPower(20) # Shininess
+        prop.LightingOn()         # Enable lighting calculations
 
         # Apply render mode
         self._apply_render_mode()

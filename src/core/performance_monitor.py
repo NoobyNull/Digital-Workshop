@@ -118,11 +118,12 @@ class PerformanceMonitor:
             Dictionary with GPU info: has_dedicated_gpu, vram_mb, gpu_name
         """
         try:
-            from src.core.hardware_acceleration import HardwareAccelerator
-            accelerator = HardwareAccelerator()
+            from src.core.hardware_acceleration import get_acceleration_manager
+            accelerator = get_acceleration_manager()
+            caps = accelerator.get_capabilities()
 
             # Check if CUDA is available (dedicated GPU)
-            if accelerator.is_cuda_available():
+            if caps.recommended_backend.value == 'cuda':
                 try:
                     import torch
                     vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))

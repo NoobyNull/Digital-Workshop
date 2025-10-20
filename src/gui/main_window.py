@@ -28,9 +28,7 @@ from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
 from src.parsers.stl_parser import STLParser, STLProgressCallback
 from src.gui.preferences import PreferencesDialog
-from src.gui.lighting_control_panel import LightingControlPanel
-from src.gui.lighting_manager import LightingManager
-from src.gui.material_manager import MaterialManager
+from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
 
 
 
@@ -574,6 +572,53 @@ class MainWindow(QMainWindow):
     def _save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
         pass
+
+    def _toggle_lighting_panel(self) -> None:
+        """Toggle the lighting control panel visibility."""
+        try:
+            if hasattr(self, 'lighting_panel') and self.lighting_panel:
+                if self.lighting_panel.isVisible():
+                    self.lighting_panel.hide()
+                else:
+                    self.lighting_panel.show()
+                    self.lighting_panel.raise_()
+                    self.lighting_panel.activateWindow()
+            else:
+                self.logger.warning("Lighting panel not available")
+        except Exception as e:
+            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+
+    def _update_light_position(self, x: float, y: float, z: float) -> None:
+        """Update light position from lighting panel."""
+        try:
+            if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                self.lighting_manager.update_position(x, y, z)
+        except Exception as e:
+            self.logger.warning(f"Failed to update light position: {e}")
+
+    def _update_light_color(self, r: float, g: float, b: float) -> None:
+        """Update light color from lighting panel."""
+        try:
+            if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                self.lighting_manager.update_color(r, g, b)
+        except Exception as e:
+            self.logger.warning(f"Failed to update light color: {e}")
+
+    def _update_light_intensity(self, value: float) -> None:
+        """Update light intensity from lighting panel."""
+        try:
+            if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                self.lighting_manager.update_intensity(value)
+        except Exception as e:
+            self.logger.warning(f"Failed to update light intensity: {e}")
+
+    def _update_light_cone_angle(self, angle: float) -> None:
+        """Update light cone angle from lighting panel."""
+        try:
+            if hasattr(self, 'lighting_manager') and self.lighting_manager:
+                self.lighting_manager.update_cone_angle(angle)
+        except Exception as e:
+            self.logger.warning(f"Failed to update light cone angle: {e}")
 
     def _update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
