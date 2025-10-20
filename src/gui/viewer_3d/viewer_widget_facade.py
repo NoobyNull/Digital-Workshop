@@ -256,8 +256,14 @@ class Viewer3DWidget(QWidget):
             # Remove existing model from renderer
             self.model_renderer.remove_model()
 
-            # Re-render with updated geometry
-            self.model_renderer.load_model(self.current_model)
+            # Create polydata from updated model geometry
+            if hasattr(self.current_model, "is_array_based") and self.current_model.is_array_based():
+                polydata = self.model_renderer.create_vtk_polydata_from_arrays(self.current_model)
+            else:
+                polydata = self.model_renderer.create_vtk_polydata(self.current_model)
+
+            # Load polydata into renderer
+            self.model_renderer.load_model(polydata)
             self.actor = self.model_renderer.get_actor()
 
             # Fit camera to model
@@ -347,16 +353,24 @@ class Viewer3DWidget(QWidget):
 
             # Apply rotation to model geometry
             try:
-                editor = ModelEditor(self.current_model)
+                # Create a temporary STLModel from current Model for rotation
+                stl_model = STLModel(
+                    header=getattr(self.current_model, 'header', 'Model'),
+                    triangles=self.current_model.triangles,
+                    stats=self.current_model.stats
+                )
+
+                editor = ModelEditor(stl_model)
                 axis = RotationAxis[axis_str]
-                rotated_model = editor.rotate_model(axis, degrees)
+                rotated_stl = editor.rotate_model(axis, degrees)
                 self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
+
+                # Update the Model object's triangles with rotated geometry
+                self.current_model.triangles = rotated_stl.triangles
+
             except Exception as e:
                 self.logger.error(f"Failed to rotate model: {e}", exc_info=True)
                 return
-
-            # Update current model with rotated geometry
-            self.current_model = rotated_model
 
             # Re-render the model with new geometry
             self._reload_model_in_viewer()
