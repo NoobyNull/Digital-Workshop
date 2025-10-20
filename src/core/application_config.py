@@ -97,7 +97,13 @@ class ApplicationConfig:
         """
         Calculate effective memory limit using smart algorithm.
 
-        Algorithm: min(doubled_minimum, 50% available, total - 20%)
+        Algorithm: max(minimum, min(50% available, total - 20%))
+
+        This ensures:
+        - App always has minimum needed to run
+        - Never uses more than 50% of available (leaves room for OS/other apps)
+        - Always reserves 20% of total for OS
+        - Scales intelligently with system resources
 
         Args:
             available_memory_mb: Available system memory (if None, uses max_memory_usage_mb)
@@ -107,8 +113,10 @@ class ApplicationConfig:
             Effective memory limit in MB
         """
         # If manual override is enabled, use it
-        if self.use_manual_memory_override and self.manual_memory_override_mb is not None:
-            return self.manual_memory_override_mb
+        if self.use_manual_memory_override:
+            # Calculate cache limit as percentage of total system RAM
+            if total_system_memory_mb is not None:
+                return int(total_system_memory_mb * (self.manual_cache_limit_percent / 100))
 
         # Use provided values or defaults
         if available_memory_mb is None:
@@ -116,18 +124,18 @@ class ApplicationConfig:
         if total_system_memory_mb is None:
             total_system_memory_mb = available_memory_mb
 
-        # Calculate three candidates
-        minimum_doubled_mb = self.min_memory_specification_mb * 2
+        # Calculate safe upper bounds
         fifty_percent_mb = available_memory_mb // 2
         hard_max_mb = int(
             total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
         )
 
-        # Take minimum of all three
-        calculated_limit = min(minimum_doubled_mb, fifty_percent_mb, hard_max_mb)
-
-        # Ensure we don't go below minimum
-        calculated_limit = max(calculated_limit, self.min_memory_specification_mb)
+        # Smart calculation: ensure minimum, but don't exceed safe limits
+        # max(minimum, min(50% available, total - 20% reserve))
+        calculated_limit = max(
+            self.min_memory_specification_mb,
+            min(fifty_percent_mb, hard_max_mb)
+        )
 
         return calculated_limit
 
