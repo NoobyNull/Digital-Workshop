@@ -1089,13 +1089,17 @@ class MainWindow(QMainWindow):
             model_data = db_manager.get_model(self.current_model_id)
 
             if not model_data:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, "Error", "Model not found in database")
                 return
 
             # Load the model file
+            file_path = model_data.get('file_path')
+            if not file_path:
+                QMessageBox.warning(self, "Error", "Model file path not found")
+                return
+
             parser = STLParser()
-            model = parser.parse_file(model_data['file_path'])
+            model = parser.parse_file(file_path)
 
             if not model:
                 from PySide6.QtWidgets import QMessageBox

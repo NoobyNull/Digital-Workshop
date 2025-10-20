@@ -1102,12 +1102,17 @@ class ModelLibraryWidget(QWidget):
                 return
 
             # Load the model file
+            file_path = model_data.get('file_path')
+            if not file_path:
+                QMessageBox.warning(self, "Error", "Model file path not found")
+                return
+
             from src.parsers.stl_parser import STLParser
             parser = STLParser()
-            model = parser.parse_file(model_data.file_path)
+            model = parser.parse_file(file_path)
 
             if not model:
-                QMessageBox.critical(self, "Error", f"Failed to load model: {model_data.file_path}")
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
                 return
 
             # Open model editor dialog
