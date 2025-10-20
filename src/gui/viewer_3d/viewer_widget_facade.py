@@ -297,13 +297,15 @@ class Viewer3DWidget(QWidget):
             abs_y = abs(view_up[1])
             abs_z = abs(view_up[2])
 
-            # Tolerance for considering an axis as "up"
-            tolerance = 0.1
-
-            # If Z is already pointing up, no rotation needed
-            if abs_z > 0.9:
-                self.logger.info("Z-axis is already pointing up")
+            # If Z is pointing UP (positive), no rotation needed
+            if abs_z > 0.9 and view_up[2] > 0:
+                self.logger.info("Z-axis is already pointing up (positive)")
                 return ("Z", 0)
+
+            # If Z is pointing DOWN (negative), rotate 180° around X to flip it
+            if abs_z > 0.9 and view_up[2] < 0:
+                self.logger.info("Z-axis is pointing down (negative), rotating 180° around X")
+                return ("X", 180)
 
             # If Y is pointing up, rotate 90° around X to make Z point up
             if abs_y > abs_x and abs_y > abs_z:
