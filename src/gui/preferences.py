@@ -1329,12 +1329,38 @@ class AdvancedTab(QWidget):
             except Exception as e:
                 print(f"Warning: Could not delete database file: {e}")
 
+            # Reinitialize database manager to create fresh database
+            try:
+                from src.core.database_manager import get_database_manager
+                db_manager = get_database_manager()
+                print("✓ Database manager reinitialized with fresh database")
+            except Exception as e:
+                print(f"Warning: Could not reinitialize database manager: {e}")
+
+            # Reload model library widget to show empty database
+            try:
+                # Get the main window from the preferences dialog parent
+                main_window = self.parent()
+                while main_window and not hasattr(main_window, 'model_library_widget'):
+                    main_window = main_window.parent()
+
+                if main_window and hasattr(main_window, 'model_library_widget'):
+                    if hasattr(main_window.model_library_widget, '_load_models_from_database'):
+                        main_window.model_library_widget._load_models_from_database()
+                        print("✓ Model library reloaded")
+                    else:
+                        print("Warning: Model library widget does not have _load_models_from_database method")
+                else:
+                    print("Warning: Could not find main window to reload model library")
+            except Exception as e:
+                print(f"Warning: Could not reload model library: {e}")
+
             # Show success message
             QMessageBox.information(
                 self,
                 "Database Reset Complete",
                 "✓ Database reset completed successfully!\n\n"
-                "The database will be recreated on next startup."
+                "The model library has been cleared and reloaded."
             )
 
         except Exception as e:
