@@ -505,11 +505,10 @@ class ModelCache:
             # Estimate data size
             data_size = self._estimate_data_size(data)
 
-            # Check if we should cache this (avoid caching very large items)
-            max_item_size = self.max_memory_bytes // 4  # Max 25% of cache
-            if data_size > max_item_size and not memory_only:
+            # Check if item is larger than total cache limit
+            if data_size > self.max_memory_bytes and not memory_only:
                 self.logger.warning(
-                    f"Data too large for cache ({data_size} bytes > {max_item_size} bytes): {file_path}"
+                    f"Data too large for cache ({data_size} bytes > {self.max_memory_bytes} bytes): {file_path}"
                 )
                 return False
 
