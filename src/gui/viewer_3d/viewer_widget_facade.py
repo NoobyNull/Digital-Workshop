@@ -273,8 +273,59 @@ class Viewer3DWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to reload model in viewer: {e}", exc_info=True)
 
+    def _calculate_z_up_rotation_from_camera(self) -> tuple:
+        """
+        Calculate Z-up rotation based on current camera ViewUp vector.
+
+        Reads the UCS icon orientation (camera ViewUp) to determine which axis
+        is currently pointing up, then calculates the rotation needed to make Z point up.
+
+        Returns:
+            Tuple of (axis_str, degrees) to rotate model to Z-up
+        """
+        try:
+            camera = self.renderer.GetActiveCamera()
+            if not camera:
+                return ("Z", 0)
+
+            # Get current ViewUp vector (shows which axis is pointing up)
+            view_up = camera.GetViewUp()
+            self.logger.info(f"Current camera ViewUp: ({view_up[0]:.2f}, {view_up[1]:.2f}, {view_up[2]:.2f})")
+
+            # Check which axis is most dominant in ViewUp
+            abs_x = abs(view_up[0])
+            abs_y = abs(view_up[1])
+            abs_z = abs(view_up[2])
+
+            # Tolerance for considering an axis as "up"
+            tolerance = 0.1
+
+            # If Z is already pointing up, no rotation needed
+            if abs_z > 0.9:
+                self.logger.info("Z-axis is already pointing up")
+                return ("Z", 0)
+
+            # If Y is pointing up, rotate 90° around X to make Z point up
+            if abs_y > abs_x and abs_y > abs_z:
+                direction = "up" if view_up[1] > 0 else "down"
+                self.logger.info(f"Y-axis is pointing {direction}, rotating 90° around X")
+                return ("X", 90)
+
+            # If X is pointing up, rotate 90° around Y to make Z point up
+            if abs_x > abs_y and abs_x > abs_z:
+                direction = "up" if view_up[0] > 0 else "down"
+                self.logger.info(f"X-axis is pointing {direction}, rotating 90° around Y")
+                return ("Y", 90)
+
+            # Default: no rotation
+            return ("Z", 0)
+
+        except Exception as e:
+            self.logger.error(f"Failed to calculate Z-up rotation from camera: {e}", exc_info=True)
+            return ("Z", 0)
+
     def _set_z_up(self) -> None:
-        """Set Z-axis pointing up by rotating model geometry and re-rendering."""
+        """Set Z-axis pointing up by rotating model based on UCS icon orientation."""
         try:
             if not self.current_model or not self.actor:
                 self.logger.warning("No model loaded to set Z-up")
@@ -282,11 +333,10 @@ class Viewer3DWidget(QWidget):
 
             from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
 
-            # Create editor and detect Z-up rotation needed
-            editor = ModelEditor(self.current_model)
-            axis_str, degrees = editor.analyzer.get_z_up_recommendation()
+            # Calculate rotation needed based on camera's current ViewUp (UCS icon)
+            axis_str, degrees = self._calculate_z_up_rotation_from_camera()
 
-            self.logger.info(f"Z-up recommendation: rotate {degrees}° around {axis_str} axis")
+            self.logger.info(f"Z-up rotation needed: {degrees}° around {axis_str} axis")
 
             if degrees == 0:
                 self.logger.info("Model is already Z-up oriented")
@@ -295,6 +345,7 @@ class Viewer3DWidget(QWidget):
 
             # Apply rotation to model geometry
             try:
+                editor = ModelEditor(self.current_model)
                 axis = RotationAxis[axis_str]
                 rotated_model = editor.rotate_model(axis, degrees)
                 self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
