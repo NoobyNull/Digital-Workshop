@@ -22,7 +22,8 @@ from PySide6.QtWidgets import (
     QDialog, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLabel, QPushButton, QLineEdit, QColorDialog, QTableWidget, QTableWidgetItem,
     QHeaderView, QFrame, QSpacerItem, QSizePolicy, QMessageBox, QCheckBox,
-    QComboBox, QListWidget, QListWidgetItem, QScrollArea, QSlider, QInputDialog
+    QComboBox, QListWidget, QListWidgetItem, QScrollArea, QSlider, QInputDialog,
+    QSpinBox
 )
 
 from src.gui.theme import (
@@ -61,6 +62,7 @@ class PreferencesDialog(QDialog):
         # Create tabs in logical order
         self.window_layout_tab = WindowLayoutTab(on_reset_layout=self.on_reset_layout)
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
+        self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
         self.performance_tab = PerformanceSettingsTab()
         self.files_tab = FilesTab()
@@ -69,6 +71,7 @@ class PreferencesDialog(QDialog):
         # Add tabs in logical order: UI → Content → System → Advanced
         self.tabs.addTab(self.window_layout_tab, "Window & Layout")
         self.tabs.addTab(self.theming_tab, "Theming")
+        self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
         self.tabs.addTab(self.thumbnail_settings_tab, "Thumbnail Settings")
         self.tabs.addTab(self.performance_tab, "Performance")
         self.tabs.addTab(self.files_tab, "Files")
@@ -110,6 +113,14 @@ class PreferencesDialog(QDialog):
     def _save_and_notify(self):
         try:
             save_theme_to_settings()
+
+            # Save window settings
+            if hasattr(self, 'window_layout_tab'):
+                self.window_layout_tab.save_settings()
+
+            # Save viewer settings
+            if hasattr(self, 'viewer_settings_tab'):
+                self.viewer_settings_tab.save_settings()
 
             # Save thumbnail settings
             if hasattr(self, 'thumbnail_settings_tab'):
@@ -297,16 +308,323 @@ class ThemingTab(QWidget):
                 self.on_live_apply()
         except Exception:
             pass
+class ViewerSettingsTab(QWidget):
+    """3D Viewer settings tab: grid, ground plane, camera, and lighting."""
 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
 
+    def _setup_ui(self) -> None:
+        """Set up the user interface."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        # Header
+        header = QLabel("3D Viewer Settings")
+        header.setWordWrap(True)
+        layout.addWidget(header)
+
+        desc = QLabel(
+            "Customize the 3D viewer appearance and interaction behavior. "
+            "Changes apply to new models and can be adjusted anytime."
+        )
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Grid Settings Group
+        grid_group = QFrame()
+        grid_layout = QFormLayout(grid_group)
+        grid_label = QLabel("<b>Grid Settings</b>")
+        grid_layout.addRow(grid_label)
+
+        self.grid_visible_check = QCheckBox("Show grid")
+        grid_layout.addRow(self.grid_visible_check)
+
+        self.grid_color_btn = QPushButton()
+        self.grid_color_btn.setMaximumWidth(100)
+        grid_layout.addRow("Grid color:", self.grid_color_btn)
+
+        self.grid_size_slider = QSlider(Qt.Horizontal)
+        self.grid_size_slider.setRange(1, 100)
+        self.grid_size_slider.setValue(10)
+        self.grid_size_label = QLabel("10.0")
+        grid_size_row = QHBoxLayout()
+        grid_size_row.addWidget(self.grid_size_slider)
+        grid_size_row.addWidget(self.grid_size_label)
+        grid_layout.addRow("Grid size:", grid_size_row)
+
+        layout.addWidget(grid_group)
+
+        # Ground Plane Group
+        ground_group = QFrame()
+        ground_layout = QFormLayout(ground_group)
+        ground_label = QLabel("<b>Ground Plane</b>")
+        ground_layout.addRow(ground_label)
+
+        self.ground_visible_check = QCheckBox("Show ground plane")
+        ground_layout.addRow(self.ground_visible_check)
+
+        self.ground_color_btn = QPushButton()
+        self.ground_color_btn.setMaximumWidth(100)
+        ground_layout.addRow("Ground color:", self.ground_color_btn)
+
+        self.ground_offset_slider = QSlider(Qt.Horizontal)
+        self.ground_offset_slider.setRange(-100, 100)
+        self.ground_offset_slider.setValue(5)
+        self.ground_offset_label = QLabel("0.5")
+        ground_offset_row = QHBoxLayout()
+        ground_offset_row.addWidget(self.ground_offset_slider)
+        ground_offset_row.addWidget(self.ground_offset_label)
+        ground_layout.addRow("Ground offset:", ground_offset_row)
+
+        layout.addWidget(ground_group)
+
+        # Camera & Interaction Group
+        camera_group = QFrame()
+        camera_layout = QFormLayout(camera_group)
+        camera_label = QLabel("<b>Camera & Interaction</b>")
+        camera_layout.addRow(camera_label)
+
+        self.mouse_sensitivity_slider = QSlider(Qt.Horizontal)
+        self.mouse_sensitivity_slider.setRange(5, 50)
+        self.mouse_sensitivity_slider.setValue(10)
+        self.mouse_sensitivity_label = QLabel("1.0x")
+        mouse_row = QHBoxLayout()
+        mouse_row.addWidget(self.mouse_sensitivity_slider)
+        mouse_row.addWidget(self.mouse_sensitivity_label)
+        camera_layout.addRow("Mouse sensitivity:", mouse_row)
+
+        self.fps_limit_combo = QComboBox()
+        self.fps_limit_combo.addItem("Unlimited", 0)
+        self.fps_limit_combo.addItem("120 FPS", 120)
+        self.fps_limit_combo.addItem("60 FPS", 60)
+        self.fps_limit_combo.addItem("30 FPS", 30)
+        camera_layout.addRow("FPS limit:", self.fps_limit_combo)
+
+        self.zoom_speed_slider = QSlider(Qt.Horizontal)
+        self.zoom_speed_slider.setRange(5, 30)
+        self.zoom_speed_slider.setValue(10)
+        self.zoom_speed_label = QLabel("1.0x")
+        zoom_row = QHBoxLayout()
+        zoom_row.addWidget(self.zoom_speed_slider)
+        zoom_row.addWidget(self.zoom_speed_label)
+        camera_layout.addRow("Zoom speed:", zoom_row)
+
+        self.auto_fit_check = QCheckBox("Auto-fit model on load")
+        camera_layout.addRow(self.auto_fit_check)
+
+        layout.addWidget(camera_group)
+
+        # Lighting Group
+        lighting_group = QFrame()
+        lighting_layout = QFormLayout(lighting_group)
+        lighting_label = QLabel("<b>Lighting (Advanced)</b>")
+        lighting_layout.addRow(lighting_label)
+
+        self.light_color_btn = QPushButton()
+        self.light_color_btn.setMaximumWidth(100)
+        lighting_layout.addRow("Light color:", self.light_color_btn)
+
+        self.light_intensity_slider = QSlider(Qt.Horizontal)
+        self.light_intensity_slider.setRange(0, 100)
+        self.light_intensity_slider.setValue(80)
+        self.light_intensity_label = QLabel("0.8")
+        intensity_row = QHBoxLayout()
+        intensity_row.addWidget(self.light_intensity_slider)
+        intensity_row.addWidget(self.light_intensity_label)
+        lighting_layout.addRow("Light intensity:", intensity_row)
+
+        self.enable_fill_light_check = QCheckBox("Enable fill light")
+        lighting_layout.addRow(self.enable_fill_light_check)
+
+        layout.addWidget(lighting_group)
+
+        layout.addStretch()
+
+        # Connect signals
+        self.grid_visible_check.stateChanged.connect(self._on_settings_changed)
+        self.grid_color_btn.clicked.connect(self._on_grid_color_clicked)
+        self.grid_size_slider.valueChanged.connect(self._on_grid_size_changed)
+        self.ground_visible_check.stateChanged.connect(self._on_settings_changed)
+        self.ground_color_btn.clicked.connect(self._on_ground_color_clicked)
+        self.ground_offset_slider.valueChanged.connect(self._on_ground_offset_changed)
+        self.mouse_sensitivity_slider.valueChanged.connect(self._on_mouse_sensitivity_changed)
+        self.fps_limit_combo.currentIndexChanged.connect(self._on_settings_changed)
+        self.zoom_speed_slider.valueChanged.connect(self._on_zoom_speed_changed)
+        self.auto_fit_check.stateChanged.connect(self._on_settings_changed)
+        self.light_color_btn.clicked.connect(self._on_light_color_clicked)
+        self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
+        self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
+
+    def _load_settings(self) -> None:
+        """Load current settings from config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+
+            self.grid_visible_check.setChecked(config.grid_visible)
+            self._update_color_button(self.grid_color_btn, config.grid_color)
+            self.grid_size_slider.setValue(int(config.grid_size))
+
+            self.ground_visible_check.setChecked(config.ground_visible)
+            self._update_color_button(self.ground_color_btn, config.ground_color)
+            self.ground_offset_slider.setValue(int(config.ground_offset * 10))
+
+            self.mouse_sensitivity_slider.setValue(int(config.mouse_sensitivity * 10))
+            self.fps_limit_combo.setCurrentIndex(
+                {0: 0, 120: 1, 60: 2, 30: 3}.get(config.fps_limit, 0)
+            )
+            self.zoom_speed_slider.setValue(int(config.zoom_speed * 10))
+            self.auto_fit_check.setChecked(config.auto_fit_on_load)
+
+            self._update_color_button(self.light_color_btn, self._rgb_to_hex(
+                config.default_light_color_r,
+                config.default_light_color_g,
+                config.default_light_color_b
+            ))
+            self.light_intensity_slider.setValue(int(config.default_light_intensity * 100))
+            self.enable_fill_light_check.setChecked(config.enable_fill_light)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load viewer settings: {e}")
+
+    def save_settings(self) -> None:
+        """Save viewer settings to config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+
+            config.grid_visible = self.grid_visible_check.isChecked()
+            config.grid_color = self.grid_color_btn.palette().button().color().name()
+            config.grid_size = float(self.grid_size_slider.value())
+
+            config.ground_visible = self.ground_visible_check.isChecked()
+            config.ground_color = self.ground_color_btn.palette().button().color().name()
+            config.ground_offset = float(self.ground_offset_slider.value()) / 10.0
+
+            config.mouse_sensitivity = float(self.mouse_sensitivity_slider.value()) / 10.0
+            config.fps_limit = self.fps_limit_combo.currentData()
+            config.zoom_speed = float(self.zoom_speed_slider.value()) / 10.0
+            config.auto_fit_on_load = self.auto_fit_check.isChecked()
+
+            r, g, b = self._hex_to_rgb(self.light_color_btn.palette().button().color().name())
+            config.default_light_color_r = r
+            config.default_light_color_g = g
+            config.default_light_color_b = b
+            config.default_light_intensity = float(self.light_intensity_slider.value()) / 100.0
+            config.enable_fill_light = self.enable_fill_light_check.isChecked()
+
+            if self.logger:
+                self.logger.info("Viewer settings saved")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save viewer settings: {e}")
+
+    def _on_grid_color_clicked(self) -> None:
+        """Handle grid color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.grid_color_btn.palette().button().color()),
+            self,
+            "Select Grid Color"
+        )
+        if color.isValid():
+            self._update_color_button(self.grid_color_btn, color.name())
+
+    def _on_ground_color_clicked(self) -> None:
+        """Handle ground color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.ground_color_btn.palette().button().color()),
+            self,
+            "Select Ground Color"
+        )
+        if color.isValid():
+            self._update_color_button(self.ground_color_btn, color.name())
+
+    def _on_light_color_clicked(self) -> None:
+        """Handle light color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.light_color_btn.palette().button().color()),
+            self,
+            "Select Light Color"
+        )
+        if color.isValid():
+            self._update_color_button(self.light_color_btn, color.name())
+
+    def _on_grid_size_changed(self, value: int) -> None:
+        """Update grid size label."""
+        self.grid_size_label.setText(f"{value}.0")
+
+    def _on_ground_offset_changed(self, value: int) -> None:
+        """Update ground offset label."""
+        self.ground_offset_label.setText(f"{value / 10.0:.1f}")
+
+    def _on_mouse_sensitivity_changed(self, value: int) -> None:
+        """Update mouse sensitivity label."""
+        self.mouse_sensitivity_label.setText(f"{value / 10.0:.1f}x")
+
+    def _on_zoom_speed_changed(self, value: int) -> None:
+        """Update zoom speed label."""
+        self.zoom_speed_label.setText(f"{value / 10.0:.1f}x")
+
+    def _on_light_intensity_changed(self, value: int) -> None:
+        """Update light intensity label."""
+        self.light_intensity_label.setText(f"{value / 100.0:.2f}")
+
+    def _on_settings_changed(self) -> None:
+        """Handle settings change."""
+        pass
+
+    def _update_color_button(self, button: QPushButton, color_hex: str) -> None:
+        """Update color button appearance."""
+        try:
+            color = QColor(color_hex)
+            pixmap = QPixmap(20, 20)
+            pixmap.fill(color)
+            button.setIcon(QIcon(pixmap))
+            button.setStyleSheet(f"background-color: {color_hex};")
+        except Exception:
+            pass
+
+    @staticmethod
+    def _hex_to_rgb(hex_color: str) -> tuple:
+        """Convert hex color to RGB (0-1 range)."""
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+
+    @staticmethod
+    def _rgb_to_hex(r: float, g: float, b: float) -> str:
+        """Convert RGB (0-1 range) to hex color."""
+        return f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
 
 
 class WindowLayoutTab(QWidget):
-    """Window and layout settings tab: reset window/dock layout."""
+    """Window and layout settings tab: window dimensions and layout management."""
     def __init__(self, on_reset_layout: Callable | None = None, parent=None):
         super().__init__(parent)
         self.on_reset_layout = on_reset_layout
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+
+    def _setup_ui(self):
+        """Setup the user interface."""
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
         header = QLabel("Window Layout and Docking")
         header.setWordWrap(True)
@@ -316,16 +634,110 @@ class WindowLayoutTab(QWidget):
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
+        # Window Dimensions Group
+        dim_group = QFrame()
+        dim_layout = QFormLayout(dim_group)
+        dim_label = QLabel("<b>Window Dimensions</b>")
+        dim_layout.addRow(dim_label)
+
+        self.window_width_spin = QSpinBox()
+        self.window_width_spin.setRange(800, 3840)
+        self.window_width_spin.setValue(1200)
+        self.window_width_spin.setSuffix(" px")
+        dim_layout.addRow("Default width:", self.window_width_spin)
+
+        self.window_height_spin = QSpinBox()
+        self.window_height_spin.setRange(600, 2160)
+        self.window_height_spin.setValue(800)
+        self.window_height_spin.setSuffix(" px")
+        dim_layout.addRow("Default height:", self.window_height_spin)
+
+        self.min_width_spin = QSpinBox()
+        self.min_width_spin.setRange(400, 1200)
+        self.min_width_spin.setValue(800)
+        self.min_width_spin.setSuffix(" px")
+        dim_layout.addRow("Minimum width:", self.min_width_spin)
+
+        self.min_height_spin = QSpinBox()
+        self.min_height_spin.setRange(300, 1000)
+        self.min_height_spin.setValue(600)
+        self.min_height_spin.setSuffix(" px")
+        dim_layout.addRow("Minimum height:", self.min_height_spin)
+
+        layout.addWidget(dim_group)
+
+        # Startup Behavior Group
+        startup_group = QFrame()
+        startup_layout = QVBoxLayout(startup_group)
+        startup_label = QLabel("<b>Startup Behavior</b>")
+        startup_layout.addWidget(startup_label)
+
+        self.maximize_startup_check = QCheckBox("Maximize window on startup")
+        startup_layout.addWidget(self.maximize_startup_check)
+
+        self.remember_size_check = QCheckBox("Remember window size on exit")
+        startup_layout.addWidget(self.remember_size_check)
+
+        layout.addWidget(startup_group)
+
+        # Layout Management Group
+        layout_group = QFrame()
+        layout_layout = QVBoxLayout(layout_group)
+        layout_label = QLabel("<b>Layout Management</b>")
+        layout_layout.addWidget(layout_label)
+
+        desc2 = QLabel("Reset the window and dock layout to default positions.")
+        desc2.setWordWrap(True)
+        layout_layout.addWidget(desc2)
+
         # Actions row
         row = QHBoxLayout()
         row.addStretch(1)
         self.btn_reset_layout = QPushButton("Reset Window Layout")
         row.addWidget(self.btn_reset_layout)
-        layout.addLayout(row)
+        layout_layout.addLayout(row)
 
-        self.btn_reset_layout.clicked.connect(self._handle_reset)
+        layout.addWidget(layout_group)
 
         layout.addStretch(1)
+
+        # Connect signals
+        self.btn_reset_layout.clicked.connect(self._handle_reset)
+
+    def _load_settings(self) -> None:
+        """Load current settings from config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+
+            self.window_width_spin.setValue(config.default_window_width)
+            self.window_height_spin.setValue(config.default_window_height)
+            self.min_width_spin.setValue(config.minimum_window_width)
+            self.min_height_spin.setValue(config.minimum_window_height)
+            self.maximize_startup_check.setChecked(config.maximize_on_startup)
+            self.remember_size_check.setChecked(config.remember_window_size)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load window settings: {e}")
+
+    def save_settings(self) -> None:
+        """Save window settings to config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+
+            config.default_window_width = self.window_width_spin.value()
+            config.default_window_height = self.window_height_spin.value()
+            config.minimum_window_width = self.min_width_spin.value()
+            config.minimum_window_height = self.min_height_spin.value()
+            config.maximize_on_startup = self.maximize_startup_check.isChecked()
+            config.remember_window_size = self.remember_size_check.isChecked()
+
+            if self.logger:
+                self.logger.info("Window settings saved")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save window settings: {e}")
 
     def _handle_reset(self):
         try:

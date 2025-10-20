@@ -35,7 +35,25 @@ class VTKSceneManager:
         self.marker = None
         self.grid_actor = None
         self.ground_actor = None
-        self.grid_visible = True
+
+        # Load grid and ground settings from config
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            self.grid_visible = config.grid_visible
+            self.grid_color = config.grid_color
+            self.grid_size = config.grid_size
+            self.ground_visible = config.ground_visible
+            self.ground_color = config.ground_color
+            self.ground_offset = config.ground_offset
+        except Exception as e:
+            logger.warning(f"Failed to load grid/ground settings from config: {e}")
+            self.grid_visible = True
+            self.grid_color = "#CCCCCC"
+            self.grid_size = 10.0
+            self.ground_visible = True
+            self.ground_color = "#999999"
+            self.ground_offset = 0.5
 
     @log_function_call(logger)
     def setup_scene(self) -> None:
@@ -178,19 +196,18 @@ class VTKSceneManager:
             pass
 
     def _setup_grid_and_ground(self) -> None:
-        """Set up grid and ground plane."""
+        """Set up grid and ground plane using config settings."""
         try:
-            logger.info(f"Creating initial grid and ground with grid_visible={self.grid_visible}")
-            self.grid_visible = True
+            logger.info(f"Creating initial grid and ground with grid_visible={self.grid_visible}, ground_visible={self.ground_visible}")
             self.update_grid(radius=100.0, center_x=0.0, center_y=0.0)
             self.create_ground_plane(radius=100.0, center_x=0.0, center_y=0.0)
 
             if self.grid_actor:
-                self.grid_actor.SetVisibility(True)
-                logger.info("Grid actor visibility set to True")
+                self.grid_actor.SetVisibility(self.grid_visible)
+                logger.info(f"Grid actor visibility set to {self.grid_visible}")
             if self.ground_actor:
-                self.ground_actor.SetVisibility(True)
-                logger.info("Ground actor visibility set to True")
+                self.ground_actor.SetVisibility(self.ground_visible)
+                logger.info(f"Ground actor visibility set to {self.ground_visible}")
         except Exception as e:
             logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
 
@@ -207,7 +224,7 @@ class VTKSceneManager:
             logger.debug(f"Grid visibility toggled to {self.grid_visible}")
 
     def update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
-        """Update grid visualization."""
+        """Update grid visualization using config settings."""
         # Remove existing grid if present
         if self.grid_actor and self.renderer:
             self.renderer.RemoveActor(self.grid_actor)
@@ -217,8 +234,8 @@ class VTKSceneManager:
         grid_source.SetOrigin(-radius + center_x, -radius + center_y, 0)
         grid_source.SetPoint1(radius + center_x, -radius + center_y, 0)
         grid_source.SetPoint2(-radius + center_x, radius + center_y, 0)
-        grid_source.SetXResolution(20)
-        grid_source.SetYResolution(20)
+        grid_source.SetXResolution(int(self.grid_size))
+        grid_source.SetYResolution(int(self.grid_size))
 
         # Create mapper and actor
         mapper = vtk.vtkPolyDataMapper()
@@ -226,7 +243,10 @@ class VTKSceneManager:
 
         self.grid_actor = vtk.vtkActor()
         self.grid_actor.SetMapper(mapper)
-        self.grid_actor.GetProperty().SetColor(*vtk_rgb('grid_color'))
+
+        # Apply grid color from config
+        grid_rgb = self._hex_to_rgb(self.grid_color)
+        self.grid_actor.GetProperty().SetColor(*grid_rgb)
         self.grid_actor.GetProperty().SetRepresentationToWireframe()
         self.grid_actor.SetVisibility(self.grid_visible)
 
@@ -239,7 +259,7 @@ class VTKSceneManager:
         center_y: float = 0.0,
         z_position: float = -0.1
     ) -> None:
-        """Create ground plane."""
+        """Create ground plane using config settings."""
         # Remove existing ground if present
         if self.ground_actor and self.renderer:
             self.renderer.RemoveActor(self.ground_actor)
@@ -256,10 +276,20 @@ class VTKSceneManager:
 
         self.ground_actor = vtk.vtkActor()
         self.ground_actor.SetMapper(mapper)
-        self.ground_actor.GetProperty().SetColor(*vtk_rgb('ground_color'))
+
+        # Apply ground color from config
+        ground_rgb = self._hex_to_rgb(self.ground_color)
+        self.ground_actor.GetProperty().SetColor(*ground_rgb)
         self.ground_actor.GetProperty().SetOpacity(0.3)
+        self.ground_actor.SetVisibility(self.ground_visible)
 
         self.renderer.AddActor(self.ground_actor)
+
+    @staticmethod
+    def _hex_to_rgb(hex_color: str) -> tuple:
+        """Convert hex color to RGB (0-1 range)."""
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
 
     def render(self) -> None:
         """Trigger a render."""

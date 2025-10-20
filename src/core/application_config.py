@@ -47,6 +47,37 @@ class ApplicationConfig:
     default_window_height: int = 800
     minimum_window_width: int = 800
     minimum_window_height: int = 600
+    maximize_on_startup: bool = False
+    remember_window_size: bool = True
+
+    # 3D Viewer - Grid Settings
+    grid_visible: bool = True
+    grid_color: str = "#CCCCCC"
+    grid_size: float = 10.0
+
+    # 3D Viewer - Ground Plane Settings
+    ground_visible: bool = True
+    ground_color: str = "#999999"
+    ground_offset: float = 0.5
+
+    # Camera & Interaction Settings
+    mouse_sensitivity: float = 1.0
+    fps_limit: int = 0  # 0 = unlimited
+    zoom_speed: float = 1.0
+    pan_speed: float = 1.0
+    auto_fit_on_load: bool = True
+
+    # Lighting Settings
+    default_light_position_x: float = 100.0
+    default_light_position_y: float = 100.0
+    default_light_position_z: float = 100.0
+    default_light_color_r: float = 1.0
+    default_light_color_g: float = 1.0
+    default_light_color_b: float = 1.0
+    default_light_intensity: float = 0.8
+    default_light_cone_angle: float = 30.0
+    enable_fill_light: bool = True
+    fill_light_intensity: float = 0.3
 
     # Logging Configuration
     log_level: str = "DEBUG"
