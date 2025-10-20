@@ -154,3 +154,54 @@ class SettingsManager:
             logger.warning(f"Failed to load library panel visibility: {e}")
         return False
 
+    @log_function_call(logger)
+    def save_viewer_settings(self) -> None:
+        """Save 3D viewer settings (grid, ground, camera, lighting) to QSettings."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+
+            # Grid settings
+            settings.setValue("viewer/grid_visible", config.grid_visible)
+            settings.setValue("viewer/grid_color", config.grid_color)
+            settings.setValue("viewer/grid_size", float(config.grid_size))
+
+            # Ground plane settings
+            settings.setValue("viewer/ground_visible", config.ground_visible)
+            settings.setValue("viewer/ground_color", config.ground_color)
+            settings.setValue("viewer/ground_offset", float(config.ground_offset))
+
+            # Camera settings
+            settings.setValue("viewer/mouse_sensitivity", float(config.mouse_sensitivity))
+            settings.setValue("viewer/fps_limit", int(config.fps_limit))
+            settings.setValue("viewer/zoom_speed", float(config.zoom_speed))
+            settings.setValue("viewer/pan_speed", float(config.pan_speed))
+            settings.setValue("viewer/auto_fit_on_load", config.auto_fit_on_load)
+
+            logger.debug("Viewer settings saved to QSettings")
+        except Exception as e:
+            logger.warning(f"Failed to save viewer settings: {e}")
+
+    @log_function_call(logger)
+    def save_window_settings(self) -> None:
+        """Save window settings (dimensions, startup behavior) to QSettings."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+
+            # Window dimensions
+            settings.setValue("window/default_width", int(config.default_window_width))
+            settings.setValue("window/default_height", int(config.default_window_height))
+            settings.setValue("window/minimum_width", int(config.minimum_window_width))
+            settings.setValue("window/minimum_height", int(config.minimum_window_height))
+
+            # Startup behavior
+            settings.setValue("window/maximize_on_startup", config.maximize_on_startup)
+            settings.setValue("window/remember_window_size", config.remember_window_size)
+
+            logger.debug("Window settings saved to QSettings")
+        except Exception as e:
+            logger.warning(f"Failed to save window settings: {e}")
+

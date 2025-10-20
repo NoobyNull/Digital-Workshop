@@ -675,6 +675,17 @@ class MainWindow(QMainWindow):
             self.logger.info("Lighting settings saved on app close")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings on close: {e}")
+
+        # Save viewer and window settings
+        try:
+            from src.gui.main_window_components.settings_manager import SettingsManager
+            settings_mgr = SettingsManager(self)
+            settings_mgr.save_viewer_settings()
+            settings_mgr.save_window_settings()
+            self.logger.info("Viewer and window settings saved on app close")
+        except Exception as e:
+            self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
+
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
