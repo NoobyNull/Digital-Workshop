@@ -22,6 +22,9 @@ from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel
 from .model_editor_core import ModelEditor, RotationAxis
 from .stl_writer import STLWriter
+from .model_error_detector import ModelErrorDetector
+from .model_error_fixer import ModelErrorFixer
+from .model_error_dialog import ModelErrorDialog
 
 
 logger = get_logger(__name__)
@@ -282,23 +285,53 @@ class ModelEditorDialog(QDialog):
             self._update_info_display()
 
     def _save_model(self) -> None:
-        """Save edited model."""
+        """Save edited model with error detection and fixing."""
         try:
-            # Verify before saving
-            is_valid, message = self.editor.verify_model_integrity()
-            if not is_valid:
-                reply = QMessageBox.question(self, "Verification Warning",
-                                           f"{message}\n\nContinue saving anyway?",
-                                           QMessageBox.Yes | QMessageBox.No)
-                if reply != QMessageBox.Yes:
+            # Detect errors in the model
+            detector = ModelErrorDetector(self.editor.current_model)
+            errors = detector.detect_all_errors()
+
+            # If errors found, show dialog
+            if errors:
+                error_dialog = ModelErrorDialog(errors, self)
+                if error_dialog.exec() != QDialog.Accepted:
                     return
+
+                fix_mode = error_dialog.get_fix_mode()
+
+                # Fix errors
+                fixer = ModelErrorFixer(self.editor.current_model)
+                fixed_model, fixes = fixer.fix_all_errors()
+
+                if fix_mode == "preview":
+                    # Show preview of fixes
+                    preview_text = "Fixes Applied:\n"
+                    for fix_type, count in fixes.items():
+                        if count > 0:
+                            preview_text += f"- {fix_type}: {count}\n"
+
+                    reply = QMessageBox.question(
+                        self, "Preview Fixes",
+                        f"{preview_text}\nSave with these fixes?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply != QMessageBox.Yes:
+                        return
+
+                # Use fixed model
+                model_to_save = fixed_model
+                use_fixed_suffix = True
+            else:
+                # No errors, use current model
+                model_to_save = self.editor.current_model
+                use_fixed_suffix = False
 
             # Generate output path
             original_path = Path(self.model.header) if hasattr(self.model, 'header') else Path("model.stl")
             output_path = original_path.parent / f"{original_path.stem}_edited.stl"
 
             # Save model using STL writer
-            success = STLWriter.write(self.editor.current_model, str(output_path), binary=True)
+            success = STLWriter.write(model_to_save, str(output_path), binary=True, fixed=use_fixed_suffix)
 
             if success:
                 self.saved_path = str(output_path)
@@ -309,6 +342,7 @@ class ModelEditorDialog(QDialog):
                 QMessageBox.critical(self, "Error", "Failed to write STL file")
 
         except Exception as e:
+            self.logger.error(f"Failed to save model: {e}")
             QMessageBox.critical(self, "Error", f"Failed to save model: {e}")
 
     def _update_info_display(self) -> None:

@@ -107,7 +107,7 @@ class STLWriter:
             return False
 
     @staticmethod
-    def write(model: STLModel, output_path: str, binary: bool = True) -> bool:
+    def write(model: STLModel, output_path: str, binary: bool = True, fixed: bool = False) -> bool:
         """
         Write model to STL file.
 
@@ -119,8 +119,12 @@ class STLWriter:
         Returns:
             True if successful, False otherwise
         """
+        # Handle fixed filename if needed
+        if fixed:
+            path = Path(output_path)
+            output_path = str(path.parent / f"{path.stem} - Fixed{path.suffix}")
+
         if binary:
             return STLWriter.write_binary(model, output_path)
-        else:
-            return STLWriter.write_ascii(model, output_path)
+        return STLWriter.write_ascii(model, output_path)
 
