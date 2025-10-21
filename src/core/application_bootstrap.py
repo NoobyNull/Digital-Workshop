@@ -12,7 +12,6 @@ import logging
 from .application_config import ApplicationConfig
 from .hardware_acceleration import get_acceleration_manager
 from .settings_migration import migrate_on_startup
-from src.gui.theme import load_theme_from_settings
 
 
 class ApplicationBootstrap:
@@ -80,14 +79,45 @@ class ApplicationBootstrap:
         """
         try:
             self.logger.debug("Loading theme settings")
-            # Initialize theme service (don't apply yet - wait for widgets to be created)
-            from src.gui.theme.simple_service import ThemeService
-            service = ThemeService.instance()
-            self.logger.debug("Theme system initialized")
+            
+            # Initialize theme service using qt-material architecture with graceful fallback
+            try:
+                from src.gui.theme import QtMaterialThemeService
+                service = QtMaterialThemeService.instance()
+                
+                # Load saved theme settings with error handling
+                try:
+                    service.load_settings()
+                    self.logger.debug("Theme settings loaded successfully")
+                except Exception as settings_error:
+                    self.logger.warning(f"Failed to load theme settings: {settings_error}")
+                    # Apply default theme as fallback
+                    try:
+                        service.apply_theme("dark", "blue")
+                        self.logger.info("Applied default theme as fallback")
+                    except Exception as fallback_error:
+                        self.logger.warning(f"Failed to apply fallback theme: {fallback_error}")
+                
+                # Check if qt-material is available
+                if hasattr(service, 'qtmaterial_available'):
+                    if service.qtmaterial_available:
+                        self.logger.info("qt-material theme system initialized successfully")
+                    else:
+                        self.logger.info("Fallback theme system initialized (qt-material not available)")
+                else:
+                    self.logger.info("Theme system initialized successfully")
+                
+                return True
+                
+            except ImportError as import_error:
+                self.logger.error(f"Failed to import theme service: {import_error}")
+                # Continue without theme system - not critical for startup
+                return True
+                
+        except Exception as e:
+            self.logger.error(f"Theme initialization failed: {e}", exc_info=True)
+            # Continue without theme system - not critical for startup
             return True
-        except RuntimeError as e:
-            self.logger.error("Theme initialization failed: %s", str(e))
-            return False
 
     def _initialize_hardware_acceleration(self) -> bool:
         """Initialize hardware acceleration detection and setup.
