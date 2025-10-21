@@ -62,8 +62,12 @@ def main():
     # Parse command line arguments
     args = parse_arguments()
     
+    # Handle None case (when no arguments are provided in mutually exclusive group)
+    log_level = args.log_level if args.log_level is not None else "INFO"
+    
     # Create application configuration with overridden log level
     config = ApplicationConfig.get_default()
+    
     # Since ApplicationConfig is frozen, we need to create a new instance
     # with all the original fields but with the log level overridden
     config = ApplicationConfig(
@@ -133,7 +137,7 @@ def main():
         fill_light_intensity=config.fill_light_intensity,
         
         # Logging Configuration (overridden)
-        log_level=args.log_level,
+        log_level=log_level,
         enable_file_logging=config.enable_file_logging,
         log_retention_days=config.log_retention_days,
         
@@ -142,6 +146,7 @@ def main():
         thumbnail_bg_image=config.thumbnail_bg_image,
         thumbnail_material=config.thumbnail_material,
     )
+    
 
     # Create exception handler for startup errors
     exception_handler = ExceptionHandler()
