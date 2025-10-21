@@ -80,7 +80,7 @@ class ApplicationConfig:
     fill_light_intensity: float = 0.3
 
     # Logging Configuration
-    log_level: str = "DEBUG"
+    log_level: str = "INFO"
     enable_file_logging: bool = True
     log_retention_days: int = 30
 

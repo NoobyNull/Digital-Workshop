@@ -153,8 +153,10 @@ def run_application():
         
         os.chdir(src_dir)
         
-        # Run the application
-        subprocess.run([sys.executable, "main.py"], check=True)
+        # Run the application with command line arguments
+        # Pass through any command line arguments that were given to run.py
+        cmd = [sys.executable, "main.py"] + sys.argv[1:]
+        subprocess.run(cmd, check=True)
         
         return True
     except subprocess.CalledProcessError as e:
