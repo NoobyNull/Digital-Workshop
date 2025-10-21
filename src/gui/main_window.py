@@ -1564,38 +1564,71 @@ class MainWindow(QMainWindow):
                 strategy = dialog.get_keep_strategy()
 
                 # Deduplicate
-                self.dedup_service.deduplicate_all(strategy)
+                deleted_count = self.dedup_service.deduplicate_all(strategy)
+
+                # Clear pending duplicates
+                self.dedup_service.pending_duplicates = {}
+
+                # Update deduplication status widget to show no duplicates
+                self.dedup_service.duplicates_found.emit(0)
 
                 # Refresh model library
                 if hasattr(self, 'model_library_widget'):
                     self.model_library_widget._load_models_from_database()
 
                 QMessageBox.information(self, "Deduplication Complete",
-                                      "Models have been deduplicated successfully.")
+                                      f"Successfully deduplicated {deleted_count} models.")
         except Exception as e:
             self.logger.error(f"Failed to show deduplication dialog: {e}")
             QMessageBox.critical(self, "Error", f"Failed to show deduplication dialog: {e}")
 
     def _run_manual_deduplication(self) -> None:
         """Run manual deduplication from Tools menu."""
+        progress_dialog = None
         try:
             if not self.dedup_service:
                 QMessageBox.warning(self, "Error", "Deduplication service not initialized")
                 return
 
-            # Show progress dialog
-            progress_dialog = QMessageBox(self)
-            progress_dialog.setWindowTitle("Scanning for Duplicates")
-            progress_dialog.setText("Scanning library for duplicate models...\n\nThis may take a moment.")
-            progress_dialog.setStandardButtons(QMessageBox.NoButton)
-            progress_dialog.show()
-            QApplication.processEvents()
+            # First, ensure all models have hashes calculated
+            from src.utils.file_hash import calculate_file_hash
+            all_models = self.dedup_service.db_manager.get_all_models()
+            models_needing_hash = [m for m in all_models if not m.get('file_hash')]
+            
+            if models_needing_hash:
+                # Show progress dialog for hashing
+                progress_dialog = QMessageBox(self)
+                progress_dialog.setWindowTitle("Calculating Hashes")
+                progress_dialog.setText(f"Calculating hashes for {len(models_needing_hash)} models...\n\nThis may take a moment.")
+                progress_dialog.setStandardButtons(QMessageBox.NoButton)
+                progress_dialog.show()
+                QApplication.processEvents()
+                
+                # Calculate hashes for models that don't have them
+                for i, model in enumerate(models_needing_hash):
+                    if progress_dialog and progress_dialog.isVisible():
+                        progress_dialog.setText(f"Calculating hashes for {len(models_needing_hash)} models...\n\nProcessing: {i+1}/{len(models_needing_hash)}")
+                        QApplication.processEvents()
+                    
+                    file_path = model.get('file_path')
+                    if file_path and Path(file_path).exists():
+                        file_hash = calculate_file_hash(file_path)
+                        if file_hash:
+                            self.dedup_service.db_manager.update_file_hash(model['id'], file_hash)
+
+            # Show progress dialog for duplicate scanning
+            if progress_dialog and progress_dialog.isVisible():
+                progress_dialog.setWindowTitle("Scanning for Duplicates")
+                progress_dialog.setText("Scanning library for duplicate models...\n\nThis may take a moment.")
+                QApplication.processEvents()
 
             # Find all duplicates
             duplicates = self.dedup_service.dedup_manager.find_all_duplicates()
             duplicate_count = self.dedup_service.dedup_manager.get_duplicate_count()
 
-            progress_dialog.close()
+            if progress_dialog:
+                progress_dialog.close()
+                progress_dialog = None
 
             if duplicate_count == 0:
                 QMessageBox.information(self, "No Duplicates",
@@ -1612,5 +1645,9 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to run manual deduplication: {e}")
             QMessageBox.critical(self, "Error", f"Failed to run deduplication: {e}")
+        finally:
+            # Ensure progress dialog is closed even if an exception occurs
+            if progress_dialog and progress_dialog.isVisible():
+                progress_dialog.close()
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====

@@ -90,9 +90,10 @@ class StatusBarManager:
         self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
 
-        # Deduplication status widget
+        # Deduplication status widget (add last to be on the far right)
         self.dedup_status_widget = DeduplicationStatusWidget()
-        self.status_bar.addPermanentWidget(self.dedup_status_widget)
+        # Add with 0 stretch to ensure it's positioned on the far right
+        self.status_bar.addPermanentWidget(self.dedup_status_widget, 0)
 
         # Initialize background hasher
         self.background_hasher = None

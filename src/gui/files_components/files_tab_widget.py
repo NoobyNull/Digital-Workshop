@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
+from src.gui.files_components.file_maintenance_worker import FileMaintenanceWorker
 
 
 
@@ -32,6 +33,7 @@ class FilesTab(QWidget):
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
+        self.maintenance_worker = None  # Initialize maintenance worker attribute
         self._setup_ui()
         self._load_folders()
         self._connect_signals()
