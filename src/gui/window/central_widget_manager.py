@@ -242,8 +242,8 @@ class CentralWidgetManager:
         # Make Hero Tabs the central widget
         try:
             self.main_window.setCentralWidget(self.main_window.hero_tabs)
-            # Ensure the central widget fills all available space
-            self.main_window.hero_tabs.setGeometry(0, 0, self.main_window.width(), self.main_window.height())
+            # Don't set explicit geometry - let Qt layout system handle it
+            # The size policy and margins are sufficient for proper layout
         except Exception as e:
             self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
 
