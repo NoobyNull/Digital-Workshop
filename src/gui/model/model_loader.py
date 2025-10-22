@@ -99,7 +99,7 @@ class ModelLoader:
             # Create STL parser
             parser = STLParser()
 
-            # Create progress callback
+            # Create progress callback for parsing stage
             progress_callback = STLProgressCallback(
                 callback_func=lambda progress, message: self.update_loading_progress(progress, message)
             )
@@ -109,7 +109,9 @@ class ModelLoader:
 
             # Load model into viewer if available
             if hasattr(self.main_window, 'viewer_widget') and hasattr(self.main_window.viewer_widget, 'load_model'):
-                success = self.main_window.viewer_widget.load_model(model)
+                # Create progress callback for rendering stage
+                render_progress_callback = lambda progress, message: self.update_loading_progress(progress, message)
+                success = self.main_window.viewer_widget.load_model(model, render_progress_callback)
                 self.finish_model_loading(file_path, success, "" if success else "Failed to load model into viewer")
             else:
                 self.finish_model_loading(file_path, False, "3D viewer not available")

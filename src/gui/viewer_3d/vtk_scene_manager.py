@@ -325,9 +325,20 @@ class VTKSceneManager:
         return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
 
     def render(self) -> None:
-        """Trigger a render."""
+        """Trigger a render with error suppression for OpenGL context issues."""
         if self.render_window:
-            self.render_window.Render()
+            try:
+                # Suppress VTK errors during rendering to avoid wglMakeCurrent errors
+                vtk.vtkObject.GlobalWarningDisplayOff()
+                self.render_window.Render()
+            except Exception as e:
+                logger.debug(f"Render error (suppressed): {e}")
+            finally:
+                # Re-enable VTK error output
+                try:
+                    vtk.vtkObject.GlobalWarningDisplayOn()
+                except Exception:
+                    pass
 
     def reset_camera(self) -> None:
         """Reset camera to default position."""

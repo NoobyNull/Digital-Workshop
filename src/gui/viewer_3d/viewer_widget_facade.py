@@ -22,6 +22,7 @@ from src.parsers.stl_parser import STLModel
 from src.core.data_structures import Model, LoadingState, Triangle, Vector3D
 from src.gui.theme import vtk_rgb
 from src.gui.material_picker_widget import MaterialPickerWidget
+from src.gui.components.detailed_progress_tracker import DetailedProgressTracker, LoadingStage
 
 from .vtk_scene_manager import VTKSceneManager
 from .model_renderer import ModelRenderer, RenderMode
@@ -173,34 +174,62 @@ class Viewer3DWidget(QWidget):
         """Rotate view around axis."""
         self.camera_controller.rotate_around_view_axis(degrees)
 
-    def load_model(self, model: Model) -> bool:
-        """Load a model into the viewer."""
+    def load_model(self, model: Model, progress_callback=None) -> bool:
+        """
+        Load a model into the viewer with optional progress tracking.
+
+        Args:
+            model: The model to load
+            progress_callback: Optional callback for progress updates (progress_pct, message)
+        """
         try:
             self.logger.info(f"Loading model with {model.stats.triangle_count} triangles")
 
+            # Create progress tracker
+            tracker = DetailedProgressTracker(
+                triangle_count=model.stats.triangle_count,
+                file_size_mb=model.stats.file_size_bytes / (1024 * 1024) if model.stats.file_size_bytes else 0
+            )
+
+            # Set up progress callback
+            def emit_progress(progress: float, message: str) -> None:
+                if progress_callback:
+                    progress_callback(progress, message)
+
+            tracker.set_progress_callback(emit_progress)
+
             # Remove existing model
+            tracker.start_stage(LoadingStage.RENDERING, "Removing existing model...")
             self.model_renderer.remove_model()
 
             # Store reference
             self.current_model = model
 
-            # Create polydata
+            # Create polydata with progress tracking
+            tracker.start_stage(LoadingStage.RENDERING, "Creating VTK polydata...")
+            self.model_renderer.set_progress_callback(emit_progress)
+
             if hasattr(model, "is_array_based") and model.is_array_based():
                 polydata = self.model_renderer.create_vtk_polydata_from_arrays(model)
             else:
                 polydata = self.model_renderer.create_vtk_polydata(model)  # type: ignore
 
             # Load into renderer
+            tracker.update_stage_progress(50, 100, "Loading into renderer...")
             self.model_renderer.load_model(polydata)
             self.actor = self.model_renderer.get_actor()
 
             # Fit camera
+            tracker.update_stage_progress(75, 100, "Fitting camera...")
             self.camera_controller.fit_camera_to_model(
                 model,
                 self.actor,
                 update_grid_callback=self.scene_manager.update_grid,
                 update_ground_callback=self.scene_manager.create_ground_plane,
             )
+
+            # Complete
+            tracker.complete_stage("Model loaded successfully")
 
             # Emit signal
             self.model_loaded.emit(model.filename if hasattr(model, "filename") else "Model")
