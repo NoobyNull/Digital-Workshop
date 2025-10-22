@@ -164,14 +164,6 @@ class MenuManager:
         # Tools menu
         tools_menu = menubar.addMenu("&Tools")
 
-        # Run deduplication action
-        dedupe_action = QAction("&Run Deduplication", self.main_window)
-        dedupe_action.setStatusTip("Scan library for duplicate models and resolve them")
-        dedupe_action.triggered.connect(self._run_deduplication)
-        tools_menu.addAction(dedupe_action)
-
-        tools_menu.addSeparator()
-
         # Generate screenshots action
         generate_screenshots_action = QAction("Generate &Screenshots for Library", self.main_window)
         generate_screenshots_action.setStatusTip("Generate screenshots of all models in the library with applied materials")
@@ -181,12 +173,11 @@ class MenuManager:
         # Help menu
         help_menu = menubar.addMenu("&Help")
 
-        # Search help action
-        search_help_action = QAction("&Search Documentation", self.main_window)
-        search_help_action.setShortcut(QKeySequence("Ctrl+H"))
-        search_help_action.setStatusTip("Search application documentation")
-        search_help_action.triggered.connect(self._show_help)
-        help_menu.addAction(search_help_action)
+        # Tips & Tricks action
+        tips_action = QAction("&Tips & Tricks", self.main_window)
+        tips_action.setStatusTip("View helpful tips and tutorials")
+        tips_action.triggered.connect(self._show_tips)
+        help_menu.addAction(tips_action)
 
         help_menu.addSeparator()
 
@@ -260,10 +251,14 @@ class MenuManager:
         if hasattr(self.main_window, '_set_layout_edit_mode'):
             self.main_window._set_layout_edit_mode(enabled)
 
-    def _show_help(self) -> None:
-        """Handle show help action."""
-        if hasattr(self.main_window, '_show_help'):
-            self.main_window._show_help()
+    def _show_tips(self) -> None:
+        """Show tips and tricks dialog."""
+        try:
+            from src.gui.walkthrough import WalkthroughDialog
+            dialog = WalkthroughDialog(self.main_window)
+            dialog.exec()
+        except Exception as e:
+            self.logger.error(f"Failed to show tips dialog: {e}")
 
     def _show_about(self) -> None:
         """Handle show about action."""
@@ -274,11 +269,6 @@ class MenuManager:
         """Handle generate library screenshots action."""
         if hasattr(self.main_window, '_generate_library_screenshots'):
             self.main_window._generate_library_screenshots()
-
-    def _run_deduplication(self) -> None:
-        """Handle run deduplication action."""
-        if hasattr(self.main_window, '_run_manual_deduplication'):
-            self.main_window._run_manual_deduplication()
 
 
 # Convenience function for easy menu setup

@@ -62,28 +62,8 @@ class MainWindow(QMainWindow):
 
         # Window properties
         self.setWindowTitle("3D-MM - 3D Model Manager")
-
-        # Load window settings from config
-        try:
-            from src.core.application_config import ApplicationConfig
-            config = ApplicationConfig.get_default()
-            min_width = config.minimum_window_width
-            min_height = config.minimum_window_height
-            default_width = config.default_window_width
-            default_height = config.default_window_height
-            self.maximize_on_startup = config.maximize_on_startup
-            self.remember_window_size = config.remember_window_size
-        except Exception as e:
-            self.logger.warning(f"Failed to load window settings from config: {e}")
-            min_width = 800
-            min_height = 600
-            default_width = 1200
-            default_height = 800
-            self.maximize_on_startup = False
-            self.remember_window_size = True
-
-        self.setMinimumSize(min_width, min_height)
-        self.resize(default_width, default_height)
+        self.setMinimumSize(1200, 800)
+        self.resize(1600, 1000)  # Default size for desktop
 
         # Initialize UI components
         self._init_ui()
@@ -130,7 +110,6 @@ class MainWindow(QMainWindow):
         self.progress_bar = self.status_bar_manager.progress_bar
         self.hash_indicator = self.status_bar_manager.hash_indicator
         self.memory_label = self.status_bar_manager.memory_label
-        self.dedup_status_widget = self.status_bar_manager.dedup_status_widget
 
         # Expose menu manager actions for easy access
         self.toggle_layout_edit_action = self.menu_manager.toggle_layout_edit_action
@@ -164,25 +143,6 @@ class MainWindow(QMainWindow):
         from src.gui.model.model_loader import ModelLoader
         self.model_loader_manager = ModelLoader(self, self.logger)
 
-        # Initialize deduplication service
-        try:
-            from src.gui.services.deduplication_service import DeduplicationService
-            db_manager = get_database_manager()
-            self.dedup_service = DeduplicationService(db_manager)
-
-            # Connect deduplication service signals to status widget
-            self.dedup_service.hashing_progress.connect(self.dedup_status_widget.set_hashing_progress)
-            self.dedup_service.hashing_complete.connect(self.dedup_status_widget.set_hashing_complete)
-            self.dedup_service.duplicates_found.connect(self.dedup_status_widget.set_duplicate_count)
-
-            # Connect duplicate button click to show deduplication dialog
-            self.dedup_status_widget.duplicate_clicked.connect(self._show_deduplication_dialog)
-
-            self.logger.info("Deduplication service initialized")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize deduplication service: {e}")
-            self.dedup_service = None
-
         # Initialize snapping overlays and handlers
         try:
             self._init_snapping_system()
@@ -209,17 +169,10 @@ class MainWindow(QMainWindow):
         # Log window initialization
         self.logger.info("Main window initialized successfully")
 
-    def showEvent(self, event: QEvent) -> None:
-        """Handle window show event to apply startup settings."""
-        super().showEvent(event)
+        # Track if startup tips have been shown
+        self._startup_tips_shown = False
 
-        # Apply maximize on startup setting if configured
-        try:
-            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
-                self.showMaximized()
-                self.logger.debug("Window maximized on startup")
-        except Exception as e:
-            self.logger.warning(f"Failed to apply maximize on startup: {e}")
+
 
 
 
@@ -555,24 +508,6 @@ class MainWindow(QMainWindow):
             pass
         return True
 
-    def _reset_dock_layout(self) -> None:
-        """Restore dock widgets to their default docking layout."""
-        try:
-            if getattr(self, "_default_geometry", None):
-                self.restoreGeometry(self._default_geometry)
-            if getattr(self, "_default_layout_state", None):
-                # restoreState returns bool; ignore on failure
-                self.restoreState(self._default_layout_state)
-        except Exception:
-            pass
-        # Fallback: programmatically re-dock common widgets
-        self._redock_all()
-        # Persist the reset layout
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-
     def _reset_dock_layout_and_save(self) -> None:
         """Reset layout to defaults and persist immediately."""
         self._reset_dock_layout()
@@ -713,17 +648,6 @@ class MainWindow(QMainWindow):
             self.logger.info("Lighting settings saved on app close")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings on close: {e}")
-
-        # Save viewer and window settings
-        try:
-            from src.gui.main_window_components.settings_manager import SettingsManager
-            settings_mgr = SettingsManager(self)
-            settings_mgr.save_viewer_settings()
-            settings_mgr.save_window_settings()
-            self.logger.info("Viewer and window settings saved on app close")
-        except Exception as e:
-            self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
-
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
@@ -908,9 +832,6 @@ class MainWindow(QMainWindow):
             self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
             self.model_library_widget.models_added.connect(self._on_models_added)
 
-            # Connect model library progress updates to main window status bar
-            self._connect_model_library_status_updates()
-
             self.model_library_dock.setWidget(self.model_library_widget)
         except Exception as e:
             # Fallback widget
@@ -1071,78 +992,6 @@ class MainWindow(QMainWindow):
 
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
-
-    def _start_background_hasher(self) -> None:
-        """Start the background hasher thread to process unhashed models."""
-        try:
-            # Use the status bar manager's background hasher if available
-            if hasattr(self.status_bar_manager, 'start_background_hasher'):
-                self.status_bar_manager.start_background_hasher()
-                self.logger.info("Background hasher started via status bar manager")
-            else:
-                self.logger.warning("Status bar manager does not have start_background_hasher method")
-        except Exception as e:
-            self.logger.error(f"Failed to start background hasher: {e}")
-
-    def _connect_model_library_status_updates(self) -> None:
-        """Connect model library progress updates to main window status bar."""
-        try:
-            if not hasattr(self.model_library_widget, 'model_loader'):
-                return
-
-            # We need to monitor the model loader when it's created
-            # Store reference to original _load_models method
-            original_load_models = self.model_library_widget._load_models
-
-            def _load_models_with_status_update(file_paths):
-                """Wrapper to connect status updates when loading starts."""
-                # Call original method
-                original_load_models(file_paths)
-
-                # Connect progress signals if model_loader exists
-                if hasattr(self.model_library_widget, 'model_loader') and self.model_library_widget.model_loader:
-                    try:
-                        self.model_library_widget.model_loader.progress_updated.connect(
-                            self._on_model_library_progress
-                        )
-                    except Exception as e:
-                        self.logger.debug(f"Could not connect progress signal: {e}")
-
-            # Replace the method
-            self.model_library_widget._load_models = _load_models_with_status_update
-
-            self.logger.debug("Model library status updates connected")
-        except Exception as e:
-            self.logger.warning(f"Failed to connect model library status updates: {e}")
-
-    def _on_model_library_progress(self, progress_percent: float, message: str) -> None:
-        """Handle progress updates from model library."""
-        try:
-            # Update main window status bar
-            if hasattr(self, 'status_label'):
-                # Get total files from model loader if available
-                if (hasattr(self.model_library_widget, 'model_loader') and
-                    self.model_library_widget.model_loader):
-                    total_files = len(self.model_library_widget.model_loader.file_paths)
-                    current_item = int((progress_percent / 100.0) * total_files) + 1
-                    current_item = min(current_item, total_files)
-
-                    if total_files > 1:
-                        status_text = f"{message} ({current_item} of {total_files} = {int(progress_percent)}%)"
-                    else:
-                        status_text = f"{message} ({int(progress_percent)}%)"
-                else:
-                    status_text = f"{message} ({int(progress_percent)}%)"
-
-                self.status_label.setText(status_text)
-
-            # Update progress bar
-            if hasattr(self, 'progress_bar'):
-                self.progress_bar.setVisible(True)
-                self.progress_bar.setRange(0, 100)
-                self.progress_bar.setValue(int(progress_percent))
-        except Exception as e:
-            self.logger.debug(f"Failed to update status from model library: {e}")
 
     def _on_metadata_saved(self, model_id: int) -> None:
         """
@@ -1361,20 +1210,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to restore saved camera: {e}")
 
-    def _show_help(self) -> None:
-        """Show searchable help dialog."""
-        try:
-            from src.gui.help_system import HelpDialog
-            help_dialog = HelpDialog(self)
-            help_dialog.exec()
-        except Exception as e:
-            self.logger.error(f"Error showing help dialog: {e}")
-            QMessageBox.warning(
-                self,
-                "Help Error",
-                f"Could not open help system: {e}"
-            )
-
     def _show_about(self) -> None:
         """Show about dialog."""
         self.logger.info("Showing about dialog")
@@ -1532,122 +1367,29 @@ class MainWindow(QMainWindow):
         # except Exception as e:
         #     self.logger.error(f"Failed to start background hasher: {e}")
 
-    def _show_deduplication_dialog(self) -> None:
-        """Show deduplication dialog when duplicate indicator is clicked."""
-        try:
-            if not self.dedup_service:
-                self.logger.warning("Deduplication service not initialized")
-                return
-
-            # Get all duplicates
-            duplicates = self.dedup_service.get_pending_duplicate_groups()
-            if not duplicates:
-                QMessageBox.information(self, "No Duplicates", "No duplicate models found.")
-                return
-
-            # Show deduplication dialog
-            from src.gui.deduplication_dialog import DeduplicationDialog
-
-            # Flatten duplicates for display
-            all_duplicate_models = []
-            for _, models in duplicates.items():
-                if len(models) > 1:
-                    all_duplicate_models.extend(models)
-
-            if not all_duplicate_models:
-                QMessageBox.information(self, "No Duplicates", "No duplicate models found.")
-                return
-
-            dialog = DeduplicationDialog(all_duplicate_models, self)
-            if dialog.exec() == QMessageBox.Accepted:
-                # Get selected strategy
-                strategy = dialog.get_keep_strategy()
-
-                # Deduplicate
-                deleted_count = self.dedup_service.deduplicate_all(strategy)
-
-                # Clear pending duplicates
-                self.dedup_service.pending_duplicates = {}
-
-                # Update deduplication status widget to show no duplicates
-                self.dedup_service.duplicates_found.emit(0)
-
-                # Refresh model library
-                if hasattr(self, 'model_library_widget'):
-                    self.model_library_widget._load_models_from_database()
-
-                QMessageBox.information(self, "Deduplication Complete",
-                                      f"Successfully deduplicated {deleted_count} models.")
-        except Exception as e:
-            self.logger.error(f"Failed to show deduplication dialog: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to show deduplication dialog: {e}")
-
-    def _run_manual_deduplication(self) -> None:
-        """Run manual deduplication from Tools menu."""
-        progress_dialog = None
-        try:
-            if not self.dedup_service:
-                QMessageBox.warning(self, "Error", "Deduplication service not initialized")
-                return
-
-            # First, ensure all models have hashes calculated
-            from src.utils.file_hash import calculate_file_hash
-            all_models = self.dedup_service.db_manager.get_all_models()
-            models_needing_hash = [m for m in all_models if not m.get('file_hash')]
-            
-            if models_needing_hash:
-                # Show progress dialog for hashing
-                progress_dialog = QMessageBox(self)
-                progress_dialog.setWindowTitle("Calculating Hashes")
-                progress_dialog.setText(f"Calculating hashes for {len(models_needing_hash)} models...\n\nThis may take a moment.")
-                progress_dialog.setStandardButtons(QMessageBox.NoButton)
-                progress_dialog.show()
-                QApplication.processEvents()
-                
-                # Calculate hashes for models that don't have them
-                for i, model in enumerate(models_needing_hash):
-                    if progress_dialog and progress_dialog.isVisible():
-                        progress_dialog.setText(f"Calculating hashes for {len(models_needing_hash)} models...\n\nProcessing: {i+1}/{len(models_needing_hash)}")
-                        QApplication.processEvents()
-                    
-                    file_path = model.get('file_path')
-                    if file_path and Path(file_path).exists():
-                        file_hash = calculate_file_hash(file_path)
-                        if file_hash:
-                            self.dedup_service.db_manager.update_file_hash(model['id'], file_hash)
-
-            # Show progress dialog for duplicate scanning
-            if progress_dialog and progress_dialog.isVisible():
-                progress_dialog.setWindowTitle("Scanning for Duplicates")
-                progress_dialog.setText("Scanning library for duplicate models...\n\nThis may take a moment.")
-                QApplication.processEvents()
-
-            # Find all duplicates
-            duplicates = self.dedup_service.dedup_manager.find_all_duplicates()
-            duplicate_count = self.dedup_service.dedup_manager.get_duplicate_count()
-
-            if progress_dialog:
-                progress_dialog.close()
-                progress_dialog = None
-
-            if duplicate_count == 0:
-                QMessageBox.information(self, "No Duplicates",
-                                      "No duplicate models found in the library.")
-                return
-
-            # Update service with duplicates
-            self.dedup_service.pending_duplicates = duplicates
-            self.dedup_service.duplicates_found.emit(duplicate_count)
-
-            # Show deduplication dialog
-            self._show_deduplication_dialog()
-
-        except Exception as e:
-            self.logger.error(f"Failed to run manual deduplication: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to run deduplication: {e}")
-        finally:
-            # Ensure progress dialog is closed even if an exception occurs
-            if progress_dialog and progress_dialog.isVisible():
-                progress_dialog.close()
-
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====
+
+    def showEvent(self, event) -> None:
+        """Show event handler - display startup tips on first show."""
+        super().showEvent(event)
+
+        # Show startup tips only once on first show
+        if not self._startup_tips_shown:
+            self._startup_tips_shown = True
+            QTimer.singleShot(500, self._show_startup_tips)
+
+    def _show_startup_tips(self) -> None:
+        """Show startup tips dialog if enabled."""
+        try:
+            from src.gui.startup_tips import StartupTipsDialog
+
+            # Check if user wants to see startup tips
+            if StartupTipsDialog.should_show_on_startup():
+                dialog = StartupTipsDialog(self)
+                dialog.exec()
+
+                # Save user preference
+                if not dialog.should_show_again():
+                    StartupTipsDialog.save_preference(False)
+        except Exception as e:
+            self.logger.warning(f"Failed to show startup tips: {e}")
