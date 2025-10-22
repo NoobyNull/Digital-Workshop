@@ -157,6 +157,11 @@ class CentralWidgetManager:
             if tab_bar:
                 tab_bar.setExpanding(True)  # This makes tabs expand to fill available space
                 tab_bar.setUsesScrollButtons(False)
+
+            # Make hero tabs sticky to all sides
+            from PySide6.QtWidgets import QSizePolicy
+            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
         except Exception:
             pass
 
@@ -237,6 +242,8 @@ class CentralWidgetManager:
         # Make Hero Tabs the central widget
         try:
             self.main_window.setCentralWidget(self.main_window.hero_tabs)
+            # Ensure the central widget fills all available space
+            self.main_window.hero_tabs.setGeometry(0, 0, self.main_window.width(), self.main_window.height())
         except Exception as e:
             self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
 
