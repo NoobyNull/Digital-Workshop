@@ -93,6 +93,7 @@ class Viewer3DWidget(QWidget):
             on_material_clicked=self._open_material_picker,
             on_lighting_clicked=self._open_lighting_panel,
             on_grid_clicked=self._toggle_grid,
+            on_ground_clicked=self.toggle_ground_plane,
             on_reset_clicked=self.reset_view,
             on_save_view_clicked=self._save_view_requested,
             on_rotate_ccw_clicked=lambda: self._rotate_around_view_axis(90),
@@ -157,6 +158,15 @@ class Viewer3DWidget(QWidget):
         """Toggle grid visibility."""
         self.scene_manager.toggle_grid()
         self.grid_visible = self.scene_manager.grid_visible
+        # Update button appearance to show subdued state when off
+        self.ui_manager.update_grid_button_state(self.grid_visible)
+        self.scene_manager.render()
+
+    def toggle_ground_plane(self) -> None:
+        """Toggle ground plane visibility."""
+        self.scene_manager.toggle_ground_plane()
+        # Update button appearance to show subdued state when off
+        self.ui_manager.update_ground_button_state(self.scene_manager.ground_visible)
         self.scene_manager.render()
 
     def _rotate_around_view_axis(self, degrees: float) -> None:
@@ -233,8 +243,24 @@ class Viewer3DWidget(QWidget):
 
     def cleanup(self) -> None:
         """Clean up resources."""
-        self.perf_tracker.cleanup()
-        self.model_renderer.remove_model()
+        try:
+            # Clean up VTK scene manager first (before other cleanup)
+            if hasattr(self, 'scene_manager') and self.scene_manager:
+                self.scene_manager.cleanup()
+                self.logger.info("VTK scene manager cleaned up")
+        except Exception as e:
+            self.logger.warning(f"Error cleaning up scene manager: {e}")
+
+        try:
+            self.perf_tracker.cleanup()
+        except Exception as e:
+            self.logger.warning(f"Error cleaning up performance tracker: {e}")
+
+        try:
+            self.model_renderer.remove_model()
+        except Exception as e:
+            self.logger.warning(f"Error removing model: {e}")
+
         gc.collect()
         self.logger.info("Viewer cleanup completed")
 

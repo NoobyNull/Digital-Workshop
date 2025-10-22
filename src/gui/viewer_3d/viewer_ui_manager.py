@@ -55,6 +55,7 @@ class ViewerUIManager:
         on_save_view_clicked: Callable,
         on_rotate_ccw_clicked: Callable,
         on_rotate_cw_clicked: Callable,
+        on_ground_clicked: Callable = None,
         on_set_z_up_clicked: Callable = None
     ) -> None:
         """
@@ -65,6 +66,7 @@ class ViewerUIManager:
             on_material_clicked: Callback for material button
             on_lighting_clicked: Callback for lighting button
             on_grid_clicked: Callback for grid button
+            on_ground_clicked: Callback for ground plane button
             on_reset_clicked: Callback for reset button
             on_save_view_clicked: Callback for save view button
             on_rotate_ccw_clicked: Callback for rotate CCW button
@@ -117,6 +119,14 @@ class ViewerUIManager:
         self.grid_button.setChecked(True)
         self.grid_button.clicked.connect(on_grid_clicked)
         control_layout.addWidget(self.grid_button)
+
+        # Ground plane button
+        if on_ground_clicked:
+            self.ground_button = QPushButton("Ground")
+            self.ground_button.setCheckable(True)
+            self.ground_button.setChecked(True)
+            self.ground_button.clicked.connect(on_ground_clicked)
+            control_layout.addWidget(self.ground_button)
 
         # Reset view button
         self.reset_button = QPushButton("Reset View")
@@ -202,4 +212,39 @@ class ViewerUIManager:
         """Reset save view button state."""
         if self.save_view_button:
             self.save_view_button.setChecked(False)
+
+    def update_grid_button_state(self, is_visible: bool) -> None:
+        """Update grid button appearance based on visibility state."""
+        if self.grid_button:
+            self.grid_button.setChecked(is_visible)
+            self._update_toggle_button_appearance(self.grid_button, is_visible)
+
+    def update_ground_button_state(self, is_visible: bool) -> None:
+        """Update ground button appearance based on visibility state."""
+        if hasattr(self, 'ground_button') and self.ground_button:
+            self.ground_button.setChecked(is_visible)
+            self._update_toggle_button_appearance(self.ground_button, is_visible)
+
+    def _update_toggle_button_appearance(self, button: QPushButton, is_active: bool) -> None:
+        """
+        Update button appearance to show subdued state when inactive.
+
+        Args:
+            button: The button to update
+            is_active: Whether the button is in active state
+        """
+        if is_active:
+            # Active state - bright and visible
+            button.setStyleSheet("")  # Reset to default theme
+        else:
+            # Inactive state - subdued appearance
+            button.setStyleSheet("""
+                QPushButton {
+                    opacity: 0.6;
+                    color: #888888;
+                }
+                QPushButton:hover {
+                    opacity: 0.8;
+                }
+            """)
 

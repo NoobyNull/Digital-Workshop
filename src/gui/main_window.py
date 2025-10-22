@@ -704,6 +704,15 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
 
+        # Clean up viewer widget and VTK resources before closing
+        try:
+            if hasattr(self, 'viewer_widget') and self.viewer_widget:
+                if hasattr(self.viewer_widget, 'cleanup'):
+                    self.viewer_widget.cleanup()
+                    self.logger.info("Viewer widget cleaned up on app close")
+        except Exception as e:
+            self.logger.warning(f"Failed to cleanup viewer widget: {e}")
+
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
@@ -1237,6 +1246,8 @@ class MainWindow(QMainWindow):
         dlg = PreferencesDialog(self, on_reset_layout=self._reset_dock_layout_and_save)
         # Connect theme change signal to update main window stylesheet
         dlg.theme_changed.connect(self._on_theme_changed)
+        # Connect viewer settings change signal to update VTK scene
+        dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
         dlg.exec_()
 
     def _on_theme_changed(self) -> None:
@@ -1252,6 +1263,18 @@ class MainWindow(QMainWindow):
                     self.logger.debug("Main window stylesheet updated after theme change")
         except Exception as e:
             self.logger.debug(f"Error updating main window stylesheet: {e}")
+
+    def _on_viewer_settings_changed(self) -> None:
+        """Handle viewer settings change from preferences dialog."""
+        try:
+            # Reload viewer settings from QSettings
+            if hasattr(self, 'viewer_widget') and self.viewer_widget:
+                # Trigger viewer to reload settings
+                if hasattr(self.viewer_widget, 'reload_settings'):
+                    self.viewer_widget.reload_settings()
+                self.logger.debug("Viewer settings reloaded after preferences change")
+        except Exception as e:
+            self.logger.debug(f"Error reloading viewer settings: {e}")
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""

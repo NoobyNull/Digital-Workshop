@@ -51,11 +51,23 @@ class QtMaterialThemeService(QObject):
             self.qtmaterial = qtmaterial
             self.qtmaterial_available = True
             logger.info("qt-material library loaded successfully")
+            logger.debug(f"qt-material version: {getattr(self.qtmaterial, '__version__', 'unknown')}")
         except ImportError as e:
             logger.warning(f"qt-material library not available: {e}")
             logger.info("Application will use fallback theme system")
             self.qtmaterial = None
             self.qtmaterial_available = False
+            # Debug: Check if package is installed but not importable
+            try:
+                import pkg_resources
+                try:
+                    dist = pkg_resources.get_distribution('qt-material')
+                    logger.warning(f"qt-material package found but not importable: {dist.version}")
+                    logger.warning("This suggests a Python path or module name issue")
+                except pkg_resources.DistributionNotFound:
+                    logger.warning("qt-material package not found in pkg_resources")
+            except Exception as debug_e:
+                logger.debug(f"Could not check pkg_resources: {debug_e}")
         except Exception as e:
             logger.error(f"Unexpected error importing qt-material: {e}")
             logger.info("Application will use fallback theme system")

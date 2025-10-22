@@ -95,7 +95,7 @@ def main():
         
         # Memory Override Settings
         use_manual_memory_override=config.use_manual_memory_override,
-        manual_memory_override_mb=config.manual_memory_override_mb,
+        manual_cache_limit_percent=config.manual_cache_limit_percent,
         min_memory_specification_mb=config.min_memory_specification_mb,
         system_memory_reserve_percent=config.system_memory_reserve_percent,
         
@@ -116,6 +116,11 @@ def main():
         ground_visible=config.ground_visible,
         ground_color=config.ground_color,
         ground_offset=config.ground_offset,
+        
+        # 3D Viewer - Background Gradient Settings
+        gradient_top_color=config.gradient_top_color,
+        gradient_bottom_color=config.gradient_bottom_color,
+        enable_gradient=config.enable_gradient,
         
         # Camera & Interaction Settings
         mouse_sensitivity=config.mouse_sensitivity,

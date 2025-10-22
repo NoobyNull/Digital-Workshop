@@ -36,24 +36,41 @@ class VTKSceneManager:
         self.grid_actor = None
         self.ground_actor = None
 
-        # Load grid and ground settings from config
+        # Load grid, ground, and gradient settings from QSettings with fallback to config
         try:
+            from PySide6.QtCore import QSettings
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
-            self.grid_visible = config.grid_visible
-            self.grid_color = config.grid_color
-            self.grid_size = config.grid_size
-            self.ground_visible = config.ground_visible
-            self.ground_color = config.ground_color
-            self.ground_offset = config.ground_offset
+            settings = QSettings()
+
+            # Grid settings - load from QSettings with fallback to config
+            self.grid_visible = settings.value("viewer/grid_visible", config.grid_visible, type=bool)
+            self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
+
+            # Ground settings
+            self.ground_visible = settings.value("viewer/ground_visible", config.ground_visible, type=bool)
+            self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
+            self.ground_offset = settings.value("viewer/ground_offset", config.ground_offset, type=float)
+
+            # Gradient settings - load from QSettings with fallback to config
+            self.gradient_top_color = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
+            self.gradient_bottom_color = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
+            self.enable_gradient = settings.value("viewer/enable_gradient", config.enable_gradient, type=bool)
         except Exception as e:
-            logger.warning(f"Failed to load grid/ground settings from config: {e}")
+            logger.warning(f"Failed to load grid/ground/gradient settings from QSettings: {e}")
             self.grid_visible = True
             self.grid_color = "#CCCCCC"
             self.grid_size = 10.0
             self.ground_visible = True
             self.ground_color = "#999999"
             self.ground_offset = 0.5
+
+            # Default gradient settings
+            self.gradient_top_color = "#4A6FA5"
+            self.gradient_bottom_color = "#1E3A5F"
+            self.enable_gradient = True
 
     @log_function_call(logger)
     def setup_scene(self) -> None:
@@ -69,16 +86,25 @@ class VTKSceneManager:
     def _setup_renderer(self) -> None:
         """Set up the VTK renderer with lighting."""
         self.renderer = vtk.vtkRenderer()
-        self.renderer.GradientBackgroundOn()
-
-        bg_rgb = vtk_rgb('canvas_bg')
-        top_color = (
-            max(0, bg_rgb[0] - 0.15),
-            max(0, bg_rgb[1] - 0.15),
-            max(0, bg_rgb[2] - 0.15)
-        )
-        self.renderer.SetBackground2(*top_color)
-        self.renderer.SetBackground(*bg_rgb)
+        
+        # Configure gradient based on settings
+        if self.enable_gradient:
+            self.renderer.GradientBackgroundOn()
+            
+            # Convert hex colors to RGB tuples
+            top_rgb = self._hex_to_rgb(self.gradient_top_color)
+            bottom_rgb = self._hex_to_rgb(self.gradient_bottom_color)
+            
+            self.renderer.SetBackground2(*top_rgb)    # Top of gradient
+            self.renderer.SetBackground(*bottom_rgb)  # Bottom of gradient
+            
+            logger.debug(f"Applied gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}")
+        else:
+            self.renderer.GradientBackgroundOff()
+            # Use solid background color from theme
+            bg_rgb = vtk_rgb('canvas_bg')
+            self.renderer.SetBackground(*bg_rgb)
+            logger.debug(f"Applied solid background color: {bg_rgb}")
 
         # Configure multi-threading
         try:
@@ -223,6 +249,13 @@ class VTKSceneManager:
             self.grid_actor.SetVisibility(self.grid_visible)
             logger.debug(f"Grid visibility toggled to {self.grid_visible}")
 
+    def toggle_ground_plane(self) -> None:
+        """Toggle ground plane visibility."""
+        self.ground_visible = not self.ground_visible
+        if self.ground_actor:
+            self.ground_actor.SetVisibility(self.ground_visible)
+            logger.debug(f"Ground plane visibility toggled to {self.ground_visible}")
+
     def update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
         """Update grid visualization using config settings."""
         # Remove existing grid if present
@@ -301,4 +334,98 @@ class VTKSceneManager:
         if self.renderer:
             self.renderer.ResetCamera()
             self.render()
+
+    def cleanup(self) -> None:
+        """Clean up VTK resources in proper order to avoid OpenGL errors."""
+        try:
+            logger.info("Cleaning up VTK scene resources")
+
+            # Suppress VTK error output during cleanup
+            try:
+                vtk.vtkObject.GlobalWarningDisplayOff()
+            except Exception:
+                pass
+
+            # Stop rendering
+            if self.render_window:
+                try:
+                    self.render_window.Finalize()
+                except Exception as e:
+                    logger.debug(f"Error finalizing render window: {e}")
+
+            # Finalize interactor
+            if self.interactor:
+                try:
+                    self.interactor.TerminateApp()
+                except Exception as e:
+                    logger.debug(f"Error terminating interactor: {e}")
+
+            # Remove all actors from renderer
+            if self.renderer:
+                try:
+                    self.renderer.RemoveAllViewProps()
+                except Exception as e:
+                    logger.debug(f"Error removing view props: {e}")
+
+            # Clear references
+            self.grid_actor = None
+            self.ground_actor = None
+            self.camera_widget = None
+            self.marker = None
+            self.interactor = None
+            self.render_window = None
+            self.renderer = None
+
+            # Re-enable VTK error output
+            try:
+                vtk.vtkObject.GlobalWarningDisplayOn()
+            except Exception:
+                pass
+
+            logger.info("VTK scene cleanup completed")
+        except Exception as e:
+            logger.warning(f"Error during VTK cleanup: {e}")
+
+    def update_gradient_colors(self, top_color: str = None, bottom_color: str = None, enable_gradient: bool = None) -> None:
+        """
+        Update the background gradient colors and settings.
+        
+        Args:
+            top_color: Hex color string for top of gradient (optional)
+            bottom_color: Hex color string for bottom of gradient (optional)
+            enable_gradient: Whether to enable gradient background (optional)
+        """
+        try:
+            # Update settings if provided
+            if top_color is not None:
+                self.gradient_top_color = top_color
+            if bottom_color is not None:
+                self.gradient_bottom_color = bottom_color
+            if enable_gradient is not None:
+                self.enable_gradient = enable_gradient
+            
+            # Reconfigure renderer background
+            if self.enable_gradient:
+                self.renderer.GradientBackgroundOn()
+                
+                # Convert hex colors to RGB tuples
+                top_rgb = self._hex_to_rgb(self.gradient_top_color)
+                bottom_rgb = self._hex_to_rgb(self.gradient_bottom_color)
+                
+                self.renderer.SetBackground2(*top_rgb)
+                self.renderer.SetBackground(*bottom_rgb)
+                
+                logger.info(f"Updated gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}")
+            else:
+                self.renderer.GradientBackgroundOff()
+                # Use solid background color from theme
+                bg_rgb = vtk_rgb('canvas_bg')
+                self.renderer.SetBackground(*bg_rgb)
+                logger.info("Updated to solid background color")
+            
+            # Trigger re-render
+            self.render()
+            
+        except Exception as e:
+            logger.error(f"Failed to update gradient colors: {e}", exc_info=True)
 

@@ -37,8 +37,10 @@ class PreferencesDialog(QDialog):
     """
     Application preferences dialog with multiple tabs.
     Emits theme_changed whenever the Theming tab applies updates.
+    Emits viewer_settings_changed whenever viewer settings are modified.
     """
     theme_changed = Signal()
+    viewer_settings_changed = Signal()
 
     def __init__(self, parent=None, on_reset_layout=None):
         super().__init__(parent)
@@ -129,6 +131,9 @@ class PreferencesDialog(QDialog):
             # Save performance settings
             if hasattr(self, 'performance_tab'):
                 self.performance_tab.save_settings()
+
+            # Emit viewer settings changed signal
+            self.viewer_settings_changed.emit()
 
             QMessageBox.information(self, "Saved", "All settings saved successfully.")
         except Exception as e:
@@ -448,6 +453,25 @@ class ViewerSettingsTab(QWidget):
 
         layout.addWidget(lighting_group)
 
+        # Background Gradient Group
+        gradient_group = QFrame()
+        gradient_layout = QFormLayout(gradient_group)
+        gradient_label = QLabel("<b>Background Gradient</b>")
+        gradient_layout.addRow(gradient_label)
+
+        self.enable_gradient_check = QCheckBox("Enable gradient background")
+        gradient_layout.addRow(self.enable_gradient_check)
+
+        self.gradient_top_color_btn = QPushButton()
+        self.gradient_top_color_btn.setMaximumWidth(100)
+        gradient_layout.addRow("Top color (sky):", self.gradient_top_color_btn)
+
+        self.gradient_bottom_color_btn = QPushButton()
+        self.gradient_bottom_color_btn.setMaximumWidth(100)
+        gradient_layout.addRow("Bottom color (ground):", self.gradient_bottom_color_btn)
+
+        layout.addWidget(gradient_group)
+
         layout.addStretch()
 
         # Connect signals
@@ -465,66 +489,95 @@ class ViewerSettingsTab(QWidget):
         self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
         self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
 
+        # Gradient signals
+        self.enable_gradient_check.stateChanged.connect(self._on_settings_changed)
+        self.gradient_top_color_btn.clicked.connect(self._on_gradient_top_color_clicked)
+        self.gradient_bottom_color_btn.clicked.connect(self._on_gradient_bottom_color_clicked)
+
     def _load_settings(self) -> None:
-        """Load current settings from config."""
+        """Load current settings from QSettings with fallback to ApplicationConfig."""
         try:
+            from PySide6.QtCore import QSettings
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
+            settings = QSettings()
 
-            self.grid_visible_check.setChecked(config.grid_visible)
-            self._update_color_button(self.grid_color_btn, config.grid_color)
-            self.grid_size_slider.setValue(int(config.grid_size))
+            # Grid settings - load from QSettings with fallback to config
+            self.grid_visible_check.setChecked(settings.value("viewer/grid_visible", config.grid_visible, type=bool))
+            grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self._update_color_button(self.grid_color_btn, grid_color)
+            self.grid_size_slider.setValue(int(settings.value("viewer/grid_size", config.grid_size, type=float)))
 
-            self.ground_visible_check.setChecked(config.ground_visible)
-            self._update_color_button(self.ground_color_btn, config.ground_color)
-            self.ground_offset_slider.setValue(int(config.ground_offset * 10))
+            # Ground settings
+            self.ground_visible_check.setChecked(settings.value("viewer/ground_visible", config.ground_visible, type=bool))
+            ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
+            self._update_color_button(self.ground_color_btn, ground_color)
+            self.ground_offset_slider.setValue(int(settings.value("viewer/ground_offset", config.ground_offset, type=float) * 10))
 
-            self.mouse_sensitivity_slider.setValue(int(config.mouse_sensitivity * 10))
-            self.fps_limit_combo.setCurrentIndex(
-                {0: 0, 120: 1, 60: 2, 30: 3}.get(config.fps_limit, 0)
-            )
-            self.zoom_speed_slider.setValue(int(config.zoom_speed * 10))
-            self.auto_fit_check.setChecked(config.auto_fit_on_load)
+            # Camera settings
+            self.mouse_sensitivity_slider.setValue(int(settings.value("viewer/mouse_sensitivity", config.mouse_sensitivity, type=float) * 10))
+            fps_limit = int(settings.value("viewer/fps_limit", config.fps_limit, type=int))
+            self.fps_limit_combo.setCurrentIndex({0: 0, 120: 1, 60: 2, 30: 3}.get(fps_limit, 0))
+            self.zoom_speed_slider.setValue(int(settings.value("viewer/zoom_speed", config.zoom_speed, type=float) * 10))
+            self.auto_fit_check.setChecked(settings.value("viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool))
 
-            self._update_color_button(self.light_color_btn, self._rgb_to_hex(
-                config.default_light_color_r,
-                config.default_light_color_g,
-                config.default_light_color_b
-            ))
-            self.light_intensity_slider.setValue(int(config.default_light_intensity * 100))
-            self.enable_fill_light_check.setChecked(config.enable_fill_light)
+            # Lighting settings
+            r = settings.value("lighting/color_r", config.default_light_color_r, type=float)
+            g = settings.value("lighting/color_g", config.default_light_color_g, type=float)
+            b = settings.value("lighting/color_b", config.default_light_color_b, type=float)
+            self._update_color_button(self.light_color_btn, self._rgb_to_hex(r, g, b))
+            self.light_intensity_slider.setValue(int(settings.value("lighting/intensity", config.default_light_intensity, type=float) * 100))
+            self.enable_fill_light_check.setChecked(settings.value("lighting/enable_fill_light", config.enable_fill_light, type=bool))
+
+            # Load gradient settings
+            self.enable_gradient_check.setChecked(settings.value("viewer/enable_gradient", config.enable_gradient, type=bool))
+            gradient_top = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
+            gradient_bottom = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
+            self._update_color_button(self.gradient_top_color_btn, gradient_top)
+            self._update_color_button(self.gradient_bottom_color_btn, gradient_bottom)
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to load viewer settings: {e}")
 
     def save_settings(self) -> None:
-        """Save viewer settings to config."""
+        """Save viewer settings to QSettings."""
         try:
-            from src.core.application_config import ApplicationConfig
-            config = ApplicationConfig.get_default()
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
 
-            config.grid_visible = self.grid_visible_check.isChecked()
-            config.grid_color = self.grid_color_btn.palette().button().color().name()
-            config.grid_size = float(self.grid_size_slider.value())
+            # Grid settings
+            settings.setValue("viewer/grid_visible", self.grid_visible_check.isChecked())
+            settings.setValue("viewer/grid_color", self.grid_color_btn.palette().button().color().name())
+            settings.setValue("viewer/grid_size", float(self.grid_size_slider.value()))
 
-            config.ground_visible = self.ground_visible_check.isChecked()
-            config.ground_color = self.ground_color_btn.palette().button().color().name()
-            config.ground_offset = float(self.ground_offset_slider.value()) / 10.0
+            # Ground settings
+            settings.setValue("viewer/ground_visible", self.ground_visible_check.isChecked())
+            settings.setValue("viewer/ground_color", self.ground_color_btn.palette().button().color().name())
+            settings.setValue("viewer/ground_offset", float(self.ground_offset_slider.value()) / 10.0)
 
-            config.mouse_sensitivity = float(self.mouse_sensitivity_slider.value()) / 10.0
-            config.fps_limit = self.fps_limit_combo.currentData()
-            config.zoom_speed = float(self.zoom_speed_slider.value()) / 10.0
-            config.auto_fit_on_load = self.auto_fit_check.isChecked()
+            # Camera settings
+            settings.setValue("viewer/mouse_sensitivity", float(self.mouse_sensitivity_slider.value()) / 10.0)
+            settings.setValue("viewer/fps_limit", int(self.fps_limit_combo.currentData()))
+            settings.setValue("viewer/zoom_speed", float(self.zoom_speed_slider.value()) / 10.0)
+            settings.setValue("viewer/auto_fit_on_load", self.auto_fit_check.isChecked())
 
-            r, g, b = self._hex_to_rgb(self.light_color_btn.palette().button().color().name())
-            config.default_light_color_r = r
-            config.default_light_color_g = g
-            config.default_light_color_b = b
-            config.default_light_intensity = float(self.light_intensity_slider.value()) / 100.0
-            config.enable_fill_light = self.enable_fill_light_check.isChecked()
+            # Lighting settings
+            light_color = self.light_color_btn.palette().button().color().name()
+            r, g, b = self._hex_to_rgb(light_color)
+            settings.setValue("lighting/color_r", r)
+            settings.setValue("lighting/color_g", g)
+            settings.setValue("lighting/color_b", b)
+            settings.setValue("lighting/intensity", float(self.light_intensity_slider.value()) / 100.0)
+            settings.setValue("lighting/enable_fill_light", self.enable_fill_light_check.isChecked())
+
+            # Gradient settings
+            settings.setValue("viewer/enable_gradient", self.enable_gradient_check.isChecked())
+            settings.setValue("viewer/gradient_top_color", self.gradient_top_color_btn.palette().button().color().name())
+            settings.setValue("viewer/gradient_bottom_color", self.gradient_bottom_color_btn.palette().button().color().name())
 
             if self.logger:
-                self.logger.info("Viewer settings saved")
+                self.logger.info("Viewer settings saved to QSettings")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to save viewer settings: {e}")
@@ -578,6 +631,26 @@ class ViewerSettingsTab(QWidget):
     def _on_light_intensity_changed(self, value: int) -> None:
         """Update light intensity label."""
         self.light_intensity_label.setText(f"{value / 100.0:.2f}")
+
+    def _on_gradient_top_color_clicked(self) -> None:
+        """Handle gradient top color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.gradient_top_color_btn.palette().button().color()),
+            self,
+            "Select Gradient Top Color (Sky)"
+        )
+        if color.isValid():
+            self._update_color_button(self.gradient_top_color_btn, color.name())
+
+    def _on_gradient_bottom_color_clicked(self) -> None:
+        """Handle gradient bottom color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.gradient_bottom_color_btn.palette().button().color()),
+            self,
+            "Select Gradient Bottom Color (Ground)"
+        )
+        if color.isValid():
+            self._update_color_button(self.gradient_bottom_color_btn, color.name())
 
     def _on_settings_changed(self) -> None:
         """Handle settings change."""

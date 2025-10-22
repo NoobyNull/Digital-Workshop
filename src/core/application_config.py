@@ -59,6 +59,11 @@ class ApplicationConfig:
     ground_visible: bool = True
     ground_color: str = "#999999"
     ground_offset: float = 0.5
+    
+    # 3D Viewer - Background Gradient Settings
+    gradient_top_color: str = "#4A6FA5"  # Light sky blue
+    gradient_bottom_color: str = "#1E3A5F"  # Dark ground blue
+    enable_gradient: bool = True
 
     # Camera & Interaction Settings
     mouse_sensitivity: float = 1.0
