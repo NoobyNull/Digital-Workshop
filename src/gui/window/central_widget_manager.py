@@ -199,7 +199,16 @@ class CentralWidgetManager:
             self.logger.warning(f"Failed to create CLO widget: {e}")
             self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "CLO")
 
-        self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds placeholder\n\nCalculate optimal CNC feeds and speeds."), "F&S")
+        # Create Feeds & Speeds widget
+        try:
+            from src.gui.feeds_and_speeds import FeedsAndSpeedsWidget
+            self.main_window.feeds_and_speeds_widget = FeedsAndSpeedsWidget(self.main_window)
+            self.main_window.hero_tabs.addTab(self.main_window.feeds_and_speeds_widget, "F&S")
+            self.logger.info("Feeds & Speeds widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
+            self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."), "F&S")
+
         self.main_window.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
 
         # Persist active hero tab on change
