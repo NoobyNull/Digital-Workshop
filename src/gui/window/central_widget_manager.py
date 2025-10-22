@@ -12,7 +12,7 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QSplitter, QSizePolicy
 
 from src.gui.theme import qss_tabs_lists_labels, SPACING_8, SPACING_16
 from src.gui.material_manager import MaterialManager
@@ -159,7 +159,6 @@ class CentralWidgetManager:
                 tab_bar.setUsesScrollButtons(False)
 
             # Make hero tabs sticky to all sides
-            from PySide6.QtWidgets import QSizePolicy
             self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
         except Exception:
@@ -239,13 +238,47 @@ class CentralWidgetManager:
         except Exception:
             pass
 
-        # Make Hero Tabs the central widget
+        # Create a horizontal splitter: Hero Tabs (left) | Right Docks (right)
+        # This keeps the hero tabs and right dock widgets stuck together
         try:
-            self.main_window.setCentralWidget(self.main_window.hero_tabs)
-            # Don't set explicit geometry - let Qt layout system handle it
-            # The size policy and margins are sufficient for proper layout
+            splitter = QSplitter(Qt.Horizontal)
+            splitter.setObjectName("CentralHorizontalSplitter")
+
+            # Add hero tabs to left side of splitter
+            splitter.addWidget(self.main_window.hero_tabs)
+
+            # Create a container for right dock widgets
+            # This will hold the tabified Properties and Metadata docks
+            right_container = QWidget()
+            right_container.setObjectName("RightDockContainer")
+            right_layout = QVBoxLayout(right_container)
+            right_layout.setContentsMargins(0, 0, 0, 0)
+            right_layout.setSpacing(0)
+
+            # Add right container to splitter
+            splitter.addWidget(right_container)
+
+            # Set stretch factors: hero tabs get more space (70%), right docks get less (30%)
+            splitter.setStretchFactor(0, 70)
+            splitter.setStretchFactor(1, 30)
+
+            # Set splitter to be collapsible but not collapse by default
+            splitter.setCollapsible(0, False)  # Hero tabs cannot collapse
+            splitter.setCollapsible(1, True)   # Right docks can collapse
+
+            # Set the splitter as central widget
+            self.main_window.setCentralWidget(splitter)
+            self.main_window.central_splitter = splitter
+            self.main_window.right_dock_container = right_container
+
+            self.logger.info("Central horizontal splitter created - hero tabs and right docks stuck together")
         except Exception as e:
-            self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
+            self.logger.warning(f"Failed to create central splitter: {e}")
+            # Fallback to simple central widget
+            try:
+                self.main_window.setCentralWidget(self.main_window.hero_tabs)
+            except Exception as e2:
+                self.logger.warning(f"Fallback central widget setup failed: {e2}")
 
         # 3) Ensure all docks are visible but don't force positioning
         try:
