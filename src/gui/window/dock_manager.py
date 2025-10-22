@@ -174,6 +174,10 @@ class DockManager:
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
         )
 
+        # Set minimum width for right dock widgets to ensure proper resizing
+        self.properties_dock.setMinimumWidth(250)
+        self.metadata_dock.setMinimumWidth(250)
+
         # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
         try:
             from src.gui.metadata_editor import MetadataEditorWidget
@@ -237,7 +241,14 @@ class DockManager:
 
         # Default to right side but user can move anywhere
         self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        # Don't force stacking - let users arrange as they prefer
+
+        # Stack metadata dock with properties dock (tabify) so they resize together
+        try:
+            self.main_window.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+            self.logger.info("Properties and Metadata docks tabified for unified resizing")
+        except Exception as e:
+            self.logger.warning(f"Failed to tabify right dock widgets: {e}")
+
         try:
             self._register_dock_for_snapping(self.metadata_dock)
         except Exception:
