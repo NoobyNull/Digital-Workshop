@@ -44,6 +44,18 @@ from .base_parser import (
 from src.core.logging_config import get_logger, log_function_call
 from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 
+# GPU acceleration imports (optional)
+try:
+    from .stl_gpu_parser import STLGPUParser, GPUParseConfig
+    from .stl_progressive_loader import ProgressiveSTLLoader, LODConfig
+    _gpu_available = True
+except ImportError:
+    _gpu_available = False
+    STLGPUParser = None
+    GPUParseConfig = None
+    ProgressiveSTLLoader = None
+    LODConfig = None
+
 
 class STLFormat(Enum):
     """STL file format types."""
@@ -165,9 +177,9 @@ class STLParser(BaseParser):
         """
         Parse binary STL file format.
 
-        Optimized path:
-        - Uses NumPy to decode triangle data in bulk
-        - Computes bounds using vectorized operations
+        Optimized path with GPU acceleration:
+        - Uses GPU acceleration for large files when available
+        - Falls back to NumPy array processing
         - Builds Triangle objects efficiently in chunks
         Falls back to pure-Python parsing if NumPy is not available.
 
@@ -200,9 +212,11 @@ class STLParser(BaseParser):
 
                 # Probe hardware acceleration and report status
                 backend = None
+                gpu_available = False
                 try:
                     caps = get_acceleration_manager().get_capabilities()
                     backend = caps.recommended_backend
+                    gpu_available = backend != AccelBackend.CPU
                     if progress_callback:
                         progress_callback.report(3.0, f"Hardware backend: {backend.value}")
                     self.logger.info(
@@ -219,6 +233,34 @@ class STLParser(BaseParser):
                 # Validate triangle count is reasonable
                 if triangle_count > 100000000:  # 100 million triangles is unreasonable
                     raise STLParseError(f"Invalid triangle count: {triangle_count}")
+
+                # Decide parsing strategy based on file size and GPU availability
+                file_size_mb = file_path.stat().st_size / (1024 * 1024)
+
+                # Use GPU acceleration for large files if available
+                if (_gpu_available and gpu_available and
+                    triangle_count >= 50000 and file_size_mb >= 50):
+                    self.logger.info(f"Using GPU-accelerated parsing for {triangle_count} triangles")
+                    try:
+                        gpu_parser = STLGPUParser()
+                        gpu_model = gpu_parser._parse_file_internal(str(file_path), progress_callback)
+                        # Convert GPU model back to STLModel format for compatibility
+                        return STLModel(
+                            header=gpu_model.header,
+                            triangles=[],  # GPU path uses arrays
+                            stats=ModelStats(
+                                vertex_count=gpu_model.stats.vertex_count,
+                                triangle_count=gpu_model.stats.triangle_count,
+                                min_bounds=gpu_model.stats.min_bounds,
+                                max_bounds=gpu_model.stats.max_bounds,
+                                file_size_bytes=gpu_model.stats.file_size_bytes,
+                                format_type=STLFormat.BINARY,
+                                parsing_time_seconds=time.time() - start_time
+                            )
+                        )
+                    except Exception as gpu_error:
+                        self.logger.warning(f"GPU parsing failed, falling back to CPU: {gpu_error}")
+                        # Continue to CPU fallback below
 
                 # Decide path: array-based fast path for large models, else vectorized object path
                 if (np is not None) and (triangle_count >= 100000):
@@ -252,12 +294,29 @@ class STLParser(BaseParser):
                     if progress_callback:
                         progress_callback.report(20.0, "Decoding triangle floats...")
 
-                    # Convert to NumPy array and extract floats
+                    # Convert to NumPy array and extract floats with granular progress
                     # Layout per triangle: 48 bytes (12 float32) + 2 bytes (uint16 attribute)
                     # View first 48 bytes as float32 (little-endian)
                     t_dec0 = time.time()
                     u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
-                    floats = u8[:, :48].copy().view('<f4').reshape(triangle_count, 12)  # shape: (N, 12)
+
+                    # Process float decoding in chunks for progress reporting
+                    chunk_size = min(50000, max(10000, triangle_count // 20))  # Adaptive chunk size
+                    floats = np.empty((triangle_count, 12), dtype=np.float32)
+
+                    for start_idx in range(0, triangle_count, chunk_size):
+                        end_idx = min(start_idx + chunk_size, triangle_count)
+                        chunk_data = u8[start_idx:end_idx, :48].copy().view('<f4').reshape(end_idx - start_idx, 12)
+                        floats[start_idx:end_idx] = chunk_data
+
+                        # Report progress during float decoding
+                        if progress_callback:
+                            decode_progress = 20.0 + 15.0 * (end_idx / triangle_count)
+                            progress_callback.report(
+                                decode_progress,
+                                f"Decoding floats: {end_idx:,}/{triangle_count:,} triangles"
+                            )
+
                     t_dec1 = time.time()
                     self.logger.info(f"Decode floats: {triangle_count:,} triangles in {t_dec1 - t_dec0:.2f}s")
 
@@ -454,10 +513,27 @@ class STLParser(BaseParser):
                 if progress_callback:
                     progress_callback.report(22.0, "Decoding floats...")
 
-                # Decode first 48 bytes of each 50-byte record as 12 float32s
+                # Decode first 48 bytes of each 50-byte record as 12 float32s with progress
                 t_dec0 = time.time()
                 u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
-                floats = u8[:, :48].view('<f4').reshape(triangle_count, 12)  # type: ignore
+
+                # Process in chunks for progress reporting
+                chunk_size = min(50000, max(10000, triangle_count // 20))
+                floats = np.empty((triangle_count, 12), dtype=np.float32)
+
+                for start_idx in range(0, triangle_count, chunk_size):
+                    end_idx = min(start_idx + chunk_size, triangle_count)
+                    chunk_floats = u8[start_idx:end_idx, :48].view('<f4').reshape(end_idx - start_idx, 12)
+                    floats[start_idx:end_idx] = chunk_floats
+
+                    # Report progress during array decoding
+                    if progress_callback:
+                        decode_progress = 22.0 + 13.0 * (end_idx / triangle_count)
+                        progress_callback.report(
+                            decode_progress,
+                            f"Decoding arrays: {end_idx:,}/{triangle_count:,} triangles"
+                        )
+
                 # release reference to raw data buffer ASAP
                 del u8
                 t_dec1 = time.time()
@@ -846,6 +922,8 @@ class STLParser(BaseParser):
         """
         Load low-resolution geometry for progressive loading.
 
+        Uses GPU-accelerated progressive loading when available.
+
         Args:
             file_path: Path to the STL file
             progress_callback: Optional progress callback
@@ -853,13 +931,26 @@ class STLParser(BaseParser):
         Returns:
             Model with low-resolution geometry
         """
-        file_path = Path(file_path)
+        file_path_obj = Path(file_path)
 
+        # Use GPU progressive loader if available
+        if _gpu_available and ProgressiveSTLLoader:
+            try:
+                self.logger.info("Using GPU-accelerated progressive loading")
+                loader = ProgressiveSTLLoader()
+                lod_model = loader.load_progressive(file_path, progress_callback)
+                return lod_model.active_model
+            except Exception as e:
+                self.logger.warning(f"GPU progressive loading failed, falling back to CPU: {e}")
+
+        # Fallback to CPU-based progressive loading
         # Get full model first
-        full_model = self._parse_file_internal(str(file_path), progress_callback)
+        full_model = self._parse_file_internal(str(file_path_obj), progress_callback)
 
         # Determine sampling rate based on triangle count
-        triangle_count = len(full_model.triangles)
+        triangle_count = len(full_model.triangles) if full_model.triangles else (
+            full_model.stats.triangle_count if hasattr(full_model.stats, 'triangle_count') else 0
+        )
 
         # Performance profile determines sampling rate
         perf_profile = self.performance_monitor.get_performance_profile()
@@ -872,13 +963,19 @@ class STLParser(BaseParser):
             # Calculate sampling rate to get to target triangle count
             sample_rate = max(1, triangle_count // max_triangles)
 
-        # Sample triangles
-        sampled_triangles = full_model.triangles[::sample_rate]
+        # Sample triangles or arrays
+        if full_model.triangles:
+            sampled_triangles = full_model.triangles[::sample_rate]
+            vertex_count = len(sampled_triangles) * 3
+        else:
+            # Handle array-based models
+            sampled_triangles = []
+            vertex_count = triangle_count * 3 // sample_rate
 
         # Update stats
         sampled_stats = ModelStats(
-            vertex_count=len(sampled_triangles) * 3,
-            triangle_count=len(sampled_triangles),
+            vertex_count=vertex_count,
+            triangle_count=triangle_count // sample_rate,
             min_bounds=full_model.stats.min_bounds,
             max_bounds=full_model.stats.max_bounds,
             file_size_bytes=full_model.stats.file_size_bytes,
@@ -893,10 +990,10 @@ class STLParser(BaseParser):
             stats=sampled_stats,
             format_type=full_model.format_type,
             loading_state=LoadingState.LOW_RES_GEOMETRY,
-            file_path=str(file_path)
+            file_path=str(file_path_obj)
         )
 
-        self.logger.info(f"Created low-res model: {len(sampled_triangles)} triangles (sample rate: 1/{sample_rate})")
+        self.logger.info(f"Created low-res model: {sampled_stats.triangle_count} triangles (sample rate: 1/{sample_rate})")
         return low_res_model
 
 

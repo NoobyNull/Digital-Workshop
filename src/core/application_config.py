@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 
-@dataclass(frozen=True)
+@dataclass
 class ApplicationConfig:
     """Centralized application configuration and metadata."""
 
