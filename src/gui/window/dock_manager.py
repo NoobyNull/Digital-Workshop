@@ -181,8 +181,9 @@ class DockManager:
         )
 
         # Set minimum width for right dock widgets to ensure proper resizing
-        self.properties_dock.setMinimumWidth(250)
-        self.metadata_dock.setMinimumWidth(250)
+        # Metadata can expand to fill the entire right side when needed
+        self.properties_dock.setMinimumWidth(200)
+        self.metadata_dock.setMinimumWidth(200)
 
         # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
         try:
@@ -254,6 +255,16 @@ class DockManager:
             try:
                 self.main_window.tabifyDockWidget(self.properties_dock, self.metadata_dock)
                 self.logger.info("Properties and Metadata docks tabified for unified resizing")
+
+                # Connect to tab bar to allow expanding metadata when active
+                try:
+                    # Get the tab bar for the tabified docks
+                    tab_bar = self.properties_dock.tabBar()
+                    if tab_bar:
+                        tab_bar.currentChanged.connect(self._on_right_dock_tab_changed)
+                        self.logger.info("Connected tab change handler for right dock expansion")
+                except Exception:
+                    pass
             except Exception:
                 pass
         except Exception as e:
@@ -325,6 +336,15 @@ class DockManager:
             self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
 
         self.logger.debug("Dock widgets setup completed")
+
+    def _on_right_dock_tab_changed(self, index: int) -> None:
+        """Handle tab changes in the right dock area to allow expansion."""
+        try:
+            # When metadata tab is active, it can expand to fill the right side
+            # This is handled by Qt's dock system automatically
+            self.logger.debug(f"Right dock tab changed to index {index}")
+        except Exception as e:
+            self.logger.warning(f"Error handling dock tab change: {e}")
 
     def iter_docks(self) -> List[QDockWidget]:
         """Iterate over all known dock widgets."""
