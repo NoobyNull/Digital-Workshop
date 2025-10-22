@@ -164,7 +164,7 @@ class CentralWidgetManager:
         # No need to apply custom stylesheets here - let qt-material handle it
 
         # Add tabs: Model (viewer) + placeholders
-        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model")
+        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model Previewer")
 
         def _placeholder(title: str, body: str) -> QWidget:
             w = QWidget()
@@ -183,33 +183,41 @@ class CentralWidgetManager:
         try:
             from src.gui.gcode_previewer_components import GcodePreviewerWidget
             self.main_window.gcode_previewer_widget = GcodePreviewerWidget(self.main_window)
-            self.main_window.hero_tabs.addTab(self.main_window.gcode_previewer_widget, "GP")
+            self.main_window.hero_tabs.addTab(self.main_window.gcode_previewer_widget, "G Code Previewer")
             self.logger.info("G-code Previewer widget created successfully")
         except Exception as e:
             self.logger.warning(f"Failed to create G-code Previewer widget: {e}")
-            self.main_window.hero_tabs.addTab(_placeholder("GP", "G-code Previewer\n\nComponent unavailable."), "GP")
+            self.main_window.hero_tabs.addTab(_placeholder("GCP", "G-code Previewer\n\nComponent unavailable."), "G Code Previewer")
 
         # Create CLO widget
         try:
             from src.gui.CLO import CutListOptimizerWidget
             self.main_window.clo_widget = CutListOptimizerWidget()
-            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "CLO")
+            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "Cut List Optimizer")
             self.logger.info("CLO widget created successfully")
         except Exception as e:
             self.logger.warning(f"Failed to create CLO widget: {e}")
-            self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "CLO")
+            self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "Cut List Optimizer")
 
         # Create Feeds & Speeds widget
         try:
             from src.gui.feeds_and_speeds import FeedsAndSpeedsWidget
             self.main_window.feeds_and_speeds_widget = FeedsAndSpeedsWidget(self.main_window)
-            self.main_window.hero_tabs.addTab(self.main_window.feeds_and_speeds_widget, "F&S")
+            self.main_window.hero_tabs.addTab(self.main_window.feeds_and_speeds_widget, "Feed and Speed")
             self.logger.info("Feeds & Speeds widget created successfully")
         except Exception as e:
             self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
-            self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."), "F&S")
+            self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."), "Feed and Speed")
 
-        self.main_window.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
+        self.main_window.hero_tabs.addTab(_placeholder("Project Cost Estimator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Estimator")
+
+        # Setup dynamic tab naming
+        try:
+            from src.gui.components.dynamic_tab_manager import setup_dynamic_tabs
+            self.main_window.dynamic_tab_manager = setup_dynamic_tabs(self.main_window.hero_tabs)
+            self.logger.info("Dynamic tab manager initialized")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize dynamic tab manager: {e}")
 
         # Persist active hero tab on change
         try:
