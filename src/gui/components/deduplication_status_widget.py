@@ -43,6 +43,7 @@ class DeduplicationStatusWidget(QWidget):
         # Hashing status label
         self.hash_label = QLabel("Hashing: 0%")
         self.hash_label.setVisible(False)
+        self.hash_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout.addWidget(self.hash_label)
 
         # Duplicate indicator button
@@ -53,7 +54,7 @@ class DeduplicationStatusWidget(QWidget):
         self.duplicate_btn.setCursor(Qt.PointingHandCursor)
         layout.addWidget(self.duplicate_btn)
 
-        layout.addStretch()
+        # No stretch - this widget should stay on the right
         self.setLayout(layout)
 
     def set_hashing_progress(self, filename: str, progress: float) -> None:

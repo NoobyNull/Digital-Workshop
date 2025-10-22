@@ -65,13 +65,16 @@ class StatusBarManager:
 
         # qt-material handles statusbar styling automatically
 
-        # Permanent status message
+        # Main status message - larger and takes up available space
         self.status_label = QLabel("Ready")
-        self.status_bar.addWidget(self.status_label)
+        self.status_label.setMinimumWidth(300)  # Give it more space
+        self.status_label.setStyleSheet("font-size: 11pt; font-weight: 500;")  # Larger, bolder text
+        self.status_bar.addWidget(self.status_label, 1)  # Stretch factor 1 to take available space
 
         # Progress bar for long operations
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
+        self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         # Hash indicator button
@@ -84,10 +87,14 @@ class StatusBarManager:
 
         # Memory usage indicator
         self.memory_label = QLabel("Memory: N/A")
+        self.memory_label.setMinimumWidth(120)
+        self.memory_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_bar.addPermanentWidget(self.memory_label)
 
         # Layout Edit Mode indicator
         self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
+        self.layout_edit_indicator.setMinimumWidth(150)
+        self.layout_edit_indicator.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
 
         # Deduplication status widget (add last to be on the far right)
