@@ -49,7 +49,7 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.model_library_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
 
         # Create model library widget
@@ -118,7 +118,7 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.properties_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
 
         # Placeholder for model properties
@@ -141,24 +141,13 @@ class DockManager:
             pass
         # Let qt-material handle all dock styling
 
-        # Add to right dock container if it exists (splitter-based layout)
-        # Otherwise add as dock widget (fallback)
+        # Add as dock widget to the right side
+        # The dock system will automatically manage layout and tabification
         try:
-            if hasattr(self.main_window, 'right_dock_container') and self.main_window.right_dock_container:
-                # Add to right container in splitter layout
-                self.main_window.right_dock_container.layout().addWidget(self.properties_dock)
-                self.logger.info("Properties dock added to right container")
-            else:
-                # Fallback: add as dock widget
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-                self.logger.info("Properties dock added as dock widget (fallback)")
+            self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+            self.logger.info("Properties dock added to right dock area")
         except Exception as e:
-            self.logger.warning(f"Failed to add properties dock to right container: {e}")
-            # Fallback to dock widget
-            try:
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-            except Exception:
-                pass
+            self.logger.warning(f"Failed to add properties dock: {e}")
 
         try:
             self._register_dock_for_snapping(self.properties_dock)
@@ -188,7 +177,7 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.metadata_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
 
         # Set minimum width for right dock widgets to ensure proper resizing
@@ -258,26 +247,17 @@ class DockManager:
 
         # Add to right dock container if it exists (splitter-based layout)
         # Otherwise add as dock widget (fallback)
+        # Add as dock widget to the right side and tabify with properties dock
+        # This creates a tabbed interface for Properties and Metadata
         try:
-            if hasattr(self.main_window, 'right_dock_container') and self.main_window.right_dock_container:
-                # Add to right container in splitter layout
-                self.main_window.right_dock_container.layout().addWidget(self.metadata_dock)
-                self.logger.info("Metadata dock added to right container")
-            else:
-                # Fallback: add as dock widget and tabify
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-                try:
-                    self.main_window.tabifyDockWidget(self.properties_dock, self.metadata_dock)
-                    self.logger.info("Properties and Metadata docks tabified for unified resizing")
-                except Exception:
-                    pass
-        except Exception as e:
-            self.logger.warning(f"Failed to add metadata dock to right container: {e}")
-            # Fallback to dock widget
+            self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
             try:
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+                self.main_window.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+                self.logger.info("Properties and Metadata docks tabified for unified resizing")
             except Exception:
                 pass
+        except Exception as e:
+            self.logger.warning(f"Failed to add metadata dock: {e}")
 
         try:
             self._register_dock_for_snapping(self.metadata_dock)
