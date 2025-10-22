@@ -149,6 +149,67 @@ __all__ = [
 # Module Information
 # ============================================================
 
+# Missing functions for backward compatibility
+def set_theme(theme_dict: dict) -> None:
+    """
+    Set theme from dictionary (backward compatibility).
+    
+    Args:
+        theme_dict: Dictionary containing theme settings
+    """
+    try:
+        service = QtMaterialThemeService.instance()
+        # Extract theme info from dict
+        theme_name = theme_dict.get('name', 'dark')
+        variant = theme_dict.get('variant', 'blue')
+        service.apply_theme(theme_name, variant)
+    except Exception as e:
+        try:
+            from src.core.logging_config import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to set theme: {e}")
+        except Exception:
+            pass
+
+def theme_to_dict() -> dict:
+    """
+    Get current theme as dictionary (backward compatibility).
+    
+    Returns:
+        Dictionary containing current theme settings
+    """
+    try:
+        service = QtMaterialThemeService.instance()
+        theme, variant = service.get_current_theme()
+        return {
+            'name': theme,
+            'variant': variant,
+            'colors': service.get_all_colors()
+        }
+    except Exception:
+        return {
+            'name': 'dark',
+            'variant': 'blue',
+            'colors': COLORS.copy()
+        }
+
+# Legacy color function
+def color(color_name: str) -> str:
+    """
+    Get color by name (backward compatibility).
+    
+    Args:
+        color_name: Name of the color
+        
+    Returns:
+        Hex color string
+    """
+    try:
+        service = QtMaterialThemeService.instance()
+        return service.get_color(color_name)
+    except Exception:
+        return COLORS.get(color_name, FALLBACK_COLOR)
+
 def get_theme_system_info() -> dict:
     """
     Get information about the qt-material theme system.
