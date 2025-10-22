@@ -62,8 +62,28 @@ class MainWindow(QMainWindow):
 
         # Window properties
         self.setWindowTitle("3D-MM - 3D Model Manager")
-        self.setMinimumSize(1200, 800)
-        self.resize(1600, 1000)  # Default size for desktop
+
+        # Load window settings from config
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            min_width = config.minimum_window_width
+            min_height = config.minimum_window_height
+            default_width = config.default_window_width
+            default_height = config.default_window_height
+            self.maximize_on_startup = config.maximize_on_startup
+            self.remember_window_size = config.remember_window_size
+        except Exception as e:
+            self.logger.warning(f"Failed to load window settings from config: {e}")
+            min_width = 800
+            min_height = 600
+            default_width = 1200
+            default_height = 800
+            self.maximize_on_startup = False
+            self.remember_window_size = True
+
+        self.setMinimumSize(min_width, min_height)
+        self.resize(default_width, default_height)
 
         # Initialize UI components
         self._init_ui()
@@ -169,10 +189,17 @@ class MainWindow(QMainWindow):
         # Log window initialization
         self.logger.info("Main window initialized successfully")
 
-        # Track if startup tips have been shown
-        self._startup_tips_shown = False
+    def showEvent(self, event: QEvent) -> None:
+        """Handle window show event to apply startup settings."""
+        super().showEvent(event)
 
-
+        # Apply maximize on startup setting if configured
+        try:
+            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
+                self.showMaximized()
+                self.logger.debug("Window maximized on startup")
+        except Exception as e:
+            self.logger.warning(f"Failed to apply maximize on startup: {e}")
 
 
 
@@ -508,6 +535,24 @@ class MainWindow(QMainWindow):
             pass
         return True
 
+    def _reset_dock_layout(self) -> None:
+        """Restore dock widgets to their default docking layout."""
+        try:
+            if getattr(self, "_default_geometry", None):
+                self.restoreGeometry(self._default_geometry)
+            if getattr(self, "_default_layout_state", None):
+                # restoreState returns bool; ignore on failure
+                self.restoreState(self._default_layout_state)
+        except Exception:
+            pass
+        # Fallback: programmatically re-dock common widgets
+        self._redock_all()
+        # Persist the reset layout
+        try:
+            self._schedule_layout_save()
+        except Exception:
+            pass
+
     def _reset_dock_layout_and_save(self) -> None:
         """Reset layout to defaults and persist immediately."""
         self._reset_dock_layout()
@@ -648,6 +693,17 @@ class MainWindow(QMainWindow):
             self.logger.info("Lighting settings saved on app close")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings on close: {e}")
+
+        # Save viewer and window settings
+        try:
+            from src.gui.main_window_components.settings_manager import SettingsManager
+            settings_mgr = SettingsManager(self)
+            settings_mgr.save_viewer_settings()
+            settings_mgr.save_window_settings()
+            self.logger.info("Viewer and window settings saved on app close")
+        except Exception as e:
+            self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
+
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
@@ -832,6 +888,9 @@ class MainWindow(QMainWindow):
             self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
             self.model_library_widget.models_added.connect(self._on_models_added)
 
+            # Connect model library progress updates to main window status bar
+            self._connect_model_library_status_updates()
+
             self.model_library_dock.setWidget(self.model_library_widget)
         except Exception as e:
             # Fallback widget
@@ -992,6 +1051,149 @@ class MainWindow(QMainWindow):
 
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+    def _on_model_selected(self, model_id: int) -> None:
+        """
+        Handle model selection from the model library.
+
+        Args:
+            model_id: ID of the selected model
+        """
+        try:
+            # Store the current model ID
+            self.current_model_id = model_id
+
+            # Enable the Edit Model action
+            if hasattr(self.menu_manager, 'edit_model_action'):
+                self.menu_manager.edit_model_action.setEnabled(True)
+            if hasattr(self.toolbar_manager, 'edit_model_action'):
+                self.toolbar_manager.edit_model_action.setEnabled(True)
+
+            self.logger.debug(f"Model selected: {model_id}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle model selection: {e}")
+
+    def _edit_model(self) -> None:
+        """Analyze the currently selected model for errors."""
+        try:
+            # Check if a model is currently selected
+            if not hasattr(self, 'current_model_id') or self.current_model_id is None:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(self, "No Model Selected",
+                                      "Please select a model from the library first.")
+                return
+
+            # Get the model from database
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(self.current_model_id)
+
+            if not model_data:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Load the model file
+            file_path = model_data.get('file_path')
+            if not file_path:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Error", "Model file path not found")
+                return
+
+            parser = STLParser()
+            model = parser.parse_file(file_path)
+
+            if not model:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
+                return
+
+            # Open model analyzer dialog
+            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
+            dialog = ModelAnalyzerDialog(model, file_path, self)
+
+            if dialog.exec() == 1:  # QDialog.Accepted
+                # Model was fixed and saved, reload it
+                self.logger.info(f"Model analyzed and fixed")
+                # Reload the model in the viewer
+                self._on_model_double_clicked(self.current_model_id)
+
+        except Exception as e:
+            self.logger.error(f"Failed to analyze model: {e}")
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
+
+    def _start_background_hasher(self) -> None:
+        """Start the background hasher thread to process unhashed models."""
+        try:
+            # Use the status bar manager's background hasher if available
+            if hasattr(self.status_bar_manager, 'start_background_hasher'):
+                self.status_bar_manager.start_background_hasher()
+                self.logger.info("Background hasher started via status bar manager")
+            else:
+                self.logger.warning("Status bar manager does not have start_background_hasher method")
+        except Exception as e:
+            self.logger.error(f"Failed to start background hasher: {e}")
+
+    def _connect_model_library_status_updates(self) -> None:
+        """Connect model library progress updates to main window status bar."""
+        try:
+            if not hasattr(self.model_library_widget, 'model_loader'):
+                return
+
+            # We need to monitor the model loader when it's created
+            # Store reference to original _load_models method
+            original_load_models = self.model_library_widget._load_models
+
+            def _load_models_with_status_update(file_paths):
+                """Wrapper to connect status updates when loading starts."""
+                # Call original method
+                original_load_models(file_paths)
+
+                # Connect progress signals if model_loader exists
+                if hasattr(self.model_library_widget, 'model_loader') and self.model_library_widget.model_loader:
+                    try:
+                        self.model_library_widget.model_loader.progress_updated.connect(
+                            self._on_model_library_progress
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"Could not connect progress signal: {e}")
+
+            # Replace the method
+            self.model_library_widget._load_models = _load_models_with_status_update
+
+            self.logger.debug("Model library status updates connected")
+        except Exception as e:
+            self.logger.warning(f"Failed to connect model library status updates: {e}")
+
+    def _on_model_library_progress(self, progress_percent: float, message: str) -> None:
+        """Handle progress updates from model library."""
+        try:
+            # Update main window status bar
+            if hasattr(self, 'status_label'):
+                # Get total files from model loader if available
+                if (hasattr(self.model_library_widget, 'model_loader') and
+                    self.model_library_widget.model_loader):
+                    total_files = len(self.model_library_widget.model_loader.file_paths)
+                    current_item = int((progress_percent / 100.0) * total_files) + 1
+                    current_item = min(current_item, total_files)
+
+                    if total_files > 1:
+                        status_text = f"{message} ({current_item} of {total_files} = {int(progress_percent)}%)"
+                    else:
+                        status_text = f"{message} ({int(progress_percent)}%)"
+                else:
+                    status_text = f"{message} ({int(progress_percent)}%)"
+
+                self.status_label.setText(status_text)
+
+            # Update progress bar
+            if hasattr(self, 'progress_bar'):
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setRange(0, 100)
+                self.progress_bar.setValue(int(progress_percent))
+        except Exception as e:
+            self.logger.debug(f"Failed to update status from model library: {e}")
 
     def _on_metadata_saved(self, model_id: int) -> None:
         """
@@ -1210,6 +1412,20 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to restore saved camera: {e}")
 
+    def _show_help(self) -> None:
+        """Show searchable help dialog."""
+        try:
+            from src.gui.help_system import HelpDialog
+            help_dialog = HelpDialog(self)
+            help_dialog.exec()
+        except Exception as e:
+            self.logger.error(f"Error showing help dialog: {e}")
+            QMessageBox.warning(
+                self,
+                "Help Error",
+                f"Could not open help system: {e}"
+            )
+
     def _show_about(self) -> None:
         """Show about dialog."""
         self.logger.info("Showing about dialog")
@@ -1368,28 +1584,3 @@ class MainWindow(QMainWindow):
         #     self.logger.error(f"Failed to start background hasher: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====
-
-    def showEvent(self, event) -> None:
-        """Show event handler - display startup tips on first show."""
-        super().showEvent(event)
-
-        # Show startup tips only once on first show
-        if not self._startup_tips_shown:
-            self._startup_tips_shown = True
-            QTimer.singleShot(500, self._show_startup_tips)
-
-    def _show_startup_tips(self) -> None:
-        """Show startup tips dialog if enabled."""
-        try:
-            from src.gui.startup_tips import StartupTipsDialog
-
-            # Check if user wants to see startup tips
-            if StartupTipsDialog.should_show_on_startup():
-                dialog = StartupTipsDialog(self)
-                dialog.exec()
-
-                # Save user preference
-                if not dialog.should_show_again():
-                    StartupTipsDialog.save_preference(False)
-        except Exception as e:
-            self.logger.warning(f"Failed to show startup tips: {e}")

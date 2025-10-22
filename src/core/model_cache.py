@@ -94,9 +94,29 @@ class ModelCache:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
 
-        # Memory limits
+        # Memory limits - check for user override first
         if max_memory_mb is None:
-            self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
+            # Check if user has set a manual override in config
+            try:
+                import psutil
+                from .application_config import ApplicationConfig
+                config = ApplicationConfig.get_default()
+
+                if config.use_manual_memory_override:
+                    # Calculate cache limit as percentage of total system RAM
+                    total_system_memory_mb = int(psutil.virtual_memory().total / (1024 ** 2))
+                    cache_limit_mb = int(total_system_memory_mb * (config.manual_cache_limit_percent / 100))
+                    self.max_memory_bytes = cache_limit_mb * 1024 * 1024
+                    self.logger.info(
+                        f"Using manual cache limit: {config.manual_cache_limit_percent}% of "
+                        f"{total_system_memory_mb}MB system RAM = {cache_limit_mb}MB"
+                    )
+                else:
+                    # Use adaptive cache size from performance profile
+                    self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
+            except Exception as e:
+                self.logger.warning(f"Failed to check config override, using adaptive: {e}")
+                self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
         else:
             self.max_memory_bytes = max_memory_mb * 1024 * 1024
 
@@ -114,12 +134,14 @@ class ModelCache:
         self.stats = CacheStats()
 
         # Adaptive settings based on performance level
-        self.max_disk_cache_mb = perf_profile.recommended_cache_size_mb * 2
+        # Disk cache is 2x the memory cache size
+        self.max_disk_cache_mb = (self.max_memory_bytes / (1024 * 1024)) * 2
         self.compression_enabled = perf_profile.performance_level != PerformanceLevel.ULTRA
         self.aggressive_eviction = perf_profile.performance_level == PerformanceLevel.MINIMAL
 
         self.logger.info(
             f"Model cache initialized: {self.max_memory_bytes / (1024*1024):.1f}MB memory limit, "
+            f"{self.max_disk_cache_mb:.1f}MB disk limit, "
             f"compression: {self.compression_enabled}"
         )
 
@@ -483,11 +505,10 @@ class ModelCache:
             # Estimate data size
             data_size = self._estimate_data_size(data)
 
-            # Check if we should cache this (avoid caching very large items)
-            max_item_size = self.max_memory_bytes // 4  # Max 25% of cache
-            if data_size > max_item_size and not memory_only:
+            # Check if item is larger than total cache limit
+            if data_size > self.max_memory_bytes and not memory_only:
                 self.logger.warning(
-                    f"Data too large for cache ({data_size} bytes > {max_item_size} bytes): {file_path}"
+                    f"Data too large for cache ({data_size} bytes > {self.max_memory_bytes} bytes): {file_path}"
                 )
                 return False
 

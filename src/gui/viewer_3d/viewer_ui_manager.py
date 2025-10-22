@@ -39,6 +39,7 @@ class ViewerUIManager:
         self.save_view_button = None
         self.rotate_ccw_button = None
         self.rotate_cw_button = None
+        self.set_z_up_button = None
         self.progress_bar = None
         self.progress_label = None
         self.progress_frame = None
@@ -53,7 +54,8 @@ class ViewerUIManager:
         on_reset_clicked: Callable,
         on_save_view_clicked: Callable,
         on_rotate_ccw_clicked: Callable,
-        on_rotate_cw_clicked: Callable
+        on_rotate_cw_clicked: Callable,
+        on_set_z_up_clicked: Callable = None
     ) -> None:
         """
         Set up the UI layout.
@@ -67,6 +69,7 @@ class ViewerUIManager:
             on_save_view_clicked: Callback for save view button
             on_rotate_ccw_clicked: Callback for rotate CCW button
             on_rotate_cw_clicked: Callback for rotate CW button
+            on_set_z_up_clicked: Callback for set Z up button
         """
         layout = QVBoxLayout(self.parent_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -137,6 +140,13 @@ class ViewerUIManager:
         control_layout.addWidget(self.rotate_cw_button)
 
         control_layout.addStretch()
+
+        # Set Z Up button (far right)
+        self.set_z_up_button = QPushButton("Set Z Up")
+        self.set_z_up_button.setToolTip("Rotate model to set Z-axis pointing up")
+        if on_set_z_up_clicked:
+            self.set_z_up_button.clicked.connect(on_set_z_up_clicked)
+        control_layout.addWidget(self.set_z_up_button)
 
         layout.addWidget(control_panel)
 

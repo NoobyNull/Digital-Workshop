@@ -1058,20 +1058,20 @@ class PerformanceSettingsTab(QWidget):
         override_group = QFrame()
         override_layout = QVBoxLayout(override_group)
 
-        override_label = QLabel("<b>Manual Memory Limit (MB)</b>")
+        override_label = QLabel("<b>Cache Limit (% of System RAM)</b>")
         override_layout.addWidget(override_label)
 
         slider_layout = QHBoxLayout()
         self.memory_slider = QSlider(Qt.Horizontal)
-        self.memory_slider.setMinimum(512)
-        self.memory_slider.setMaximum(4096)
-        self.memory_slider.setValue(1024)
+        self.memory_slider.setMinimum(10)
+        self.memory_slider.setMaximum(95)
+        self.memory_slider.setValue(80)
         self.memory_slider.setTickPosition(QSlider.TicksBelow)
-        self.memory_slider.setTickInterval(512)
+        self.memory_slider.setTickInterval(5)
         slider_layout.addWidget(self.memory_slider)
 
-        self.memory_value_label = QLabel("1024 MB")
-        self.memory_value_label.setMinimumWidth(80)
+        self.memory_value_label = QLabel("80%")
+        self.memory_value_label.setMinimumWidth(100)
         slider_layout.addWidget(self.memory_value_label)
 
         override_layout.addLayout(slider_layout)
@@ -1108,7 +1108,7 @@ class PerformanceSettingsTab(QWidget):
 
     def _on_slider_changed(self, value: int) -> None:
         """Handle slider change."""
-        self.memory_value_label.setText(f"{value} MB")
+        self.memory_value_label.setText(f"{value}%")
         self._update_system_info()
 
     def _update_system_info(self) -> None:
@@ -1124,9 +1124,10 @@ class PerformanceSettingsTab(QWidget):
             config = ApplicationConfig.get_default()
 
             if self.manual_radio.isChecked():
-                limit_mb = self.memory_slider.value()
+                percent = self.memory_slider.value()
+                limit_mb = int(total_mb * (percent / 100))
                 info_text = (
-                    f"Manual Override: {limit_mb} MB\n"
+                    f"Cache Limit: {percent}% of {total_mb} MB = {limit_mb} MB\n"
                     f"System Total: {total_mb} MB\n"
                     f"Available: {available_mb} MB\n"
                     f"Reserve: {config.system_memory_reserve_percent}%"
@@ -1158,8 +1159,8 @@ class PerformanceSettingsTab(QWidget):
             if config.use_manual_memory_override:
                 self.manual_radio.setChecked(True)
                 self.auto_radio.setChecked(False)
-                if config.manual_memory_override_mb:
-                    self.memory_slider.setValue(config.manual_memory_override_mb)
+                if config.manual_cache_limit_percent:
+                    self.memory_slider.setValue(config.manual_cache_limit_percent)
             else:
                 self.auto_radio.setChecked(True)
                 self.manual_radio.setChecked(False)
@@ -1178,13 +1179,13 @@ class PerformanceSettingsTab(QWidget):
             config.use_manual_memory_override = self.manual_radio.isChecked()
 
             if self.manual_radio.isChecked():
-                config.manual_memory_override_mb = self.memory_slider.value()
+                config.manual_cache_limit_percent = self.memory_slider.value()
 
             if self.logger:
                 self.logger.info(
                     f"Saved performance settings: "
                     f"manual={config.use_manual_memory_override}, "
-                    f"override_mb={config.manual_memory_override_mb}"
+                    f"cache_limit_percent={config.manual_cache_limit_percent}%"
                 )
         except Exception as e:
             if self.logger:

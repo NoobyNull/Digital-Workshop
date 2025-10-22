@@ -6,11 +6,12 @@ while maintaining backward compatibility with the original API.
 """
 
 import gc
+import math
 import time
 from typing import Optional, Any
 
 from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QDialog
 
 import vtk
 
@@ -18,7 +19,7 @@ from src.core.logging_config import get_logger, log_function_call
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.stl_parser import STLModel
-from src.core.data_structures import Model, LoadingState
+from src.core.data_structures import Model, LoadingState, Triangle, Vector3D
 from src.gui.theme import vtk_rgb
 from src.gui.material_picker_widget import MaterialPickerWidget
 
@@ -52,6 +53,7 @@ class Viewer3DWidget(QWidget):
     lighting_panel_requested = Signal()
     material_selected = Signal(str)
     save_view_requested = Signal()
+    z_up_orientation_set = Signal()  # Emitted when Z-up is set, before save
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Initialize the 3D viewer widget."""
@@ -63,6 +65,7 @@ class Viewer3DWidget(QWidget):
         # State
         self.current_model = None
         self.loading_in_progress = False
+        self.z_up_pending_save = False  # Track if Z-up was just set and needs saving
 
         # Performance settings
         self.adaptive_quality = True
@@ -94,6 +97,7 @@ class Viewer3DWidget(QWidget):
             on_save_view_clicked=self._save_view_requested,
             on_rotate_ccw_clicked=lambda: self._rotate_around_view_axis(90),
             on_rotate_cw_clicked=lambda: self._rotate_around_view_axis(-90),
+            on_set_z_up_clicked=self._set_z_up,
         )
 
     def _init_modules(self) -> None:
@@ -243,6 +247,156 @@ class Viewer3DWidget(QWidget):
         """Apply theme styling."""
         self.ui_manager.apply_theme()
 
+    def _reload_model_in_viewer(self) -> None:
+        """Reload the current model in the viewer with updated geometry."""
+        try:
+            if not self.current_model:
+                return
+
+            # Remove existing model from renderer
+            self.model_renderer.remove_model()
+
+            # Create polydata from updated model geometry
+            if hasattr(self.current_model, "is_array_based") and self.current_model.is_array_based():
+                polydata = self.model_renderer.create_vtk_polydata_from_arrays(self.current_model)
+            else:
+                polydata = self.model_renderer.create_vtk_polydata(self.current_model)
+
+            # Load polydata into renderer
+            self.model_renderer.load_model(polydata)
+            self.actor = self.model_renderer.get_actor()
+
+            # Fit camera to model
+            self.camera_controller.fit_camera_to_model(
+                self.current_model,
+                self.actor
+            )
+
+            # Render the scene
+            self.scene_manager.render()
+            self.logger.info("Model reloaded in viewer with updated geometry")
+
+        except Exception as e:
+            self.logger.error(f"Failed to reload model in viewer: {e}", exc_info=True)
+
+    def _calculate_z_up_rotation_from_camera(self) -> tuple:
+        """
+        Calculate Z-up rotation based on current camera ViewUp vector.
+
+        Reads the UCS icon orientation (camera ViewUp) to determine which axis
+        is currently pointing up, then calculates the rotation needed to make Z point up.
+
+        Handles all 24 possible orientations (6 faces × 4 rotations each).
+
+        Returns:
+            Tuple of (axis_str, degrees) to rotate model to Z-up
+        """
+        try:
+            camera = self.renderer.GetActiveCamera()
+            if not camera:
+                return ("Z", 0)
+
+            # Get current ViewUp vector (shows which axis is pointing up)
+            view_up = camera.GetViewUp()
+            self.logger.info(f"Current camera ViewUp: ({view_up[0]:.2f}, {view_up[1]:.2f}, {view_up[2]:.2f})")
+
+            # Check which axis is most dominant in ViewUp
+            abs_x = abs(view_up[0])
+            abs_y = abs(view_up[1])
+            abs_z = abs(view_up[2])
+
+            # Threshold for considering an axis dominant
+            threshold = 0.9
+
+            # Z-axis cases (already pointing up/down)
+            if abs_z > threshold:
+                if view_up[2] > 0:
+                    self.logger.info("Z-axis pointing up (0°), no rotation needed")
+                    return ("Z", 0)
+                else:
+                    self.logger.info("Z-axis pointing down (180°), rotating 180° around X")
+                    return ("X", 180)
+
+            # Y-axis cases (Y is dominant)
+            if abs_y > threshold and abs_y > abs_x and abs_y > abs_z:
+                if view_up[1] > 0:
+                    self.logger.info("Y-axis pointing up (90°), rotating 90° around X")
+                    return ("X", 90)
+                else:
+                    self.logger.info("Y-axis pointing down (270°), rotating 270° around X")
+                    return ("X", 270)
+
+            # X-axis cases (X is dominant)
+            if abs_x > threshold and abs_x > abs_y and abs_x > abs_z:
+                if view_up[0] > 0:
+                    self.logger.info("X-axis pointing up (90°), rotating 90° around Y")
+                    return ("Y", 90)
+                else:
+                    self.logger.info("X-axis pointing down (270°), rotating 270° around Y")
+                    return ("Y", 270)
+
+            # Default: no rotation
+            self.logger.info("No dominant axis detected, no rotation needed")
+            return ("Z", 0)
+
+        except Exception as e:
+            self.logger.error(f"Failed to calculate Z-up rotation from camera: {e}", exc_info=True)
+            return ("Z", 0)
+
+    def _set_z_up(self) -> None:
+        """Set Z-axis pointing up by rotating model based on UCS icon orientation."""
+        try:
+            if not self.current_model or not self.actor:
+                self.logger.warning("No model loaded to set Z-up")
+                return
+
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+
+            # Calculate rotation needed based on camera's current ViewUp (UCS icon)
+            axis_str, degrees = self._calculate_z_up_rotation_from_camera()
+
+            self.logger.info(f"Z-up rotation needed: {degrees}° around {axis_str} axis")
+
+            if degrees == 0:
+                self.logger.info("Model is already Z-up oriented")
+                self.z_up_pending_save = True
+                return
+
+            # Apply rotation to model geometry
+            try:
+                # Create a temporary STLModel from current Model for rotation
+                stl_model = STLModel(
+                    header=getattr(self.current_model, 'header', 'Model'),
+                    triangles=self.current_model.triangles,
+                    stats=self.current_model.stats
+                )
+
+                editor = ModelEditor(stl_model)
+                axis = RotationAxis[axis_str]
+                rotated_stl = editor.rotate_model(axis, degrees)
+                self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
+
+                # Update the Model object's triangles with rotated geometry
+                self.current_model.triangles = rotated_stl.triangles
+
+            except Exception as e:
+                self.logger.error(f"Failed to rotate model: {e}", exc_info=True)
+                return
+
+            # Re-render the model with new geometry
+            self._reload_model_in_viewer()
+
+            # Mark that Z-up is pending save
+            self.z_up_pending_save = True
+
+            self.logger.info(f"Set Z-up: Model rotated {degrees}° around {axis_str} axis (pending save)")
+
+            # Emit signal to notify UI that Z-up was set
+            self.z_up_orientation_set.emit()
+
+        except Exception as e:
+            self.logger.error(f"Failed to set Z-up: {e}", exc_info=True)
+
     def _open_material_picker(self) -> None:
         """Open material picker dialog."""
         try:
@@ -265,7 +419,105 @@ class Viewer3DWidget(QWidget):
 
     def _save_view_requested(self) -> None:
         """Request save view."""
-        self.save_view_requested.emit()
+        # If Z-up is pending, show special dialog
+        if self.z_up_pending_save:
+            self._handle_z_up_save()
+        else:
+            self.save_view_requested.emit()
+
+    def _handle_z_up_save(self) -> None:
+        """Handle Z-up save workflow with dialog."""
+        try:
+            from .z_up_save_dialog import ZUpSaveDialog
+            from src.gui.model_editor.stl_writer import STLWriter
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+
+            if not self.current_model:
+                self.logger.warning("No model loaded for Z-up save")
+                return
+
+            # Get model filename
+            model_filename = getattr(self.current_model, 'header', 'model.stl')
+
+            # Show dialog
+            dialog = ZUpSaveDialog(model_filename, self.ui_manager.viewer_widget if hasattr(self.ui_manager, 'viewer_widget') else None)
+            if dialog.exec() != QDialog.Accepted:
+                return
+
+            option = dialog.get_selected_option()
+
+            if option == ZUpSaveDialog.SAVE_VIEW_ONLY:
+                # Just save camera view
+                self.save_view_requested.emit()
+                self.z_up_pending_save = False
+
+            elif option == ZUpSaveDialog.SAVE_AND_REPLACE:
+                # Rotate model and save to original file
+                self._rotate_and_save_model(model_filename, replace_original=True)
+                self.z_up_pending_save = False
+
+            elif option == ZUpSaveDialog.SAVE_AS_NEW:
+                # Rotate model and save as new file
+                new_path = dialog.get_new_filepath()
+                self._rotate_and_save_model(new_path, replace_original=False)
+                self.z_up_pending_save = False
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle Z-up save: {e}", exc_info=True)
+
+    def _rotate_and_save_model(self, output_path: str, replace_original: bool = False) -> None:
+        """
+        Rotate model to Z-up and save to file.
+
+        Args:
+            output_path: Path to save the model
+            replace_original: If True, replaces original file
+        """
+        try:
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+            from src.gui.model_editor.stl_writer import STLWriter
+            from PySide6.QtWidgets import QMessageBox
+
+            if not self.current_model:
+                return
+
+            # Create editor and detect Z-up rotation needed
+            editor = ModelEditor(self.current_model)
+            axis_str, degrees = editor.analyzer.get_z_up_recommendation()
+
+            if degrees != 0:
+                # Apply rotation
+                axis = RotationAxis[axis_str]
+                rotated_model = editor.rotate_model(axis, degrees)
+                self.logger.info(f"Rotated model {degrees}° around {axis_str} for Z-up")
+            else:
+                rotated_model = self.current_model
+                self.logger.info("Model already Z-up, no rotation needed")
+
+            # Save model
+            success = STLWriter.write(rotated_model, output_path, binary=True)
+
+            if success:
+                self.logger.info(f"Saved Z-up model to {output_path}")
+                if replace_original:
+                    QMessageBox.information(
+                        None,
+                        "Success",
+                        f"Model rotated to Z-up and saved:\n{output_path}"
+                    )
+                else:
+                    QMessageBox.information(
+                        None,
+                        "Success",
+                        f"Model rotated to Z-up and saved as:\n{output_path}"
+                    )
+            else:
+                QMessageBox.critical(None, "Error", f"Failed to save model to {output_path}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to rotate and save model: {e}", exc_info=True)
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(None, "Error", f"Failed to save model: {str(e)}")
 
     def reset_save_view_button(self) -> None:
         """Reset save view button."""

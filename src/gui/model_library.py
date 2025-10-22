@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTreeView, QListView,
     QTableView, QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
     QGroupBox, QTabWidget, QFrame, QMenu, QMessageBox, QHeaderView,
-    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox
+    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox, QDialog
 )
 
 from src.core.logging_config import get_logger
@@ -784,6 +784,11 @@ class ModelLibraryWidget(QWidget):
             open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
             menu.addAction(open_action)
 
+            # Add analyze model action
+            analyze_action = QAction("Analyze & Fix Errors", self)
+            analyze_action.triggered.connect(lambda: self._analyze_model(int(model_id)))
+            menu.addAction(analyze_action)
+
             # Add separator and remove action
             menu.addSeparator()
             remove_action = QAction("Remove", self)
@@ -1083,6 +1088,55 @@ class ModelLibraryWidget(QWidget):
         except Exception:
             pass
         gc.collect()
+
+    def _analyze_model(self, model_id: int) -> None:
+        """Analyze model for errors and offer fixing."""
+        try:
+            # Get the model from database
+            from src.core.database_manager import get_database_manager
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(model_id)
+
+            if not model_data:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Load the model file
+            file_path = model_data.get('file_path')
+            if not file_path:
+                QMessageBox.warning(self, "Error", "Model file path not found")
+                return
+
+            from src.parsers.stl_parser import STLParser
+            parser = STLParser()
+            model = parser.parse_file(file_path)
+
+            if not model:
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
+                return
+
+            # Open model analyzer dialog
+            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
+            dialog = ModelAnalyzerDialog(model, file_path, self)
+
+            if dialog.exec() == QDialog.Accepted:
+                # Model was fixed and saved
+                # Update database with new file hash
+                try:
+                    from src.utils.file_hash import calculate_file_hash
+                    new_hash = calculate_file_hash(file_path)
+
+                    # Update model file hash in database
+                    db_manager.update_file_hash(model_id, new_hash)
+
+                    # Reload the model in viewer
+                    self.model_double_clicked.emit(model_id)
+                except Exception as e:
+                    self.logger.error(f"Failed to update database after fix: {e}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to analyze model: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
 
     def closeEvent(self, event) -> None:
         self.cleanup()

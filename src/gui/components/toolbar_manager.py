@@ -109,6 +109,15 @@ class ToolbarManager:
             "Open a 3D model file",
         )
 
+        # Analyze Model
+        self.edit_model_action = _add_action(
+            "Analyze",
+            "fa5s.stethoscope",
+            self._edit_model,
+            "Analyze model for errors and fix them",
+        )
+        self.edit_model_action.setEnabled(False)
+
         toolbar.addSeparator()
 
         # Zoom controls
@@ -152,6 +161,11 @@ class ToolbarManager:
         """Handle open model action."""
         if hasattr(self.main_window, '_open_model'):
             self.main_window._open_model()
+
+    def _edit_model(self) -> None:
+        """Handle edit model action."""
+        if hasattr(self.main_window, '_edit_model'):
+            self.main_window._edit_model()
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""

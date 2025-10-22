@@ -75,6 +75,15 @@ class MenuManager:
         # Edit menu
         edit_menu = menubar.addMenu("&Edit")
 
+        # Analyze Model action
+        self.edit_model_action = QAction("&Analyze & Fix Errors...", self.main_window)
+        self.edit_model_action.setStatusTip("Analyze model for errors and fix them")
+        self.edit_model_action.setEnabled(False)
+        self.edit_model_action.triggered.connect(self._edit_model)
+        edit_menu.addAction(self.edit_model_action)
+
+        edit_menu.addSeparator()
+
         # Preferences action
         prefs_action = QAction("&Preferences...", self.main_window)
         prefs_action.setStatusTip("Open application preferences")
@@ -200,6 +209,11 @@ class MenuManager:
         # This would need to be connected to the main window's model loading logic
         if hasattr(self.main_window, '_open_model'):
             self.main_window._open_model()
+
+    def _edit_model(self) -> None:
+        """Handle edit model action."""
+        if hasattr(self.main_window, '_edit_model'):
+            self.main_window._edit_model()
 
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
