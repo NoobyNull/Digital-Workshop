@@ -162,6 +162,7 @@ class ThemeService:
     def set_qt_material_variant(self, variant: str) -> None:
         """Set the qt-material color variant."""
         self.settings.setValue("qt_material_variant", variant)
+        self.settings.sync()  # Force immediate write to disk
 
     def get_current_theme(self) -> tuple[str, ThemeLibrary]:
         """Get current theme and library."""

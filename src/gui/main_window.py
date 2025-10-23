@@ -163,11 +163,8 @@ class MainWindow(QMainWindow):
         from src.gui.model.model_loader import ModelLoader
         self.model_loader_manager = ModelLoader(self, self.logger)
 
-        # Initialize snapping overlays and handlers
-        try:
-            self._init_snapping_system()
-        except Exception as e:
-            self.logger.warning(f"Snap system init failed: {e}")
+        # Let PySide6 handle all window management naturally
+        # Removed all custom layout management and snapping systems
         # Default to locked layout mode
         try:
             settings = QSettings()
@@ -186,8 +183,31 @@ class MainWindow(QMainWindow):
         # Set up status update timer
         self.status_bar_manager.setup_status_timer()
 
+        # Let PySide6 handle all layout management naturally
+        # Removed custom layout timers and forced layout updates
+
         # Log window initialization
-        self.logger.info("Main window initialized successfully")
+        self.logger.info("Main window initialized successfully - PySide6 handling all layout management")
+
+    def _force_initial_layout(self) -> None:
+        """Force initial layout after all widgets are created."""
+        try:
+            # Force central widget layout
+            self._force_central_widget_layout()
+
+            # Update all dock widgets
+            for dock in self.findChildren(QDockWidget):
+                if dock.isVisible():
+                    dock.updateGeometry()
+                    dock.update()
+
+            # Force main window layout recalculation
+            self.updateGeometry()
+            self.layout().activate() if self.layout() else None
+
+            self.logger.debug("Initial layout forced after widget creation")
+        except Exception as e:
+            self.logger.debug(f"Failed to force initial layout: {e}")
 
     def showEvent(self, event: QEvent) -> None:
         """Handle window show event to apply startup settings."""
@@ -200,6 +220,121 @@ class MainWindow(QMainWindow):
                 self.logger.debug("Window maximized on startup")
         except Exception as e:
             self.logger.warning(f"Failed to apply maximize on startup: {e}")
+
+        # Ensure central widget fills available space after show
+        QTimer.singleShot(100, self._force_central_widget_layout)
+
+    def resizeEvent(self, event) -> None:
+        """Handle window resize events to ensure proper layout."""
+        super().resizeEvent(event)
+        # Let PySide6 handle resize events naturally
+        # Removed custom layout management
+
+    def _force_central_widget_layout(self) -> None:
+        """Force central widget to fill all available space."""
+        try:
+            central_widget = self.centralWidget()
+            if central_widget:
+                # Let Qt handle the layout completely naturally
+                # Just ensure proper size policies are set and trigger layout update
+                if hasattr(central_widget, 'setSizePolicy'):
+                    from PySide6.QtWidgets import QSizePolicy
+                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+                # Force layout recalculation without manual geometry setting
+                if hasattr(central_widget, 'updateGeometry'):
+                    central_widget.updateGeometry()
+
+                # Update the main window layout
+                self.updateGeometry()
+                if self.layout():
+                    self.layout().activate()
+
+                # Force repaint
+                central_widget.update()
+                self.update()
+
+                # Log the actual geometry for debugging
+                actual_geometry = central_widget.geometry()
+                self.logger.debug(f"Central widget actual geometry: {actual_geometry}")
+        except Exception as e:
+            self.logger.debug(f"Failed to force central widget layout: {e}")
+
+    def _get_available_central_geometry(self) -> QRect:
+        """Get the available geometry for the central widget (excluding dock widgets)."""
+        try:
+            # Use Qt's built-in method to get the geometry of the central widget area
+            # This is more reliable than manual calculation
+            central_area = self.centralWidget().geometry() if self.centralWidget() else self.rect()
+
+            # Ensure minimum dimensions
+            min_width = 200
+            min_height = 150
+
+            if central_area.width() < min_width or central_area.height() < min_height:
+                # If the calculated area is too small, use the full window minus dock space
+                full_rect = self.rect()
+                dock_widgets = self.findChildren(QDockWidget)
+
+                left_width = 0
+                right_width = 0
+                top_height = 0
+                bottom_height = 0
+
+                for dock in dock_widgets:
+                    if dock.isVisible():
+                        dock_area = self.dockWidgetArea(dock)
+                        dock_geometry = dock.geometry()
+
+                        if dock_area == Qt.LeftDockWidgetArea:
+                            left_width = max(left_width, dock_geometry.right())
+                        elif dock_area == Qt.RightDockWidgetArea:
+                            right_width = max(right_width, dock_geometry.width())
+                        elif dock_area == Qt.TopDockWidgetArea:
+                            top_height = max(top_height, dock_geometry.bottom())
+                        elif dock_area == Qt.BottomDockWidgetArea:
+                            bottom_height = max(bottom_height, dock_geometry.height())
+
+                # Calculate available space for central widget
+                available_x = left_width
+                available_y = top_height
+                available_width = max(full_rect.width() - left_width - right_width, min_width)
+                available_height = max(full_rect.height() - top_height - bottom_height, min_height)
+
+                central_area = QRect(available_x, available_y, available_width, available_height)
+
+            self.logger.debug(f"Central widget geometry: {central_area}")
+            return central_area
+
+        except Exception as e:
+            self.logger.debug(f"Failed to calculate available central geometry: {e}")
+            return self.rect()  # Fallback to full window
+
+    def _setup_layout_update_timer(self) -> None:
+        """Set up timer for real-time layout updates."""
+        try:
+            self._layout_update_timer = QTimer(self)
+            self._layout_update_timer.setSingleShot(True)
+            self._layout_update_timer.setInterval(200)  # 200ms for responsive updates (reduced frequency)
+            self._layout_update_timer.timeout.connect(self._update_layout_responsive)
+        except Exception as e:
+            self.logger.debug(f"Failed to setup layout update timer: {e}")
+
+    def _update_layout_responsive(self) -> None:
+        """Update layout in response to dock widget movements."""
+        try:
+            # Force central widget to adjust to current dock layout
+            self._force_central_widget_layout()
+
+            # Update all dock widgets to ensure proper sizing
+            for dock in self.findChildren(QDockWidget):
+                if dock.isVisible():
+                    dock.updateGeometry()
+                    dock.update()
+
+            self.logger.debug("Responsive layout update completed")
+        except Exception as e:
+            self.logger.debug(f"Failed responsive layout update: {e}")
 
 
 
@@ -407,15 +542,29 @@ class MainWindow(QMainWindow):
     # ===== END_EXTRACT_TO: src/gui/window/layout_persistence.py =====
 
     def _connect_layout_autosave(self, dock: QDockWidget) -> None:
-        """Connect signals from a dock to trigger autosave."""
+        """Connect signals from a dock to trigger autosave and central widget updates."""
         try:
             dock.topLevelChanged.connect(lambda _=False: self._schedule_layout_save())
+            dock.topLevelChanged.connect(lambda _=False: self._update_central_widget_for_dock_changes())
+            dock.topLevelChanged.connect(lambda _=False: self._trigger_responsive_layout_update())
             # Some bindings expose dockLocationChanged(area)
             if hasattr(dock, "dockLocationChanged"):
                 dock.dockLocationChanged.connect(lambda _area=None: self._schedule_layout_save())
+                dock.dockLocationChanged.connect(lambda _area=None: self._update_central_widget_for_dock_changes())
+                dock.dockLocationChanged.connect(lambda _area=None: self._trigger_responsive_layout_update())
             dock.visibilityChanged.connect(lambda _=False: self._schedule_layout_save())
+            dock.visibilityChanged.connect(lambda _=False: self._update_central_widget_for_dock_changes())
+            dock.visibilityChanged.connect(lambda _=False: self._trigger_responsive_layout_update())
         except Exception:
             pass
+
+    def _trigger_responsive_layout_update(self) -> None:
+        """Trigger responsive layout update with debouncing."""
+        try:
+            if hasattr(self, "_layout_update_timer"):
+                self._layout_update_timer.start()
+        except Exception as e:
+            self.logger.debug(f"Failed to trigger responsive layout update: {e}")
 
     # ---- Snapping system (overlays + edge snap) ----
     def _init_snapping_system(self) -> None:
@@ -503,6 +652,26 @@ class MainWindow(QMainWindow):
                 pass
         except Exception as e:
             self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
+
+    def _update_central_widget_for_dock_changes(self) -> None:
+        """Update central widget layout when dock widgets change position or size."""
+        try:
+            central_widget = self.centralWidget()
+            if central_widget:
+                # Force geometry update to ensure proper resizing
+                central_widget.updateGeometry()
+
+                # Ensure the central widget maintains its expanding policy
+                if hasattr(central_widget, 'setSizePolicy'):
+                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+                # Force main window layout recalculation
+                self.updateGeometry()
+                self.layout().activate()
+
+                self.logger.debug("Central widget updated for dock changes")
+        except Exception as e:
+            self.logger.debug(f"Failed to update central widget for dock changes: {e}")
 
     def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> bool:
         """Dock the provided QDockWidget to the specified edge if allowed."""
@@ -1267,14 +1436,33 @@ class MainWindow(QMainWindow):
     def _on_viewer_settings_changed(self) -> None:
         """Handle viewer settings change from preferences dialog."""
         try:
-            # Reload viewer settings from QSettings
-            if hasattr(self, 'viewer_widget') and self.viewer_widget:
-                # Trigger viewer to reload settings
-                if hasattr(self.viewer_widget, 'reload_settings'):
-                    self.viewer_widget.reload_settings()
-                self.logger.debug("Viewer settings reloaded after preferences change")
+            if not hasattr(self, 'viewer_widget') or not self.viewer_widget:
+                return
+
+            # Try to apply viewer settings changes
+            # Settings may include grid visibility, ground plane, rendering mode, etc.
+            
+            # Attempt to trigger refresh by calling render if available
+            if hasattr(self.viewer_widget, 'render'):
+                try:
+                    self.viewer_widget.render()
+                    self.logger.debug("Viewer re-rendered after settings change")
+                except Exception as e:
+                    self.logger.debug(f"Could not re-render viewer: {e}")
+           
+            # Try scene manager render if available
+            if hasattr(self.viewer_widget, 'scene_manager'):
+                try:
+                    scene_manager = self.viewer_widget.scene_manager
+                    if hasattr(scene_manager, 'render'):
+                        scene_manager.render()
+                        self.logger.debug("Scene re-rendered after viewer settings change")
+                except Exception as e:
+                    self.logger.debug(f"Could not re-render scene: {e}")
+           
+            self.logger.debug("Viewer settings applied after preferences change")
         except Exception as e:
-            self.logger.debug(f"Error reloading viewer settings: {e}")
+            self.logger.debug(f"Error applying viewer settings: {e}")
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
@@ -1581,29 +1769,5 @@ class MainWindow(QMainWindow):
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 
     # ===== END_EXTRACT_TO: src/gui/services/background_processor.py =====
-        """Start the background hasher thread."""
-        # try:
-        #     if self.background_hasher and self.background_hasher.isRunning():
-        #         self.logger.debug("Background hasher already running")
-        #         return
-
-        #     from gui.background_hasher import BackgroundHasher
-
-        #     self.background_hasher = BackgroundHasher(self)
-        #     self.background_hasher.hash_progress.connect(self._on_hash_progress)
-        #     self.background_hasher.model_hashed.connect(self._on_model_hashed)
-        #     self.background_hasher.duplicate_found.connect(self._on_duplicate_found)
-        #     self.background_hasher.all_complete.connect(self._on_hashing_complete)
-
-        #     self.background_hasher.start()
-
-        #     # Update indicator - solid when hashing
-        #     self.hash_indicator.setVisible(True)
-        #     self.hash_indicator.setStyleSheet("opacity: 1.0;")  # Solid when hashing
-        #     self.hash_indicator.setToolTip("Background hashing active - Click to pause")
-
-        #     self.logger.info("Background hasher started")
-        # except Exception as e:
-        #     self.logger.error(f"Failed to start background hasher: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====

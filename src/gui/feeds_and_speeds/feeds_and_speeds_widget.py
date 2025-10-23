@@ -1,17 +1,20 @@
 """Feeds & Speeds Calculator Widget."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
+import json
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QTableWidget,
-    QTableWidgetItem, QHeaderView, QSplitter, QMessageBox, QMenu
+    QTableWidgetItem, QHeaderView, QSplitter, QMessageBox, QMenu, QDialog
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 
 from src.core.logging_config import get_logger
+from src.parsers.tool_database_manager import ToolDatabaseManager
+from src.core.database.provider_repository import ProviderRepository
+from src.gui.widgets.add_tool_dialog import AddToolDialog
 from .tool_library_manager import ToolLibraryManager, Tool
 from .personal_toolbox_manager import PersonalToolboxManager
 from .unit_converter import UnitConverter
@@ -27,30 +30,56 @@ class FeedsAndSpeedsWidget(QWidget):
         super().__init__(parent)
         self.logger = logger
         
+        # Initialize database path
+        self.db_path = str(Path.home() / ".digital_workshop" / "tools.db")
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        
         # Initialize managers
-        self.tool_library_manager = ToolLibraryManager()
+        self.tool_database_manager = ToolDatabaseManager(self.db_path)
+        self.provider_repo = ProviderRepository(self.db_path)
         self.personal_toolbox_manager = PersonalToolboxManager()
         self.unit_converter = UnitConverter()
         
-        # Load default library
+        # Keep old manager for backward compatibility during migration
+        self.tool_library_manager = ToolLibraryManager()
+        
+        # Load default library (import if needed)
         self._load_default_library()
         
         # UI state
         self.is_metric = self.personal_toolbox_manager.get_auto_convert_to_metric()
-        self.selected_tool: Optional[Tool] = None
+        self.selected_tool: Optional[Dict[str, Any]] = None
+        self.selected_provider_id: Optional[int] = None
         
         # Setup UI
         self._setup_ui()
     
     def _load_default_library(self) -> None:
-        """Load the default IDC Woodcraft library."""
+        """Load the default IDC Woodcraft library and import to database if needed."""
         try:
-            library_path = Path(__file__).parent.parent / "IDCWoodcraftFusion360Library.json"
-            if library_path.exists():
-                self.tool_library_manager.load_library("IDC Woodcraft", str(library_path))
-                self.logger.info("Loaded IDC Woodcraft library")
+            # Check if we have any providers in the database
+            providers = self.provider_repo.get_all_providers()
+            
+            if not providers:
+                # Import default library to database
+                library_path = Path(__file__).parent.parent / "IDCWoodcraftFusion360Library.json"
+                if library_path.exists():
+                    self.logger.info("Importing default library to database...")
+                    success, message = self.tool_database_manager.import_tools_from_file(
+                        str(library_path),
+                        "IDC Woodcraft"
+                    )
+                    if success:
+                        self.logger.info(f"Default library imported: {message}")
+                    else:
+                        self.logger.warning(f"Failed to import default library: {message}")
+                        # Fall back to old manager
+                        self.tool_library_manager.load_library("IDC Woodcraft", str(library_path))
+                else:
+                    self.logger.warning(f"Library not found: {library_path}")
             else:
-                self.logger.warning(f"Library not found: {library_path}")
+                self.logger.info(f"Found {len(providers)} providers in database")
+                
         except Exception as e:
             self.logger.error(f"Failed to load default library: {e}")
     
@@ -107,15 +136,21 @@ class FeedsAndSpeedsWidget(QWidget):
         title.setStyleSheet("font-weight: bold; font-size: 11pt;")
         layout.addWidget(title)
         
-        # Library selector
+        # Library selector (provider selector)
         lib_layout = QHBoxLayout()
-        lib_layout.addWidget(QLabel("Library:"))
+        lib_layout.addWidget(QLabel("Provider:"))
         self.library_combo = QComboBox()
-        self.library_combo.addItem("IDC Woodcraft")
-        self.library_combo.addItem("My Toolbox")
-        self.library_combo.currentTextChanged.connect(self._on_library_changed)
         lib_layout.addWidget(self.library_combo)
+        
+        # Add Tool button
+        self.import_tool_btn = QPushButton("Import Tools...")
+        self.import_tool_btn.clicked.connect(self._on_import_tools)
+        lib_layout.addWidget(self.import_tool_btn)
+        
         layout.addLayout(lib_layout)
+        
+        # Load providers into combo box
+        self._load_providers()
         
         # Search
         search_layout = QHBoxLayout()
@@ -140,13 +175,23 @@ class FeedsAndSpeedsWidget(QWidget):
         self.tools_table.customContextMenuRequested.connect(self._on_tool_context_menu)
         layout.addWidget(self.tools_table)
         
-        # Add button
+        # Action buttons
+        button_layout = QHBoxLayout()
+        
         self.add_tool_btn = QPushButton(">> Add to My Toolbox")
         self.add_tool_btn.clicked.connect(self._on_add_tool)
-        layout.addWidget(self.add_tool_btn)
+        button_layout.addWidget(self.add_tool_btn)
+        
+        self.add_from_db_btn = QPushButton("Add from Database...")
+        self.add_from_db_btn.clicked.connect(self._on_add_from_database)
+        button_layout.addWidget(self.add_from_db_btn)
+        
+        layout.addLayout(button_layout)
         
         panel.setLayout(layout)
         self._populate_tools_table()
+        # Connect signal after initial setup to prevent premature triggers
+        self.library_combo.currentTextChanged.connect(self._on_library_changed)
         return panel
     
     def _create_calculator_panel(self) -> QWidget:
@@ -227,28 +272,130 @@ class FeedsAndSpeedsWidget(QWidget):
         panel.setLayout(layout)
         return panel
     
+    def _load_providers(self) -> None:
+        """Load providers from database into combo box."""
+        try:
+            self.library_combo.clear()
+            self.library_combo.addItem("My Toolbox")
+            
+            providers = self.provider_repo.get_all_providers()
+            for provider in providers:
+                self.library_combo.addItem(provider['name'])
+                
+            self.logger.info(f"Loaded {len(providers)} providers")
+        except Exception as e:
+            self.logger.error(f"Failed to load providers: {e}")
+    
+    def _on_import_tools(self) -> None:
+        """Handle import tools button click."""
+        from PySide6.QtWidgets import QFileDialog
+        
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Tool Database",
+            str(Path.home()),
+            "Tool Files (*.json *.csv *.vtdb *.tdb);;All Files (*.*)"
+        )
+        
+        if file_path:
+            try:
+                success, message = self.tool_database_manager.import_tools_from_file(file_path)
+                if success:
+                    QMessageBox.information(self, "Success", message)
+                    self._load_providers()
+                    self._populate_tools_table()
+                else:
+                    QMessageBox.warning(self, "Import Failed", message)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to import: {str(e)}")
+                self.logger.error(f"Import error: {e}")
+    
+    def _on_add_from_database(self) -> None:
+        """Open Add Tool dialog to select tools from database."""
+        dialog = AddToolDialog(self.db_path, self)
+        if dialog.exec() == QDialog.Accepted:
+            tool_data = dialog.get_selected_tool()
+            if tool_data:
+                # Convert to UI Tool format and add to personal toolbox
+                ui_tool = self._convert_db_tool_to_ui(tool_data)
+                if self.personal_toolbox_manager.add_tool(ui_tool):
+                    QMessageBox.information(self, "Success", f"Added '{tool_data['description']}' to your toolbox.")
+                else:
+                    QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
+    
+    def _convert_db_tool_to_ui(self, db_tool: Dict[str, Any]) -> 'Tool':
+        """Convert database tool format to UI Tool format.
+        
+        Args:
+            db_tool: Tool data from database
+            
+        Returns:
+            Tool object for UI
+        """
+        from .tool_library_manager import Tool
+        
+        # Parse geometry and start_values if stored as properties
+        geometry = {}
+        start_values = {}
+        
+        # Try to load from properties
+        properties = db_tool.get('properties', {})
+        if isinstance(properties, dict):
+            geometry = properties.get('geometry', {})
+            start_values = properties.get('start_values', {})
+        
+        # If not in properties, try direct fields (for legacy data)
+        if not geometry and 'geometry' in db_tool:
+            geometry = db_tool['geometry'] if isinstance(db_tool['geometry'], dict) else {}
+        if not start_values and 'start_values' in db_tool:
+            start_values = db_tool['start_values'] if isinstance(db_tool['start_values'], dict) else {}
+        
+        return Tool(
+            guid=db_tool.get('guid', ''),
+            description=db_tool.get('description', ''),
+            tool_type=db_tool.get('tool_type', ''),
+            diameter=db_tool.get('diameter', 0.0),
+            vendor=db_tool.get('vendor', ''),
+            product_id=db_tool.get('product_id', ''),
+            geometry=geometry,
+            start_values=start_values,
+            unit=db_tool.get('unit', 'inches')
+        )
+    
     def _populate_tools_table(self) -> None:
         """Populate the tools table."""
-        library_name = self.library_combo.currentText()
+        provider_name = self.library_combo.currentText()
         
-        if library_name == "My Toolbox":
+        if provider_name == "My Toolbox":
             tools = self.personal_toolbox_manager.get_toolbox()
+            # Convert to dict format for consistency
+            tools = [tool.to_dict() for tool in tools]
         else:
-            tools = self.tool_library_manager.get_library(library_name)
+            # Load from database
+            try:
+                provider = self.provider_repo.get_provider_by_name(provider_name)
+                if provider:
+                    self.selected_provider_id = provider['id']
+                    tools = self.tool_database_manager.get_tools_by_provider(provider['id'])
+                else:
+                    tools = []
+            except Exception as e:
+                self.logger.error(f"Failed to load tools: {e}")
+                tools = []
         
         self.tools_table.setRowCount(len(tools))
         
         for row, tool in enumerate(tools):
             # Description
-            desc_item = QTableWidgetItem(tool.description)
+            desc_item = QTableWidgetItem(tool.get('description', ''))
             self.tools_table.setItem(row, 0, desc_item)
             
             # Type
-            type_item = QTableWidgetItem(tool.tool_type)
+            type_item = QTableWidgetItem(tool.get('tool_type', ''))
             self.tools_table.setItem(row, 1, type_item)
             
             # Diameter
-            diameter = tool.diameter
+            diameter = tool.get('diameter', 0.0)
             if self.is_metric:
                 diameter = self.unit_converter.inch_to_mm(diameter)
                 unit = "mm"
@@ -265,25 +412,39 @@ class FeedsAndSpeedsWidget(QWidget):
     def _on_search_changed(self) -> None:
         """Handle search input change."""
         query = self.search_input.text()
-        library_name = self.library_combo.currentText()
+        provider_name = self.library_combo.currentText()
         
-        if library_name == "My Toolbox":
+        if provider_name == "My Toolbox":
             tools = self.personal_toolbox_manager.get_toolbox()
             if query:
                 tools = [t for t in tools if query.lower() in t.description.lower()]
+            # Convert to dict format
+            tools = [tool.to_dict() for tool in tools]
         else:
-            tools = self.tool_library_manager.search_tools(query, library_name)
+            # Search in database
+            try:
+                if query:
+                    tools = self.tool_database_manager.search_tools(query, self.selected_provider_id)
+                else:
+                    # Show all tools for provider
+                    if self.selected_provider_id:
+                        tools = self.tool_database_manager.get_tools_by_provider(self.selected_provider_id)
+                    else:
+                        tools = []
+            except Exception as e:
+                self.logger.error(f"Search failed: {e}")
+                tools = []
         
         self.tools_table.setRowCount(len(tools))
         
         for row, tool in enumerate(tools):
-            desc_item = QTableWidgetItem(tool.description)
+            desc_item = QTableWidgetItem(tool.get('description', ''))
             self.tools_table.setItem(row, 0, desc_item)
             
-            type_item = QTableWidgetItem(tool.tool_type)
+            type_item = QTableWidgetItem(tool.get('tool_type', ''))
             self.tools_table.setItem(row, 1, type_item)
             
-            diameter = tool.diameter
+            diameter = tool.get('diameter', 0.0)
             if self.is_metric:
                 diameter = self.unit_converter.inch_to_mm(diameter)
                 unit = "mm"
@@ -298,16 +459,25 @@ class FeedsAndSpeedsWidget(QWidget):
         if current_row < 0:
             return
         
-        # Get tool from current library
-        library_name = self.library_combo.currentText()
-        if library_name == "My Toolbox":
+        # Get tool from current provider
+        provider_name = self.library_combo.currentText()
+        if provider_name == "My Toolbox":
             tools = self.personal_toolbox_manager.get_toolbox()
+            tools = [tool.to_dict() for tool in tools]
         else:
-            tools = self.tool_library_manager.get_library(library_name)
+            # Get from database
+            try:
+                if self.selected_provider_id:
+                    tools = self.tool_database_manager.get_tools_by_provider(self.selected_provider_id)
+                else:
+                    tools = []
+            except Exception as e:
+                self.logger.error(f"Failed to load tools: {e}")
+                tools = []
         
         if current_row < len(tools):
             self.selected_tool = tools[current_row]
-            self.selected_tool_label.setText(f"Selected: {self.selected_tool.description}")
+            self.selected_tool_label.setText(f"Selected: {self.selected_tool.get('description', '')}")
             self._update_calculator()
     
     def _on_tool_context_menu(self, pos) -> None:
@@ -328,8 +498,11 @@ class FeedsAndSpeedsWidget(QWidget):
             QMessageBox.warning(self, "No Tool Selected", "Please select a tool first.")
             return
         
-        if self.personal_toolbox_manager.add_tool(self.selected_tool):
-            QMessageBox.information(self, "Success", f"Added '{self.selected_tool.description}' to your toolbox.")
+        # Convert to UI Tool format
+        ui_tool = self._convert_db_tool_to_ui(self.selected_tool)
+        
+        if self.personal_toolbox_manager.add_tool(ui_tool):
+            QMessageBox.information(self, "Success", f"Added '{self.selected_tool.get('description', '')}' to your toolbox.")
         else:
             QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
     
@@ -356,9 +529,17 @@ class FeedsAndSpeedsWidget(QWidget):
             self.results_display.setText("Select a tool to see calculations")
             return
         
-        # Get preset values
-        presets = self.selected_tool.start_values.get('presets', [])
-        if presets:
+        # Get preset values from start_values
+        start_values = self.selected_tool.get('start_values', {})
+        if isinstance(start_values, str):
+            try:
+                start_values = json.loads(start_values)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                start_values = {}
+        
+        # Check for presets array
+        presets = start_values.get('presets', [])
+        if presets and isinstance(presets, list) and len(presets) > 0:
             preset = presets[0]
             rpm = preset.get('n', 10000)
             feed = preset.get('v_f', 50.0)
@@ -384,14 +565,14 @@ class FeedsAndSpeedsWidget(QWidget):
         feed = self.feed_input.value()
         stepdown = self.stepdown_input.value()
         stepover = self.stepover_input.value()
-        diameter = self.selected_tool.diameter
+        diameter = self.selected_tool.get('diameter', 0.0)
         
         # Calculate surface speed
         surface_speed = (rpm * 3.14159 * diameter) / 12.0
         
         # Format results
         results = f"""
-Tool: {self.selected_tool.description}
+Tool: {self.selected_tool.get('description', '')}
 Diameter: {self.unit_converter.format_value(diameter, self.is_metric, 'length')}
 
 Parameters:

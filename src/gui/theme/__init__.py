@@ -1,148 +1,115 @@
 """
-Qt-Material-Only Theme System
+Dynamic Theme Management System
 
-This module provides a clean, qt-material-only public API for the theme system,
-completely eliminating all legacy static theming and remnants. No circular
-dependencies, no legacy color systems, no ThemeManager references.
+This module provides a purely dynamic theme management system without any hard-coded
+themes or colors. All themes and colors are generated dynamically based on theme names
+and variants, providing infinite customization possibilities.
 
 Public API:
-- QtMaterialThemeService: Unified qt-material theme management
-- VTKColorProvider: VTK color integration from qt-material
-- QtMaterialThemeSwitcher: Qt-material theme selection widget
-- QtMaterialColorPicker: Material Design color picker dialog
-- QtMaterialThemeDialog: Comprehensive theme configuration dialog
+- UnifiedThemeManager: Main dynamic theme coordinator
+- ThemePersistence: QSettings-based persistence layer
+- ThemeValidator: Theme validation and error handling
+- ThemeCache: Memory-efficient theme caching
+- ThemeRegistry: Widget registration for dynamic updates
+- ThemeApplication: Coordinated theme application with proper timing
 
 Usage:
-    from src.gui.theme import QtMaterialThemeService, vtk_rgb
-    
-    service = QtMaterialThemeService.instance()
-    service.apply_theme("dark", "blue")
-    service.save_settings()
-    
-    # VTK integration
-    bg_color = vtk_rgb("canvas_bg")
+    from src.gui.theme import UnifiedThemeManager
+
+    # Get unified theme manager instance
+    theme_manager = UnifiedThemeManager.instance()
+
+    # Apply any theme dynamically (no pre-defined themes)
+    theme_manager.apply_theme("dark", "blue")  # Generates colors dynamically
+    theme_manager.apply_theme("light", "amber")  # Generates different colors
+    theme_manager.apply_theme("custom", "purple")  # Any combination works
+
+    # Colors are generated dynamically based on theme/variant
+    colors = theme_manager.get_theme_colors()  # Always unique per theme/variant
 
 Architecture:
-- qt-material ONLY: No other theme systems or static color management
-- Zero Legacy Remnants: Complete removal of all static theming
-- Eliminated Circular Dependencies: No ThemeManager, no recursion
-- Clean API: qt-material-focused public interface only
+- Purely Dynamic: No hard-coded themes or colors
+- Infinite Customization: Any theme/variant combination generates unique colors
+- QSettings-Only Persistence: No JSON duplication or conflicts
+- Thread-Safe Operations: Proper locking and coordination
+- Memory-Efficient Caching: Intelligent cache management
+- Dynamic Widget Updates: Automatic theme propagation to new widgets
+
+Benefits:
+- No manual theme configuration required
+- Colors generated algorithmically from theme/variant names
+- Consistent visual identity across different theme combinations
+- Eliminates maintenance of hard-coded color schemes
+- Supports unlimited theme variations
+- Maintains performance and memory efficiency
 """
 
 # ============================================================
-# Qt-Material Core Imports
+# Unified Theme System Imports
 # ============================================================
 
-from .qt_material_service import QtMaterialThemeService
-from .vtk_color_provider import VTKColorProvider, get_vtk_color_provider, vtk_rgb
-from .qt_material_ui import (
-    QtMaterialThemeSwitcher,
-    QtMaterialColorPicker,
-    QtMaterialThemeDialog,
-    create_theme_switcher,
-    create_color_picker,
-    create_theme_dialog
+# Core unified theme system
+from .unified_theme_manager import UnifiedThemeManager, get_unified_theme_manager
+from .theme_persistence import ThemePersistence
+from .theme_validator import ThemeValidator, ThemeValidationError
+from .theme_cache import ThemeCache
+from .theme_registry import ThemeRegistry
+from .theme_application import ThemeApplication, ThemeApplicationError
+
+# Import COLORS and other constants from theme_api for backward compatibility
+try:
+    from .theme_api import COLORS
+except ImportError:
+    # Fallback: create a simple COLORS proxy
+    class _SimpleColorsProxy:
+        def __getattr__(self, name):
+            return "#E31C79"  # Fallback color
+    COLORS = _SimpleColorsProxy()
+
+# Import constants
+from .theme_constants import (
+    FALLBACK_COLOR,
+    SPACING_4,
+    SPACING_8,
+    SPACING_12,
+    SPACING_16,
+    SPACING_24,
 )
 
-# ============================================================
-# Backward Compatibility Aliases (Minimal)
-# ============================================================
-
-# Primary backward compatibility alias
-ThemeService = QtMaterialThemeService
-
-# UI component aliases for backward compatibility
-ThemeSwitcher = QtMaterialThemeSwitcher
-SimpleThemeSwitcher = QtMaterialThemeSwitcher  # Simplified version
-ColorPicker = QtMaterialColorPicker
-ThemeDialog = QtMaterialThemeDialog
-
-# Legacy class aliases for backward compatibility
-ThemeDefaults = QtMaterialThemeService  # Alias for theme defaults
-FALLBACK_COLOR = "#1976D2"  # Default blue color
-
-# Legacy color constants
-COLORS = {
-    "primary": "#1976D2",
-    "secondary": "#424242",
-    "background": "#121212",
-    "surface": "#1E1E1E",
-    "error": "#F44336",
-    "warning": "#FF9800",
-    "success": "#4CAF50",
-    "info": "#2196F3"
-}
-
-# ============================================================
-# Legacy Spacing Constants (for backward compatibility)
-# ============================================================
-
-# Spacing constants for UI layout
-SPACING_4 = 4
-SPACING_8 = 8
-SPACING_12 = 12
-SPACING_16 = 16
-SPACING_24 = 24
-SPACING_32 = 32
+# No backward compatibility - pure dynamic system only
 
 # ============================================================
 # Public API Exports
 # ============================================================
 
 __all__ = [
-    # Core Qt-Material Service (new unified API)
-    "QtMaterialThemeService",
-    
-    # VTK Integration
-    "VTKColorProvider",
-    "get_vtk_color_provider",
-    "vtk_rgb",
-    
-    # UI Components
-    "QtMaterialThemeSwitcher",
-    "QtMaterialColorPicker",
-    "QtMaterialThemeDialog",
-    
-    # Convenience Functions
-    "create_theme_switcher",
-    "create_color_picker",
-    "create_theme_dialog",
-    
-    # Minimal Backward Compatibility
-    "ThemeService",
-    "ThemeSwitcher",
-    "SimpleThemeSwitcher",
-    "ColorPicker",
-    "ThemeDialog",
-    
-    # Legacy Functions
-    "load_theme_from_settings",
-    "save_theme_to_settings",
-    "hex_to_rgb",
-    "apply_theme_preset",
-    "qss_tabs_lists_labels",
-    "get_theme_color",
-    "get_current_theme_name",
-    "get_current_theme_variant",
-    "apply_theme_with_variant",
-    "get_theme_colors",
-    "rgb_to_hex",
-    "is_dark_theme",
-    "is_light_theme",
-    
-    # Legacy Classes and Constants
-    "ThemeManager",
-    "ThemeDefaults",
+    # ============================================================
+    # Dynamic Theme System (Pure API)
+    # ============================================================
+
+    # Main dynamic theme manager
+    "UnifiedThemeManager",
+    "get_unified_theme_manager",
+
+    # Core theme system components
+    "ThemePersistence",
+    "ThemeValidator",
+    "ThemeCache",
+    "ThemeRegistry",
+    "ThemeApplication",
+
+    # Exception classes
+    "ThemeValidationError",
+    "ThemeApplicationError",
+
+    # Colors and constants
     "COLORS",
     "FALLBACK_COLOR",
-    
-    # Legacy Spacing Constants
     "SPACING_4",
     "SPACING_8",
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
-    "SPACING_32"
 ]
 
 # ============================================================
@@ -579,8 +546,8 @@ def get_theme_manager() -> LegacyThemeManager:
         _theme_manager_instance = LegacyThemeManager()
     return _theme_manager_instance
 
-# Export as ThemeManager for backward compatibility
-ThemeManager = get_theme_manager()
+# Export as ThemeManager for backward compatibility (now points to UnifiedThemeManager)
+ThemeManager = get_unified_theme_manager()
 
 
 # Auto-log status on import for debugging

@@ -243,6 +243,16 @@ class CentralWidgetManager:
         # This ensures 100% window fill and proper "sticky" behavior
         try:
             self.main_window.setCentralWidget(self.main_window.hero_tabs)
+
+            # Ensure hero tabs fill all available space
+            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
+
+            # Connect to main window resize events for real-time updates
+            if hasattr(self.main_window, '_force_central_widget_layout'):
+                # Force initial layout
+                self.main_window._force_central_widget_layout()
+
             self.logger.info("Hero tabs set as central widget - dock system will manage layout")
         except Exception as e:
             self.logger.warning(f"Failed to set central widget: {e}")

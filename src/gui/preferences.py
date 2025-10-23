@@ -256,11 +256,22 @@ class ThemingTab(QWidget):
             theme_type, _ = self.service.get_current_theme()
             variants = self.service.get_qt_material_variants(theme_type)
 
-            for variant in variants:
+            # Get the currently selected variant from QSettings
+            from PySide6.QtCore import QSettings
+            settings = QSettings("Candy-Cadence", "3D-MM")
+            current_variant = settings.value("qt_material_variant", "blue", type=str)
+
+            current_index = 0
+            for idx, variant in enumerate(variants):
                 # Extract color name from variant (e.g., "dark_blue" -> "blue")
                 color_name = variant.split("_", 1)[1] if "_" in variant else variant
                 self.variant_combo.addItem(color_name.title(), variant)
+                
+                # Set current index if this variant matches the saved variant
+                if variant == current_variant or color_name == current_variant:
+                    current_index = idx
 
+            self.variant_combo.setCurrentIndex(current_index)
             self.variant_combo.blockSignals(False)
         except Exception:
             pass
@@ -279,7 +290,12 @@ class ThemingTab(QWidget):
             if not mode:
                 return
 
-            # Apply the new theme mode
+            # Get the current variant from QSettings to apply with new mode
+            from PySide6.QtCore import QSettings
+            settings = QSettings("Candy-Cadence", "3D-MM")
+            current_variant = settings.value("qt_material_variant", "blue", type=str)
+            
+            # Apply the new theme mode with the current variant
             self.service.apply_theme(mode, "qt-material")
 
             # Update variant selector to show correct variants for new mode

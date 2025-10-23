@@ -30,6 +30,17 @@ from .camera_controller import CameraController
 from .performance_tracker import PerformanceTracker
 from .viewer_ui_manager import ViewerUIManager
 
+# Import VTK error handling system
+from src.gui.vtk import (
+    get_vtk_error_handler,
+    get_vtk_context_manager,
+    get_vtk_cleanup_coordinator,
+    get_vtk_resource_tracker,
+    get_vtk_fallback_renderer,
+    register_vtk_resource,
+    ResourceType
+)
+
 
 logger = get_logger(__name__)
 
@@ -106,9 +117,19 @@ class Viewer3DWidget(QWidget):
         """Initialize modular components."""
         self.vtk_widget = self.ui_manager.get_vtk_widget()
 
+        # Initialize VTK error handling system
+        self.error_handler = get_vtk_error_handler()
+        self.context_manager = get_vtk_context_manager()
+        self.cleanup_coordinator = get_vtk_cleanup_coordinator()
+        self.resource_tracker = get_vtk_resource_tracker()
+        self.fallback_renderer = get_vtk_fallback_renderer()
+
         # Scene manager
         self.scene_manager = VTKSceneManager(self.vtk_widget)
         self.scene_manager.setup_scene()
+
+        # Register VTK resources for tracking
+        self._register_vtk_resources()
 
         # Model renderer
         self.renderer = self.scene_manager.renderer
@@ -129,6 +150,61 @@ class Viewer3DWidget(QWidget):
         self.camera = self.renderer.GetActiveCamera()
         self.render_mode = RenderMode.SOLID
 
+        self.logger.info("VTK error handling system integrated successfully")
+
+    def _register_vtk_resources(self) -> None:
+        """Register VTK resources for proper cleanup tracking."""
+        try:
+            # Register main VTK components
+            if self.render_window:
+                self.resource_tracker.register_resource(
+                    self.render_window,
+                    ResourceType.RENDER_WINDOW,
+                    "main_render_window"
+                )
+
+            if self.renderer:
+                self.resource_tracker.register_resource(
+                    self.renderer,
+                    ResourceType.RENDERER,
+                    "main_renderer"
+                )
+
+            if self.interactor:
+                self.resource_tracker.register_resource(
+                    self.interactor,
+                    ResourceType.INTERACTOR,
+                    "main_interactor"
+                )
+
+            # Register actors
+            if self.grid_actor:
+                self.resource_tracker.register_resource(
+                    self.grid_actor,
+                    ResourceType.ACTOR,
+                    "grid_actor"
+                )
+
+            if self.ground_actor:
+                self.resource_tracker.register_resource(
+                    self.ground_actor,
+                    ResourceType.ACTOR,
+                    "ground_actor"
+                )
+
+            # Register camera
+            if self.camera:
+                self.resource_tracker.register_resource(
+                    self.camera,
+                    ResourceType.CAMERA,
+                    "main_camera"
+                )
+
+            self.logger.debug("VTK resources registered for tracking")
+
+        except Exception as e:
+            self.logger.warning(f"Error registering VTK resources: {e}")
+
     def _setup_performance_monitoring(self) -> None:
         """Set up performance monitoring."""
         self.perf_tracker = PerformanceTracker(
@@ -141,11 +217,25 @@ class Viewer3DWidget(QWidget):
         self.performance_updated.emit(fps)
 
     def _set_render_mode(self, mode: RenderMode) -> None:
-        """Set rendering mode."""
-        self.render_mode = mode
-        self.model_renderer.set_render_mode(mode)
-        self.render_mode_changed.emit(mode.value)
-        self.scene_manager.render()
+        """Set rendering mode with enhanced error handling."""
+        try:
+            self.render_mode = mode
+            self.model_renderer.set_render_mode(mode)
+            self.render_mode_changed.emit(mode.value)
+
+            # Use fallback renderer for safe rendering
+            if self.render_window:
+                success = self.fallback_renderer.render_with_fallback(self.render_window)
+                if not success:
+                    self.logger.warning(f"Render failed for mode {mode.value}, continuing anyway")
+            else:
+                self.scene_manager.render()
+
+        except Exception as e:
+            self.logger.error(f"Error setting render mode {mode.value}: {e}")
+            # Continue with fallback rendering
+            if self.render_window:
+                self.fallback_renderer.render_with_fallback(self.render_window)
 
     def set_render_mode(self, name: str) -> None:
         """Public interface for setting render mode."""
@@ -156,12 +246,22 @@ class Viewer3DWidget(QWidget):
             self.logger.warning(f"Invalid render mode: {name}")
 
     def _toggle_grid(self) -> None:
-        """Toggle grid visibility."""
-        self.scene_manager.toggle_grid()
-        self.grid_visible = self.scene_manager.grid_visible
-        # Update button appearance to show subdued state when off
-        self.ui_manager.update_grid_button_state(self.grid_visible)
-        self.scene_manager.render()
+        """Toggle grid visibility with enhanced error handling."""
+        try:
+            self.scene_manager.toggle_grid()
+            self.grid_visible = self.scene_manager.grid_visible
+            # Update button appearance to show subdued state when off
+            self.ui_manager.update_grid_button_state(self.grid_visible)
+
+            # Use fallback renderer for safe rendering
+            if self.render_window:
+                self.fallback_renderer.render_with_fallback(self.render_window)
+            else:
+                self.scene_manager.render()
+
+        except Exception as e:
+            self.logger.error(f"Error toggling grid: {e}")
+            # Continue anyway, grid state may still be updated
 
     def toggle_ground_plane(self) -> None:
         """Toggle ground plane visibility."""
@@ -271,27 +371,80 @@ class Viewer3DWidget(QWidget):
         }
 
     def cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up resources using enhanced VTK error handling."""
         try:
-            # Clean up VTK scene manager first (before other cleanup)
-            if hasattr(self, 'scene_manager') and self.scene_manager:
-                self.scene_manager.cleanup()
-                self.logger.info("VTK scene manager cleaned up")
-        except Exception as e:
-            self.logger.warning(f"Error cleaning up scene manager: {e}")
+            self.logger.info("Starting enhanced VTK cleanup")
 
+            # Use the cleanup coordinator for proper VTK cleanup sequence
+            cleanup_success = self.cleanup_coordinator.coordinate_cleanup(
+                render_window=self.render_window,
+                renderer=self.renderer,
+                interactor=self.interactor
+            )
+
+            if cleanup_success:
+                self.logger.info("VTK cleanup completed successfully")
+            else:
+                self.logger.info("VTK cleanup completed with context loss (normal during shutdown)")
+
+            # Clean up model renderer
+            try:
+                self.model_renderer.remove_model()
+                self.logger.debug("Model renderer cleaned up")
+            except Exception as e:
+                self.logger.warning(f"Error removing model: {e}")
+
+            # Clean up performance tracker
+            try:
+                self.perf_tracker.cleanup()
+                self.logger.debug("Performance tracker cleaned up")
+            except Exception as e:
+                self.logger.warning(f"Error cleaning up performance tracker: {e}")
+
+            # Clean up fallback renderer
+            try:
+                if self.fallback_renderer.is_fallback_active():
+                    self.fallback_renderer.deactivate_fallback()
+                    self.logger.debug("Fallback renderer deactivated")
+            except Exception as e:
+                self.logger.warning(f"Error deactivating fallback renderer: {e}")
+
+            # Clear resource tracking
+            try:
+                cleanup_stats = self.resource_tracker.cleanup_all_resources()
+                self.logger.info(f"Resource cleanup stats: {cleanup_stats}")
+            except Exception as e:
+                self.logger.warning(f"Error during resource cleanup: {e}")
+
+            # Force garbage collection
+            gc.collect()
+
+            self.logger.info("Enhanced viewer cleanup completed")
+
+        except Exception as e:
+            self.logger.error(f"Error during enhanced cleanup: {e}")
+            # Fallback to basic cleanup if enhanced cleanup fails
+            self._basic_cleanup()
+
+    def _basic_cleanup(self) -> None:
+        """Basic cleanup fallback if enhanced cleanup fails."""
         try:
-            self.perf_tracker.cleanup()
-        except Exception as e:
-            self.logger.warning(f"Error cleaning up performance tracker: {e}")
+            self.logger.info("Performing basic cleanup fallback")
 
-        try:
-            self.model_renderer.remove_model()
-        except Exception as e:
-            self.logger.warning(f"Error removing model: {e}")
+            # Basic VTK cleanup
+            try:
+                if hasattr(self, 'scene_manager') and self.scene_manager:
+                    self.scene_manager.cleanup()
+            except Exception as e:
+                self.logger.debug(f"Basic scene manager cleanup error: {e}")
 
-        gc.collect()
-        self.logger.info("Viewer cleanup completed")
+            # Force garbage collection
+            gc.collect()
+
+            self.logger.info("Basic cleanup completed")
+
+        except Exception as e:
+            self.logger.error(f"Error during basic cleanup: {e}")
 
     def closeEvent(self, event) -> None:
         """Handle widget close event."""

@@ -325,20 +325,20 @@ class VTKSceneManager:
         return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
 
     def render(self) -> None:
-        """Trigger a render with error suppression for OpenGL context issues."""
+        """Trigger a render with enhanced error handling."""
         if self.render_window:
             try:
-                # Suppress VTK errors during rendering to avoid wglMakeCurrent errors
-                vtk.vtkObject.GlobalWarningDisplayOff()
-                self.render_window.Render()
+                # Use fallback renderer for safe rendering
+                from src.gui.vtk import get_vtk_fallback_renderer
+                fallback_renderer = get_vtk_fallback_renderer()
+
+                success = fallback_renderer.render_with_fallback(self.render_window)
+                if not success:
+                    logger.debug("Fallback render failed, continuing anyway")
+
             except Exception as e:
-                logger.debug(f"Render error (suppressed): {e}")
-            finally:
-                # Re-enable VTK error output
-                try:
-                    vtk.vtkObject.GlobalWarningDisplayOn()
-                except Exception:
-                    pass
+                logger.debug(f"Render error: {e}")
+                # Continue silently - errors are handled by the fallback renderer
 
     def reset_camera(self) -> None:
         """Reset camera to default position."""
@@ -347,36 +347,87 @@ class VTKSceneManager:
             self.render()
 
     def cleanup(self) -> None:
-        """Clean up VTK resources in proper order to avoid OpenGL errors."""
+        """Clean up VTK resources using enhanced error handling."""
         try:
-            logger.info("Cleaning up VTK scene resources")
+            logger.info("Cleaning up VTK scene resources with enhanced error handling")
 
-            # Suppress VTK error output during cleanup
-            try:
-                vtk.vtkObject.GlobalWarningDisplayOff()
-            except Exception:
-                pass
+            # Use the cleanup coordinator for proper cleanup sequence
+            from src.gui.vtk import get_vtk_cleanup_coordinator, get_vtk_resource_tracker
 
-            # Stop rendering
+            cleanup_coordinator = get_vtk_cleanup_coordinator()
+            resource_tracker = get_vtk_resource_tracker()
+
+            # Register resources for cleanup
             if self.render_window:
-                try:
-                    self.render_window.Finalize()
-                except Exception as e:
-                    logger.debug(f"Error finalizing render window: {e}")
+                resource_tracker.register_resource(
+                    self.render_window,
+                    resource_tracker.ResourceType.RENDER_WINDOW,
+                    "scene_render_window"
+                )
 
-            # Finalize interactor
-            if self.interactor:
-                try:
-                    self.interactor.TerminateApp()
-                except Exception as e:
-                    logger.debug(f"Error terminating interactor: {e}")
-
-            # Remove all actors from renderer
             if self.renderer:
-                try:
+                resource_tracker.register_resource(
+                    self.renderer,
+                    resource_tracker.ResourceType.RENDERER,
+                    "scene_renderer"
+                )
+
+            if self.interactor:
+                resource_tracker.register_resource(
+                    self.interactor,
+                    resource_tracker.ResourceType.INTERACTOR,
+                    "scene_interactor"
+                )
+
+            # Coordinate cleanup using the enhanced system
+            cleanup_success = cleanup_coordinator.coordinate_cleanup(
+                render_window=self.render_window,
+                renderer=self.renderer,
+                interactor=self.interactor
+            )
+
+            if cleanup_success:
+                logger.info("Enhanced VTK scene cleanup completed successfully")
+            else:
+                logger.info("Enhanced VTK scene cleanup completed with context loss (normal)")
+
+            # Clear local references
+            self.grid_actor = None
+            self.ground_actor = None
+            self.camera_widget = None
+            self.marker = None
+            self.interactor = None
+            self.render_window = None
+            self.renderer = None
+
+        except Exception as e:
+            logger.warning(f"Error during enhanced VTK cleanup: {e}")
+            # Fallback to basic cleanup
+            self._basic_cleanup()
+
+    def _basic_cleanup(self) -> None:
+        """Basic cleanup fallback if enhanced cleanup fails."""
+        try:
+            logger.info("Performing basic VTK cleanup fallback")
+
+            # Basic cleanup operations
+            try:
+                if self.render_window:
+                    self.render_window.Finalize()
+            except Exception as e:
+                logger.debug(f"Basic render window cleanup error: {e}")
+
+            try:
+                if self.interactor:
+                    self.interactor.TerminateApp()
+            except Exception as e:
+                logger.debug(f"Basic interactor cleanup error: {e}")
+
+            try:
+                if self.renderer:
                     self.renderer.RemoveAllViewProps()
-                except Exception as e:
-                    logger.debug(f"Error removing view props: {e}")
+            except Exception as e:
+                logger.debug(f"Basic renderer cleanup error: {e}")
 
             # Clear references
             self.grid_actor = None
@@ -387,15 +438,10 @@ class VTKSceneManager:
             self.render_window = None
             self.renderer = None
 
-            # Re-enable VTK error output
-            try:
-                vtk.vtkObject.GlobalWarningDisplayOn()
-            except Exception:
-                pass
+            logger.info("Basic VTK cleanup completed")
 
-            logger.info("VTK scene cleanup completed")
         except Exception as e:
-            logger.warning(f"Error during VTK cleanup: {e}")
+            logger.error(f"Error during basic cleanup: {e}")
 
     def update_gradient_colors(self, top_color: str = None, bottom_color: str = None, enable_gradient: bool = None) -> None:
         """

@@ -451,7 +451,11 @@ class QtMaterialThemeCore(QObject):
     def load_settings(self) -> None:
         """Load theme settings."""
         self._current_theme = self.settings.value("theme/current_theme", "dark", type=str)
-        self._current_variant = self.settings.value("theme/current_variant", "blue", type=str)
+        
+        # Try to load variant from both possible keys for backward compatibility
+        self._current_variant = self.settings.value("qt_material_variant", None, type=str)
+        if not self._current_variant:
+            self._current_variant = self.settings.value("theme/current_variant", "blue", type=str)
         
         # Validate loaded settings
         if self._current_theme not in self._qt_material_themes:

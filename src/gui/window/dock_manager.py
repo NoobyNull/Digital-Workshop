@@ -12,7 +12,7 @@ import logging
 from typing import Optional, List
 
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget
+from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget, QSizePolicy
 
 from src.gui.lighting_control_panel import LightingControlPanel
 
@@ -159,6 +159,15 @@ class DockManager:
         except Exception:
             pass
 
+        # Ensure proper central widget resizing by setting size constraints
+        try:
+            # Set minimum width for right docks to ensure they don't disappear
+            self.properties_dock.setMinimumWidth(200)
+            # Ensure the dock widget can resize properly
+            self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        except Exception as e:
+            self.logger.warning(f"Failed to set properties dock size constraints: {e}")
+
         # Lighting control dialog (floating, initially hidden)
         try:
             self.main_window.lighting_panel = LightingControlPanel(self.main_window)
@@ -181,9 +190,17 @@ class DockManager:
         )
 
         # Set minimum width for right dock widgets to ensure proper resizing
-        # Metadata can expand to fill the entire right side when needed
-        self.properties_dock.setMinimumWidth(200)
-        self.metadata_dock.setMinimumWidth(200)
+        # This ensures they don't disappear and maintains proper layout
+        self.properties_dock.setMinimumWidth(250)
+        self.metadata_dock.setMinimumWidth(300)
+
+        # Set size policies for proper resizing behavior
+        self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.metadata_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+        # Set maximum width to prevent them from taking too much space
+        self.properties_dock.setMaximumWidth(400)
+        self.metadata_dock.setMaximumWidth(500)
 
         # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
         try:
