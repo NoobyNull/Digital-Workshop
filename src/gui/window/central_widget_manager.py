@@ -54,7 +54,12 @@ class CentralWidgetManager:
                 except ImportError:
                     Viewer3DWidget = None
 
-            self.main_window.viewer_widget = Viewer3DWidget(self.main_window)
+            if Viewer3DWidget is not None:
+                self.main_window.viewer_widget = Viewer3DWidget(self.main_window)
+            else:
+                # Fallback: create a placeholder widget
+                self.main_window.viewer_widget = QLabel("3D Viewer not available")
+                self.logger.warning("Viewer3DWidget not available, using placeholder")
 
             # Connect signals
             self.main_window.viewer_widget.model_loaded.connect(self._on_model_loaded)

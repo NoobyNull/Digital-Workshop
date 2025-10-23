@@ -20,7 +20,8 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette, QCursor
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QMenuBar, QToolBar, QStatusBar, QDockWidget, QLabel, QTextEdit, QPushButton,
-    QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar, QTabWidget
+    QFrame, QSplitter, QFileDialog, QMessageBox, QProgressBar, QTabWidget,
+    QSizePolicy
 )
 
 from src.core.logging_config import get_logger
@@ -136,32 +137,21 @@ class MainWindow(QMainWindow):
         self.show_metadata_action = self.menu_manager.show_metadata_action
         self.show_model_library_action = self.menu_manager.show_model_library_action
 
-        # Initialize dock manager
-        from src.gui.window.dock_manager import DockManager
-        self.dock_manager = DockManager(self, self.logger)
-        self.dock_manager.setup_dock_widgets()
+        # Use native Qt dock system instead of custom dock manager
+        self._setup_native_dock_widgets()
 
-        # Initialize central widget manager
-        from src.gui.window.central_widget_manager import CentralWidgetManager
-        self.central_widget_manager = CentralWidgetManager(self, self.logger)
+        # Use native Qt central widget instead of custom manager
+        self._setup_native_central_widget()
 
-        # Ensure main window gets the application stylesheet
-        # This is needed for frameless windows to properly inherit the Material Design theme
-        try:
-            app = QApplication.instance()
-            if app:
-                # Get the current stylesheet from the application
-                app_stylesheet = app.styleSheet()
-                if app_stylesheet:
-                    # Apply it to the main window
-                    self.setStyleSheet(app_stylesheet)
-        except Exception as e:
-            self.logger.debug(f"Could not apply app stylesheet to main window: {e}")
-        self.central_widget_manager.setup_central_widget()
+        # Qt-material handles all styling automatically through the application
+        # No need to manually apply stylesheets to main window
 
         # Initialize model loader
         from src.gui.model.model_loader import ModelLoader
         self.model_loader_manager = ModelLoader(self, self.logger)
+
+        # Set up native central widget with Qt's built-in layout management
+        self._setup_native_central_widget()
 
         # Let PySide6 handle all window management naturally
         # Removed all custom layout management and snapping systems
@@ -189,152 +179,397 @@ class MainWindow(QMainWindow):
         # Log window initialization
         self.logger.info("Main window initialized successfully - PySide6 handling all layout management")
 
-    def _force_initial_layout(self) -> None:
-        """Force initial layout after all widgets are created."""
+    def _setup_native_central_widget(self) -> None:
+        """Set up native Qt central widget with built-in layout management."""
+        self.logger.debug("Setting up native central widget")
+
+        # Create native Qt tab widget for central area
+        self.hero_tabs = QTabWidget(self)
+        self.hero_tabs.setObjectName("HeroTabs")
+
+        # Configure tab widget with native Qt properties
+        self.hero_tabs.setDocumentMode(True)
+        self.hero_tabs.setTabsClosable(False)
+        self.hero_tabs.setMovable(True)
+        self.hero_tabs.setUsesScrollButtons(False)
+        self.hero_tabs.setElideMode(Qt.ElideNone)
+        self.hero_tabs.setTabBarAutoHide(False)
+
+        # Set expanding policy for native layout management
+        self.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.hero_tabs.setContentsMargins(0, 0, 0, 0)
+
+        # Get tab bar and configure for native behavior
+        tab_bar = self.hero_tabs.tabBar()
+        if tab_bar:
+            tab_bar.setExpanding(True)
+            tab_bar.setUsesScrollButtons(False)
+
+        # Set up 3D viewer as the primary tab
+        self._setup_viewer_widget()
+
+        # Add placeholder tabs for other features
+        self._add_placeholder_tabs()
+
+        # Set as central widget - Qt will handle all layout automatically
+        self.setCentralWidget(self.hero_tabs)
+
+        # Qt handles tab persistence automatically through QSettings
+
+        # Restore last active tab
+        self._restore_active_tab()
+
+        self.logger.info("Native central widget setup completed - Qt handling layout")
+
+    def _setup_native_dock_widgets(self) -> None:
+        """Set up dock widgets using native Qt dock system."""
+        self.logger.debug("Setting up native dock widgets")
+
+        # Configure native Qt dock options for optimal performance
+        dock_options = (
+            QMainWindow.AllowNestedDocks |
+            QMainWindow.AllowTabbedDocks |
+            QMainWindow.AnimatedDocks
+        )
+        # Add grouped dragging if available for better UX
+        if hasattr(QMainWindow, "GroupedDragging"):
+            dock_options |= QMainWindow.GroupedDragging
+        self.setDockOptions(dock_options)
+
+        # Enable dock nesting for native layout management
         try:
-            # Force central widget layout
-            self._force_central_widget_layout()
+            self.setDockNestingEnabled(True)
+        except Exception:
+            pass
 
-            # Update all dock widgets
-            for dock in self.findChildren(QDockWidget):
-                if dock.isVisible():
-                    dock.updateGeometry()
-                    dock.update()
+        # Set up individual dock widgets using native Qt
+        self._setup_model_library_dock()
+        self._setup_properties_dock()
+        self._setup_metadata_dock()
 
-            # Force main window layout recalculation
-            self.updateGeometry()
-            self.layout().activate() if self.layout() else None
+        # Load saved dock layout using native Qt methods
+        self._load_native_dock_layout()
 
-            self.logger.debug("Initial layout forced after widget creation")
-        except Exception as e:
-            self.logger.debug(f"Failed to force initial layout: {e}")
+        # Connect native dock signals for layout persistence
+        self._connect_native_dock_signals()
 
-    def showEvent(self, event: QEvent) -> None:
-        """Handle window show event to apply startup settings."""
-        super().showEvent(event)
+        self.logger.info("Native dock widgets setup completed - Qt handling all dock management")
 
-        # Apply maximize on startup setting if configured
+    def _setup_model_library_dock(self) -> None:
+        """Set up model library dock using native Qt."""
         try:
-            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
-                self.showMaximized()
-                self.logger.debug("Window maximized on startup")
+            self.model_library_dock = QDockWidget("Model Library", self)
+            self.model_library_dock.setObjectName("ModelLibraryDock")
+
+            # Configure with native Qt dock features
+            self.model_library_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea |
+                Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+            )
+            self.model_library_dock.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
+            )
+
+            # Create model library widget
+            try:
+                from src.gui.model_library import ModelLibraryWidget
+                self.model_library_widget = ModelLibraryWidget(self)
+
+                # Connect native Qt signals
+                self.model_library_widget.model_selected.connect(self._on_model_selected)
+                self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
+                self.model_library_widget.models_added.connect(self._on_models_added)
+
+                self.model_library_dock.setWidget(self.model_library_widget)
+                self.logger.info("Model library dock created successfully")
+
+            except Exception as e:
+                self.logger.warning(f"Failed to create model library widget: {e}")
+                # Native Qt fallback
+                fallback_widget = QLabel("Model Library\n\nComponent unavailable.")
+                fallback_widget.setAlignment(Qt.AlignCenter)
+                self.model_library_dock.setWidget(fallback_widget)
+
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+
+            # Connect visibility signal for menu synchronization
+            self.model_library_dock.visibilityChanged.connect(
+                lambda visible: self._update_library_action_state()
+            )
+            # Qt handles layout persistence automatically
+
         except Exception as e:
-            self.logger.warning(f"Failed to apply maximize on startup: {e}")
+            self.logger.error(f"Failed to setup model library dock: {e}")
 
-        # Ensure central widget fills available space after show
-        QTimer.singleShot(100, self._force_central_widget_layout)
-
-    def resizeEvent(self, event) -> None:
-        """Handle window resize events to ensure proper layout."""
-        super().resizeEvent(event)
-        # Let PySide6 handle resize events naturally
-        # Removed custom layout management
-
-    def _force_central_widget_layout(self) -> None:
-        """Force central widget to fill all available space."""
+    def _setup_properties_dock(self) -> None:
+        """Set up properties dock using native Qt."""
         try:
-            central_widget = self.centralWidget()
-            if central_widget:
-                # Let Qt handle the layout completely naturally
-                # Just ensure proper size policies are set and trigger layout update
-                if hasattr(central_widget, 'setSizePolicy'):
-                    from PySide6.QtWidgets import QSizePolicy
-                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.properties_dock = QDockWidget("Model Properties", self)
+            self.properties_dock.setObjectName("PropertiesDock")
 
-                # Force layout recalculation without manual geometry setting
-                if hasattr(central_widget, 'updateGeometry'):
-                    central_widget.updateGeometry()
+            # Configure with native Qt dock features
+            self.properties_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea |
+                Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+            )
+            self.properties_dock.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
+            )
 
-                # Update the main window layout
-                self.updateGeometry()
-                if self.layout():
-                    self.layout().activate()
+            # Create properties widget using native Qt
+            properties_widget = QLabel(
+                "Model Properties\n\n"
+                "This panel will display properties and metadata\n"
+                "for the selected 3D model.\n\n"
+                "Features will include:\n"
+                "- Model information\n"
+                "- Metadata editing\n"
+                "- Tag management\n"
+                "- Export settings"
+            )
+            properties_widget.setAlignment(Qt.AlignCenter)
+            properties_widget.setWordWrap(True)
 
-                # Force repaint
-                central_widget.update()
-                self.update()
+            self.properties_dock.setWidget(properties_widget)
 
-                # Log the actual geometry for debugging
-                actual_geometry = central_widget.geometry()
-                self.logger.debug(f"Central widget actual geometry: {actual_geometry}")
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+
+            # Set minimum width for proper native layout
+            self.properties_dock.setMinimumWidth(200)
+            self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
         except Exception as e:
-            self.logger.debug(f"Failed to force central widget layout: {e}")
+            self.logger.error(f"Failed to setup properties dock: {e}")
 
-    def _get_available_central_geometry(self) -> QRect:
-        """Get the available geometry for the central widget (excluding dock widgets)."""
+    def _setup_metadata_dock(self) -> None:
+        """Set up metadata dock using native Qt."""
         try:
-            # Use Qt's built-in method to get the geometry of the central widget area
-            # This is more reliable than manual calculation
-            central_area = self.centralWidget().geometry() if self.centralWidget() else self.rect()
+            self.metadata_dock = QDockWidget("Metadata Editor", self)
+            self.metadata_dock.setObjectName("MetadataDock")
 
-            # Ensure minimum dimensions
-            min_width = 200
-            min_height = 150
+            # Configure with native Qt dock features
+            self.metadata_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea |
+                Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
+            )
+            self.metadata_dock.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
+            )
 
-            if central_area.width() < min_width or central_area.height() < min_height:
-                # If the calculated area is too small, use the full window minus dock space
-                full_rect = self.rect()
-                dock_widgets = self.findChildren(QDockWidget)
+            # Create metadata widget using native Qt
+            try:
+                from src.gui.metadata_editor import MetadataEditorWidget
 
-                left_width = 0
-                right_width = 0
-                top_height = 0
-                bottom_height = 0
+                self.metadata_editor = MetadataEditorWidget(self)
 
-                for dock in dock_widgets:
-                    if dock.isVisible():
-                        dock_area = self.dockWidgetArea(dock)
-                        dock_geometry = dock.geometry()
+                # Connect native Qt signals
+                self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
+                self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
 
-                        if dock_area == Qt.LeftDockWidgetArea:
-                            left_width = max(left_width, dock_geometry.right())
-                        elif dock_area == Qt.RightDockWidgetArea:
-                            right_width = max(right_width, dock_geometry.width())
-                        elif dock_area == Qt.TopDockWidgetArea:
-                            top_height = max(top_height, dock_geometry.bottom())
-                        elif dock_area == Qt.BottomDockWidgetArea:
-                            bottom_height = max(bottom_height, dock_geometry.height())
+                # Create tab widget for metadata sections
+                self.metadata_tabs = QTabWidget(self)
+                self.metadata_tabs.setObjectName("MetadataTabs")
+                self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
 
-                # Calculate available space for central widget
-                available_x = left_width
-                available_y = top_height
-                available_width = max(full_rect.width() - left_width - right_width, min_width)
-                available_height = max(full_rect.height() - top_height - bottom_height, min_height)
+                # Add placeholder tabs using native Qt
+                notes_widget = QLabel(
+                    "Notes\n\n"
+                    "Add project or model-specific notes here.\n"
+                    "Future: rich text, timestamps, and attachments."
+                )
+                notes_widget.setAlignment(Qt.AlignCenter)
+                notes_widget.setWordWrap(True)
+                self.metadata_tabs.addTab(notes_widget, "Notes")
 
-                central_area = QRect(available_x, available_y, available_width, available_height)
+                history_widget = QLabel(
+                    "History\n\n"
+                    "Timeline of edits and metadata changes will appear here."
+                )
+                history_widget.setAlignment(Qt.AlignCenter)
+                history_widget.setWordWrap(True)
+                self.metadata_tabs.addTab(history_widget, "History")
 
-            self.logger.debug(f"Central widget geometry: {central_area}")
-            return central_area
+                self.metadata_dock.setWidget(self.metadata_tabs)
+                self.logger.info("Metadata dock created successfully")
+
+            except Exception as e:
+                self.logger.warning(f"Failed to create metadata editor: {e}")
+                # Native Qt fallback
+                fallback_widget = QLabel("Metadata Editor\n\nComponent unavailable.")
+                fallback_widget.setAlignment(Qt.AlignCenter)
+                fallback_widget.setWordWrap(True)
+                self.metadata_dock.setWidget(fallback_widget)
+
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+
+            # Tabify with properties dock using native Qt
+            try:
+                self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+                self.logger.info("Properties and Metadata docks tabified using native Qt")
+            except Exception as e:
+                self.logger.debug(f"Could not tabify docks: {e}")
+
+            # Set size constraints for native layout
+            self.metadata_dock.setMinimumWidth(300)
+            self.metadata_dock.setMaximumWidth(500)
+            self.metadata_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+            # Connect visibility signal for menu synchronization
+            self.metadata_dock.visibilityChanged.connect(
+                lambda visible: self._update_metadata_action_state()
+            )
+            # Qt handles layout persistence automatically
 
         except Exception as e:
-            self.logger.debug(f"Failed to calculate available central geometry: {e}")
-            return self.rect()  # Fallback to full window
+            self.logger.error(f"Failed to setup metadata dock: {e}")
 
-    def _setup_layout_update_timer(self) -> None:
-        """Set up timer for real-time layout updates."""
+    def _load_native_dock_layout(self) -> None:
+        """Load saved dock layout using native Qt methods."""
         try:
-            self._layout_update_timer = QTimer(self)
-            self._layout_update_timer.setSingleShot(True)
-            self._layout_update_timer.setInterval(200)  # 200ms for responsive updates (reduced frequency)
-            self._layout_update_timer.timeout.connect(self._update_layout_responsive)
-        except Exception as e:
-            self.logger.debug(f"Failed to setup layout update timer: {e}")
+            settings = QSettings()
+            if settings.contains("window_geometry") and settings.contains("window_state"):
+                # Use native Qt methods to restore layout
+                geometry_data = settings.value("window_geometry")
+                state_data = settings.value("window_state")
 
-    def _update_layout_responsive(self) -> None:
-        """Update layout in response to dock widget movements."""
+                if geometry_data and state_data:
+                    self.restoreGeometry(geometry_data)
+                    self.restoreState(state_data)
+                    self.logger.info("Native dock layout restored successfully")
+                else:
+                    self.logger.debug("No saved dock layout found, using defaults")
+            else:
+                self.logger.debug("No dock layout settings found")
+        except Exception as e:
+            self.logger.warning(f"Failed to load native dock layout: {e}")
+
+    def _connect_native_dock_signals(self) -> None:
+        """Connect native Qt dock signals for layout persistence."""
+        # Qt handles dock layout persistence automatically through QSettings
+        self.logger.debug("Native Qt dock system handles layout persistence automatically")
+
+    def _setup_viewer_widget(self) -> None:
+        """Set up the 3D viewer widget using native Qt integration."""
         try:
-            # Force central widget to adjust to current dock layout
-            self._force_central_widget_layout()
+            # Try to load the VTK viewer widget
+            try:
+                from src.gui.viewer_widget_vtk import Viewer3DWidget
+            except ImportError:
+                try:
+                    from src.gui.viewer_widget import Viewer3DWidget
+                except ImportError:
+                    Viewer3DWidget = None
 
-            # Update all dock widgets to ensure proper sizing
-            for dock in self.findChildren(QDockWidget):
-                if dock.isVisible():
-                    dock.updateGeometry()
-                    dock.update()
+            if Viewer3DWidget is not None:
+                self.viewer_widget = Viewer3DWidget(self)
+                self.logger.info("3D viewer widget created successfully")
+            else:
+                # Native Qt fallback
+                self.viewer_widget = QLabel("3D Viewer not available")
+                self.viewer_widget.setAlignment(Qt.AlignCenter)
+                self.logger.warning("Viewer3DWidget not available, using native Qt placeholder")
 
-            self.logger.debug("Responsive layout update completed")
+            # Connect viewer signals
+            if hasattr(self.viewer_widget, 'model_loaded'):
+                self.viewer_widget.model_loaded.connect(self._on_model_loaded)
+            if hasattr(self.viewer_widget, 'performance_updated'):
+                self.viewer_widget.performance_updated.connect(self._on_performance_updated)
+
+            # Set up managers
+            self._setup_viewer_managers()
+
         except Exception as e:
-            self.logger.debug(f"Failed responsive layout update: {e}")
+            self.logger.warning(f"Failed to setup viewer widget: {e}")
+            # Native Qt fallback
+            self.viewer_widget = QLabel("3D Model Viewer\n\nComponent unavailable.")
+            self.viewer_widget.setAlignment(Qt.AlignCenter)
+
+        # Add to hero tabs
+        self.hero_tabs.addTab(self.viewer_widget, "Model Previewer")
+
+    def _setup_viewer_managers(self) -> None:
+        """Set up viewer-related managers using native Qt integration."""
+        try:
+            from src.core.database_manager import get_database_manager
+            from src.gui.material_manager import MaterialManager
+            from src.gui.lighting_manager import LightingManager
+
+            # Material manager
+            try:
+                self.material_manager = MaterialManager(get_database_manager())
+            except Exception as e:
+                self.material_manager = None
+                self.logger.warning(f"MaterialManager unavailable: {e}")
+
+            # Lighting manager
+            try:
+                renderer = getattr(self.viewer_widget, "renderer", None)
+                self.lighting_manager = LightingManager(renderer) if renderer else None
+                if self.lighting_manager:
+                    self.lighting_manager.create_light()
+            except Exception as e:
+                self.lighting_manager = None
+                self.logger.warning(f"LightingManager unavailable: {e}")
+
+            # Material-Lighting integration
+            try:
+                from src.gui.materials.integration import MaterialLightingIntegrator
+                self.material_lighting_integrator = MaterialLightingIntegrator(self)
+                self.logger.info("MaterialLightingIntegrator created successfully")
+            except Exception as e:
+                self.material_lighting_integrator = None
+                self.logger.warning(f"MaterialLightingIntegrator unavailable: {e}")
+
+        except Exception as e:
+            self.logger.warning(f"Failed to setup viewer managers: {e}")
+
+    def _add_placeholder_tabs(self) -> None:
+        """Add placeholder tabs for other features using native Qt widgets."""
+        def create_placeholder(title: str, content: str) -> QWidget:
+            """Create a native Qt placeholder widget."""
+            widget = QWidget()
+            layout = QVBoxLayout(widget)
+            layout.setContentsMargins(12, 12, 12, 12)
+
+            label = QLabel(content)
+            label.setWordWrap(True)
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+            layout.addStretch(1)
+
+            return widget
+
+        # Add feature tabs with native Qt placeholders
+        placeholders = [
+            ("G Code Previewer", "G-code Previewer\n\nComponent unavailable."),
+            ("Cut List Optimizer", "Cut List Optimizer\n\nComponent unavailable."),
+            ("Feed and Speed", "Feeds & Speeds Calculator\n\nComponent unavailable."),
+            ("Project Cost Estimator", "Cost Calculator\n\nEstimate material, machine, and labor costs.")
+        ]
+
+        for title, content in placeholders:
+            try:
+                self.hero_tabs.addTab(create_placeholder(title, content), title)
+            except Exception as e:
+                self.logger.warning(f"Failed to add placeholder tab {title}: {e}")
+
+    def _restore_active_tab(self) -> None:
+        """Restore the last active tab using native Qt settings."""
+        try:
+            settings = QSettings()
+            active_tab = settings.value("ui/active_hero_tab_index", 0, type=int)
+            if isinstance(active_tab, int) and 0 <= active_tab < self.hero_tabs.count():
+                self.hero_tabs.setCurrentIndex(active_tab)
+        except Exception as e:
+            self.logger.debug(f"Failed to restore active tab: {e}")
+
+    # Manual layout management methods removed - Qt handles layout automatically
+
+    # Timer-based layout updates removed for performance optimization
+    # Qt's native layout system handles responsive updates automatically
 
 
 
@@ -348,215 +583,21 @@ class MainWindow(QMainWindow):
     # --- Dock layout helpers ---
     # ===== END_EXTRACT_TO: src/gui/window/layout_persistence.py =====
 
-    def _connect_layout_autosave(self, dock: QDockWidget) -> None:
-        """Restore dock widgets to their default docking layout."""
-        try:
-            # First try to load saved default layout (for fresh installations)
-            settings = self._read_settings_json()
-            default_geom = settings.get("default_window_geometry")
-            default_state = settings.get("default_window_state")
-
-            if default_geom and default_state:
-                try:
-                    geom = base64.b64decode(default_geom)
-                    state = base64.b64decode(default_state)
-                    restored = self.restoreGeometry(geom) and self.restoreState(state)
-                    if restored:
-                        self.logger.info("Restored default layout from saved defaults")
-                        # Restore default hero tab if available
-                        try:
-                            default_hero_idx = settings.get("default_hero_tab_index")
-                            if (isinstance(default_hero_idx, int) and hasattr(self, "hero_tabs") and
-                                isinstance(self.hero_tabs, QTabWidget) and
-                                0 <= default_hero_idx < self.hero_tabs.count()):
-                                self.hero_tabs.setCurrentIndex(default_hero_idx)
-                        except Exception:
-                            pass
-                        self._schedule_layout_save()
-                        return
-                except Exception:
-                    pass
-            # ===== END_EXTRACT_TO: src/gui/services/background_processor.py =====
-
-            # Fallback to hardcoded defaults if no saved default
-            if getattr(self, "_default_geometry", None):
-                self.restoreGeometry(self._default_geometry)
-            if getattr(self, "_default_layout_state", None):
-                # restoreState returns bool; ignore on failure
-                self.restoreState(self._default_layout_state)
-        except Exception:
-            pass
-        # Fallback: programmatically re-dock common widgets
-        self._redock_all()
-        # Persist the reset layout
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-
-    def _redock_all(self) -> None:
-        """Force re-dock of known dock widgets to their default areas."""
-        try:
-            if hasattr(self, "model_library_dock"):
-                self.model_library_dock.setFloating(False)
-                self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
-            if hasattr(self, "properties_dock"):
-                self.properties_dock.setFloating(False)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-            if hasattr(self, "metadata_dock"):
-                self.metadata_dock.setFloating(False)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        except Exception as e:
-            self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
+    # Layout autosave connections removed - Qt handles layout persistence automatically
 
     # ---- Layout persistence (auto-save/auto-load) ----
-    def _settings_json_path(self) -> Path:
-        """Return AppData settings.json path."""
-        app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
-        app_data.mkdir(parents=True, exist_ok=True)
-        return app_data / "settings.json"
+    # JSON settings methods removed - Qt handles layout persistence automatically
 
-    def _read_settings_json(self) -> dict:
-        try:
-            p = self._settings_json_path()
-            if p.exists():
-                with p.open("r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    return data if isinstance(data, dict) else {}
-        except Exception:
-            pass
-        return {}
+    # Layout persistence initialization removed - Qt handles automatically
 
-    def _write_settings_json(self, data: dict) -> None:
-        try:
-            p = self._settings_json_path()
-            with p.open("w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-        except Exception:
-            pass
+    # Layout persistence handled automatically by Qt's native dock system
 
-    def _init_layout_persistence(self) -> None:
-        """Initialize debounced autosave timer."""
-        try:
-            self._layout_save_timer = QTimer(self)
-            self._layout_save_timer.setSingleShot(True)
-            self._layout_save_timer.setInterval(700)  # ms debounce
-            self._layout_save_timer.timeout.connect(self._save_current_layout)
-        except Exception:
-            pass
+    # Layout persistence handled automatically by Qt's native dock system
 
-    def _schedule_layout_save(self) -> None:
-        """Request a debounced layout save."""
-        try:
-            if hasattr(self, "_layout_save_timer"):
-                self._layout_save_timer.start()
-        except Exception:
-            pass
-
-    def _save_current_layout(self) -> None:
-        """Persist current window geometry, dock layout, and navigation state to settings.json."""
-        try:
-            geom = bytes(self.saveGeometry())
-            state = bytes(self.saveState())
-
-            # Persist base window geometry/state
-            payload = {
-                "window_geometry": base64.b64encode(geom).decode("ascii"),
-                "window_state": base64.b64encode(state).decode("ascii"),
-                "layout_version": 1,
-            }
-
-            # Persist central splitter sizes if applicable (legacy path)
-            try:
-                cw = self.centralWidget()
-                if isinstance(cw, QSplitter):
-                    sizes = cw.sizes()
-                    if sizes:
-                        payload["central_splitter_sizes"] = [int(s) for s in sizes]
-            except Exception:
-                pass
-
-            # Persist active main tab index if available
-            try:
-                if hasattr(self, "main_tabs") and isinstance(self.main_tabs, QTabWidget):
-                    payload["active_main_tab_index"] = int(self.main_tabs.currentIndex())
-            except Exception:
-                pass
-
-            # Persist active center tab index (inside "3d Model") if available
-            try:
-                if hasattr(self, "center_tabs") and isinstance(self.center_tabs, QTabWidget):
-                    payload["active_center_tab_index"] = int(self.center_tabs.currentIndex())
-            except Exception:
-                pass
-            # Persist active hero tab index if available
-            try:
-                if hasattr(self, "hero_tabs") and isinstance(self.hero_tabs, QTabWidget):
-                    payload["active_hero_tab_index"] = int(self.hero_tabs.currentIndex())
-            except Exception:
-                pass
-
-            settings = self._read_settings_json()
-            settings.update(payload)
-            self._write_settings_json(settings)
-            self.logger.debug("Layout autosaved")
-        except Exception as e:
-            self.logger.warning(f"Failed to save current layout: {e}")
-
-    def _load_saved_layout(self) -> bool:
-        """Restore previously saved layout from settings.json. Returns True if successful."""
-        try:
-            settings = self._read_settings_json()
-            g64 = settings.get("window_geometry")
-            s64 = settings.get("window_state")
-            ok_any = False
-            if g64:
-                try:
-                    geom = base64.b64decode(g64)
-                    ok_any = self.restoreGeometry(geom) or ok_any
-                except Exception:
-                    pass
-            if s64:
-                try:
-                    state = base64.b64decode(s64)
-                    ok_any = self.restoreState(state) or ok_any
-                except Exception:
-                    pass
-
-            # If central is already a splitter, restore sizes
-            try:
-                cw = self.centralWidget()
-                if isinstance(cw, QSplitter):
-                    sizes = settings.get("central_splitter_sizes")
-                    if isinstance(sizes, list) and sizes:
-                        cw.setSizes([int(s) for s in sizes])
-            except Exception:
-                pass
-
-            if ok_any:
-                self.logger.info("Restored window layout from saved settings")
-            return ok_any
-        except Exception as e:
-            self.logger.warning(f"Failed to load saved layout: {e}")
-            return False
+    # Layout loading handled automatically by Qt's native dock system
     # ===== END_EXTRACT_TO: src/gui/window/layout_persistence.py =====
 
-    def _connect_layout_autosave(self, dock: QDockWidget) -> None:
-        """Connect signals from a dock to trigger autosave and central widget updates."""
-        try:
-            dock.topLevelChanged.connect(lambda _=False: self._schedule_layout_save())
-            dock.topLevelChanged.connect(lambda _=False: self._update_central_widget_for_dock_changes())
-            dock.topLevelChanged.connect(lambda _=False: self._trigger_responsive_layout_update())
-            # Some bindings expose dockLocationChanged(area)
-            if hasattr(dock, "dockLocationChanged"):
-                dock.dockLocationChanged.connect(lambda _area=None: self._schedule_layout_save())
-                dock.dockLocationChanged.connect(lambda _area=None: self._update_central_widget_for_dock_changes())
-                dock.dockLocationChanged.connect(lambda _area=None: self._trigger_responsive_layout_update())
-            dock.visibilityChanged.connect(lambda _=False: self._schedule_layout_save())
-            dock.visibilityChanged.connect(lambda _=False: self._update_central_widget_for_dock_changes())
-            dock.visibilityChanged.connect(lambda _=False: self._trigger_responsive_layout_update())
-        except Exception:
-            pass
+    # Layout autosave connections removed - Qt handles layout persistence automatically
 
     def _trigger_responsive_layout_update(self) -> None:
         """Trigger responsive layout update with debouncing."""
@@ -566,85 +607,31 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.debug(f"Failed to trigger responsive layout update: {e}")
 
-    # ---- Snapping system (overlays + edge snap) ----
-    def _init_snapping_system(self) -> None:
-        """Create snap overlays and attach drag handlers to all current docks."""
-        try:
-            if hasattr(self, "_snap_layer"):
-                return
-            self._snap_layer = SnapOverlayLayer(self)
-            self._snap_handlers: dict[str, DockDragHandler] = {}
-        except Exception:
-            # Ensure attributes exist for later safe checks
-            self._snap_handlers = {}
-            self._snap_layer = SnapOverlayLayer(self)
-
-        # Register known docks if they exist (lighting_panel is now a dialog, not a dock)
-        for name in ("model_library_dock", "properties_dock", "metadata_dock"):
-            try:
-                dock = getattr(self, name, None)
-                if dock is not None:
-                    self._register_dock_for_snapping(dock)
-            except Exception:
-                continue
-
-    def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
-        """Install a DockDragHandler on the given dock to enable overlay-guided snapping."""
-        if dock is None:
-            return
-        key = dock.objectName() or str(id(dock))
-        if hasattr(self, "_snap_handlers") and key in getattr(self, "_snap_handlers", {}):
-            return
-        handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
-        dock.installEventFilter(handler)
-        self._snap_handlers[key] = handler
-
-    def _iter_docks(self) -> list[QDockWidget]:
-        """Get all dock widgets in the main window."""
-        # Use findChildren to get ALL dock widgets, not just the known ones
-        return self.findChildren(QDockWidget)
-
-    def _enable_snap_handlers(self, enable: bool) -> None:
-        """Enable or disable snap overlay handlers for all docks."""
-        try:
-            if enable:
-                for d in self._iter_docks():
-                    self._register_dock_for_snapping(d)
-            else:
-                # Remove event filters and clear overlays
-                if hasattr(self, "_snap_handlers"):
-                    for key, handler in list(self._snap_handlers.items()):
-                        try:
-                            dock = getattr(handler, "_dock", None)
-                            if dock:
-                                dock.removeEventFilter(handler)  # type: ignore[arg-type]
-                        except Exception:
-                            pass
-                    self._snap_handlers.clear()
-                if hasattr(self, "_snap_layer"):
-                    self._snap_layer.hide_overlays()
-        except Exception:
-            pass
+    # Snapping system removed - Qt handles dock management automatically
 
     def _set_layout_edit_mode(self, enabled: bool) -> None:
         """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable."""
         try:
             self.layout_edit_mode = bool(enabled)
-            for d in self._iter_docks():
+            # Use native Qt dock features for layout edit mode
+            for dock in self.findChildren(QDockWidget):
                 if self.layout_edit_mode:
-                    d.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
+                    # Enable full dock features for editing
+                    dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
                 else:
-                    # Locked: disable moving and floating, keep closable so user can hide/pin panels
-                    d.setFeatures(QDockWidget.DockWidgetClosable)
-            self._enable_snap_handlers(self.layout_edit_mode)
+                    # Lock docks but keep closable for hiding
+                    dock.setFeatures(QDockWidget.DockWidgetClosable)
+
             # Persist state for next launch
             settings = QSettings()
             settings.setValue("ui/layout_edit_mode", self.layout_edit_mode)
+
             # Update status bar indicator
             try:
                 self.status_bar_manager.update_layout_edit_mode(self.layout_edit_mode)
             except Exception:
                 pass
+
             # Status feedback
             try:
                 self.statusBar().showMessage("Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked", 2000)
@@ -653,82 +640,11 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
 
-    def _update_central_widget_for_dock_changes(self) -> None:
-        """Update central widget layout when dock widgets change position or size."""
-        try:
-            central_widget = self.centralWidget()
-            if central_widget:
-                # Force geometry update to ensure proper resizing
-                central_widget.updateGeometry()
+    # Manual central widget update methods removed - Qt handles layout automatically
 
-                # Ensure the central widget maintains its expanding policy
-                if hasattr(central_widget, 'setSizePolicy'):
-                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    # Dock snapping methods removed - Qt handles dock management automatically
 
-                # Force main window layout recalculation
-                self.updateGeometry()
-                self.layout().activate()
-
-                self.logger.debug("Central widget updated for dock changes")
-        except Exception as e:
-            self.logger.debug(f"Failed to update central widget for dock changes: {e}")
-
-    def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> bool:
-        """Dock the provided QDockWidget to the specified edge if allowed."""
-        area_map = {
-            "left": Qt.LeftDockWidgetArea,
-            "right": Qt.RightDockWidgetArea,
-            "top": Qt.TopDockWidgetArea,
-            "bottom": Qt.BottomDockWidgetArea,
-        }
-        target_area = area_map.get(edge)
-        if target_area is None:
-            return False
-        allowed = dock.allowedAreas()
-        if not (allowed & target_area):
-            # Not permitted by this dock's allowed areas
-            return False
-        try:
-            dock.setFloating(False)
-        except Exception:
-            pass
-        # Perform docking
-        self.addDockWidget(target_area, dock)
-        try:
-            dock.raise_()
-        except Exception:
-            pass
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-        return True
-
-    def _reset_dock_layout(self) -> None:
-        """Restore dock widgets to their default docking layout."""
-        try:
-            if getattr(self, "_default_geometry", None):
-                self.restoreGeometry(self._default_geometry)
-            if getattr(self, "_default_layout_state", None):
-                # restoreState returns bool; ignore on failure
-                self.restoreState(self._default_layout_state)
-        except Exception:
-            pass
-        # Fallback: programmatically re-dock common widgets
-        self._redock_all()
-        # Persist the reset layout
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
-
-    def _reset_dock_layout_and_save(self) -> None:
-        """Reset layout to defaults and persist immediately."""
-        self._reset_dock_layout()
-        try:
-            self._schedule_layout_save()
-        except Exception:
-            pass
+    # Dock layout reset methods removed - Qt handles layout persistence automatically
 
     # ---- Settings persistence (QSettings) ----
     def _save_lighting_settings(self) -> None:
@@ -855,6 +771,30 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to apply material species '{species_name}': {e}")
 
+    def _on_model_loaded(self, info: str) -> None:
+        """Handle model loaded signal from viewer."""
+        try:
+            self.logger.info(f"Model loaded: {info}")
+            self.status_label.setText(f"Model loaded: {info}")
+            self.progress_bar.setVisible(False)
+
+            # Clear status after a delay
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+        except Exception as e:
+            self.logger.error(f"Failed to handle model loaded signal: {e}")
+
+    def _on_performance_updated(self, fps: float) -> None:
+        """Handle performance update signal from viewer."""
+        try:
+            self.logger.debug(f"Performance updated: {fps:.1f} FPS")
+            # Update status bar if performance is low
+            if fps < 30:
+                self.status_label.setText(f"Low FPS: {fps:.1f}")
+            elif fps < 60:
+                self.status_label.setText(f"FPS: {fps:.1f}")
+        except Exception as e:
+            self.logger.error(f"Failed to handle performance update signal: {e}")
+
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing."""
         try:
@@ -906,246 +846,33 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to save metadata panel visibility: {e}")
 
-    def _create_metadata_dock(self) -> None:
-        """Create the Metadata Manager dock and integrate it into the UI."""
-        try:
-            # Avoid recreating if it already exists
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                return
-        except Exception:
-            pass
-
-        self.metadata_dock = QDockWidget("Metadata Editor", self)
-        self.metadata_dock.setObjectName("MetadataDock")
-        # Allow docking to any area for maximum flexibility
-        self.metadata_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-        )
-        self.metadata_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
-
-        try:
-            from src.gui.metadata_editor import MetadataEditorWidget
-            self.metadata_editor = MetadataEditorWidget(self)
-
-            # Connect signals
-            self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
-            self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
-
-            # Bottom tabs: Metadata | Notes | History
-            self.metadata_tabs = QTabWidget(self)
-            self.metadata_tabs.setObjectName("MetadataTabs")
-            self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
-
-            # Notes tab (placeholder)
-            notes_widget = QTextEdit()
-            notes_widget.setReadOnly(True)
-            notes_widget.setPlainText(
-                "Notes\n\n"
-                "Add project or model-specific notes here.\n"
-                "Future: rich text, timestamps, and attachments."
-            )
-            self.metadata_tabs.addTab(notes_widget, "Notes")
-
-            # History tab (placeholder)
-            history_widget = QTextEdit()
-            history_widget.setReadOnly(True)
-            history_widget.setPlainText(
-                "History\n\n"
-                "Timeline of edits and metadata changes will appear here."
-            )
-            self.metadata_tabs.addTab(history_widget, "History")
-
-            # Material Design theme is applied globally via ThemeService
-            # No need to apply custom stylesheets here
-
-            self.metadata_dock.setWidget(self.metadata_tabs)
-            self.logger.info("Metadata editor widget created successfully (restored)")
-        except Exception as e:
-            self.logger.warning(f"Failed to create MetadataEditorWidget during restore: {e}")
-
-            # Fallback to placeholder
-            metadata_widget = QTextEdit()
-            metadata_widget.setReadOnly(True)
-            metadata_widget.setPlainText(
-                "Metadata Editor\n\n"
-                "Component unavailable."
-            )
-            self.metadata_dock.setWidget(metadata_widget)
-
-        # Attach dock - default to right side but user can move anywhere
-        self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        try:
-            self._register_dock_for_snapping(self.metadata_dock)
-        except Exception:
-            pass
-        try:
-            self._connect_layout_autosave(self.metadata_dock)
-        except Exception:
-            pass
-        # Persist visibility and keep View menu action state in sync
-        try:
-            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._save_metadata_panel_visibility())
-            self.metadata_dock.visibilityChanged.connect(lambda _=False: self._update_metadata_action_state())
-        except Exception:
-            pass
+    # Old dock creation methods removed - using native Qt dock system
 
     def _restore_metadata_manager(self) -> None:
         """Restore and show the Metadata Manager panel if it was closed or missing."""
         try:
-            # Create or recreate the dock as needed
-            if not hasattr(self, "metadata_dock") or self.metadata_dock is None:
-                self._create_metadata_dock()
-            else:
-                # Ensure it has a widget; recreate contents if missing
-                try:
-                    has_widget = self.metadata_dock.widget() is not None
-                except Exception:
-                    has_widget = False
-                if not has_widget:
-                    try:
-                        self.removeDockWidget(self.metadata_dock)
-                    except Exception:
-                        pass
-                    self.metadata_dock = None  # type: ignore
-                    self._create_metadata_dock()
-
-            # Dock to default right side and show (user can move)
-            try:
-                self._snap_dock_to_edge(self.metadata_dock, "right")
-            except Exception:
-                pass
-            try:
+            # Native Qt dock system handles restoration automatically
+            if hasattr(self, "metadata_dock") and self.metadata_dock:
                 self.metadata_dock.show()
                 self.metadata_dock.raise_()
-            except Exception:
-                pass
-
-            # Persist visibility and menu state
-            try:
-                self._save_metadata_panel_visibility()
-            except Exception:
-                pass
-            try:
-                self._update_metadata_action_state()
-            except Exception:
-                pass
-            try:
-                self._schedule_layout_save()
-            except Exception:
-                pass
-
-            try:
                 self.statusBar().showMessage("Metadata Manager restored", 2000)
-            except Exception:
-                pass
+            else:
+                self.logger.warning("Metadata dock not available")
         except Exception as e:
             self.logger.error(f"Failed to restore Metadata Manager: {e}")
 
-    def _create_model_library_dock(self) -> None:
-        """Create the Model Library dock and integrate it into the UI."""
-        try:
-            if hasattr(self, "model_library_dock") and self.model_library_dock:
-                return
-        except Exception:
-            pass
-
-        self.model_library_dock = QDockWidget("Model Library", self)
-        self.model_library_dock.setObjectName("ModelLibraryDock")
-        # Allow docking to any area for maximum flexibility
-        self.model_library_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
-        )
-        self.model_library_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable)
-
-        try:
-            from src.gui.model_library import ModelLibraryWidget
-            self.model_library_widget = ModelLibraryWidget(self)
-
-            # Connect signals
-            self.model_library_widget.model_selected.connect(self._on_model_selected)
-            self.model_library_widget.model_double_clicked.connect(self._on_model_double_clicked)
-            self.model_library_widget.models_added.connect(self._on_models_added)
-
-            # Connect model library progress updates to main window status bar
-            self._connect_model_library_status_updates()
-
-            self.model_library_dock.setWidget(self.model_library_widget)
-        except Exception as e:
-            # Fallback widget
-            lib_placeholder = QTextEdit()
-            lib_placeholder.setReadOnly(True)
-            lib_placeholder.setPlainText(
-                "Model Library\n\nComponent unavailable."
-            )
-            self.model_library_dock.setWidget(lib_placeholder)
-
-        # Attach dock - default to left side but user can move anywhere
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
-        try:
-            self._register_dock_for_snapping(self.model_library_dock)
-        except Exception:
-            pass
-        try:
-            self._connect_layout_autosave(self.model_library_dock)
-        except Exception:
-            pass
-        try:
-            self.model_library_dock.visibilityChanged.connect(lambda _=False: self._update_library_action_state())
-        except Exception:
-            pass
-        try:
-            self._update_library_action_state()
-        except Exception:
-            pass
+    # Old dock creation methods removed - using native Qt dock system
 
     def _restore_model_library(self) -> None:
         """Restore and show the Model Library panel if it was closed or missing."""
         try:
-            # Create or recreate the dock as needed
-            recreate = False
-            if not hasattr(self, "model_library_dock") or self.model_library_dock is None:
-                recreate = True
-            else:
-                try:
-                    has_widget = self.model_library_dock.widget() is not None
-                except Exception:
-                    has_widget = False
-                if not has_widget:
-                    try:
-                        self.removeDockWidget(self.model_library_dock)
-                    except Exception:
-                        pass
-                    self.model_library_dock = None  # type: ignore
-                    recreate = True
-
-            if recreate:
-                self._create_model_library_dock()
-
-            # Dock to default left side and show (user can move)
-            try:
-                self._snap_dock_to_edge(self.model_library_dock, "left")
-            except Exception:
-                pass
-            try:
+            # Native Qt dock system handles restoration automatically
+            if hasattr(self, "model_library_dock") and self.model_library_dock:
                 self.model_library_dock.show()
                 self.model_library_dock.raise_()
-            except Exception:
-                pass
-
-            # Persist menu/action state and layout
-            try:
-                self._update_library_action_state()
-            except Exception:
-                pass
-            try:
-                self._schedule_layout_save()
-            except Exception:
-                pass
-
-            try:
                 self.statusBar().showMessage("Model Library restored", 2000)
-            except Exception:
-                pass
+            else:
+                self.logger.warning("Model Library dock not available")
         except Exception as e:
             self.logger.error(f"Failed to restore Model Library: {e}")
 
@@ -1421,17 +1148,9 @@ class MainWindow(QMainWindow):
 
     def _on_theme_changed(self) -> None:
         """Handle theme change from preferences dialog."""
-        try:
-            # Get the updated stylesheet from the application
-            app = QApplication.instance()
-            if app:
-                new_stylesheet = app.styleSheet()
-                if new_stylesheet:
-                    # Apply the new stylesheet to the main window
-                    self.setStyleSheet(new_stylesheet)
-                    self.logger.debug("Main window stylesheet updated after theme change")
-        except Exception as e:
-            self.logger.debug(f"Error updating main window stylesheet: {e}")
+        # Qt-material handles theme changes automatically through the application
+        # No need to manually update main window stylesheet
+        self.logger.debug("Theme changed - qt-material handling automatically")
 
     def _on_viewer_settings_changed(self) -> None:
         """Handle viewer settings change from preferences dialog."""

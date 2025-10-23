@@ -68,7 +68,7 @@ class StatusBarManager:
         # Main status message - larger and takes up available space
         self.status_label = QLabel("Ready")
         self.status_label.setMinimumWidth(300)  # Give it more space
-        self.status_label.setStyleSheet("font-size: 11pt; font-weight: 500;")  # Larger, bolder text
+        # Qt-material handles font styling automatically
         self.status_bar.addWidget(self.status_label, 1)  # Stretch factor 1 to take available space
 
         # Progress bar for long operations

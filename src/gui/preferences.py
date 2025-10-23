@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.theme import (
-    COLORS,
+    UnifiedThemeManager,
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
 from src.gui.files_tab import FilesTab
@@ -48,12 +48,40 @@ class PreferencesDialog(QDialog):
         self.setModal(True)
         self.setMinimumWidth(560)
         self.on_reset_layout = on_reset_layout
+        self.theme_manager = None
 
         # Remove native title bar and frame - we'll use custom title bar
         # Use native title bar (removed frameless window flag)
         # This allows the OS to handle the title bar and window controls
 
         self._setup_ui()
+
+    def get_theme_color(self, color_name: str) -> str:
+        """Get color from qt-material theme system"""
+        if not self.theme_manager:
+            try:
+                self.theme_manager = UnifiedThemeManager.instance()
+            except Exception:
+                # Fallback colors if theme system not available
+                fallback_colors = {
+                    'border': '#cccccc',
+                    'warning': '#ffa500',
+                    'error': '#ff6b6b',
+                    'text_primary': '#000000'
+                }
+                return fallback_colors.get(color_name, '#1976D2')
+
+        try:
+            return self.theme_manager.get_color(color_name)
+        except Exception:
+            # Fallback colors if color not found in theme
+            fallback_colors = {
+                'border': '#cccccc',
+                'warning': '#ffa500',
+                'error': '#ff6b6b',
+                'text_primary': '#000000'
+            }
+            return fallback_colors.get(color_name, '#1976D2')
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -926,7 +954,7 @@ class ThumbnailSettingsTab(QWidget):
         self.preview_label.setMinimumHeight(120)
         self.preview_label.setMinimumWidth(120)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        self.preview_label.setStyleSheet(f"border: 1px solid {self.get_theme_color('border')}; border-radius: 4px;")
         bg_preview_container.addWidget(self.preview_label)
 
         # Material preview
@@ -939,7 +967,7 @@ class ThumbnailSettingsTab(QWidget):
         self.material_preview_label.setMinimumHeight(120)
         self.material_preview_label.setMinimumWidth(120)
         self.material_preview_label.setAlignment(Qt.AlignCenter)
-        self.material_preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        self.material_preview_label.setStyleSheet(f"border: 1px solid {self.get_theme_color('border')}; border-radius: 4px;")
         mat_preview_container.addWidget(self.material_preview_label)
 
         preview_h_layout.addLayout(bg_preview_container)
@@ -1296,7 +1324,7 @@ class AdvancedTab(QWidget):
 
         # Header
         header = QLabel("Advanced Settings")
-        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        header.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {self.get_theme_color('text_primary')};")
         layout.addWidget(header)
 
         # Database Reset Section
@@ -1311,7 +1339,7 @@ class AdvancedTab(QWidget):
             "metadata, and library information. The database will be recreated on next startup."
         )
         db_warning.setWordWrap(True)
-        db_warning.setStyleSheet("color: #ffa500; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+        db_warning.setStyleSheet(f"color: {self.get_theme_color('warning')}; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
         db_layout.addWidget(db_warning)
 
         reset_db_button = QPushButton("Reset Database")
@@ -1337,7 +1365,7 @@ class AdvancedTab(QWidget):
             "the application to its default state. This action cannot be undone."
         )
         warning.setWordWrap(True)
-        warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
+        warning.setStyleSheet(f"color: {self.get_theme_color('error')}; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
         system_layout.addWidget(warning)
 
         # Reset button

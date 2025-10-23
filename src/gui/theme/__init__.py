@@ -56,6 +56,9 @@ from .theme_cache import ThemeCache
 from .theme_registry import ThemeRegistry
 from .theme_application import ThemeApplication, ThemeApplicationError
 
+# Qt-material service for backward compatibility
+from .qt_material_service import QtMaterialThemeService
+
 # Import COLORS and other constants from theme_api for backward compatibility
 try:
     from .theme_api import COLORS
@@ -75,6 +78,9 @@ from .theme_constants import (
     SPACING_16,
     SPACING_24,
 )
+
+# Import VTK color function
+from .theme_service import vtk_rgb
 
 # No backward compatibility - pure dynamic system only
 
@@ -110,6 +116,12 @@ __all__ = [
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
+
+    # Backward compatibility
+    "QtMaterialThemeService",
+
+    # VTK integration
+    "vtk_rgb",
 ]
 
 # ============================================================
@@ -505,49 +517,24 @@ def is_light_theme() -> bool:
 
 
 # ============================================================
-# Legacy ThemeManager Compatibility Class
+# Enhanced Legacy ThemeManager Compatibility Layer
 # ============================================================
 
-class LegacyThemeManager:
-    """
-    Legacy ThemeManager compatibility class.
-    
-    Provides backward compatibility for legacy ThemeManager usage
-    while delegating to QtMaterialThemeService.
-    """
-    
-    def __init__(self):
-        self._service = QtMaterialThemeService.instance()
-    
-    def apply_theme(self, theme_name: str, variant: str = None) -> bool:
-        """Legacy apply_theme method."""
-        return self._service.apply_theme(theme_name, variant)
-    
-    def get_color(self, color_name: str) -> str:
-        """Legacy get_color method."""
-        return self._service.get_color(color_name)
-    
-    def save_settings(self) -> None:
-        """Legacy save_settings method."""
-        self._service.save_settings()
-    
-    def load_settings(self) -> None:
-        """Legacy load_settings method."""
-        self._service.load_settings()
+# Import the enhanced legacy theme manager
+from .legacy_theme_manager import (
+    LegacyThemeManager,
+    get_legacy_theme_manager,
+    ThemeManager,
+    get_theme_manager
+)
 
-
-# Create singleton instance for backward compatibility
-_theme_manager_instance = None
-
-def get_theme_manager() -> LegacyThemeManager:
-    """Get singleton ThemeManager instance (backward compatibility)."""
-    global _theme_manager_instance
-    if _theme_manager_instance is None:
-        _theme_manager_instance = LegacyThemeManager()
-    return _theme_manager_instance
-
-# Export as ThemeManager for backward compatibility (now points to UnifiedThemeManager)
-ThemeManager = get_unified_theme_manager()
+# Re-export for backward compatibility
+__all__.extend([
+    "LegacyThemeManager",
+    "get_legacy_theme_manager",
+    "ThemeManager",  # Legacy alias
+    "get_theme_manager"  # Legacy alias
+])
 
 
 # Auto-log status on import for debugging
