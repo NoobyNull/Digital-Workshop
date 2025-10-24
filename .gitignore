@@ -151,7 +151,10 @@ models/
 temp/
 logs/
 *.stl
+*.STL
 *.tap
+*.TAP
+*.glb
 
 # Documentation and reports
 *REPORT.md
