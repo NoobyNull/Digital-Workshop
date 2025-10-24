@@ -17,6 +17,7 @@ sys.path.insert(0, parent_dir)
 from src.core.application import Application
 from src.core.application_config import ApplicationConfig
 from src.core.exception_handler import ExceptionHandler
+from src.core.logging_config import get_logger
 
 
 def parse_arguments():
@@ -59,12 +60,17 @@ Examples:
 
 def main():
     """Main function to start the 3D-MM application."""
+    # Initialize logger early
+    logger = get_logger(__name__)
+    logger.info("3D-MM application starting")
+
     # Parse command line arguments
     args = parse_arguments()
     
     # Handle None case (when no arguments are provided in mutually exclusive group)
     log_level = args.log_level if args.log_level is not None else "INFO"
-    
+    logger.info(f"Log level set to: {log_level}")
+
     # Create application configuration with overridden log level
     config = ApplicationConfig.get_default()
     
@@ -161,15 +167,18 @@ def main():
         app = Application(config)
 
         if not app.initialize():
-            print("Failed to initialize application")
+            logger.error("Application initialization failed")
             return 1
 
         # Run the application
+        logger.info("Application initialized successfully, starting main loop")
         exit_code = app.run()
+        logger.info(f"Application exited with code: {exit_code}")
         return exit_code
 
     except RuntimeError as e:
         # Handle any exceptions during startup
+        logger.error(f"Application startup failed: {str(e)}")
         exception_handler.handle_startup_error(e)
         return 1
 

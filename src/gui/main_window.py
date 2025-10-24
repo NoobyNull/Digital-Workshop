@@ -126,6 +126,12 @@ class MainWindow(QMainWindow):
         self.toolbar_manager.setup_toolbar()
         self.status_bar_manager.setup_status_bar()
 
+        # Expose theme button for easy access
+        self.theme_button = self.status_bar_manager.theme_button
+
+        # Update initial theme icon
+        self.status_bar_manager._update_theme_icon()
+
         # Expose status bar components for easy access
         self.status_label = self.status_bar_manager.status_label
         self.progress_bar = self.status_bar_manager.progress_bar
@@ -771,6 +777,78 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to apply material species '{species_name}': {e}")
 
+    def _reset_dock_layout_and_save(self) -> None:
+        """Reset dock layout to default positions and save settings."""
+        try:
+            self.logger.info("Resetting dock layout to defaults")
+
+            # Reset dock layout using native Qt methods
+            # Clear any saved layout state
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
+
+            # Remove saved geometry and state
+            if settings.contains("window_geometry"):
+                settings.remove("window_geometry")
+            if settings.contains("window_state"):
+                settings.remove("window_state")
+
+            # Restore default dock positions
+            # Model library to left
+            if hasattr(self, 'model_library_dock') and self.model_library_dock:
+                self.removeDockWidget(self.model_library_dock)
+                self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+
+            # Properties and metadata to right, tabified
+            if hasattr(self, 'properties_dock') and self.properties_dock:
+                self.removeDockWidget(self.properties_dock)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+
+            if hasattr(self, 'metadata_dock') and self.metadata_dock:
+                self.removeDockWidget(self.metadata_dock)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+                # Tabify with properties dock
+                try:
+                    self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+                except Exception as e:
+                    self.logger.debug(f"Could not tabify docks: {e}")
+
+            # Make sure all docks are visible
+            if hasattr(self, 'model_library_dock') and self.model_library_dock:
+                self.model_library_dock.setVisible(True)
+            if hasattr(self, 'properties_dock') and self.properties_dock:
+                self.properties_dock.setVisible(True)
+            if hasattr(self, 'metadata_dock') and self.metadata_dock:
+                self.metadata_dock.setVisible(True)
+
+            # Save the new layout state
+            self._save_window_settings()
+
+            self.logger.info("Dock layout reset to defaults and saved")
+            self.statusBar().showMessage("Layout reset to defaults", 3000)
+
+        except Exception as e:
+            self.logger.error(f"Failed to reset dock layout: {e}")
+            self.statusBar().showMessage("Failed to reset layout", 3000)
+
+    def _save_window_settings(self) -> None:
+        """Save current window geometry and dock state."""
+        try:
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
+
+            # Save window geometry and state
+            settings.setValue("window_geometry", self.saveGeometry())
+            settings.setValue("window_state", self.saveState())
+
+            # Save current tab index
+            if hasattr(self, 'hero_tabs') and self.hero_tabs:
+                settings.setValue("ui/active_hero_tab_index", self.hero_tabs.currentIndex())
+
+            self.logger.debug("Window settings saved")
+        except Exception as e:
+            self.logger.error(f"Failed to save window settings: {e}")
+
     def _on_model_loaded(self, info: str) -> None:
         """Handle model loaded signal from viewer."""
         try:
@@ -1152,6 +1230,9 @@ class MainWindow(QMainWindow):
         # No need to manually update main window stylesheet
         self.logger.debug("Theme changed - qt-material handling automatically")
 
+        # Update theme button icon
+        self.status_bar_manager._update_theme_icon()
+
     def _on_viewer_settings_changed(self) -> None:
         """Handle viewer settings change from preferences dialog."""
         try:
@@ -1236,6 +1317,39 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.logger.warning(f"Failed to reset save view button: {e}")
         else:
+            QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+
+    def _cycle_theme(self) -> None:
+        """Cycle through Light, Dark, and System themes."""
+        try:
+            from src.gui.theme.simple_service import ThemeService
+            service = ThemeService.instance()
+
+            # Get current theme
+            current_theme, _ = service.get_current_theme()
+
+            # Define theme cycle
+            themes = ["light", "dark", "auto"]
+            current_index = themes.index(current_theme) if current_theme in themes else 0
+            next_index = (current_index + 1) % len(themes)
+            next_theme = themes[next_index]
+
+            # Apply next theme
+            service.apply_theme(next_theme, "qt-material")
+
+            # Update status
+            theme_names = {"light": "Light", "dark": "Dark", "auto": "System"}
+            self.status_label.setText(f"Theme: {theme_names.get(next_theme, next_theme)}")
+            QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+
+            # Update theme button icon
+            self.status_bar_manager._update_theme_icon()
+
+            self.logger.info(f"Cycled theme from {current_theme} to {next_theme}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to cycle theme: {e}")
+            self.status_label.setText("Theme cycle failed")
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
 
     def _save_current_view(self) -> None:

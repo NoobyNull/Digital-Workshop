@@ -358,48 +358,82 @@ class ThemeApplication(QObject):
 
     def _apply_qt_material_theme(self, theme: str, _variant: str) -> bool:
         """
-        Apply Qt-material theme.
+        Apply QDarkStyleSheet theme (replaces qt-material).
 
         Args:
-            theme: Theme name
-            variant: Theme variant
+            theme: Theme name ("dark", "light", or "auto")
+            _variant: Theme variant (ignored, kept for compatibility)
 
         Returns:
-            True if Qt-material theme was applied successfully
+            True if QDarkStyleSheet theme was applied successfully
         """
-        if not self._qt_material_available:
-            logger.debug("Qt-material not available, skipping Qt-material application")
-            return False
-
         try:
-            import qt_material  # noqa: F401
+            import qdarkstyle
 
             app = QApplication.instance()
             if not app:
                 return False
 
-            # Map theme names to Qt-material format
-            qt_theme_mapping = {
-                "dark": "dark_teal.xml",
-                "light": "light_cyan.xml",
-                "auto": "dark_teal.xml"  # Default for auto
-            }
+            # Determine palette
+            if theme == "auto":
+                palette_name = self._detect_system_theme()
+            else:
+                palette_name = theme if theme in ["dark", "light"] else "dark"
 
-            qt_theme = qt_theme_mapping.get(theme, "dark_teal.xml")
+            # Apply QDarkStyleSheet theme
+            if palette_name == "dark":
+                try:
+                    from qdarkstyle.palette.dark import DarkPalette
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6', palette=DarkPalette)
+                except ImportError:
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
+            else:
+                stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
 
-            # Apply Qt-material theme
-            stylesheet = qt_material.apply_stylesheet(app, theme=qt_theme)
             app.setStyleSheet(stylesheet)
 
-            logger.info(f"Qt-material theme applied: {qt_theme}")
+            logger.info(f"QDarkStyleSheet theme applied: {palette_name}")
             return True
 
         except ImportError:
-            logger.warning("Qt-material library not available")
+            logger.warning("QDarkStyleSheet library not available")
             return False
         except Exception as e:
-            logger.error(f"Qt-material theme application failed: {e}")
+            logger.error(f"QDarkStyleSheet theme application failed: {e}")
             return False
+
+    def _detect_system_theme(self) -> str:
+        """Detect system theme preference."""
+        try:
+            import platform
+            system = platform.system()
+
+            if system == "Windows":
+                try:
+                    import winreg
+                    registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+                    registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
+                    value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
+                    winreg.CloseKey(registry_key)
+                    return "light" if value == 1 else "dark"
+                except Exception:
+                    return "dark"
+            elif system == "Darwin":  # macOS
+                try:
+                    import subprocess
+                    result = subprocess.run(
+                        ["defaults", "read", "-g", "AppleInterfaceStyle"],
+                        capture_output=True,
+                        text=True,
+                        timeout=1
+                    )
+                    return "dark" if "Dark" in result.stdout else "light"
+                except Exception:
+                    return "light"
+            else:  # Linux
+                return "dark"
+        except Exception:
+            return "dark"
 
     def _apply_fallback_theme(self, theme: str, variant: str) -> bool:
         """
@@ -1114,13 +1148,13 @@ class ThemeApplication(QObject):
 
     def _check_qt_material_availability(self) -> bool:
         """
-        Check if Qt-material library is available.
+        Check if QDarkStyleSheet library is available.
 
         Returns:
-            True if Qt-material is available
+            True if QDarkStyleSheet is available
         """
         try:
-            import qt_material
+            import qdarkstyle
             return True
         except ImportError:
             return False

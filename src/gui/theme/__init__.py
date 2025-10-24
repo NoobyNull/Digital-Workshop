@@ -1,63 +1,52 @@
 """
-Dynamic Theme Management System
+Consolidated Theme Management System
 
-This module provides a purely dynamic theme management system without any hard-coded
-themes or colors. All themes and colors are generated dynamically based on theme names
-and variants, providing infinite customization possibilities.
+This module provides a single, consolidated theme management system that eliminates
+conflicting theme services and provides a unified entry point for all theme operations.
 
 Public API:
-- UnifiedThemeManager: Main dynamic theme coordinator
-- ThemePersistence: QSettings-based persistence layer
-- ThemeValidator: Theme validation and error handling
-- ThemeCache: Memory-efficient theme caching
-- ThemeRegistry: Widget registration for dynamic updates
-- ThemeApplication: Coordinated theme application with proper timing
+- QtMaterialThemeService: Primary qt-material-based theme service (recommended)
+- ThemeService: Backward compatibility theme service using PySide6 built-in styling
 
 Usage:
-    from src.gui.theme import UnifiedThemeManager
+    from src.gui.theme import QtMaterialThemeService
 
-    # Get unified theme manager instance
-    theme_manager = UnifiedThemeManager.instance()
+    # Get primary theme service instance
+    theme_service = QtMaterialThemeService.instance()
 
-    # Apply any theme dynamically (no pre-defined themes)
-    theme_manager.apply_theme("dark", "blue")  # Generates colors dynamically
-    theme_manager.apply_theme("light", "amber")  # Generates different colors
-    theme_manager.apply_theme("custom", "purple")  # Any combination works
+    # Apply themes
+    theme_service.apply_theme("dark", "blue")
+    theme_service.apply_theme("light", "amber")
 
-    # Colors are generated dynamically based on theme/variant
-    colors = theme_manager.get_theme_colors()  # Always unique per theme/variant
+    # Or use backward compatibility service
+    from src.gui.theme import ThemeService
+    legacy_service = ThemeService.instance()
+    legacy_service.apply_theme("dark")
 
 Architecture:
-- Purely Dynamic: No hard-coded themes or colors
-- Infinite Customization: Any theme/variant combination generates unique colors
-- QSettings-Only Persistence: No JSON duplication or conflicts
-- Thread-Safe Operations: Proper locking and coordination
-- Memory-Efficient Caching: Intelligent cache management
-- Dynamic Widget Updates: Automatic theme propagation to new widgets
+- Single Entry Point: Consolidated to QtMaterialThemeService as primary
+- Backward Compatibility: ThemeService available for legacy code
+- No Conflicts: Eliminates multiple competing theme managers
+- VTK Integration: Direct connection to VTK color provider
+- Clean Dependencies: Minimal external library requirements
 
 Benefits:
-- No manual theme configuration required
-- Colors generated algorithmically from theme/variant names
-- Consistent visual identity across different theme combinations
-- Eliminates maintenance of hard-coded color schemes
-- Supports unlimited theme variations
-- Maintains performance and memory efficiency
+- Eliminates theme service conflicts and race conditions
+- Provides consistent theme application timing
+- Maintains backward compatibility for existing code
+- Supports both qt-material and built-in PySide6 styling
+- Clear migration path from legacy systems
 """
 
 # ============================================================
 # Unified Theme System Imports
 # ============================================================
 
-# Core unified theme system
-from .unified_theme_manager import UnifiedThemeManager, get_unified_theme_manager
-from .theme_persistence import ThemePersistence
-from .theme_validator import ThemeValidator, ThemeValidationError
-from .theme_cache import ThemeCache
-from .theme_registry import ThemeRegistry
-from .theme_application import ThemeApplication, ThemeApplicationError
-
-# Qt-material service for backward compatibility
+# Core theme system - consolidated to single entry point
 from .qt_material_service import QtMaterialThemeService
+
+# ThemeService for backward compatibility (used in tests and other modules)
+from .simple_service import ThemeService
 
 # Import COLORS and other constants from theme_api for backward compatibility
 try:
@@ -82,6 +71,9 @@ from .theme_constants import (
 # Import VTK color function
 from .theme_service import vtk_rgb
 
+# Backward compatibility - ThemeManager alias for QtMaterialThemeService
+from .qt_material_service import QtMaterialThemeService as ThemeManager
+
 # No backward compatibility - pure dynamic system only
 
 # ============================================================
@@ -90,23 +82,17 @@ from .theme_service import vtk_rgb
 
 __all__ = [
     # ============================================================
-    # Dynamic Theme System (Pure API)
+    # Consolidated Theme System (Single Entry Point)
     # ============================================================
 
-    # Main dynamic theme manager
-    "UnifiedThemeManager",
-    "get_unified_theme_manager",
+    # Primary theme service (qt-material based)
+    "QtMaterialThemeService",
 
-    # Core theme system components
-    "ThemePersistence",
-    "ThemeValidator",
-    "ThemeCache",
-    "ThemeRegistry",
-    "ThemeApplication",
+    # Backward compatibility theme service
+    "ThemeService",
 
-    # Exception classes
-    "ThemeValidationError",
-    "ThemeApplicationError",
+    # Backward compatibility alias for QtMaterialThemeService
+    "ThemeManager",
 
     # Colors and constants
     "COLORS",
@@ -116,9 +102,6 @@ __all__ = [
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
-
-    # Backward compatibility
-    "QtMaterialThemeService",
 
     # VTK integration
     "vtk_rgb",
@@ -516,25 +499,7 @@ def is_light_theme() -> bool:
     return not is_dark_theme()
 
 
-# ============================================================
-# Enhanced Legacy ThemeManager Compatibility Layer
-# ============================================================
-
-# Import the enhanced legacy theme manager
-from .legacy_theme_manager import (
-    LegacyThemeManager,
-    get_legacy_theme_manager,
-    ThemeManager,
-    get_theme_manager
-)
-
-# Re-export for backward compatibility
-__all__.extend([
-    "LegacyThemeManager",
-    "get_legacy_theme_manager",
-    "ThemeManager",  # Legacy alias
-    "get_theme_manager"  # Legacy alias
-])
+# Legacy theme managers removed - consolidated to single entry point
 
 
 # Auto-log status on import for debugging

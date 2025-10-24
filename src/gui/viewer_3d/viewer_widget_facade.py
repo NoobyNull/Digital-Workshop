@@ -128,9 +128,6 @@ class Viewer3DWidget(QWidget):
         self.scene_manager = VTKSceneManager(self.vtk_widget)
         self.scene_manager.setup_scene()
 
-        # Register VTK resources for tracking
-        self._register_vtk_resources()
-
         # Model renderer
         self.renderer = self.scene_manager.renderer
         self.model_renderer = ModelRenderer(self.renderer)
@@ -149,6 +146,9 @@ class Viewer3DWidget(QWidget):
         # Expose for backward compatibility
         self.camera = self.renderer.GetActiveCamera()
         self.render_mode = RenderMode.SOLID
+
+        # Register VTK resources for tracking (after all attributes are set)
+        self._register_vtk_resources()
 
         self.logger.info("VTK error handling system integrated successfully")
 

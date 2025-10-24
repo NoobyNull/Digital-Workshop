@@ -87,9 +87,9 @@ class ThemeValidator:
 
         # Valid theme configurations
         self._valid_themes = {
-            "dark": ["blue", "amber", "cyan", "red", "green", "purple", "teal"],
-            "light": ["blue", "amber", "cyan", "red", "green", "purple", "teal"],
-            "auto": ["blue", "amber", "cyan", "red", "green", "purple", "teal"]
+            "dark": ["blue", "amber", "cyan", "red", "green", "purple", "teal", "yellow"],
+            "light": ["blue", "amber", "cyan", "red", "green", "purple", "teal", "yellow"],
+            "auto": ["blue", "amber", "cyan", "red", "green", "purple", "teal", "yellow"]
         }
 
         # Required color roles for accessibility

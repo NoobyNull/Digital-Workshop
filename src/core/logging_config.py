@@ -234,10 +234,7 @@ def setup_logging(
     # Add console handler if requested
     if enable_console:
         console_handler = logging.StreamHandler(sys.stdout)
-        console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        console_handler.setFormatter(console_formatter)
+        console_handler.setFormatter(json_formatter)
         logger.addHandler(console_handler)
 
     return logger

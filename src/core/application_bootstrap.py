@@ -79,43 +79,46 @@ class ApplicationBootstrap:
         """
         try:
             self.logger.debug("Loading theme settings")
-            
-            # Initialize theme service using qt-material architecture with graceful fallback
+
+            # Initialize consolidated theme system using QtMaterialThemeService
             try:
                 from src.gui.theme import QtMaterialThemeService
                 service = QtMaterialThemeService.instance()
-                
-                # Load saved theme settings with error handling
+
+                # Apply default dark theme with blue variant
                 try:
-                    service.load_settings()
-                    self.logger.debug("Theme settings loaded successfully")
-                except Exception as settings_error:
-                    self.logger.warning(f"Failed to load theme settings: {settings_error}")
-                    # Apply default theme as fallback
-                    try:
-                        service.apply_theme("dark", "blue")
-                        self.logger.info("Applied default theme as fallback")
-                    except Exception as fallback_error:
-                        self.logger.warning(f"Failed to apply fallback theme: {fallback_error}")
-                
-                # Check if qt-material is available
-                if hasattr(service, 'qtmaterial_available'):
-                    if service.qtmaterial_available:
-                        self.logger.info("qt-material theme system initialized successfully")
+                    result = service.apply_theme("dark", "blue")
+                    if result:
+                        self.logger.info("QtMaterialThemeService theme applied successfully")
                     else:
-                        self.logger.info("Fallback theme system initialized (qt-material not available)")
+                        self.logger.warning("Theme application returned False, but continuing")
+                except Exception as theme_error:
+                    self.logger.warning("Failed to apply theme: %s", theme_error)
+
+                # Check if qt-material is available
+                if hasattr(service, 'qtmaterial') and service.qtmaterial is not None:
+                    self.logger.info("QtMaterialThemeService theme system initialized successfully")
                 else:
-                    self.logger.info("Theme system initialized successfully")
-                
+                    self.logger.info("Qt-material not available, using fallback theme system")
+
                 return True
-                
+
             except ImportError as import_error:
-                self.logger.error(f"Failed to import theme service: {import_error}")
-                # Continue without theme system - not critical for startup
-                return True
-                
+                self.logger.error("Failed to import QtMaterialThemeService: %s", import_error)
+                # Try fallback to ThemeService
+                try:
+                    from src.gui.theme import ThemeService
+                    service = ThemeService.instance()
+                    service.apply_theme("dark")
+                    self.logger.info("ThemeService (fallback) applied successfully")
+                    return True
+                except Exception as fallback_error:
+                    self.logger.error("Fallback theme service also failed: %s", fallback_error)
+                    # Continue without theme system - not critical for startup
+                    return True
+
         except Exception as e:
-            self.logger.error(f"Theme initialization failed: {e}", exc_info=True)
+            self.logger.error("Theme initialization failed: %s", e, exc_info=True)
             # Continue without theme system - not critical for startup
             return True
 

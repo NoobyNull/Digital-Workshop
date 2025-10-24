@@ -6,7 +6,6 @@ This module contains the Application class that encapsulates
 the application lifecycle management and coordinates all components.
 """
 
-import logging
 import sys
 from typing import Optional
 
@@ -15,6 +14,7 @@ from PySide6.QtWidgets import QApplication
 from .application_config import ApplicationConfig
 from .application_bootstrap import ApplicationBootstrap
 from .exception_handler import ExceptionHandler
+from .logging_config import get_logger
 from .system_initializer import SystemInitializer
 from src.gui.main_window import MainWindow
 
@@ -185,7 +185,7 @@ class Application:
         """
         try:
             self.qt_app = QApplication(argv)
-            self.logger = logging.getLogger(__name__)
+            self.logger = get_logger(__name__)
             self.logger.info("QApplication created")
             return True
         except RuntimeError as e:
@@ -202,7 +202,7 @@ class Application:
             self.system_initializer = SystemInitializer(self.config)
             if not self.system_initializer.initialize():
                 return False
-            self.logger = logging.getLogger(__name__)
+            self.logger = get_logger(__name__)
             return True
         except RuntimeError as e:
             print(f"System initialization failed: {str(e)}")

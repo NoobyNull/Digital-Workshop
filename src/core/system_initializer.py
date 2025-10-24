@@ -6,7 +6,6 @@ This module contains the SystemInitializer class responsible for
 setting up the application environment, directories, and logging.
 """
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -15,7 +14,7 @@ from PySide6.QtCore import QStandardPaths, QDir
 from PySide6.QtWidgets import QApplication
 
 from .application_config import ApplicationConfig
-from .logging_config import setup_logging
+from .logging_config import setup_logging, get_logger
 
 
 class SystemInitializer:
@@ -81,7 +80,7 @@ class SystemInitializer:
                 enable_console=True
             )
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.logger.info("Logging system initialized")
 
     def _create_directories(self) -> None:

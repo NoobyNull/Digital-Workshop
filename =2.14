@@ -1,0 +1,3 @@
+Requirement already satisfied: qt-material in c:\users\matthew\appdata\local\programs\python\python312\lib\site-packages (2.17)
+Requirement already satisfied: Jinja2 in c:\users\matthew\appdata\local\programs\python\python312\lib\site-packages (from qt-material) (3.1.6)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\users\matthew\appdata\local\programs\python\python312\lib\site-packages (from Jinja2->qt-material) (3.0.3)

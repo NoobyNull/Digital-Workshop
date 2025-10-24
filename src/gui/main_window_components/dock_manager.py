@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDockWidget, QTextEdit, QTabWidget
 
 from src.core.logging_config import get_logger, log_function_call
-from src.gui.theme import UnifiedThemeManager
+from src.gui.theme import QtMaterialThemeService
 
 
 logger = get_logger(__name__)

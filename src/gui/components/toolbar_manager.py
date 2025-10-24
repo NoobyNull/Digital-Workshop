@@ -142,8 +142,7 @@ class ToolbarManager:
             "Reset the 3D view to default",
         )
 
-        # Theme switcher moved to Preferences > Theming tab
-        # (removed from toolbar to reduce clutter)
+        # Theme cycle moved to status bar
 
         # Show toolbar mode in status bar for immediate visual feedback
         try:

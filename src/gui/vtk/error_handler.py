@@ -114,21 +114,25 @@ class VTKErrorHandler:
     def _setup_vtk_error_observer(self) -> None:
         """Set up VTK error observer to capture VTK internal errors."""
         try:
-            # Create a custom error observer
-            def vtk_error_callback(obj, event, calldata):
-                if self.suppress_errors:
-                    return
+            # Create a custom error observer class that inherits from vtk.vtkCommand
+            class VTKErrorObserver(vtk.vtkCommand):
+                def __init__(self, handler):
+                    super().__init__()
+                    self.handler = handler
 
-                try:
-                    # Extract error information from VTK
-                    error_text = calldata if calldata else "Unknown VTK error"
-                    self._handle_vtk_error(error_text)
-                except Exception as e:
-                    self.logger.debug(f"Error in VTK error callback: {e}")
+                def Execute(self, obj, event, calldata):
+                    if self.handler.suppress_errors:
+                        return
 
-            # Set up the observer
-            self.vtk_error_observer = vtk.vtkCommand()
-            self.vtk_error_observer.SetCallback(vtk_error_callback)
+                    try:
+                        # Extract error information from VTK
+                        error_text = calldata if calldata else "Unknown VTK error"
+                        self.handler._handle_vtk_error(error_text)
+                    except Exception as e:
+                        self.handler.logger.debug(f"Error in VTK error callback: {e}")
+
+            # Set up the observer using the custom class
+            self.vtk_error_observer = VTKErrorObserver(self)
 
             # Observe VTK object errors
             vtk.vtkObject.GlobalWarningDisplayOff()

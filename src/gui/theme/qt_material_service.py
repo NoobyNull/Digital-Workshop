@@ -15,6 +15,7 @@ Key Features:
 
 import time
 from typing import Dict, List, Tuple, Any
+from importlib.metadata import version, PackageNotFoundError
 from PySide6.QtCore import QObject, Signal, QSettings
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication
@@ -47,8 +48,8 @@ class QtMaterialThemeService(QObject):
         self.qtmaterial = None
         self.qtmaterial_available = False
         try:
-            import qtmaterial
-            self.qtmaterial = qtmaterial
+            import qt_material
+            self.qtmaterial = qt_material
             self.qtmaterial_available = True
             logger.info("qt-material library loaded successfully")
             logger.debug(f"qt-material version: {getattr(self.qtmaterial, '__version__', 'unknown')}")
@@ -59,15 +60,14 @@ class QtMaterialThemeService(QObject):
             self.qtmaterial_available = False
             # Debug: Check if package is installed but not importable
             try:
-                import pkg_resources
                 try:
-                    dist = pkg_resources.get_distribution('qt-material')
-                    logger.warning(f"qt-material package found but not importable: {dist.version}")
+                    pkg_version = version('qt-material')
+                    logger.warning(f"qt-material package found but not importable: {pkg_version}")
                     logger.warning("This suggests a Python path or module name issue")
-                except pkg_resources.DistributionNotFound:
-                    logger.warning("qt-material package not found in pkg_resources")
+                except PackageNotFoundError:
+                    logger.warning("qt-material package not found in installed packages")
             except Exception as debug_e:
-                logger.debug(f"Could not check pkg_resources: {debug_e}")
+                logger.debug(f"Could not check package metadata: {debug_e}")
         except Exception as e:
             logger.error(f"Unexpected error importing qt-material: {e}")
             logger.info("Application will use fallback theme system")
@@ -168,7 +168,7 @@ class QtMaterialThemeService(QObject):
     def _apply_qt_material_theme(self, theme: str, variant: str = None) -> None:
         """
         Apply qt-material theme using the qt-material library.
-        
+
         Args:
             theme: Theme name
             variant: Variant name (currently unused, reserved for future use)
@@ -177,25 +177,40 @@ class QtMaterialThemeService(QObject):
         if not self.qtmaterial or not self.qtmaterial_available:
             logger.warning("qt-material library not available for theme application")
             return
-        
+
         try:
             # Map theme names to qt-material theme names
             qt_theme_mapping = {
-                "dark": "dark_teal",
-                "light": "light_cyan",
-                "auto": "dark_teal"  # Default to dark for auto
+                "dark": "dark_blue",  # Changed from dark_teal to dark_blue
+                "light": "light_blue",  # Changed from light_cyan to light_blue
+                "auto": "dark_blue"  # Default to dark for auto
             }
-            qt_theme = qt_theme_mapping.get(theme, "dark_teal")
-            
-            # Apply qt-material theme
-            app = QApplication.instance()
-            if app:
-                stylesheet = self.qtmaterial.apply_stylesheet(app, theme=qt_theme)
-                app.setStyleSheet(stylesheet)
-                logger.debug(f"qt-material theme applied: {qt_theme}")
-            else:
-                logger.warning("No QApplication instance available for qt-material theme")
-            
+            qt_theme = qt_theme_mapping.get(theme, "dark_blue")
+
+            # Apply qt-material theme with retry logic for QApplication availability
+            max_retries = 5
+            retry_delay = 0.1  # 100ms
+
+            for attempt in range(max_retries):
+                app = QApplication.instance()
+                if app:
+                    try:
+                        stylesheet = self.qtmaterial.apply_stylesheet(app, theme=qt_theme)
+                        app.setStyleSheet(stylesheet)
+                        logger.debug(f"qt-material theme applied: {qt_theme}")
+                        return
+                    except Exception as apply_error:
+                        logger.warning(f"Failed to apply qt-material theme on attempt {attempt + 1}: {apply_error}")
+                        if attempt == max_retries - 1:
+                            raise
+                else:
+                    logger.debug(f"QApplication not available on attempt {attempt + 1}, retrying...")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+
+            # If we get here, all retries failed
+            logger.warning("No QApplication instance available for qt-material theme after all retries")
+
         except Exception as e:
             logger.warning(f"Failed to apply qt-material theme: {e}")
             raise

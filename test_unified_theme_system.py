@@ -188,10 +188,10 @@ def test_unified_theme_manager():
     print("Testing Unified Theme Manager...")
 
     try:
-        from src.gui.theme import UnifiedThemeManager
+        from src.gui.theme import QtMaterialThemeService
 
         # Get manager instance
-        manager = UnifiedThemeManager.instance()
+        manager = QtMaterialThemeService.instance()
 
         # Test theme application
         apply_success = manager.apply_theme("dark", "blue")
@@ -271,9 +271,9 @@ def test_performance():
     print("Testing Performance...")
 
     try:
-        from src.gui.theme import UnifiedThemeManager
+        from src.gui.theme import QtMaterialThemeService
 
-        manager = UnifiedThemeManager.instance()
+        manager = QtMaterialThemeService.instance()
 
         # Test multiple theme applications
         start_time = time.time()
@@ -307,12 +307,12 @@ def test_memory_efficiency():
 
     try:
         import gc
-        from src.gui.theme import UnifiedThemeManager
+        from src.gui.theme import QtMaterialThemeService
 
         # Get initial object count
         initial_objects = len(gc.get_objects())
 
-        manager = UnifiedThemeManager.instance()
+        manager = QtMaterialThemeService.instance()
 
         # Perform multiple operations that could cause memory leaks
         for i in range(50):

@@ -27,7 +27,6 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.theme import (
-    UnifiedThemeManager,
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
 from src.gui.files_tab import FilesTab
@@ -57,10 +56,11 @@ class PreferencesDialog(QDialog):
         self._setup_ui()
 
     def get_theme_color(self, color_name: str) -> str:
-        """Get color from qt-material theme system"""
+        """Get color from theme system"""
         if not self.theme_manager:
             try:
-                self.theme_manager = UnifiedThemeManager.instance()
+                from src.gui.theme.simple_service import ThemeService
+                self.theme_manager = ThemeService.instance()
             except Exception:
                 # Fallback colors if theme system not available
                 fallback_colors = {
@@ -205,7 +205,7 @@ class ThemingTab(QWidget):
         layout.setSpacing(12)
 
         # Header
-        hdr = QLabel("Select your preferred theme mode and color variant.")
+        hdr = QLabel("Select your preferred theme mode.")
         hdr.setWordWrap(True)
         layout.addWidget(hdr)
 
@@ -219,7 +219,7 @@ class ThemingTab(QWidget):
         self._apply_theme_styling()
 
     def _setup_material_theme_selector(self, parent_layout: QVBoxLayout) -> None:
-        """Setup qt-material theme mode and variant selector."""
+        """Setup qt-material theme mode selector."""
         try:
             from src.gui.theme.simple_service import ThemeService
             self.service = ThemeService.instance()
@@ -250,113 +250,54 @@ class ThemingTab(QWidget):
             mode_layout.addStretch()
             mat_layout.addLayout(mode_layout)
 
-            # Variant selector
-            mat_desc = QLabel("Select a Material Design color variant:")
-            mat_desc.setWordWrap(True)
-            mat_layout.addWidget(mat_desc)
-
-            variant_layout = QHBoxLayout()
-            variant_layout.addWidget(QLabel("Variant:"))
-
-            self.variant_combo = QComboBox()
-            self._populate_material_variants()
-            self.variant_combo.currentTextChanged.connect(self._on_material_variant_changed)
-            variant_layout.addWidget(self.variant_combo)
-            variant_layout.addStretch()
-
-            mat_layout.addLayout(variant_layout)
             parent_layout.addWidget(mat_group)
 
         except Exception as e:
             # Silently fail if ThemeService not available
             pass
 
-    def _populate_material_variants(self) -> None:
-        """Populate material variant combo."""
+    def _on_theme_mode_changed(self, index: int) -> None:
+        """Handle theme mode change."""
         try:
             if not self.service:
                 return
 
-            self.variant_combo.blockSignals(True)
-            self.variant_combo.clear()
-
-            # Get current theme type
-            theme_type, _ = self.service.get_current_theme()
-            variants = self.service.get_qt_material_variants(theme_type)
-
-            # Get the currently selected variant from QSettings
-            from PySide6.QtCore import QSettings
-            settings = QSettings("Candy-Cadence", "3D-MM")
-            current_variant = settings.value("qt_material_variant", "blue", type=str)
-
-            current_index = 0
-            for idx, variant in enumerate(variants):
-                # Extract color name from variant (e.g., "dark_blue" -> "blue")
-                color_name = variant.split("_", 1)[1] if "_" in variant else variant
-                self.variant_combo.addItem(color_name.title(), variant)
-                
-                # Set current index if this variant matches the saved variant
-                if variant == current_variant or color_name == current_variant:
-                    current_index = idx
-
-            self.variant_combo.setCurrentIndex(current_index)
-            self.variant_combo.blockSignals(False)
-        except Exception:
+            theme_mode = self.mode_combo.currentData()
+            if theme_mode:
+                self.service.set_theme(theme_mode)
+                if self.on_live_apply:
+                    self.on_live_apply()
+        except Exception as e:
             pass
 
     def _apply_theme_styling(self) -> None:
-        """Apply theme styling (no-op - qt-material handles this)."""
-        pass
+        """Apply theme styling to the tab."""
+        try:
+            # This is a placeholder for any additional styling
+            # QDarkStyleSheet handles most styling automatically
+            pass
+        except Exception as e:
+            pass
 
-    def _on_theme_mode_changed(self, index: int) -> None:
-        """Handle theme mode change (Dark/Light/Auto)."""
+    def reload_from_current(self) -> None:
+        """Reload theme selector from current theme."""
         try:
             if not self.service:
                 return
 
-            mode = self.mode_combo.itemData(index)
-            if not mode:
-                return
-
-            # Get the current variant from QSettings to apply with new mode
-            from PySide6.QtCore import QSettings
-            settings = QSettings("Candy-Cadence", "3D-MM")
-            current_variant = settings.value("qt_material_variant", "blue", type=str)
-            
-            # Apply the new theme mode with the current variant
-            self.service.apply_theme(mode, "qt-material")
-
-            # Update variant selector to show correct variants for new mode
-            self._populate_material_variants()
-
-            # Reapply styling to this tab
-            self._apply_theme_styling()
-
-            # Notify parent of theme change
-            if callable(self.on_live_apply):
-                self.on_live_apply()
-        except Exception:
-            pass
-
-    def _on_material_variant_changed(self, variant_name: str) -> None:
-        """Handle material variant change."""
-        try:
-            if not self.service or not variant_name:
-                return
-
-            # Set the variant and apply theme
-            self.service.set_qt_material_variant(variant_name.lower())
             current_theme, _ = self.service.get_current_theme()
-            self.service.apply_theme(current_theme, "qt-material")
-
-            # Reapply styling to this tab
-            self._apply_theme_styling()
-
-            # Notify parent of theme change
-            if callable(self.on_live_apply):
-                self.on_live_apply()
-        except Exception:
+            self.mode_combo.setCurrentIndex({"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0))
+        except Exception as e:
             pass
+
+    def save_settings(self) -> None:
+        """Save theming settings."""
+        try:
+            if self.service:
+                self.service.apply_theme(self.mode_combo.currentData())
+        except Exception as e:
+            pass
+
 class ViewerSettingsTab(QWidget):
     """3D Viewer settings tab: grid, ground plane, camera, and lighting."""
 
@@ -871,13 +812,70 @@ class ThumbnailSettingsTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = None
+        self.theme_manager = None
         try:
             from src.core.logging_config import get_logger
             self.logger = get_logger(__name__)
         except Exception:
             pass
         self._setup_ui()
+
+    def get_theme_color(self, color_name: str) -> str:
+        """Get color from qt-material theme system"""
+        if not self.theme_manager:
+            try:
+                from src.gui.theme.simple_service import ThemeService
+                self.theme_manager = ThemeService.instance()
+            except Exception:
+                # Fallback colors if theme system not available
+                fallback_colors = {
+                    'border': '#cccccc',
+                    'warning': '#ffa500',
+                    'error': '#ff6b6b',
+                    'text_primary': '#000000'
+                }
+                return fallback_colors.get(color_name, '#1976D2')
+
+        try:
+            return self.theme_manager.get_color(color_name)
+        except Exception:
+            # Fallback colors if color not found in theme
+            fallback_colors = {
+                'border': '#cccccc',
+                'warning': '#ffa500',
+                'error': '#ff6b6b',
+                'text_primary': '#000000'
+            }
+            return fallback_colors.get(color_name, '#1976D2')
         self._load_settings()
+
+    def get_theme_color(self, color_name: str) -> str:
+        """Get color from qt-material theme system"""
+        if not self.theme_manager:
+            try:
+                from src.gui.theme import QtMaterialThemeService
+                self.theme_manager = QtMaterialThemeService.instance()
+            except Exception:
+                # Fallback colors if theme system not available
+                fallback_colors = {
+                    'border': '#cccccc',
+                    'warning': '#ffa500',
+                    'error': '#ff6b6b',
+                    'text_primary': '#000000'
+                }
+                return fallback_colors.get(color_name, '#1976D2')
+
+        try:
+            return self.theme_manager.get_color(color_name)
+        except Exception:
+            # Fallback colors if color not found in theme
+            fallback_colors = {
+                'border': '#cccccc',
+                'warning': '#ffa500',
+                'error': '#ff6b6b',
+                'text_primary': '#000000'
+            }
+            return fallback_colors.get(color_name, '#1976D2')
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -1314,7 +1312,43 @@ class AdvancedTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = None
+        self.theme_manager = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+
         self._setup_ui()
+
+    def get_theme_color(self, color_name: str) -> str:
+        """Get color from qt-material theme system"""
+        if not self.theme_manager:
+            try:
+                from src.gui.theme import QtMaterialThemeService
+                self.theme_manager = QtMaterialThemeService.instance()
+            except Exception:
+                # Fallback colors if theme system not available
+                fallback_colors = {
+                    'border': '#cccccc',
+                    'warning': '#ffa500',
+                    'error': '#ff6b6b',
+                    'text_primary': '#000000'
+                }
+                return fallback_colors.get(color_name, '#1976D2')
+
+        try:
+            return self.theme_manager.get_color(color_name)
+        except Exception:
+            # Fallback colors if color not found in theme
+            fallback_colors = {
+                'border': '#cccccc',
+                'warning': '#ffa500',
+                'error': '#ff6b6b',
+                'text_primary': '#000000'
+            }
+            return fallback_colors.get(color_name, '#1976D2')
 
     def _setup_ui(self) -> None:
         """Setup the advanced settings UI."""
@@ -1608,4 +1642,8 @@ class AdvancedTab(QWidget):
                 "Reset Failed",
                 f"An error occurred during system reset:\n\n{str(e)}"
             )
+
+    def save_settings(self) -> None:
+        """Save advanced settings (no-op for this tab)."""
+        pass
 
