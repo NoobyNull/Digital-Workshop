@@ -151,6 +151,7 @@ data/
 *.db
 *.sqlite
 models/
+STL/
 temp/
 logs/
 *.stl
