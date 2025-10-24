@@ -16,6 +16,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+# For user-specific directories
+import platform
+
 
 class JSONFormatter(logging.Formatter):
     """
@@ -199,6 +202,10 @@ def setup_logging(
     max_bytes: int = 10*1024*1024,
     backup_count: int = 5
 ) -> logging.Logger:
+    # Use user-specific log directory if default is used
+    if log_dir == "logs":
+        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+        log_dir = str(app_data / 'DigitalWorkshop' / 'logs')
     """
     Set up JSON logging with rotation for the application.
 

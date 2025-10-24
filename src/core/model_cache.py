@@ -90,9 +90,15 @@ class ModelCache:
         self.perf_monitor = get_performance_monitor()
         perf_profile = self.perf_monitor.get_performance_profile()
 
-        # Cache configuration
-        self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
+        # Cache configuration - use user-specific directory for installed app
+        if cache_dir == "cache":
+            # Default to user local app data directory
+            import os
+            app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+            self.cache_dir = app_data / 'DigitalWorkshop' / 'cache'
+        else:
+            self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Memory limits - check for user override first
         if max_memory_mb is None:
