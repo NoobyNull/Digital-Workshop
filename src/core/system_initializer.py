@@ -38,8 +38,8 @@ class SystemInitializer:
         try:
             self._setup_application_metadata()
             self._setup_high_dpi_support()
-            self._setup_logging()
             self._create_directories()
+            self._setup_logging()
             self.logger.info("System initialization completed successfully")
             return True
         except RuntimeError as e:
@@ -66,6 +66,7 @@ class SystemInitializer:
         # Get the app data path for logs
         app_data_path = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         log_dir = os.path.join(app_data_path, "logs")
+
 
         if self.config.enable_file_logging:
             setup_logging(
@@ -102,11 +103,11 @@ class SystemInitializer:
         # Create directories
         for dir_path in app_dirs:
             if QDir().mkpath(dir_path):
-                self.logger.debug("Created directory: %s", dir_path)
+                print(f"Created directory: {dir_path}")
             else:
-                self.logger.debug("Directory already exists: %s", dir_path)
+                print(f"Directory already exists: {dir_path}")
 
-        self.logger.debug("Application directories created")
+        print("Application directories created")
 
     def get_app_data_path(self) -> Path:
         """Get the application data directory path.

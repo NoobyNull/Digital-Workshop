@@ -87,7 +87,7 @@ class TimestampRotatingFileHandler(logging.Handler):
         """
         super().__init__()
         self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         self.max_bytes = max_bytes
         self.backup_count = backup_count
         self.current_file = None
