@@ -1,4 +1,4 @@
-# 3D-MM (3D Model Manager) - Python Dependencies
+# Digital Workshop - Python Dependencies
 
 # Core GUI Framework
 # Primary option: PySide6 (recommended for Python 3.8+)

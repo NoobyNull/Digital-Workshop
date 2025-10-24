@@ -1,5 +1,5 @@
 """
-STL file parser for 3D-MM application.
+STL file parser for Digital Workshop.
 
 This module provides parsing functionality for both binary and ASCII STL file formats.
 It includes memory-efficient processing, progress reporting, and comprehensive error handling.

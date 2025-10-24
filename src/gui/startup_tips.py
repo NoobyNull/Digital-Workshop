@@ -18,7 +18,7 @@ class StartupTipsDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("3D-MM - Getting Started")
+        self.setWindowTitle("Digital Workshop - Getting Started")
         self.setMinimumWidth(600)
         self.setMinimumHeight(400)
         self.setModal(True)
@@ -40,7 +40,7 @@ class StartupTipsDialog(QDialog):
         layout.setSpacing(20)
         
         # Welcome header
-        welcome_label = QLabel("Welcome to 3D-MM!")
+        welcome_label = QLabel("Welcome to Digital Workshop!")
         welcome_font = QFont()
         welcome_font.setPointSize(18)
         welcome_font.setBold(True)
@@ -48,7 +48,7 @@ class StartupTipsDialog(QDialog):
         layout.addWidget(welcome_label)
         
         # Subtitle
-        subtitle = QLabel("Your Personal 3D Model Manager")
+        subtitle = QLabel("Your Personal Digital Workshop")
         subtitle_font = QFont()
         subtitle_font.setPointSize(11)
         subtitle_font.setItalic(True)

@@ -260,16 +260,16 @@ class EventHandler:
         logger.info("Showing about dialog")
 
         about_text = (
-            "<h3>3D-MM - 3D Model Manager</h3>"
+            "<h3>Digital Workshop</h3>"
             "<p>Version 1.0.0</p>"
             "<p>A desktop application for managing and viewing 3D models.</p>"
             "<p><b>Supported formats:</b> STL, OBJ, STEP, MF3</p>"
             "<p><b>Requirements:</b> Windows 7+, Python 3.8+, PySide5</p>"
             "<br>"
-            "<p>&copy; 2023 3D-MM Development Team</p>"
+            "<p>&copy; 2023 Digital Workshop Development Team</p>"
         )
 
-        QMessageBox.about(self.main_window, "About 3D-MM", about_text)
+        QMessageBox.about(self.main_window, "About Digital Workshop", about_text)
 
     @log_function_call(logger)
     def generate_library_screenshots(self) -> None:

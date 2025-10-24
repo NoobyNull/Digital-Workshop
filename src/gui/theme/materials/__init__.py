@@ -1,5 +1,5 @@
 """
-Material Design theme integration for 3D-MM application.
+Material Design theme integration for Digital Workshop.
 
 Optional integration with qt-material library for Material Design themes.
 This module is optional and can be used to provide Material Design presets.

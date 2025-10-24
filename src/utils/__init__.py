@@ -1,5 +1,5 @@
 """
-Utility functions for 3D-MM application.
+Utility functions for Digital Workshop.
 
 This package contains utility functions for file operations, geometry calculations,
 and other common functionality used throughout the application.

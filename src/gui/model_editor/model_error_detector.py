@@ -1,5 +1,5 @@
 """
-Model error detection for 3D-MM Model Editor.
+Model error detection for Digital Workshop Model Editor.
 
 Detects various mesh errors:
 - Non-manifold edges (edges shared by >2 triangles)

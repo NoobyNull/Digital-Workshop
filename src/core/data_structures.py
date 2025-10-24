@@ -1,5 +1,5 @@
 """
-Shared data structures for 3D-MM application.
+Shared data structures for Digital Workshop.
 
 This module contains the core data structures that are shared across different
 components of the application, including parsers, cache, and GUI components.

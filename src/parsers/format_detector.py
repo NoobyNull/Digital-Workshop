@@ -1,5 +1,5 @@
 """
-Format detection utility for 3D-MM application.
+Format detection utility for Digital Workshop.
 
 This module provides automatic detection of 3D model file formats based on
 file extension and content analysis.

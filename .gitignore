@@ -144,9 +144,33 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-# 3D-MM specific
+# Digital Workshop specific
 *.db
 *.sqlite
 models/
 temp/
 logs/
+*.stl
+*.tap
+
+# Documentation and reports
+*REPORT.md
+*PLAN.md
+*SUMMARY.md
+*FIX*.md
+*VALIDATION*.md
+*IMPLEMENTATION*.md
+*TESTING*.md
+*COMPLETE.md
+*CONSOLIDATION*.md
+*FINAL*.md
+*INTEGRATION*.md
+*LOGGING*.md
+*MISSING*.md
+*QDARKSTYLE*.md
+*THEME*.md
+*THEMING*.md
+*TOOL_DATABASE*.md
+*ui_layout*.md
+*WALKTHROUGH*.md
+*WORK_COMPLETED*.md

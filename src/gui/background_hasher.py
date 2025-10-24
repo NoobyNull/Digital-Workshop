@@ -1,5 +1,5 @@
 """
-Background hashing worker for 3D-MM application.
+Background hashing worker for Digital Workshop.
 
 Processes unhashed models in the background without blocking the UI.
 Provides duplicate detection and file recovery functionality.

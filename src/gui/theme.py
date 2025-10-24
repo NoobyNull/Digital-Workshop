@@ -1,5 +1,5 @@
 """
-Theme system for 3D-MM application (Facade).
+Theme system for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored theme system.
 All functionality has been moved to src/gui/theme/ package for better modularity.

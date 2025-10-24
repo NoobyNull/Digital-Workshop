@@ -1,5 +1,5 @@
 """
-3D format parsers for 3D-MM application.
+3D format parsers for Digital Workshop.
 
 This package contains parsers for various 3D model formats including STL, OBJ, 3MF, and STEP.
 Each parser handles format-specific loading and validation.

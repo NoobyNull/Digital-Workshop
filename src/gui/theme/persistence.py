@@ -1,5 +1,5 @@
 """
-Theme persistence for 3D-MM application.
+Theme persistence for Digital Workshop.
 
 Handles saving, loading, importing, and exporting themes to/from JSON files.
 

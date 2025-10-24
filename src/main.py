@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-3D-MM (3D Model Manager) - Main Entry Point
+Digital Workshop (3D Model Manager) - Main Entry Point
 
 This is the main entry point for the 3D Model Manager application.
 It uses the new modular Application class for initialization and execution.
@@ -27,7 +27,7 @@ def parse_arguments():
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        description="3D-MM (3D Model Manager) - Manage and view 3D models",
+        description="Digital Workshop (3D Model Manager) - Manage and view 3D models",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -59,10 +59,10 @@ Examples:
 
 
 def main():
-    """Main function to start the 3D-MM application."""
+    """Main function to start the Digital Workshop application."""
     # Initialize logger early
     logger = get_logger(__name__)
-    logger.info("3D-MM application starting")
+    logger.info("Digital Workshop application starting")
 
     # Parse command line arguments
     args = parse_arguments()

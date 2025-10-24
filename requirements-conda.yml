@@ -1,7 +1,7 @@
-# 3D-MM (3D Model Manager) - Conda Environment File
+# Digital Workshop - Conda Environment File
 # Use this file with: conda env create -f requirements-conda.yml
 
-name: 3d-mm
+name: digital-workshop
 channels:
   - conda-forge
   - defaults

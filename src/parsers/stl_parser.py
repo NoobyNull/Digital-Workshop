@@ -1,5 +1,5 @@
 """
-STL file parser for 3D-MM application (Facade).
+STL file parser for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored STL parser.
 Core parsing logic remains in stl_parser_original.py for complex interdependencies.

@@ -1,5 +1,5 @@
 """
-JSON logging configuration with rotation for 3D-MM application.
+JSON logging configuration with rotation for Digital Workshop application.
 
 This module provides a centralized logging configuration with JSON formatting
 and rotating file handlers to ensure efficient log management without memory leaks.
@@ -213,7 +213,7 @@ def setup_logging(
         Configured logger instance
     """
     # Create the application logger
-    logger = logging.getLogger("3D-MM")
+    logger = logging.getLogger("Digital Workshop")
     logger.setLevel(getattr(logging, log_level.upper()))
 
     # Clear any existing handlers
@@ -250,7 +250,7 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logging.getLogger(f"3D-MM.{name}")
+    return logging.getLogger(f"Digital Workshop.{name}")
 
 
 def log_function_call(logger: logging.Logger):

@@ -1,6 +1,6 @@
-3D-MM (3D Model Manager) - Installation Guide
+Digital Workshop - Installation Guide
 
-Thank you for choosing 3D-MM, the professional 3D model viewing and management application.
+Thank you for choosing Digital Workshop, the professional 3D model viewing and management application.
 
 SYSTEM REQUIREMENTS
 ===================
@@ -27,7 +27,7 @@ Graphics API Support:
 INSTALLATION
 ============
 
-1. Run the installer executable (3D-MM-Setup-1.0.0.exe)
+1. Run the installer executable (Digital Workshop-Setup-1.0.0.exe)
 2. Follow the on-screen instructions
 3. Choose your preferred installation location
 4. Select which shortcuts to create
@@ -42,7 +42,7 @@ The installer will automatically:
 SUPPORTED FILE FORMATS
 ======================
 
-3D-MM supports the following 3D model formats:
+Digital Workshop supports the following 3D model formats:
 - STL (Stereolithography) - .stl
 - OBJ (Wavefront Object) - .obj
 - 3MF (3D Manufacturing Format) - .3mf
@@ -52,7 +52,7 @@ GETTING STARTED
 ===============
 
 After installation, you can:
-1. Launch 3D-MM from the Start Menu or desktop shortcut
+1. Launch Digital Workshop from the Start Menu or desktop shortcut
 2. Open 3D model files using File > Open or drag-and-drop
 3. Browse your model library using the built-in library manager
 4. Search models by name, format, or metadata
@@ -80,34 +80,34 @@ Common Issues:
    - Ensure sufficient disk space for temporary files
 
 4. File associations not working:
-   - Repair the installation using the installer
-   - Manually associate files with 3D-MM.exe
+    - Repair the installation using the installer
+    - Manually associate files with Digital Workshop.exe
 
 For more detailed troubleshooting, please refer to the documentation included with the application or visit our support website.
 
 UNINSTALLATION
 ==============
 
-To remove 3D-MM from your system:
+To remove Digital Workshop from your system:
 1. Open "Programs and Features" in Windows Control Panel
-2. Select "3D-MM" from the list
+2. Select "Digital Workshop" from the list
 3. Click "Uninstall"
 4. Follow the on-screen instructions
 
-You will be asked whether to keep or remove your user data and settings. Choose "Keep" if you plan to reinstall 3D-MM in the future.
+You will be asked whether to keep or remove your user data and settings. Choose "Keep" if you plan to reinstall Digital Workshop in the future.
 
 SUPPORT & UPDATES
 =================
 
 For the latest updates, documentation, and support:
-- Website: https://3dmm.local
+- Website: https://digitalworkshop.local
 - Documentation: Included in the installation
 - Updates: Check for updates from within the application
 
 THIRD-PARTY LICENSES
 ===================
 
-3D-MM uses the following open-source components:
+Digital Workshop uses the following open-source components:
 - PySide5/Qt - LGPLv3
 - PyQt3D - GPL v3
 - SQLite - Public Domain
@@ -116,4 +116,4 @@ THIRD-PARTY LICENSES
 
 Full license information is available in the documentation folder.
 
-Thank you for using 3D-MM!
+Thank you for using Digital Workshop!

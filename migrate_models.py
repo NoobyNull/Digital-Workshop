@@ -17,16 +17,16 @@ def get_appdata_db_path():
     """Get the AppData database path."""
     try:
         # Set organization and app name for proper path resolution
-        QCoreApplication.setApplicationName('3D-MM')
+        QCoreApplication.setApplicationName('Digital Workshop')
         QCoreApplication.setApplicationVersion('1.0.0')
-        QCoreApplication.setOrganizationName('3D-MM Development Team')
-        QCoreApplication.setOrganizationDomain('3dmm.local')
+        QCoreApplication.setOrganizationName('Digital Workshop Development Team')
+        QCoreApplication.setOrganizationDomain('digitalworkshop.local')
 
         # QStandardPaths.AppDataLocation uses organization and app name
-        # which creates: AppData/Roaming/3D-MM Development Team/3D-MM/
+        # which creates: AppData/Roaming/Digital Workshop Development Team/Digital Workshop/
         app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
         app_data.mkdir(parents=True, exist_ok=True)
-        return str(app_data / "3dmm.db")
+        return str(app_data / "digitalworkshop.db")
     except Exception:
         return "data/3dmm.db"
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     print("=" * 60)
-    print("3D-MM Model Migration Tool")
+    print("Digital Workshop Model Migration Tool")
     print("=" * 60)
     print()
 

@@ -1,5 +1,5 @@
 """
-SQLite database manager for 3D-MM application - Compatibility Layer.
+SQLite database manager for Digital Workshop - Compatibility Layer.
 
 REFACTORED: This module now acts as a compatibility layer.
 The actual implementation has been split into modular components in src/core/database/

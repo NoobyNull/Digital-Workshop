@@ -87,7 +87,7 @@ class QtMaterialThemeService(QObject):
         self._theme_change_count = 0
         
         # Initialize settings
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         
         # Load saved theme
         self.load_settings()

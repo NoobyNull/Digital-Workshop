@@ -1,5 +1,5 @@
 """
-Model error dialog for 3D-MM Model Editor.
+Model error dialog for Digital Workshop Model Editor.
 
 Shows detected errors and offers fixing options:
 - Preview then save

@@ -1,5 +1,5 @@
 """
-Lighting manager for a single VTK light in the 3D-MM application.
+Lighting manager for a single VTK light in Digital Workshop.
 
 Responsibilities:
 - Create and manage a single vtkLight attached to a provided renderer

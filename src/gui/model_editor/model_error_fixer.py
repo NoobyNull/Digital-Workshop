@@ -1,5 +1,5 @@
 """
-Model error fixing for 3D-MM Model Editor.
+Model error fixing for Digital Workshop Model Editor.
 
 Fixes various mesh errors:
 - Non-manifold edges

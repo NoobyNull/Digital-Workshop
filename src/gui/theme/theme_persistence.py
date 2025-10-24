@@ -43,7 +43,7 @@ class ThemePersistence:
 
     def __init__(self):
         """Initialize theme persistence manager."""
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._mutex = QMutex()
         self._cache_mutex = QMutex()
 

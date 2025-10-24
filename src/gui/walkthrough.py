@@ -29,8 +29,8 @@ class WalkthroughManager:
     TIPS = [
         # Getting Started
         TutorialTip(
-            title="Welcome to 3D-MM!",
-            content="3D-MM is your personal 3D model organizer. Start by adding a folder containing your 3D models in the Files tab. The app will automatically scan and catalog all supported formats (STL, OBJ, 3MF, STEP).",
+            title="Welcome to Digital Workshop!",
+            content="Digital Workshop is your personal 3D model organizer. Start by adding a folder containing your 3D models in the Files tab. The app will automatically scan and catalog all supported formats (STL, OBJ, 3MF, STEP).",
             category="getting_started",
             icon_emoji="👋"
         ),
@@ -126,7 +126,7 @@ class WalkthroughManager:
     def get_welcome_message(cls) -> str:
         """Get the welcome message for first-time users."""
         return (
-            "Welcome to 3D-MM - Your Personal 3D Model Manager!\n\n"
+            "Welcome to Digital Workshop - Your Personal Digital Workshop!\n\n"
             "Quick Start:\n"
             "1. Add a folder with your 3D models (Files tab)\n"
             "2. Browse and select models in the Library\n"
@@ -151,7 +151,7 @@ class WalkthroughDialog(QDialog):
 
     def __init__(self, parent=None, tip: Optional[TutorialTip] = None):
         super().__init__(parent)
-        self.setWindowTitle("3D-MM Tutorial")
+        self.setWindowTitle("Digital Workshop Tutorial")
         self.setMinimumWidth(500)
         self.setMinimumHeight(300)
         self.setModal(True)

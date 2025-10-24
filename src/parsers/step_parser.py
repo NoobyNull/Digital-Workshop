@@ -1,5 +1,5 @@
 """
-STEP file parser for 3D-MM application.
+STEP file parser for Digital Workshop.
 
 This module provides parsing functionality for STEP/ISO 10303 files.
 It includes memory-efficient processing, progress reporting, and comprehensive error handling.

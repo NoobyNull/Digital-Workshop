@@ -1,5 +1,5 @@
 """
-Consolidated theme core module for 3D-MM application.
+Consolidated theme core module for Digital Workshop.
 
 This module consolidates the core theme functionality from:
 - theme_constants.py - Constants and definitions

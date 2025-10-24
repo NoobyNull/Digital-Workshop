@@ -1,5 +1,5 @@
 """
-Model cache system for 3D-MM application.
+Model cache system for Digital Workshop.
 
 This module provides an intelligent caching system for 3D models with adaptive
 memory management, LRU eviction, and progressive loading capabilities.

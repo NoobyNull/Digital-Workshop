@@ -191,8 +191,8 @@ class MenuManager:
         help_menu.addSeparator()
 
         # About action
-        about_action = QAction("&About 3D-MM", self.main_window)
-        about_action.setStatusTip("Show information about 3D-MM")
+        about_action = QAction("&About Digital Workshop", self.main_window)
+        about_action.setStatusTip("Show information about Digital Workshop")
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 

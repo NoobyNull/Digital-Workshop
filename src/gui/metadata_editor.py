@@ -1,5 +1,5 @@
 """
-Metadata editor widget for 3D-MM application (Facade).
+Metadata editor widget for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored metadata editor.
 All functionality has been moved to src/gui/metadata_components/ package.

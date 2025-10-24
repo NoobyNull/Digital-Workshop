@@ -1,5 +1,5 @@
 """
-Search widget for 3D-MM application (Facade).
+Search widget for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored search widget.
 All functionality has been moved to src/gui/search_components/ package.

@@ -1,8 +1,8 @@
-# 3D-MM (3D Model Manager) Documentation
+# Digital Workshop Documentation
 
 ## Overview
 
-3D-MM is a Windows desktop application for organizing and viewing 3D model collections. It's designed for hobbyists who need to manage large collections of 3D models with ease.
+Digital Workshop is a Windows desktop application for organizing and viewing 3D model collections. It's designed for hobbyists who need to manage large collections of 3D models with ease.
 
 ## Table of Contents
 
@@ -36,11 +36,11 @@
 1. Download the latest installer from the releases page
 2. Run the installer executable
 3. Follow the installation wizard
-4. Launch 3D-MM from the Start menu
+4. Launch Digital Workshop from the Start menu
 
 ## Running the Application
 
-For detailed instructions on running the 3D-MM application in both development and production modes, see the [Running Guide](RUNNING_GUIDE.md).
+For detailed instructions on running the Digital Workshop application in both development and production modes, see the [Running Guide](RUNNING_GUIDE.md).
 
 ### Quick Start
 

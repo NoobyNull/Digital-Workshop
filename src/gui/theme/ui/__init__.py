@@ -1,5 +1,5 @@
 """
-Theme UI components for 3D-MM application.
+Theme UI components for Digital Workshop.
 
 Provides UI widgets for theme management:
 - ThemeSwitcher: Quick theme selection dropdown

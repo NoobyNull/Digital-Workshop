@@ -40,7 +40,7 @@ class QtMaterialThemeCore(QObject):
         super().__init__()
         
         # Settings storage
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         
         # Current theme state
         self._current_theme = "dark"

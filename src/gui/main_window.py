@@ -1,5 +1,5 @@
 """
-Main window implementation for 3D-MM application.
+Main window implementation for Digital Workshop.
 
 This module provides the main application window with menu bar, toolbar,
 status bar, and dockable widgets for 3D model management.
@@ -35,7 +35,7 @@ from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
 
 class MainWindow(QMainWindow):
     """
-    Main application window for 3D Model Manager.
+    Main application window for Digital Workshop.
 
     Provides the primary interface with menu bar, toolbar, status bar,
     and dockable widgets for model management and 3D visualization.
@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         self.hide()
 
         # Window properties
-        self.setWindowTitle("3D-MM - 3D Model Manager")
+        self.setWindowTitle("Digital Workshop")
 
         # Load window settings from config
         try:
@@ -1475,16 +1475,16 @@ class MainWindow(QMainWindow):
         self.logger.info("Showing about dialog")
 
         about_text = (
-            "<h3>3D-MM - 3D Model Manager</h3>"
+            "<h3>Digital Workshop</h3>"
             "<p>Version 1.0.0</p>"
             "<p>A desktop application for managing and viewing 3D models.</p>"
             "<p><b>Supported formats:</b> STL, OBJ, STEP, MF3</p>"
             "<p><b>Requirements:</b> Windows 7+, Python 3.8+, PySide5</p>"
             "<br>"
-            "<p>&copy; 2023 3D-MM Development Team</p>"
+            "<p>&copy; 2023 Digital Workshop Development Team</p>"
         )
 
-        QMessageBox.about(self, "About 3D-MM", about_text)
+        QMessageBox.about(self, "About Digital Workshop", about_text)
 
     def _generate_library_screenshots(self) -> None:
         """Generate screenshots for all models in the library with applied materials."""

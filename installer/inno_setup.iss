@@ -1,12 +1,13 @@
-; 3D-MM (3D Model Manager) - Inno Setup Installer Script
-; This script creates a professional Windows installer for the 3D-MM application
+; Digital Workshop - Inno Setup Installer Script
+; This script creates a professional Windows installer for the Digital Workshop application
+; Updated to reflect current project structure after cleanup
 
-#define MyAppName "3D-MM"
+#define MyAppName "Digital Workshop"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "3D-MM Development Team"
-#define MyAppURL "https://3dmm.local"
-#define MyAppExeName "3D-MM.exe"
-#define MyAppAssocName "3D Model Manager"
+#define MyAppPublisher "Digital Workshop Development Team"
+#define MyAppURL "https://digitalworkshop.local"
+#define MyAppExeName "Digital Workshop.exe"
+#define MyAppAssocName "Digital Workshop"
 
 [Setup]
 ; Application information
@@ -24,7 +25,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 
 ; Installer executable information
-OutputBaseFilename=3D-MM-Setup-{#MyAppVersion}
+OutputBaseFilename=Digital Workshop-Setup-{#MyAppVersion}
 OutputDir=..\dist
 SetupIconFile=assets\setup_icon.ico
 Compression=lzma2/max
@@ -69,14 +70,14 @@ Source: "assets\readme.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu shortcuts
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Comment: "3D Model Manager"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Comment: "Digital Workshop 3D Model Manager"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
 ; Desktop shortcut
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"; Comment: "3D Model Manager"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"; Comment: "Digital Workshop 3D Model Manager"
 
 ; Quick Launch shortcut
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon; IconFilename: "{app}\{#MyAppExeName}"; Comment: "3D Model Manager"
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon; IconFilename: "{app}\{#MyAppExeName}"; Comment: "Digital Workshop 3D Model Manager"
 
 [Registry]
 ; Application registration
@@ -126,10 +127,10 @@ begin
   // Check if .NET Framework 4.5 or higher is installed (required for some components)
   if not IsDotNetInstalled(4, 0) then
   begin
-    MsgBox('3D-MM requires .NET Framework 4.5 or higher to be installed.' + #13#13 +
-           'Please install .NET Framework 4.5 or higher and run the setup again.' + #13#13 +
-           'You can download it from: https://www.microsoft.com/net/download',
-           mbError, MB_OK);
+    MsgBox('Digital Workshop requires .NET Framework 4.5 or higher to be installed.' + #13#13 +
+            'Please install .NET Framework 4.5 or higher and run the setup again.' + #13#13 +
+            'You can download it from: https://www.microsoft.com/net/download',
+            mbError, MB_OK);
     Result := False;
     Exit;
   end;

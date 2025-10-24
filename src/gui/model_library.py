@@ -1,5 +1,5 @@
 """
-Model library interface for 3D-MM application.
+Model library interface for Digital Workshop.
 
 Provides a model library widget with:
 - File browser

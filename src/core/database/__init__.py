@@ -1,5 +1,5 @@
 """
-Database module - modular database operations for 3D-MM application.
+Database module - modular database operations for Digital Workshop.
 
 Provides DatabaseManager facade with specialized repositories for models, metadata,
 and maintenance operations.

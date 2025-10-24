@@ -58,7 +58,7 @@ class ThemeService:
 
     def __init__(self):
         """Initialize theme service."""
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._load_saved_theme()
 
     @classmethod

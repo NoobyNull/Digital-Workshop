@@ -1,5 +1,5 @@
 """
-Consolidated theme service for 3D-MM application.
+Consolidated theme service for Digital Workshop.
 
 This module consolidates the theme service functionality from:
 - simple_service.py - Qt-material focused service (primary base)
@@ -252,7 +252,7 @@ class ThemeService:
         if hasattr(self, '_initialized'):
             return
             
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._detector = SystemThemeDetector()
         self._persistence = ThemePersistence()
         self._auto_save_enabled = True

@@ -1,5 +1,5 @@
 """
-OBJ file parser for 3D-MM application.
+OBJ file parser for Digital Workshop.
 
 This module provides parsing functionality for Wavefront OBJ files with MTL material support.
 It includes memory-efficient processing, progress reporting, and comprehensive error handling.

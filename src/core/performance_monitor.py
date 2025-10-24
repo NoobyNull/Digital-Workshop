@@ -1,5 +1,5 @@
 """
-Performance monitoring system for 3D-MM application.
+Performance monitoring system for Digital Workshop.
 
 This module provides comprehensive performance monitoring capabilities including
 memory usage tracking, operation timing, bottleneck identification, and

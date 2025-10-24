@@ -1,6 +1,6 @@
-# 3D-MM (3D Model Manager) - Running Guide
+# Digital Workshop - Running Guide
 
-This guide provides comprehensive instructions for running the 3D-MM application in both development and production modes.
+This guide provides comprehensive instructions for running the Digital Workshop application in both development and production modes.
 
 ## Table of Contents
 
@@ -55,7 +55,7 @@ If you haven't already, clone the repository:
 
 ```bash
 git clone <repository-url>
-cd 3D-MM
+cd digital-workshop
 ```
 
 ### Step 2: Set Up Python Environment
@@ -93,7 +93,7 @@ If you have conda installed, you can create a conda environment:
 
 ```bash
 conda env create -f requirements-conda.yml
-conda activate 3d-mm
+conda activate digital-workshop
 ```
 
 **Troubleshooting PySide Installation Issues**
@@ -185,9 +185,9 @@ Once the application is running:
 ### Option 1: Using the Pre-built Installer
 
 1. Download the latest installer from the releases page
-2. Run the installer executable (`3D-MM-Setup-1.0.0.exe`)
+2. Run the installer executable (`Digital Workshop-Setup-1.0.0.exe`)
 3. Follow the installation wizard
-4. Launch 3D-MM from the Start menu or desktop shortcut
+4. Launch Digital Workshop from the Start menu or desktop shortcut
 
 ### Option 2: Building the Application Yourself
 
@@ -219,8 +219,8 @@ This will:
 After building successfully:
 
 1. Navigate to the `dist` directory
-2. Run `3D-MM.exe` directly
-3. Or run the installer from `dist/3D-MM-Setup-1.0.0.exe`
+2. Run `Digital Workshop.exe` directly
+3. Or run the installer from `dist/Digital Workshop-Setup-1.0.0.exe`
 
 #### Alternative: Manual PyInstaller Build
 

@@ -15,17 +15,17 @@ class ApplicationConfig:
     """Centralized application configuration and metadata."""
 
     # Application Identity
-    name: str = "3D-MM"
-    display_name: str = "3D Model Manager"
+    name: str = "Digital Workshop"
+    display_name: str = "Digital Workshop"
     version: str = "1.0.0"
     build_number: Optional[str] = None
 
     # Organization Information
-    organization_name: str = "3D-MM Development Team"
-    organization_domain: str = "3dmm.local"
+    organization_name: str = "Digital Workshop Development Team"
+    organization_domain: str = "digitalworkshop.local"
 
     # Application Paths and Settings
-    app_data_subdir: str = "3D-MM"
+    app_data_subdir: str = "Digital Workshop"
 
     # Feature Flags
     enable_hardware_acceleration: bool = True

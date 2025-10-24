@@ -1,5 +1,5 @@
 """
-Core business logic for 3D-MM application.
+Core business logic for Digital Workshop.
 
 This package contains the core functionality including model management,
 database operations, search engine, and logging configuration.
