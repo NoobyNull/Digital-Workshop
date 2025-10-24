@@ -145,6 +145,9 @@ ehthumbs.db
 Thumbs.db
 
 # Digital Workshop specific
+.kilocode/
+cache/
+data/
 *.db
 *.sqlite
 models/
