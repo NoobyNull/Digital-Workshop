@@ -443,6 +443,53 @@ class VTKSceneManager:
         except Exception as e:
             logger.error(f"Error during basic cleanup: {e}")
 
+    def reload_settings_from_qsettings(self) -> None:
+        """
+        Reload all viewer settings from QSettings and apply them.
+        Called when preferences are changed.
+        """
+        try:
+            from PySide6.QtCore import QSettings
+            from src.core.application_config import ApplicationConfig
+            
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+            
+            # Reload grid settings
+            self.grid_visible = settings.value("viewer/grid_visible", config.grid_visible, type=bool)
+            self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
+            
+            # Reload ground settings
+            self.ground_visible = settings.value("viewer/ground_visible", config.ground_visible, type=bool)
+            self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
+            self.ground_offset = settings.value("viewer/ground_offset", config.ground_offset, type=float)
+            
+            # Reload gradient settings
+            self.gradient_top_color = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
+            self.gradient_bottom_color = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
+            self.enable_gradient = settings.value("viewer/enable_gradient", config.enable_gradient, type=bool)
+            
+            # Apply gradient changes
+            self.update_gradient_colors()
+            
+            # Apply grid/ground changes
+            if self.grid_actor:
+                self.grid_actor.SetVisibility(self.grid_visible)
+                grid_rgb = self._hex_to_rgb(self.grid_color)
+                self.grid_actor.GetProperty().SetColor(*grid_rgb)
+            
+            if self.ground_actor:
+                self.ground_actor.SetVisibility(self.ground_visible)
+                ground_rgb = self._hex_to_rgb(self.ground_color)
+                self.ground_actor.GetProperty().SetColor(*ground_rgb)
+            
+            self.render()
+            logger.info("Viewer settings reloaded from QSettings and applied")
+            
+        except Exception as e:
+            logger.error(f"Failed to reload settings from QSettings: {e}", exc_info=True)
+    
     def update_gradient_colors(self, top_color: str = None, bottom_color: str = None, enable_gradient: bool = None) -> None:
         """
         Update the background gradient colors and settings.

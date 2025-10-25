@@ -111,25 +111,37 @@ class PreferencesDialog(QDialog):
 
     def _save_and_notify(self):
         try:
+            from src.core.logging_config import get_logger
+            logger = get_logger(__name__)
+            logger.info("=== PREFERENCES SAVE STARTED ===")
+            
             save_theme_to_settings()
+            logger.info("✓ Theme settings saved")
 
             # Save general settings (window + performance)
             if hasattr(self, 'general_tab'):
                 self.general_tab.save_settings()
+                logger.info("✓ General tab settings saved")
 
             # Save viewer settings
             if hasattr(self, 'viewer_settings_tab'):
                 self.viewer_settings_tab.save_settings()
+                logger.info("✓ Viewer settings tab saved to QSettings")
 
             # Save thumbnail settings
             if hasattr(self, 'thumbnail_settings_tab'):
                 self.thumbnail_settings_tab.save_settings()
+                logger.info("✓ Thumbnail settings saved")
 
             # Emit viewer settings changed signal
+            logger.info("Emitting viewer_settings_changed signal...")
             self.viewer_settings_changed.emit()
+            logger.info("✓ viewer_settings_changed signal emitted")
+            logger.info("=== PREFERENCES SAVE COMPLETE ===")
 
             QMessageBox.information(self, "Saved", "All settings saved successfully.")
         except Exception as e:
+            logger.error(f"ERROR during save: {e}", exc_info=True)
             QMessageBox.warning(self, "Save Failed", f"Failed to save settings:\n{e}")
 
     def _reset_to_defaults(self):

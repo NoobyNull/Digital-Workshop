@@ -1236,33 +1236,53 @@ class MainWindow(QMainWindow):
     def _on_viewer_settings_changed(self) -> None:
         """Handle viewer settings change from preferences dialog."""
         try:
-            if not hasattr(self, 'viewer_widget') or not self.viewer_widget:
-                return
-
-            # Try to apply viewer settings changes
-            # Settings may include grid visibility, ground plane, rendering mode, etc.
+            self.logger.info("=== VIEWER SETTINGS CHANGED SIGNAL RECEIVED ===")
             
-            # Attempt to trigger refresh by calling render if available
-            if hasattr(self.viewer_widget, 'render'):
-                try:
-                    self.viewer_widget.render()
-                    self.logger.debug("Viewer re-rendered after settings change")
-                except Exception as e:
-                    self.logger.debug(f"Could not re-render viewer: {e}")
-           
-            # Try scene manager render if available
+            if not hasattr(self, 'viewer_widget'):
+                self.logger.error("ERROR: Main window has no viewer_widget attribute")
+                return
+                
+            if not self.viewer_widget:
+                self.logger.error("ERROR: viewer_widget is None")
+                return
+            
+            self.logger.info(f"viewer_widget type: {type(self.viewer_widget).__name__}")
+            self.logger.info(f"viewer_widget has scene_manager: {hasattr(self.viewer_widget, 'scene_manager')}")
+
+            # Reload settings from QSettings and apply them
             if hasattr(self.viewer_widget, 'scene_manager'):
                 try:
                     scene_manager = self.viewer_widget.scene_manager
-                    if hasattr(scene_manager, 'render'):
-                        scene_manager.render()
-                        self.logger.debug("Scene re-rendered after viewer settings change")
+                    self.logger.info(f"scene_manager type: {type(scene_manager).__name__}")
+                    
+                    # Reload all settings from QSettings
+                    if hasattr(scene_manager, 'reload_settings_from_qsettings'):
+                        self.logger.info("Calling scene_manager.reload_settings_from_qsettings()")
+                        scene_manager.reload_settings_from_qsettings()
+                        self.logger.info("✓ Viewer settings reloaded and applied successfully")
+                    else:
+                        self.logger.warning("WARNING: scene_manager has no reload_settings_from_qsettings method")
+                        # Fallback to just rendering
+                        if hasattr(scene_manager, 'render'):
+                            scene_manager.render()
+                            self.logger.info("Fallback: Scene re-rendered")
+                            
                 except Exception as e:
-                    self.logger.debug(f"Could not re-render scene: {e}")
+                    self.logger.error(f"ERROR in scene_manager path: {e}", exc_info=True)
+            else:
+                self.logger.warning("WARNING: viewer_widget has no scene_manager attribute")
+                
+                # Also try direct render if available
+                if hasattr(self.viewer_widget, 'render'):
+                    try:
+                        self.viewer_widget.render()
+                        self.logger.info("Fallback: Viewer re-rendered directly")
+                    except Exception as e:
+                        self.logger.error(f"ERROR in direct render: {e}")
            
-            self.logger.debug("Viewer settings applied after preferences change")
+            self.logger.info("=== VIEWER SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
-            self.logger.debug(f"Error applying viewer settings: {e}")
+            self.logger.error(f"FATAL ERROR applying viewer settings: {e}", exc_info=True)
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
