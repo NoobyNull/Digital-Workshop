@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 from src.gui.theme import (
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
+from src.gui.theme.color_helper import get_theme_color
 from src.gui.files_tab import FilesTab
 
 
@@ -47,7 +48,6 @@ class PreferencesDialog(QDialog):
         self.setModal(True)
         self.setMinimumWidth(560)
         self.on_reset_layout = on_reset_layout
-        self.theme_manager = None
 
         # Remove native title bar and frame - we'll use custom title bar
         # Use native title bar (removed frameless window flag)
@@ -55,56 +55,25 @@ class PreferencesDialog(QDialog):
 
         self._setup_ui()
 
-    def get_theme_color(self, color_name: str) -> str:
-        """Get color from theme system"""
-        if not self.theme_manager:
-            try:
-                from src.gui.theme.simple_service import ThemeService
-                self.theme_manager = ThemeService.instance()
-            except Exception:
-                # Fallback colors if theme system not available
-                fallback_colors = {
-                    'border': '#cccccc',
-                    'warning': '#ffa500',
-                    'error': '#ff6b6b',
-                    'text_primary': '#000000'
-                }
-                return fallback_colors.get(color_name, '#1976D2')
-
-        try:
-            return self.theme_manager.get_color(color_name)
-        except Exception:
-            # Fallback colors if color not found in theme
-            fallback_colors = {
-                'border': '#cccccc',
-                'warning': '#ffa500',
-                'error': '#ff6b6b',
-                'text_primary': '#000000'
-            }
-            return fallback_colors.get(color_name, '#1976D2')
-
     def _setup_ui(self):
         layout = QVBoxLayout(self)
 
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
 
-        # Create tabs in logical order
-        self.window_layout_tab = WindowLayoutTab(on_reset_layout=self.on_reset_layout)
+        # Create new consolidated tabs
+        self.general_tab = GeneralTab(on_reset_layout=self.on_reset_layout)
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
         self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
-        self.performance_tab = PerformanceSettingsTab()
         self.files_tab = FilesTab()
         self.advanced_tab = AdvancedTab()
 
-        # Add tabs in logical order: UI → Content → System → Advanced
-        self.tabs.addTab(self.window_layout_tab, "Window & Layout")
-        self.tabs.addTab(self.theming_tab, "Theming")
+        # Add tabs in new consolidated structure
+        self.tabs.addTab(self.general_tab, "General")
+        self.tabs.addTab(self.theming_tab, "Appearance")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
-        self.tabs.addTab(self.thumbnail_settings_tab, "Thumbnail Settings")
-        self.tabs.addTab(self.performance_tab, "Performance")
-        self.tabs.addTab(self.files_tab, "Files")
+        self.tabs.addTab(self.thumbnail_settings_tab, "Content")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
         # Dialog action buttons
@@ -144,9 +113,9 @@ class PreferencesDialog(QDialog):
         try:
             save_theme_to_settings()
 
-            # Save window settings
-            if hasattr(self, 'window_layout_tab'):
-                self.window_layout_tab.save_settings()
+            # Save general settings (window + performance)
+            if hasattr(self, 'general_tab'):
+                self.general_tab.save_settings()
 
             # Save viewer settings
             if hasattr(self, 'viewer_settings_tab'):
@@ -155,10 +124,6 @@ class PreferencesDialog(QDialog):
             # Save thumbnail settings
             if hasattr(self, 'thumbnail_settings_tab'):
                 self.thumbnail_settings_tab.save_settings()
-
-            # Save performance settings
-            if hasattr(self, 'performance_tab'):
-                self.performance_tab.save_settings()
 
             # Emit viewer settings changed signal
             self.viewer_settings_changed.emit()
@@ -664,6 +629,278 @@ class ViewerSettingsTab(QWidget):
         return f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
 
 
+class GeneralTab(QWidget):
+    """General settings tab: window, layout, and performance settings combined."""
+    
+    def __init__(self, on_reset_layout: Callable | None = None, parent=None):
+        super().__init__(parent)
+        self.on_reset_layout = on_reset_layout
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+    
+    def _setup_ui(self):
+        """Setup the combined general settings UI."""
+        # Create scroll area for all content
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+        
+        # Header
+        header = QLabel("General Application Settings")
+        header.setStyleSheet("font-weight: bold; font-size: 13pt;")
+        layout.addWidget(header)
+        
+        desc = QLabel("Configure window behavior, layout management, and system performance.")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+        
+        # === Window Settings Section ===
+        window_section = QFrame()
+        window_layout = QVBoxLayout(window_section)
+        
+        window_label = QLabel("<b>Window & Layout</b>")
+        window_label.setStyleSheet("font-size: 11pt;")
+        window_layout.addWidget(window_label)
+        
+        # Window dimensions
+        dim_form = QFormLayout()
+        
+        self.window_width_spin = QSpinBox()
+        self.window_width_spin.setRange(800, 3840)
+        self.window_width_spin.setValue(1200)
+        self.window_width_spin.setSuffix(" px")
+        dim_form.addRow("Default width:", self.window_width_spin)
+        
+        self.window_height_spin = QSpinBox()
+        self.window_height_spin.setRange(600, 2160)
+        self.window_height_spin.setValue(800)
+        self.window_height_spin.setSuffix(" px")
+        dim_form.addRow("Default height:", self.window_height_spin)
+        
+        self.min_width_spin = QSpinBox()
+        self.min_width_spin.setRange(400, 1200)
+        self.min_width_spin.setValue(800)
+        self.min_width_spin.setSuffix(" px")
+        dim_form.addRow("Minimum width:", self.min_width_spin)
+        
+        self.min_height_spin = QSpinBox()
+        self.min_height_spin.setRange(300, 1000)
+        self.min_height_spin.setValue(600)
+        self.min_height_spin.setSuffix(" px")
+        dim_form.addRow("Minimum height:", self.min_height_spin)
+        
+        window_layout.addLayout(dim_form)
+        
+        # Startup behavior
+        self.maximize_startup_check = QCheckBox("Maximize window on startup")
+        self.remember_size_check = QCheckBox("Remember window size on exit")
+        window_layout.addWidget(self.maximize_startup_check)
+        window_layout.addWidget(self.remember_size_check)
+        
+        # Layout reset
+        reset_row = QHBoxLayout()
+        reset_row.addWidget(QLabel("Reset the window and dock layout to default positions."))
+        reset_row.addStretch(1)
+        self.btn_reset_layout = QPushButton("Reset Layout")
+        reset_row.addWidget(self.btn_reset_layout)
+        window_layout.addLayout(reset_row)
+        
+        layout.addWidget(window_section)
+        
+        # Separator line
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line)
+        
+        # === Performance Settings Section ===
+        perf_section = QFrame()
+        perf_layout = QVBoxLayout(perf_section)
+        
+        perf_label = QLabel("<b>Performance & Memory</b>")
+        perf_label.setStyleSheet("font-size: 11pt;")
+        perf_layout.addWidget(perf_label)
+        
+        perf_desc = QLabel(
+            "Configure memory allocation. Smart calculation: min(doubled_minimum, 50% available, total - 20%)"
+        )
+        perf_desc.setWordWrap(True)
+        perf_layout.addWidget(perf_desc)
+        
+        # Memory mode
+        self.auto_radio = QCheckBox("Auto (Smart Calculation)")
+        self.auto_radio.setChecked(True)
+        perf_layout.addWidget(self.auto_radio)
+        
+        self.manual_radio = QCheckBox("Manual Override")
+        perf_layout.addWidget(self.manual_radio)
+        
+        # Manual override slider
+        slider_form = QFormLayout()
+        slider_layout = QHBoxLayout()
+        
+        self.memory_slider = QSlider(Qt.Horizontal)
+        self.memory_slider.setMinimum(10)
+        self.memory_slider.setMaximum(95)
+        self.memory_slider.setValue(80)
+        self.memory_slider.setTickPosition(QSlider.TicksBelow)
+        self.memory_slider.setTickInterval(5)
+        slider_layout.addWidget(self.memory_slider)
+        
+        self.memory_value_label = QLabel("80%")
+        self.memory_value_label.setMinimumWidth(80)
+        slider_layout.addWidget(self.memory_value_label)
+        
+        slider_form.addRow("Cache limit (% of RAM):", slider_layout)
+        perf_layout.addLayout(slider_form)
+        
+        # System info
+        self.system_info_label = QLabel()
+        self.system_info_label.setWordWrap(True)
+        self.system_info_label.setStyleSheet("padding: 8px; background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;")
+        perf_layout.addWidget(self.system_info_label)
+        
+        layout.addWidget(perf_section)
+        
+        layout.addStretch(1)
+        
+        scroll.setWidget(container)
+        
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+        
+        # Connect signals
+        self.btn_reset_layout.clicked.connect(self._handle_reset)
+        self.auto_radio.toggled.connect(self._on_mode_changed)
+        self.manual_radio.toggled.connect(self._on_mode_changed)
+        self.memory_slider.valueChanged.connect(self._on_slider_changed)
+        
+        # Update system info
+        self._update_system_info()
+    
+    def _load_settings(self) -> None:
+        """Load current settings from config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            
+            # Window settings
+            self.window_width_spin.setValue(config.default_window_width)
+            self.window_height_spin.setValue(config.default_window_height)
+            self.min_width_spin.setValue(config.minimum_window_width)
+            self.min_height_spin.setValue(config.minimum_window_height)
+            self.maximize_startup_check.setChecked(config.maximize_on_startup)
+            self.remember_size_check.setChecked(config.remember_window_size)
+            
+            # Performance settings
+            if config.use_manual_memory_override:
+                self.manual_radio.setChecked(True)
+                self.auto_radio.setChecked(False)
+                if config.manual_cache_limit_percent:
+                    self.memory_slider.setValue(config.manual_cache_limit_percent)
+            else:
+                self.auto_radio.setChecked(True)
+                self.manual_radio.setChecked(False)
+            
+            self._on_mode_changed()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load general settings: {e}")
+    
+    def save_settings(self) -> None:
+        """Save all general settings to config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            
+            # Save window settings
+            config.default_window_width = self.window_width_spin.value()
+            config.default_window_height = self.window_height_spin.value()
+            config.minimum_window_width = self.min_width_spin.value()
+            config.minimum_window_height = self.min_height_spin.value()
+            config.maximize_on_startup = self.maximize_startup_check.isChecked()
+            config.remember_window_size = self.remember_size_check.isChecked()
+            
+            # Save performance settings
+            config.use_manual_memory_override = self.manual_radio.isChecked()
+            if self.manual_radio.isChecked():
+                config.manual_cache_limit_percent = self.memory_slider.value()
+            
+            if self.logger:
+                self.logger.info("General settings saved")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save general settings: {e}")
+    
+    def _handle_reset(self):
+        """Handle layout reset."""
+        try:
+            if callable(self.on_reset_layout):
+                self.on_reset_layout()
+                QMessageBox.information(self, "Layout Reset", "Window layout has been reset to defaults.")
+        except Exception as e:
+            QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
+    
+    def _on_mode_changed(self) -> None:
+        """Handle memory mode change."""
+        is_manual = self.manual_radio.isChecked()
+        self.memory_slider.setEnabled(is_manual)
+        self._update_system_info()
+    
+    def _on_slider_changed(self, value: int) -> None:
+        """Handle slider change."""
+        self.memory_value_label.setText(f"{value}%")
+        self._update_system_info()
+    
+    def _update_system_info(self) -> None:
+        """Update system information display."""
+        try:
+            import psutil
+            from src.core.application_config import ApplicationConfig
+            
+            memory = psutil.virtual_memory()
+            total_mb = int(memory.total / (1024 ** 2))
+            available_mb = int(memory.available / (1024 ** 2))
+            
+            config = ApplicationConfig.get_default()
+            
+            if self.manual_radio.isChecked():
+                percent = self.memory_slider.value()
+                limit_mb = int(total_mb * (percent / 100))
+                info_text = (
+                    f"<b>Manual Mode:</b> {percent}% of {total_mb} MB = <b>{limit_mb} MB</b><br>"
+                    f"System Total: {total_mb} MB | Available: {available_mb} MB"
+                )
+            else:
+                limit_mb = config.get_effective_memory_limit_mb(available_mb, total_mb)
+                hard_max = int(total_mb * (100 - config.system_memory_reserve_percent) / 100)
+                fifty_percent = available_mb // 2
+                doubled_min = config.min_memory_specification_mb * 2
+                
+                info_text = (
+                    f"<b>Smart Calculation:</b> <b>{limit_mb} MB</b><br>"
+                    f"System Total: {total_mb} MB | Available: {available_mb} MB<br>"
+                    f"Calculated from: min({doubled_min}, {fifty_percent}, {hard_max})"
+                )
+            
+            self.system_info_label.setText(info_text)
+        except Exception as e:
+            self.system_info_label.setText(f"Error: {e}")
+
+
 class WindowLayoutTab(QWidget):
     """Window and layout settings tab: window dimensions and layout management."""
     def __init__(self, on_reset_layout: Callable | None = None, parent=None):
@@ -812,7 +1049,6 @@ class ThumbnailSettingsTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = None
-        self.theme_manager = None
         try:
             from src.core.logging_config import get_logger
             self.logger = get_logger(__name__)
@@ -820,62 +1056,7 @@ class ThumbnailSettingsTab(QWidget):
             pass
         self._setup_ui()
 
-    def get_theme_color(self, color_name: str) -> str:
-        """Get color from qt-material theme system"""
-        if not self.theme_manager:
-            try:
-                from src.gui.theme.simple_service import ThemeService
-                self.theme_manager = ThemeService.instance()
-            except Exception:
-                # Fallback colors if theme system not available
-                fallback_colors = {
-                    'border': '#cccccc',
-                    'warning': '#ffa500',
-                    'error': '#ff6b6b',
-                    'text_primary': '#000000'
-                }
-                return fallback_colors.get(color_name, '#1976D2')
-
-        try:
-            return self.theme_manager.get_color(color_name)
-        except Exception:
-            # Fallback colors if color not found in theme
-            fallback_colors = {
-                'border': '#cccccc',
-                'warning': '#ffa500',
-                'error': '#ff6b6b',
-                'text_primary': '#000000'
-            }
-            return fallback_colors.get(color_name, '#1976D2')
         self._load_settings()
-
-    def get_theme_color(self, color_name: str) -> str:
-        """Get color from qt-material theme system"""
-        if not self.theme_manager:
-            try:
-                from src.gui.theme import QtMaterialThemeService
-                self.theme_manager = QtMaterialThemeService.instance()
-            except Exception:
-                # Fallback colors if theme system not available
-                fallback_colors = {
-                    'border': '#cccccc',
-                    'warning': '#ffa500',
-                    'error': '#ff6b6b',
-                    'text_primary': '#000000'
-                }
-                return fallback_colors.get(color_name, '#1976D2')
-
-        try:
-            return self.theme_manager.get_color(color_name)
-        except Exception:
-            # Fallback colors if color not found in theme
-            fallback_colors = {
-                'border': '#cccccc',
-                'warning': '#ffa500',
-                'error': '#ff6b6b',
-                'text_primary': '#000000'
-            }
-            return fallback_colors.get(color_name, '#1976D2')
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -952,7 +1133,7 @@ class ThumbnailSettingsTab(QWidget):
         self.preview_label.setMinimumHeight(120)
         self.preview_label.setMinimumWidth(120)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setStyleSheet(f"border: 1px solid {self.get_theme_color('border')}; border-radius: 4px;")
+        self.preview_label.setStyleSheet(f"border: 1px solid {get_theme_color('border')}; border-radius: 4px;")
         bg_preview_container.addWidget(self.preview_label)
 
         # Material preview
@@ -965,7 +1146,7 @@ class ThumbnailSettingsTab(QWidget):
         self.material_preview_label.setMinimumHeight(120)
         self.material_preview_label.setMinimumWidth(120)
         self.material_preview_label.setAlignment(Qt.AlignCenter)
-        self.material_preview_label.setStyleSheet(f"border: 1px solid {self.get_theme_color('border')}; border-radius: 4px;")
+        self.material_preview_label.setStyleSheet(f"border: 1px solid {get_theme_color('border')}; border-radius: 4px;")
         mat_preview_container.addWidget(self.material_preview_label)
 
         preview_h_layout.addLayout(bg_preview_container)
@@ -1322,34 +1503,6 @@ class AdvancedTab(QWidget):
 
         self._setup_ui()
 
-    def get_theme_color(self, color_name: str) -> str:
-        """Get color from qt-material theme system"""
-        if not self.theme_manager:
-            try:
-                from src.gui.theme import QtMaterialThemeService
-                self.theme_manager = QtMaterialThemeService.instance()
-            except Exception:
-                # Fallback colors if theme system not available
-                fallback_colors = {
-                    'border': '#cccccc',
-                    'warning': '#ffa500',
-                    'error': '#ff6b6b',
-                    'text_primary': '#000000'
-                }
-                return fallback_colors.get(color_name, '#1976D2')
-
-        try:
-            return self.theme_manager.get_color(color_name)
-        except Exception:
-            # Fallback colors if color not found in theme
-            fallback_colors = {
-                'border': '#cccccc',
-                'warning': '#ffa500',
-                'error': '#ff6b6b',
-                'text_primary': '#000000'
-            }
-            return fallback_colors.get(color_name, '#1976D2')
-
     def _setup_ui(self) -> None:
         """Setup the advanced settings UI."""
         layout = QVBoxLayout(self)
@@ -1358,7 +1511,7 @@ class AdvancedTab(QWidget):
 
         # Header
         header = QLabel("Advanced Settings")
-        header.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {self.get_theme_color('text_primary')};")
+        header.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {get_theme_color('text_primary')};")
         layout.addWidget(header)
 
         # Database Reset Section
@@ -1373,7 +1526,7 @@ class AdvancedTab(QWidget):
             "metadata, and library information. The database will be recreated on next startup."
         )
         db_warning.setWordWrap(True)
-        db_warning.setStyleSheet(f"color: {self.get_theme_color('warning')}; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+        db_warning.setStyleSheet(f"color: {get_theme_color('warning')}; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
         db_layout.addWidget(db_warning)
 
         reset_db_button = QPushButton("Reset Database")
@@ -1399,7 +1552,7 @@ class AdvancedTab(QWidget):
             "the application to its default state. This action cannot be undone."
         )
         warning.setWordWrap(True)
-        warning.setStyleSheet(f"color: {self.get_theme_color('error')}; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
+        warning.setStyleSheet(f"color: {get_theme_color('error')}; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
         system_layout.addWidget(warning)
 
         # Reset button
