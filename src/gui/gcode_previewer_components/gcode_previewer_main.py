@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog,
     QTableWidget, QTableWidgetItem, QSplitter, QGroupBox, QProgressBar,
-    QSlider, QSpinBox, QComboBox, QCheckBox, QTabWidget
+    QSlider, QSpinBox, QComboBox, QCheckBox, QTabWidget, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont
@@ -21,6 +21,8 @@ from .feed_speed_visualizer import FeedSpeedVisualizer
 from .export_manager import ExportManager
 from .gcode_editor import GcodeEditorWidget
 from .gcode_loader_thread import GcodeLoaderThread
+from .gcode_timeline import GcodeTimeline
+from .gcode_interactive_loader import InteractiveGcodeLoader
 
 
 class GcodePreviewerWidget(QWidget):
@@ -34,12 +36,18 @@ class GcodePreviewerWidget(QWidget):
         self.logger = get_logger(__name__)
 
         self.parser = GcodeParser()
-        self.renderer = GcodeRenderer()
+        self.renderer = None  # Defer VTK initialization
         self.animation_controller = AnimationController()
         self.layer_analyzer = LayerAnalyzer()
         self.feed_speed_visualizer = FeedSpeedVisualizer()
         self.export_manager = ExportManager()
         self.loader_thread: Optional[GcodeLoaderThread] = None
+
+        # New VTK viewer components
+        self.timeline: Optional[GcodeTimeline] = None
+        self.interactive_loader: Optional[InteractiveGcodeLoader] = None
+        self.editor: Optional[GcodeEditorWidget] = None
+        self.vtk_widget: Optional[VTKWidget] = None
 
         self.current_file = None
         self.moves = []
@@ -56,48 +64,83 @@ class GcodePreviewerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
-        
+
         # Top toolbar
         toolbar_layout = QHBoxLayout()
-        
+
         load_btn = QPushButton("Load G-code File")
         load_btn.clicked.connect(self._on_load_file)
         toolbar_layout.addWidget(load_btn)
-        
+
         self.file_label = QLabel("No file loaded")
         self.file_label.setStyleSheet("color: gray; font-style: italic;")
         toolbar_layout.addWidget(self.file_label)
-        
+
         toolbar_layout.addStretch()
         layout.addLayout(toolbar_layout)
-        
-        # Main content: splitter with 3D view and info panel
+
+        # Main content: splitter with 3D view and right panel
         splitter = QSplitter(Qt.Horizontal)
-        
-        # 3D VTK viewer
-        self.vtk_widget = VTKWidget(self.renderer)
-        splitter.addWidget(self.vtk_widget)
-        
-        # Right panel with statistics and moves table
+
+        # Initialize VTK renderer lazily
+        try:
+            if self.renderer is None:
+                self.renderer = GcodeRenderer()
+
+            # 3D VTK viewer
+            self.vtk_widget = VTKWidget(self.renderer)
+            splitter.addWidget(self.vtk_widget)
+        except Exception as e:
+            self.logger.error(f"Failed to initialize VTK viewer: {e}")
+            # Create a placeholder label
+            placeholder = QLabel("VTK Viewer unavailable")
+            splitter.addWidget(placeholder)
+
+        # Right panel with tabs for different views
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(8)
-        
+
+        # Create tab widget for right panel
+        right_tabs = QTabWidget()
+
+        # Tab 1: Timeline and Loader
+        timeline_loader_widget = QWidget()
+        timeline_loader_layout = QVBoxLayout(timeline_loader_widget)
+        timeline_loader_layout.setContentsMargins(0, 0, 0, 0)
+        timeline_loader_layout.setSpacing(8)
+
+        # Timeline
+        self.timeline = GcodeTimeline()
+        timeline_loader_layout.addWidget(self.timeline)
+
+        # Interactive loader
+        self.interactive_loader = InteractiveGcodeLoader(self.renderer)
+        timeline_loader_layout.addWidget(self.interactive_loader)
+
+        right_tabs.addTab(timeline_loader_widget, "Timeline & Loader")
+
+        # Tab 2: Statistics and Moves
+        stats_moves_widget = QWidget()
+        stats_moves_layout = QVBoxLayout(stats_moves_widget)
+        stats_moves_layout.setContentsMargins(0, 0, 0, 0)
+        stats_moves_layout.setSpacing(8)
+
         # Statistics group
         stats_group = QGroupBox("Toolpath Statistics")
         stats_layout = QVBoxLayout(stats_group)
-        
+
         self.stats_label = QLabel("Load a G-code file to see statistics")
         self.stats_label.setWordWrap(True)
         stats_layout.addWidget(self.stats_label)
-        
-        right_layout.addWidget(stats_group)
-        
+
+        stats_moves_layout.addWidget(stats_group)
+
         # Moves table
         moves_group = QGroupBox("G-code Moves")
         moves_layout = QVBoxLayout(moves_group)
-        
+
         self.moves_table = QTableWidget()
         self.moves_table.setColumnCount(7)
         self.moves_table.setHorizontalHeaderLabels(
@@ -105,15 +148,22 @@ class GcodePreviewerWidget(QWidget):
         )
         self.moves_table.setMaximumHeight(200)
         moves_layout.addWidget(self.moves_table)
-        
-        right_layout.addWidget(moves_group)
-        
+
+        stats_moves_layout.addWidget(moves_group)
+        stats_moves_layout.addStretch()
+
+        right_tabs.addTab(stats_moves_widget, "Statistics")
+
+        # Tab 3: G-code Editor
+        self.editor = GcodeEditorWidget()
+        right_tabs.addTab(self.editor, "Editor")
+
+        right_layout.addWidget(right_tabs)
+
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         right_layout.addWidget(self.progress_bar)
-
-        right_layout.addStretch()
 
         splitter.addWidget(right_panel)
         splitter.setStretchFactor(0, 3)
@@ -212,9 +262,25 @@ class GcodePreviewerWidget(QWidget):
         """Connect animation controller signals."""
         self.animation_controller.frame_changed.connect(self._on_animation_frame_changed)
         self.animation_controller.state_changed.connect(self._on_animation_state_changed)
+
+        # Connect timeline signals
+        if self.timeline:
+            self.timeline.frame_changed.connect(self._on_timeline_frame_changed)
+            self.timeline.playback_requested.connect(self._on_timeline_playback_requested)
+            self.timeline.pause_requested.connect(self._on_timeline_pause_requested)
+            self.timeline.stop_requested.connect(self._on_timeline_stop_requested)
+
+        # Connect interactive loader signals
+        if self.interactive_loader:
+            self.interactive_loader.loading_complete.connect(self._on_interactive_loader_complete)
+            self.interactive_loader.chunk_loaded.connect(self._on_interactive_loader_chunk_loaded)
+
+        # Connect editor signals
+        if self.editor:
+            self.editor.reload_requested.connect(self._on_gcode_reload)
     
     def _on_load_file(self) -> None:
-        """Handle load file button click."""
+        """Handle load file button click with security validation."""
         filepath, _ = QFileDialog.getOpenFileName(
             self,
             "Open G-code File",
@@ -223,46 +289,117 @@ class GcodePreviewerWidget(QWidget):
         )
         
         if filepath:
-            self.load_gcode_file(filepath)
+            # Validate and sanitize path
+            validated_path = self._validate_file_path(filepath)
+            if validated_path:
+                self.load_gcode_file(validated_path)
+    
+    def _validate_file_path(self, filepath: str) -> Optional[str]:
+        """
+        Validate file path for security and accessibility.
+        
+        Args:
+            filepath: Path to validate
+            
+        Returns:
+            Validated absolute path or None if invalid
+        """
+        try:
+            # Convert to Path object for safe manipulation
+            file_path = Path(filepath).resolve()
+            
+            # Check file exists
+            if not file_path.exists():
+                self.logger.error(f"File does not exist: {filepath}")
+                QMessageBox.warning(self, "Invalid File", "File does not exist.")
+                return None
+            
+            # Check it's a file (not a directory)
+            if not file_path.is_file():
+                self.logger.error(f"Path is not a file: {filepath}")
+                QMessageBox.warning(self, "Invalid File", "Path must be a file.")
+                return None
+            
+            # Check file is readable
+            if not os.access(file_path, os.R_OK):
+                self.logger.error(f"File not readable: {filepath}")
+                QMessageBox.warning(self, "Access Denied", "Cannot read file.")
+                return None
+            
+            # Validate file extension
+            valid_extensions = {'.nc', '.gcode', '.gco', '.tap', '.txt'}
+            if file_path.suffix.lower() not in valid_extensions:
+                self.logger.warning(f"Unusual file extension: {file_path.suffix}")
+                reply = QMessageBox.question(
+                    self, "Unusual Extension",
+                    f"File has unusual extension '{file_path.suffix}'. Continue?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply != QMessageBox.Yes:
+                    return None
+            
+            # Check file size (warn for very large files)
+            MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
+            file_size = file_path.stat().st_size
+            
+            if file_size > MAX_FILE_SIZE:
+                self.logger.warning(f"Very large file: {file_size} bytes")
+                reply = QMessageBox.question(
+                    self, "Large File",
+                    f"File is {file_size / (1024*1024):.1f}MB. "
+                    "This may take a while to load. Continue?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply != QMessageBox.Yes:
+                    return None
+            
+            return str(file_path)
+            
+        except Exception as e:
+            self.logger.error(f"Path validation failed: {e}")
+            QMessageBox.critical(self, "Validation Error",
+                               f"Failed to validate file path: {str(e)}")
+            return None
     
     def load_gcode_file(self, filepath: str) -> None:
-        """Load and display a G-code file in background."""
+        """Load and display a G-code file in background thread."""
         try:
+            # Validate path first (quick operation)
+            validated_path = self._validate_file_path(filepath)
+            if not validated_path:
+                return
+            
             # Stop any existing loader
             if self.loader_thread and self.loader_thread.isRunning():
-                self.loader_thread.stop()
-                self.loader_thread.wait()
-
+                self.loader_thread.cancel()
+                self.loader_thread.wait(5000)  # Wait max 5 seconds
+            
+            # Show progress UI immediately
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-
-            # Get file info
-            file_size_mb = Path(filepath).stat().st_size / (1024 * 1024)
-            self.total_file_lines = self.parser.get_file_line_count(filepath)
-
-            # Update UI with file info
-            file_name = Path(filepath).name
-            info_text = f"Loading: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines)..."
+            
+            # Get file info (quick operation)
+            file_path = Path(validated_path)
+            file_size_mb = file_path.stat().st_size / (1024 * 1024)
+            
+            # Update UI
+            info_text = f"Loading: {file_path.name} ({file_size_mb:.1f}MB)..."
             self.file_label.setText(info_text)
             self.file_label.setStyleSheet("color: orange;")
-
-            self.current_file = filepath
+            
+            self.current_file = validated_path
             self.moves = []
-
-            # Clear renderer for incremental rendering
+            
+            # Clear renderer (quick operation)
             self.renderer.clear_incremental()
             self.vtk_widget.update_render()
-
-            # Start background loader
-            self.loader_thread = GcodeLoaderThread(filepath, batch_size=5000)
-            self.loader_thread.progress.connect(self._on_loader_progress)
-            self.loader_thread.moves_loaded.connect(self._on_moves_batch_loaded)
-            self.loader_thread.finished_loading.connect(self._on_loader_finished)
-            self.loader_thread.error_occurred.connect(self._on_loader_error)
-            self.loader_thread.start()
-
+            
+            # Start background loading
+            if self.interactive_loader:
+                self.interactive_loader.load_file(validated_path)
+            
         except Exception as e:
-            self.logger.error(f"Failed to start loading G-code file: {e}")
+            self.logger.error(f"Failed to start loading: {e}")
             self.file_label.setText(f"Error: {str(e)}")
             self.file_label.setStyleSheet("color: red;")
             self.progress_bar.setVisible(False)
@@ -405,18 +542,54 @@ class GcodePreviewerWidget(QWidget):
             self.logger.info("Video export not yet fully implemented")
 
     def _on_edit_gcode(self) -> None:
-        """Handle edit G-code."""
+        """Handle edit G-code with proper validation and limits."""
         if not self.current_file:
             self.logger.warning("No G-code file loaded")
             return
 
-        # Create editor dialog
-        editor_widget = GcodeEditorWidget()
-        with open(self.current_file, 'r', encoding='utf-8', errors='ignore') as f:
-            editor_widget.set_content(f.read())
-
-        editor_widget.reload_requested.connect(self._on_gcode_reload)
-        editor_widget.show()
+        try:
+            # Validate file still exists
+            if not os.path.exists(self.current_file):
+                self.logger.error(f"File no longer exists: {self.current_file}")
+                QMessageBox.warning(self, "File Not Found",
+                                  "The G-code file no longer exists.")
+                return
+            
+            # Check file size (limit to 10MB for editor)
+            MAX_EDITOR_SIZE = 10 * 1024 * 1024  # 10MB
+            file_size = os.path.getsize(self.current_file)
+            
+            if file_size > MAX_EDITOR_SIZE:
+                self.logger.warning(f"File too large for editor: {file_size} bytes")
+                reply = QMessageBox.question(
+                    self, "Large File",
+                    f"File is {file_size / (1024*1024):.1f}MB. "
+                    "Large files may be slow to edit. Continue?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply != QMessageBox.Yes:
+                    return
+            
+            # Read file with proper error handling
+            try:
+                with open(self.current_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+            except (OSError, IOError) as e:
+                self.logger.error(f"Failed to read file: {e}")
+                QMessageBox.critical(self, "Read Error",
+                                   f"Failed to read file: {str(e)}")
+                return
+            
+            # Create editor dialog
+            editor_widget = GcodeEditorWidget()
+            editor_widget.set_content(content)
+            editor_widget.reload_requested.connect(self._on_gcode_reload)
+            editor_widget.show()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open editor: {e}", exc_info=True)
+            QMessageBox.critical(self, "Error",
+                               f"Failed to open editor: {str(e)}")
 
     def _on_gcode_reload(self, content: str) -> None:
         """Handle G-code reload from editor."""
@@ -514,4 +687,71 @@ class GcodePreviewerWidget(QWidget):
         self.file_label.setText(f"Error: {error_msg}")
         self.file_label.setStyleSheet("color: red;")
         self.progress_bar.setVisible(False)
+
+    def _on_timeline_frame_changed(self, frame_index: int) -> None:
+        """Handle frame change from timeline."""
+        if frame_index < len(self.moves):
+            # Update animation controller
+            self.animation_controller.set_current_frame(frame_index)
+
+            # Update frame slider
+            self.frame_slider.blockSignals(True)
+            self.frame_slider.setValue(frame_index)
+            self.frame_slider.blockSignals(False)
+
+            # Update frame label
+            self.frame_label.setText(f"{frame_index}/{len(self.moves) - 1}")
+
+            self.logger.debug(f"Timeline frame changed to {frame_index}")
+
+    def _on_timeline_playback_requested(self) -> None:
+        """Handle playback request from timeline."""
+        self._on_play()
+
+    def _on_timeline_pause_requested(self) -> None:
+        """Handle pause request from timeline."""
+        self._on_pause()
+
+    def _on_timeline_stop_requested(self) -> None:
+        """Handle stop request from timeline."""
+        self._on_stop()
+
+    def _on_interactive_loader_complete(self, all_moves: list) -> None:
+        """Handle interactive loader completion."""
+        self.moves = all_moves
+
+        # Initialize animation controller
+        self.animation_controller.set_moves(self.moves)
+
+        # Update timeline
+        if self.timeline:
+            self.timeline.set_moves(self.moves)
+
+        # Analyze layers
+        self.layer_analyzer.analyze(self.moves)
+        self._update_layer_combo()
+
+        # Update frame slider
+        self.frame_slider.setMaximum(len(self.moves) - 1)
+        self.frame_slider.setValue(0)
+
+        # Update moves table
+        self._update_moves_table()
+
+        # Add axes
+        self.renderer._add_axes()
+        self.renderer.reset_camera()
+        self.vtk_widget.update_render()
+
+        self.gcode_loaded.emit(self.current_file)
+        self.logger.info(f"Interactive loader finished: {len(self.moves):,} moves")
+
+    def _on_interactive_loader_chunk_loaded(self, chunk_moves: list) -> None:
+        """Handle chunk loaded from interactive loader."""
+        # Add moves to renderer incrementally
+        self.renderer.add_moves_incremental(chunk_moves)
+        self.vtk_widget.update_render()
+
+        # Update statistics
+        self._update_statistics()
 

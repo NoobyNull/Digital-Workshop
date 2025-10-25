@@ -50,13 +50,17 @@ class ViewerUIManager:
         on_solid_clicked: Callable,
         on_material_clicked: Callable,
         on_lighting_clicked: Callable,
-        on_grid_clicked: Callable,
         on_reset_clicked: Callable,
         on_save_view_clicked: Callable,
         on_rotate_ccw_clicked: Callable,
         on_rotate_cw_clicked: Callable,
-        on_ground_clicked: Callable = None,
-        on_set_z_up_clicked: Callable = None
+        on_set_z_up_clicked: Callable = None,
+        on_rotate_x_pos: Callable = None,
+        on_rotate_x_neg: Callable = None,
+        on_rotate_y_pos: Callable = None,
+        on_rotate_y_neg: Callable = None,
+        on_rotate_z_pos: Callable = None,
+        on_rotate_z_neg: Callable = None,
     ) -> None:
         """
         Set up the UI layout.
@@ -65,13 +69,17 @@ class ViewerUIManager:
             on_solid_clicked: Callback for solid button
             on_material_clicked: Callback for material button
             on_lighting_clicked: Callback for lighting button
-            on_grid_clicked: Callback for grid button
-            on_ground_clicked: Callback for ground plane button
             on_reset_clicked: Callback for reset button
             on_save_view_clicked: Callback for save view button
-            on_rotate_ccw_clicked: Callback for rotate CCW button
-            on_rotate_cw_clicked: Callback for rotate CW button
+            on_rotate_ccw_clicked: Callback for rotate CCW button (view rotation)
+            on_rotate_cw_clicked: Callback for rotate CW button (view rotation)
             on_set_z_up_clicked: Callback for set Z up button
+            on_rotate_x_pos: Callback for rotate +X button
+            on_rotate_x_neg: Callback for rotate -X button
+            on_rotate_y_pos: Callback for rotate +Y button
+            on_rotate_y_neg: Callback for rotate -Y button
+            on_rotate_z_pos: Callback for rotate +Z button
+            on_rotate_z_neg: Callback for rotate -Z button
         """
         layout = QVBoxLayout(self.parent_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -113,20 +121,7 @@ class ViewerUIManager:
         self.lighting_button.clicked.connect(on_lighting_clicked)
         control_layout.addWidget(self.lighting_button)
 
-        # Grid button
-        self.grid_button = QPushButton("Grid")
-        self.grid_button.setCheckable(True)
-        self.grid_button.setChecked(True)
-        self.grid_button.clicked.connect(on_grid_clicked)
-        control_layout.addWidget(self.grid_button)
-
-        # Ground plane button
-        if on_ground_clicked:
-            self.ground_button = QPushButton("Ground")
-            self.ground_button.setCheckable(True)
-            self.ground_button.setChecked(True)
-            self.ground_button.clicked.connect(on_ground_clicked)
-            control_layout.addWidget(self.ground_button)
+        # Grid and Ground buttons removed - these settings are now managed in preferences dialog only
 
         # Reset view button
         self.reset_button = QPushButton("Reset View")
@@ -145,9 +140,61 @@ class ViewerUIManager:
         control_layout.addWidget(self.rotate_ccw_button)
 
         self.rotate_cw_button = QPushButton("↻ 90°")
-        self.rotate_cw_button.setToolTip("Rotate 90° clockwise")
+        self.rotate_cw_button.setToolTip("Rotate view 90° clockwise")
         self.rotate_cw_button.clicked.connect(on_rotate_cw_clicked)
         control_layout.addWidget(self.rotate_cw_button)
+
+        # Separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        control_layout.addWidget(separator)
+
+        # Model rotation buttons (rotate geometry, not view)
+        # X-axis rotations
+        if on_rotate_x_pos:
+            self.rotate_x_pos_button = QPushButton("X+")
+            self.rotate_x_pos_button.setToolTip("Rotate model +90° around X axis")
+            self.rotate_x_pos_button.setMaximumWidth(40)
+            self.rotate_x_pos_button.clicked.connect(on_rotate_x_pos)
+            control_layout.addWidget(self.rotate_x_pos_button)
+
+        if on_rotate_x_neg:
+            self.rotate_x_neg_button = QPushButton("X-")
+            self.rotate_x_neg_button.setToolTip("Rotate model -90° around X axis")
+            self.rotate_x_neg_button.setMaximumWidth(40)
+            self.rotate_x_neg_button.clicked.connect(on_rotate_x_neg)
+            control_layout.addWidget(self.rotate_x_neg_button)
+
+        # Y-axis rotations
+        if on_rotate_y_pos:
+            self.rotate_y_pos_button = QPushButton("Y+")
+            self.rotate_y_pos_button.setToolTip("Rotate model +90° around Y axis")
+            self.rotate_y_pos_button.setMaximumWidth(40)
+            self.rotate_y_pos_button.clicked.connect(on_rotate_y_pos)
+            control_layout.addWidget(self.rotate_y_pos_button)
+
+        if on_rotate_y_neg:
+            self.rotate_y_neg_button = QPushButton("Y-")
+            self.rotate_y_neg_button.setToolTip("Rotate model -90° around Y axis")
+            self.rotate_y_neg_button.setMaximumWidth(40)
+            self.rotate_y_neg_button.clicked.connect(on_rotate_y_neg)
+            control_layout.addWidget(self.rotate_y_neg_button)
+
+        # Z-axis rotations
+        if on_rotate_z_pos:
+            self.rotate_z_pos_button = QPushButton("Z+")
+            self.rotate_z_pos_button.setToolTip("Rotate model +90° around Z axis")
+            self.rotate_z_pos_button.setMaximumWidth(40)
+            self.rotate_z_pos_button.clicked.connect(on_rotate_z_pos)
+            control_layout.addWidget(self.rotate_z_pos_button)
+
+        if on_rotate_z_neg:
+            self.rotate_z_neg_button = QPushButton("Z-")
+            self.rotate_z_neg_button.setToolTip("Rotate model -90° around Z axis")
+            self.rotate_z_neg_button.setMaximumWidth(40)
+            self.rotate_z_neg_button.clicked.connect(on_rotate_z_neg)
+            control_layout.addWidget(self.rotate_z_neg_button)
 
         control_layout.addStretch()
 
@@ -213,38 +260,5 @@ class ViewerUIManager:
         if self.save_view_button:
             self.save_view_button.setChecked(False)
 
-    def update_grid_button_state(self, is_visible: bool) -> None:
-        """Update grid button appearance based on visibility state."""
-        if self.grid_button:
-            self.grid_button.setChecked(is_visible)
-            self._update_toggle_button_appearance(self.grid_button, is_visible)
-
-    def update_ground_button_state(self, is_visible: bool) -> None:
-        """Update ground button appearance based on visibility state."""
-        if hasattr(self, 'ground_button') and self.ground_button:
-            self.ground_button.setChecked(is_visible)
-            self._update_toggle_button_appearance(self.ground_button, is_visible)
-
-    def _update_toggle_button_appearance(self, button: QPushButton, is_active: bool) -> None:
-        """
-        Update button appearance to show subdued state when inactive.
-
-        Args:
-            button: The button to update
-            is_active: Whether the button is in active state
-        """
-        if is_active:
-            # Active state - bright and visible
-            button.setStyleSheet("")  # Reset to default theme
-        else:
-            # Inactive state - subdued appearance
-            button.setStyleSheet("""
-                QPushButton {
-                    opacity: 0.6;
-                    color: #888888;
-                }
-                QPushButton:hover {
-                    opacity: 0.8;
-                }
-            """)
-
+    # Grid and Ground button state update methods removed - these buttons are no longer in the UI
+    # Grid and floor plane settings are now managed exclusively through the preferences dialog

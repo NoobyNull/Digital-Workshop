@@ -7,6 +7,7 @@ It uses the new modular Application class for initialization and execution.
 """
 
 import argparse
+import dataclasses
 import sys
 import os
 
@@ -60,107 +61,18 @@ Examples:
 
 def main():
     """Main function to start the Digital Workshop application."""
-    # Initialize logger early
     logger = get_logger(__name__)
     logger.info("Digital Workshop application starting")
 
-    # Parse command line arguments
     args = parse_arguments()
-    
-    # Handle None case (when no arguments are provided in mutually exclusive group)
     log_level = args.log_level if args.log_level is not None else "INFO"
     logger.info(f"Log level set to: {log_level}")
 
-    # Create application configuration with overridden log level
     config = ApplicationConfig.get_default()
+    config = dataclasses.replace(config, log_level=log_level)  # Simplified config update
     
-    # Since ApplicationConfig is frozen, we need to create a new instance
-    # with all the original fields but with the log level overridden
-    config = ApplicationConfig(
-        # Application Identity
-        name=config.name,
-        display_name=config.display_name,
-        version=config.version,
-        build_number=config.build_number,
-        
-        # Organization Information
-        organization_name=config.organization_name,
-        organization_domain=config.organization_domain,
-        
-        # Application Paths and Settings
-        app_data_subdir=config.app_data_subdir,
-        
-        # Feature Flags
-        enable_hardware_acceleration=config.enable_hardware_acceleration,
-        enable_high_dpi=config.enable_high_dpi,
-        enable_performance_monitoring=config.enable_performance_monitoring,
-        
-        # Resource Limits
-        max_memory_usage_mb=config.max_memory_usage_mb,
-        model_cache_size_mb=config.model_cache_size_mb,
-        
-        # Memory Override Settings
-        use_manual_memory_override=config.use_manual_memory_override,
-        manual_cache_limit_percent=config.manual_cache_limit_percent,
-        min_memory_specification_mb=config.min_memory_specification_mb,
-        system_memory_reserve_percent=config.system_memory_reserve_percent,
-        
-        # UI Configuration
-        default_window_width=config.default_window_width,
-        default_window_height=config.default_window_height,
-        minimum_window_width=config.minimum_window_width,
-        minimum_window_height=config.minimum_window_height,
-        maximize_on_startup=config.maximize_on_startup,
-        remember_window_size=config.remember_window_size,
-        
-        # 3D Viewer - Grid Settings
-        grid_visible=config.grid_visible,
-        grid_color=config.grid_color,
-        grid_size=config.grid_size,
-        
-        # 3D Viewer - Ground Plane Settings
-        ground_visible=config.ground_visible,
-        ground_color=config.ground_color,
-        ground_offset=config.ground_offset,
-        
-        # 3D Viewer - Background Gradient Settings
-        gradient_top_color=config.gradient_top_color,
-        gradient_bottom_color=config.gradient_bottom_color,
-        enable_gradient=config.enable_gradient,
-        
-        # Camera & Interaction Settings
-        mouse_sensitivity=config.mouse_sensitivity,
-        fps_limit=config.fps_limit,
-        zoom_speed=config.zoom_speed,
-        pan_speed=config.pan_speed,
-        auto_fit_on_load=config.auto_fit_on_load,
-        
-        # Lighting Settings
-        default_light_position_x=config.default_light_position_x,
-        default_light_position_y=config.default_light_position_y,
-        default_light_position_z=config.default_light_position_z,
-        default_light_color_r=config.default_light_color_r,
-        default_light_color_g=config.default_light_color_g,
-        default_light_color_b=config.default_light_color_b,
-        default_light_intensity=config.default_light_intensity,
-        default_light_cone_angle=config.default_light_cone_angle,
-        enable_fill_light=config.enable_fill_light,
-        fill_light_intensity=config.fill_light_intensity,
-        
-        # Logging Configuration (overridden)
-        log_level=log_level,
-        enable_file_logging=config.enable_file_logging,
-        log_retention_days=config.log_retention_days,
-        
-        # Thumbnail Generation Configuration
-        thumbnail_bg_color=config.thumbnail_bg_color,
-        thumbnail_bg_image=config.thumbnail_bg_image,
-        thumbnail_material=config.thumbnail_material,
-    )
-    
-
-    # Create exception handler for startup errors
     exception_handler = ExceptionHandler()
+    app = None
 
     try:
         # Create and initialize application
@@ -168,6 +80,9 @@ def main():
 
         if not app.initialize():
             logger.error("Application initialization failed")
+            # Cleanup on initialization failure
+            if app:
+                app.cleanup()
             return 1
 
         # Run the application
@@ -176,11 +91,33 @@ def main():
         logger.info(f"Application exited with code: {exit_code}")
         return exit_code
 
-    except RuntimeError as e:
-        # Handle any exceptions during startup
-        logger.error(f"Application startup failed: {str(e)}")
+    except KeyboardInterrupt:
+        logger.info("Application interrupted by user")
+        return 130  # Standard Unix exit code for Ctrl+C
+        
+    except (OSError, IOError) as e:
+        logger.error(f"File system error: {str(e)}")
         exception_handler.handle_startup_error(e)
         return 1
+        
+    except ImportError as e:
+        logger.error(f"Missing dependency: {str(e)}")
+        exception_handler.handle_startup_error(e)
+        return 1
+        
+    except Exception as e:
+        # Catch all other exceptions
+        logger.error(f"Application startup failed: {str(e)}", exc_info=True)
+        exception_handler.handle_startup_error(e)
+        return 1
+        
+    finally:
+        # Ensure cleanup happens
+        if app:
+            try:
+                app.cleanup()
+            except Exception as e:
+                logger.error(f"Cleanup failed: {str(e)}")
 
 
 if __name__ == "__main__":

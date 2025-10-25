@@ -190,12 +190,19 @@ class CentralWidgetManager:
 
         # Create G-code Previewer widget
         try:
+            self.logger.info("Attempting to import GcodePreviewerWidget...")
             from src.gui.gcode_previewer_components import GcodePreviewerWidget
+            self.logger.info("GcodePreviewerWidget imported successfully")
+
+            self.logger.info("Creating GcodePreviewerWidget instance...")
             self.main_window.gcode_previewer_widget = GcodePreviewerWidget(self.main_window)
+            self.logger.info("GcodePreviewerWidget instance created")
+
+            self.logger.info("Adding G-code Previewer tab...")
             self.main_window.hero_tabs.addTab(self.main_window.gcode_previewer_widget, "G Code Previewer")
             self.logger.info("G-code Previewer widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create G-code Previewer widget: {e}")
+            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
             self.main_window.hero_tabs.addTab(_placeholder("GCP", "G-code Previewer\n\nComponent unavailable."), "G Code Previewer")
 
         # Create CLO widget

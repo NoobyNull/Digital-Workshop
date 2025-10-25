@@ -104,13 +104,17 @@ class Viewer3DWidget(QWidget):
             on_solid_clicked=lambda: self._set_render_mode(RenderMode.SOLID),
             on_material_clicked=self._open_material_picker,
             on_lighting_clicked=self._open_lighting_panel,
-            on_grid_clicked=self._toggle_grid,
-            on_ground_clicked=self.toggle_ground_plane,
             on_reset_clicked=self.reset_view,
             on_save_view_clicked=self._save_view_requested,
             on_rotate_ccw_clicked=lambda: self._rotate_around_view_axis(90),
             on_rotate_cw_clicked=lambda: self._rotate_around_view_axis(-90),
             on_set_z_up_clicked=self._set_z_up,
+            on_rotate_x_pos=self.rotate_x_positive,
+            on_rotate_x_neg=self.rotate_x_negative,
+            on_rotate_y_pos=self.rotate_y_positive,
+            on_rotate_y_neg=self.rotate_y_negative,
+            on_rotate_z_pos=self.rotate_z_positive,
+            on_rotate_z_neg=self.rotate_z_negative,
         )
 
     def _init_modules(self) -> None:
@@ -245,30 +249,8 @@ class Viewer3DWidget(QWidget):
         except (KeyError, ValueError):
             self.logger.warning(f"Invalid render mode: {name}")
 
-    def _toggle_grid(self) -> None:
-        """Toggle grid visibility with enhanced error handling."""
-        try:
-            self.scene_manager.toggle_grid()
-            self.grid_visible = self.scene_manager.grid_visible
-            # Update button appearance to show subdued state when off
-            self.ui_manager.update_grid_button_state(self.grid_visible)
-
-            # Use fallback renderer for safe rendering
-            if self.render_window:
-                self.fallback_renderer.render_with_fallback(self.render_window)
-            else:
-                self.scene_manager.render()
-
-        except Exception as e:
-            self.logger.error(f"Error toggling grid: {e}")
-            # Continue anyway, grid state may still be updated
-
-    def toggle_ground_plane(self) -> None:
-        """Toggle ground plane visibility."""
-        self.scene_manager.toggle_ground_plane()
-        # Update button appearance to show subdued state when off
-        self.ui_manager.update_ground_button_state(self.scene_manager.ground_visible)
-        self.scene_manager.render()
+    # Grid and ground plane toggle methods removed - these are now controlled via preferences dialog only
+    # The VTK scene manager still maintains grid_visible and ground_visible state loaded from QSettings
 
     def _rotate_around_view_axis(self, degrees: float) -> None:
         """Rotate view around axis."""
@@ -487,72 +469,69 @@ class Viewer3DWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to reload model in viewer: {e}", exc_info=True)
 
-    def _calculate_z_up_rotation_from_camera(self) -> tuple:
+    def _calculate_z_up_rotation_from_model_bounds(self) -> tuple:
         """
-        Calculate Z-up rotation based on current camera ViewUp vector.
+        Calculate Z-up rotation based on model's bounding box dimensions.
 
-        Reads the UCS icon orientation (camera ViewUp) to determine which axis
-        is currently pointing up, then calculates the rotation needed to make Z point up.
+        Analyzes which dimension (X, Y, Z) is tallest in the model's world-space bounds,
+        then calculates the rotation needed to make Z the tallest dimension (Z-up).
 
-        Handles all 24 possible orientations (6 faces × 4 rotations each).
+        This is the correct approach for determining model orientation in world space,
+        as opposed to camera-relative orientation.
 
         Returns:
             Tuple of (axis_str, degrees) to rotate model to Z-up
         """
         try:
-            camera = self.renderer.GetActiveCamera()
-            if not camera:
+            if not self.actor:
                 return ("Z", 0)
 
-            # Get current ViewUp vector (shows which axis is pointing up)
-            view_up = camera.GetViewUp()
-            self.logger.info(f"Current camera ViewUp: ({view_up[0]:.2f}, {view_up[1]:.2f}, {view_up[2]:.2f})")
+            # Get model bounds in world space
+            bounds = self.actor.GetBounds()
+            xmin, xmax, ymin, ymax, zmin, zmax = bounds
 
-            # Check which axis is most dominant in ViewUp
-            abs_x = abs(view_up[0])
-            abs_y = abs(view_up[1])
-            abs_z = abs(view_up[2])
+            # Calculate dimensions
+            dx = abs(xmax - xmin)
+            dy = abs(ymax - ymin)
+            dz = abs(zmax - zmin)
 
-            # Threshold for considering an axis dominant
-            threshold = 0.9
+            self.logger.info(f"Model dimensions - X: {dx:.2f}, Y: {dy:.2f}, Z: {dz:.2f}")
 
-            # Z-axis cases (already pointing up/down)
-            if abs_z > threshold:
-                if view_up[2] > 0:
-                    self.logger.info("Z-axis pointing up (0°), no rotation needed")
-                    return ("Z", 0)
-                else:
-                    self.logger.info("Z-axis pointing down (180°), rotating 180° around X")
-                    return ("X", 180)
+            # Threshold for considering dimensions equal (avoid rotation for nearly-cubic models)
+            equal_threshold = 0.1  # 10% difference
+            max_dim = max(dx, dy, dz)
 
-            # Y-axis cases (Y is dominant)
-            if abs_y > threshold and abs_y > abs_x and abs_y > abs_z:
-                if view_up[1] > 0:
-                    self.logger.info("Y-axis pointing up (90°), rotating 90° around X")
-                    return ("X", 90)
-                else:
-                    self.logger.info("Y-axis pointing down (270°), rotating 270° around X")
-                    return ("X", 270)
+            # Check if all dimensions are roughly equal (cube-like)
+            if (abs(dx - max_dim) / max_dim < equal_threshold and
+                abs(dy - max_dim) / max_dim < equal_threshold and
+                abs(dz - max_dim) / max_dim < equal_threshold):
+                self.logger.info("Model is roughly cubic, assuming already Z-up")
+                return ("Z", 0)
 
-            # X-axis cases (X is dominant)
-            if abs_x > threshold and abs_x > abs_y and abs_x > abs_z:
-                if view_up[0] > 0:
-                    self.logger.info("X-axis pointing up (90°), rotating 90° around Y")
-                    return ("Y", 90)
-                else:
-                    self.logger.info("X-axis pointing down (270°), rotating 270° around Y")
-                    return ("Y", 270)
-
-            # Default: no rotation
-            self.logger.info("No dominant axis detected, no rotation needed")
-            return ("Z", 0)
+            # Determine which dimension is tallest and calculate required rotation
+            if dz >= dy and dz >= dx:
+                # Z is already the tallest dimension
+                self.logger.info("Z is tallest dimension, already Z-up")
+                return ("Z", 0)
+            elif dy > dx and dy > dz:
+                # Y is tallest, need to rotate 90° around X to make Z tallest
+                self.logger.info("Y is tallest dimension, rotating 90° around X to make Z-up")
+                return ("X", 90)
+            elif dx > dy and dx > dz:
+                # X is tallest, need to rotate -90° around Y to make Z tallest
+                self.logger.info("X is tallest dimension, rotating -90° around Y to make Z-up")
+                return ("Y", -90)
+            else:
+                # Fallback
+                self.logger.info("Unable to determine tallest dimension, no rotation")
+                return ("Z", 0)
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate Z-up rotation from camera: {e}", exc_info=True)
+            self.logger.error(f"Failed to calculate Z-up rotation from model bounds: {e}", exc_info=True)
             return ("Z", 0)
 
     def _set_z_up(self) -> None:
-        """Set Z-axis pointing up by rotating model based on UCS icon orientation."""
+        """Set Z-axis pointing up by rotating model geometry based on bounds analysis."""
         try:
             if not self.current_model or not self.actor:
                 self.logger.warning("No model loaded to set Z-up")
@@ -560,8 +539,8 @@ class Viewer3DWidget(QWidget):
 
             from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
 
-            # Calculate rotation needed based on camera's current ViewUp (UCS icon)
-            axis_str, degrees = self._calculate_z_up_rotation_from_camera()
+            # Calculate rotation needed based on model's bounding box dimensions
+            axis_str, degrees = self._calculate_z_up_rotation_from_model_bounds()
 
             self.logger.info(f"Z-up rotation needed: {degrees}° around {axis_str} axis")
 
@@ -730,4 +709,76 @@ class Viewer3DWidget(QWidget):
     def reset_save_view_button(self) -> None:
         """Reset save view button."""
         self.ui_manager.reset_save_view_button()
+
+    def rotate_model_geometry(self, axis: str, degrees: float) -> None:
+        """
+        Rotate model geometry around world-space axis.
+        
+        This modifies the actual triangle coordinates, not just the visual representation.
+        Camera stays fixed while model rotates in world space.
+        
+        Args:
+            axis: Rotation axis - "X", "Y", or "Z"
+            degrees: Rotation angle in degrees (positive = counterclockwise when looking along axis)
+        """
+        try:
+            if not self.current_model or not self.actor:
+                self.logger.warning("No model loaded to rotate")
+                return
+
+            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
+
+            # Create STLModel from current Model for rotation
+            from src.parsers.stl_parser import STLModel
+            stl_model = STLModel(
+                header=getattr(self.current_model, 'header', 'Model'),
+                triangles=self.current_model.triangles,
+                stats=self.current_model.stats
+            )
+
+            # Apply rotation using ModelEditor
+            editor = ModelEditor(stl_model)
+            try:
+                axis_enum = RotationAxis[axis.upper()]
+            except KeyError:
+                self.logger.error(f"Invalid rotation axis: {axis}")
+                return
+
+            rotated_model = editor.rotate_model(axis_enum, degrees)
+            self.logger.info(f"Rotated model {degrees}° around {axis} axis")
+
+            # Update current model's triangles with rotated geometry
+            self.current_model.triangles = rotated_model.triangles
+
+            # Reload the model in the viewer with new geometry
+            self._reload_model_in_viewer()
+
+            self.logger.info(f"Model geometry rotated {degrees}° around {axis} axis")
+
+        except Exception as e:
+            self.logger.error(f"Failed to rotate model geometry: {e}", exc_info=True)
+
+    def rotate_x_positive(self) -> None:
+        """Rotate model +90° around X axis."""
+        self.rotate_model_geometry("X", 90)
+
+    def rotate_x_negative(self) -> None:
+        """Rotate model -90° around X axis."""
+        self.rotate_model_geometry("X", -90)
+
+    def rotate_y_positive(self) -> None:
+        """Rotate model +90° around Y axis."""
+        self.rotate_model_geometry("Y", 90)
+
+    def rotate_y_negative(self) -> None:
+        """Rotate model -90° around Y axis."""
+        self.rotate_model_geometry("Y", -90)
+
+    def rotate_z_positive(self) -> None:
+        """Rotate model +90° around Z axis."""
+        self.rotate_model_geometry("Z", 90)
+
+    def rotate_z_negative(self) -> None:
+        """Rotate model -90° around Z axis."""
+        self.rotate_model_geometry("Z", -90)
 

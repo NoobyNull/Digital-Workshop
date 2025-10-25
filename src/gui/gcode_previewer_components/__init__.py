@@ -9,6 +9,10 @@ from .feed_speed_visualizer import FeedSpeedVisualizer
 from .export_manager import ExportManager
 from .gcode_editor import GcodeEditorWidget, GcodeSyntaxHighlighter
 from .gcode_loader_thread import GcodeLoaderThread
+from .vtk_widget import VTKWidget
+from .camera_controller import CameraController
+from .gcode_timeline import GcodeTimeline
+from .gcode_interactive_loader import InteractiveGcodeLoader, GcodeLoaderWorker
 
 __all__ = [
     'GcodePreviewerWidget',
@@ -24,5 +28,10 @@ __all__ = [
     'GcodeEditorWidget',
     'GcodeSyntaxHighlighter',
     'GcodeLoaderThread',
+    'VTKWidget',
+    'CameraController',
+    'GcodeTimeline',
+    'InteractiveGcodeLoader',
+    'GcodeLoaderWorker',
 ]
 

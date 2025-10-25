@@ -548,19 +548,44 @@ class MainWindow(QMainWindow):
 
             return widget
 
-        # Add feature tabs with native Qt placeholders
-        placeholders = [
-            ("G Code Previewer", "G-code Previewer\n\nComponent unavailable."),
-            ("Cut List Optimizer", "Cut List Optimizer\n\nComponent unavailable."),
-            ("Feed and Speed", "Feeds & Speeds Calculator\n\nComponent unavailable."),
-            ("Project Cost Estimator", "Cost Calculator\n\nEstimate material, machine, and labor costs.")
-        ]
+        # Try to add G-code Previewer widget
+        try:
+            self.logger.info("Attempting to create G-code Previewer widget...")
+            from src.gui.gcode_previewer_components import GcodePreviewerWidget
+            self.gcode_previewer_widget = GcodePreviewerWidget(self)
+            self.hero_tabs.addTab(self.gcode_previewer_widget, "G Code Previewer")
+            self.logger.info("G-code Previewer widget created successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
+            self.hero_tabs.addTab(create_placeholder("G Code Previewer", "G-code Previewer\n\nComponent unavailable."), "G Code Previewer")
 
-        for title, content in placeholders:
-            try:
-                self.hero_tabs.addTab(create_placeholder(title, content), title)
-            except Exception as e:
-                self.logger.warning(f"Failed to add placeholder tab {title}: {e}")
+        # Try to add Cut List Optimizer widget
+        try:
+            self.logger.info("Attempting to create Cut List Optimizer widget...")
+            from src.gui.CLO import CutListOptimizerWidget
+            self.clo_widget = CutListOptimizerWidget()
+            self.hero_tabs.addTab(self.clo_widget, "Cut List Optimizer")
+            self.logger.info("Cut List Optimizer widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create Cut List Optimizer widget: {e}")
+            self.hero_tabs.addTab(create_placeholder("Cut List Optimizer", "Cut List Optimizer\n\nComponent unavailable."), "Cut List Optimizer")
+
+        # Try to add Feeds & Speeds widget
+        try:
+            self.logger.info("Attempting to create Feeds & Speeds widget...")
+            from src.gui.feeds_and_speeds import FeedsAndSpeedsWidget
+            self.feeds_and_speeds_widget = FeedsAndSpeedsWidget(self)
+            self.hero_tabs.addTab(self.feeds_and_speeds_widget, "Feed and Speed")
+            self.logger.info("Feeds & Speeds widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
+            self.hero_tabs.addTab(create_placeholder("Feed and Speed", "Feeds & Speeds Calculator\n\nComponent unavailable."), "Feed and Speed")
+
+        # Add Project Cost Estimator placeholder
+        try:
+            self.hero_tabs.addTab(create_placeholder("Project Cost Estimator", "Cost Calculator\n\nEstimate material, machine, and labor costs."), "Project Cost Estimator")
+        except Exception as e:
+            self.logger.warning(f"Failed to add Project Cost Estimator tab: {e}")
 
     def _restore_active_tab(self) -> None:
         """Restore the last active tab using native Qt settings."""

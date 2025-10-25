@@ -54,6 +54,12 @@ class PreferencesDialog(QDialog):
         # This allows the OS to handle the title bar and window controls
 
         self._setup_ui()
+        
+        # Load and restore last selected tab
+        self._restore_last_tab()
+        
+        # Connect signal to save tab index when changed
+        self.tabs.currentChanged.connect(self._save_current_tab)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -94,6 +100,65 @@ class PreferencesDialog(QDialog):
         self.btn_close.clicked.connect(self.reject)
         self.btn_save.clicked.connect(self._save_and_notify)
         self.btn_reset.clicked.connect(self._reset_to_defaults)
+    
+    def _restore_last_tab(self):
+        """Restore the last selected tab from QSettings."""
+        try:
+            from PySide6.QtCore import QSettings
+            from src.core.logging_config import get_logger
+            
+            settings = QSettings()
+            last_tab = settings.value("preferences/last_tab_index", 0, type=int)
+            
+            # Debug logging
+            logger = get_logger(__name__)
+            logger.debug(f"Attempting to restore preferences tab index: {last_tab} (total tabs: {self.tabs.count()})")
+            
+            # Validate the tab index to ensure it's within range
+            if 0 <= last_tab < self.tabs.count():
+                self.tabs.setCurrentIndex(last_tab)
+                logger.debug(f"Successfully restored tab index: {last_tab}")
+            else:
+                # Invalid index, default to first tab
+                self.tabs.setCurrentIndex(0)
+                logger.warning(f"Invalid tab index {last_tab}, defaulting to 0")
+        except Exception as e:
+            # On error, default to first tab
+            try:
+                from src.core.logging_config import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Failed to restore tab index: {e}")
+            except Exception:
+                pass
+            self.tabs.setCurrentIndex(0)
+    
+    def _save_current_tab(self):
+        """Save the current tab index to QSettings."""
+        try:
+            from PySide6.QtCore import QSettings
+            from src.core.logging_config import get_logger
+            
+            settings = QSettings()
+            tab_index = self.tabs.currentIndex()
+            settings.setValue("preferences/last_tab_index", tab_index)
+            settings.sync()  # Force immediate write to disk
+            
+            # Debug logging
+            logger = get_logger(__name__)
+            logger.debug(f"Saved preferences tab index: {tab_index}")
+        except Exception as e:
+            # Log error if possible
+            try:
+                from src.core.logging_config import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Failed to save tab index: {e}")
+            except Exception:
+                pass
+    
+    def closeEvent(self, event):
+        """Handle dialog close event and save current tab as backup."""
+        self._save_current_tab()
+        super().closeEvent(event)
 
     def _toggle_maximize(self) -> None:
         """Toggle window maximize/restore state."""
@@ -397,12 +462,42 @@ class ViewerSettingsTab(QWidget):
         lighting_label = QLabel("<b>Lighting (Advanced)</b>")
         lighting_layout.addRow(lighting_label)
 
+        # Light Position X
+        self.light_pos_x_slider = QSlider(Qt.Horizontal)
+        self.light_pos_x_slider.setRange(-200, 200)
+        self.light_pos_x_slider.setValue(100)
+        self.light_pos_x_label = QLabel("100")
+        pos_x_row = QHBoxLayout()
+        pos_x_row.addWidget(self.light_pos_x_slider)
+        pos_x_row.addWidget(self.light_pos_x_label)
+        lighting_layout.addRow("Light position X:", pos_x_row)
+
+        # Light Position Y
+        self.light_pos_y_slider = QSlider(Qt.Horizontal)
+        self.light_pos_y_slider.setRange(-200, 200)
+        self.light_pos_y_slider.setValue(100)
+        self.light_pos_y_label = QLabel("100")
+        pos_y_row = QHBoxLayout()
+        pos_y_row.addWidget(self.light_pos_y_slider)
+        pos_y_row.addWidget(self.light_pos_y_label)
+        lighting_layout.addRow("Light position Y:", pos_y_row)
+
+        # Light Position Z
+        self.light_pos_z_slider = QSlider(Qt.Horizontal)
+        self.light_pos_z_slider.setRange(-200, 200)
+        self.light_pos_z_slider.setValue(100)
+        self.light_pos_z_label = QLabel("100")
+        pos_z_row = QHBoxLayout()
+        pos_z_row.addWidget(self.light_pos_z_slider)
+        pos_z_row.addWidget(self.light_pos_z_label)
+        lighting_layout.addRow("Light position Z:", pos_z_row)
+
         self.light_color_btn = QPushButton()
         self.light_color_btn.setMaximumWidth(100)
         lighting_layout.addRow("Light color:", self.light_color_btn)
 
         self.light_intensity_slider = QSlider(Qt.Horizontal)
-        self.light_intensity_slider.setRange(0, 100)
+        self.light_intensity_slider.setRange(0, 200)
         self.light_intensity_slider.setValue(80)
         self.light_intensity_label = QLabel("0.8")
         intensity_row = QHBoxLayout()
@@ -447,6 +542,9 @@ class ViewerSettingsTab(QWidget):
         self.fps_limit_combo.currentIndexChanged.connect(self._on_settings_changed)
         self.zoom_speed_slider.valueChanged.connect(self._on_zoom_speed_changed)
         self.auto_fit_check.stateChanged.connect(self._on_settings_changed)
+        self.light_pos_x_slider.valueChanged.connect(self._on_light_pos_x_changed)
+        self.light_pos_y_slider.valueChanged.connect(self._on_light_pos_y_changed)
+        self.light_pos_z_slider.valueChanged.connect(self._on_light_pos_z_changed)
         self.light_color_btn.clicked.connect(self._on_light_color_clicked)
         self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
         self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
@@ -485,6 +583,13 @@ class ViewerSettingsTab(QWidget):
             self.auto_fit_check.setChecked(settings.value("viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool))
 
             # Lighting settings
+            pos_x = settings.value("lighting/position_x", 100.0, type=float)
+            pos_y = settings.value("lighting/position_y", 100.0, type=float)
+            pos_z = settings.value("lighting/position_z", 100.0, type=float)
+            self.light_pos_x_slider.setValue(int(pos_x))
+            self.light_pos_y_slider.setValue(int(pos_y))
+            self.light_pos_z_slider.setValue(int(pos_z))
+            
             r = settings.value("lighting/color_r", config.default_light_color_r, type=float)
             g = settings.value("lighting/color_g", config.default_light_color_g, type=float)
             b = settings.value("lighting/color_b", config.default_light_color_b, type=float)
@@ -525,6 +630,10 @@ class ViewerSettingsTab(QWidget):
             settings.setValue("viewer/auto_fit_on_load", self.auto_fit_check.isChecked())
 
             # Lighting settings
+            settings.setValue("lighting/position_x", float(self.light_pos_x_slider.value()))
+            settings.setValue("lighting/position_y", float(self.light_pos_y_slider.value()))
+            settings.setValue("lighting/position_z", float(self.light_pos_z_slider.value()))
+            
             light_color = self.light_color_btn.palette().button().color().name()
             r, g, b = self._hex_to_rgb(light_color)
             settings.setValue("lighting/color_r", r)
@@ -589,6 +698,18 @@ class ViewerSettingsTab(QWidget):
     def _on_zoom_speed_changed(self, value: int) -> None:
         """Update zoom speed label."""
         self.zoom_speed_label.setText(f"{value / 10.0:.1f}x")
+
+    def _on_light_pos_x_changed(self, value: int) -> None:
+        """Update light position X label."""
+        self.light_pos_x_label.setText(f"{value}")
+
+    def _on_light_pos_y_changed(self, value: int) -> None:
+        """Update light position Y label."""
+        self.light_pos_y_label.setText(f"{value}")
+
+    def _on_light_pos_z_changed(self, value: int) -> None:
+        """Update light position Z label."""
+        self.light_pos_z_label.setText(f"{value}")
 
     def _on_light_intensity_changed(self, value: int) -> None:
         """Update light intensity label."""
@@ -1201,30 +1322,55 @@ class ThumbnailSettingsTab(QWidget):
                 self.logger.error(f"Failed to populate materials: {e}")
 
     def _load_settings(self) -> None:
-        """Load current settings."""
+        """Load current settings from QSettings with fallback to ApplicationConfig."""
         try:
             from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
 
             config = ApplicationConfig.get_default()
+            settings = QSettings()
 
-            # Load background
-            if config.thumbnail_bg_image:
+            if self.logger:
+                self.logger.info("=== THUMBNAIL SETTINGS LOAD ===")
+
+            # Load from QSettings with fallback to ApplicationConfig
+            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+
+            if self.logger:
+                self.logger.info(f"Loaded from QSettings: bg={bg_image}, material={material}")
+
+            # Update ApplicationConfig for runtime compatibility
+            if bg_image:
+                config.thumbnail_bg_image = bg_image
+            if material:
+                config.thumbnail_material = material
+
+            # Load background into UI
+            if bg_image:
                 for i in range(self.bg_list.count()):
                     item = self.bg_list.item(i)
-                    if item.data(Qt.UserRole) == config.thumbnail_bg_image:
+                    if item.data(Qt.UserRole) == bg_image:
                         self.bg_list.setCurrentItem(item)
+                        if self.logger:
+                            self.logger.info(f"✓ Set background to: {bg_image}")
                         break
 
-            # Load material
-            if config.thumbnail_material:
-                idx = self.material_combo.findData(config.thumbnail_material)
+            # Load material into UI
+            if material:
+                idx = self.material_combo.findData(material)
                 if idx >= 0:
                     self.material_combo.setCurrentIndex(idx)
+                    if self.logger:
+                        self.logger.info(f"✓ Set material to: {material}")
 
             self._update_preview()
+            
+            if self.logger:
+                self.logger.info("=== THUMBNAIL SETTINGS LOAD COMPLETE ===")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to load settings: {e}")
+                self.logger.error(f"Failed to load thumbnail settings: {e}", exc_info=True)
 
     def _on_background_selected(self) -> None:
         """Handle background selection."""
@@ -1297,25 +1443,37 @@ class ThumbnailSettingsTab(QWidget):
         return settings
 
     def save_settings(self) -> None:
-        """Save thumbnail settings to application config."""
+        """Save thumbnail settings to QSettings for persistence."""
         try:
             from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
 
             config = ApplicationConfig.get_default()
-            settings = self.get_settings()
-
-            config.thumbnail_bg_image = settings["background_image"]
-            config.thumbnail_material = settings["material"]
+            settings = QSettings()  # Use QSettings for persistence
+            settings_dict = self.get_settings()
 
             if self.logger:
-                self.logger.info(
-                    f"Saved thumbnail settings: "
-                    f"bg={settings['background_image']}, "
-                    f"material={settings['material']}"
-                )
+                self.logger.info("=== THUMBNAIL SETTINGS SAVE ===")
+                self.logger.info(f"Attempting to save: bg={settings_dict['background_image']}, material={settings_dict['material']}")
+
+            # Save to QSettings (persistent storage)
+            settings.setValue("thumbnail/background_image", settings_dict["background_image"])
+            settings.setValue("thumbnail/material", settings_dict["material"])
+            settings.sync()  # Force immediate write to disk
+
+            # Also update ApplicationConfig for runtime compatibility
+            config.thumbnail_bg_image = settings_dict["background_image"]
+            config.thumbnail_material = settings_dict["material"]
+
+            if self.logger:
+                self.logger.info("✓ Content settings saved to QSettings (persistent)")
+                self.logger.info(f"QSettings thumbnail/background_image = {settings_dict['background_image']}")
+                self.logger.info(f"QSettings thumbnail/material = {settings_dict['material']}")
+                self.logger.info(f"ApplicationConfig also updated for runtime compatibility")
+                self.logger.info("=== THUMBNAIL SETTINGS SAVE COMPLETE ===")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to save settings: {e}")
+                self.logger.error(f"Failed to save settings: {e}", exc_info=True)
 
 class PerformanceSettingsTab(QWidget):
     """Performance settings tab for memory allocation and system optimization."""

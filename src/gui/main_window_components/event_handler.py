@@ -98,7 +98,26 @@ class EventHandler:
         """Show preferences dialog."""
         logger.info("Opening preferences dialog")
         dlg = PreferencesDialog(self.main_window, on_reset_layout=self.main_window._reset_dock_layout_and_save)
+        dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
         dlg.exec_()
+
+    def _on_viewer_settings_changed(self) -> None:
+        """Handle viewer settings changed from preferences dialog."""
+        try:
+            logger.info("Viewer settings changed from preferences, syncing to lighting panel and manager")
+            
+            # Reload lighting settings from QSettings
+            if hasattr(self.main_window, '_settings_manager'):
+                self.main_window._settings_manager.load_lighting_settings()
+                logger.info("Lighting settings reloaded and synced to popup and manager")
+            
+            # Reload viewer settings to scene manager
+            if hasattr(self.main_window.viewer_widget, 'scene_manager'):
+                self.main_window.viewer_widget.scene_manager.reload_viewer_settings()
+                logger.info("Viewer settings reloaded to scene manager")
+                
+        except Exception as e:
+            logger.error(f"Failed to sync viewer settings: {e}")
 
     def show_theme_manager(self) -> None:
         """Show the Theme Manager dialog."""

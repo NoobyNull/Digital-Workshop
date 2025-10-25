@@ -10,6 +10,7 @@ import sys
 from typing import Optional
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QCoreApplication
 
 from .application_config import ApplicationConfig
 from .application_bootstrap import ApplicationBootstrap
@@ -185,8 +186,15 @@ class Application:
         """
         try:
             self.qt_app = QApplication(argv)
+            
+            # Initialize QSettings with organization and application names
+            # This must be done before any QSettings usage to ensure proper persistence
+            QCoreApplication.setOrganizationName("Digital Workshop")
+            QCoreApplication.setApplicationName("3D Model Manager")
+            
             self.logger = get_logger(__name__)
             self.logger.info("QApplication created")
+            self.logger.info("QSettings initialized with organization: 'Digital Workshop', application: '3D Model Manager'")
             return True
         except RuntimeError as e:
             print(f"Failed to create QApplication: {str(e)}")

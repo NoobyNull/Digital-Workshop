@@ -26,7 +26,8 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTreeView, QListView,
     QTableView, QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
     QGroupBox, QTabWidget, QFrame, QMenu, QMessageBox, QHeaderView,
-    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox, QDialog
+    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox, QDialog,
+    QFileDialog, QInputDialog
 )
 
 from src.core.logging_config import get_logger
@@ -804,33 +805,133 @@ class ModelLibraryWidget(QWidget):
         """Show context menu for the file tree with import and open options."""
         try:
             index = self.file_tree.indexAt(position)
-            if not index.isValid():
-                return
-
-            # Map from proxy to source model
-            source_index = self.file_proxy_model.mapToSource(index)
-            path = self.file_model.get_file_path(source_index)
-            if not path:
-                return
-
             menu = QMenu(self)
+            
+            # Add Root Folder action - always available
+            add_root_action = QAction("Add Root Folder", self)
+            add_root_action.triggered.connect(self._add_root_folder_from_context)
+            menu.addAction(add_root_action)
+            
+            # Check if clicking on a valid file/folder
+            if index.isValid():
+                source_index = self.file_proxy_model.mapToSource(index)
+                path = self.file_model.get_file_path(source_index)
+                
+                # Check if this is a root folder node
+                node = self.file_model.get_node(source_index)
+                is_root_folder = node and hasattr(node, 'root_folder') and node.root_folder is not None
 
-            # Import action (for files and folders)
-            import_action = QAction("Import", self)
-            import_action.triggered.connect(lambda: self._import_from_context_menu(path))
-            menu.addAction(import_action)
+                if is_root_folder:
+                    # Remove Root Folder action for root folder nodes
+                    menu.addSeparator()
+                    remove_root_action = QAction("Remove Root Folder", self)
+                    remove_root_action.triggered.connect(lambda: self._remove_root_folder_from_context(node.root_folder))
+                    menu.addAction(remove_root_action)
 
-            # Open in native app action (for files only)
-            if Path(path).is_file():
-                menu.addSeparator()
-                open_action = QAction("Open in Native App", self)
-                open_action.triggered.connect(lambda: self._open_in_native_app(path))
-                menu.addAction(open_action)
+                if path and Path(path).exists():
+                    # Add separator before file-specific actions
+                    menu.addSeparator()
+                    
+                    # Import action (for files and folders)
+                    import_action = QAction("Import", self)
+                    import_action.triggered.connect(lambda: self._import_from_context_menu(path))
+                    menu.addAction(import_action)
+
+                    # Open in native app action (for files only)
+                    if Path(path).is_file():
+                        open_action = QAction("Open in Native App", self)
+                        open_action.triggered.connect(lambda: self._open_in_native_app(path))
+                        menu.addAction(open_action)
 
             menu.exec_(self.file_tree.mapToGlobal(position))
 
         except Exception as e:
             self.logger.error(f"Error showing file tree context menu: {e}")
+
+    def _add_root_folder_from_context(self) -> None:
+        """Add a new root folder via context menu."""
+        try:
+            # Open folder selection dialog
+            folder_path = QFileDialog.getExistingDirectory(
+                self,
+                "Select Root Folder",
+                str(Path.home()),
+                QFileDialog.ShowDirsOnly
+            )
+
+            if not folder_path:
+                return
+
+            # Get display name
+            folder_name = Path(folder_path).name
+            display_name, ok = QInputDialog.getText(
+                self,
+                "Folder Display Name",
+                "Enter a display name for this folder:",
+                text=folder_name
+            )
+
+            if not ok or not display_name.strip():
+                return
+
+            # Add to manager
+            if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Added folder '{display_name}'"
+                )
+                # Refresh the file browser to show the new root folder
+                self._refresh_file_browser()
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    "Failed to add folder. It may already exist or be inaccessible."
+                )
+        except Exception as e:
+            self.logger.error(f"Failed to add root folder: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to add root folder: {e}"
+            )
+
+    def _remove_root_folder_from_context(self, root_folder) -> None:
+        """Remove a root folder via context menu."""
+        try:
+            # Confirm removal
+            reply = QMessageBox.question(
+                self,
+                "Confirm Removal",
+                f"Are you sure you want to remove '{root_folder.display_name}' from the root folders?\n\n"
+                f"This will not delete any files, only remove the folder from the file browser.",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                if self.root_folder_manager.remove_folder(root_folder.id):
+                    QMessageBox.information(
+                        self,
+                        "Success",
+                        f"Removed folder '{root_folder.display_name}'"
+                    )
+                    # Refresh the file browser
+                    self._refresh_file_browser()
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Error",
+                        "Failed to remove folder."
+                    )
+        except Exception as e:
+            self.logger.error(f"Failed to remove root folder: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to remove root folder: {e}"
+            )
 
     def _import_from_context_menu(self, path: str) -> None:
         """Import files/folders from context menu selection."""
