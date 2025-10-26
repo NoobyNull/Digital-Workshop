@@ -698,8 +698,18 @@ class MainWindow(QMainWindow):
                 "Feed and Speed",
             )
 
-        # Add Project Cost Estimator placeholder
+        # Try to add Cost Estimator widget
         try:
+            self.logger.info("Attempting to create Cost Estimator widget...")
+            from src.gui.cost_estimator import CostEstimatorWidget
+
+            self.cost_estimator_widget = CostEstimatorWidget(self)
+            self.hero_tabs.addTab(
+                self.cost_estimator_widget, "Project Cost Estimator"
+            )
+            self.logger.info("Cost Estimator widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create Cost Estimator widget: {e}")
             self.hero_tabs.addTab(
                 create_placeholder(
                     "Project Cost Estimator",
@@ -707,8 +717,6 @@ class MainWindow(QMainWindow):
                 ),
                 "Project Cost Estimator",
             )
-        except Exception as e:
-            self.logger.warning(f"Failed to add Project Cost Estimator tab: {e}")
 
     def _restore_active_tab(self) -> None:
         """Restore the last active tab using native Qt settings."""
