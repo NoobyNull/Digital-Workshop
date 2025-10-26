@@ -1,0 +1,108 @@
+name: CI - Continuous Integration
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pylint pytest pytest-qt
+
+      - name: Run linting
+        run: |
+          pylint src/ --fail-under=8.0 --output-format=colorized
+
+      - name: Run basic tests
+        run: |
+          pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-report=term
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  build-test:
+    runs-on: windows-latest
+    needs: code-quality
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache PyInstaller build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/
+            dist/
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('**/*.py') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Test build process
+        run: |
+          python build.py --no-tests --no-installer
+
+      - name: Verify executable
+        run: |
+          if (Test-Path "dist/Digital Workshop.exe") {
+            Write-Host "Build test successful - executable created"
+            $size = (Get-Item "dist/Digital Workshop.exe").Length / 1MB
+            Write-Host "Executable size: $([math]::Round($size, 2)) MB"
+          } else {
+            Write-Error "Build test failed - executable not found"
+            exit 1
+          }
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-debug-logs
+          path: |
+            build_*.log
+            dist/build_report.json
+          retention-days: 7
