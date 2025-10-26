@@ -31,26 +31,52 @@ class ModelErrorFixer:
             "degenerate_removed": 0,
             "non_manifold_fixed": 0,
         }
-        
+
+        # Ensure triangles is a list (handle numpy arrays or other types)
+        if self.fixed_triangles is None:
+            return STLModel(
+                header=self.model.header,
+                triangles=[],
+                stats=self.model.stats
+            ), fixes_applied
+
+        try:
+            # Convert to list if needed
+            if not isinstance(self.fixed_triangles, list):
+                self.fixed_triangles = list(self.fixed_triangles)
+        except (TypeError, ValueError):
+            return STLModel(
+                header=self.model.header,
+                triangles=[],
+                stats=self.model.stats
+            ), fixes_applied
+
+        if not self.fixed_triangles:
+            return STLModel(
+                header=self.model.header,
+                triangles=[],
+                stats=self.model.stats
+            ), fixes_applied
+
         # Fix overlapping/duplicate triangles
         self.fixed_triangles, dup_count = self._fix_overlapping_triangles()
         fixes_applied["duplicates_removed"] = dup_count
-        
+
         # Fix degenerate triangles
         self.fixed_triangles, deg_count = self._fix_degenerate_triangles()
         fixes_applied["degenerate_removed"] = deg_count
-        
+
         # Fix non-manifold edges
         self.fixed_triangles, nm_count = self._fix_non_manifold_edges()
         fixes_applied["non_manifold_fixed"] = nm_count
-        
+
         # Create new model with fixed triangles
         fixed_model = STLModel(
             header=self.model.header,
             triangles=self.fixed_triangles,
             stats=self._recalculate_stats()
         )
-        
+
         return fixed_model, fixes_applied
 
     def _fix_overlapping_triangles(self) -> Tuple[List[Triangle], int]:

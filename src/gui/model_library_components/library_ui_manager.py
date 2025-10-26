@@ -81,17 +81,6 @@ class LibraryUIManager:
         controls_layout.addWidget(QLabel("Search:"))
         controls_layout.addWidget(self.library_widget.search_box)
 
-        self.library_widget.category_filter = QComboBox()
-        self.library_widget.category_filter.addItem("All Categories")
-        controls_layout.addWidget(QLabel("Category:"))
-        controls_layout.addWidget(self.library_widget.category_filter)
-
-        self.library_widget.format_filter = QComboBox()
-        self.library_widget.format_filter.addItem("All Formats")
-        self.library_widget.format_filter.addItems(["STL", "OBJ", "3MF", "STEP"])
-        controls_layout.addWidget(QLabel("Format:"))
-        controls_layout.addWidget(self.library_widget.format_filter)
-
         parent_layout.addWidget(controls_frame)
 
     def create_file_browser(self, parent_layout: QVBoxLayout) -> None:

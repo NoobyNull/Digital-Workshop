@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import Tuple
+import logging
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSettings
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QDialog,
@@ -14,6 +15,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QColorDialog,
 )
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -33,13 +36,22 @@ class LightingControlPanel(QDialog):
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.resize(400, 400)
 
+        # Load default values from QSettings or use system defaults
+        settings = QSettings()
+        self._default_pos_x = settings.value("lighting/default_pos_x", 90.0, type=float)
+        self._default_pos_y = settings.value("lighting/default_pos_y", 90.0, type=float)
+        self._default_pos_z = settings.value("lighting/default_pos_z", 180.0, type=float)
+        self._default_color = (1.0, 1.0, 1.0)  # normalized RGB
+        self._default_intensity = settings.value("lighting/default_intensity", 1.2, type=float)
+        self._default_cone_angle = settings.value("lighting/default_cone_angle", 90.0, type=float)
+
         # Current values (defaults) - using angle-based positions (0-180 deg, 90 = center)
-        self._pos_x = 90.0  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_y = 90.0  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_z = 90.0  # degrees, 90 = center (maps to 100 actual position)
-        self._color = (1.0, 1.0, 1.0)  # normalized RGB
-        self._intensity = 0.8
-        self._cone_angle = 30.0  # Cone angle in degrees (1-90)
+        self._pos_x = self._default_pos_x  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_y = self._default_pos_y  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_z = self._default_pos_z  # degrees, 90 = center (maps to 100 actual position)
+        self._color = self._default_color  # normalized RGB
+        self._intensity = self._default_intensity
+        self._cone_angle = self._default_cone_angle  # Cone angle in degrees (1-90)
 
         # Build UI
         root_layout = QVBoxLayout(self)
@@ -150,15 +162,22 @@ class LightingControlPanel(QDialog):
         cone_layout.addWidget(self.cone_slider, 1)
         cone_layout.addWidget(self.cone_value)
 
-        # Actions group (Reset)
+        # Actions group (Reset and Set Default)
         self.actions_group = QGroupBox("Actions")
         actions_layout = QHBoxLayout(self.actions_group)
         actions_layout.setContentsMargins(10, 10, 10, 10)
         actions_layout.setSpacing(8)
+
+        self.set_default_button = QPushButton("Set Default")
+        self._apply_button_style(self.set_default_button)
+        self.set_default_button.clicked.connect(self._set_as_default)
+
         self.reset_button = QPushButton("Reset to Defaults")
         self._apply_button_style(self.reset_button)
         self.reset_button.clicked.connect(self._reset_defaults)
+
         actions_layout.addStretch()
+        actions_layout.addWidget(self.set_default_button)
         actions_layout.addWidget(self.reset_button)
 
         # Assemble groups
@@ -310,14 +329,41 @@ class LightingControlPanel(QDialog):
         self.cone_angle_changed.emit(self._cone_angle)
 
     def _reset_defaults(self) -> None:
-        # Defaults: (0, 0, 100) actual position (90° on XY sliders), white, 0.8 intensity, 30° cone
+        """Reset to the stored default values."""
         self.set_values(
-            position=(0.0, 0.0, 100.0),  # Centered XY, slightly positive Z
-            color=(1.0, 1.0, 1.0),
-            intensity=0.8,
-            cone_angle=30.0,
+            position=(self._default_pos_x, self._default_pos_y, self._default_pos_z),
+            color=self._default_color,
+            intensity=self._default_intensity,
+            cone_angle=self._default_cone_angle,
             emit_signals=True,
         )
+
+    def _set_as_default(self) -> None:
+        """Save current values as the new defaults."""
+        try:
+            settings = QSettings()
+            settings.setValue("lighting/default_pos_x", self._pos_x)
+            settings.setValue("lighting/default_pos_y", self._pos_y)
+            settings.setValue("lighting/default_pos_z", self._pos_z)
+            settings.setValue("lighting/default_intensity", self._intensity)
+            settings.setValue("lighting/default_cone_angle", self._cone_angle)
+            settings.sync()
+
+            # Update internal defaults
+            self._default_pos_x = self._pos_x
+            self._default_pos_y = self._pos_y
+            self._default_pos_z = self._pos_z
+            self._default_intensity = self._intensity
+            self._default_cone_angle = self._cone_angle
+
+            logger.info(
+                f"Lighting defaults saved: "
+                f"Position=({self._pos_x:.1f}, {self._pos_y:.1f}, {self._pos_z:.1f}), "
+                f"Intensity={self._intensity:.1f}, "
+                f"Cone Angle={self._cone_angle:.0f}°"
+            )
+        except Exception as e:
+            logger.error(f"Failed to save lighting defaults: {e}")
 
 
 

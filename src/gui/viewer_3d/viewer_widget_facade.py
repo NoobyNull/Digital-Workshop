@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QWidget, QDialog
 
 import vtk
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger, get_activity_logger, log_function_call
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.stl_parser import STLModel
@@ -43,6 +43,7 @@ from src.gui.vtk import (
 
 
 logger = get_logger(__name__)
+activity_logger = get_activity_logger(__name__)
 
 
 class Viewer3DWidget(QWidget):
@@ -316,7 +317,7 @@ class Viewer3DWidget(QWidget):
             # Emit signal
             self.model_loaded.emit(model.filename if hasattr(model, "filename") else "Model")
 
-            self.logger.info("Model loaded successfully")
+            activity_logger.info("Model loaded successfully")
             return True
 
         except Exception as e:

@@ -62,6 +62,13 @@ class MenuManager:
         open_action.setStatusTip("Open a 3D model file")
         open_action.triggered.connect(self._open_model)
         file_menu.addAction(open_action)
+        
+        # Import Models action
+        import_action = QAction("&Import Models...", self.main_window)
+        import_action.setShortcut(QKeySequence("Ctrl+I"))
+        import_action.setStatusTip("Import 3D models into the library")
+        import_action.triggered.connect(self._import_models)
+        file_menu.addAction(import_action)
 
         file_menu.addSeparator()
 
@@ -209,6 +216,11 @@ class MenuManager:
         # This would need to be connected to the main window's model loading logic
         if hasattr(self.main_window, '_open_model'):
             self.main_window._open_model()
+    
+    def _import_models(self) -> None:
+        """Handle import models action."""
+        if hasattr(self.main_window, '_import_models'):
+            self.main_window._import_models()
 
     def _edit_model(self) -> None:
         """Handle edit model action."""

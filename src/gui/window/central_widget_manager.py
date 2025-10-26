@@ -101,22 +101,9 @@ class CentralWidgetManager:
             if hasattr(self.main_window.viewer_widget, "save_view_requested"):
                 self.main_window.viewer_widget.save_view_requested.connect(self._save_current_view)
 
-            try:
-                if hasattr(self.main_window, "lighting_panel") and self.main_window.lighting_panel and self.main_window.lighting_manager:
-                    self.main_window.lighting_panel.position_changed.connect(self._update_light_position)
-                    self.main_window.lighting_panel.color_changed.connect(self._update_light_color)
-                    self.main_window.lighting_panel.intensity_changed.connect(self._update_light_intensity)
-                    self.main_window.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
-                    props = self.main_window.lighting_manager.get_properties()
-                    self.main_window.lighting_panel.set_values(
-                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
-                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
-                        intensity=float(props.get("intensity", 0.8)),
-                        cone_angle=float(props.get("cone_angle", 30.0)),
-                        emit_signals=False,
-                    )
-            except Exception as e:
-                self.logger.warning(f"Failed to connect lighting panel: {e}")
+            # Note: Lighting panel is created later in dock_manager, so we'll connect it there
+            # This is just a placeholder to ensure the signal exists
+            self.logger.debug("Lighting panel will be connected in dock_manager after creation")
 
             if hasattr(self.main_window.viewer_widget, "apply_theme"):
                 try:

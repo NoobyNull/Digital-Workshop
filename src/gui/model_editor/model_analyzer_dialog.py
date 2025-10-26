@@ -98,7 +98,21 @@ class ModelAnalyzerDialog(QDialog):
         """Analyze the model for errors."""
         try:
             # Check if model has triangles
-            if not self.model or not self.model.triangles:
+            if not self.model:
+                self.logger.warning("Model is None")
+                self.info_text.setText("⚠️ Model is None")
+                self.fix_btn.setEnabled(False)
+                return
+
+            # Check if triangles exist (handle both list and numpy array)
+            has_triangles = False
+            if self.model.triangles is not None:
+                try:
+                    has_triangles = len(self.model.triangles) > 0
+                except (TypeError, ValueError):
+                    has_triangles = False
+
+            if not has_triangles:
                 self.logger.warning("Model has no triangles to analyze")
                 self.info_text.setText("⚠️ Model has no triangles to analyze")
                 self.fix_btn.setEnabled(False)

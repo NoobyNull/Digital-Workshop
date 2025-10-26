@@ -175,6 +175,27 @@ class DockManager:
             self.main_window.lighting_panel.hide()
             # Dialog will float above main window when shown
             self.logger.info("Lighting control panel created as floating dialog")
+
+            # Connect lighting panel signals to main window handlers
+            try:
+                if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
+                    self.main_window.lighting_panel.position_changed.connect(self.main_window._update_light_position)
+                    self.main_window.lighting_panel.color_changed.connect(self.main_window._update_light_color)
+                    self.main_window.lighting_panel.intensity_changed.connect(self.main_window._update_light_intensity)
+                    self.main_window.lighting_panel.cone_angle_changed.connect(self.main_window._update_light_cone_angle)
+
+                    # Initialize panel with current lighting properties
+                    props = self.main_window.lighting_manager.get_properties()
+                    self.main_window.lighting_panel.set_values(
+                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
+                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
+                        intensity=float(props.get("intensity", 0.8)),
+                        cone_angle=float(props.get("cone_angle", 30.0)),
+                        emit_signals=False,
+                    )
+                    self.logger.info("Lighting panel signals connected to main window handlers")
+            except Exception as e:
+                self.logger.warning(f"Failed to connect lighting panel signals: {e}")
         except Exception as e:
             self.logger.warning(f"Failed to create LightingControlPanel: {e}")
 

@@ -55,8 +55,6 @@ class LibraryEventHandler:
         self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
 
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
-        self.library_widget.category_filter.currentIndexChanged.connect(self.apply_filters)
-        self.library_widget.format_filter.currentIndexChanged.connect(self.apply_filters)
 
         self.library_widget.setAcceptDrops(True)
         self.library_widget.list_view.setAcceptDrops(True)

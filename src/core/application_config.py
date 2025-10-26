@@ -73,20 +73,21 @@ class ApplicationConfig:
     auto_fit_on_load: bool = True
 
     # Lighting Settings
-    default_light_position_x: float = 100.0
-    default_light_position_y: float = 100.0
-    default_light_position_z: float = 100.0
+    default_light_position_x: float = 90.0
+    default_light_position_y: float = 90.0
+    default_light_position_z: float = 180.0
     default_light_color_r: float = 1.0
     default_light_color_g: float = 1.0
     default_light_color_b: float = 1.0
-    default_light_intensity: float = 0.8
-    default_light_cone_angle: float = 30.0
+    default_light_intensity: float = 1.2
+    default_light_cone_angle: float = 90.0
     enable_fill_light: bool = True
     fill_light_intensity: float = 0.3
 
     # Logging Configuration
     log_level: str = "INFO"
     enable_file_logging: bool = True
+    enable_console_logging: bool = False  # Console logging disabled by default
     log_retention_days: int = 30
 
     # Thumbnail Generation Configuration

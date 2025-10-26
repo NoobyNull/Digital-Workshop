@@ -23,7 +23,7 @@ from src.core.logging_config import get_logger
 
 def parse_arguments():
     """Parse command line arguments for the application.
-    
+
     Returns:
         Parsed arguments namespace
     """
@@ -32,14 +32,16 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py                    # Start with INFO logging (default)
-  python main.py --debug            # Start with DEBUG logging
-  python main.py --log-level DEBUG  # Start with DEBUG logging
-  python main.py --log-level INFO   # Start with INFO logging
-  python main.py --log-level WARNING # Start with WARNING logging
+  python main.py                           # Start with INFO logging (default)
+  python main.py --debug                   # Start with DEBUG logging
+  python main.py --log-level DEBUG         # Start with DEBUG logging
+  python main.py --log-level INFO          # Start with INFO logging
+  python main.py --log-level WARNING       # Start with WARNING logging
+  python main.py --log-console             # Enable console logging (default: file only)
+  python main.py --debug --log-console     # DEBUG logging to both file and console
         """
     )
-    
+
     # Log level arguments
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument(
@@ -55,7 +57,14 @@ Examples:
         default="INFO",
         help="Set logging level (default: INFO)"
     )
-    
+
+    # Console logging argument
+    parser.add_argument(
+        "--log-console",
+        action="store_true",
+        help="Enable console logging (default: logs go to file only, activities always shown)"
+    )
+
     return parser.parse_args()
 
 
@@ -69,7 +78,11 @@ def main():
     logger.info(f"Log level set to: {log_level}")
 
     config = ApplicationConfig.get_default()
-    config = dataclasses.replace(config, log_level=log_level)  # Simplified config update
+    config = dataclasses.replace(
+        config,
+        log_level=log_level,
+        enable_console_logging=args.log_console
+    )
     
     exception_handler = ExceptionHandler()
     app = None

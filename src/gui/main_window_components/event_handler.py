@@ -10,12 +10,13 @@ from typing import List, Optional
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger, get_activity_logger, log_function_call
 from src.core.database_manager import get_database_manager
 from src.gui.preferences import PreferencesDialog
 
 
 logger = get_logger(__name__)
+activity_logger = get_activity_logger(__name__)
 
 
 class EventHandler:
@@ -63,7 +64,7 @@ class EventHandler:
 
     def on_models_added(self, model_ids: List[int]) -> None:
         """Handle models added to the library."""
-        logger.info(f"Added {len(model_ids)} models to library")
+        activity_logger.info(f"Added {len(model_ids)} models to library")
 
         if model_ids:
             self.main_window.status_label.setText(f"Added {len(model_ids)} models to library")
@@ -74,7 +75,7 @@ class EventHandler:
     def on_metadata_saved(self, model_id: int) -> None:
         """Handle metadata saved event from the metadata editor."""
         try:
-            logger.info(f"Metadata saved for model ID: {model_id}")
+            activity_logger.info(f"Metadata saved for model ID: {model_id}")
             self.main_window.status_label.setText("Metadata saved")
 
             if hasattr(self.main_window, "model_library_widget"):
@@ -105,17 +106,21 @@ class EventHandler:
         """Handle viewer settings changed from preferences dialog."""
         try:
             logger.info("Viewer settings changed from preferences, syncing to lighting panel and manager")
-            
-            # Reload lighting settings from QSettings
+
+            # Reload lighting settings from QSettings and apply to lighting manager
             if hasattr(self.main_window, '_settings_manager'):
                 self.main_window._settings_manager.load_lighting_settings()
                 logger.info("Lighting settings reloaded and synced to popup and manager")
-            
+            elif hasattr(self.main_window, '_load_lighting_settings'):
+                # Fallback: call load_lighting_settings directly
+                self.main_window._load_lighting_settings()
+                logger.info("Lighting settings reloaded directly from main window")
+
             # Reload viewer settings to scene manager
             if hasattr(self.main_window.viewer_widget, 'scene_manager'):
                 self.main_window.viewer_widget.scene_manager.reload_viewer_settings()
                 logger.info("Viewer settings reloaded to scene manager")
-                
+
         except Exception as e:
             logger.error(f"Failed to sync viewer settings: {e}")
 

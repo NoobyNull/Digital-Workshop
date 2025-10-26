@@ -24,10 +24,15 @@ from PySide6.QtWidgets import (
     QSizePolicy
 )
 
-from src.core.logging_config import get_logger
+from src.core.logging_config import get_logger, get_activity_logger
 from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
+from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.parsers.obj_parser import OBJParser
+from src.parsers.threemf_parser import ThreeMFParser
+from src.parsers.step_parser import STEPParser
+from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
 from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
 
@@ -56,6 +61,7 @@ class MainWindow(QMainWindow):
 
         # Initialize logger
         self.logger = get_logger(__name__)
+        self.activity_logger = get_activity_logger(__name__)
         self.logger.info("Initializing main window")
 
         # Hide window during initialization to prevent blinking
@@ -88,6 +94,9 @@ class MainWindow(QMainWindow):
 
         # Initialize UI components
         self._init_ui()
+
+        # Note: Window geometry restoration is deferred to showEvent() to ensure
+        # proper restoration after the window is fully initialized and shown
 
     def _init_ui(self) -> None:
         """Initialize basic UI properties and styling."""
@@ -433,24 +442,13 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to setup metadata dock: {e}")
 
     def _load_native_dock_layout(self) -> None:
-        """Load saved dock layout using native Qt methods."""
-        try:
-            settings = QSettings()
-            if settings.contains("window_geometry") and settings.contains("window_state"):
-                # Use native Qt methods to restore layout
-                geometry_data = settings.value("window_geometry")
-                state_data = settings.value("window_state")
+        """Load saved dock layout using native Qt methods.
 
-                if geometry_data and state_data:
-                    self.restoreGeometry(geometry_data)
-                    self.restoreState(state_data)
-                    self.logger.info("Native dock layout restored successfully")
-                else:
-                    self.logger.debug("No saved dock layout found, using defaults")
-            else:
-                self.logger.debug("No dock layout settings found")
-        except Exception as e:
-            self.logger.warning(f"Failed to load native dock layout: {e}")
+        Note: This is called during initialization but actual restoration
+        is deferred to showEvent() to ensure proper timing.
+        """
+        # Geometry restoration is now handled in showEvent() for proper timing
+        self.logger.debug("Dock layout restoration deferred to showEvent()")
 
     def _connect_native_dock_signals(self) -> None:
         """Connect native Qt dock signals for layout persistence."""
@@ -481,11 +479,15 @@ class MainWindow(QMainWindow):
             # Connect viewer signals
             if hasattr(self.viewer_widget, 'model_loaded'):
                 self.viewer_widget.model_loaded.connect(self._on_model_loaded)
-            if hasattr(self.viewer_widget, 'performance_updated'):
-                self.viewer_widget.performance_updated.connect(self._on_performance_updated)
+            # FPS counter removed - performance_updated signal no longer connected
 
             # Set up managers
             self._setup_viewer_managers()
+
+            # Connect lighting panel signal after managers are set up
+            if hasattr(self.viewer_widget, 'lighting_panel_requested'):
+                self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
+                self.logger.info("Lighting panel signal connected to main window")
 
         except Exception as e:
             self.logger.warning(f"Failed to setup viewer widget: {e}")
@@ -519,6 +521,35 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.lighting_manager = None
                 self.logger.warning(f"LightingManager unavailable: {e}")
+
+            # Create lighting control panel
+            try:
+                from src.gui.lighting_control_panel import LightingControlPanel
+                self.lighting_panel = LightingControlPanel(self)
+                self.lighting_panel.setObjectName("LightingDialog")
+                self.lighting_panel.hide()
+                self.logger.info("Lighting control panel created as floating dialog")
+
+                # Connect lighting panel signals to main window handlers
+                if self.lighting_manager:
+                    self.lighting_panel.position_changed.connect(self._update_light_position)
+                    self.lighting_panel.color_changed.connect(self._update_light_color)
+                    self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
+                    self.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
+
+                    # Initialize panel with current lighting properties
+                    props = self.lighting_manager.get_properties()
+                    self.lighting_panel.set_values(
+                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
+                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
+                        intensity=float(props.get("intensity", 0.8)),
+                        cone_angle=float(props.get("cone_angle", 30.0)),
+                        emit_signals=False,
+                    )
+                    self.logger.info("Lighting panel signals connected to main window handlers")
+            except Exception as e:
+                self.lighting_panel = None
+                self.logger.warning(f"Failed to create LightingControlPanel: {e}")
 
             # Material-Lighting integration
             try:
@@ -701,14 +732,14 @@ class MainWindow(QMainWindow):
         try:
             settings = QSettings()
             if settings.contains('lighting/position_x'):
-                pos_x = settings.value('lighting/position_x', 100.0, type=float)
-                pos_y = settings.value('lighting/position_y', 100.0, type=float)
-                pos_z = settings.value('lighting/position_z', 100.0, type=float)
+                pos_x = settings.value('lighting/position_x', 90.0, type=float)
+                pos_y = settings.value('lighting/position_y', 90.0, type=float)
+                pos_z = settings.value('lighting/position_z', 180.0, type=float)
                 col_r = settings.value('lighting/color_r', 1.0, type=float)
                 col_g = settings.value('lighting/color_g', 1.0, type=float)
                 col_b = settings.value('lighting/color_b', 1.0, type=float)
-                intensity = settings.value('lighting/intensity', 0.8, type=float)
-                cone_angle = settings.value('lighting/cone_angle', 30.0, type=float)
+                intensity = settings.value('lighting/intensity', 1.2, type=float)
+                cone_angle = settings.value('lighting/cone_angle', 90.0, type=float)
                 props = {
                     "position": (float(pos_x), float(pos_y), float(pos_z)),
                     "color": (float(col_r), float(col_g), float(col_b)),
@@ -856,10 +887,34 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to reset dock layout: {e}")
             self.statusBar().showMessage("Failed to reset layout", 3000)
 
+    def _restore_window_state(self) -> None:
+        """Restore saved window geometry and state from QSettings."""
+        try:
+            settings = QSettings()
+
+            # Try to restore window geometry (size and position)
+            if settings.contains("window_geometry"):
+                geometry_data = settings.value("window_geometry")
+                if geometry_data:
+                    if self.restoreGeometry(geometry_data):
+                        self.logger.info("Window geometry restored successfully")
+                    else:
+                        self.logger.debug("Failed to restore window geometry, using defaults")
+
+            # Try to restore window state (maximized/normal, dock layout)
+            if settings.contains("window_state"):
+                state_data = settings.value("window_state")
+                if state_data:
+                    if self.restoreState(state_data):
+                        self.logger.info("Window state restored successfully")
+                    else:
+                        self.logger.debug("Failed to restore window state, using defaults")
+        except Exception as e:
+            self.logger.warning(f"Failed to restore window state: {e}")
+
     def _save_window_settings(self) -> None:
         """Save current window geometry and dock state."""
         try:
-            from PySide6.QtCore import QSettings
             settings = QSettings()
 
             # Save window geometry and state
@@ -877,7 +932,7 @@ class MainWindow(QMainWindow):
     def _on_model_loaded(self, info: str) -> None:
         """Handle model loaded signal from viewer."""
         try:
-            self.logger.info(f"Model loaded: {info}")
+            self.activity_logger.info(f"Model loaded: {info}")
             self.status_label.setText(f"Model loaded: {info}")
             self.progress_bar.setVisible(False)
 
@@ -886,20 +941,30 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to handle model loaded signal: {e}")
 
-    def _on_performance_updated(self, fps: float) -> None:
-        """Handle performance update signal from viewer."""
+
+
+    def showEvent(self, event) -> None:
+        """Handle window show event - restore geometry on first show."""
         try:
-            self.logger.debug(f"Performance updated: {fps:.1f} FPS")
-            # Update status bar if performance is low
-            if fps < 30:
-                self.status_label.setText(f"Low FPS: {fps:.1f}")
-            elif fps < 60:
-                self.status_label.setText(f"FPS: {fps:.1f}")
+            # Only restore on first show
+            if not hasattr(self, '_geometry_restored'):
+                self._restore_window_state()
+                self._geometry_restored = True
+                self.logger.info("Window geometry restored on first show")
         except Exception as e:
-            self.logger.error(f"Failed to handle performance update signal: {e}")
+            self.logger.warning(f"Failed to restore window geometry on show: {e}")
+
+        super().showEvent(event)
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing."""
+        try:
+            # Save window geometry and state (size, position, maximized state, dock layout)
+            self._save_window_settings()
+            self.logger.info("Window geometry and state saved on app close")
+        except Exception as e:
+            self.logger.warning(f"Failed to save window geometry/state on close: {e}")
+
         try:
             self._save_lighting_settings()
             self.logger.info("Lighting settings saved on app close")
@@ -992,6 +1057,49 @@ class MainWindow(QMainWindow):
 
         # TODO: Add material roughness/metallic sliders in picker
         # TODO: Add export material presets feature
+
+    def _import_models(self) -> None:
+        """Show the import models dialog."""
+        try:
+            from src.gui.import_components.import_dialog import ImportDialog
+            from src.core.root_folder_manager import RootFolderManager
+            from src.core.database.import_migration import migrate_import_schema
+            
+            # Ensure database schema is migrated
+            db_manager = get_database_manager()
+            success, error = migrate_import_schema(db_manager)
+            if not success:
+                self.logger.warning(f"Database migration warning: {error}")
+            
+            # Create and show import dialog
+            root_folder_mgr = RootFolderManager.get_instance()
+            dialog = ImportDialog(self, root_folder_mgr)
+            
+            if dialog.exec():
+                # Import completed successfully
+                import_result = dialog.get_import_result()
+                if import_result:
+                    self.activity_logger.info(
+                        f"Import completed: {import_result.processed_files} files imported"
+                    )
+                    self.status_label.setText(
+                        f"Import complete: {import_result.processed_files} file(s) imported"
+                    )
+                    
+                    # Refresh model library to show new imports
+                    if hasattr(self, 'model_library_widget') and self.model_library_widget:
+                        self.model_library_widget._load_models_from_database()
+                    
+                    # Clear status after delay
+                    QTimer.singleShot(5000, lambda: self.status_label.setText("Ready"))
+            
+        except Exception as e:
+            self.logger.error(f"Failed to show import dialog: {e}", exc_info=True)
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to open import dialog:\n\n{str(e)}"
+            )
 
     # Menu action handlers
 
@@ -1108,12 +1216,36 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Error", "Model file path not found")
                 return
 
-            parser = STLParser()
-            model = parser.parse_file(file_path)
+            # Load full geometry (not just metadata) for analysis
+            model_cache = get_model_cache()
+            cached_model = model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
+            if cached_model and cached_model.triangles:
+                model = cached_model
+            else:
+                # Load full geometry from file
+                fmt = FormatDetector().detect_format(Path(file_path))
+                if fmt == ModelFormat.STL:
+                    parser = STLParser()
+                elif fmt == ModelFormat.OBJ:
+                    parser = OBJParser()
+                elif fmt == ModelFormat.THREE_MF:
+                    parser = ThreeMFParser()
+                elif fmt == ModelFormat.STEP:
+                    parser = STEPParser()
+                else:
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.critical(self, "Error", f"Unsupported model format: {fmt}")
+                    return
 
-            if not model:
+                model = parser.parse_file(file_path)
+                if model:
+                    # Cache the full geometry for future use
+                    model_cache.put(file_path, CacheLevel.GEOMETRY_FULL, model)
+
+            # Validate model has geometry (either triangles or array-based)
+            if not model or (not model.triangles and not model.vertex_array):
                 from PySide6.QtWidgets import QMessageBox
-                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
+                QMessageBox.critical(self, "Error", f"Failed to load model geometry: {file_path}")
                 return
 
             # Open model analyzer dialog
@@ -1122,7 +1254,7 @@ class MainWindow(QMainWindow):
 
             if dialog.exec() == 1:  # QDialog.Accepted
                 # Model was fixed and saved, reload it
-                self.logger.info(f"Model analyzed and fixed")
+                self.activity_logger.info(f"Model analyzed and fixed")
                 # Reload the model in the viewer
                 self._on_model_double_clicked(self.current_model_id)
 

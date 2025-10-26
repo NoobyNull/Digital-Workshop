@@ -37,13 +37,27 @@ class ModelErrorDetector:
     def detect_all_errors(self) -> List[MeshError]:
         """Detect all types of errors in the model."""
         self.errors = []
-        
+
+        # Ensure triangles is a list (handle numpy arrays or other types)
+        if self.triangles is None:
+            return self.errors
+
+        try:
+            # Convert to list if needed
+            if not isinstance(self.triangles, list):
+                self.triangles = list(self.triangles)
+        except (TypeError, ValueError):
+            return self.errors
+
+        if not self.triangles:
+            return self.errors
+
         self._detect_non_manifold_edges()
         self._detect_holes()
         self._detect_overlapping_triangles()
         self._detect_self_intersecting()
         self._detect_hollow_areas()
-        
+
         return self.errors
 
     def _detect_non_manifold_edges(self) -> None:

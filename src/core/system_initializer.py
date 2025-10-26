@@ -6,6 +6,7 @@ This module contains the SystemInitializer class responsible for
 setting up the application environment, directories, and logging.
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -67,19 +68,12 @@ class SystemInitializer:
         app_data_path = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         log_dir = os.path.join(app_data_path, "logs")
 
-
-        if self.config.enable_file_logging:
-            setup_logging(
-                log_level=self.config.log_level,
-                log_dir=log_dir,
-                enable_console=True
-            )
-        else:
-            setup_logging(
-                log_level=self.config.log_level,
-                log_dir=log_dir,
-                enable_console=True
-            )
+        # Setup logging with console enabled only if explicitly requested
+        setup_logging(
+            log_level=self.config.log_level,
+            log_dir=log_dir,
+            enable_console=self.config.enable_console_logging
+        )
 
         self.logger = get_logger(__name__)
         self.logger.info("Logging system initialized")

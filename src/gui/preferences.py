@@ -505,6 +505,16 @@ class ViewerSettingsTab(QWidget):
         intensity_row.addWidget(self.light_intensity_label)
         lighting_layout.addRow("Light intensity:", intensity_row)
 
+        # Light Cone Angle
+        self.light_cone_angle_slider = QSlider(Qt.Horizontal)
+        self.light_cone_angle_slider.setRange(1, 90)
+        self.light_cone_angle_slider.setValue(90)
+        self.light_cone_angle_label = QLabel("90°")
+        cone_angle_row = QHBoxLayout()
+        cone_angle_row.addWidget(self.light_cone_angle_slider)
+        cone_angle_row.addWidget(self.light_cone_angle_label)
+        lighting_layout.addRow("Light cone angle:", cone_angle_row)
+
         self.enable_fill_light_check = QCheckBox("Enable fill light")
         lighting_layout.addRow(self.enable_fill_light_check)
 
@@ -547,6 +557,7 @@ class ViewerSettingsTab(QWidget):
         self.light_pos_z_slider.valueChanged.connect(self._on_light_pos_z_changed)
         self.light_color_btn.clicked.connect(self._on_light_color_clicked)
         self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
+        self.light_cone_angle_slider.valueChanged.connect(self._on_light_cone_angle_changed)
         self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
 
         # Gradient signals
@@ -583,18 +594,21 @@ class ViewerSettingsTab(QWidget):
             self.auto_fit_check.setChecked(settings.value("viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool))
 
             # Lighting settings
-            pos_x = settings.value("lighting/position_x", 100.0, type=float)
-            pos_y = settings.value("lighting/position_y", 100.0, type=float)
-            pos_z = settings.value("lighting/position_z", 100.0, type=float)
+            pos_x = settings.value("lighting/position_x", 90.0, type=float)
+            pos_y = settings.value("lighting/position_y", 90.0, type=float)
+            pos_z = settings.value("lighting/position_z", 180.0, type=float)
             self.light_pos_x_slider.setValue(int(pos_x))
             self.light_pos_y_slider.setValue(int(pos_y))
             self.light_pos_z_slider.setValue(int(pos_z))
-            
+
             r = settings.value("lighting/color_r", config.default_light_color_r, type=float)
             g = settings.value("lighting/color_g", config.default_light_color_g, type=float)
             b = settings.value("lighting/color_b", config.default_light_color_b, type=float)
             self._update_color_button(self.light_color_btn, self._rgb_to_hex(r, g, b))
             self.light_intensity_slider.setValue(int(settings.value("lighting/intensity", config.default_light_intensity, type=float) * 100))
+            cone_angle = settings.value("lighting/cone_angle", 90.0, type=float)
+            self.light_cone_angle_slider.setValue(int(cone_angle))
+            self.light_cone_angle_label.setText(f"{int(cone_angle)}°")
             self.enable_fill_light_check.setChecked(settings.value("lighting/enable_fill_light", config.enable_fill_light, type=bool))
 
             # Load gradient settings
@@ -633,13 +647,14 @@ class ViewerSettingsTab(QWidget):
             settings.setValue("lighting/position_x", float(self.light_pos_x_slider.value()))
             settings.setValue("lighting/position_y", float(self.light_pos_y_slider.value()))
             settings.setValue("lighting/position_z", float(self.light_pos_z_slider.value()))
-            
+
             light_color = self.light_color_btn.palette().button().color().name()
             r, g, b = self._hex_to_rgb(light_color)
             settings.setValue("lighting/color_r", r)
             settings.setValue("lighting/color_g", g)
             settings.setValue("lighting/color_b", b)
             settings.setValue("lighting/intensity", float(self.light_intensity_slider.value()) / 100.0)
+            settings.setValue("lighting/cone_angle", float(self.light_cone_angle_slider.value()))
             settings.setValue("lighting/enable_fill_light", self.enable_fill_light_check.isChecked())
 
             # Gradient settings
@@ -714,6 +729,10 @@ class ViewerSettingsTab(QWidget):
     def _on_light_intensity_changed(self, value: int) -> None:
         """Update light intensity label."""
         self.light_intensity_label.setText(f"{value / 100.0:.2f}")
+
+    def _on_light_cone_angle_changed(self, value: int) -> None:
+        """Update light cone angle label."""
+        self.light_cone_angle_label.setText(f"{value}°")
 
     def _on_gradient_top_color_clicked(self) -> None:
         """Handle gradient top color picker."""
