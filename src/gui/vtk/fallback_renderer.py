@@ -420,11 +420,25 @@ class VTKFallbackRenderer:
         try:
             # Suppress VTK warnings during rendering to avoid wglMakeCurrent errors
             # These are expected and handled gracefully by VTK
+            import os
+            import sys
+
             vtk.vtkObject.GlobalWarningDisplayOff()
+
+            # Redirect stderr to suppress VTK C++ error messages
+            # (wglMakeCurrent errors are printed directly by VTK's C++ code)
+            old_stderr = sys.stderr
             try:
+                # Suppress stderr during rendering
+                sys.stderr = open(os.devnull, 'w')
                 render_window.Render()
             finally:
+                # Restore stderr
+                if sys.stderr != old_stderr:
+                    sys.stderr.close()
+                sys.stderr = old_stderr
                 vtk.vtkObject.GlobalWarningDisplayOn()
+
             return True
 
         except Exception as e:
