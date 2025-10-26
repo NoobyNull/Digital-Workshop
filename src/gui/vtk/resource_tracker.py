@@ -77,6 +77,9 @@ class VTKResourceTracker:
             "by_type": defaultdict(int)
         }
 
+        # Register default cleanup callbacks
+        self._register_default_cleanup_callbacks()
+
         self.logger.info("VTK Resource Tracker initialized")
 
     def generate_resource_id(self) -> str:
@@ -84,6 +87,84 @@ class VTKResourceTracker:
         with self.lock:
             self.resource_counter += 1
             return f"vtk_resource_{self.resource_counter}"
+
+    def _register_default_cleanup_callbacks(self) -> None:
+        """Register default cleanup callbacks for each resource type."""
+        try:
+            # Actor cleanup
+            def cleanup_actor(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "SetMapper"):
+                        resource.SetMapper(None)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Mapper cleanup
+            def cleanup_mapper(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "SetInput"):
+                        resource.SetInput(None)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Polydata cleanup
+            def cleanup_polydata(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "Reset"):
+                        resource.Reset()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Renderer cleanup
+            def cleanup_renderer(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "RemoveAllViewProps"):
+                        resource.RemoveAllViewProps()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Render window cleanup
+            def cleanup_render_window(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "Finalize"):
+                        resource.Finalize()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Interactor cleanup
+            def cleanup_interactor(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "TerminateApp"):
+                        resource.TerminateApp()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Register callbacks
+            self.register_cleanup_callback(ResourceType.ACTOR, cleanup_actor)
+            self.register_cleanup_callback(ResourceType.MAPPER, cleanup_mapper)
+            self.register_cleanup_callback(ResourceType.POLYDATA, cleanup_polydata)
+            self.register_cleanup_callback(ResourceType.RENDERER, cleanup_renderer)
+            self.register_cleanup_callback(
+                ResourceType.RENDER_WINDOW, cleanup_render_window
+            )
+            self.register_cleanup_callback(ResourceType.INTERACTOR, cleanup_interactor)
+
+            self.logger.debug("Default cleanup callbacks registered")
+
+        except Exception as e:
+            self.logger.warning(f"Error registering default cleanup callbacks: {e}")
 
     def register_resource(self, resource: Any, resource_type: ResourceType,
                          name: Optional[str] = None, parent_id: Optional[str] = None,
