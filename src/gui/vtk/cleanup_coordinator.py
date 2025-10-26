@@ -429,6 +429,16 @@ class VTKCleanupCoordinator:
     def _final_cleanup(self) -> Optional[bool]:
         """Final cleanup phase: Last cleanup operations."""
         try:
+            # Clean up all tracked resources in the resource tracker
+            try:
+                cleanup_stats = self.resource_tracker.cleanup_all_resources()
+                self.logger.debug(
+                    f"Resource tracker cleanup: {cleanup_stats['success']} "
+                    f"cleaned, {cleanup_stats['errors']} errors"
+                )
+            except Exception as e:
+                self.logger.debug(f"Error cleaning tracked resources: {e}")
+
             # Clear all resource references
             for name, resource_info in self.cleanup_resources.items():
                 resource_info["resource"] = None
