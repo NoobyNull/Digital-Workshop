@@ -233,34 +233,52 @@ class VTKResourceTracker:
             True if cleanup succeeded
         """
         try:
-            resource = self.get_resource(resource_id)
-            if not resource:
-                self.logger.debug(f"Resource {resource_id} not found or already destroyed")
-                return self.unregister_resource(resource_id)
+            with self.lock:
+                if resource_id not in self.resources:
+                    self.logger.debug(f"Resource {resource_id} not found")
+                    return True
 
-            resource_info = self.resources[resource_id]
+                resource_info = self.resources[resource_id]
+                resource_ref = resource_info["resource"]
+                resource = resource_ref() if resource_ref else None
 
-            # Check if cleanup callback is registered
-            resource_type = resource_info["resource_type"]
-            if resource_type.value in self.cleanup_callbacks:
+                if not resource:
+                    self.logger.debug(
+                        f"Resource {resource_id} already destroyed"
+                    )
+                    # Mark as cleaned before unregistering
+                    resource_info["state"] = ResourceState.CLEANED
+                    self.stats["total_cleaned"] += 1
+                    return self.unregister_resource(resource_id)
+
+                # Check if cleanup callback is registered
+                resource_type = resource_info["resource_type"]
+                if resource_type.value in self.cleanup_callbacks:
+                    try:
+                        self.cleanup_callbacks[resource_type.value](resource)
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Error in cleanup callback for {resource_id}: {e}"
+                        )
+
+                # Try generic cleanup
                 try:
-                    self.cleanup_callbacks[resource_type.value](resource)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                    elif hasattr(resource, "Finalize"):
+                        resource.Finalize()
+                    elif hasattr(resource, "TerminateApp"):
+                        resource.TerminateApp()
                 except Exception as e:
-                    self.logger.debug(f"Error in cleanup callback for {resource_id}: {e}")
+                    self.logger.debug(
+                        f"Error in generic cleanup for {resource_id}: {e}"
+                    )
 
-            # Try generic cleanup
-            try:
-                if hasattr(resource, 'Delete'):
-                    resource.Delete()
-                elif hasattr(resource, 'Finalize'):
-                    resource.Finalize()
-                elif hasattr(resource, 'TerminateApp'):
-                    resource.TerminateApp()
-            except Exception as e:
-                self.logger.debug(f"Error in generic cleanup for {resource_id}: {e}")
+                # Mark as cleaned BEFORE unregistering to prevent false leak warnings
+                resource_info["state"] = ResourceState.CLEANED
+                self.stats["total_cleaned"] += 1
+                resource_info["cleanup_attempts"] += 1
 
-            # Update tracking
-            resource_info["cleanup_attempts"] += 1
             return self.unregister_resource(resource_id)
 
         except Exception as e:

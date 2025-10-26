@@ -352,34 +352,12 @@ class VTKSceneManager:
             logger.info("Cleaning up VTK scene resources with enhanced error handling")
 
             # Use the cleanup coordinator for proper cleanup sequence
-            from src.gui.vtk import get_vtk_cleanup_coordinator, get_vtk_resource_tracker
+            from src.gui.vtk import get_vtk_cleanup_coordinator
 
             cleanup_coordinator = get_vtk_cleanup_coordinator()
-            resource_tracker = get_vtk_resource_tracker()
-
-            # Register resources for cleanup
-            if self.render_window:
-                resource_tracker.register_resource(
-                    self.render_window,
-                    resource_tracker.ResourceType.RENDER_WINDOW,
-                    "scene_render_window"
-                )
-
-            if self.renderer:
-                resource_tracker.register_resource(
-                    self.renderer,
-                    resource_tracker.ResourceType.RENDERER,
-                    "scene_renderer"
-                )
-
-            if self.interactor:
-                resource_tracker.register_resource(
-                    self.interactor,
-                    resource_tracker.ResourceType.INTERACTOR,
-                    "scene_interactor"
-                )
 
             # Coordinate cleanup using the enhanced system
+            # Resources are already registered in viewer_widget_facade, so just coordinate cleanup
             cleanup_success = cleanup_coordinator.coordinate_cleanup(
                 render_window=self.render_window,
                 renderer=self.renderer,
