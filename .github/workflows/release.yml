@@ -1,0 +1,224 @@
+name: Release - Manual Release Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      release_notes:
+        description: 'Custom release notes (optional)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache PyInstaller build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/
+            dist/
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('**/*.py') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Get current version
+        id: current_version
+        run: |
+          $version = Select-String -Path "build.py" -Pattern '"version":\s*"([^"]+)"' | ForEach-Object { $_.Matches.Groups[1].Value }
+          echo "current_version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          $current = "${{ steps.current_version.outputs.current_version }}"
+          $bumpType = "${{ github.event.inputs.version_bump }}"
+          $parts = $current -split '\.'
+          $major = [int]$parts[0]
+          $minor = [int]$parts[1]
+          $patch = [int]$parts[2]
+
+          switch ($bumpType) {
+            "major" {
+              $major++
+              $minor = 0
+              $patch = 0
+            }
+            "minor" {
+              $minor++
+              $patch = 0
+            }
+            "patch" {
+              $patch++
+            }
+          }
+
+          $newVersion = "$major.$minor.$patch"
+          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+          echo "NEW_VERSION=$newVersion" >> $env:GITHUB_ENV
+
+      - name: Update version in build.py
+        run: |
+          $newVersion = "${{ steps.new_version.outputs.new_version }}"
+          (Get-Content build.py) -replace '"version":\s*"[^"]*"', "`"version`": `"$newVersion`"" | Set-Content build.py
+
+      - name: Update version in installer script
+        run: |
+          $newVersion = "${{ steps.new_version.outputs.new_version }}"
+          (Get-Content installer/inno_setup.iss) -replace '#define MyAppVersion "[^"]*"', "#define MyAppVersion `"$newVersion`"" | Set-Content installer/inno_setup.iss
+
+      - name: Create release branch
+        run: |
+          $newVersion = "${{ steps.new_version.outputs.new_version }}"
+          git checkout -b release/v$newVersion
+          git add .
+          git commit -m "Bump version to $newVersion"
+          git push origin release/v$newVersion
+
+      - name: Build application
+        run: |
+          python build.py --no-tests
+
+      - name: Verify build artifacts
+        run: |
+          if (!(Test-Path "dist/Digital Workshop.exe")) {
+            Write-Error "Executable not found after build"
+            exit 1
+          }
+          if (!(Test-Path "dist/Digital Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe")) {
+            Write-Error "Installer not found after build"
+            exit 1
+          }
+
+      - name: Generate release notes
+        run: |
+          $newVersion = "${{ steps.new_version.outputs.new_version }}"
+          $customNotes = "${{ github.event.inputs.release_notes }}"
+
+          $notes = "# Digital Workshop v$newVersion`n`n"
+          $notes += "Released on $(Get-Date -Format 'yyyy-MM-dd')`n`n"
+
+          if ($customNotes) {
+            $notes += "$customNotes`n`n"
+          }
+
+          # Get commits since last version tag
+          try {
+            $lastTag = git describe --tags --abbrev=0 2>$null
+            if ($lastTag) {
+              $commits = git log --oneline --no-merges "$lastTag..HEAD" 2>$null
+              if ($commits) {
+                $notes += "## Changes`n`n"
+                $commits -split "`n" | ForEach-Object {
+                  if ($_ -match '^\w+\s+(.+)$') {
+                    $notes += "- $($matches[1])`n"
+                  }
+                }
+                $notes += "`n"
+              }
+            }
+          } catch {
+            Write-Host "Could not generate commit history for release notes"
+          }
+
+          $notes | Out-File -FilePath release_notes.md -Encoding UTF8
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.new_version.outputs.new_version }}
+          release_name: Digital Workshop v${{ steps.new_version.outputs.new_version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+
+      - name: Upload executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/Digital Workshop.exe
+          asset_name: Digital-Workshop-${{ steps.new_version.outputs.new_version }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/Digital Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe
+          asset_name: Digital-Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload build report
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/build_report.json
+          asset_name: build-report-${{ steps.new_version.outputs.new_version }}.json
+          asset_content_type: application/json
+
+      - name: Merge to main
+        run: |
+          git checkout main
+          git merge release/v${{ steps.new_version.outputs.new_version }} --no-ff -m "Release v${{ steps.new_version.outputs.new_version }}"
+          git push origin main
+
+      - name: Create and push version tag
+        run: |
+          git tag v${{ steps.new_version.outputs.new_version }}
+          git push origin v${{ steps.new_version.outputs.new_version }}
+
+      - name: Delete release branch
+        run: |
+          git push origin --delete release/v${{ steps.new_version.outputs.new_version }}
+
+      - name: Clean up local release branch
+        run: |
+          git branch -D release/v${{ steps.new_version.outputs.new_version }}
