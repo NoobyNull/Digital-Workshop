@@ -135,6 +135,8 @@ class VTKErrorHandler:
             self.vtk_error_observer = VTKErrorObserver(self)
 
             # Observe VTK object errors
+            # Note: We suppress VTK warnings because wglMakeCurrent errors are
+            # expected during rendering and are handled gracefully by VTK
             vtk.vtkObject.GlobalWarningDisplayOff()
             vtk.vtkObject.SetGlobalWarningDisplay(0)
 

@@ -418,7 +418,13 @@ class VTKFallbackRenderer:
     def _normal_render(self, render_window: vtk.vtkRenderWindow) -> bool:
         """Perform normal rendering."""
         try:
-            render_window.Render()
+            # Suppress VTK warnings during rendering to avoid wglMakeCurrent errors
+            # These are expected and handled gracefully by VTK
+            vtk.vtkObject.GlobalWarningDisplayOff()
+            try:
+                render_window.Render()
+            finally:
+                vtk.vtkObject.GlobalWarningDisplayOn()
             return True
 
         except Exception as e:
