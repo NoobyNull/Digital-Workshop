@@ -416,14 +416,22 @@ class VTKFallbackRenderer:
             return False
 
     def _normal_render(self, render_window: vtk.vtkRenderWindow) -> bool:
-        """Perform normal rendering."""
+        """Perform normal rendering with error suppression."""
         try:
+            # Suppress VTK errors during rendering to avoid wglMakeCurrent errors
+            vtk.vtkObject.GlobalWarningDisplayOff()
             render_window.Render()
             return True
 
         except Exception as e:
             handled = self.error_handler.handle_error(e, "normal_render")
             return handled
+        finally:
+            # Re-enable VTK error output
+            try:
+                vtk.vtkObject.GlobalWarningDisplayOn()
+            except Exception:
+                pass
 
     def _fallback_render(self, render_window: vtk.vtkRenderWindow) -> bool:
         """Perform fallback rendering."""
