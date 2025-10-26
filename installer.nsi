@@ -2,7 +2,7 @@
 
 Name "Digital Workshop"
 
-OutFile "Digital Workshop-Setup-1.0.0.exe"
+OutFile "Digital-Workshop-Installer.exe"
 
 InstallDir "$PROGRAMFILES\Digital Workshop"
 
@@ -14,7 +14,9 @@ Section
 
   SetOutPath $INSTDIR
 
-  File "dist\Digital Workshop.exe"
+  File "dist\run.exe"
+
+  Rename "$INSTDIR\run.exe" "$INSTDIR\Digital Workshop.exe"
 
   CreateShortcut "$DESKTOP\Digital Workshop.lnk" "$INSTDIR\Digital Workshop.exe"
 
