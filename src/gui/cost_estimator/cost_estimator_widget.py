@@ -13,12 +13,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFormLayout,
     QMessageBox,
-    QTabWidget,
-    QGroupBox,
-    QTableWidget,
-    QTableWidgetItem,
+    QScrollArea,
 )
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
 
 from src.core.logging_config import get_logger
@@ -55,53 +52,81 @@ class CostEstimatorWidget(QWidget):
         self.logger.info("Professional Cost Estimator Widget initialized")
 
     def _setup_ui(self) -> None:
-        """Set up the user interface."""
-        layout = QVBoxLayout()
+        """Set up the user interface as a worksheet."""
+        main_layout = QVBoxLayout()
 
         # Title
-        title = QLabel("Professional Cost Estimator")
+        title = QLabel("Professional Cost Estimator Worksheet")
         title_font = QFont()
         title_font.setPointSize(14)
         title_font.setBold(True)
         title.setFont(title_font)
-        layout.addWidget(title)
+        main_layout.addWidget(title)
 
-        # Create tab widget
-        tabs = QTabWidget()
+        # Create scrollable area for worksheet
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout()
 
-        # Material Tab
-        tabs.addTab(self._create_material_tab(), "Materials")
+        # MATERIALS SECTION
+        scroll_layout.addWidget(self._create_section_header("MATERIALS"))
+        scroll_layout.addLayout(self._create_material_section())
 
-        # Machine Time Tab
-        tabs.addTab(self._create_machine_tab(), "Machine Time")
+        # MACHINE TIME SECTION
+        scroll_layout.addWidget(self._create_section_header("MACHINE TIME"))
+        scroll_layout.addLayout(self._create_machine_section())
 
-        # Labor Tab
-        tabs.addTab(self._create_labor_tab(), "Labor & Design")
+        # LABOR & DESIGN SECTION
+        scroll_layout.addWidget(self._create_section_header("LABOR & DESIGN"))
+        scroll_layout.addLayout(self._create_labor_section())
 
-        # Shop Operations Tab
-        tabs.addTab(self._create_shop_tab(), "Shop Operations")
+        # SHOP OPERATIONS SECTION
+        scroll_layout.addWidget(self._create_section_header("SHOP OPERATIONS"))
+        scroll_layout.addLayout(self._create_shop_section())
 
-        # Tools & Consumables Tab
-        tabs.addTab(self._create_tools_tab(), "Tools & Consumables")
+        # TOOLS & CONSUMABLES SECTION
+        scroll_layout.addWidget(self._create_section_header("TOOLS & CONSUMABLES"))
+        scroll_layout.addLayout(self._create_tools_section())
 
-        # Settings Tab
-        tabs.addTab(self._create_settings_tab(), "Settings")
+        # SETTINGS SECTION
+        scroll_layout.addWidget(self._create_section_header("SETTINGS"))
+        scroll_layout.addLayout(self._create_settings_section())
 
-        # Summary Tab
-        tabs.addTab(self._create_summary_tab(), "Summary")
+        scroll_layout.addStretch()
+        scroll_widget.setLayout(scroll_layout)
+        scroll.setWidget(scroll_widget)
+        main_layout.addWidget(scroll)
 
-        layout.addWidget(tabs)
+        # Bottom section with calculate button and summary
+        bottom_layout = QHBoxLayout()
 
         # Calculate button
         calc_button = QPushButton("Calculate Estimate")
+        calc_button.setMinimumHeight(40)
         calc_button.clicked.connect(self._calculate_estimate)
-        layout.addWidget(calc_button)
+        bottom_layout.addWidget(calc_button)
 
-        self.setLayout(layout)
+        # Summary display
+        self.summary_display = QLabel("Ready to calculate...")
+        self.summary_display.setWordWrap(True)
+        bottom_layout.addWidget(self.summary_display)
 
-    def _create_material_tab(self) -> QWidget:
-        """Create material cost tab."""
-        widget = QWidget()
+        main_layout.addLayout(bottom_layout)
+        self.setLayout(main_layout)
+
+    def _create_section_header(self, title: str) -> QLabel:
+        """Create a section header label."""
+        header = QLabel(title)
+        header_font = QFont()
+        header_font.setPointSize(11)
+        header_font.setBold(True)
+        header.setFont(header_font)
+        header.setStyleSheet("color: #1a5490; margin-top: 12px; margin-bottom: 6px;")
+        return header
+
+    def _create_material_section(self) -> QFormLayout:
+        """Create material cost section."""
         layout = QFormLayout()
 
         # Material selection
@@ -126,14 +151,15 @@ class CostEstimatorWidget(QWidget):
 
         # Material cost display
         self.material_cost_display = QLabel("$0.00")
+        mat_cost_font = QFont()
+        mat_cost_font.setBold(True)
+        self.material_cost_display.setFont(mat_cost_font)
         layout.addRow("Total Material Cost:", self.material_cost_display)
 
-        widget.setLayout(layout)
-        return widget
+        return layout
 
-    def _create_machine_tab(self) -> QWidget:
-        """Create machine time tab."""
-        widget = QWidget()
+    def _create_machine_section(self) -> QFormLayout:
+        """Create machine time section."""
         layout = QFormLayout()
 
         # Setup hours
@@ -150,14 +176,15 @@ class CostEstimatorWidget(QWidget):
 
         # Machine cost display
         self.machine_cost_display = QLabel("$0.00")
+        mach_cost_font = QFont()
+        mach_cost_font.setBold(True)
+        self.machine_cost_display.setFont(mach_cost_font)
         layout.addRow("Total Machine Cost:", self.machine_cost_display)
 
-        widget.setLayout(layout)
-        return widget
+        return layout
 
-    def _create_labor_tab(self) -> QWidget:
-        """Create labor and design tab."""
-        widget = QWidget()
+    def _create_labor_section(self) -> QFormLayout:
+        """Create labor and design section."""
         layout = QFormLayout()
 
         # Design hours
@@ -174,14 +201,15 @@ class CostEstimatorWidget(QWidget):
 
         # Labor cost display
         self.labor_cost_display = QLabel("$0.00")
+        labor_cost_font = QFont()
+        labor_cost_font.setBold(True)
+        self.labor_cost_display.setFont(labor_cost_font)
         layout.addRow("Total Labor Cost:", self.labor_cost_display)
 
-        widget.setLayout(layout)
-        return widget
+        return layout
 
-    def _create_shop_tab(self) -> QWidget:
-        """Create shop operations tab."""
-        widget = QWidget()
+    def _create_shop_section(self) -> QFormLayout:
+        """Create shop operations section."""
         layout = QFormLayout()
 
         # Finishing hours
@@ -204,14 +232,15 @@ class CostEstimatorWidget(QWidget):
 
         # Shop cost display
         self.shop_cost_display = QLabel("$0.00")
+        shop_cost_font = QFont()
+        shop_cost_font.setBold(True)
+        self.shop_cost_display.setFont(shop_cost_font)
         layout.addRow("Total Shop Cost:", self.shop_cost_display)
 
-        widget.setLayout(layout)
-        return widget
+        return layout
 
-    def _create_tools_tab(self) -> QWidget:
-        """Create tools and consumables tab."""
-        widget = QWidget()
+    def _create_tools_section(self) -> QFormLayout:
+        """Create tools and consumables section."""
         layout = QFormLayout()
 
         # Tool wear cost
@@ -230,14 +259,15 @@ class CostEstimatorWidget(QWidget):
 
         # Tools cost display
         self.tools_cost_display = QLabel("$0.00")
+        tools_cost_font = QFont()
+        tools_cost_font.setBold(True)
+        self.tools_cost_display.setFont(tools_cost_font)
         layout.addRow("Total Tools Cost:", self.tools_cost_display)
 
-        widget.setLayout(layout)
-        return widget
+        return layout
 
-    def _create_settings_tab(self) -> QWidget:
-        """Create settings tab."""
-        widget = QWidget()
+    def _create_settings_section(self) -> QFormLayout:
+        """Create settings section."""
         layout = QFormLayout()
 
         # Overhead percentage
@@ -270,23 +300,7 @@ class CostEstimatorWidget(QWidget):
         self.quantity.setValue(1)
         layout.addRow("Quantity:", self.quantity)
 
-        widget.setLayout(layout)
-        return widget
-
-    def _create_summary_tab(self) -> QWidget:
-        """Create summary tab."""
-        widget = QWidget()
-        layout = QVBoxLayout()
-
-        # Summary table
-        self.summary_table = QTableWidget()
-        self.summary_table.setColumnCount(2)
-        self.summary_table.setHorizontalHeaderLabels(["Category", "Amount"])
-        self.summary_table.setRowCount(10)
-
-        layout.addWidget(self.summary_table)
-        widget.setLayout(layout)
-        return widget
+        return layout
 
     def _calculate_estimate(self) -> None:
         """Calculate the cost estimate."""
@@ -341,6 +355,7 @@ class CostEstimatorWidget(QWidget):
         if not self.current_estimate:
             return
 
+        # Update section displays
         self.material_cost_display.setText(
             f"${self.current_estimate.total_material_cost:.2f}"
         )
@@ -357,8 +372,16 @@ class CostEstimatorWidget(QWidget):
             f"${self.current_estimate.total_tool_cost:.2f}"
         )
 
-        # Update summary table
+        # Update summary display
         breakdown = self.current_estimate.get_cost_breakdown()
-        for i, (category, amount) in enumerate(breakdown.items()):
-            self.summary_table.setItem(i, 0, QTableWidgetItem(category))
-            self.summary_table.setItem(i, 1, QTableWidgetItem(f"${amount:.2f}"))
+        summary_html = "<b>COST SUMMARY</b><br><br>"
+        for category, amount in breakdown.items():
+            summary_html += f"{category}: <b>${amount:.2f}</b><br>"
+
+        summary_html += f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
+        if self.current_estimate.quantity > 1:
+            summary_html += (
+                f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
+            )
+
+        self.summary_display.setText(summary_html)
