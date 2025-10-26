@@ -14,10 +14,18 @@ class Material:
     cost_per_unit: float
     unit: str = "kg"
     description: str = ""
+    waste_percentage: float = 10.0
+    category: str = "general"
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return asdict(self)
+
+    def get_effective_cost(self, quantity: float) -> float:
+        """Get effective cost including waste."""
+        base_cost = quantity * self.cost_per_unit
+        waste_cost = base_cost * (self.waste_percentage / 100.0)
+        return base_cost + waste_cost
 
 
 class MaterialCostManager:
@@ -55,13 +63,62 @@ class MaterialCostManager:
     def _create_default_materials(self) -> None:
         """Create default material library."""
         default_materials = {
-            "Aluminum": Material("Aluminum", 15.0, "kg", "Aluminum stock"),
-            "Steel": Material("Steel", 8.0, "kg", "Steel stock"),
-            "Brass": Material("Brass", 12.0, "kg", "Brass stock"),
-            "Wood (Oak)": Material("Wood (Oak)", 5.0, "board_ft", "Oak lumber"),
-            "Wood (Maple)": Material("Wood (Maple)", 6.0, "board_ft", "Maple lumber"),
-            "Plastic (ABS)": Material("Plastic (ABS)", 3.0, "kg", "ABS plastic"),
-            "Plastic (PLA)": Material("Plastic (PLA)", 2.5, "kg", "PLA plastic"),
+            "Aluminum": Material(
+                "Aluminum",
+                15.0,
+                "kg",
+                "Aluminum stock",
+                waste_percentage=5.0,
+                category="metal",
+            ),
+            "Steel": Material(
+                "Steel",
+                8.0,
+                "kg",
+                "Steel stock",
+                waste_percentage=8.0,
+                category="metal",
+            ),
+            "Brass": Material(
+                "Brass",
+                12.0,
+                "kg",
+                "Brass stock",
+                waste_percentage=5.0,
+                category="metal",
+            ),
+            "Wood (Oak)": Material(
+                "Wood (Oak)",
+                5.0,
+                "board_ft",
+                "Oak lumber",
+                waste_percentage=15.0,
+                category="wood",
+            ),
+            "Wood (Maple)": Material(
+                "Wood (Maple)",
+                6.0,
+                "board_ft",
+                "Maple lumber",
+                waste_percentage=15.0,
+                category="wood",
+            ),
+            "Plastic (ABS)": Material(
+                "Plastic (ABS)",
+                3.0,
+                "kg",
+                "ABS plastic",
+                waste_percentage=10.0,
+                category="plastic",
+            ),
+            "Plastic (PLA)": Material(
+                "Plastic (PLA)",
+                2.5,
+                "kg",
+                "PLA plastic",
+                waste_percentage=10.0,
+                category="plastic",
+            ),
         }
         self.materials = default_materials
 
@@ -166,3 +223,45 @@ class MaterialCostManager:
         except Exception as e:
             print(f"Error updating material cost: {e}")
             return False
+
+    def update_material_waste(self, name: str, waste_percentage: float) -> bool:
+        """
+        Update the waste percentage of a material.
+
+        Args:
+            name: Name of material
+            waste_percentage: New waste percentage (0-100)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if name in self.materials:
+                self.materials[name].waste_percentage = max(0.0, min(100.0, waste_percentage))
+                self._save_materials()
+                return True
+            return False
+        except Exception as e:
+            print(f"Error updating material waste: {e}")
+            return False
+
+    def get_materials_by_category(self, category: str) -> List[Material]:
+        """
+        Get all materials in a category.
+
+        Args:
+            category: Category name
+
+        Returns:
+            List of materials in category
+        """
+        return [m for m in self.materials.values() if m.category == category]
+
+    def get_categories(self) -> List[str]:
+        """
+        Get all material categories.
+
+        Returns:
+            List of unique categories
+        """
+        return list(set(m.category for m in self.materials.values()))
