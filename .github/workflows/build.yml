@@ -10,6 +10,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: false
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -24,6 +26,9 @@ jobs:
 
     - name: Build with PyInstaller
       run: pyinstaller --onefile run.py
+
+    - name: Install NSIS
+      run: choco install nsis -y
 
     - name: Create installer
       uses: joncloud/makensis-action@v3.6
