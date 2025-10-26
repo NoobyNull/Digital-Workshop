@@ -162,47 +162,20 @@ jobs:
 
           $notes | Out-File -FilePath release_notes.md -Encoding UTF8
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.new_version.outputs.new_version }}
-          release_name: Digital Workshop v${{ steps.new_version.outputs.new_version }}
+          name: Digital Workshop v${{ steps.new_version.outputs.new_version }}
           body_path: release_notes.md
           draft: false
           prerelease: false
-
-      - name: Upload executable
-        uses: actions/upload-release-asset@v1
+          files: |
+            ./dist/Digital Workshop.exe
+            ./dist/Digital Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe
+            ./dist/build_report.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/Digital Workshop.exe
-          asset_name: Digital-Workshop-${{ steps.new_version.outputs.new_version }}.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload installer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/Digital Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe
-          asset_name: Digital-Workshop-Setup-${{ steps.new_version.outputs.new_version }}.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload build report
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/build_report.json
-          asset_name: build-report-${{ steps.new_version.outputs.new_version }}.json
-          asset_content_type: application/json
 
       - name: Merge to main
         run: |
