@@ -315,3 +315,41 @@ class ProfessionalCostCalculator:
             cost_per_unit=cost_per_unit,
             pricing_strategy=self.pricing_strategy.value,
         )
+
+
+    def set_hourly_rates(
+        self,
+        labor_rate: float = None,
+        design_rate: float = None,
+        setup_rate: float = None,
+        runtime_rate: float = None,
+        finishing_rate: float = None,
+        assembly_rate: float = None,
+    ) -> None:
+        """Set custom hourly rates."""
+        if labor_rate is not None:
+            self.labor_hourly_rate = labor_rate
+        if design_rate is not None:
+            self.design_hourly_rate = design_rate
+        if setup_rate is not None:
+            self.machine_setup_rate = setup_rate
+        if runtime_rate is not None:
+            self.machine_runtime_rate = runtime_rate
+        if finishing_rate is not None:
+            self.finishing_hourly_rate = finishing_rate
+        if assembly_rate is not None:
+            self.assembly_hourly_rate = assembly_rate
+
+    def set_overhead_and_margins(
+        self,
+        overhead_pct: float = None,
+        profit_margin_pct: float = None,
+        tax_pct: float = None,
+    ) -> None:
+        """Set overhead, profit margin, and tax percentages."""
+        if overhead_pct is not None:
+            self.overhead_percentage = max(0.0, min(100.0, overhead_pct))
+        if profit_margin_pct is not None:
+            self.profit_margin_percentage = max(0.0, min(100.0, profit_margin_pct))
+        if tax_pct is not None:
+            self.tax_percentage = max(0.0, min(100.0, tax_pct))
