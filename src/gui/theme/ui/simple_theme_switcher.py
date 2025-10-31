@@ -5,8 +5,9 @@ Single Responsibility: Provide quick theme switching UI.
 """
 
 from typing import Optional
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QComboBox, QLabel, QPushButton
+
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QWidget
 
 from ..simple_service import ThemeService
 
@@ -97,8 +98,8 @@ class SimpleThemeSwitcher(QWidget):
         """Show the Material Design color picker dialog."""
         try:
             from .qt_material_color_picker import QtMaterialColorPicker
+
             dialog = QtMaterialColorPicker(self)
             dialog.exec()
         except Exception as e:
             print(f"Error opening color picker: {e}")
-

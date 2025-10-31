@@ -14,15 +14,25 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
-    QWidget, QLabel, QPushButton, QComboBox, QColorDialog,
-    QScrollArea, QGridLayout, QFileDialog, QMessageBox
-)
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
+    QColorDialog,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
-from ..service import ThemeService
 from ..manager import ThemeManager, qcolor
+from ..service import ThemeService
 
 
 class ThemeDialog(QDialog):
@@ -62,6 +72,7 @@ class ThemeDialog(QDialog):
             self._load_current_theme()
         except Exception as e:
             from src.core.logging_config import get_logger
+
             logger = get_logger(__name__)
             logger.error(f"Failed to initialize ThemeDialog: {e}", exc_info=True)
             raise
@@ -147,13 +158,14 @@ class ThemeDialog(QDialog):
         # Group colors by category (prefix)
         categories = {}
         for color_name in sorted(colors.keys()):
-            prefix = color_name.split('_')[0]
+            prefix = color_name.split("_")[0]
             if prefix not in categories:
                 categories[prefix] = []
             categories[prefix].append(color_name)
 
         # Create collapsible groups for each category
         from PySide6.QtWidgets import QGroupBox
+
         for category in sorted(categories.keys()):
             group = QGroupBox(category.replace("_", " ").title())
             group_layout = QGridLayout()
@@ -161,13 +173,17 @@ class ThemeDialog(QDialog):
             col = 0
             for color_name in sorted(categories[category]):
                 # Label
-                label = QLabel(color_name.replace(f"{category}_", "").replace("_", " ").title())
+                label = QLabel(
+                    color_name.replace(f"{category}_", "").replace("_", " ").title()
+                )
                 group_layout.addWidget(label, col // 2, (col % 2) * 2)
 
                 # Color button
                 btn = QPushButton()
                 btn.setMaximumWidth(80)
-                btn.clicked.connect(lambda checked, cn=color_name: self._on_color_clicked(cn))
+                btn.clicked.connect(
+                    lambda checked, cn=color_name: self._on_color_clicked(cn)
+                )
                 self.color_buttons[color_name] = btn
                 group_layout.addWidget(btn, col // 2, (col % 2) * 2 + 1)
 
@@ -257,7 +273,9 @@ class ThemeDialog(QDialog):
         if color.isValid():
             hex_value = color.name()
             self.service.set_color(color_name, hex_value)
-            self.color_buttons[color_name].setStyleSheet(f"background-color: {hex_value};")
+            self.color_buttons[color_name].setStyleSheet(
+                f"background-color: {hex_value};"
+            )
             self.theme_applied.emit("custom")
 
     def _on_export(self) -> None:
@@ -289,8 +307,10 @@ class ThemeDialog(QDialog):
     def _on_reset(self) -> None:
         """Reset to default theme."""
         reply = QMessageBox.question(
-            self, "Reset Theme", "Reset to default theme?",
-            QMessageBox.Yes | QMessageBox.No
+            self,
+            "Reset Theme",
+            "Reset to default theme?",
+            QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
             self.service.reset_to_default()
@@ -318,4 +338,3 @@ class ThemeDialog(QDialog):
             self.service.enable_system_detection()
             self.system_detection_btn.setText("Disable System Detection")
             self.status_label.setText("Status: Enabled")
-

@@ -27,8 +27,8 @@ class ThemeDefaults:
     menubar_item_pressed_bg: str = "#106ebe"
 
     # Surfaces
-    surface: str = "#f5f5f5"            # toolbars, panes
-    surface_alt: str = "#ffffff"        # cards/panels inner background
+    surface: str = "#f5f5f5"  # toolbars, panes
+    surface_alt: str = "#ffffff"  # cards/panels inner background
     card_bg: str = "#ffffff"
     surface_grad_start: str = "#fafafa"  # subtle gradient example
     surface_grad_end: str = "#f2f2f2"
@@ -216,4 +216,3 @@ class ThemeDefaults:
     border: str = "#d0d0d0"
     border_light: str = "#f0f0f0"
     focus_border: str = "#2684ff"
-

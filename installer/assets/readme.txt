@@ -1,119 +1,100 @@
-Digital Workshop - Installation Guide
+DIGITAL WORKSHOP - 3D MODEL MANAGER
+====================================
 
-Thank you for choosing Digital Workshop, the professional 3D model viewing and management application.
+Welcome to Digital Workshop v1.0.0!
+
+Digital Workshop is a powerful 3D model management and visualization application designed for professionals and enthusiasts working with 3D models.
+
+WHAT'S NEW IN THIS VERSION
+--------------------------
+- Enhanced 3D model visualization with improved performance
+- Support for multiple 3D file formats (STL, OBJ, STEP, 3MF)
+- Advanced model library management
+- Professional theme system with dark/light modes
+- Optimized memory usage and faster loading times
+- Improved error handling and user experience
 
 SYSTEM REQUIREMENTS
-===================
-
+-------------------
 Minimum Requirements:
-- Operating System: Windows 7 SP1 (64-bit)
-- Processor: Intel Core i3-3220 (Ivy Bridge) or equivalent
-- Graphics: Intel HD Graphics 4000 or equivalent
-- Memory: 4GB RAM
-- Storage: 100MB free space
+- Windows 7 SP1 (64-bit) or higher
+- Intel Core i3-3220 or equivalent processor
+- 4GB RAM
+- 100MB free disk space
+- DirectX 11 compatible graphics card
 
 Recommended Requirements:
-- Operating System: Windows 10/11 (64-bit)
-- Processor: Intel Core i5-3470 or equivalent
-- Graphics: NVIDIA GeForce GTX 1050 or equivalent
-- Memory: 8GB RAM
-- Storage: 500MB free space (SSD recommended)
+- Windows 10/11 (64-bit)
+- Intel Core i5-3470 or equivalent processor
+- 8GB RAM
+- 500MB free disk space (SSD recommended)
+- NVIDIA GeForce GTX 1050 or equivalent graphics card
 
-Graphics API Support:
-- OpenGL 3.3 Core Profile minimum
-- DirectX 11.0 minimum (via ANGLE fallback)
-- Software rasterizer fallback (limited performance)
-
-INSTALLATION
-============
-
+INSTALLATION INSTRUCTIONS
+--------------------------
 1. Run the installer executable (Digital Workshop-Setup-1.0.0.exe)
 2. Follow the on-screen instructions
-3. Choose your preferred installation location
-4. Select which shortcuts to create
-5. Complete the installation process
-
-The installer will automatically:
-- Register file associations for supported 3D formats
-- Create Start Menu shortcuts
-- Create desktop shortcut (optional)
-- Configure the application for first use
-
-SUPPORTED FILE FORMATS
-======================
-
-Digital Workshop supports the following 3D model formats:
-- STL (Stereolithography) - .stl
-- OBJ (Wavefront Object) - .obj
-- 3MF (3D Manufacturing Format) - .3mf
-- STEP (Standard for the Exchange of Product Data) - .step, .stp
+3. Choose your installation directory
+4. Select additional tasks (desktop shortcut, etc.)
+5. Click Install to begin installation
+6. Wait for the installation to complete
+7. Click Finish to exit the installer
 
 GETTING STARTED
-===============
+---------------
+After installation, you can start Digital Workshop from:
+- Desktop shortcut (if created during installation)
+- Start Menu > Digital Workshop
+- Double-clicking on supported 3D model files
 
-After installation, you can:
-1. Launch Digital Workshop from the Start Menu or desktop shortcut
-2. Open 3D model files using File > Open or drag-and-drop
-3. Browse your model library using the built-in library manager
-4. Search models by name, format, or metadata
-5. Edit model properties and metadata
-6. Export models to different formats
+SUPPORTED FILE FORMATS
+----------------------
+- STL (Stereolithography)
+- OBJ (Wavefront OBJ)
+- STEP (Standard for the Exchange of Product Data)
+- 3MF (3D Manufacturing Format)
+
+FEATURES
+--------
+- Import and manage 3D model libraries
+- Advanced 3D visualization with interactive controls
+- Model metadata management and search
+- Professional theme system
+- Offline operation (no internet required)
+- SQLite database for local data storage
+- File association support for 3D model formats
 
 TROUBLESHOOTING
-===============
+---------------
+If you encounter any issues:
 
-Common Issues:
+1. Ensure your system meets the minimum requirements
+2. Update your graphics drivers to the latest version
+3. Run the application as Administrator if needed
+4. Check Windows Event Viewer for detailed error messages
+5. Repair the installation using the installer
+6. Manually associate files with Digital Workshop.exe
 
-1. Application won't start:
-   - Ensure your graphics drivers are up to date
-   - Try running as administrator
-   - Check if .NET Framework 4.5+ is installed
-
-2. Models don't display correctly:
-   - Update your graphics drivers
-   - Check if your GPU supports OpenGL 3.3+
-   - Try disabling hardware acceleration in settings
-
-3. Performance issues:
-   - Close other applications to free up memory
-   - Reduce model complexity or detail level
-   - Ensure sufficient disk space for temporary files
-
-4. File associations not working:
-    - Repair the installation using the installer
-    - Manually associate files with Digital Workshop.exe
-
-For more detailed troubleshooting, please refer to the documentation included with the application or visit our support website.
+For additional support, please contact:
+Email: support@digitalworkshop.local
+Website: https://digitalworkshop.local
 
 UNINSTALLATION
-==============
+--------------
+To uninstall Digital Workshop:
+1. Go to Control Panel > Programs and Features
+2. Find "Digital Workshop" in the list
+3. Click Uninstall and follow the prompts
+4. Optionally remove user data when prompted
 
-To remove Digital Workshop from your system:
-1. Open "Programs and Features" in Windows Control Panel
-2. Select "Digital Workshop" from the list
-3. Click "Uninstall"
-4. Follow the on-screen instructions
+Note: Uninstalling will not remove your personal model library unless you choose to delete user data during uninstallation.
 
-You will be asked whether to keep or remove your user data and settings. Choose "Keep" if you plan to reinstall Digital Workshop in the future.
+LEGAL INFORMATION
+-----------------
+This software is provided under the Digital Workshop License Agreement.
+See the included license.txt file for complete terms and conditions.
 
-SUPPORT & UPDATES
-=================
+Copyright (C) 2024 Digital Workshop Development Team
+All rights reserved.
 
-For the latest updates, documentation, and support:
-- Website: https://digitalworkshop.local
-- Documentation: Included in the installation
-- Updates: Check for updates from within the application
-
-THIRD-PARTY LICENSES
-===================
-
-Digital Workshop uses the following open-source components:
-- PySide5/Qt - LGPLv3
-- PyQt3D - GPL v3
-- SQLite - Public Domain
-- VTK - BSD 3-Clause License
-- NumPy - BSD 3-Clause License
-
-Full license information is available in the documentation folder.
-
-Thank you for using Digital Workshop!
+Thank you for choosing Digital Workshop!

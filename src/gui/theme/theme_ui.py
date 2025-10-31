@@ -16,11 +16,19 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QLabel,
-    QPushButton, QScrollArea, QVBoxLayout, QWidget
-)
 from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .theme_service import ThemeService
 
@@ -302,6 +310,7 @@ class QtMaterialColorPicker(QDialog):
 
             # Create grid for colors in this group
             from PySide6.QtWidgets import QGridLayout
+
             grid = QGridLayout()
             for i, color_name in enumerate(colors):
                 # Color swatch button
@@ -362,13 +371,27 @@ class QtMaterialColorPicker(QDialog):
             # Get colors from environment (set by qt-material)
             colors = {
                 "primaryColor": os.environ.get("QTMATERIAL_PRIMARYCOLOR", "#2196F3"),
-                "primaryLightColor": os.environ.get("QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"),
-                "primaryDarkColor": os.environ.get("QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"),
-                "secondaryColor": os.environ.get("QTMATERIAL_SECONDARYCOLOR", "#FFC107"),
-                "secondaryLightColor": os.environ.get("QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"),
-                "secondaryDarkColor": os.environ.get("QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"),
-                "primaryTextColor": os.environ.get("QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"),
-                "secondaryTextColor": os.environ.get("QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"),
+                "primaryLightColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"
+                ),
+                "primaryDarkColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"
+                ),
+                "secondaryColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYCOLOR", "#FFC107"
+                ),
+                "secondaryLightColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"
+                ),
+                "secondaryDarkColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"
+                ),
+                "primaryTextColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"
+                ),
+                "secondaryTextColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"
+                ),
             }
 
             # Update swatches
@@ -377,7 +400,8 @@ class QtMaterialColorPicker(QDialog):
                     swatch = self.color_swatches[color_name]
 
                     # Set background color
-                    swatch.setStyleSheet(f"""
+                    swatch.setStyleSheet(
+                        f"""
                         QPushButton {{
                             background-color: {hex_color};
                             border: 1px solid #cccccc;
@@ -388,7 +412,8 @@ class QtMaterialColorPicker(QDialog):
                         QPushButton:hover {{
                             border: 2px solid #999999;
                         }}
-                    """)
+                    """
+                    )
 
                     # Set button text to hex value
                     swatch.setText(hex_color.upper())
@@ -464,7 +489,7 @@ class ThemeDialog(QDialog):
         self.service = ThemeService.instance()
         self.manager = self.service.get_manager()
         self.color_buttons = {}
-        
+
         # Initialize UI attributes
         self.preset_combo = None
         self.status_label = None
@@ -488,6 +513,7 @@ class ThemeDialog(QDialog):
 
         # Create tab widget
         from PySide6.QtWidgets import QTabWidget
+
         tabs = QTabWidget()
 
         # Tab 1: Presets
@@ -565,7 +591,7 @@ class ThemeDialog(QDialog):
             # Group colors by category (prefix)
             categories = {}
             for color_name in sorted(colors.keys()):
-                prefix = color_name.split('_')[0]
+                prefix = color_name.split("_")[0]
                 if prefix not in categories:
                     categories[prefix] = []
                 categories[prefix].append(color_name)
@@ -578,13 +604,17 @@ class ThemeDialog(QDialog):
                 col = 0
                 for color_name in sorted(categories[category]):
                     # Label
-                    label = QLabel(color_name.replace(f"{category}_", "").replace("_", " ").title())
+                    label = QLabel(
+                        color_name.replace(f"{category}_", "").replace("_", " ").title()
+                    )
                     group_layout.addWidget(label, col // 2, (col % 2) * 2)
 
                     # Color button
                     btn = QPushButton()
                     btn.setMaximumWidth(80)
-                    btn.clicked.connect(lambda checked, cn=color_name: self._on_color_clicked(cn))
+                    btn.clicked.connect(
+                        lambda checked, cn=color_name: self._on_color_clicked(cn)
+                    )
                     self.color_buttons[color_name] = btn
                     group_layout.addWidget(btn, col // 2, (col % 2) * 2 + 1)
 
@@ -671,12 +701,15 @@ class ThemeDialog(QDialog):
         if self.manager:
             current_color = QColor(self.manager.get_color(color_name))
             from PySide6.QtWidgets import QColorDialog
+
             color = QColorDialog.getColor(current_color, self, f"Select {color_name}")
 
             if color.isValid():
                 hex_value = color.name()
                 self.service.set_color(color_name, hex_value)
-                self.color_buttons[color_name].setStyleSheet(f"background-color: {hex_value};")
+                self.color_buttons[color_name].setStyleSheet(
+                    f"background-color: {hex_value};"
+                )
                 self.theme_applied.emit("custom")
 
     def _on_export(self) -> None:
@@ -688,9 +721,11 @@ class ThemeDialog(QDialog):
             try:
                 self.service.export_theme(Path(path))
                 from PySide6.QtWidgets import QMessageBox
+
                 QMessageBox.information(self, "Success", "Theme exported successfully")
             except Exception as e:
                 from PySide6.QtWidgets import QMessageBox
+
                 QMessageBox.critical(self, "Error", f"Failed to export theme: {e}")
 
     def _on_import(self) -> None:
@@ -703,18 +738,23 @@ class ThemeDialog(QDialog):
                 self.service.import_theme(Path(path))
                 self._load_current_theme()
                 from PySide6.QtWidgets import QMessageBox
+
                 QMessageBox.information(self, "Success", "Theme imported successfully")
                 self.theme_applied.emit("custom")
             except Exception as e:
                 from PySide6.QtWidgets import QMessageBox
+
                 QMessageBox.critical(self, "Error", f"Failed to import theme: {e}")
 
     def _on_reset(self) -> None:
         """Reset to default theme."""
         from PySide6.QtWidgets import QMessageBox
+
         reply = QMessageBox.question(
-            self, "Reset Theme", "Reset to default theme?",
-            QMessageBox.Yes | QMessageBox.No
+            self,
+            "Reset Theme",
+            "Reset to default theme?",
+            QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
             self.service.reset_to_default()

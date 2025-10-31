@@ -402,7 +402,7 @@ class ModelLibraryWidget(QWidget):
         self.list_view.setModel(self.proxy_model)
         self.list_view.setSortingEnabled(True)
         self.list_view.setSelectionBehavior(QTableView.SelectRows)
-        self.list_view.setAlternatingRowColors(True)
+        # Removed setAlternatingRowColors(True) - qt-material handles alternating row colors via theme
         header = self.list_view.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for col in range(1, 6):

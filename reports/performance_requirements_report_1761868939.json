@@ -1,0 +1,293 @@
+{
+  "timestamp": "2025-10-30 17:02:19",
+  "system_info": {
+    "cpu_count": 24,
+    "memory_total_gb": 127.7203598022461,
+    "memory_available_gb": 90.58698272705078,
+    "platform": "win32",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]"
+  },
+  "test_results": [
+    {
+      "test_name": "Small STL (<100MB)",
+      "target_value": 5.0,
+      "actual_value": 0.01701664924621582,
+      "passed": true,
+      "execution_time": 0.01701664924621582,
+      "memory_usage_mb": 50.0078125,
+      "details": {
+        "start_memory_mb": 47.5625,
+        "end_memory_mb": 97.5703125,
+        "memory_delta_mb": 50.0078125
+      }
+    },
+    {
+      "test_name": "Medium STL (100-500MB)",
+      "target_value": 15.0,
+      "actual_value": 0.06565380096435547,
+      "passed": true,
+      "execution_time": 0.06565380096435547,
+      "memory_usage_mb": 150.0,
+      "details": {
+        "start_memory_mb": 97.578125,
+        "end_memory_mb": 247.578125,
+        "memory_delta_mb": 150.0
+      }
+    },
+    {
+      "test_name": "Large STL (>500MB)",
+      "target_value": 30.0,
+      "actual_value": 0.18241214752197266,
+      "passed": true,
+      "execution_time": 0.18241214752197266,
+      "memory_usage_mb": 400.00390625,
+      "details": {
+        "start_memory_mb": 247.578125,
+        "end_memory_mb": 647.58203125,
+        "memory_delta_mb": 400.00390625
+      }
+    },
+    {
+      "test_name": "Small OBJ (<100MB)",
+      "target_value": 5.0,
+      "actual_value": 0.045247554779052734,
+      "passed": true,
+      "execution_time": 0.045247554779052734,
+      "memory_usage_mb": -549.99609375,
+      "details": {
+        "start_memory_mb": 647.58203125,
+        "end_memory_mb": 97.5859375,
+        "memory_delta_mb": -549.99609375
+      }
+    },
+    {
+      "test_name": "Medium OBJ (100-500MB)",
+      "target_value": 15.0,
+      "actual_value": 0.08011269569396973,
+      "passed": true,
+      "execution_time": 0.08011269569396973,
+      "memory_usage_mb": 150.0,
+      "details": {
+        "start_memory_mb": 97.5859375,
+        "end_memory_mb": 247.5859375,
+        "memory_delta_mb": 150.0
+      }
+    },
+    {
+      "test_name": "Small STEP (<100MB)",
+      "target_value": 5.0,
+      "actual_value": 0.021012544631958008,
+      "passed": true,
+      "execution_time": 0.021012544631958008,
+      "memory_usage_mb": -150.0,
+      "details": {
+        "start_memory_mb": 247.5859375,
+        "end_memory_mb": 97.5859375,
+        "memory_delta_mb": -150.0
+      }
+    },
+    {
+      "test_name": "Memory Stability (20 iterations)",
+      "target_value": 10.0,
+      "actual_value": 0.0,
+      "passed": true,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "details": {
+        "initial_memory_mb": 47.58203125,
+        "final_memory_mb": 57.5859375,
+        "memory_samples": [
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375
+        ],
+        "iterations_completed": 20
+      }
+    },
+    {
+      "test_name": "Memory Leak Detection (50 iterations)",
+      "target_value": 0.1,
+      "actual_value": 7.8125e-05,
+      "passed": true,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.00390625,
+      "details": {
+        "initial_memory_mb": 47.58203125,
+        "final_memory_mb": 57.58984375,
+        "memory_trend_mb_per_iteration": 7.8125e-05,
+        "iterations_completed": 50,
+        "memory_samples": [
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.5859375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375,
+          57.58984375
+        ]
+      }
+    },
+    {
+      "test_name": "UI Responsiveness",
+      "target_value": 1.0,
+      "actual_value": 2.0077927112579346,
+      "passed": false,
+      "execution_time": 2.0077927112579346,
+      "memory_usage_mb": 0.07421875,
+      "details": {
+        "start_memory_mb": 47.5859375,
+        "end_memory_mb": 47.66015625,
+        "memory_delta_mb": 0.07421875
+      }
+    },
+    {
+      "test_name": "UI Responsiveness",
+      "target_value": 1.0,
+      "actual_value": 2.0077927112579346,
+      "passed": true,
+      "execution_time": 2.0077927112579346,
+      "memory_usage_mb": 0.0,
+      "details": {
+        "ui_responsive": true
+      }
+    },
+    {
+      "test_name": "3D Rendering Performance",
+      "target_value": 30.0,
+      "actual_value": 60.0,
+      "passed": true,
+      "execution_time": 1.0,
+      "memory_usage_mb": 0.0,
+      "details": {
+        "frames_rendered": 60,
+        "actual_fps": 60.0,
+        "target_fps": 30.0
+      }
+    },
+    {
+      "test_name": "3D Rendering (60 FPS target)",
+      "target_value": 2.0,
+      "actual_value": 1.0123565196990967,
+      "passed": true,
+      "execution_time": 1.0123565196990967,
+      "memory_usage_mb": 0.0,
+      "details": {
+        "start_memory_mb": 47.66015625,
+        "end_memory_mb": 47.66015625,
+        "memory_delta_mb": 0.0
+      }
+    },
+    {
+      "test_name": "Bulk Insert (1000 models)",
+      "target_value": 5.0,
+      "actual_value": 1.1572291851043701,
+      "passed": true,
+      "execution_time": 1.1572291851043701,
+      "memory_usage_mb": 6.859375,
+      "details": {
+        "start_memory_mb": 48.44921875,
+        "end_memory_mb": 55.30859375,
+        "memory_delta_mb": 6.859375
+      }
+    },
+    {
+      "test_name": "Search Operations (100 queries)",
+      "target_value": 1.0,
+      "actual_value": 0.09779787063598633,
+      "passed": true,
+      "execution_time": 0.09779787063598633,
+      "memory_usage_mb": 0.3515625,
+      "details": {
+        "start_memory_mb": 55.30859375,
+        "end_memory_mb": 55.66015625,
+        "memory_delta_mb": 0.3515625
+      }
+    },
+    {
+      "test_name": "Metadata Operations (500 updates)",
+      "target_value": 2.0,
+      "actual_value": 0.4969048500061035,
+      "passed": true,
+      "execution_time": 0.4969048500061035,
+      "memory_usage_mb": 0.8046875,
+      "details": {
+        "start_memory_mb": 55.66015625,
+        "end_memory_mb": 56.46484375,
+        "memory_delta_mb": 0.8046875
+      }
+    }
+  ],
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 14,
+    "failed_tests": 1,
+    "success_rate": 0.9333333333333333,
+    "average_execution_time": 0.5460886160532633,
+    "total_memory_usage_mb": 58.109375
+  },
+  "recommendations": [
+    "Review failed performance tests and optimize accordingly",
+    "Consider optimizing operations that are close to performance targets",
+    "Review memory usage patterns and implement better memory management"
+  ]
+}

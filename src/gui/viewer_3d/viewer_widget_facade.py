@@ -91,10 +91,21 @@ class Viewer3DWidget(QWidget):
         self._init_modules()
         self._setup_performance_monitoring()
 
-        # Update performance settings
-        perf_profile = self.performance_monitor.get_performance_profile()
-        self.max_triangles_for_full_quality = perf_profile.max_triangles_for_full_quality
-        self.adaptive_quality = perf_profile.adaptive_quality_enabled
+        # Update performance settings based on system info
+        perf_report = self.performance_monitor.get_performance_report()
+        system_info = perf_report.get('system_info', {})
+        total_memory_gb = system_info.get('memory_total_gb', 8.0)
+        
+        # Set triangle limits based on available memory
+        if total_memory_gb >= 16.0:
+            self.max_triangles_for_full_quality = 200000
+            self.adaptive_quality = False
+        elif total_memory_gb >= 8.0:
+            self.max_triangles_for_full_quality = 100000
+            self.adaptive_quality = True
+        else:
+            self.max_triangles_for_full_quality = 50000
+            self.adaptive_quality = True
 
         self.logger.info("VTK-based 3D viewer widget initialized successfully")
 

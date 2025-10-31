@@ -61,7 +61,9 @@ class SystemThemeDetector:
         try:
             import winreg
 
-            registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            registry_path = (
+                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            )
             registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
             value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
             winreg.CloseKey(registry_key)
@@ -86,7 +88,7 @@ class SystemThemeDetector:
                 ["defaults", "read", "-g", "AppleInterfaceStyle"],
                 capture_output=True,
                 text=True,
-                timeout=2
+                timeout=2,
             )
 
             # If command succeeds and output contains "Dark", it's dark mode
@@ -117,11 +119,16 @@ class SystemThemeDetector:
             # Check GNOME dconf settings
             try:
                 import subprocess
+
                 result = subprocess.run(
-                    ["dconf", "read", "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme"],
+                    [
+                        "dconf",
+                        "read",
+                        "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme",
+                    ],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
                 )
                 if result.returncode == 0 and "true" in result.stdout.lower():
                     return "dark"
@@ -176,4 +183,3 @@ class SystemThemeDetector:
             logger.info(f"System theme changed: {old_mode} -> {self._current_mode}")
 
         return self._current_mode
-

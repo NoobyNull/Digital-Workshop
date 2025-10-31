@@ -165,4 +165,3 @@ class ThemePersistence:
     def get_app_data_path(self) -> Path:
         """Get the application data directory path."""
         return self._app_data_path
-

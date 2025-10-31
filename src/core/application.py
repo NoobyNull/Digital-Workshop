@@ -269,15 +269,15 @@ class Application:
     def _apply_theme_early(self) -> None:
         """Apply theme early, right after QApplication is created."""
         try:
-            from src.gui.theme.simple_service import ThemeService
-            service = ThemeService.instance()
-            theme, library = service.get_current_theme()
-            result = service.apply_theme(theme, library)
+            from src.gui.theme.qt_material_service import QtMaterialThemeService
+            service = QtMaterialThemeService.instance()
+            theme, variant = service.get_current_theme()
+            result = service.apply_theme(theme, variant)
             if self.logger:
                 if result:
-                    self.logger.info(f"Theme applied early: {theme} ({library})")
+                    self.logger.info(f"Theme applied early: {theme} ({variant})")
                 else:
-                    self.logger.warning(f"Theme application returned False: {theme} ({library})")
+                    self.logger.warning(f"Theme application returned False: {theme} ({variant})")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to apply theme early: {e}", exc_info=True)

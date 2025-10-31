@@ -31,6 +31,7 @@ FALLBACK_COLOR = "#E31C79"  # Hot pink for undefined colors
 # Color Conversion Helpers
 # ============================================================
 
+
 def _normalize_hex(h: str) -> str:
     """
     Return a normalized #rrggbb hex string for inputs that look like hex codes.
@@ -49,7 +50,11 @@ def _normalize_hex(h: str) -> str:
         return lower
 
     # If already a valid #rrggbb, return normalized lowercase
-    if lower.startswith("#") and len(lower) == 7 and all(c in "0123456789abcdef" for c in lower[1:]):
+    if (
+        lower.startswith("#")
+        and len(lower) == 7
+        and all(c in "0123456789abcdef" for c in lower[1:])
+    ):
         return lower
 
     # Accept 3 or 6 hex digits with optional '#'
@@ -84,4 +89,3 @@ def hex_to_vtk_rgb(hex_code: str) -> Tuple[float, float, float]:
     """Convert #rrggbb to normalized RGB tuple (0..1) for VTK."""
     r, g, b = hex_to_rgb(hex_code)
     return (r / 255.0, g / 255.0, b / 255.0)
-

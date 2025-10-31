@@ -77,6 +77,9 @@ class VTKResourceTracker:
             "by_type": defaultdict(int)
         }
 
+        # Register default cleanup callbacks
+        self._register_default_cleanup_callbacks()
+
         self.logger.info("VTK Resource Tracker initialized")
 
     def generate_resource_id(self) -> str:
@@ -84,6 +87,84 @@ class VTKResourceTracker:
         with self.lock:
             self.resource_counter += 1
             return f"vtk_resource_{self.resource_counter}"
+
+    def _register_default_cleanup_callbacks(self) -> None:
+        """Register default cleanup callbacks for each resource type."""
+        try:
+            # Actor cleanup
+            def cleanup_actor(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "SetMapper"):
+                        resource.SetMapper(None)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Mapper cleanup
+            def cleanup_mapper(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "SetInput"):
+                        resource.SetInput(None)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Polydata cleanup
+            def cleanup_polydata(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "Reset"):
+                        resource.Reset()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Renderer cleanup
+            def cleanup_renderer(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "RemoveAllViewProps"):
+                        resource.RemoveAllViewProps()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Render window cleanup
+            def cleanup_render_window(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "Finalize"):
+                        resource.Finalize()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Interactor cleanup
+            def cleanup_interactor(resource: Any) -> None:
+                try:
+                    if hasattr(resource, "TerminateApp"):
+                        resource.TerminateApp()
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                except Exception:
+                    pass
+
+            # Register callbacks
+            self.register_cleanup_callback(ResourceType.ACTOR, cleanup_actor)
+            self.register_cleanup_callback(ResourceType.MAPPER, cleanup_mapper)
+            self.register_cleanup_callback(ResourceType.POLYDATA, cleanup_polydata)
+            self.register_cleanup_callback(ResourceType.RENDERER, cleanup_renderer)
+            self.register_cleanup_callback(
+                ResourceType.RENDER_WINDOW, cleanup_render_window
+            )
+            self.register_cleanup_callback(ResourceType.INTERACTOR, cleanup_interactor)
+
+            self.logger.debug("Default cleanup callbacks registered")
+
+        except Exception as e:
+            self.logger.warning(f"Error registering default cleanup callbacks: {e}")
 
     def register_resource(self, resource: Any, resource_type: ResourceType,
                          name: Optional[str] = None, parent_id: Optional[str] = None,
@@ -233,34 +314,52 @@ class VTKResourceTracker:
             True if cleanup succeeded
         """
         try:
-            resource = self.get_resource(resource_id)
-            if not resource:
-                self.logger.debug(f"Resource {resource_id} not found or already destroyed")
-                return self.unregister_resource(resource_id)
+            with self.lock:
+                if resource_id not in self.resources:
+                    self.logger.debug(f"Resource {resource_id} not found")
+                    return True
 
-            resource_info = self.resources[resource_id]
+                resource_info = self.resources[resource_id]
+                resource_ref = resource_info["resource"]
+                resource = resource_ref() if resource_ref else None
 
-            # Check if cleanup callback is registered
-            resource_type = resource_info["resource_type"]
-            if resource_type.value in self.cleanup_callbacks:
+                if not resource:
+                    self.logger.debug(
+                        f"Resource {resource_id} already destroyed"
+                    )
+                    # Mark as cleaned before unregistering
+                    resource_info["state"] = ResourceState.CLEANED
+                    self.stats["total_cleaned"] += 1
+                    return self.unregister_resource(resource_id)
+
+                # Check if cleanup callback is registered
+                resource_type = resource_info["resource_type"]
+                if resource_type.value in self.cleanup_callbacks:
+                    try:
+                        self.cleanup_callbacks[resource_type.value](resource)
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Error in cleanup callback for {resource_id}: {e}"
+                        )
+
+                # Try generic cleanup
                 try:
-                    self.cleanup_callbacks[resource_type.value](resource)
+                    if hasattr(resource, "Delete"):
+                        resource.Delete()
+                    elif hasattr(resource, "Finalize"):
+                        resource.Finalize()
+                    elif hasattr(resource, "TerminateApp"):
+                        resource.TerminateApp()
                 except Exception as e:
-                    self.logger.debug(f"Error in cleanup callback for {resource_id}: {e}")
+                    self.logger.debug(
+                        f"Error in generic cleanup for {resource_id}: {e}"
+                    )
 
-            # Try generic cleanup
-            try:
-                if hasattr(resource, 'Delete'):
-                    resource.Delete()
-                elif hasattr(resource, 'Finalize'):
-                    resource.Finalize()
-                elif hasattr(resource, 'TerminateApp'):
-                    resource.TerminateApp()
-            except Exception as e:
-                self.logger.debug(f"Error in generic cleanup for {resource_id}: {e}")
+                # Mark as cleaned BEFORE unregistering to prevent false leak warnings
+                resource_info["state"] = ResourceState.CLEANED
+                self.stats["total_cleaned"] += 1
+                resource_info["cleanup_attempts"] += 1
 
-            # Update tracking
-            resource_info["cleanup_attempts"] += 1
             return self.unregister_resource(resource_id)
 
         except Exception as e:

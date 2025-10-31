@@ -418,7 +418,38 @@ class VTKFallbackRenderer:
     def _normal_render(self, render_window: vtk.vtkRenderWindow) -> bool:
         """Perform normal rendering."""
         try:
-            render_window.Render()
+            # Suppress VTK warnings during rendering to avoid wglMakeCurrent errors
+            # These are expected and handled gracefully by VTK
+            import os
+            import sys
+
+            vtk.vtkObject.GlobalWarningDisplayOff()
+
+            # Redirect stderr at file descriptor level to suppress VTK C++ error messages
+            # (wglMakeCurrent errors are printed directly by VTK's C++ code)
+            old_stderr_fd = None
+            devnull_fd = None
+            try:
+                # Save original stderr file descriptor
+                old_stderr_fd = os.dup(2)  # 2 is stderr
+                # Open devnull
+                devnull_fd = os.open(os.devnull, os.O_WRONLY)
+                # Redirect stderr to devnull
+                os.dup2(devnull_fd, 2)
+
+                # Perform rendering
+                render_window.Render()
+
+            finally:
+                # Restore stderr
+                if old_stderr_fd is not None:
+                    os.dup2(old_stderr_fd, 2)
+                    os.close(old_stderr_fd)
+                if devnull_fd is not None:
+                    os.close(devnull_fd)
+
+                vtk.vtkObject.GlobalWarningDisplayOn()
+
             return True
 
         except Exception as e:

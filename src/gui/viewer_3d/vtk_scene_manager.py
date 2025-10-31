@@ -61,10 +61,10 @@ class VTKSceneManager:
         except Exception as e:
             logger.warning(f"Failed to load grid/ground/gradient settings from QSettings: {e}")
             self.grid_visible = True
-            self.grid_color = "#CCCCCC"
+            self.grid_color = vtk_rgb('grid')
             self.grid_size = 10.0
             self.ground_visible = True
-            self.ground_color = "#999999"
+            self.ground_color = vtk_rgb('ground')
             self.ground_offset = 0.5
 
             # Default gradient settings
@@ -277,9 +277,20 @@ class VTKSceneManager:
         self.grid_actor = vtk.vtkActor()
         self.grid_actor.SetMapper(mapper)
 
-        # Apply grid color from config
-        grid_rgb = self._hex_to_rgb(self.grid_color)
-        self.grid_actor.GetProperty().SetColor(*grid_rgb)
+        # Apply grid color from config (handle theme string, hex string, and RGB tuple)
+        if isinstance(self.grid_color, str):
+            if self.grid_color.lower() == "theme":
+                # Use theme system color
+                grid_rgb = vtk_rgb('grid')
+                self.grid_actor.GetProperty().SetColor(*grid_rgb)
+            else:
+                # Hex string from config - convert to RGB
+                grid_rgb = self._hex_to_rgb(self.grid_color)
+                self.grid_actor.GetProperty().SetColor(*grid_rgb)
+        else:
+            # RGB tuple from vtk_rgb() - use directly
+            self.grid_actor.GetProperty().SetColor(*self.grid_color)
+        
         self.grid_actor.GetProperty().SetRepresentationToWireframe()
         self.grid_actor.SetVisibility(self.grid_visible)
 
@@ -310,9 +321,20 @@ class VTKSceneManager:
         self.ground_actor = vtk.vtkActor()
         self.ground_actor.SetMapper(mapper)
 
-        # Apply ground color from config
-        ground_rgb = self._hex_to_rgb(self.ground_color)
-        self.ground_actor.GetProperty().SetColor(*ground_rgb)
+        # Apply ground color from config (handle theme string, hex string, and RGB tuple)
+        if isinstance(self.ground_color, str):
+            if self.ground_color.lower() == "theme":
+                # Use theme system color
+                ground_rgb = vtk_rgb('ground')
+                self.ground_actor.GetProperty().SetColor(*ground_rgb)
+            else:
+                # Hex string from config - convert to RGB
+                ground_rgb = self._hex_to_rgb(self.ground_color)
+                self.ground_actor.GetProperty().SetColor(*ground_rgb)
+        else:
+            # RGB tuple from vtk_rgb() - use directly
+            self.ground_actor.GetProperty().SetColor(*self.ground_color)
+        
         self.ground_actor.GetProperty().SetOpacity(0.3)
         self.ground_actor.SetVisibility(self.ground_visible)
 
@@ -352,34 +374,12 @@ class VTKSceneManager:
             logger.info("Cleaning up VTK scene resources with enhanced error handling")
 
             # Use the cleanup coordinator for proper cleanup sequence
-            from src.gui.vtk import get_vtk_cleanup_coordinator, get_vtk_resource_tracker
+            from src.gui.vtk import get_vtk_cleanup_coordinator
 
             cleanup_coordinator = get_vtk_cleanup_coordinator()
-            resource_tracker = get_vtk_resource_tracker()
-
-            # Register resources for cleanup
-            if self.render_window:
-                resource_tracker.register_resource(
-                    self.render_window,
-                    resource_tracker.ResourceType.RENDER_WINDOW,
-                    "scene_render_window"
-                )
-
-            if self.renderer:
-                resource_tracker.register_resource(
-                    self.renderer,
-                    resource_tracker.ResourceType.RENDERER,
-                    "scene_renderer"
-                )
-
-            if self.interactor:
-                resource_tracker.register_resource(
-                    self.interactor,
-                    resource_tracker.ResourceType.INTERACTOR,
-                    "scene_interactor"
-                )
 
             # Coordinate cleanup using the enhanced system
+            # Resources are already registered in viewer_widget_facade, so just coordinate cleanup
             cleanup_success = cleanup_coordinator.coordinate_cleanup(
                 render_window=self.render_window,
                 renderer=self.renderer,

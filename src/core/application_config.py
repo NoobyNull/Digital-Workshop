@@ -52,12 +52,12 @@ class ApplicationConfig:
 
     # 3D Viewer - Grid Settings
     grid_visible: bool = True
-    grid_color: str = "#CCCCCC"
+    grid_color: str = "theme"  # Use theme grid color, fallback to "#CCCCCC"
     grid_size: float = 10.0
 
     # 3D Viewer - Ground Plane Settings
     ground_visible: bool = True
-    ground_color: str = "#999999"
+    ground_color: str = "theme"  # Use theme ground color, fallback to "#999999"
     ground_offset: float = 0.5
     
     # 3D Viewer - Background Gradient Settings
@@ -91,7 +91,7 @@ class ApplicationConfig:
     log_retention_days: int = 30
 
     # Thumbnail Generation Configuration
-    thumbnail_bg_color: str = "#F5F5F5"  # Light gray default background
+    thumbnail_bg_color: str = "theme"  # Use theme thumbnail background, fallback to "#F5F5F5"
     thumbnail_bg_image: Optional[str] = None  # Path to custom background image
     thumbnail_material: Optional[str] = None  # Wood species name for thumbnail material (e.g., 'Oak', 'Walnut')
 
