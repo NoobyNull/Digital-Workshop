@@ -16,6 +16,7 @@ from typing import Dict, List, Tuple, Any
 from PySide6.QtCore import QObject, Signal, QSettings
 from PySide6.QtGui import QColor
 from src.core.logging_config import get_logger
+from .theme_loader import get_theme_loader
 
 logger = get_logger(__name__)
 
@@ -68,144 +69,9 @@ class QtMaterialThemeCore(QObject):
         Returns:
             Dictionary of qt-material themes, variants, and their color definitions
         """
-        return {
-            "light": {
-                "blue": {
-                    "primary": "#1976D2",
-                    "primaryLight": "#42A5F5",
-                    "primaryDark": "#1565C0",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#212121",
-                    "secondaryTextColor": "#757575",
-                    "primaryText": "#000000",
-                    "secondaryText": "#000000",
-                    "primaryColor": "#1976D2",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#42A5F5",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#1565C0",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#4CAF50",
-                    "warningColor": "#FF9800",
-                    "errorColor": "#F44336",
-                    "infoColor": "#2196F3"
-                },
-                "amber": {
-                    "primary": "#FFA000",
-                    "primaryLight": "#FFB74D",
-                    "primaryDark": "#FF8F00",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#212121",
-                    "secondaryTextColor": "#757575",
-                    "primaryText": "#000000",
-                    "secondaryText": "#000000",
-                    "primaryColor": "#FFA000",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#FFB74D",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#FF8F00",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#4CAF50",
-                    "warningColor": "#FF9800",
-                    "errorColor": "#F44336",
-                    "infoColor": "#2196F3"
-                },
-                "cyan": {
-                    "primary": "#00ACC1",
-                    "primaryLight": "#4DD0E1",
-                    "primaryDark": "#00838F",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#212121",
-                    "secondaryTextColor": "#757575",
-                    "primaryText": "#000000",
-                    "secondaryText": "#000000",
-                    "primaryColor": "#00ACC1",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#4DD0E1",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#00838F",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#4CAF50",
-                    "warningColor": "#FF9800",
-                    "errorColor": "#F44336",
-                    "infoColor": "#2196F3"
-                }
-            },
-            "dark": {
-                "blue": {
-                    "primary": "#42A5F5",
-                    "primaryLight": "#1976D2",
-                    "primaryDark": "#2196F3",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#FFFFFF",
-                    "secondaryTextColor": "#B0BEC5",
-                    "primaryText": "#FFFFFF",
-                    "secondaryText": "#FFFFFF",
-                    "primaryColor": "#42A5F5",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#1976D2",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#2196F3",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#66BB6A",
-                    "warningColor": "#FFB74D",
-                    "errorColor": "#EF5350",
-                    "infoColor": "#42A5F5"
-                },
-                "amber": {
-                    "primary": "#FFB74D",
-                    "primaryLight": "#FFA000",
-                    "primaryDark": "#FFC107",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#FFFFFF",
-                    "secondaryTextColor": "#B0BEC5",
-                    "primaryText": "#FFFFFF",
-                    "secondaryText": "#FFFFFF",
-                    "primaryColor": "#FFB74D",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#FFA000",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#FFC107",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#66BB6A",
-                    "warningColor": "#FFB74D",
-                    "errorColor": "#EF5350",
-                    "infoColor": "#42A5F5"
-                },
-                "cyan": {
-                    "primary": "#4DD0E1",
-                    "primaryLight": "#00ACC1",
-                    "primaryDark": "#26C6DA",
-                    "secondary": "#424242",
-                    "secondaryLight": "#6D6D6D",
-                    "secondaryDark": "#1B1B1B",
-                    "primaryTextColor": "#FFFFFF",
-                    "secondaryTextColor": "#B0BEC5",
-                    "primaryText": "#FFFFFF",
-                    "secondaryText": "#FFFFFF",
-                    "primaryColor": "#4DD0E1",
-                    "secondaryColor": "#424242",
-                    "primaryLightColor": "#00ACC1",
-                    "secondaryLightColor": "#6D6D6D",
-                    "primaryDarkColor": "#26C6DA",
-                    "secondaryDarkColor": "#1B1B1B",
-                    "successColor": "#66BB6A",
-                    "warningColor": "#FFB74D",
-                    "errorColor": "#EF5350",
-                    "infoColor": "#42A5F5"
-                }
-            }
-        }
+        # Load themes from JSON configuration
+        theme_loader = get_theme_loader()
+        return theme_loader.get_available_themes()
     
     def _define_color_mappings(self) -> Dict[str, str]:
         """
@@ -276,7 +142,16 @@ class QtMaterialThemeCore(QObject):
         Returns:
             Dictionary of theme names and their available variants
         """
-        return {theme: list(variants.keys()) for theme, variants in self._qt_material_themes.items()}
+        # Handle both dictionary and list variants from theme loader
+        result = {}
+        for theme, variants in self._qt_material_themes.items():
+            if isinstance(variants, dict):
+                result[theme] = list(variants.keys())
+            elif isinstance(variants, list):
+                result[theme] = variants
+            else:
+                result[theme] = []
+        return result
     
     def get_available_variants(self, theme: str) -> List[str]:
         """

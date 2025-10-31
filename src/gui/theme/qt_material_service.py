@@ -199,21 +199,24 @@ class QtMaterialThemeService(QObject):
         try:
             app = QApplication.instance()
             if app:
-                # Enhanced fallback styling with variant support
+                # Load colors dynamically from theme loader
+                from .theme_loader import get_theme_loader
+                theme_loader = get_theme_loader()
+                colors = theme_loader.get_theme_colors(theme, variant)
+                
+                if not colors:
+                    # Fallback to default colors if theme not found
+                    colors = {
+                        "primary": "#1976D2",
+                        "primaryLight": "#42A5F5",
+                        "primaryDark": "#1565C0"
+                    }
+                
+                primary_color = colors.get("primary", "#1976D2")
+                primary_light = colors.get("primaryLight", "#42A5F5")
+                primary_dark = colors.get("primaryDark", "#1565C0")
+                
                 if theme == "dark":
-                    if variant == "amber":
-                        primary_color = "#FFA000"
-                        primary_light = "#FFB74D"
-                        primary_dark = "#FF8F00"
-                    elif variant == "cyan":
-                        primary_color = "#00ACC1"
-                        primary_light = "#4DD0E1"
-                        primary_dark = "#00838F"
-                    else:  # blue default
-                        primary_color = "#1976D2"
-                        primary_light = "#42A5F5"
-                        primary_dark = "#1565C0"
-                    
                     stylesheet = f"""
                     QWidget {{
                         background-color: #121212;
@@ -254,19 +257,6 @@ class QtMaterialThemeService(QObject):
                     }}
                     """
                 else:  # light theme
-                    if variant == "amber":
-                        primary_color = "#FFA000"
-                        primary_light = "#FFB74D"
-                        primary_dark = "#FF8F00"
-                    elif variant == "cyan":
-                        primary_color = "#00ACC1"
-                        primary_light = "#4DD0E1"
-                        primary_dark = "#00838F"
-                    else:  # blue default
-                        primary_color = "#1976D2"
-                        primary_light = "#42A5F5"
-                        primary_dark = "#1565C0"
-                    
                     stylesheet = f"""
                     QWidget {{
                         background-color: #FFFFFF;
@@ -368,9 +358,18 @@ class QtMaterialThemeService(QObject):
         Returns:
             Dictionary of theme names and their available variants
         """
-        themes = self.core.get_available_themes()
-        # Add auto theme option
-        themes["auto"] = ["blue", "amber", "cyan"]
+        # Load themes from theme loader
+        from .theme_loader import get_theme_loader
+        theme_loader = get_theme_loader()
+        themes = theme_loader.get_available_themes()
+        
+        # Add auto theme option with all available themes
+        all_variants = theme_loader.get_all_variant_names()
+        auto_themes = []
+        for theme_type in ["light", "dark"]:
+            auto_themes.extend(all_variants[theme_type])
+        
+        themes["auto"] = auto_themes
         return themes
     
     def get_available_variants(self, theme: str) -> List[str]:
@@ -384,7 +383,14 @@ class QtMaterialThemeService(QObject):
             List of available variant names
         """
         if theme == "auto":
-            return ["blue", "amber", "cyan"]
+            # Load all variants from theme loader
+            from .theme_loader import get_theme_loader
+            theme_loader = get_theme_loader()
+            all_variants = theme_loader.get_all_variant_names()
+            auto_themes = []
+            for theme_type in ["light", "dark"]:
+                auto_themes.extend(all_variants[theme_type])
+            return auto_themes
         return self.core.get_available_variants(theme)
     
     def get_color(self, color_name: str) -> str:
