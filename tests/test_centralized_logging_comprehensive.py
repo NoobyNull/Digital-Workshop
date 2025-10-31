@@ -395,9 +395,9 @@ class TestLoggingSecurity:
     def test_sensitive_data_filtering(self, logging_service):
         """Test that sensitive data is properly filtered from logs."""
         sensitive_data = {
-            "password": "secret123",
-            "api_key": "sk-1234567890abcdef",
-            "token": "bearer_token_here",
+            "password": "TEST_PASSWORD_PLACEHOLDER",
+            "api_key": "TEST_API_KEY_PLACEHOLDER",
+            "token": "TEST_TOKEN_PLACEHOLDER",
             "file_path": "/sensitive/data.txt"
         }
         

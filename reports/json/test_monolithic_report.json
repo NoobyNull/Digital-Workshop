@@ -1,0 +1,6938 @@
+{
+  "summary": {
+    "total_files_analyzed": 425,
+    "monolithic_files_found": 375,
+    "compliance_rate": 11.76470588235294,
+    "threshold": 10,
+    "analysis_timestamp": "2025-10-31T13:20:29.049908"
+  },
+  "violations": [
+    {
+      "path": "build.py",
+      "code_lines": 234,
+      "severity": "critical",
+      "excess_lines": 224
+    },
+    {
+      "path": "code_quality_validator.py",
+      "code_lines": 349,
+      "severity": "critical",
+      "excess_lines": 339
+    },
+    {
+      "path": "comprehensive_test_suite_tests.py",
+      "code_lines": 518,
+      "severity": "critical",
+      "excess_lines": 508
+    },
+    {
+      "path": "comprehensive_test_suite.py",
+      "code_lines": 712,
+      "severity": "critical",
+      "excess_lines": 702
+    },
+    {
+      "path": "debug_detection.py",
+      "code_lines": 21,
+      "severity": "critical",
+      "excess_lines": 11
+    },
+    {
+      "path": "error_handling_demo.py",
+      "code_lines": 286,
+      "severity": "critical",
+      "excess_lines": 276
+    },
+    {
+      "path": "error_handling_demo_simple.py",
+      "code_lines": 289,
+      "severity": "critical",
+      "excess_lines": 279
+    },
+    {
+      "path": "migrate_models.py",
+      "code_lines": 65,
+      "severity": "critical",
+      "excess_lines": 55
+    },
+    {
+      "path": "monolithic_detector.py",
+      "code_lines": 133,
+      "severity": "critical",
+      "excess_lines": 123
+    },
+    {
+      "path": "naming_validator.py",
+      "code_lines": 240,
+      "severity": "critical",
+      "excess_lines": 230
+    },
+    {
+      "path": "quality_gate_enforcer.py",
+      "code_lines": 639,
+      "severity": "critical",
+      "excess_lines": 629
+    },
+    {
+      "path": "run.py",
+      "code_lines": 125,
+      "severity": "critical",
+      "excess_lines": 115
+    },
+    {
+      "path": "sample_large_module.py",
+      "code_lines": 331,
+      "severity": "critical",
+      "excess_lines": 321
+    },
+    {
+      "path": "sample_small_module.py",
+      "code_lines": 14,
+      "severity": "minor",
+      "excess_lines": 4
+    },
+    {
+      "path": "test_code_quality_validator.py",
+      "code_lines": 366,
+      "severity": "critical",
+      "excess_lines": 356
+    },
+    {
+      "path": "test_comprehensive_preferences_persistence.py",
+      "code_lines": 342,
+      "severity": "critical",
+      "excess_lines": 332
+    },
+    {
+      "path": "test_gcode_parser_only.py",
+      "code_lines": 66,
+      "severity": "critical",
+      "excess_lines": 56
+    },
+    {
+      "path": "test_gcode_viewer_integration.py",
+      "code_lines": 79,
+      "severity": "critical",
+      "excess_lines": 69
+    },
+    {
+      "path": "test_gcode_viewer_simple.py",
+      "code_lines": 101,
+      "severity": "critical",
+      "excess_lines": 91
+    },
+    {
+      "path": "test_gcode_widget_creation.py",
+      "code_lines": 27,
+      "severity": "critical",
+      "excess_lines": 17
+    },
+    {
+      "path": "test_import_dialog.py",
+      "code_lines": 42,
+      "severity": "critical",
+      "excess_lines": 32
+    },
+    {
+      "path": "test_lighting_defaults.py",
+      "code_lines": 48,
+      "severity": "critical",
+      "excess_lines": 38
+    },
+    {
+      "path": "test_monolithic_detector.py",
+      "code_lines": 227,
+      "severity": "critical",
+      "excess_lines": 217
+    },
+    {
+      "path": "test_naming_validator.py",
+      "code_lines": 504,
+      "severity": "critical",
+      "excess_lines": 494
+    },
+    {
+      "path": "test_qsettings_persistence.py",
+      "code_lines": 28,
+      "severity": "critical",
+      "excess_lines": 18
+    },
+    {
+      "path": "test_quality_gate_enforcer.py",
+      "code_lines": 304,
+      "severity": "critical",
+      "excess_lines": 294
+    },
+    {
+      "path": "test_tab_persistence.py",
+      "code_lines": 215,
+      "severity": "critical",
+      "excess_lines": 205
+    },
+    {
+      "path": "test_tab_persistence_fixed.py",
+      "code_lines": 213,
+      "severity": "critical",
+      "excess_lines": 203
+    },
+    {
+      "path": "test_unified_runner.py",
+      "code_lines": 638,
+      "severity": "critical",
+      "excess_lines": 628
+    },
+    {
+      "path": "test_window_persistence.py",
+      "code_lines": 66,
+      "severity": "critical",
+      "excess_lines": 56
+    },
+    {
+      "path": "test_window_state_restoration_fix.py",
+      "code_lines": 163,
+      "severity": "critical",
+      "excess_lines": 153
+    },
+    {
+      "path": "unified_test_runner.py",
+      "code_lines": 593,
+      "severity": "critical",
+      "excess_lines": 583
+    },
+    {
+      "path": "scripts\\profile_stl.py",
+      "code_lines": 48,
+      "severity": "critical",
+      "excess_lines": 38
+    },
+    {
+      "path": "scripts\\release_manager.py",
+      "code_lines": 355,
+      "severity": "critical",
+      "excess_lines": 345
+    },
+    {
+      "path": "src\\main.py",
+      "code_lines": 69,
+      "severity": "critical",
+      "excess_lines": 59
+    },
+    {
+      "path": "tests\\benchmark_fast_hasher.py",
+      "code_lines": 193,
+      "severity": "critical",
+      "excess_lines": 183
+    },
+    {
+      "path": "tests\\comprehensive_theme_consistency_test.py",
+      "code_lines": 77,
+      "severity": "critical",
+      "excess_lines": 67
+    },
+    {
+      "path": "tests\\continuous_testing_framework.py",
+      "code_lines": 579,
+      "severity": "critical",
+      "excess_lines": 569
+    },
+    {
+      "path": "tests\\final_theme_consistency_test.py",
+      "code_lines": 67,
+      "severity": "critical",
+      "excess_lines": 57
+    },
+    {
+      "path": "tests\\simple_theme_verification.py",
+      "code_lines": 37,
+      "severity": "critical",
+      "excess_lines": 27
+    },
+    {
+      "path": "tests\\quality_assurance_framework.py",
+      "code_lines": 630,
+      "severity": "critical",
+      "excess_lines": 620
+    },
+    {
+      "path": "tests\\test_application_closing_comprehensive.py",
+      "code_lines": 678,
+      "severity": "critical",
+      "excess_lines": 668
+    },
+    {
+      "path": "tests\\test_basic_functionality.py",
+      "code_lines": 121,
+      "severity": "critical",
+      "excess_lines": 111
+    },
+    {
+      "path": "tests\\test_centralized_logging_comprehensive.py",
+      "code_lines": 249,
+      "severity": "critical",
+      "excess_lines": 239
+    },
+    {
+      "path": "tests\\test_comprehensive_performance_framework.py",
+      "code_lines": 402,
+      "severity": "critical",
+      "excess_lines": 392
+    },
+    {
+      "path": "tests\\test_comprehensive_theme_fixes.py",
+      "code_lines": 177,
+      "severity": "critical",
+      "excess_lines": 167
+    },
+    {
+      "path": "tests\\test_database_performance_benchmarks.py",
+      "code_lines": 539,
+      "severity": "critical",
+      "excess_lines": 529
+    },
+    {
+      "path": "tests\\test_database_refactored_comprehensive.py",
+      "code_lines": 779,
+      "severity": "critical",
+      "excess_lines": 769
+    },
+    {
+      "path": "tests\\test_default_theme_behavior.py",
+      "code_lines": 79,
+      "severity": "critical",
+      "excess_lines": 69
+    },
+    {
+      "path": "tests\\test_end_to_end_workflows_complete.py",
+      "code_lines": 236,
+      "severity": "critical",
+      "excess_lines": 226
+    },
+    {
+      "path": "tests\\test_end_to_end_workflows_fixed.py",
+      "code_lines": 224,
+      "severity": "critical",
+      "excess_lines": 214
+    },
+    {
+      "path": "tests\\test_fast_hasher.py",
+      "code_lines": 205,
+      "severity": "critical",
+      "excess_lines": 195
+    },
+    {
+      "path": "tests\\test_framework_validation.py",
+      "code_lines": 413,
+      "severity": "critical",
+      "excess_lines": 403
+    },
+    {
+      "path": "tests\\test_gui_framework.py",
+      "code_lines": 311,
+      "severity": "critical",
+      "excess_lines": 301
+    },
+    {
+      "path": "tests\\test_gui_performance_requirements.py",
+      "code_lines": 295,
+      "severity": "critical",
+      "excess_lines": 285
+    },
+    {
+      "path": "tests\\test_headlight_comprehensive_validation.py",
+      "code_lines": 454,
+      "severity": "critical",
+      "excess_lines": 444
+    },
+    {
+      "path": "tests\\test_headlight_fix_validation.py",
+      "code_lines": 319,
+      "severity": "critical",
+      "excess_lines": 309
+    },
+    {
+      "path": "tests\\test_import_analysis_service.py",
+      "code_lines": 261,
+      "severity": "critical",
+      "excess_lines": 251
+    },
+    {
+      "path": "tests\\test_import_file_manager.py",
+      "code_lines": 252,
+      "severity": "critical",
+      "excess_lines": 242
+    },
+    {
+      "path": "tests\\test_import_thumbnail_service.py",
+      "code_lines": 313,
+      "severity": "critical",
+      "excess_lines": 303
+    },
+    {
+      "path": "tests\\test_improved_error_handling_comprehensive.py",
+      "code_lines": 408,
+      "severity": "critical",
+      "excess_lines": 398
+    },
+    {
+      "path": "tests\\test_main_window.py",
+      "code_lines": 36,
+      "severity": "critical",
+      "excess_lines": 26
+    },
+    {
+      "path": "tests\\test_minimal_components.py",
+      "code_lines": 94,
+      "severity": "critical",
+      "excess_lines": 84
+    },
+    {
+      "path": "tests\\test_minimal_functionality.py",
+      "code_lines": 137,
+      "severity": "critical",
+      "excess_lines": 127
+    },
+    {
+      "path": "tests\\test_optimized_cleanup_system.py",
+      "code_lines": 312,
+      "severity": "critical",
+      "excess_lines": 302
+    },
+    {
+      "path": "tests\\test_performance_basic.py",
+      "code_lines": 117,
+      "severity": "critical",
+      "excess_lines": 107
+    },
+    {
+      "path": "tests\\test_performance_corrected.py",
+      "code_lines": 136,
+      "severity": "critical",
+      "excess_lines": 126
+    },
+    {
+      "path": "tests\\test_performance_requirements_validation.py",
+      "code_lines": 396,
+      "severity": "critical",
+      "excess_lines": 386
+    },
+    {
+      "path": "tests\\test_performance_regression_framework.py",
+      "code_lines": 329,
+      "severity": "critical",
+      "excess_lines": 319
+    },
+    {
+      "path": "tests\\test_performance_validation.py",
+      "code_lines": 391,
+      "severity": "critical",
+      "excess_lines": 381
+    },
+    {
+      "path": "tests\\test_preferences_dark_blue_default.py",
+      "code_lines": 82,
+      "severity": "critical",
+      "excess_lines": 72
+    },
+    {
+      "path": "tests\\test_preferences_theme_modes.py",
+      "code_lines": 83,
+      "severity": "critical",
+      "excess_lines": 73
+    },
+    {
+      "path": "tests\\test_preferences_variant_switching.py",
+      "code_lines": 54,
+      "severity": "critical",
+      "excess_lines": 44
+    },
+    {
+      "path": "tests\\test_professional_themes.py",
+      "code_lines": 206,
+      "severity": "critical",
+      "excess_lines": 196
+    },
+    {
+      "path": "tests\\test_professional_themes_simple.py",
+      "code_lines": 120,
+      "severity": "critical",
+      "excess_lines": 110
+    },
+    {
+      "path": "tests\\test_qt_material_comprehensive.py",
+      "code_lines": 180,
+      "severity": "critical",
+      "excess_lines": 170
+    },
+    {
+      "path": "tests\\test_qt_material_simple.py",
+      "code_lines": 139,
+      "severity": "critical",
+      "excess_lines": 129
+    },
+    {
+      "path": "tests\\test_qt_material_takeover.py",
+      "code_lines": 201,
+      "severity": "critical",
+      "excess_lines": 191
+    },
+    {
+      "path": "tests\\test_qt_material_takeover_fixed.py",
+      "code_lines": 201,
+      "severity": "critical",
+      "excess_lines": 191
+    },
+    {
+      "path": "tests\\test_refactored_parsers_comprehensive.py",
+      "code_lines": 398,
+      "severity": "critical",
+      "excess_lines": 388
+    },
+    {
+      "path": "tests\\test_simple_components.py",
+      "code_lines": 36,
+      "severity": "critical",
+      "excess_lines": 26
+    },
+    {
+      "path": "tests\\test_tabbed_lighting_panel.py",
+      "code_lines": 45,
+      "severity": "critical",
+      "excess_lines": 35
+    },
+    {
+      "path": "tests\\test_theme_consistency_fix.py",
+      "code_lines": 51,
+      "severity": "critical",
+      "excess_lines": 41
+    },
+    {
+      "path": "tests\\test_theme_fix_verification.py",
+      "code_lines": 64,
+      "severity": "critical",
+      "excess_lines": 54
+    },
+    {
+      "path": "tests\\test_theme_graceful_degradation.py",
+      "code_lines": 282,
+      "severity": "critical",
+      "excess_lines": 272
+    },
+    {
+      "path": "tests\\test_theme_startup_fix.py",
+      "code_lines": 174,
+      "severity": "critical",
+      "excess_lines": 164
+    },
+    {
+      "path": "tests\\test_theme_switching_verification.py",
+      "code_lines": 103,
+      "severity": "critical",
+      "excess_lines": 93
+    },
+    {
+      "path": "tests\\test_unified_cleanup_system.py",
+      "code_lines": 234,
+      "severity": "critical",
+      "excess_lines": 224
+    },
+    {
+      "path": "tests\\test_variant_colors.py",
+      "code_lines": 92,
+      "severity": "critical",
+      "excess_lines": 82
+    },
+    {
+      "path": "tests\\test_variant_fix.py",
+      "code_lines": 51,
+      "severity": "critical",
+      "excess_lines": 41
+    },
+    {
+      "path": "tests\\test_variant_fix_corrected.py",
+      "code_lines": 50,
+      "severity": "critical",
+      "excess_lines": 40
+    },
+    {
+      "path": "tests\\test_visual_theme_application.py",
+      "code_lines": 62,
+      "severity": "critical",
+      "excess_lines": 52
+    },
+    {
+      "path": "tests\\test_vtk_resource_tracker_fix.py",
+      "code_lines": 195,
+      "severity": "critical",
+      "excess_lines": 185
+    },
+    {
+      "path": "tests\\test_vtk_theme_integration.py",
+      "code_lines": 283,
+      "severity": "critical",
+      "excess_lines": 273
+    },
+    {
+      "path": "tests\\theme_consistency_fix_test.py",
+      "code_lines": 51,
+      "severity": "critical",
+      "excess_lines": 41
+    },
+    {
+      "path": "tests\\theme_debug_diagnostic.py",
+      "code_lines": 59,
+      "severity": "critical",
+      "excess_lines": 49
+    },
+    {
+      "path": "tests\\validate_float_caching_performance.py",
+      "code_lines": 115,
+      "severity": "critical",
+      "excess_lines": 105
+    },
+    {
+      "path": "tests\\validate_parser_performance.py",
+      "code_lines": 288,
+      "severity": "critical",
+      "excess_lines": 278
+    },
+    {
+      "path": "tools\\dependency_analysis.py",
+      "code_lines": 363,
+      "severity": "critical",
+      "excess_lines": 353
+    },
+    {
+      "path": "tools\\migration_utils.py",
+      "code_lines": 309,
+      "severity": "critical",
+      "excess_lines": 299
+    },
+    {
+      "path": "tools\\run_phase0_analysis.py",
+      "code_lines": 182,
+      "severity": "critical",
+      "excess_lines": 172
+    },
+    {
+      "path": "tools\\stylesheet_detector.py",
+      "code_lines": 347,
+      "severity": "critical",
+      "excess_lines": 337
+    },
+    {
+      "path": "tools\\visual_regression_tester.py",
+      "code_lines": 322,
+      "severity": "critical",
+      "excess_lines": 312
+    },
+    {
+      "path": "src\\core\\application.py",
+      "code_lines": 129,
+      "severity": "critical",
+      "excess_lines": 119
+    },
+    {
+      "path": "src\\core\\application_bootstrap.py",
+      "code_lines": 69,
+      "severity": "critical",
+      "excess_lines": 59
+    },
+    {
+      "path": "src\\core\\application_config.py",
+      "code_lines": 63,
+      "severity": "critical",
+      "excess_lines": 53
+    },
+    {
+      "path": "src\\core\\background_provider.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\core\\cancellation_token.py",
+      "code_lines": 22,
+      "severity": "critical",
+      "excess_lines": 12
+    },
+    {
+      "path": "src\\core\\centralized_logging_service.py",
+      "code_lines": 254,
+      "severity": "critical",
+      "excess_lines": 244
+    },
+    {
+      "path": "src\\core\\database_manager.py",
+      "code_lines": 14,
+      "severity": "minor",
+      "excess_lines": 4
+    },
+    {
+      "path": "src\\core\\data_structures.py",
+      "code_lines": 69,
+      "severity": "critical",
+      "excess_lines": 59
+    },
+    {
+      "path": "src\\core\\deduplication_manager.py",
+      "code_lines": 48,
+      "severity": "critical",
+      "excess_lines": 38
+    },
+    {
+      "path": "src\\core\\enhanced_error_handler.py",
+      "code_lines": 409,
+      "severity": "critical",
+      "excess_lines": 399
+    },
+    {
+      "path": "src\\core\\exceptions.py",
+      "code_lines": 289,
+      "severity": "critical",
+      "excess_lines": 279
+    },
+    {
+      "path": "src\\core\\exception_handler.py",
+      "code_lines": 33,
+      "severity": "critical",
+      "excess_lines": 23
+    },
+    {
+      "path": "src\\core\\fast_hasher.py",
+      "code_lines": 118,
+      "severity": "critical",
+      "excess_lines": 108
+    },
+    {
+      "path": "src\\core\\float_cache_analyzer.py",
+      "code_lines": 186,
+      "severity": "critical",
+      "excess_lines": 176
+    },
+    {
+      "path": "src\\core\\gpu_acceleration.py",
+      "code_lines": 156,
+      "severity": "critical",
+      "excess_lines": 146
+    },
+    {
+      "path": "src\\core\\gpu_memory_manager.py",
+      "code_lines": 127,
+      "severity": "critical",
+      "excess_lines": 117
+    },
+    {
+      "path": "src\\core\\hardware_acceleration.py",
+      "code_lines": 223,
+      "severity": "critical",
+      "excess_lines": 213
+    },
+    {
+      "path": "src\\core\\import_analysis_service.py",
+      "code_lines": 295,
+      "severity": "critical",
+      "excess_lines": 285
+    },
+    {
+      "path": "src\\core\\import_coordinator.py",
+      "code_lines": 279,
+      "severity": "critical",
+      "excess_lines": 269
+    },
+    {
+      "path": "src\\core\\import_file_manager.py",
+      "code_lines": 264,
+      "severity": "critical",
+      "excess_lines": 254
+    },
+    {
+      "path": "src\\core\\import_thumbnail_service.py",
+      "code_lines": 204,
+      "severity": "critical",
+      "excess_lines": 194
+    },
+    {
+      "path": "src\\core\\logging_config.py",
+      "code_lines": 64,
+      "severity": "critical",
+      "excess_lines": 54
+    },
+    {
+      "path": "src\\core\\material_provider.py",
+      "code_lines": 81,
+      "severity": "critical",
+      "excess_lines": 71
+    },
+    {
+      "path": "src\\core\\memory_manager.py",
+      "code_lines": 134,
+      "severity": "critical",
+      "excess_lines": 124
+    },
+    {
+      "path": "src\\core\\model_cache.py",
+      "code_lines": 238,
+      "severity": "critical",
+      "excess_lines": 228
+    },
+    {
+      "path": "src\\core\\model_cache_old.py",
+      "code_lines": 299,
+      "severity": "critical",
+      "excess_lines": 289
+    },
+    {
+      "path": "src\\core\\performance_monitor.py",
+      "code_lines": 317,
+      "severity": "critical",
+      "excess_lines": 307
+    },
+    {
+      "path": "src\\core\\performance_profiler.py",
+      "code_lines": 193,
+      "severity": "critical",
+      "excess_lines": 183
+    },
+    {
+      "path": "src\\core\\progressive_loader.py",
+      "code_lines": 286,
+      "severity": "critical",
+      "excess_lines": 276
+    },
+    {
+      "path": "src\\core\\progress_aggregator.py",
+      "code_lines": 113,
+      "severity": "critical",
+      "excess_lines": 103
+    },
+    {
+      "path": "src\\core\\rendering_performance_manager.py",
+      "code_lines": 472,
+      "severity": "critical",
+      "excess_lines": 462
+    },
+    {
+      "path": "src\\core\\root_folder_manager.py",
+      "code_lines": 172,
+      "severity": "critical",
+      "excess_lines": 162
+    },
+    {
+      "path": "src\\core\\search_engine.py",
+      "code_lines": 165,
+      "severity": "critical",
+      "excess_lines": 155
+    },
+    {
+      "path": "src\\core\\settings_migration.py",
+      "code_lines": 176,
+      "severity": "critical",
+      "excess_lines": 166
+    },
+    {
+      "path": "src\\core\\system_initializer.py",
+      "code_lines": 53,
+      "severity": "critical",
+      "excess_lines": 43
+    },
+    {
+      "path": "src\\core\\view_optimizer.py",
+      "code_lines": 87,
+      "severity": "critical",
+      "excess_lines": 77
+    },
+    {
+      "path": "src\\core\\__init__.py",
+      "code_lines": 21,
+      "severity": "critical",
+      "excess_lines": 11
+    },
+    {
+      "path": "src\\gui\\background_hasher.py",
+      "code_lines": 64,
+      "severity": "critical",
+      "excess_lines": 54
+    },
+    {
+      "path": "src\\gui\\batch_screenshot_worker.py",
+      "code_lines": 69,
+      "severity": "critical",
+      "excess_lines": 59
+    },
+    {
+      "path": "src\\gui\\deduplication_dialog.py",
+      "code_lines": 89,
+      "severity": "critical",
+      "excess_lines": 79
+    },
+    {
+      "path": "src\\gui\\lighting_control_panel.py",
+      "code_lines": 285,
+      "severity": "critical",
+      "excess_lines": 275
+    },
+    {
+      "path": "src\\gui\\lighting_control_panel_improved.py",
+      "code_lines": 206,
+      "severity": "critical",
+      "excess_lines": 196
+    },
+    {
+      "path": "src\\gui\\lighting_manager.py",
+      "code_lines": 181,
+      "severity": "critical",
+      "excess_lines": 171
+    },
+    {
+      "path": "src\\gui\\main_window.py",
+      "code_lines": 1191,
+      "severity": "critical",
+      "excess_lines": 1181
+    },
+    {
+      "path": "src\\gui\\material_picker_widget.py",
+      "code_lines": 303,
+      "severity": "critical",
+      "excess_lines": 293
+    },
+    {
+      "path": "src\\gui\\multi_root_file_system_model.py",
+      "code_lines": 292,
+      "severity": "critical",
+      "excess_lines": 282
+    },
+    {
+      "path": "src\\gui\\model_library.py",
+      "code_lines": 1118,
+      "severity": "critical",
+      "excess_lines": 1108
+    },
+    {
+      "path": "src\\gui\\preferences.py",
+      "code_lines": 1342,
+      "severity": "critical",
+      "excess_lines": 1332
+    },
+    {
+      "path": "src\\gui\\screenshot_generator.py",
+      "code_lines": 126,
+      "severity": "critical",
+      "excess_lines": 116
+    },
+    {
+      "path": "src\\gui\\startup_tips.py",
+      "code_lines": 111,
+      "severity": "critical",
+      "excess_lines": 101
+    },
+    {
+      "path": "src\\gui\\theme.py",
+      "code_lines": 45,
+      "severity": "critical",
+      "excess_lines": 35
+    },
+    {
+      "path": "src\\gui\\walkthrough.py",
+      "code_lines": 148,
+      "severity": "critical",
+      "excess_lines": 138
+    },
+    {
+      "path": "src\\parsers\\adaptive_chunker.py",
+      "code_lines": 193,
+      "severity": "critical",
+      "excess_lines": 183
+    },
+    {
+      "path": "src\\parsers\\base_parser.py",
+      "code_lines": 47,
+      "severity": "critical",
+      "excess_lines": 37
+    },
+    {
+      "path": "src\\parsers\\file_chunker.py",
+      "code_lines": 86,
+      "severity": "critical",
+      "excess_lines": 76
+    },
+    {
+      "path": "src\\parsers\\format_detector.py",
+      "code_lines": 29,
+      "severity": "critical",
+      "excess_lines": 19
+    },
+    {
+      "path": "src\\parsers\\obj_parser.py",
+      "code_lines": 207,
+      "severity": "critical",
+      "excess_lines": 197
+    },
+    {
+      "path": "src\\parsers\\refactored_base_parser.py",
+      "code_lines": 95,
+      "severity": "critical",
+      "excess_lines": 85
+    },
+    {
+      "path": "src\\parsers\\refactored_obj_parser.py",
+      "code_lines": 393,
+      "severity": "critical",
+      "excess_lines": 383
+    },
+    {
+      "path": "src\\parsers\\refactored_step_parser.py",
+      "code_lines": 328,
+      "severity": "critical",
+      "excess_lines": 318
+    },
+    {
+      "path": "src\\parsers\\refactored_stl_parser.py",
+      "code_lines": 520,
+      "severity": "critical",
+      "excess_lines": 510
+    },
+    {
+      "path": "src\\parsers\\refactored_threemf_parser.py",
+      "code_lines": 249,
+      "severity": "critical",
+      "excess_lines": 239
+    },
+    {
+      "path": "src\\parsers\\step_parser.py",
+      "code_lines": 245,
+      "severity": "critical",
+      "excess_lines": 235
+    },
+    {
+      "path": "src\\parsers\\stl_gpu_parser.py",
+      "code_lines": 318,
+      "severity": "critical",
+      "excess_lines": 308
+    },
+    {
+      "path": "src\\parsers\\stl_progressive_loader.py",
+      "code_lines": 228,
+      "severity": "critical",
+      "excess_lines": 218
+    },
+    {
+      "path": "src\\parsers\\stl_parser_original.py",
+      "code_lines": 517,
+      "severity": "critical",
+      "excess_lines": 507
+    },
+    {
+      "path": "src\\parsers\\thread_pool_coordinator.py",
+      "code_lines": 132,
+      "severity": "critical",
+      "excess_lines": 122
+    },
+    {
+      "path": "src\\parsers\\threemf_parser.py",
+      "code_lines": 180,
+      "severity": "critical",
+      "excess_lines": 170
+    },
+    {
+      "path": "src\\parsers\\tool_database_manager.py",
+      "code_lines": 166,
+      "severity": "critical",
+      "excess_lines": 156
+    },
+    {
+      "path": "src\\parsers\\tool_export_manager.py",
+      "code_lines": 131,
+      "severity": "critical",
+      "excess_lines": 121
+    },
+    {
+      "path": "src\\parsers\\tool_migration_utility.py",
+      "code_lines": 137,
+      "severity": "critical",
+      "excess_lines": 127
+    },
+    {
+      "path": "src\\parsers\\__init__.py",
+      "code_lines": 11,
+      "severity": "minor",
+      "excess_lines": 1
+    },
+    {
+      "path": "src\\ui\\model_library_ui.py",
+      "code_lines": 164,
+      "severity": "critical",
+      "excess_lines": 154
+    },
+    {
+      "path": "src\\ui\\main_window_ui.py",
+      "code_lines": 158,
+      "severity": "critical",
+      "excess_lines": 148
+    },
+    {
+      "path": "src\\ui\\viewer_widget_ui.py",
+      "code_lines": 76,
+      "severity": "critical",
+      "excess_lines": 66
+    },
+    {
+      "path": "src\\ui\\viewer_widget_vtk_ui.py",
+      "code_lines": 76,
+      "severity": "critical",
+      "excess_lines": 66
+    },
+    {
+      "path": "src\\core\\cleanup\\resource_cleanup_handler.py",
+      "code_lines": 131,
+      "severity": "critical",
+      "excess_lines": 121
+    },
+    {
+      "path": "src\\core\\cleanup\\backward_compatibility.py",
+      "code_lines": 80,
+      "severity": "critical",
+      "excess_lines": 70
+    },
+    {
+      "path": "src\\core\\cleanup\\service_cleanup_handler.py",
+      "code_lines": 168,
+      "severity": "critical",
+      "excess_lines": 158
+    },
+    {
+      "path": "src\\core\\cleanup\\unified_cleanup_coordinator.py",
+      "code_lines": 187,
+      "severity": "critical",
+      "excess_lines": 177
+    },
+    {
+      "path": "src\\core\\cleanup\\vtk_cleanup_handler.py",
+      "code_lines": 127,
+      "severity": "critical",
+      "excess_lines": 117
+    },
+    {
+      "path": "src\\core\\cleanup\\widget_cleanup_handler.py",
+      "code_lines": 182,
+      "severity": "critical",
+      "excess_lines": 172
+    },
+    {
+      "path": "src\\core\\cleanup\\__init__.py",
+      "code_lines": 16,
+      "severity": "major",
+      "excess_lines": 6
+    },
+    {
+      "path": "src\\core\\database\\cache_manager.py",
+      "code_lines": 294,
+      "severity": "critical",
+      "excess_lines": 284
+    },
+    {
+      "path": "src\\core\\database\\database_manager.py",
+      "code_lines": 105,
+      "severity": "critical",
+      "excess_lines": 95
+    },
+    {
+      "path": "src\\core\\database\\db_maintenance.py",
+      "code_lines": 31,
+      "severity": "critical",
+      "excess_lines": 21
+    },
+    {
+      "path": "src\\core\\database\\db_operations.py",
+      "code_lines": 67,
+      "severity": "critical",
+      "excess_lines": 57
+    },
+    {
+      "path": "src\\core\\database\\enhanced_metadata_repository.py",
+      "code_lines": 164,
+      "severity": "critical",
+      "excess_lines": 154
+    },
+    {
+      "path": "src\\core\\database\\enhanced_model_repository.py",
+      "code_lines": 124,
+      "severity": "critical",
+      "excess_lines": 114
+    },
+    {
+      "path": "src\\core\\database\\enhanced_search_repository.py",
+      "code_lines": 213,
+      "severity": "critical",
+      "excess_lines": 203
+    },
+    {
+      "path": "src\\core\\database\\error_handler.py",
+      "code_lines": 264,
+      "severity": "critical",
+      "excess_lines": 254
+    },
+    {
+      "path": "src\\core\\database\\health_monitor.py",
+      "code_lines": 268,
+      "severity": "critical",
+      "excess_lines": 258
+    },
+    {
+      "path": "src\\core\\database\\import_migration.py",
+      "code_lines": 67,
+      "severity": "critical",
+      "excess_lines": 57
+    },
+    {
+      "path": "src\\core\\database\\import_schema.py",
+      "code_lines": 20,
+      "severity": "major",
+      "excess_lines": 10
+    },
+    {
+      "path": "src\\core\\database\\metadata_repository.py",
+      "code_lines": 76,
+      "severity": "critical",
+      "excess_lines": 66
+    },
+    {
+      "path": "src\\core\\database\\migration_manager.py",
+      "code_lines": 323,
+      "severity": "critical",
+      "excess_lines": 313
+    },
+    {
+      "path": "src\\core\\database\\model_repository.py",
+      "code_lines": 60,
+      "severity": "critical",
+      "excess_lines": 50
+    },
+    {
+      "path": "src\\core\\database\\provider_repository.py",
+      "code_lines": 110,
+      "severity": "critical",
+      "excess_lines": 100
+    },
+    {
+      "path": "src\\core\\database\\query_optimizer.py",
+      "code_lines": 272,
+      "severity": "critical",
+      "excess_lines": 262
+    },
+    {
+      "path": "src\\core\\database\\search_repository.py",
+      "code_lines": 63,
+      "severity": "critical",
+      "excess_lines": 53
+    },
+    {
+      "path": "src\\core\\database\\tool_database_repository.py",
+      "code_lines": 238,
+      "severity": "critical",
+      "excess_lines": 228
+    },
+    {
+      "path": "src\\core\\database\\tool_database_schema.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\core\\database\\tool_preferences_repository.py",
+      "code_lines": 63,
+      "severity": "critical",
+      "excess_lines": 53
+    },
+    {
+      "path": "src\\core\\database\\transaction_manager.py",
+      "code_lines": 174,
+      "severity": "critical",
+      "excess_lines": 164
+    },
+    {
+      "path": "src\\core\\error_handling\\comprehensive_logger.py",
+      "code_lines": 297,
+      "severity": "critical",
+      "excess_lines": 287
+    },
+    {
+      "path": "src\\core\\error_handling\\error_categories.py",
+      "code_lines": 197,
+      "severity": "critical",
+      "excess_lines": 187
+    },
+    {
+      "path": "src\\core\\error_handling\\error_reporter.py",
+      "code_lines": 258,
+      "severity": "critical",
+      "excess_lines": 248
+    },
+    {
+      "path": "src\\core\\error_handling\\error_handlers.py",
+      "code_lines": 140,
+      "severity": "critical",
+      "excess_lines": 130
+    },
+    {
+      "path": "src\\core\\interfaces\\__init__.py",
+      "code_lines": 26,
+      "severity": "critical",
+      "excess_lines": 16
+    },
+    {
+      "path": "src\\core\\services\\model_service.py",
+      "code_lines": 65,
+      "severity": "critical",
+      "excess_lines": 55
+    },
+    {
+      "path": "src\\core\\thumbnail_components\\thumbnail_generator_main.py",
+      "code_lines": 246,
+      "severity": "critical",
+      "excess_lines": 236
+    },
+    {
+      "path": "src\\gui\\CLO\\board_visualizer.py",
+      "code_lines": 155,
+      "severity": "critical",
+      "excess_lines": 145
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_logging_service.py",
+      "code_lines": 187,
+      "severity": "critical",
+      "excess_lines": 177
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_progress_indicator.py",
+      "code_lines": 222,
+      "severity": "critical",
+      "excess_lines": 212
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_theme_service.py",
+      "code_lines": 194,
+      "severity": "critical",
+      "excess_lines": 184
+    },
+    {
+      "path": "src\\gui\\CLO\\cut_list_optimizer_widget.py",
+      "code_lines": 833,
+      "severity": "critical",
+      "excess_lines": 823
+    },
+    {
+      "path": "src\\gui\\CLO\\data_models.py",
+      "code_lines": 59,
+      "severity": "critical",
+      "excess_lines": 49
+    },
+    {
+      "path": "src\\gui\\CLO\\enhanced_cut_list_optimizer_widget.py",
+      "code_lines": 650,
+      "severity": "critical",
+      "excess_lines": 640
+    },
+    {
+      "path": "src\\gui\\CLO\\file_operations.py",
+      "code_lines": 67,
+      "severity": "critical",
+      "excess_lines": 57
+    },
+    {
+      "path": "src\\gui\\CLO\\main.py",
+      "code_lines": 17,
+      "severity": "major",
+      "excess_lines": 7
+    },
+    {
+      "path": "src\\gui\\CLO\\optimization_algorithms.py",
+      "code_lines": 183,
+      "severity": "critical",
+      "excess_lines": 173
+    },
+    {
+      "path": "src\\gui\\CLO\\ui_components.py",
+      "code_lines": 73,
+      "severity": "critical",
+      "excess_lines": 63
+    },
+    {
+      "path": "src\\gui\\components\\deduplication_status_widget.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\gui\\components\\detailed_progress_tracker.py",
+      "code_lines": 55,
+      "severity": "critical",
+      "excess_lines": 45
+    },
+    {
+      "path": "src\\gui\\components\\dynamic_tab_manager.py",
+      "code_lines": 44,
+      "severity": "critical",
+      "excess_lines": 34
+    },
+    {
+      "path": "src\\gui\\components\\menu_manager.py",
+      "code_lines": 154,
+      "severity": "critical",
+      "excess_lines": 144
+    },
+    {
+      "path": "src\\gui\\components\\status_bar_manager.py",
+      "code_lines": 161,
+      "severity": "critical",
+      "excess_lines": 151
+    },
+    {
+      "path": "src\\gui\\components\\toolbar_manager.py",
+      "code_lines": 84,
+      "severity": "critical",
+      "excess_lines": 74
+    },
+    {
+      "path": "src\\gui\\core\\event_coordinator.py",
+      "code_lines": 44,
+      "severity": "critical",
+      "excess_lines": 34
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\cost_calculator.py",
+      "code_lines": 165,
+      "severity": "critical",
+      "excess_lines": 155
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\cost_estimator_widget.py",
+      "code_lines": 248,
+      "severity": "critical",
+      "excess_lines": 238
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\material_cost_manager.py",
+      "code_lines": 76,
+      "severity": "critical",
+      "excess_lines": 66
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\__init__.py",
+      "code_lines": 14,
+      "severity": "minor",
+      "excess_lines": 4
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\feeds_and_speeds_widget.py",
+      "code_lines": 381,
+      "severity": "critical",
+      "excess_lines": 371
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\personal_toolbox_manager.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\tool_library_manager.py",
+      "code_lines": 77,
+      "severity": "critical",
+      "excess_lines": 67
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\unit_converter.py",
+      "code_lines": 23,
+      "severity": "critical",
+      "excess_lines": 13
+    },
+    {
+      "path": "src\\gui\\files_components\\files_tab_widget.py",
+      "code_lines": 280,
+      "severity": "critical",
+      "excess_lines": 270
+    },
+    {
+      "path": "src\\gui\\files_components\\file_maintenance_worker.py",
+      "code_lines": 160,
+      "severity": "critical",
+      "excess_lines": 150
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\animation_controller.py",
+      "code_lines": 75,
+      "severity": "critical",
+      "excess_lines": 65
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\camera_controller.py",
+      "code_lines": 94,
+      "severity": "critical",
+      "excess_lines": 84
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\export_manager.py",
+      "code_lines": 55,
+      "severity": "critical",
+      "excess_lines": 45
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\feed_speed_visualizer.py",
+      "code_lines": 112,
+      "severity": "critical",
+      "excess_lines": 102
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_editor.py",
+      "code_lines": 70,
+      "severity": "critical",
+      "excess_lines": 60
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_interactive_loader.py",
+      "code_lines": 145,
+      "severity": "critical",
+      "excess_lines": 135
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_loader_thread.py",
+      "code_lines": 46,
+      "severity": "critical",
+      "excess_lines": 36
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_parser.py",
+      "code_lines": 210,
+      "severity": "critical",
+      "excess_lines": 200
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_previewer_main.py",
+      "code_lines": 467,
+      "severity": "critical",
+      "excess_lines": 457
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_renderer.py",
+      "code_lines": 183,
+      "severity": "critical",
+      "excess_lines": 173
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_timeline.py",
+      "code_lines": 148,
+      "severity": "critical",
+      "excess_lines": 138
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\layer_analyzer.py",
+      "code_lines": 71,
+      "severity": "critical",
+      "excess_lines": 61
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\vtk_widget.py",
+      "code_lines": 97,
+      "severity": "critical",
+      "excess_lines": 87
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\__init__.py",
+      "code_lines": 32,
+      "severity": "critical",
+      "excess_lines": 22
+    },
+    {
+      "path": "src\\gui\\help_system\\documentation_indexer.py",
+      "code_lines": 142,
+      "severity": "critical",
+      "excess_lines": 132
+    },
+    {
+      "path": "src\\gui\\help_system\\help_dialog.py",
+      "code_lines": 102,
+      "severity": "critical",
+      "excess_lines": 92
+    },
+    {
+      "path": "src\\gui\\import_components\\import_dialog.py",
+      "code_lines": 465,
+      "severity": "critical",
+      "excess_lines": 455
+    },
+    {
+      "path": "src\\gui\\main_window_components\\dock_manager.py",
+      "code_lines": 189,
+      "severity": "critical",
+      "excess_lines": 179
+    },
+    {
+      "path": "src\\gui\\main_window_components\\event_handler.py",
+      "code_lines": 246,
+      "severity": "critical",
+      "excess_lines": 236
+    },
+    {
+      "path": "src\\gui\\main_window_components\\layout_manager.py",
+      "code_lines": 147,
+      "severity": "critical",
+      "excess_lines": 137
+    },
+    {
+      "path": "src\\gui\\main_window_components\\main_window_facade.py",
+      "code_lines": 33,
+      "severity": "critical",
+      "excess_lines": 23
+    },
+    {
+      "path": "src\\gui\\main_window_components\\settings_manager.py",
+      "code_lines": 138,
+      "severity": "critical",
+      "excess_lines": 128
+    },
+    {
+      "path": "src\\gui\\materials\\integration.py",
+      "code_lines": 164,
+      "severity": "critical",
+      "excess_lines": 154
+    },
+    {
+      "path": "src\\gui\\material_components\\material_manager_main.py",
+      "code_lines": 342,
+      "severity": "critical",
+      "excess_lines": 332
+    },
+    {
+      "path": "src\\gui\\metadata_components\\star_rating_widget.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\gui\\metadata_components\\metadata_editor_main.py",
+      "code_lines": 277,
+      "severity": "critical",
+      "excess_lines": 267
+    },
+    {
+      "path": "src\\gui\\model\\model_loader.py",
+      "code_lines": 101,
+      "severity": "critical",
+      "excess_lines": 91
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_analyzer_dialog.py",
+      "code_lines": 183,
+      "severity": "critical",
+      "excess_lines": 173
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_editor_core.py",
+      "code_lines": 100,
+      "severity": "critical",
+      "excess_lines": 90
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_editor_dialog.py",
+      "code_lines": 221,
+      "severity": "critical",
+      "excess_lines": 211
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_detector.py",
+      "code_lines": 169,
+      "severity": "critical",
+      "excess_lines": 159
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_dialog.py",
+      "code_lines": 66,
+      "severity": "critical",
+      "excess_lines": 56
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_fixer.py",
+      "code_lines": 133,
+      "severity": "critical",
+      "excess_lines": 123
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_geometry_analyzer.py",
+      "code_lines": 120,
+      "severity": "critical",
+      "excess_lines": 110
+    },
+    {
+      "path": "src\\gui\\model_editor\\stl_writer.py",
+      "code_lines": 23,
+      "severity": "critical",
+      "excess_lines": 13
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_event_handler.py",
+      "code_lines": 172,
+      "severity": "critical",
+      "excess_lines": 162
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_file_browser.py",
+      "code_lines": 133,
+      "severity": "critical",
+      "excess_lines": 123
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_model_manager.py",
+      "code_lines": 179,
+      "severity": "critical",
+      "excess_lines": 169
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_ui_manager.py",
+      "code_lines": 111,
+      "severity": "critical",
+      "excess_lines": 101
+    },
+    {
+      "path": "src\\gui\\model_library_components\\model_library_facade.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\gui\\model_library_components\\model_load_worker.py",
+      "code_lines": 77,
+      "severity": "critical",
+      "excess_lines": 67
+    },
+    {
+      "path": "src\\gui\\model_library_components\\thumbnail_generator.py",
+      "code_lines": 57,
+      "severity": "critical",
+      "excess_lines": 47
+    },
+    {
+      "path": "src\\gui\\model_library_components\\__init__.py",
+      "code_lines": 14,
+      "severity": "minor",
+      "excess_lines": 4
+    },
+    {
+      "path": "src\\gui\\search_components\\advanced_search_widget.py",
+      "code_lines": 171,
+      "severity": "critical",
+      "excess_lines": 161
+    },
+    {
+      "path": "src\\gui\\search_components\\saved_search_dialog.py",
+      "code_lines": 39,
+      "severity": "critical",
+      "excess_lines": 29
+    },
+    {
+      "path": "src\\gui\\search_components\\search_widget_main.py",
+      "code_lines": 168,
+      "severity": "critical",
+      "excess_lines": 158
+    },
+    {
+      "path": "src\\gui\\search_components\\search_workers.py",
+      "code_lines": 12,
+      "severity": "minor",
+      "excess_lines": 2
+    },
+    {
+      "path": "src\\gui\\services\\background_loading_manager.py",
+      "code_lines": 170,
+      "severity": "critical",
+      "excess_lines": 160
+    },
+    {
+      "path": "src\\gui\\services\\background_processor.py",
+      "code_lines": 89,
+      "severity": "critical",
+      "excess_lines": 79
+    },
+    {
+      "path": "src\\gui\\services\\deduplication_service.py",
+      "code_lines": 29,
+      "severity": "critical",
+      "excess_lines": 19
+    },
+    {
+      "path": "src\\gui\\services\\enhanced_theme_service.py",
+      "code_lines": 338,
+      "severity": "critical",
+      "excess_lines": 328
+    },
+    {
+      "path": "src\\gui\\services\\enhanced_viewer_service.py",
+      "code_lines": 245,
+      "severity": "critical",
+      "excess_lines": 235
+    },
+    {
+      "path": "src\\gui\\services\\material_service.py",
+      "code_lines": 374,
+      "severity": "critical",
+      "excess_lines": 364
+    },
+    {
+      "path": "src\\gui\\services\\ui_service.py",
+      "code_lines": 306,
+      "severity": "critical",
+      "excess_lines": 296
+    },
+    {
+      "path": "src\\gui\\theme\\detector.py",
+      "code_lines": 53,
+      "severity": "critical",
+      "excess_lines": 43
+    },
+    {
+      "path": "src\\gui\\theme\\legacy_theme_manager.py",
+      "code_lines": 71,
+      "severity": "critical",
+      "excess_lines": 61
+    },
+    {
+      "path": "src\\gui\\theme\\manager.py",
+      "code_lines": 637,
+      "severity": "critical",
+      "excess_lines": 627
+    },
+    {
+      "path": "src\\gui\\theme\\persistence.py",
+      "code_lines": 33,
+      "severity": "critical",
+      "excess_lines": 23
+    },
+    {
+      "path": "src\\gui\\theme\\presets.py",
+      "code_lines": 274,
+      "severity": "critical",
+      "excess_lines": 264
+    },
+    {
+      "path": "src\\gui\\theme\\qdarkstyle_service.py",
+      "code_lines": 54,
+      "severity": "critical",
+      "excess_lines": 44
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_core.py",
+      "code_lines": 202,
+      "severity": "critical",
+      "excess_lines": 192
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_service.py",
+      "code_lines": 133,
+      "severity": "critical",
+      "excess_lines": 123
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_ui.py",
+      "code_lines": 358,
+      "severity": "critical",
+      "excess_lines": 348
+    },
+    {
+      "path": "src\\gui\\theme\\service.py",
+      "code_lines": 60,
+      "severity": "critical",
+      "excess_lines": 50
+    },
+    {
+      "path": "src\\gui\\theme\\simple_service.py",
+      "code_lines": 85,
+      "severity": "critical",
+      "excess_lines": 75
+    },
+    {
+      "path": "src\\gui\\theme\\theme_api.py",
+      "code_lines": 73,
+      "severity": "critical",
+      "excess_lines": 63
+    },
+    {
+      "path": "src\\gui\\theme\\theme_application.py",
+      "code_lines": 264,
+      "severity": "critical",
+      "excess_lines": 254
+    },
+    {
+      "path": "src\\gui\\theme\\theme_cache.py",
+      "code_lines": 92,
+      "severity": "critical",
+      "excess_lines": 82
+    },
+    {
+      "path": "src\\gui\\theme\\theme_constants.py",
+      "code_lines": 32,
+      "severity": "critical",
+      "excess_lines": 22
+    },
+    {
+      "path": "src\\gui\\theme\\theme_core.py",
+      "code_lines": 643,
+      "severity": "critical",
+      "excess_lines": 633
+    },
+    {
+      "path": "src\\gui\\theme\\theme_defaults.py",
+      "code_lines": 146,
+      "severity": "critical",
+      "excess_lines": 136
+    },
+    {
+      "path": "src\\gui\\theme\\theme_loader.py",
+      "code_lines": 57,
+      "severity": "critical",
+      "excess_lines": 47
+    },
+    {
+      "path": "src\\gui\\theme\\theme_manager_core.py",
+      "code_lines": 230,
+      "severity": "critical",
+      "excess_lines": 220
+    },
+    {
+      "path": "src\\gui\\theme\\theme_palette.py",
+      "code_lines": 203,
+      "severity": "critical",
+      "excess_lines": 193
+    },
+    {
+      "path": "src\\gui\\theme\\theme_persistence.py",
+      "code_lines": 155,
+      "severity": "critical",
+      "excess_lines": 145
+    },
+    {
+      "path": "src\\gui\\theme\\theme_registry.py",
+      "code_lines": 116,
+      "severity": "critical",
+      "excess_lines": 106
+    },
+    {
+      "path": "src\\gui\\theme\\theme_service.py",
+      "code_lines": 261,
+      "severity": "critical",
+      "excess_lines": 251
+    },
+    {
+      "path": "src\\gui\\theme\\theme_ui.py",
+      "code_lines": 372,
+      "severity": "critical",
+      "excess_lines": 362
+    },
+    {
+      "path": "src\\gui\\theme\\theme_validator.py",
+      "code_lines": 83,
+      "severity": "critical",
+      "excess_lines": 73
+    },
+    {
+      "path": "src\\gui\\theme\\unified_theme_manager.py",
+      "code_lines": 119,
+      "severity": "critical",
+      "excess_lines": 109
+    },
+    {
+      "path": "src\\gui\\theme\\vtk_color_provider.py",
+      "code_lines": 106,
+      "severity": "critical",
+      "excess_lines": 96
+    },
+    {
+      "path": "src\\gui\\theme\\__init__.py",
+      "code_lines": 76,
+      "severity": "critical",
+      "excess_lines": 66
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\color_row.py",
+      "code_lines": 51,
+      "severity": "critical",
+      "excess_lines": 41
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\preview_window.py",
+      "code_lines": 127,
+      "severity": "critical",
+      "excess_lines": 117
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\theme_manager_helpers.py",
+      "code_lines": 87,
+      "severity": "critical",
+      "excess_lines": 77
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\theme_manager_widget_main.py",
+      "code_lines": 244,
+      "severity": "critical",
+      "excess_lines": 234
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\camera_controller.py",
+      "code_lines": 185,
+      "severity": "critical",
+      "excess_lines": 175
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\model_renderer.py",
+      "code_lines": 124,
+      "severity": "critical",
+      "excess_lines": 114
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\performance_tracker.py",
+      "code_lines": 43,
+      "severity": "critical",
+      "excess_lines": 33
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\viewer_ui_manager.py",
+      "code_lines": 127,
+      "severity": "critical",
+      "excess_lines": 117
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\viewer_widget_facade.py",
+      "code_lines": 419,
+      "severity": "critical",
+      "excess_lines": 409
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\vtk_scene_manager.py",
+      "code_lines": 328,
+      "severity": "critical",
+      "excess_lines": 318
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\z_up_save_dialog.py",
+      "code_lines": 54,
+      "severity": "critical",
+      "excess_lines": 44
+    },
+    {
+      "path": "src\\gui\\viewer_components\\progressive_load_worker.py",
+      "code_lines": 26,
+      "severity": "critical",
+      "excess_lines": 16
+    },
+    {
+      "path": "src\\gui\\viewer_components\\viewer_3d_widget_main.py",
+      "code_lines": 307,
+      "severity": "critical",
+      "excess_lines": 297
+    },
+    {
+      "path": "src\\gui\\vtk\\cleanup_coordinator.py",
+      "code_lines": 418,
+      "severity": "critical",
+      "excess_lines": 408
+    },
+    {
+      "path": "src\\gui\\vtk\\context_manager.py",
+      "code_lines": 113,
+      "severity": "critical",
+      "excess_lines": 103
+    },
+    {
+      "path": "src\\gui\\vtk\\diagnostic_tools.py",
+      "code_lines": 384,
+      "severity": "critical",
+      "excess_lines": 374
+    },
+    {
+      "path": "src\\gui\\vtk\\enhanced_context_manager.py",
+      "code_lines": 312,
+      "severity": "critical",
+      "excess_lines": 302
+    },
+    {
+      "path": "src\\gui\\vtk\\error_handler.py",
+      "code_lines": 159,
+      "severity": "critical",
+      "excess_lines": 149
+    },
+    {
+      "path": "src\\gui\\vtk\\fallback_renderer.py",
+      "code_lines": 256,
+      "severity": "critical",
+      "excess_lines": 246
+    },
+    {
+      "path": "src\\gui\\vtk\\optimized_cleanup_coordinator.py",
+      "code_lines": 383,
+      "severity": "critical",
+      "excess_lines": 373
+    },
+    {
+      "path": "src\\gui\\vtk\\resource_tracker.py",
+      "code_lines": 256,
+      "severity": "critical",
+      "excess_lines": 246
+    },
+    {
+      "path": "src\\gui\\vtk\\__init__.py",
+      "code_lines": 36,
+      "severity": "critical",
+      "excess_lines": 26
+    },
+    {
+      "path": "src\\gui\\widgets\\add_tool_dialog.py",
+      "code_lines": 72,
+      "severity": "critical",
+      "excess_lines": 62
+    },
+    {
+      "path": "src\\gui\\widgets\\collapsible_section.py",
+      "code_lines": 27,
+      "severity": "critical",
+      "excess_lines": 17
+    },
+    {
+      "path": "src\\gui\\widgets\\external_database_editor.py",
+      "code_lines": 199,
+      "severity": "critical",
+      "excess_lines": 189
+    },
+    {
+      "path": "src\\gui\\widgets\\loading_progress_widget.py",
+      "code_lines": 135,
+      "severity": "critical",
+      "excess_lines": 125
+    },
+    {
+      "path": "src\\gui\\widgets\\tool_database_preferences.py",
+      "code_lines": 104,
+      "severity": "critical",
+      "excess_lines": 94
+    },
+    {
+      "path": "src\\gui\\window\\central_widget_manager.py",
+      "code_lines": 184,
+      "severity": "critical",
+      "excess_lines": 174
+    },
+    {
+      "path": "src\\gui\\window\\custom_title_bar.py",
+      "code_lines": 66,
+      "severity": "critical",
+      "excess_lines": 56
+    },
+    {
+      "path": "src\\gui\\window\\dock_manager.py",
+      "code_lines": 525,
+      "severity": "critical",
+      "excess_lines": 515
+    },
+    {
+      "path": "src\\gui\\window\\dock_snapping.py",
+      "code_lines": 107,
+      "severity": "critical",
+      "excess_lines": 97
+    },
+    {
+      "path": "src\\gui\\window\\layout_persistence.py",
+      "code_lines": 203,
+      "severity": "critical",
+      "excess_lines": 193
+    },
+    {
+      "path": "src\\gui\\window\\title_bar_manager.py",
+      "code_lines": 51,
+      "severity": "critical",
+      "excess_lines": 41
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\coordinate_manager.py",
+      "code_lines": 184,
+      "severity": "critical",
+      "excess_lines": 174
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\event_processor.py",
+      "code_lines": 272,
+      "severity": "critical",
+      "excess_lines": 262
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_configuration.py",
+      "code_lines": 154,
+      "severity": "critical",
+      "excess_lines": 144
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_engine.py",
+      "code_lines": 182,
+      "severity": "critical",
+      "excess_lines": 172
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_guide_renderer.py",
+      "code_lines": 298,
+      "severity": "critical",
+      "excess_lines": 288
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\__init__.py",
+      "code_lines": 22,
+      "severity": "critical",
+      "excess_lines": 12
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\qt_material_color_picker.py",
+      "code_lines": 121,
+      "severity": "critical",
+      "excess_lines": 111
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\simple_theme_switcher.py",
+      "code_lines": 48,
+      "severity": "critical",
+      "excess_lines": 38
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\theme_dialog.py",
+      "code_lines": 187,
+      "severity": "critical",
+      "excess_lines": 177
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\theme_switcher.py",
+      "code_lines": 28,
+      "severity": "critical",
+      "excess_lines": 18
+    },
+    {
+      "path": "src\\parsers\\stl_components\\stl_format_detector.py",
+      "code_lines": 22,
+      "severity": "critical",
+      "excess_lines": 12
+    },
+    {
+      "path": "src\\parsers\\stl_components\\stl_models.py",
+      "code_lines": 24,
+      "severity": "critical",
+      "excess_lines": 14
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\base_tool_parser.py",
+      "code_lines": 33,
+      "severity": "critical",
+      "excess_lines": 23
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\csv_tool_parser.py",
+      "code_lines": 126,
+      "severity": "critical",
+      "excess_lines": 116
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\json_tool_parser.py",
+      "code_lines": 70,
+      "severity": "critical",
+      "excess_lines": 60
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\tdb_tool_parser.py",
+      "code_lines": 75,
+      "severity": "critical",
+      "excess_lines": 65
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\vtdb_tool_parser.py",
+      "code_lines": 71,
+      "severity": "critical",
+      "excess_lines": 61
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\__init__.py",
+      "code_lines": 11,
+      "severity": "minor",
+      "excess_lines": 1
+    }
+  ],
+  "detailed_results": [
+    {
+      "path": "build.py",
+      "total_lines": 367,
+      "code_lines": 234,
+      "comment_lines": 28,
+      "docstring_lines": 18,
+      "blank_lines": 72,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.622835"
+    },
+    {
+      "path": "code_quality_validator.py",
+      "total_lines": 659,
+      "code_lines": 349,
+      "comment_lines": 39,
+      "docstring_lines": 74,
+      "blank_lines": 101,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.622835"
+    },
+    {
+      "path": "comprehensive_test_suite_tests.py",
+      "total_lines": 857,
+      "code_lines": 518,
+      "comment_lines": 52,
+      "docstring_lines": 28,
+      "blank_lines": 127,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.631516"
+    },
+    {
+      "path": "comprehensive_test_suite.py",
+      "total_lines": 1174,
+      "code_lines": 712,
+      "comment_lines": 39,
+      "docstring_lines": 45,
+      "blank_lines": 153,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.644082"
+    },
+    {
+      "path": "create_exceptions.py",
+      "total_lines": 1,
+      "code_lines": 1,
+      "comment_lines": 0,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:27.644082"
+    },
+    {
+      "path": "debug_detection.py",
+      "total_lines": 36,
+      "code_lines": 21,
+      "comment_lines": 4,
+      "docstring_lines": 1,
+      "blank_lines": 9,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.646079"
+    },
+    {
+      "path": "error_handling_demo.py",
+      "total_lines": 429,
+      "code_lines": 286,
+      "comment_lines": 23,
+      "docstring_lines": 17,
+      "blank_lines": 86,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.649593"
+    },
+    {
+      "path": "error_handling_demo_simple.py",
+      "total_lines": 433,
+      "code_lines": 289,
+      "comment_lines": 23,
+      "docstring_lines": 17,
+      "blank_lines": 86,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.653115"
+    },
+    {
+      "path": "migrate_models.py",
+      "total_lines": 107,
+      "code_lines": 65,
+      "comment_lines": 9,
+      "docstring_lines": 8,
+      "blank_lines": 21,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.654114"
+    },
+    {
+      "path": "monolithic_detector.py",
+      "total_lines": 298,
+      "code_lines": 133,
+      "comment_lines": 12,
+      "docstring_lines": 52,
+      "blank_lines": 51,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.656639"
+    },
+    {
+      "path": "naming_validator.py",
+      "total_lines": 542,
+      "code_lines": 240,
+      "comment_lines": 50,
+      "docstring_lines": 80,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.659639"
+    },
+    {
+      "path": "quality_gate_enforcer.py",
+      "total_lines": 1022,
+      "code_lines": 639,
+      "comment_lines": 35,
+      "docstring_lines": 54,
+      "blank_lines": 162,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.669680"
+    },
+    {
+      "path": "run.py",
+      "total_lines": 196,
+      "code_lines": 125,
+      "comment_lines": 14,
+      "docstring_lines": 11,
+      "blank_lines": 35,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.671687"
+    },
+    {
+      "path": "sample_large_module.py",
+      "total_lines": 530,
+      "code_lines": 331,
+      "comment_lines": 28,
+      "docstring_lines": 49,
+      "blank_lines": 101,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.675648"
+    },
+    {
+      "path": "sample_small_module.py",
+      "total_lines": 87,
+      "code_lines": 14,
+      "comment_lines": 3,
+      "docstring_lines": 30,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:27.676646"
+    },
+    {
+      "path": "test_code_quality_validator.py",
+      "total_lines": 605,
+      "code_lines": 366,
+      "comment_lines": 37,
+      "docstring_lines": 41,
+      "blank_lines": 122,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.681661"
+    },
+    {
+      "path": "test_comprehensive_preferences_persistence.py",
+      "total_lines": 551,
+      "code_lines": 342,
+      "comment_lines": 35,
+      "docstring_lines": 33,
+      "blank_lines": 118,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.686701"
+    },
+    {
+      "path": "test_gcode_parser_only.py",
+      "total_lines": 101,
+      "code_lines": 66,
+      "comment_lines": 7,
+      "docstring_lines": 4,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.687702"
+    },
+    {
+      "path": "test_gcode_viewer_integration.py",
+      "total_lines": 121,
+      "code_lines": 79,
+      "comment_lines": 9,
+      "docstring_lines": 5,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.689701"
+    },
+    {
+      "path": "test_gcode_viewer_simple.py",
+      "total_lines": 159,
+      "code_lines": 101,
+      "comment_lines": 15,
+      "docstring_lines": 5,
+      "blank_lines": 36,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.690710"
+    },
+    {
+      "path": "test_gcode_widget_creation.py",
+      "total_lines": 48,
+      "code_lines": 27,
+      "comment_lines": 7,
+      "docstring_lines": 2,
+      "blank_lines": 12,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.691701"
+    },
+    {
+      "path": "test_import_dialog.py",
+      "total_lines": 96,
+      "code_lines": 42,
+      "comment_lines": 9,
+      "docstring_lines": 12,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.692746"
+    },
+    {
+      "path": "test_lighting_defaults.py",
+      "total_lines": 71,
+      "code_lines": 48,
+      "comment_lines": 3,
+      "docstring_lines": 1,
+      "blank_lines": 12,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.692746"
+    },
+    {
+      "path": "test_monolithic_detector.py",
+      "total_lines": 481,
+      "code_lines": 227,
+      "comment_lines": 41,
+      "docstring_lines": 36,
+      "blank_lines": 91,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.698024"
+    },
+    {
+      "path": "test_naming_validator.py",
+      "total_lines": 774,
+      "code_lines": 504,
+      "comment_lines": 42,
+      "docstring_lines": 47,
+      "blank_lines": 134,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.704543"
+    },
+    {
+      "path": "test_qsettings_persistence.py",
+      "total_lines": 55,
+      "code_lines": 28,
+      "comment_lines": 6,
+      "docstring_lines": 4,
+      "blank_lines": 13,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.706059"
+    },
+    {
+      "path": "test_quality_gate_enforcer.py",
+      "total_lines": 462,
+      "code_lines": 304,
+      "comment_lines": 20,
+      "docstring_lines": 33,
+      "blank_lines": 76,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.710593"
+    },
+    {
+      "path": "test_tab_persistence.py",
+      "total_lines": 356,
+      "code_lines": 215,
+      "comment_lines": 34,
+      "docstring_lines": 23,
+      "blank_lines": 72,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.713621"
+    },
+    {
+      "path": "test_tab_persistence_fixed.py",
+      "total_lines": 351,
+      "code_lines": 213,
+      "comment_lines": 32,
+      "docstring_lines": 23,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.716625"
+    },
+    {
+      "path": "test_unified_runner.py",
+      "total_lines": 973,
+      "code_lines": 638,
+      "comment_lines": 58,
+      "docstring_lines": 60,
+      "blank_lines": 146,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.722547"
+    },
+    {
+      "path": "test_window_persistence.py",
+      "total_lines": 108,
+      "code_lines": 66,
+      "comment_lines": 9,
+      "docstring_lines": 5,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.723546"
+    },
+    {
+      "path": "test_window_state_restoration_fix.py",
+      "total_lines": 288,
+      "code_lines": 163,
+      "comment_lines": 22,
+      "docstring_lines": 18,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.725553"
+    },
+    {
+      "path": "unified_test_runner.py",
+      "total_lines": 895,
+      "code_lines": 593,
+      "comment_lines": 53,
+      "docstring_lines": 59,
+      "blank_lines": 118,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.733600"
+    },
+    {
+      "path": "scripts\\profile_stl.py",
+      "total_lines": 63,
+      "code_lines": 48,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 13,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.734592"
+    },
+    {
+      "path": "scripts\\release_manager.py",
+      "total_lines": 555,
+      "code_lines": 355,
+      "comment_lines": 26,
+      "docstring_lines": 32,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.740136"
+    },
+    {
+      "path": "src\\main.py",
+      "total_lines": 137,
+      "code_lines": 69,
+      "comment_lines": 9,
+      "docstring_lines": 12,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.741632"
+    },
+    {
+      "path": "src\\__init__.py",
+      "total_lines": 8,
+      "code_lines": -2,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 2,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:27.742641"
+    },
+    {
+      "path": "tests\\benchmark_fast_hasher.py",
+      "total_lines": 340,
+      "code_lines": 193,
+      "comment_lines": 15,
+      "docstring_lines": 36,
+      "blank_lines": 70,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.747147"
+    },
+    {
+      "path": "tests\\comprehensive_theme_consistency_test.py",
+      "total_lines": 124,
+      "code_lines": 77,
+      "comment_lines": 9,
+      "docstring_lines": 5,
+      "blank_lines": 26,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.748650"
+    },
+    {
+      "path": "tests\\continuous_testing_framework.py",
+      "total_lines": 902,
+      "code_lines": 579,
+      "comment_lines": 61,
+      "docstring_lines": 50,
+      "blank_lines": 167,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.757285"
+    },
+    {
+      "path": "tests\\final_theme_consistency_test.py",
+      "total_lines": 106,
+      "code_lines": 67,
+      "comment_lines": 6,
+      "docstring_lines": 4,
+      "blank_lines": 21,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.759803"
+    },
+    {
+      "path": "tests\\simple_theme_verification.py",
+      "total_lines": 66,
+      "code_lines": 37,
+      "comment_lines": 7,
+      "docstring_lines": 4,
+      "blank_lines": 13,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.760801"
+    },
+    {
+      "path": "tests\\quality_assurance_framework.py",
+      "total_lines": 1015,
+      "code_lines": 630,
+      "comment_lines": 69,
+      "docstring_lines": 44,
+      "blank_lines": 187,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.769315"
+    },
+    {
+      "path": "tests\\test_application_closing_comprehensive.py",
+      "total_lines": 1101,
+      "code_lines": 678,
+      "comment_lines": 85,
+      "docstring_lines": 72,
+      "blank_lines": 224,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.778587"
+    },
+    {
+      "path": "tests\\test_basic_functionality.py",
+      "total_lines": 196,
+      "code_lines": 121,
+      "comment_lines": 11,
+      "docstring_lines": 14,
+      "blank_lines": 37,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.780104"
+    },
+    {
+      "path": "tests\\test_centralized_logging_comprehensive.py",
+      "total_lines": 450,
+      "code_lines": 249,
+      "comment_lines": 40,
+      "docstring_lines": 46,
+      "blank_lines": 86,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.783631"
+    },
+    {
+      "path": "tests\\test_comprehensive_performance_framework.py",
+      "total_lines": 653,
+      "code_lines": 402,
+      "comment_lines": 38,
+      "docstring_lines": 31,
+      "blank_lines": 117,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.790141"
+    },
+    {
+      "path": "tests\\test_comprehensive_theme_fixes.py",
+      "total_lines": 278,
+      "code_lines": 177,
+      "comment_lines": 11,
+      "docstring_lines": 15,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.791680"
+    },
+    {
+      "path": "tests\\test_database_performance_benchmarks.py",
+      "total_lines": 867,
+      "code_lines": 539,
+      "comment_lines": 79,
+      "docstring_lines": 56,
+      "blank_lines": 165,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.801713"
+    },
+    {
+      "path": "tests\\test_database_refactored_comprehensive.py",
+      "total_lines": 1214,
+      "code_lines": 779,
+      "comment_lines": 108,
+      "docstring_lines": 78,
+      "blank_lines": 191,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.810047"
+    },
+    {
+      "path": "tests\\test_default_theme_behavior.py",
+      "total_lines": 132,
+      "code_lines": 79,
+      "comment_lines": 15,
+      "docstring_lines": 6,
+      "blank_lines": 28,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.811544"
+    },
+    {
+      "path": "tests\\test_end_to_end_workflows.py",
+      "total_lines": 0,
+      "code_lines": 0,
+      "comment_lines": 0,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:27.813549"
+    },
+    {
+      "path": "tests\\test_end_to_end_workflows_complete.py",
+      "total_lines": 446,
+      "code_lines": 236,
+      "comment_lines": 56,
+      "docstring_lines": 27,
+      "blank_lines": 103,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.816073"
+    },
+    {
+      "path": "tests\\test_end_to_end_workflows_fixed.py",
+      "total_lines": 424,
+      "code_lines": 224,
+      "comment_lines": 52,
+      "docstring_lines": 27,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.819066"
+    },
+    {
+      "path": "tests\\test_fast_hasher.py",
+      "total_lines": 385,
+      "code_lines": 205,
+      "comment_lines": 23,
+      "docstring_lines": 46,
+      "blank_lines": 84,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.822589"
+    },
+    {
+      "path": "tests\\test_framework_validation.py",
+      "total_lines": 616,
+      "code_lines": 413,
+      "comment_lines": 50,
+      "docstring_lines": 20,
+      "blank_lines": 95,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.827592"
+    },
+    {
+      "path": "tests\\test_gui_framework.py",
+      "total_lines": 615,
+      "code_lines": 311,
+      "comment_lines": 77,
+      "docstring_lines": 57,
+      "blank_lines": 120,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.832116"
+    },
+    {
+      "path": "tests\\test_gui_performance_requirements.py",
+      "total_lines": 546,
+      "code_lines": 295,
+      "comment_lines": 54,
+      "docstring_lines": 42,
+      "blank_lines": 143,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.836648"
+    },
+    {
+      "path": "tests\\test_headlight_comprehensive_validation.py",
+      "total_lines": 719,
+      "code_lines": 454,
+      "comment_lines": 69,
+      "docstring_lines": 33,
+      "blank_lines": 144,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.842671"
+    },
+    {
+      "path": "tests\\test_headlight_fix_validation.py",
+      "total_lines": 527,
+      "code_lines": 319,
+      "comment_lines": 60,
+      "docstring_lines": 18,
+      "blank_lines": 120,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.846685"
+    },
+    {
+      "path": "tests\\test_import_analysis_service.py",
+      "total_lines": 452,
+      "code_lines": 261,
+      "comment_lines": 32,
+      "docstring_lines": 43,
+      "blank_lines": 83,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.850685"
+    },
+    {
+      "path": "tests\\test_import_file_manager.py",
+      "total_lines": 431,
+      "code_lines": 252,
+      "comment_lines": 23,
+      "docstring_lines": 39,
+      "blank_lines": 85,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.853220"
+    },
+    {
+      "path": "tests\\test_import_thumbnail_service.py",
+      "total_lines": 532,
+      "code_lines": 313,
+      "comment_lines": 32,
+      "docstring_lines": 33,
+      "blank_lines": 118,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.857275"
+    },
+    {
+      "path": "tests\\test_improved_error_handling_comprehensive.py",
+      "total_lines": 737,
+      "code_lines": 408,
+      "comment_lines": 78,
+      "docstring_lines": 68,
+      "blank_lines": 159,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.863330"
+    },
+    {
+      "path": "tests\\test_main_window.py",
+      "total_lines": 58,
+      "code_lines": 36,
+      "comment_lines": 3,
+      "docstring_lines": 4,
+      "blank_lines": 12,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.864877"
+    },
+    {
+      "path": "tests\\test_minimal_components.py",
+      "total_lines": 137,
+      "code_lines": 94,
+      "comment_lines": 13,
+      "docstring_lines": 5,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.865882"
+    },
+    {
+      "path": "tests\\test_minimal_functionality.py",
+      "total_lines": 216,
+      "code_lines": 137,
+      "comment_lines": 14,
+      "docstring_lines": 12,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.869257"
+    },
+    {
+      "path": "tests\\test_optimized_cleanup_system.py",
+      "total_lines": 556,
+      "code_lines": 312,
+      "comment_lines": 67,
+      "docstring_lines": 26,
+      "blank_lines": 125,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.873778"
+    },
+    {
+      "path": "tests\\test_performance_basic.py",
+      "total_lines": 210,
+      "code_lines": 117,
+      "comment_lines": 12,
+      "docstring_lines": 12,
+      "blank_lines": 52,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.876814"
+    },
+    {
+      "path": "tests\\test_performance_corrected.py",
+      "total_lines": 234,
+      "code_lines": 136,
+      "comment_lines": 12,
+      "docstring_lines": 12,
+      "blank_lines": 53,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.878814"
+    },
+    {
+      "path": "tests\\test_performance_requirements_validation.py",
+      "total_lines": 642,
+      "code_lines": 396,
+      "comment_lines": 38,
+      "docstring_lines": 30,
+      "blank_lines": 113,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.888858"
+    },
+    {
+      "path": "tests\\test_performance_regression_framework.py",
+      "total_lines": 615,
+      "code_lines": 329,
+      "comment_lines": 50,
+      "docstring_lines": 56,
+      "blank_lines": 122,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.898875"
+    },
+    {
+      "path": "tests\\test_performance_validation.py",
+      "total_lines": 643,
+      "code_lines": 391,
+      "comment_lines": 39,
+      "docstring_lines": 31,
+      "blank_lines": 117,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.907806"
+    },
+    {
+      "path": "tests\\test_preferences_dark_blue_default.py",
+      "total_lines": 139,
+      "code_lines": 82,
+      "comment_lines": 17,
+      "docstring_lines": 6,
+      "blank_lines": 28,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.910807"
+    },
+    {
+      "path": "tests\\test_preferences_theme_modes.py",
+      "total_lines": 141,
+      "code_lines": 83,
+      "comment_lines": 14,
+      "docstring_lines": 7,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.913332"
+    },
+    {
+      "path": "tests\\test_preferences_variant_switching.py",
+      "total_lines": 96,
+      "code_lines": 54,
+      "comment_lines": 9,
+      "docstring_lines": 5,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.914328"
+    },
+    {
+      "path": "tests\\test_professional_themes.py",
+      "total_lines": 345,
+      "code_lines": 206,
+      "comment_lines": 26,
+      "docstring_lines": 16,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.919841"
+    },
+    {
+      "path": "tests\\test_professional_themes_simple.py",
+      "total_lines": 202,
+      "code_lines": 120,
+      "comment_lines": 18,
+      "docstring_lines": 7,
+      "blank_lines": 47,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.922346"
+    },
+    {
+      "path": "tests\\test_qt_material_comprehensive.py",
+      "total_lines": 307,
+      "code_lines": 180,
+      "comment_lines": 28,
+      "docstring_lines": 14,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.927864"
+    },
+    {
+      "path": "tests\\test_qt_material_simple.py",
+      "total_lines": 220,
+      "code_lines": 139,
+      "comment_lines": 17,
+      "docstring_lines": 10,
+      "blank_lines": 48,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.930392"
+    },
+    {
+      "path": "tests\\test_qt_material_takeover.py",
+      "total_lines": 333,
+      "code_lines": 201,
+      "comment_lines": 30,
+      "docstring_lines": 15,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.933905"
+    },
+    {
+      "path": "tests\\test_qt_material_takeover_fixed.py",
+      "total_lines": 333,
+      "code_lines": 201,
+      "comment_lines": 30,
+      "docstring_lines": 15,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.936906"
+    },
+    {
+      "path": "tests\\test_refactored_parsers_comprehensive.py",
+      "total_lines": 851,
+      "code_lines": 398,
+      "comment_lines": 46,
+      "docstring_lines": 60,
+      "blank_lines": 159,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.944664"
+    },
+    {
+      "path": "tests\\test_simple_components.py",
+      "total_lines": 56,
+      "code_lines": 36,
+      "comment_lines": 2,
+      "docstring_lines": 4,
+      "blank_lines": 9,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.945664"
+    },
+    {
+      "path": "tests\\test_tabbed_lighting_panel.py",
+      "total_lines": 89,
+      "code_lines": 45,
+      "comment_lines": 10,
+      "docstring_lines": 7,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.947167"
+    },
+    {
+      "path": "tests\\test_theme_consistency_fix.py",
+      "total_lines": 100,
+      "code_lines": 51,
+      "comment_lines": 13,
+      "docstring_lines": 7,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.948179"
+    },
+    {
+      "path": "tests\\test_theme_fix_verification.py",
+      "total_lines": 115,
+      "code_lines": 64,
+      "comment_lines": 9,
+      "docstring_lines": 8,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.950185"
+    },
+    {
+      "path": "tests\\test_theme_graceful_degradation.py",
+      "total_lines": 450,
+      "code_lines": 282,
+      "comment_lines": 26,
+      "docstring_lines": 16,
+      "blank_lines": 92,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.955215"
+    },
+    {
+      "path": "tests\\test_theme_startup_fix.py",
+      "total_lines": 288,
+      "code_lines": 174,
+      "comment_lines": 28,
+      "docstring_lines": 15,
+      "blank_lines": 53,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.957727"
+    },
+    {
+      "path": "tests\\test_theme_switching_verification.py",
+      "total_lines": 166,
+      "code_lines": 103,
+      "comment_lines": 8,
+      "docstring_lines": 8,
+      "blank_lines": 35,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.959732"
+    },
+    {
+      "path": "tests\\test_unified_cleanup_system.py",
+      "total_lines": 440,
+      "code_lines": 234,
+      "comment_lines": 46,
+      "docstring_lines": 51,
+      "blank_lines": 100,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.962779"
+    },
+    {
+      "path": "tests\\test_variant_colors.py",
+      "total_lines": 149,
+      "code_lines": 92,
+      "comment_lines": 16,
+      "docstring_lines": 6,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.965775"
+    },
+    {
+      "path": "tests\\test_variant_fix.py",
+      "total_lines": 90,
+      "code_lines": 51,
+      "comment_lines": 9,
+      "docstring_lines": 5,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.966786"
+    },
+    {
+      "path": "tests\\test_variant_fix_corrected.py",
+      "total_lines": 88,
+      "code_lines": 50,
+      "comment_lines": 8,
+      "docstring_lines": 5,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.968300"
+    },
+    {
+      "path": "tests\\test_visual_theme_application.py",
+      "total_lines": 107,
+      "code_lines": 62,
+      "comment_lines": 12,
+      "docstring_lines": 5,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.970316"
+    },
+    {
+      "path": "tests\\test_vtk_resource_tracker_fix.py",
+      "total_lines": 362,
+      "code_lines": 195,
+      "comment_lines": 54,
+      "docstring_lines": 25,
+      "blank_lines": 76,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.973842"
+    },
+    {
+      "path": "tests\\test_vtk_theme_integration.py",
+      "total_lines": 474,
+      "code_lines": 283,
+      "comment_lines": 31,
+      "docstring_lines": 22,
+      "blank_lines": 103,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.977841"
+    },
+    {
+      "path": "tests\\theme_consistency_fix_test.py",
+      "total_lines": 82,
+      "code_lines": 51,
+      "comment_lines": 6,
+      "docstring_lines": 7,
+      "blank_lines": 11,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.978833"
+    },
+    {
+      "path": "tests\\theme_debug_diagnostic.py",
+      "total_lines": 101,
+      "code_lines": 59,
+      "comment_lines": 12,
+      "docstring_lines": 4,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.980003"
+    },
+    {
+      "path": "tests\\validate_float_caching_performance.py",
+      "total_lines": 299,
+      "code_lines": 115,
+      "comment_lines": 28,
+      "docstring_lines": 43,
+      "blank_lines": 77,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.982534"
+    },
+    {
+      "path": "tests\\validate_parser_performance.py",
+      "total_lines": 478,
+      "code_lines": 288,
+      "comment_lines": 30,
+      "docstring_lines": 26,
+      "blank_lines": 98,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.986059"
+    },
+    {
+      "path": "tools\\dependency_analysis.py",
+      "total_lines": 620,
+      "code_lines": 363,
+      "comment_lines": 33,
+      "docstring_lines": 40,
+      "blank_lines": 108,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.991611"
+    },
+    {
+      "path": "tools\\migration_utils.py",
+      "total_lines": 583,
+      "code_lines": 309,
+      "comment_lines": 27,
+      "docstring_lines": 71,
+      "blank_lines": 113,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.995773"
+    },
+    {
+      "path": "tools\\run_phase0_analysis.py",
+      "total_lines": 318,
+      "code_lines": 182,
+      "comment_lines": 18,
+      "docstring_lines": 30,
+      "blank_lines": 57,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:27.999275"
+    },
+    {
+      "path": "tools\\stylesheet_detector.py",
+      "total_lines": 609,
+      "code_lines": 347,
+      "comment_lines": 33,
+      "docstring_lines": 39,
+      "blank_lines": 125,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.004819"
+    },
+    {
+      "path": "tools\\visual_regression_tester.py",
+      "total_lines": 758,
+      "code_lines": 322,
+      "comment_lines": 54,
+      "docstring_lines": 75,
+      "blank_lines": 150,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.009819"
+    },
+    {
+      "path": "src\\core\\application.py",
+      "total_lines": 326,
+      "code_lines": 129,
+      "comment_lines": 19,
+      "docstring_lines": 71,
+      "blank_lines": 59,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.011630"
+    },
+    {
+      "path": "src\\core\\application_bootstrap.py",
+      "total_lines": 196,
+      "code_lines": 69,
+      "comment_lines": 14,
+      "docstring_lines": 44,
+      "blank_lines": 38,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.013639"
+    },
+    {
+      "path": "src\\core\\application_config.py",
+      "total_lines": 161,
+      "code_lines": 63,
+      "comment_lines": 21,
+      "docstring_lines": 28,
+      "blank_lines": 30,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.014649"
+    },
+    {
+      "path": "src\\core\\background_provider.py",
+      "total_lines": 282,
+      "code_lines": 43,
+      "comment_lines": 21,
+      "docstring_lines": 92,
+      "blank_lines": 61,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.016654"
+    },
+    {
+      "path": "src\\core\\cancellation_token.py",
+      "total_lines": 131,
+      "code_lines": 22,
+      "comment_lines": 5,
+      "docstring_lines": 49,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.017641"
+    },
+    {
+      "path": "src\\core\\centralized_logging_service.py",
+      "total_lines": 568,
+      "code_lines": 254,
+      "comment_lines": 41,
+      "docstring_lines": 93,
+      "blank_lines": 104,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.021698"
+    },
+    {
+      "path": "src\\core\\database_manager.py",
+      "total_lines": 93,
+      "code_lines": 14,
+      "comment_lines": 5,
+      "docstring_lines": 30,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:28.022702"
+    },
+    {
+      "path": "src\\core\\data_structures.py",
+      "total_lines": 125,
+      "code_lines": 69,
+      "comment_lines": 3,
+      "docstring_lines": 22,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.023703"
+    },
+    {
+      "path": "src\\core\\deduplication_manager.py",
+      "total_lines": 169,
+      "code_lines": 48,
+      "comment_lines": 4,
+      "docstring_lines": 47,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.024716"
+    },
+    {
+      "path": "src\\core\\enhanced_error_handler.py",
+      "total_lines": 807,
+      "code_lines": 409,
+      "comment_lines": 61,
+      "docstring_lines": 103,
+      "blank_lines": 139,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.030709"
+    },
+    {
+      "path": "src\\core\\exceptions.py",
+      "total_lines": 495,
+      "code_lines": 289,
+      "comment_lines": 12,
+      "docstring_lines": 26,
+      "blank_lines": 127,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.033236"
+    },
+    {
+      "path": "src\\core\\exception_handler.py",
+      "total_lines": 183,
+      "code_lines": 33,
+      "comment_lines": 11,
+      "docstring_lines": 61,
+      "blank_lines": 32,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.035228"
+    },
+    {
+      "path": "src\\core\\fast_hasher.py",
+      "total_lines": 414,
+      "code_lines": 118,
+      "comment_lines": 16,
+      "docstring_lines": 112,
+      "blank_lines": 68,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.037234"
+    },
+    {
+      "path": "src\\core\\float_cache_analyzer.py",
+      "total_lines": 383,
+      "code_lines": 186,
+      "comment_lines": 16,
+      "docstring_lines": 64,
+      "blank_lines": 69,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.040227"
+    },
+    {
+      "path": "src\\core\\gpu_acceleration.py",
+      "total_lines": 540,
+      "code_lines": 156,
+      "comment_lines": 37,
+      "docstring_lines": 148,
+      "blank_lines": 104,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.044744"
+    },
+    {
+      "path": "src\\core\\gpu_memory_manager.py",
+      "total_lines": 345,
+      "code_lines": 127,
+      "comment_lines": 27,
+      "docstring_lines": 72,
+      "blank_lines": 66,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.046744"
+    },
+    {
+      "path": "src\\core\\hardware_acceleration.py",
+      "total_lines": 280,
+      "code_lines": 223,
+      "comment_lines": 14,
+      "docstring_lines": 4,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.049745"
+    },
+    {
+      "path": "src\\core\\import_analysis_service.py",
+      "total_lines": 977,
+      "code_lines": 295,
+      "comment_lines": 47,
+      "docstring_lines": 258,
+      "blank_lines": 171,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.055796"
+    },
+    {
+      "path": "src\\core\\import_coordinator.py",
+      "total_lines": 681,
+      "code_lines": 279,
+      "comment_lines": 32,
+      "docstring_lines": 132,
+      "blank_lines": 119,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.060801"
+    },
+    {
+      "path": "src\\core\\import_file_manager.py",
+      "total_lines": 613,
+      "code_lines": 264,
+      "comment_lines": 31,
+      "docstring_lines": 115,
+      "blank_lines": 105,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.066828"
+    },
+    {
+      "path": "src\\core\\import_thumbnail_service.py",
+      "total_lines": 600,
+      "code_lines": 204,
+      "comment_lines": 26,
+      "docstring_lines": 140,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.069826"
+    },
+    {
+      "path": "src\\core\\logging_config.py",
+      "total_lines": 372,
+      "code_lines": 64,
+      "comment_lines": 27,
+      "docstring_lines": 120,
+      "blank_lines": 70,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.072920"
+    },
+    {
+      "path": "src\\core\\material_provider.py",
+      "total_lines": 250,
+      "code_lines": 81,
+      "comment_lines": 14,
+      "docstring_lines": 60,
+      "blank_lines": 51,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.074937"
+    },
+    {
+      "path": "src\\core\\memory_manager.py",
+      "total_lines": 491,
+      "code_lines": 134,
+      "comment_lines": 22,
+      "docstring_lines": 143,
+      "blank_lines": 95,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.077929"
+    },
+    {
+      "path": "src\\core\\model_cache.py",
+      "total_lines": 746,
+      "code_lines": 238,
+      "comment_lines": 55,
+      "docstring_lines": 162,
+      "blank_lines": 138,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.083463"
+    },
+    {
+      "path": "src\\core\\model_cache_old.py",
+      "total_lines": 857,
+      "code_lines": 299,
+      "comment_lines": 67,
+      "docstring_lines": 173,
+      "blank_lines": 166,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.089473"
+    },
+    {
+      "path": "src\\core\\performance_monitor.py",
+      "total_lines": 735,
+      "code_lines": 317,
+      "comment_lines": 34,
+      "docstring_lines": 142,
+      "blank_lines": 120,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.095437"
+    },
+    {
+      "path": "src\\core\\performance_profiler.py",
+      "total_lines": 550,
+      "code_lines": 193,
+      "comment_lines": 17,
+      "docstring_lines": 132,
+      "blank_lines": 113,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.099431"
+    },
+    {
+      "path": "src\\core\\progressive_loader.py",
+      "total_lines": 687,
+      "code_lines": 286,
+      "comment_lines": 30,
+      "docstring_lines": 144,
+      "blank_lines": 135,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.104462"
+    },
+    {
+      "path": "src\\core\\progress_aggregator.py",
+      "total_lines": 322,
+      "code_lines": 113,
+      "comment_lines": 8,
+      "docstring_lines": 86,
+      "blank_lines": 58,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.107466"
+    },
+    {
+      "path": "src\\core\\rendering_performance_manager.py",
+      "total_lines": 878,
+      "code_lines": 472,
+      "comment_lines": 55,
+      "docstring_lines": 119,
+      "blank_lines": 158,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.114980"
+    },
+    {
+      "path": "src\\core\\root_folder_manager.py",
+      "total_lines": 273,
+      "code_lines": 172,
+      "comment_lines": 5,
+      "docstring_lines": 29,
+      "blank_lines": 50,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.118488"
+    },
+    {
+      "path": "src\\core\\search_engine.py",
+      "total_lines": 756,
+      "code_lines": 165,
+      "comment_lines": 51,
+      "docstring_lines": 164,
+      "blank_lines": 154,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.126536"
+    },
+    {
+      "path": "src\\core\\settings_migration.py",
+      "total_lines": 403,
+      "code_lines": 176,
+      "comment_lines": 40,
+      "docstring_lines": 56,
+      "blank_lines": 88,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.129540"
+    },
+    {
+      "path": "src\\core\\system_initializer.py",
+      "total_lines": 170,
+      "code_lines": 53,
+      "comment_lines": 7,
+      "docstring_lines": 47,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.131539"
+    },
+    {
+      "path": "src\\core\\thumbnail_generator.py",
+      "total_lines": 15,
+      "code_lines": -5,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.132648"
+    },
+    {
+      "path": "src\\core\\view_optimizer.py",
+      "total_lines": 264,
+      "code_lines": 87,
+      "comment_lines": 20,
+      "docstring_lines": 60,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.134655"
+    },
+    {
+      "path": "src\\core\\__init__.py",
+      "total_lines": 39,
+      "code_lines": 21,
+      "comment_lines": 2,
+      "docstring_lines": 6,
+      "blank_lines": 6,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.136182"
+    },
+    {
+      "path": "src\\gui\\background_hasher.py",
+      "total_lines": 146,
+      "code_lines": 64,
+      "comment_lines": 14,
+      "docstring_lines": 22,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.138187"
+    },
+    {
+      "path": "src\\gui\\batch_screenshot_worker.py",
+      "total_lines": 165,
+      "code_lines": 69,
+      "comment_lines": 11,
+      "docstring_lines": 29,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.139187"
+    },
+    {
+      "path": "src\\gui\\deduplication_dialog.py",
+      "total_lines": 171,
+      "code_lines": 89,
+      "comment_lines": 10,
+      "docstring_lines": 21,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.140187"
+    },
+    {
+      "path": "src\\gui\\files_tab.py",
+      "total_lines": 19,
+      "code_lines": -2,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.141701"
+    },
+    {
+      "path": "src\\gui\\lighting_control_panel.py",
+      "total_lines": 387,
+      "code_lines": 285,
+      "comment_lines": 24,
+      "docstring_lines": 10,
+      "blank_lines": 65,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.146720"
+    },
+    {
+      "path": "src\\gui\\lighting_control_panel_improved.py",
+      "total_lines": 281,
+      "code_lines": 206,
+      "comment_lines": 18,
+      "docstring_lines": 8,
+      "blank_lines": 43,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.150016"
+    },
+    {
+      "path": "src\\gui\\lighting_manager.py",
+      "total_lines": 259,
+      "code_lines": 181,
+      "comment_lines": 16,
+      "docstring_lines": 25,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.152536"
+    },
+    {
+      "path": "src\\gui\\main_window.py",
+      "total_lines": 2093,
+      "code_lines": 1191,
+      "comment_lines": 234,
+      "docstring_lines": 131,
+      "blank_lines": 345,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.172167"
+    },
+    {
+      "path": "src\\gui\\material_manager.py",
+      "total_lines": 15,
+      "code_lines": -5,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.173174"
+    },
+    {
+      "path": "src\\gui\\material_picker_widget.py",
+      "total_lines": 441,
+      "code_lines": 303,
+      "comment_lines": 27,
+      "docstring_lines": 7,
+      "blank_lines": 75,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.177687"
+    },
+    {
+      "path": "src\\gui\\metadata_editor.py",
+      "total_lines": 19,
+      "code_lines": -2,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.178703"
+    },
+    {
+      "path": "src\\gui\\multi_root_file_system_model.py",
+      "total_lines": 468,
+      "code_lines": 292,
+      "comment_lines": 22,
+      "docstring_lines": 46,
+      "blank_lines": 92,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.184222"
+    },
+    {
+      "path": "src\\gui\\model_library.py",
+      "total_lines": 1737,
+      "code_lines": 1118,
+      "comment_lines": 141,
+      "docstring_lines": 75,
+      "blank_lines": 303,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.202213"
+    },
+    {
+      "path": "src\\gui\\preferences.py",
+      "total_lines": 1991,
+      "code_lines": 1342,
+      "comment_lines": 130,
+      "docstring_lines": 79,
+      "blank_lines": 360,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.220764"
+    },
+    {
+      "path": "src\\gui\\screenshot_generator.py",
+      "total_lines": 256,
+      "code_lines": 126,
+      "comment_lines": 27,
+      "docstring_lines": 34,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.224273"
+    },
+    {
+      "path": "src\\gui\\search_widget.py",
+      "total_lines": 25,
+      "code_lines": 4,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.224273"
+    },
+    {
+      "path": "src\\gui\\startup_tips.py",
+      "total_lines": 188,
+      "code_lines": 111,
+      "comment_lines": 12,
+      "docstring_lines": 12,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.227272"
+    },
+    {
+      "path": "src\\gui\\theme.py",
+      "total_lines": 91,
+      "code_lines": 45,
+      "comment_lines": 1,
+      "docstring_lines": 18,
+      "blank_lines": 9,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.227272"
+    },
+    {
+      "path": "src\\gui\\theme_core.py",
+      "total_lines": 96,
+      "code_lines": -3,
+      "comment_lines": 11,
+      "docstring_lines": 41,
+      "blank_lines": 21,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.228284"
+    },
+    {
+      "path": "src\\gui\\theme_manager_widget.py",
+      "total_lines": 21,
+      "code_lines": 0,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.229791"
+    },
+    {
+      "path": "src\\gui\\viewer_widget.py",
+      "total_lines": 21,
+      "code_lines": 0,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.229791"
+    },
+    {
+      "path": "src\\gui\\viewer_widget_vtk.py",
+      "total_lines": 17,
+      "code_lines": -2,
+      "comment_lines": 1,
+      "docstring_lines": 8,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.230796"
+    },
+    {
+      "path": "src\\gui\\walkthrough.py",
+      "total_lines": 232,
+      "code_lines": 148,
+      "comment_lines": 11,
+      "docstring_lines": 14,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.233336"
+    },
+    {
+      "path": "src\\gui\\__init__.py",
+      "total_lines": 10,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 6,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.233336"
+    },
+    {
+      "path": "src\\parsers\\adaptive_chunker.py",
+      "total_lines": 641,
+      "code_lines": 193,
+      "comment_lines": 41,
+      "docstring_lines": 163,
+      "blank_lines": 106,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.238327"
+    },
+    {
+      "path": "src\\parsers\\base_parser.py",
+      "total_lines": 403,
+      "code_lines": 47,
+      "comment_lines": 24,
+      "docstring_lines": 150,
+      "blank_lines": 77,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.240852"
+    },
+    {
+      "path": "src\\parsers\\file_chunker.py",
+      "total_lines": 321,
+      "code_lines": 86,
+      "comment_lines": 22,
+      "docstring_lines": 84,
+      "blank_lines": 64,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.242871"
+    },
+    {
+      "path": "src\\parsers\\format_detector.py",
+      "total_lines": 289,
+      "code_lines": 29,
+      "comment_lines": 18,
+      "docstring_lines": 107,
+      "blank_lines": 62,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.245873"
+    },
+    {
+      "path": "src\\parsers\\obj_parser.py",
+      "total_lines": 533,
+      "code_lines": 207,
+      "comment_lines": 48,
+      "docstring_lines": 93,
+      "blank_lines": 107,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.249874"
+    },
+    {
+      "path": "src\\parsers\\refactored_base_parser.py",
+      "total_lines": 567,
+      "code_lines": 95,
+      "comment_lines": 28,
+      "docstring_lines": 191,
+      "blank_lines": 108,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.253554"
+    },
+    {
+      "path": "src\\parsers\\refactored_obj_parser.py",
+      "total_lines": 906,
+      "code_lines": 393,
+      "comment_lines": 68,
+      "docstring_lines": 145,
+      "blank_lines": 174,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.261610"
+    },
+    {
+      "path": "src\\parsers\\refactored_step_parser.py",
+      "total_lines": 782,
+      "code_lines": 328,
+      "comment_lines": 59,
+      "docstring_lines": 138,
+      "blank_lines": 148,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.268625"
+    },
+    {
+      "path": "src\\parsers\\refactored_stl_parser.py",
+      "total_lines": 1269,
+      "code_lines": 520,
+      "comment_lines": 99,
+      "docstring_lines": 204,
+      "blank_lines": 252,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.280158"
+    },
+    {
+      "path": "src\\parsers\\refactored_threemf_parser.py",
+      "total_lines": 729,
+      "code_lines": 249,
+      "comment_lines": 58,
+      "docstring_lines": 153,
+      "blank_lines": 144,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.286708"
+    },
+    {
+      "path": "src\\parsers\\step_parser.py",
+      "total_lines": 590,
+      "code_lines": 245,
+      "comment_lines": 48,
+      "docstring_lines": 105,
+      "blank_lines": 112,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.292215"
+    },
+    {
+      "path": "src\\parsers\\stl_gpu_parser.py",
+      "total_lines": 540,
+      "code_lines": 318,
+      "comment_lines": 40,
+      "docstring_lines": 45,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.297233"
+    },
+    {
+      "path": "src\\parsers\\stl_parser.py",
+      "total_lines": 27,
+      "code_lines": 3,
+      "comment_lines": 1,
+      "docstring_lines": 10,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.298225"
+    },
+    {
+      "path": "src\\parsers\\stl_progressive_loader.py",
+      "total_lines": 439,
+      "code_lines": 228,
+      "comment_lines": 30,
+      "docstring_lines": 52,
+      "blank_lines": 84,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.302751"
+    },
+    {
+      "path": "src\\parsers\\stl_parser_original.py",
+      "total_lines": 1067,
+      "code_lines": 517,
+      "comment_lines": 96,
+      "docstring_lines": 138,
+      "blank_lines": 196,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.315313"
+    },
+    {
+      "path": "src\\parsers\\thread_pool_coordinator.py",
+      "total_lines": 366,
+      "code_lines": 132,
+      "comment_lines": 22,
+      "docstring_lines": 78,
+      "blank_lines": 72,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.317855"
+    },
+    {
+      "path": "src\\parsers\\threemf_parser.py",
+      "total_lines": 581,
+      "code_lines": 180,
+      "comment_lines": 46,
+      "docstring_lines": 132,
+      "blank_lines": 121,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.323381"
+    },
+    {
+      "path": "src\\parsers\\tool_database_manager.py",
+      "total_lines": 326,
+      "code_lines": 166,
+      "comment_lines": 18,
+      "docstring_lines": 38,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.326900"
+    },
+    {
+      "path": "src\\parsers\\tool_export_manager.py",
+      "total_lines": 300,
+      "code_lines": 131,
+      "comment_lines": 0,
+      "docstring_lines": 50,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.329899"
+    },
+    {
+      "path": "src\\parsers\\tool_migration_utility.py",
+      "total_lines": 258,
+      "code_lines": 137,
+      "comment_lines": 14,
+      "docstring_lines": 33,
+      "blank_lines": 44,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.331907"
+    },
+    {
+      "path": "src\\parsers\\__init__.py",
+      "total_lines": 37,
+      "code_lines": 11,
+      "comment_lines": 6,
+      "docstring_lines": 6,
+      "blank_lines": 8,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:28.332428"
+    },
+    {
+      "path": "src\\ui\\model_library_ui.py",
+      "total_lines": 231,
+      "code_lines": 164,
+      "comment_lines": 18,
+      "docstring_lines": 0,
+      "blank_lines": 49,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.336433"
+    },
+    {
+      "path": "src\\ui\\main_window_ui.py",
+      "total_lines": 290,
+      "code_lines": 158,
+      "comment_lines": 32,
+      "docstring_lines": 0,
+      "blank_lines": 10,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.339597"
+    },
+    {
+      "path": "src\\ui\\viewer_widget_ui.py",
+      "total_lines": 115,
+      "code_lines": 76,
+      "comment_lines": 10,
+      "docstring_lines": 0,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.341589"
+    },
+    {
+      "path": "src\\ui\\viewer_widget_vtk_ui.py",
+      "total_lines": 115,
+      "code_lines": 76,
+      "comment_lines": 10,
+      "docstring_lines": 0,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.343762"
+    },
+    {
+      "path": "src\\utils\\file_hash.py",
+      "total_lines": 59,
+      "code_lines": -9,
+      "comment_lines": 1,
+      "docstring_lines": 31,
+      "blank_lines": 15,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.343762"
+    },
+    {
+      "path": "src\\utils\\__init__.py",
+      "total_lines": 10,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 6,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.344763"
+    },
+    {
+      "path": "src\\core\\cleanup\\resource_cleanup_handler.py",
+      "total_lines": 318,
+      "code_lines": 131,
+      "comment_lines": 8,
+      "docstring_lines": 68,
+      "blank_lines": 64,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.348812"
+    },
+    {
+      "path": "src\\core\\cleanup\\backward_compatibility.py",
+      "total_lines": 332,
+      "code_lines": 80,
+      "comment_lines": 15,
+      "docstring_lines": 95,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.351811"
+    },
+    {
+      "path": "src\\core\\cleanup\\service_cleanup_handler.py",
+      "total_lines": 345,
+      "code_lines": 168,
+      "comment_lines": 14,
+      "docstring_lines": 53,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.355482"
+    },
+    {
+      "path": "src\\core\\cleanup\\unified_cleanup_coordinator.py",
+      "total_lines": 453,
+      "code_lines": 187,
+      "comment_lines": 17,
+      "docstring_lines": 88,
+      "blank_lines": 99,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.359531"
+    },
+    {
+      "path": "src\\core\\cleanup\\vtk_cleanup_handler.py",
+      "total_lines": 296,
+      "code_lines": 127,
+      "comment_lines": 26,
+      "docstring_lines": 46,
+      "blank_lines": 67,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.363586"
+    },
+    {
+      "path": "src\\core\\cleanup\\widget_cleanup_handler.py",
+      "total_lines": 381,
+      "code_lines": 182,
+      "comment_lines": 20,
+      "docstring_lines": 55,
+      "blank_lines": 88,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.366599"
+    },
+    {
+      "path": "src\\core\\cleanup\\__init__.py",
+      "total_lines": 50,
+      "code_lines": 16,
+      "comment_lines": 1,
+      "docstring_lines": 14,
+      "blank_lines": 6,
+      "is_monolithic": true,
+      "severity": "major",
+      "timestamp": "2025-10-31T13:20:28.369103"
+    },
+    {
+      "path": "src\\core\\database\\cache_manager.py",
+      "total_lines": 967,
+      "code_lines": 294,
+      "comment_lines": 71,
+      "docstring_lines": 244,
+      "blank_lines": 190,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.380129"
+    },
+    {
+      "path": "src\\core\\database\\database_manager.py",
+      "total_lines": 303,
+      "code_lines": 105,
+      "comment_lines": 12,
+      "docstring_lines": 68,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.383647"
+    },
+    {
+      "path": "src\\core\\database\\db_maintenance.py",
+      "total_lines": 108,
+      "code_lines": 31,
+      "comment_lines": 4,
+      "docstring_lines": 24,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.385646"
+    },
+    {
+      "path": "src\\core\\database\\db_operations.py",
+      "total_lines": 213,
+      "code_lines": 67,
+      "comment_lines": 13,
+      "docstring_lines": 29,
+      "blank_lines": 38,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.387638"
+    },
+    {
+      "path": "src\\core\\database\\enhanced_metadata_repository.py",
+      "total_lines": 584,
+      "code_lines": 164,
+      "comment_lines": 12,
+      "docstring_lines": 145,
+      "blank_lines": 122,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.393357"
+    },
+    {
+      "path": "src\\core\\database\\enhanced_model_repository.py",
+      "total_lines": 463,
+      "code_lines": 124,
+      "comment_lines": 7,
+      "docstring_lines": 119,
+      "blank_lines": 93,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.398868"
+    },
+    {
+      "path": "src\\core\\database\\enhanced_search_repository.py",
+      "total_lines": 637,
+      "code_lines": 213,
+      "comment_lines": 28,
+      "docstring_lines": 112,
+      "blank_lines": 122,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.404397"
+    },
+    {
+      "path": "src\\core\\database\\error_handler.py",
+      "total_lines": 796,
+      "code_lines": 264,
+      "comment_lines": 26,
+      "docstring_lines": 208,
+      "blank_lines": 137,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.413123"
+    },
+    {
+      "path": "src\\core\\database\\health_monitor.py",
+      "total_lines": 643,
+      "code_lines": 268,
+      "comment_lines": 44,
+      "docstring_lines": 128,
+      "blank_lines": 109,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.418124"
+    },
+    {
+      "path": "src\\core\\database\\import_migration.py",
+      "total_lines": 343,
+      "code_lines": 67,
+      "comment_lines": 18,
+      "docstring_lines": 96,
+      "blank_lines": 76,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.422169"
+    },
+    {
+      "path": "src\\core\\database\\import_schema.py",
+      "total_lines": 206,
+      "code_lines": 20,
+      "comment_lines": 9,
+      "docstring_lines": 24,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "major",
+      "timestamp": "2025-10-31T13:20:28.424167"
+    },
+    {
+      "path": "src\\core\\database\\metadata_repository.py",
+      "total_lines": 300,
+      "code_lines": 76,
+      "comment_lines": 2,
+      "docstring_lines": 86,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.427167"
+    },
+    {
+      "path": "src\\core\\database\\migration_manager.py",
+      "total_lines": 921,
+      "code_lines": 323,
+      "comment_lines": 47,
+      "docstring_lines": 163,
+      "blank_lines": 176,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.434716"
+    },
+    {
+      "path": "src\\core\\database\\model_repository.py",
+      "total_lines": 288,
+      "code_lines": 60,
+      "comment_lines": 0,
+      "docstring_lines": 94,
+      "blank_lines": 46,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.436716"
+    },
+    {
+      "path": "src\\core\\database\\provider_repository.py",
+      "total_lines": 168,
+      "code_lines": 110,
+      "comment_lines": 0,
+      "docstring_lines": 14,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.439709"
+    },
+    {
+      "path": "src\\core\\database\\query_optimizer.py",
+      "total_lines": 823,
+      "code_lines": 272,
+      "comment_lines": 43,
+      "docstring_lines": 192,
+      "blank_lines": 158,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.444759"
+    },
+    {
+      "path": "src\\core\\database\\search_repository.py",
+      "total_lines": 266,
+      "code_lines": 63,
+      "comment_lines": 1,
+      "docstring_lines": 68,
+      "blank_lines": 50,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.447765"
+    },
+    {
+      "path": "src\\core\\database\\tool_database_repository.py",
+      "total_lines": 342,
+      "code_lines": 238,
+      "comment_lines": 7,
+      "docstring_lines": 20,
+      "blank_lines": 49,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.449763"
+    },
+    {
+      "path": "src\\core\\database\\tool_database_schema.py",
+      "total_lines": 119,
+      "code_lines": 43,
+      "comment_lines": 5,
+      "docstring_lines": 9,
+      "blank_lines": 17,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.451778"
+    },
+    {
+      "path": "src\\core\\database\\tool_preferences_repository.py",
+      "total_lines": 107,
+      "code_lines": 63,
+      "comment_lines": 3,
+      "docstring_lines": 9,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.452782"
+    },
+    {
+      "path": "src\\core\\database\\transaction_manager.py",
+      "total_lines": 572,
+      "code_lines": 174,
+      "comment_lines": 31,
+      "docstring_lines": 152,
+      "blank_lines": 107,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.457329"
+    },
+    {
+      "path": "src\\core\\database\\__init__.py",
+      "total_lines": 20,
+      "code_lines": 6,
+      "comment_lines": 0,
+      "docstring_lines": 6,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.457329"
+    },
+    {
+      "path": "src\\core\\error_handling\\comprehensive_logger.py",
+      "total_lines": 485,
+      "code_lines": 297,
+      "comment_lines": 26,
+      "docstring_lines": 48,
+      "blank_lines": 83,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.463950"
+    },
+    {
+      "path": "src\\core\\error_handling\\error_categories.py",
+      "total_lines": 349,
+      "code_lines": 197,
+      "comment_lines": 15,
+      "docstring_lines": 48,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.467947"
+    },
+    {
+      "path": "src\\core\\error_handling\\error_reporter.py",
+      "total_lines": 521,
+      "code_lines": 258,
+      "comment_lines": 43,
+      "docstring_lines": 72,
+      "blank_lines": 85,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.474457"
+    },
+    {
+      "path": "src\\core\\error_handling\\error_handlers.py",
+      "total_lines": 457,
+      "code_lines": 140,
+      "comment_lines": 30,
+      "docstring_lines": 115,
+      "blank_lines": 77,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.477445"
+    },
+    {
+      "path": "src\\core\\interfaces\\parser_interfaces.py",
+      "total_lines": 259,
+      "code_lines": -67,
+      "comment_lines": 0,
+      "docstring_lines": 159,
+      "blank_lines": 63,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.478454"
+    },
+    {
+      "path": "src\\core\\interfaces\\repository_interfaces.py",
+      "total_lines": 309,
+      "code_lines": -96,
+      "comment_lines": 0,
+      "docstring_lines": 201,
+      "blank_lines": 77,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.480448"
+    },
+    {
+      "path": "src\\core\\interfaces\\service_interfaces.py",
+      "total_lines": 535,
+      "code_lines": -122,
+      "comment_lines": 0,
+      "docstring_lines": 324,
+      "blank_lines": 133,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.481973"
+    },
+    {
+      "path": "src\\core\\interfaces\\__init__.py",
+      "total_lines": 48,
+      "code_lines": 26,
+      "comment_lines": 3,
+      "docstring_lines": 5,
+      "blank_lines": 7,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.482978"
+    },
+    {
+      "path": "src\\core\\services\\model_service.py",
+      "total_lines": 373,
+      "code_lines": 65,
+      "comment_lines": 18,
+      "docstring_lines": 122,
+      "blank_lines": 77,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.484991"
+    },
+    {
+      "path": "src\\core\\thumbnail_components\\thumbnail_generator_main.py",
+      "total_lines": 622,
+      "code_lines": 246,
+      "comment_lines": 59,
+      "docstring_lines": 109,
+      "blank_lines": 116,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.492557"
+    },
+    {
+      "path": "src\\core\\thumbnail_components\\__init__.py",
+      "total_lines": 15,
+      "code_lines": -4,
+      "comment_lines": 0,
+      "docstring_lines": 8,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.493552"
+    },
+    {
+      "path": "src\\gui\\CLO\\board_visualizer.py",
+      "total_lines": 232,
+      "code_lines": 155,
+      "comment_lines": 30,
+      "docstring_lines": 8,
+      "blank_lines": 32,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.496886"
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_logging_service.py",
+      "total_lines": 295,
+      "code_lines": 187,
+      "comment_lines": 18,
+      "docstring_lines": 26,
+      "blank_lines": 53,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.500880"
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_progress_indicator.py",
+      "total_lines": 352,
+      "code_lines": 222,
+      "comment_lines": 23,
+      "docstring_lines": 22,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.503913"
+    },
+    {
+      "path": "src\\gui\\CLO\\clo_theme_service.py",
+      "total_lines": 373,
+      "code_lines": 194,
+      "comment_lines": 7,
+      "docstring_lines": 22,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.507921"
+    },
+    {
+      "path": "src\\gui\\CLO\\cut_list_optimizer_widget.py",
+      "total_lines": 1189,
+      "code_lines": 833,
+      "comment_lines": 116,
+      "docstring_lines": 40,
+      "blank_lines": 166,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.520267"
+    },
+    {
+      "path": "src\\gui\\CLO\\data_models.py",
+      "total_lines": 102,
+      "code_lines": 59,
+      "comment_lines": 2,
+      "docstring_lines": 13,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.521780"
+    },
+    {
+      "path": "src\\gui\\CLO\\enhanced_cut_list_optimizer_widget.py",
+      "total_lines": 981,
+      "code_lines": 650,
+      "comment_lines": 81,
+      "docstring_lines": 42,
+      "blank_lines": 187,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.530321"
+    },
+    {
+      "path": "src\\gui\\CLO\\file_operations.py",
+      "total_lines": 100,
+      "code_lines": 67,
+      "comment_lines": 5,
+      "docstring_lines": 5,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.530321"
+    },
+    {
+      "path": "src\\gui\\CLO\\main.py",
+      "total_lines": 25,
+      "code_lines": 17,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 7,
+      "is_monolithic": true,
+      "severity": "major",
+      "timestamp": "2025-10-31T13:20:28.531832"
+    },
+    {
+      "path": "src\\gui\\CLO\\optimization_algorithms.py",
+      "total_lines": 258,
+      "code_lines": 183,
+      "comment_lines": 23,
+      "docstring_lines": 6,
+      "blank_lines": 41,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.535352"
+    },
+    {
+      "path": "src\\gui\\CLO\\ui_components.py",
+      "total_lines": 122,
+      "code_lines": 73,
+      "comment_lines": 13,
+      "docstring_lines": 2,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.537364"
+    },
+    {
+      "path": "src\\gui\\CLO\\__init__.py",
+      "total_lines": 6,
+      "code_lines": 2,
+      "comment_lines": 0,
+      "docstring_lines": 1,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.537364"
+    },
+    {
+      "path": "src\\gui\\components\\deduplication_status_widget.py",
+      "total_lines": 129,
+      "code_lines": 43,
+      "comment_lines": 8,
+      "docstring_lines": 29,
+      "blank_lines": 27,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.538364"
+    },
+    {
+      "path": "src\\gui\\components\\detailed_progress_tracker.py",
+      "total_lines": 148,
+      "code_lines": 55,
+      "comment_lines": 6,
+      "docstring_lines": 35,
+      "blank_lines": 32,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.540363"
+    },
+    {
+      "path": "src\\gui\\components\\dynamic_tab_manager.py",
+      "total_lines": 178,
+      "code_lines": 44,
+      "comment_lines": 16,
+      "docstring_lines": 46,
+      "blank_lines": 41,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.542873"
+    },
+    {
+      "path": "src\\gui\\components\\menu_manager.py",
+      "total_lines": 314,
+      "code_lines": 154,
+      "comment_lines": 26,
+      "docstring_lines": 50,
+      "blank_lines": 62,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.544879"
+    },
+    {
+      "path": "src\\gui\\components\\status_bar_manager.py",
+      "total_lines": 327,
+      "code_lines": 161,
+      "comment_lines": 30,
+      "docstring_lines": 49,
+      "blank_lines": 54,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.547402"
+    },
+    {
+      "path": "src\\gui\\components\\toolbar_manager.py",
+      "total_lines": 199,
+      "code_lines": 84,
+      "comment_lines": 13,
+      "docstring_lines": 38,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.549917"
+    },
+    {
+      "path": "src\\gui\\components\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.549917"
+    },
+    {
+      "path": "src\\gui\\core\\event_coordinator.py",
+      "total_lines": 145,
+      "code_lines": 44,
+      "comment_lines": 14,
+      "docstring_lines": 36,
+      "blank_lines": 28,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.552436"
+    },
+    {
+      "path": "src\\gui\\core\\styling.py",
+      "total_lines": 59,
+      "code_lines": 1,
+      "comment_lines": 1,
+      "docstring_lines": 27,
+      "blank_lines": 15,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.552436"
+    },
+    {
+      "path": "src\\gui\\core\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.553437"
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\cost_calculator.py",
+      "total_lines": 355,
+      "code_lines": 165,
+      "comment_lines": 26,
+      "docstring_lines": 64,
+      "blank_lines": 59,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.554952"
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\cost_estimator_widget.py",
+      "total_lines": 387,
+      "code_lines": 248,
+      "comment_lines": 43,
+      "docstring_lines": 13,
+      "blank_lines": 71,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.558023"
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\material_cost_manager.py",
+      "total_lines": 267,
+      "code_lines": 76,
+      "comment_lines": 1,
+      "docstring_lines": 88,
+      "blank_lines": 37,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.560022"
+    },
+    {
+      "path": "src\\gui\\cost_estimator\\__init__.py",
+      "total_lines": 19,
+      "code_lines": 14,
+      "comment_lines": 0,
+      "docstring_lines": 1,
+      "blank_lines": 2,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:28.560022"
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\feeds_and_speeds_widget.py",
+      "total_lines": 590,
+      "code_lines": 381,
+      "comment_lines": 51,
+      "docstring_lines": 28,
+      "blank_lines": 102,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.566064"
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\personal_toolbox_manager.py",
+      "total_lines": 117,
+      "code_lines": 43,
+      "comment_lines": 1,
+      "docstring_lines": 32,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.568073"
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\tool_library_manager.py",
+      "total_lines": 150,
+      "code_lines": 77,
+      "comment_lines": 0,
+      "docstring_lines": 29,
+      "blank_lines": 26,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.569079"
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\unit_converter.py",
+      "total_lines": 141,
+      "code_lines": 23,
+      "comment_lines": 6,
+      "docstring_lines": 48,
+      "blank_lines": 30,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.570076"
+    },
+    {
+      "path": "src\\gui\\feeds_and_speeds\\__init__.py",
+      "total_lines": 15,
+      "code_lines": 10,
+      "comment_lines": 0,
+      "docstring_lines": 1,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.570076"
+    },
+    {
+      "path": "src\\gui\\files_components\\files_tab_widget.py",
+      "total_lines": 455,
+      "code_lines": 280,
+      "comment_lines": 34,
+      "docstring_lines": 29,
+      "blank_lines": 85,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.574592"
+    },
+    {
+      "path": "src\\gui\\files_components\\file_maintenance_worker.py",
+      "total_lines": 237,
+      "code_lines": 160,
+      "comment_lines": 2,
+      "docstring_lines": 11,
+      "blank_lines": 54,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.576586"
+    },
+    {
+      "path": "src\\gui\\files_components\\__init__.py",
+      "total_lines": 18,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.577619"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\animation_controller.py",
+      "total_lines": 127,
+      "code_lines": 75,
+      "comment_lines": 5,
+      "docstring_lines": 18,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.578619"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\camera_controller.py",
+      "total_lines": 165,
+      "code_lines": 94,
+      "comment_lines": 13,
+      "docstring_lines": 20,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.580136"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\export_manager.py",
+      "total_lines": 161,
+      "code_lines": 55,
+      "comment_lines": 13,
+      "docstring_lines": 36,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.581647"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\feed_speed_visualizer.py",
+      "total_lines": 213,
+      "code_lines": 112,
+      "comment_lines": 11,
+      "docstring_lines": 27,
+      "blank_lines": 47,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.583659"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_editor.py",
+      "total_lines": 128,
+      "code_lines": 70,
+      "comment_lines": 12,
+      "docstring_lines": 12,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.584669"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_interactive_loader.py",
+      "total_lines": 266,
+      "code_lines": 145,
+      "comment_lines": 20,
+      "docstring_lines": 31,
+      "blank_lines": 56,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.586665"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_loader_thread.py",
+      "total_lines": 90,
+      "code_lines": 46,
+      "comment_lines": 8,
+      "docstring_lines": 11,
+      "blank_lines": 20,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.587750"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_parser.py",
+      "total_lines": 357,
+      "code_lines": 210,
+      "comment_lines": 28,
+      "docstring_lines": 33,
+      "blank_lines": 64,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.590742"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_previewer_main.py",
+      "total_lines": 757,
+      "code_lines": 467,
+      "comment_lines": 65,
+      "docstring_lines": 45,
+      "blank_lines": 159,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.597799"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_renderer.py",
+      "total_lines": 294,
+      "code_lines": 183,
+      "comment_lines": 26,
+      "docstring_lines": 17,
+      "blank_lines": 56,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.600793"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\gcode_timeline.py",
+      "total_lines": 222,
+      "code_lines": 148,
+      "comment_lines": 11,
+      "docstring_lines": 16,
+      "blank_lines": 46,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.603316"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\layer_analyzer.py",
+      "total_lines": 142,
+      "code_lines": 71,
+      "comment_lines": 4,
+      "docstring_lines": 23,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.605315"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\vtk_widget.py",
+      "total_lines": 160,
+      "code_lines": 97,
+      "comment_lines": 12,
+      "docstring_lines": 15,
+      "blank_lines": 36,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.606315"
+    },
+    {
+      "path": "src\\gui\\gcode_previewer_components\\__init__.py",
+      "total_lines": 37,
+      "code_lines": 32,
+      "comment_lines": 0,
+      "docstring_lines": 1,
+      "blank_lines": 3,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.607827"
+    },
+    {
+      "path": "src\\gui\\help_system\\documentation_indexer.py",
+      "total_lines": 226,
+      "code_lines": 142,
+      "comment_lines": 17,
+      "docstring_lines": 16,
+      "blank_lines": 39,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.608845"
+    },
+    {
+      "path": "src\\gui\\help_system\\help_dialog.py",
+      "total_lines": 162,
+      "code_lines": 102,
+      "comment_lines": 8,
+      "docstring_lines": 13,
+      "blank_lines": 30,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.611913"
+    },
+    {
+      "path": "src\\gui\\help_system\\__init__.py",
+      "total_lines": 18,
+      "code_lines": 4,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.611913"
+    },
+    {
+      "path": "src\\gui\\import_components\\import_dialog.py",
+      "total_lines": 880,
+      "code_lines": 465,
+      "comment_lines": 57,
+      "docstring_lines": 104,
+      "blank_lines": 165,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.620446"
+    },
+    {
+      "path": "src\\gui\\import_components\\__init__.py",
+      "total_lines": 14,
+      "code_lines": -7,
+      "comment_lines": 0,
+      "docstring_lines": 10,
+      "blank_lines": 3,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.620446"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\dock_manager.py",
+      "total_lines": 322,
+      "code_lines": 189,
+      "comment_lines": 21,
+      "docstring_lines": 17,
+      "blank_lines": 56,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.623969"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\event_handler.py",
+      "total_lines": 379,
+      "code_lines": 246,
+      "comment_lines": 3,
+      "docstring_lines": 32,
+      "blank_lines": 69,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.627969"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\layout_manager.py",
+      "total_lines": 232,
+      "code_lines": 147,
+      "comment_lines": 11,
+      "docstring_lines": 22,
+      "blank_lines": 38,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.629490"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\main_window_facade.py",
+      "total_lines": 86,
+      "code_lines": 33,
+      "comment_lines": 3,
+      "docstring_lines": 19,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.630487"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\settings_manager.py",
+      "total_lines": 207,
+      "code_lines": 138,
+      "comment_lines": 6,
+      "docstring_lines": 22,
+      "blank_lines": 32,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.633566"
+    },
+    {
+      "path": "src\\gui\\main_window_components\\__init__.py",
+      "total_lines": 20,
+      "code_lines": 7,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.634557"
+    },
+    {
+      "path": "src\\gui\\materials\\integration.py",
+      "total_lines": 296,
+      "code_lines": 164,
+      "comment_lines": 18,
+      "docstring_lines": 41,
+      "blank_lines": 45,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.637564"
+    },
+    {
+      "path": "src\\gui\\materials\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.638557"
+    },
+    {
+      "path": "src\\gui\\material_components\\material_manager_main.py",
+      "total_lines": 647,
+      "code_lines": 342,
+      "comment_lines": 79,
+      "docstring_lines": 67,
+      "blank_lines": 100,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.647158"
+    },
+    {
+      "path": "src\\gui\\material_components\\__init__.py",
+      "total_lines": 16,
+      "code_lines": -5,
+      "comment_lines": 0,
+      "docstring_lines": 9,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.648150"
+    },
+    {
+      "path": "src\\gui\\metadata_components\\star_rating_widget.py",
+      "total_lines": 185,
+      "code_lines": 43,
+      "comment_lines": 14,
+      "docstring_lines": 52,
+      "blank_lines": 41,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.651671"
+    },
+    {
+      "path": "src\\gui\\metadata_components\\metadata_editor_main.py",
+      "total_lines": 623,
+      "code_lines": 277,
+      "comment_lines": 68,
+      "docstring_lines": 90,
+      "blank_lines": 121,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.656203"
+    },
+    {
+      "path": "src\\gui\\metadata_components\\__init__.py",
+      "total_lines": 20,
+      "code_lines": -5,
+      "comment_lines": 0,
+      "docstring_lines": 11,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.657203"
+    },
+    {
+      "path": "src\\gui\\model\\model_loader.py",
+      "total_lines": 348,
+      "code_lines": 101,
+      "comment_lines": 41,
+      "docstring_lines": 80,
+      "blank_lines": 63,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.660203"
+    },
+    {
+      "path": "src\\gui\\model\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.660203"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_analyzer_dialog.py",
+      "total_lines": 302,
+      "code_lines": 183,
+      "comment_lines": 17,
+      "docstring_lines": 25,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.663732"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_editor_core.py",
+      "total_lines": 241,
+      "code_lines": 100,
+      "comment_lines": 16,
+      "docstring_lines": 44,
+      "blank_lines": 53,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.667726"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_editor_dialog.py",
+      "total_lines": 364,
+      "code_lines": 221,
+      "comment_lines": 21,
+      "docstring_lines": 30,
+      "blank_lines": 68,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.670731"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_detector.py",
+      "total_lines": 278,
+      "code_lines": 169,
+      "comment_lines": 13,
+      "docstring_lines": 23,
+      "blank_lines": 53,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.673269"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_dialog.py",
+      "total_lines": 118,
+      "code_lines": 66,
+      "comment_lines": 6,
+      "docstring_lines": 13,
+      "blank_lines": 27,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.674264"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_error_fixer.py",
+      "total_lines": 226,
+      "code_lines": 133,
+      "comment_lines": 13,
+      "docstring_lines": 20,
+      "blank_lines": 41,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.676261"
+    },
+    {
+      "path": "src\\gui\\model_editor\\model_geometry_analyzer.py",
+      "total_lines": 245,
+      "code_lines": 120,
+      "comment_lines": 20,
+      "docstring_lines": 33,
+      "blank_lines": 49,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.678260"
+    },
+    {
+      "path": "src\\gui\\model_editor\\stl_writer.py",
+      "total_lines": 130,
+      "code_lines": 23,
+      "comment_lines": 9,
+      "docstring_lines": 40,
+      "blank_lines": 30,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.680259"
+    },
+    {
+      "path": "src\\gui\\model_editor\\__init__.py",
+      "total_lines": 20,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 10,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.680259"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\file_system_proxy.py",
+      "total_lines": 76,
+      "code_lines": -2,
+      "comment_lines": 6,
+      "docstring_lines": 31,
+      "blank_lines": 19,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.680259"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_event_handler.py",
+      "total_lines": 274,
+      "code_lines": 172,
+      "comment_lines": 12,
+      "docstring_lines": 24,
+      "blank_lines": 50,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.682790"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_file_browser.py",
+      "total_lines": 216,
+      "code_lines": 133,
+      "comment_lines": 0,
+      "docstring_lines": 23,
+      "blank_lines": 43,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.685230"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_model_manager.py",
+      "total_lines": 263,
+      "code_lines": 179,
+      "comment_lines": 5,
+      "docstring_lines": 22,
+      "blank_lines": 42,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.688230"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\library_ui_manager.py",
+      "total_lines": 190,
+      "code_lines": 111,
+      "comment_lines": 3,
+      "docstring_lines": 18,
+      "blank_lines": 49,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.690229"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\model_library_facade.py",
+      "total_lines": 111,
+      "code_lines": 43,
+      "comment_lines": 4,
+      "docstring_lines": 31,
+      "blank_lines": 26,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.690229"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\model_load_worker.py",
+      "total_lines": 134,
+      "code_lines": 77,
+      "comment_lines": 6,
+      "docstring_lines": 14,
+      "blank_lines": 26,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.691740"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\thumbnail_generator.py",
+      "total_lines": 111,
+      "code_lines": 57,
+      "comment_lines": 0,
+      "docstring_lines": 21,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.694293"
+    },
+    {
+      "path": "src\\gui\\model_library_components\\__init__.py",
+      "total_lines": 27,
+      "code_lines": 14,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 4,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:28.694293"
+    },
+    {
+      "path": "src\\gui\\search_components\\advanced_search_widget.py",
+      "total_lines": 336,
+      "code_lines": 171,
+      "comment_lines": 31,
+      "docstring_lines": 37,
+      "blank_lines": 74,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.697300"
+    },
+    {
+      "path": "src\\gui\\search_components\\saved_search_dialog.py",
+      "total_lines": 123,
+      "code_lines": 39,
+      "comment_lines": 7,
+      "docstring_lines": 27,
+      "blank_lines": 27,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.698300"
+    },
+    {
+      "path": "src\\gui\\search_components\\search_widget_main.py",
+      "total_lines": 481,
+      "code_lines": 168,
+      "comment_lines": 54,
+      "docstring_lines": 92,
+      "blank_lines": 108,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.701811"
+    },
+    {
+      "path": "src\\gui\\search_components\\search_workers.py",
+      "total_lines": 87,
+      "code_lines": 12,
+      "comment_lines": 0,
+      "docstring_lines": 34,
+      "blank_lines": 16,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:28.701811"
+    },
+    {
+      "path": "src\\gui\\search_components\\__init__.py",
+      "total_lines": 27,
+      "code_lines": -2,
+      "comment_lines": 0,
+      "docstring_lines": 13,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.702827"
+    },
+    {
+      "path": "src\\gui\\services\\background_loading_manager.py",
+      "total_lines": 471,
+      "code_lines": 170,
+      "comment_lines": 22,
+      "docstring_lines": 107,
+      "blank_lines": 85,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.706349"
+    },
+    {
+      "path": "src\\gui\\services\\background_processor.py",
+      "total_lines": 248,
+      "code_lines": 89,
+      "comment_lines": 15,
+      "docstring_lines": 57,
+      "blank_lines": 50,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.708349"
+    },
+    {
+      "path": "src\\gui\\services\\deduplication_service.py",
+      "total_lines": 161,
+      "code_lines": 29,
+      "comment_lines": 4,
+      "docstring_lines": 53,
+      "blank_lines": 40,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.709350"
+    },
+    {
+      "path": "src\\gui\\services\\enhanced_theme_service.py",
+      "total_lines": 601,
+      "code_lines": 338,
+      "comment_lines": 56,
+      "docstring_lines": 50,
+      "blank_lines": 129,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.714378"
+    },
+    {
+      "path": "src\\gui\\services\\enhanced_viewer_service.py",
+      "total_lines": 413,
+      "code_lines": 245,
+      "comment_lines": 28,
+      "docstring_lines": 35,
+      "blank_lines": 77,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.718391"
+    },
+    {
+      "path": "src\\gui\\services\\gui_service_interfaces.py",
+      "total_lines": 485,
+      "code_lines": -33,
+      "comment_lines": 2,
+      "docstring_lines": 253,
+      "blank_lines": 114,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.720391"
+    },
+    {
+      "path": "src\\gui\\services\\material_service.py",
+      "total_lines": 596,
+      "code_lines": 374,
+      "comment_lines": 50,
+      "docstring_lines": 40,
+      "blank_lines": 115,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.725433"
+    },
+    {
+      "path": "src\\gui\\services\\ui_service.py",
+      "total_lines": 539,
+      "code_lines": 306,
+      "comment_lines": 31,
+      "docstring_lines": 61,
+      "blank_lines": 105,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.729438"
+    },
+    {
+      "path": "src\\gui\\services\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.730438"
+    },
+    {
+      "path": "src\\gui\\theme\\color_helper.py",
+      "total_lines": 148,
+      "code_lines": -11,
+      "comment_lines": 6,
+      "docstring_lines": 73,
+      "blank_lines": 30,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.730438"
+    },
+    {
+      "path": "src\\gui\\theme\\detector.py",
+      "total_lines": 185,
+      "code_lines": 53,
+      "comment_lines": 5,
+      "docstring_lines": 54,
+      "blank_lines": 36,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.732963"
+    },
+    {
+      "path": "src\\gui\\theme\\legacy_theme_manager.py",
+      "total_lines": 456,
+      "code_lines": 71,
+      "comment_lines": 11,
+      "docstring_lines": 157,
+      "blank_lines": 101,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.735474"
+    },
+    {
+      "path": "src\\gui\\theme\\manager.py",
+      "total_lines": 1197,
+      "code_lines": 637,
+      "comment_lines": 96,
+      "docstring_lines": 127,
+      "blank_lines": 164,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.745003"
+    },
+    {
+      "path": "src\\gui\\theme\\persistence.py",
+      "total_lines": 167,
+      "code_lines": 33,
+      "comment_lines": 5,
+      "docstring_lines": 56,
+      "blank_lines": 38,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.746508"
+    },
+    {
+      "path": "src\\gui\\theme\\presets.py",
+      "total_lines": 387,
+      "code_lines": 274,
+      "comment_lines": 73,
+      "docstring_lines": 10,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.748512"
+    },
+    {
+      "path": "src\\gui\\theme\\qdarkstyle_service.py",
+      "total_lines": 167,
+      "code_lines": 54,
+      "comment_lines": 10,
+      "docstring_lines": 41,
+      "blank_lines": 33,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.750512"
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_core.py",
+      "total_lines": 543,
+      "code_lines": 202,
+      "comment_lines": 22,
+      "docstring_lines": 136,
+      "blank_lines": 78,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.760045"
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_service.py",
+      "total_lines": 588,
+      "code_lines": 133,
+      "comment_lines": 29,
+      "docstring_lines": 154,
+      "blank_lines": 93,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.769088"
+    },
+    {
+      "path": "src\\gui\\theme\\qt_material_ui.py",
+      "total_lines": 739,
+      "code_lines": 358,
+      "comment_lines": 83,
+      "docstring_lines": 87,
+      "blank_lines": 150,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.782617"
+    },
+    {
+      "path": "src\\gui\\theme\\service.py",
+      "total_lines": 246,
+      "code_lines": 60,
+      "comment_lines": 19,
+      "docstring_lines": 76,
+      "blank_lines": 48,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.788625"
+    },
+    {
+      "path": "src\\gui\\theme\\simple_service.py",
+      "total_lines": 335,
+      "code_lines": 85,
+      "comment_lines": 160,
+      "docstring_lines": 33,
+      "blank_lines": 38,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.793661"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_api.py",
+      "total_lines": 226,
+      "code_lines": 73,
+      "comment_lines": 4,
+      "docstring_lines": 29,
+      "blank_lines": 39,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.800260"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_application.py",
+      "total_lines": 1225,
+      "code_lines": 264,
+      "comment_lines": 50,
+      "docstring_lines": 244,
+      "blank_lines": 232,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.815844"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_cache.py",
+      "total_lines": 531,
+      "code_lines": 92,
+      "comment_lines": 31,
+      "docstring_lines": 179,
+      "blank_lines": 109,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.826897"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_constants.py",
+      "total_lines": 91,
+      "code_lines": 32,
+      "comment_lines": 14,
+      "docstring_lines": 14,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.830893"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_core.py",
+      "total_lines": 1096,
+      "code_lines": 643,
+      "comment_lines": 129,
+      "docstring_lines": 82,
+      "blank_lines": 184,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.841972"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_defaults.py",
+      "total_lines": 218,
+      "code_lines": 146,
+      "comment_lines": 25,
+      "docstring_lines": 7,
+      "blank_lines": 36,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.844983"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_loader.py",
+      "total_lines": 301,
+      "code_lines": 57,
+      "comment_lines": 4,
+      "docstring_lines": 107,
+      "blank_lines": 57,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.848980"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_manager_core.py",
+      "total_lines": 332,
+      "code_lines": 230,
+      "comment_lines": 3,
+      "docstring_lines": 33,
+      "blank_lines": 34,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.852048"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_palette.py",
+      "total_lines": 282,
+      "code_lines": 203,
+      "comment_lines": 23,
+      "docstring_lines": 16,
+      "blank_lines": 26,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.854056"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_persistence.py",
+      "total_lines": 515,
+      "code_lines": 155,
+      "comment_lines": 40,
+      "docstring_lines": 126,
+      "blank_lines": 107,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.858573"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_registry.py",
+      "total_lines": 591,
+      "code_lines": 116,
+      "comment_lines": 27,
+      "docstring_lines": 188,
+      "blank_lines": 117,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.862588"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_service.py",
+      "total_lines": 723,
+      "code_lines": 261,
+      "comment_lines": 39,
+      "docstring_lines": 179,
+      "blank_lines": 137,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.866602"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_ui.py",
+      "total_lines": 774,
+      "code_lines": 372,
+      "comment_lines": 48,
+      "docstring_lines": 113,
+      "blank_lines": 150,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.873127"
+    },
+    {
+      "path": "src\\gui\\theme\\theme_validator.py",
+      "total_lines": 622,
+      "code_lines": 83,
+      "comment_lines": 41,
+      "docstring_lines": 208,
+      "blank_lines": 134,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.878142"
+    },
+    {
+      "path": "src\\gui\\theme\\unified_theme_manager.py",
+      "total_lines": 702,
+      "code_lines": 119,
+      "comment_lines": 47,
+      "docstring_lines": 230,
+      "blank_lines": 146,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.885170"
+    },
+    {
+      "path": "src\\gui\\theme\\vtk_color_provider.py",
+      "total_lines": 402,
+      "code_lines": 106,
+      "comment_lines": 35,
+      "docstring_lines": 111,
+      "blank_lines": 74,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.887175"
+    },
+    {
+      "path": "src\\gui\\theme\\__init__.py",
+      "total_lines": 510,
+      "code_lines": 76,
+      "comment_lines": 43,
+      "docstring_lines": 168,
+      "blank_lines": 94,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.890172"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\color_row.py",
+      "total_lines": 98,
+      "code_lines": 51,
+      "comment_lines": 0,
+      "docstring_lines": 16,
+      "blank_lines": 20,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.891698"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\preview_css_template.py",
+      "total_lines": 249,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 18,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.891698"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\preview_window.py",
+      "total_lines": 178,
+      "code_lines": 127,
+      "comment_lines": 12,
+      "docstring_lines": 8,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.893740"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\theme_manager_helpers.py",
+      "total_lines": 127,
+      "code_lines": 87,
+      "comment_lines": 1,
+      "docstring_lines": 14,
+      "blank_lines": 14,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.895745"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\theme_manager_widget_main.py",
+      "total_lines": 355,
+      "code_lines": 244,
+      "comment_lines": 12,
+      "docstring_lines": 32,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.899751"
+    },
+    {
+      "path": "src\\gui\\theme_manager_components\\__init__.py",
+      "total_lines": 22,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 11,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.899751"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\camera_controller.py",
+      "total_lines": 324,
+      "code_lines": 185,
+      "comment_lines": 19,
+      "docstring_lines": 36,
+      "blank_lines": 55,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.903279"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\model_renderer.py",
+      "total_lines": 313,
+      "code_lines": 124,
+      "comment_lines": 28,
+      "docstring_lines": 54,
+      "blank_lines": 73,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.905807"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\performance_tracker.py",
+      "total_lines": 92,
+      "code_lines": 43,
+      "comment_lines": 4,
+      "docstring_lines": 18,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.906807"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\viewer_ui_manager.py",
+      "total_lines": 264,
+      "code_lines": 127,
+      "comment_lines": 19,
+      "docstring_lines": 42,
+      "blank_lines": 46,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.909331"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\viewer_widget_facade.py",
+      "total_lines": 796,
+      "code_lines": 419,
+      "comment_lines": 74,
+      "docstring_lines": 81,
+      "blank_lines": 155,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.915381"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\vtk_scene_manager.py",
+      "total_lines": 535,
+      "code_lines": 328,
+      "comment_lines": 43,
+      "docstring_lines": 42,
+      "blank_lines": 95,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.920379"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\z_up_save_dialog.py",
+      "total_lines": 131,
+      "code_lines": 54,
+      "comment_lines": 6,
+      "docstring_lines": 21,
+      "blank_lines": 31,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.921890"
+    },
+    {
+      "path": "src\\gui\\viewer_3d\\__init__.py",
+      "total_lines": 21,
+      "code_lines": 8,
+      "comment_lines": 0,
+      "docstring_lines": 5,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.922899"
+    },
+    {
+      "path": "src\\gui\\viewer_components\\progressive_load_worker.py",
+      "total_lines": 82,
+      "code_lines": 26,
+      "comment_lines": 6,
+      "docstring_lines": 18,
+      "blank_lines": 21,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.923904"
+    },
+    {
+      "path": "src\\gui\\viewer_components\\render_mode.py",
+      "total_lines": 15,
+      "code_lines": 1,
+      "comment_lines": 0,
+      "docstring_lines": 6,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.923904"
+    },
+    {
+      "path": "src\\gui\\viewer_components\\__init__.py",
+      "total_lines": 22,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 11,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.925429"
+    },
+    {
+      "path": "src\\gui\\viewer_components\\viewer_3d_widget_main.py",
+      "total_lines": 787,
+      "code_lines": 307,
+      "comment_lines": 98,
+      "docstring_lines": 131,
+      "blank_lines": 165,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.930423"
+    },
+    {
+      "path": "src\\gui\\vtk\\cleanup_coordinator.py",
+      "total_lines": 819,
+      "code_lines": 418,
+      "comment_lines": 60,
+      "docstring_lines": 104,
+      "blank_lines": 165,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.937455"
+    },
+    {
+      "path": "src\\gui\\vtk\\context_manager.py",
+      "total_lines": 437,
+      "code_lines": 113,
+      "comment_lines": 23,
+      "docstring_lines": 122,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.940466"
+    },
+    {
+      "path": "src\\gui\\vtk\\diagnostic_tools.py",
+      "total_lines": 700,
+      "code_lines": 384,
+      "comment_lines": 46,
+      "docstring_lines": 85,
+      "blank_lines": 121,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.946487"
+    },
+    {
+      "path": "src\\gui\\vtk\\enhanced_context_manager.py",
+      "total_lines": 632,
+      "code_lines": 312,
+      "comment_lines": 39,
+      "docstring_lines": 93,
+      "blank_lines": 129,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.950488"
+    },
+    {
+      "path": "src\\gui\\vtk\\error_handler.py",
+      "total_lines": 413,
+      "code_lines": 159,
+      "comment_lines": 35,
+      "docstring_lines": 83,
+      "blank_lines": 85,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.953991"
+    },
+    {
+      "path": "src\\gui\\vtk\\fallback_renderer.py",
+      "total_lines": 596,
+      "code_lines": 256,
+      "comment_lines": 48,
+      "docstring_lines": 100,
+      "blank_lines": 129,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.958527"
+    },
+    {
+      "path": "src\\gui\\vtk\\optimized_cleanup_coordinator.py",
+      "total_lines": 695,
+      "code_lines": 383,
+      "comment_lines": 37,
+      "docstring_lines": 89,
+      "blank_lines": 128,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.963037"
+    },
+    {
+      "path": "src\\gui\\vtk\\resource_tracker.py",
+      "total_lines": 624,
+      "code_lines": 256,
+      "comment_lines": 32,
+      "docstring_lines": 125,
+      "blank_lines": 121,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.967560"
+    },
+    {
+      "path": "src\\gui\\vtk\\__init__.py",
+      "total_lines": 134,
+      "code_lines": 36,
+      "comment_lines": 10,
+      "docstring_lines": 37,
+      "blank_lines": 19,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.968563"
+    },
+    {
+      "path": "src\\gui\\widgets\\add_tool_dialog.py",
+      "total_lines": 155,
+      "code_lines": 72,
+      "comment_lines": 5,
+      "docstring_lines": 26,
+      "blank_lines": 36,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.970564"
+    },
+    {
+      "path": "src\\gui\\widgets\\collapsible_section.py",
+      "total_lines": 215,
+      "code_lines": 27,
+      "comment_lines": 14,
+      "docstring_lines": 70,
+      "blank_lines": 41,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.971564"
+    },
+    {
+      "path": "src\\gui\\widgets\\external_database_editor.py",
+      "total_lines": 311,
+      "code_lines": 199,
+      "comment_lines": 15,
+      "docstring_lines": 19,
+      "blank_lines": 67,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.975079"
+    },
+    {
+      "path": "src\\gui\\widgets\\loading_progress_widget.py",
+      "total_lines": 349,
+      "code_lines": 135,
+      "comment_lines": 31,
+      "docstring_lines": 63,
+      "blank_lines": 75,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.977581"
+    },
+    {
+      "path": "src\\gui\\widgets\\tool_database_preferences.py",
+      "total_lines": 194,
+      "code_lines": 104,
+      "comment_lines": 11,
+      "docstring_lines": 19,
+      "blank_lines": 39,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.978602"
+    },
+    {
+      "path": "src\\gui\\window\\central_widget_manager.py",
+      "total_lines": 354,
+      "code_lines": 184,
+      "comment_lines": 30,
+      "docstring_lines": 46,
+      "blank_lines": 59,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.982115"
+    },
+    {
+      "path": "src\\gui\\window\\custom_title_bar.py",
+      "total_lines": 176,
+      "code_lines": 66,
+      "comment_lines": 8,
+      "docstring_lines": 26,
+      "blank_lines": 28,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.983112"
+    },
+    {
+      "path": "src\\gui\\window\\dock_manager.py",
+      "total_lines": 858,
+      "code_lines": 525,
+      "comment_lines": 90,
+      "docstring_lines": 64,
+      "blank_lines": 105,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.989643"
+    },
+    {
+      "path": "src\\gui\\window\\dock_snapping.py",
+      "total_lines": 250,
+      "code_lines": 107,
+      "comment_lines": 13,
+      "docstring_lines": 59,
+      "blank_lines": 35,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.992159"
+    },
+    {
+      "path": "src\\gui\\window\\layout_persistence.py",
+      "total_lines": 353,
+      "code_lines": 203,
+      "comment_lines": 26,
+      "docstring_lines": 50,
+      "blank_lines": 46,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.995165"
+    },
+    {
+      "path": "src\\gui\\window\\title_bar_manager.py",
+      "total_lines": 138,
+      "code_lines": 51,
+      "comment_lines": 3,
+      "docstring_lines": 38,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:28.996163"
+    },
+    {
+      "path": "src\\gui\\window\\__init__.py",
+      "total_lines": 1,
+      "code_lines": 0,
+      "comment_lines": 1,
+      "docstring_lines": 0,
+      "blank_lines": 0,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:28.997163"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\coordinate_manager.py",
+      "total_lines": 728,
+      "code_lines": 184,
+      "comment_lines": 56,
+      "docstring_lines": 209,
+      "blank_lines": 122,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.002206"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\event_processor.py",
+      "total_lines": 893,
+      "code_lines": 272,
+      "comment_lines": 57,
+      "docstring_lines": 233,
+      "blank_lines": 157,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.009217"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_configuration.py",
+      "total_lines": 599,
+      "code_lines": 154,
+      "comment_lines": 22,
+      "docstring_lines": 184,
+      "blank_lines": 98,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.014260"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_engine.py",
+      "total_lines": 804,
+      "code_lines": 182,
+      "comment_lines": 50,
+      "docstring_lines": 238,
+      "blank_lines": 150,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.019772"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\snap_guide_renderer.py",
+      "total_lines": 927,
+      "code_lines": 298,
+      "comment_lines": 49,
+      "docstring_lines": 240,
+      "blank_lines": 160,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.027307"
+    },
+    {
+      "path": "src\\gui\\layout\\snapping\\__init__.py",
+      "total_lines": 521,
+      "code_lines": 22,
+      "comment_lines": 23,
+      "docstring_lines": 220,
+      "blank_lines": 97,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.030841"
+    },
+    {
+      "path": "src\\gui\\theme\\materials\\__init__.py",
+      "total_lines": 11,
+      "code_lines": -7,
+      "comment_lines": 1,
+      "docstring_lines": 8,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:29.030841"
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\qt_material_color_picker.py",
+      "total_lines": 282,
+      "code_lines": 121,
+      "comment_lines": 23,
+      "docstring_lines": 41,
+      "blank_lines": 48,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.033364"
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\simple_theme_switcher.py",
+      "total_lines": 105,
+      "code_lines": 48,
+      "comment_lines": 7,
+      "docstring_lines": 18,
+      "blank_lines": 25,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.034364"
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\theme_dialog.py",
+      "total_lines": 340,
+      "code_lines": 187,
+      "comment_lines": 18,
+      "docstring_lines": 39,
+      "blank_lines": 67,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.037356"
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\theme_switcher.py",
+      "total_lines": 112,
+      "code_lines": 28,
+      "comment_lines": 3,
+      "docstring_lines": 37,
+      "blank_lines": 23,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.038363"
+    },
+    {
+      "path": "src\\gui\\theme\\ui\\__init__.py",
+      "total_lines": 17,
+      "code_lines": -2,
+      "comment_lines": 0,
+      "docstring_lines": 8,
+      "blank_lines": 4,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:29.038363"
+    },
+    {
+      "path": "src\\parsers\\stl_components\\stl_format_detector.py",
+      "total_lines": 77,
+      "code_lines": 22,
+      "comment_lines": 6,
+      "docstring_lines": 19,
+      "blank_lines": 18,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.039364"
+    },
+    {
+      "path": "src\\parsers\\stl_components\\stl_models.py",
+      "total_lines": 54,
+      "code_lines": 24,
+      "comment_lines": 0,
+      "docstring_lines": 11,
+      "blank_lines": 14,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.040364"
+    },
+    {
+      "path": "src\\parsers\\stl_components\\stl_parser_main.py",
+      "total_lines": 26,
+      "code_lines": -11,
+      "comment_lines": 3,
+      "docstring_lines": 16,
+      "blank_lines": 6,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:29.040882"
+    },
+    {
+      "path": "src\\parsers\\stl_components\\__init__.py",
+      "total_lines": 24,
+      "code_lines": -3,
+      "comment_lines": 0,
+      "docstring_lines": 12,
+      "blank_lines": 5,
+      "is_monolithic": false,
+      "severity": "none",
+      "timestamp": "2025-10-31T13:20:29.040882"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\base_tool_parser.py",
+      "total_lines": 103,
+      "code_lines": 33,
+      "comment_lines": 0,
+      "docstring_lines": 33,
+      "blank_lines": 22,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.042911"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\csv_tool_parser.py",
+      "total_lines": 197,
+      "code_lines": 126,
+      "comment_lines": 14,
+      "docstring_lines": 11,
+      "blank_lines": 39,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.044909"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\json_tool_parser.py",
+      "total_lines": 112,
+      "code_lines": 70,
+      "comment_lines": 7,
+      "docstring_lines": 7,
+      "blank_lines": 24,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.045909"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\tdb_tool_parser.py",
+      "total_lines": 139,
+      "code_lines": 75,
+      "comment_lines": 17,
+      "docstring_lines": 10,
+      "blank_lines": 32,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.047909"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\vtdb_tool_parser.py",
+      "total_lines": 123,
+      "code_lines": 71,
+      "comment_lines": 8,
+      "docstring_lines": 8,
+      "blank_lines": 29,
+      "is_monolithic": true,
+      "severity": "critical",
+      "timestamp": "2025-10-31T13:20:29.048916"
+    },
+    {
+      "path": "src\\parsers\\tool_parsers\\__init__.py",
+      "total_lines": 19,
+      "code_lines": 11,
+      "comment_lines": 0,
+      "docstring_lines": 3,
+      "blank_lines": 2,
+      "is_monolithic": true,
+      "severity": "minor",
+      "timestamp": "2025-10-31T13:20:29.049908"
+    }
+  ]
+}

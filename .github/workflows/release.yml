@@ -104,7 +104,8 @@ jobs:
       - name: Update version in installer script
         run: |
           $newVersion = "${{ steps.new_version.outputs.new_version }}"
-          (Get-Content installer/inno_setup.iss) -replace '#define MyAppVersion "[^"]*"', "#define MyAppVersion `"$newVersion`"" | Set-Content installer/inno_setup.iss
+          # Update NSIS installer script in config directory
+          (Get-Content config/installer.nsi) -replace '#define MyAppVersion "[^"]*"', "#define MyAppVersion `"$newVersion`"" | Set-Content config/installer.nsi
 
       - name: Create release branch
         run: |

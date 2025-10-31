@@ -1,18 +1,19 @@
 # Candy-Cadence Development Guidelines
-*Constitution v1.0.0 Compliant*
+*Constitution v1.2.0 Compliant*
 
 Auto-generated from all feature plans. Last updated: [DATE]
 
 ## Constitution Compliance
 
-All development MUST align with Candy-Cadence Constitution v1.0.0:
+All development MUST align with Candy-Cadence Constitution v1.2.0:
 
-**5 Core Principles:**
+**6 Core Principles:**
 1. **Performance Mandate** - Non-negotiable performance standards
 2. **Modular Architecture** - Single responsibility with clean interfaces
 3. **Quality Assurance** - Comprehensive testing and logging
 4. **User Sovereignty** - Complete offline operation with local data control
 5. **Windows Integration** - Native Windows desktop application standards
+6. **Distribution & Deployment** - Standalone installer requirements
 
 ## Active Technologies
 
@@ -39,9 +40,9 @@ All development MUST align with Candy-Cadence Constitution v1.0.0:
 
 ## Constitution Version Reference
 
-**Candy-Cadence Constitution**: v1.0.0
+**Candy-Cadence Constitution**: v1.2.0
 **Ratified**: 2025-10-30
-**Last Amended**: 2025-10-30
+**Last Amended**: 2025-10-31
 
 **Performance Standards:**
 - Load times: <5s (<100MB), <15s (100-500MB), <30s (>500MB)
@@ -53,6 +54,14 @@ All development MUST align with Candy-Cadence Constitution v1.0.0:
 - Unit + integration tests mandatory
 - Memory leak testing (10-20 iterations)
 - Performance benchmarking required
+
+**Distribution & Deployment Requirements:**
+- Standalone installer (EXE) distribution mandatory
+- No Python or dependency installation required for end users
+- All runtime dependencies handled by installer
+- Windows registry entries and uninstallation capabilities
+- Digital signing for security and version information
+- Straightforward installation for non-technical users
 
 **System Requirements:**
 - Windows 7 SP1+ (64-bit) minimum

@@ -1,0 +1,56 @@
+# Testing Framework Dependencies for Monolithic Module Detection Tool
+# This file contains all dependencies required for running the comprehensive test suite
+
+# Core Testing Framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-xdist>=3.0.0  # For parallel test execution
+pytest-mock>=3.10.0  # For mocking in tests
+
+# Code Quality and Linting (for development)
+pylint>=2.15.0
+black>=22.0.0
+flake8>=5.0.0
+mypy>=1.0.0
+
+# Performance and Memory Testing
+memory-profiler>=0.60.0
+psutil>=5.9.0
+
+# Test Data Generation
+faker>=15.0.0
+
+# Coverage Reporting
+coverage>=6.5.0
+pytest-html>=3.1.0
+
+# Documentation Testing
+doc8>=0.11.0
+
+# Security Testing (optional)
+bandit>=1.7.0
+
+# Development Dependencies
+pre-commit>=2.20.0
+tox>=4.0.0
+
+# Note: The monolithic_detector.py itself uses only built-in Python modules:
+# - ast (built-in)
+# - json (built-in)
+# - logging (built-in)
+# - os (built-in)
+# - sys (built-in)
+# - pathlib (built-in)
+# - typing (built-in)
+# - dataclasses (built-in)
+# - concurrent.futures (built-in)
+# - datetime (built-in)
+# - argparse (built-in)
+# - re (built-in)
+# - tempfile (built-in)
+# - shutil (built-in)
+# - time (built-in)
+# - unittest (built-in)
+# - unittest.mock (built-in)
+
+# This makes the tool highly portable with minimal external dependencies.

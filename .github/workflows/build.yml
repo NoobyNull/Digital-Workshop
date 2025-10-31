@@ -9,7 +9,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: false
 
@@ -25,7 +25,11 @@ jobs:
         pip install pyinstaller
 
     - name: Build with PyInstaller
-      run: pyinstaller --onefile run.py
+      run: |
+        # Build the actual application from src/main.py
+        pyinstaller --onefile --name "Digital Workshop" src/main.py
+        # Copy the executable to expected location
+        copy "dist\Digital Workshop.exe" "Digital-Workshop-Installer.exe"
 
     - name: Install NSIS
       run: choco install nsis -y
@@ -33,7 +37,7 @@ jobs:
     - name: Create installer
       uses: joncloud/makensis-action@v3.6
       with:
-        script-file: installer.nsi
+        script-file: config/installer.nsi
 
     - name: Upload executable to release
       uses: softprops/action-gh-release@v1

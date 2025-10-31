@@ -1,0 +1,1868 @@
+{
+  "summary": {
+    "total_files_analyzed": 1,
+    "files_with_formatting_issues": 0,
+    "files_with_linting_errors": 0,
+    "compliance_percentage": 100.0,
+    "target_compliance": 95.56,
+    "passed": true,
+    "total_processing_time": 1.8692004680633545,
+    "average_processing_time": 1.8692004680633545,
+    "analysis_timestamp": "2025-10-31T11:48:19.304584"
+  },
+  "scores": {
+    "formatting_score": 100.0,
+    "linting_score": 100.0,
+    "overall_score": 100.0
+  },
+  "issues_by_type": {
+    "convention": [
+      {
+        "file": "code_quality_validator.py",
+        "line": 74,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 79,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 100,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 123,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 124,
+        "message": "Line too long (92/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 136,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 140,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 143,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 148,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 154,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 162,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 164,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 167,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 169,
+        "message": "Line too long (102/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 170,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 175,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 184,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 205,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 217,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 221,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 230,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 238,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 240,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 244,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 248,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 260,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 267,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 269,
+        "message": "Line too long (89/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 270,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 280,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 288,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 307,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 320,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 324,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 326,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 327,
+        "message": "Line too long (116/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 339,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 342,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 345,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 347,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 348,
+        "message": "Line too long (127/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 362,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 389,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 391,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 392,
+        "message": "Line too long (110/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 413,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 423,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 425,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 430,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 438,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 441,
+        "message": "Line too long (101/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 442,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 444,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 446,
+        "message": "Unnecessary parens after '=' keyword",
+        "symbol": "superfluous-parens"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 447,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 451,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 455,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 457,
+        "message": "Line too long (111/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 458,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 462,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 466,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 470,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 472,
+        "message": "Line too long (90/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 473,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 476,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 487,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 488,
+        "message": "Line too long (133/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 503,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 517,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 519,
+        "message": "Line too long (94/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 520,
+        "message": "Line too long (91/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 521,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 551,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 553,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 558,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 564,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 594,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 596,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 599,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 605,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 607,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 610,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 613,
+        "message": "Line too long (96/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 618,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 621,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 625,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 629,
+        "message": "Line too long (95/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 630,
+        "message": "Line too long (89/88)",
+        "symbol": "line-too-long"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 634,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 639,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 644,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 649,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 655,
+        "message": "Trailing whitespace",
+        "symbol": "trailing-whitespace"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 659,
+        "message": "Final newline missing",
+        "symbol": "missing-final-newline"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 263,
+        "message": "Import outside toplevel (re)",
+        "symbol": "import-outside-toplevel"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 563,
+        "message": "Import outside toplevel (argparse)",
+        "symbol": "import-outside-toplevel"
+      }
+    ],
+    "refactor": [
+      {
+        "file": "code_quality_validator.py",
+        "line": 61,
+        "message": "Too many instance attributes (8/7)",
+        "symbol": "too-many-instance-attributes"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 206,
+        "message": "Too many local variables (16/15)",
+        "symbol": "too-many-locals"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 392,
+        "message": "Too many local variables (16/15)",
+        "symbol": "too-many-locals"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 392,
+        "message": "Too many branches (13/12)",
+        "symbol": "too-many-branches"
+      }
+    ],
+    "warning": [
+      {
+        "file": "code_quality_validator.py",
+        "line": 195,
+        "message": "Catching too general exception Exception",
+        "symbol": "broad-exception-caught"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 156,
+        "message": "'subprocess.run' used without explicitly defining the value for 'check'.",
+        "symbol": "subprocess-run-check"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 263,
+        "message": "Redefining name 're' from outer scope (line 19)",
+        "symbol": "redefined-outer-name"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 298,
+        "message": "Catching too general exception Exception",
+        "symbol": "broad-exception-caught"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 232,
+        "message": "'subprocess.run' used without explicitly defining the value for 'check'.",
+        "symbol": "subprocess-run-check"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 263,
+        "message": "Reimport 're' (imported line 19)",
+        "symbol": "reimported"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 269,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 322,
+        "message": "Using open without explicitly specifying an encoding",
+        "symbol": "unspecified-encoding"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 338,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 361,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 368,
+        "message": "Catching too general exception Exception",
+        "symbol": "broad-exception-caught"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 369,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 559,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 603,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 606,
+        "message": "Use lazy % formatting in logging functions",
+        "symbol": "logging-fstring-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 627,
+        "message": "Using an f-string that does not have any interpolated variables",
+        "symbol": "f-string-without-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 635,
+        "message": "Using an f-string that does not have any interpolated variables",
+        "symbol": "f-string-without-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 641,
+        "message": "Using an f-string that does not have any interpolated variables",
+        "symbol": "f-string-without-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 646,
+        "message": "Using an f-string that does not have any interpolated variables",
+        "symbol": "f-string-without-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 652,
+        "message": "Using an f-string that does not have any interpolated variables",
+        "symbol": "f-string-without-interpolation"
+      },
+      {
+        "file": "code_quality_validator.py",
+        "line": 19,
+        "message": "Unused import re",
+        "symbol": "unused-import"
+      }
+    ]
+  },
+  "violations": [],
+  "recommendations": [
+    "High number of issues detected. Consider code review"
+  ],
+  "detailed_results": [
+    {
+      "file_path": "code_quality_validator.py",
+      "formatting": {
+        "file_path": "code_quality_validator.py",
+        "was_formatted": false,
+        "original_size": 23812,
+        "formatted_size": 23812,
+        "changes_made": [],
+        "processing_time": 0.1687765121459961,
+        "error_message": null
+      },
+      "linting": {
+        "file_path": "code_quality_validator.py",
+        "overall_score": 10.0,
+        "issues": [
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 74,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 79,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 100,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 123,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 124,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (92/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 136,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 140,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 143,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 148,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 154,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 162,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 164,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 167,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 169,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (102/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 170,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 175,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 184,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 205,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 217,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 221,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 230,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 238,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 240,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 244,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 248,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 260,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 267,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 269,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (89/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 270,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 280,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 288,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 307,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 320,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 324,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 326,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 327,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (116/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 339,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 342,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 345,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 347,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 348,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (127/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 362,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 389,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 391,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 392,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (110/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 413,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 423,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 425,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 430,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 438,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 441,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (101/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 442,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 444,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 446,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "superfluous-parens",
+            "message": "Unnecessary parens after '=' keyword",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 447,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 451,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 455,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 457,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (111/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 458,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 462,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 466,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 470,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 472,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (90/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 473,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 476,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 487,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 488,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (133/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 503,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 517,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 519,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (94/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 520,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (91/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 521,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 551,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 553,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 558,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 564,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 594,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 596,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 599,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 605,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 607,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 610,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 613,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (96/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 618,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 621,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 625,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 629,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (95/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 630,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "line-too-long",
+            "message": "Line too long (89/88)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 634,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 639,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 644,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 649,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 655,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "trailing-whitespace",
+            "message": "Trailing whitespace",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 659,
+            "column": 0,
+            "issue_type": "convention",
+            "symbol": "missing-final-newline",
+            "message": "Final newline missing",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 61,
+            "column": 0,
+            "issue_type": "refactor",
+            "symbol": "too-many-instance-attributes",
+            "message": "Too many instance attributes (8/7)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 195,
+            "column": 15,
+            "issue_type": "warning",
+            "symbol": "broad-exception-caught",
+            "message": "Catching too general exception Exception",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 156,
+            "column": 21,
+            "issue_type": "warning",
+            "symbol": "subprocess-run-check",
+            "message": "'subprocess.run' used without explicitly defining the value for 'check'.",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 206,
+            "column": 4,
+            "issue_type": "refactor",
+            "symbol": "too-many-locals",
+            "message": "Too many local variables (16/15)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 263,
+            "column": 24,
+            "issue_type": "warning",
+            "symbol": "redefined-outer-name",
+            "message": "Redefining name 're' from outer scope (line 19)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 298,
+            "column": 15,
+            "issue_type": "warning",
+            "symbol": "broad-exception-caught",
+            "message": "Catching too general exception Exception",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 232,
+            "column": 21,
+            "issue_type": "warning",
+            "symbol": "subprocess-run-check",
+            "message": "'subprocess.run' used without explicitly defining the value for 'check'.",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 263,
+            "column": 24,
+            "issue_type": "warning",
+            "symbol": "reimported",
+            "message": "Reimport 're' (imported line 19)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 263,
+            "column": 24,
+            "issue_type": "convention",
+            "symbol": "import-outside-toplevel",
+            "message": "Import outside toplevel (re)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 269,
+            "column": 20,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 322,
+            "column": 13,
+            "issue_type": "warning",
+            "symbol": "unspecified-encoding",
+            "message": "Using open without explicitly specifying an encoding",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 338,
+            "column": 8,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 361,
+            "column": 8,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 368,
+            "column": 19,
+            "issue_type": "warning",
+            "symbol": "broad-exception-caught",
+            "message": "Catching too general exception Exception",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 369,
+            "column": 16,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 392,
+            "column": 4,
+            "issue_type": "refactor",
+            "symbol": "too-many-locals",
+            "message": "Too many local variables (16/15)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 392,
+            "column": 4,
+            "issue_type": "refactor",
+            "symbol": "too-many-branches",
+            "message": "Too many branches (13/12)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 559,
+            "column": 8,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 563,
+            "column": 4,
+            "issue_type": "convention",
+            "symbol": "import-outside-toplevel",
+            "message": "Import outside toplevel (argparse)",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 603,
+            "column": 8,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 606,
+            "column": 4,
+            "issue_type": "warning",
+            "symbol": "logging-fstring-interpolation",
+            "message": "Use lazy % formatting in logging functions",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 627,
+            "column": 10,
+            "issue_type": "warning",
+            "symbol": "f-string-without-interpolation",
+            "message": "Using an f-string that does not have any interpolated variables",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 635,
+            "column": 10,
+            "issue_type": "warning",
+            "symbol": "f-string-without-interpolation",
+            "message": "Using an f-string that does not have any interpolated variables",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 641,
+            "column": 14,
+            "issue_type": "warning",
+            "symbol": "f-string-without-interpolation",
+            "message": "Using an f-string that does not have any interpolated variables",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 646,
+            "column": 14,
+            "issue_type": "warning",
+            "symbol": "f-string-without-interpolation",
+            "message": "Using an f-string that does not have any interpolated variables",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 652,
+            "column": 14,
+            "issue_type": "warning",
+            "symbol": "f-string-without-interpolation",
+            "message": "Using an f-string that does not have any interpolated variables",
+            "confidence": "HIGH"
+          },
+          {
+            "file_path": "code_quality_validator.py",
+            "line_number": 19,
+            "column": 0,
+            "issue_type": "warning",
+            "symbol": "unused-import",
+            "message": "Unused import re",
+            "confidence": "HIGH"
+          }
+        ],
+        "rating": "Excellent",
+        "processing_time": 1.7004239559173584,
+        "error_message": null
+      }
+    }
+  ]
+}

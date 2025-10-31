@@ -1,0 +1,250 @@
+{
+  "summary": {
+    "total_suites": 5,
+    "successful_suites": 0,
+    "failed_suites": 5,
+    "total_tests": 0,
+    "total_passed": 0,
+    "total_failed": 0,
+    "total_skipped": 0,
+    "total_errors": 0,
+    "success_rate": 0,
+    "total_duration_seconds": 1.1342873573303223,
+    "average_coverage": null,
+    "average_memory_usage_mb": 0.0,
+    "execution_timestamp": "2025-10-31T12:07:28.212938",
+    "system_info": {
+      "cpu_count": 24,
+      "memory_total_gb": 127.7203598022461,
+      "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "win32"
+    }
+  },
+  "suite_results": [
+    {
+      "suite_name": "unit_tests",
+      "start_time": "2025-10-31T12:07:23.008130",
+      "end_time": "2025-10-31T12:07:23.241614",
+      "duration_seconds": 0.23348379135131836,
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "coverage_percentage": null,
+      "exit_code": 4,
+      "report_path": "reports\\unified_tests\\unit_tests_report.html",
+      "log_path": "reports\\unified_tests\\unit_tests.log",
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\unit_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\unit_tests_report.json --cov-report=xml:reports\\unified_tests\\unit_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/unit_tests_junit.xml --log-file=reports\\unified_tests\\unit_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m unit and not slow --timeout 300 -n 4 --cov=src --cov-fail-under 90.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      },
+      "memory_usage_mb": 0.0
+    },
+    {
+      "suite_name": "integration_tests",
+      "start_time": "2025-10-31T12:07:24.052528",
+      "end_time": "2025-10-31T12:07:24.290622",
+      "duration_seconds": 0.23809456825256348,
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "coverage_percentage": null,
+      "exit_code": 4,
+      "report_path": "reports\\unified_tests\\integration_tests_report.html",
+      "log_path": "reports\\unified_tests\\integration_tests.log",
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\integration_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\integration_tests_report.json --cov-report=xml:reports\\unified_tests\\integration_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/integration_tests_junit.xml --log-file=reports\\unified_tests\\integration_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m integration --timeout 600 -n 2 --cov=src --cov-fail-under 80.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      },
+      "memory_usage_mb": 0.0
+    },
+    {
+      "suite_name": "performance_tests",
+      "start_time": "2025-10-31T12:07:25.099091",
+      "end_time": "2025-10-31T12:07:25.321297",
+      "duration_seconds": 0.22220587730407715,
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "coverage_percentage": null,
+      "exit_code": 4,
+      "report_path": "reports\\unified_tests\\performance_tests_report.html",
+      "log_path": "reports\\unified_tests\\performance_tests.log",
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\performance_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\performance_tests_report.json --cov-report=xml:reports\\unified_tests\\performance_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/performance_tests_junit.xml --log-file=reports\\unified_tests\\performance_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m performance and benchmark --timeout 1200",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      },
+      "memory_usage_mb": 0.0
+    },
+    {
+      "suite_name": "e2e_tests",
+      "start_time": "2025-10-31T12:07:26.137077",
+      "end_time": "2025-10-31T12:07:26.357219",
+      "duration_seconds": 0.22014188766479492,
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "coverage_percentage": null,
+      "exit_code": 4,
+      "report_path": "reports\\unified_tests\\e2e_tests_report.html",
+      "log_path": "reports\\unified_tests\\e2e_tests.log",
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\e2e_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\e2e_tests_report.json --cov-report=xml:reports\\unified_tests\\e2e_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/e2e_tests_junit.xml --log-file=reports\\unified_tests\\e2e_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m e2e and workflow --timeout 900 --cov=src --cov-fail-under 70.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      },
+      "memory_usage_mb": 0.0
+    },
+    {
+      "suite_name": "quality_tests",
+      "start_time": "2025-10-31T12:07:27.174598",
+      "end_time": "2025-10-31T12:07:27.394960",
+      "duration_seconds": 0.22036123275756836,
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "coverage_percentage": null,
+      "exit_code": 4,
+      "report_path": "reports\\unified_tests\\quality_tests_report.html",
+      "log_path": "reports\\unified_tests\\quality_tests.log",
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\quality_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\quality_tests_report.json --cov-report=xml:reports\\unified_tests\\quality_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/quality_tests_junit.xml --log-file=reports\\unified_tests\\quality_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m quality and lint and format --timeout 300 -n 2",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      },
+      "memory_usage_mb": 0.0
+    }
+  ],
+  "failed_suites": [
+    {
+      "name": "unit_tests",
+      "exit_code": 4,
+      "failed_tests": 0,
+      "error_tests": 0,
+      "duration": 0.23348379135131836,
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\unit_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\unit_tests_report.json --cov-report=xml:reports\\unified_tests\\unit_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/unit_tests_junit.xml --log-file=reports\\unified_tests\\unit_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m unit and not slow --timeout 300 -n 4 --cov=src --cov-fail-under 90.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      }
+    },
+    {
+      "name": "integration_tests",
+      "exit_code": 4,
+      "failed_tests": 0,
+      "error_tests": 0,
+      "duration": 0.23809456825256348,
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\integration_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\integration_tests_report.json --cov-report=xml:reports\\unified_tests\\integration_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/integration_tests_junit.xml --log-file=reports\\unified_tests\\integration_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m integration --timeout 600 -n 2 --cov=src --cov-fail-under 80.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      }
+    },
+    {
+      "name": "performance_tests",
+      "exit_code": 4,
+      "failed_tests": 0,
+      "error_tests": 0,
+      "duration": 0.22220587730407715,
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\performance_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\performance_tests_report.json --cov-report=xml:reports\\unified_tests\\performance_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/performance_tests_junit.xml --log-file=reports\\unified_tests\\performance_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m performance and benchmark --timeout 1200",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      }
+    },
+    {
+      "name": "e2e_tests",
+      "exit_code": 4,
+      "failed_tests": 0,
+      "error_tests": 0,
+      "duration": 0.22014188766479492,
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\e2e_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\e2e_tests_report.json --cov-report=xml:reports\\unified_tests\\e2e_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/e2e_tests_junit.xml --log-file=reports\\unified_tests\\e2e_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m e2e and workflow --timeout 900 --cov=src --cov-fail-under 70.0",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      }
+    },
+    {
+      "name": "quality_tests",
+      "exit_code": 4,
+      "failed_tests": 0,
+      "error_tests": 0,
+      "duration": 0.22036123275756836,
+      "performance_metrics": {
+        "discovered_tests": 55,
+        "command": "C:\\Users\\Matthew\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest --verbose --tb=short --html=reports\\unified_tests\\quality_tests_report.html --self-contained-html --json-report --json-report-file=reports\\unified_tests\\quality_tests_report.json --cov-report=xml:reports\\unified_tests\\quality_tests_coverage.xml --cov-report=term-missing --junit-xml=reports\\unified_tests/quality_tests_junit.xml --log-file=reports\\unified_tests\\quality_tests.log --log-level=INFO --durations=10 tests\\test_application_closing_comprehensive.py tests\\test_basic_functionality.py tests\\test_centralized_logging_comprehensive.py tests\\test_comprehensive_performance_framework.py tests\\test_comprehensive_theme_fixes.py tests\\test_database_performance_benchmarks.py tests\\test_database_refactored_comprehensive.py tests\\test_default_theme_behavior.py tests\\test_end_to_end_workflows_complete.py tests\\test_end_to_end_workflows_fixed.py tests\\test_fast_hasher.py tests\\test_gui_framework.py tests\\test_gui_performance_requirements.py tests\\test_headlight_comprehensive_validation.py tests\\test_headlight_fix_validation.py tests\\test_import_analysis_service.py tests\\test_import_file_manager.py tests\\test_import_thumbnail_service.py tests\\test_improved_error_handling_comprehensive.py tests\\test_main_window.py tests\\test_minimal_components.py tests\\test_minimal_functionality.py tests\\test_optimized_cleanup_system.py tests\\test_performance_basic.py tests\\test_performance_corrected.py tests\\test_performance_regression_framework.py tests\\test_performance_requirements_validation.py tests\\test_performance_validation.py tests\\test_preferences_dark_blue_default.py tests\\test_preferences_theme_modes.py tests\\test_preferences_variant_switching.py tests\\test_professional_themes.py tests\\test_professional_themes_simple.py tests\\test_qt_material_comprehensive.py tests\\test_qt_material_simple.py tests\\test_qt_material_takeover.py tests\\test_qt_material_takeover_fixed.py tests\\test_refactored_parsers_comprehensive.py tests\\test_simple_components.py tests\\test_tabbed_lighting_panel.py tests\\test_theme_consistency_fix.py tests\\test_theme_fix_verification.py tests\\test_theme_graceful_degradation.py tests\\test_theme_startup_fix.py tests\\test_theme_switching_verification.py tests\\test_unified_cleanup_system.py tests\\test_variant_colors.py tests\\test_variant_fix.py tests\\test_variant_fix_corrected.py tests\\test_visual_theme_application.py tests\\test_vtk_resource_tracker_fix.py tests\\test_vtk_theme_integration.py tests\\comprehensive_theme_consistency_test.py tests\\final_theme_consistency_test.py tests\\theme_consistency_fix_test.py -m quality and lint and format --timeout 300 -n 2",
+        "stdout_lines": 0,
+        "stderr_lines": 2
+      }
+    }
+  ],
+  "recommendations": [
+    "All tests passed! Excellent work maintaining code quality."
+  ],
+  "quality_gates": [
+    {
+      "name": "test_success_rate",
+      "threshold": 95.0,
+      "actual": 0,
+      "passed": false,
+      "severity": "critical"
+    }
+  ],
+  "performance_analysis": {
+    "total_duration": 1.1342873573303223,
+    "average_duration": 0.22685747146606444,
+    "max_duration": 0.23809456825256348,
+    "min_duration": 0.22014188766479492,
+    "total_memory_usage": 0.0,
+    "average_memory_usage": 0.0,
+    "parallel_efficiency": 0.9528040607185164,
+    "suite_performance": {
+      "unit_tests": {
+        "duration": 0.23348379135131836,
+        "memory_usage": 0.0,
+        "tests_per_second": 0.0
+      },
+      "integration_tests": {
+        "duration": 0.23809456825256348,
+        "memory_usage": 0.0,
+        "tests_per_second": 0.0
+      },
+      "performance_tests": {
+        "duration": 0.22220587730407715,
+        "memory_usage": 0.0,
+        "tests_per_second": 0.0
+      },
+      "e2e_tests": {
+        "duration": 0.22014188766479492,
+        "memory_usage": 0.0,
+        "tests_per_second": 0.0
+      },
+      "quality_tests": {
+        "duration": 0.22036123275756836,
+        "memory_usage": 0.0,
+        "tests_per_second": 0.0
+      }
+    }
+  }
+}

@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 import gc
 
 from src.core.logging_config import get_logger
-from src.core.performance_monitor import get_performance_monitor, profile_operation
+from src.core.performance_monitor import get_performance_monitor, monitor_operation
 from src.core.data_structures import (
     Model, ModelFormat, Triangle, Vector3D, ModelStats,
     LoadingState

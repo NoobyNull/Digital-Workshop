@@ -1,0 +1,20 @@
+Digital Workshop Root Directory Cleanup Summary 
+=============================================== 
+Date: 2025-10-31 21:38:05 
+Backup Location: ..\digital-workshop-backup-20251031-213805 
+ 
+File Movement Summary: 
+- Files before cleanup: 92 
+- Files after cleanup: 24 
+- Files moved: 71 
+ 
+Essential Files Status: 
+- README.md: PRESENT 
+- pyproject.toml: PRESENT 
+- requirements.txt: PRESENT 
+- run.py: PRESENT 
+- build.py: PRESENT 
+ 
+Cleanup completed successfully 
+Backup available at: ..\digital-workshop-backup-20251031-213805 
+Summary report: cleanup_summary_20251031_213805.txt 

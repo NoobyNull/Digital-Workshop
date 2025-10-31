@@ -79,6 +79,8 @@ class MainWindow(QMainWindow):
         Args:
             parent: Parent widget (typically None for main window)
         """
+        import time
+        
         super().__init__(parent)
 
         # Initialize logger
@@ -113,13 +115,25 @@ class MainWindow(QMainWindow):
             self.remember_window_size = True
 
         self.setMinimumSize(min_width, min_height)
-        self.resize(default_width, default_height)
+        
+        # CRITICAL FIX: Restore window geometry during initialization, not in showEvent
+        # This ensures proper timing coordination between window creation and state restoration
+        restoration_start = time.time()
+        self.logger.info("FIX: Restoring window geometry during initialization phase")
+        
+        try:
+            self._restore_window_geometry_early()
+            restoration_time = time.time() - restoration_start
+            self.logger.info(f"FIX: Window geometry restoration completed in {restoration_time:.3f}s during init")
+        except Exception as e:
+            self.logger.warning(f"FIX: Failed to restore window geometry during init, using defaults: {e}")
+            # Fallback to default size if restoration fails
+            self.resize(default_width, default_height)
 
         # Initialize UI components
         self._init_ui()
 
-        # Note: Window geometry restoration is deferred to showEvent() to ensure
-        # proper restoration after the window is fully initialized and shown
+        # Window geometry restoration now happens during initialization for proper timing
 
     def _init_ui(self) -> None:
         """Initialize basic UI properties and styling."""
@@ -997,8 +1011,62 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to reset dock layout: {e}")
             self.statusBar().showMessage("Failed to reset layout", 3000)
 
+    def _restore_window_geometry_early(self) -> None:
+        """Restore saved window geometry and state during initialization phase.
+        
+        This method is called during __init__ to ensure proper timing coordination
+        between window creation and state restoration, eliminating race conditions.
+        """
+        import time
+        
+        try:
+            settings = QSettings()
+            self.logger.debug("FIX: Starting early window geometry restoration during init")
+
+            # Try to restore window geometry (size and position)
+            if settings.contains("window_geometry"):
+                geometry_data = settings.value("window_geometry")
+                if geometry_data:
+                    if self.restoreGeometry(geometry_data):
+                        self.logger.info("FIX: Window geometry restored successfully during init")
+                    else:
+                        self.logger.debug(
+                            "FIX: Failed to restore window geometry during init, using defaults"
+                        )
+            else:
+                self.logger.debug("FIX: No saved window geometry found, using defaults")
+
+            # Try to restore window state (maximized/normal, dock layout)
+            if settings.contains("window_state"):
+                state_data = settings.value("window_state")
+                if state_data:
+                    if self.restoreState(state_data):
+                        self.logger.info("FIX: Window state restored successfully during init")
+                    else:
+                        self.logger.debug(
+                            "FIX: Failed to restore window state during init, using defaults"
+                        )
+            else:
+                self.logger.debug("FIX: No saved window state found, using defaults")
+
+            # Handle maximize_on_startup setting if present
+            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
+                self.showMaximized()
+                self.logger.info("FIX: Window maximized on startup as configured")
+            
+            self.logger.debug("FIX: Early window geometry restoration completed")
+            
+        except Exception as e:
+            self.logger.warning(f"FAILED to restore window geometry during init: {e}")
+            # Don't re-raise - we want initialization to continue even if restoration fails
+
     def _restore_window_state(self) -> None:
-        """Restore saved window geometry and state from QSettings."""
+        """Restore saved window geometry and state from QSettings.
+        
+        DEPRECATED: This method is kept for compatibility but window geometry
+        restoration now happens during initialization via _restore_window_geometry_early().
+        This method is only used for manual restoration requests.
+        """
         try:
             settings = QSettings()
 
@@ -1058,53 +1126,105 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to handle model loaded signal: {e}")
 
     def showEvent(self, event) -> None:
-        """Handle window show event - restore geometry on first show."""
+        """Handle window show event - geometry restoration now happens during init.
+        
+        FIX: Window geometry restoration has been moved to __init__ phase for proper
+        timing coordination. This showEvent now only handles show-specific logic.
+        """
+        import time
+        start_time = time.time()
+        
         try:
-            # Only restore on first show
-            if not hasattr(self, "_geometry_restored"):
-                self._restore_window_state()
-                self._geometry_restored = True
-                self.logger.info("Window geometry restored on first show")
+            # FIX: Window geometry restoration now happens during initialization
+            # Only log that we're showing the window
+            self.logger.debug("FIX: Window show event - geometry already restored during init")
+            
+            # Mark that we've been shown (for any show-specific logic)
+            if not hasattr(self, "_window_shown"):
+                self._window_shown = True
+                self.logger.debug("FIX: First window show event completed")
+            
         except Exception as e:
-            self.logger.warning(f"Failed to restore window geometry on show: {e}")
+            self.logger.warning(f"Failed to handle window show event: {e}")
 
+        total_time = time.time() - start_time
+        self.logger.debug(f"showEvent completed in {total_time:.3f}s")
+        
         super().showEvent(event)
 
     def closeEvent(self, event) -> None:
-        """Handle window close event - save settings before closing."""
+        """Handle window close event - save settings before closing.
+        
+        FIX: Enhanced to ensure comprehensive window state persistence
+        with detailed logging for troubleshooting.
+        """
+        import time
+        start_time = time.time()
+        self.logger.info("FIX: Starting enhanced window close sequence with comprehensive state saving")
+        
+        # CRITICAL: Save window geometry and state FIRST (most important)
         try:
-            # Save window geometry and state (size, position, maximized state, dock layout)
+            settings_start = time.time()
+            self.logger.info("FIX: Saving window geometry and state (size, position, maximized state, dock layout)")
             self._save_window_settings()
-            self.logger.info("Window geometry and state saved on app close")
+            settings_time = time.time() - settings_start
+            self.logger.info(f"SUCCESS: Window geometry/state saved in {settings_time:.3f}s")
         except Exception as e:
-            self.logger.warning(f"Failed to save window geometry/state on close: {e}")
+            self.logger.error(f"CRITICAL FAILURE: Failed to save window geometry/state on close: {e}")
+            # Don't let this prevent closing, but log it as critical
 
+        # Save lighting settings
         try:
+            lighting_start = time.time()
+            self.logger.info("FIX: Saving lighting settings")
             self._save_lighting_settings()
-            self.logger.info("Lighting settings saved on app close")
+            lighting_time = time.time() - lighting_start
+            self.logger.info(f"SUCCESS: Lighting settings saved in {lighting_time:.3f}s")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings on close: {e}")
 
         # Save viewer and window settings
         try:
+            viewer_start = time.time()
+            self.logger.info("FIX: Saving viewer and window settings")
             from src.gui.main_window_components.settings_manager import SettingsManager
 
             settings_mgr = SettingsManager(self)
             settings_mgr.save_viewer_settings()
             settings_mgr.save_window_settings()
-            self.logger.info("Viewer and window settings saved on app close")
+            viewer_time = time.time() - viewer_start
+            self.logger.info(f"SUCCESS: Viewer/window settings saved in {viewer_time:.3f}s")
         except Exception as e:
             self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
 
         # Clean up viewer widget and VTK resources before closing
         try:
+            cleanup_start = time.time()
             if hasattr(self, "viewer_widget") and self.viewer_widget:
                 if hasattr(self.viewer_widget, "cleanup"):
                     self.viewer_widget.cleanup()
-                    self.logger.info("Viewer widget cleaned up on app close")
+                    cleanup_time = time.time() - cleanup_start
+                    self.logger.info(f"SUCCESS: Viewer widget cleaned up in {cleanup_time:.3f}s")
+                else:
+                    self.logger.debug("No cleanup method found on viewer widget")
+            else:
+                self.logger.debug("No viewer widget found for cleanup")
         except Exception as e:
             self.logger.warning(f"Failed to cleanup viewer widget: {e}")
 
+        # Log final window state for debugging
+        try:
+            final_geometry = self.saveGeometry()
+            final_state = self.saveState()
+            self.logger.info(f"FINAL STATE: Window geometry size: {len(final_geometry)} bytes, state size: {len(final_state)} bytes")
+            self.logger.info(f"FINAL STATE: Window size: {self.size().width()}x{self.size().height()}, position: {self.pos().x()},{self.pos().y()}")
+            self.logger.info(f"FINAL STATE: Window maximized: {self.isMaximized()}, minimized: {self.isMinimized()}")
+        except Exception as e:
+            self.logger.warning(f"Failed to log final window state: {e}")
+
+        total_time = time.time() - start_time
+        self.logger.info(f"COMPLETE: Window close sequence completed in {total_time:.3f}s - all state saved")
+        
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:

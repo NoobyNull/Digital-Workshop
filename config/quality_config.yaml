@@ -1,0 +1,80 @@
+# Quality Gate Configuration
+# This file defines the quality gates and tool configurations for the Quality Gate Enforcement System
+
+quality_gates:
+  monolithic_modules:
+    name: "Monolithic Modules"
+    description: "No modules over 500 lines of code"
+    threshold: 0
+    operator: "=="
+    severity: "critical"
+    auto_fix: false
+    enabled: true
+  
+  naming_conventions:
+    name: "Naming Conventions"
+    description: "95% compliance with naming conventions"
+    threshold: 95.0
+    operator: ">="
+    severity: "major"
+    auto_fix: false
+    enabled: true
+  
+  test_execution:
+    name: "Test Execution"
+    description: "95% test success rate"
+    threshold: 95.0
+    operator: ">="
+    severity: "critical"
+    auto_fix: false
+    enabled: true
+  
+  code_quality:
+    name: "Code Quality"
+    description: "95.56% overall code quality compliance"
+    threshold: 95.56
+    operator: ">="
+    severity: "critical"
+    auto_fix: false
+    enabled: true
+
+tools:
+  code_quality_validator:
+    command: "python"
+    args: ["code_quality_validator.py", "src/", "--output", "reports/code_quality_report.json"]
+    timeout: 60
+    enabled: true
+    output_pattern: "reports/code_quality_report.json"
+  
+  monolithic_detector:
+    command: "python"
+    args: ["monolithic_detector.py", "src/", "--threshold", "500", "--output", "reports/monolithic_report.json"]
+    timeout: 30
+    enabled: true
+    output_pattern: "reports/monolithic_report.json"
+  
+  naming_validator:
+    command: "python"
+    args: ["naming_validator.py", "src/", "--output", "reports/naming_report.json"]
+    timeout: 30
+    enabled: true
+    output_pattern: "reports/naming_report.json"
+  
+  unified_test_runner:
+    command: "python"
+    args: ["-m", "pytest", "tests/", "--tb=short", "--json-report", "--json-report-file=reports/test_report.json"]
+    timeout: 120
+    enabled: true
+    output_pattern: "reports/test_report.json"
+
+reporting:
+  formats: ["json", "console"]
+  paths:
+    json: "reports/quality_gate_report.json"
+    html: "reports/quality_gate_report.html"
+    console: "console"
+
+performance:
+  max_execution_time: 600  # 10 minutes
+  parallel_execution: true
+  max_parallel_tools: 4

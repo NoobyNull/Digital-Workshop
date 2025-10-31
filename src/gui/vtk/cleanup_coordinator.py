@@ -59,6 +59,10 @@ class VTKCleanupCoordinator:
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()
         self.context_manager = get_vtk_context_manager()
+        
+        # CRITICAL FIX: Robust resource tracker initialization with fallback
+        self.resource_tracker = None
+        self._initialize_resource_tracker_with_fallback()
 
         # Cleanup state
         self.cleanup_in_progress = False
@@ -70,6 +74,104 @@ class VTKCleanupCoordinator:
         self._setup_cleanup_phases()
 
         self.logger.info("VTK Cleanup Coordinator initialized")
+
+    def _initialize_resource_tracker_with_fallback(self) -> None:
+        """
+        CRITICAL FIX: Initialize resource tracker with robust fallback mechanisms.
+        
+        This method ensures the resource tracker is always available during cleanup
+        operations, even if the primary initialization fails.
+        """
+        max_retries = 3
+        retry_delay = 0.1  # 100ms between retries
+        
+        for attempt in range(max_retries):
+            try:
+                self.logger.info(f"CRITICAL FIX: Initializing resource tracker (attempt {attempt + 1}/{max_retries})")
+                
+                # Try to get the global resource tracker
+                tracker = get_vtk_resource_tracker()
+                
+                # Verify the tracker is functional
+                if tracker is not None:
+                    # Test basic functionality
+                    test_stats = tracker.get_statistics()
+                    if isinstance(test_stats, dict):
+                        self.resource_tracker = tracker
+                        self.logger.info("CRITICAL FIX: Resource tracker initialized successfully with fallback")
+                        return
+                    else:
+                        raise ValueError("Resource tracker returned invalid statistics")
+                else:
+                    raise ValueError("Resource tracker is None")
+                    
+            except Exception as e:
+                self.logger.warning(f"CRITICAL FIX: Resource tracker initialization attempt {attempt + 1} failed: {e}")
+                
+                if attempt < max_retries - 1:
+                    self.logger.info(f"CRITICAL FIX: Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    self.logger.error("CRITICAL FIX: All resource tracker initialization attempts failed")
+        
+        # Final fallback: Create a minimal mock tracker for cleanup operations
+        self._create_fallback_resource_tracker()
+        
+    def _create_fallback_resource_tracker(self) -> None:
+        """
+        Create a minimal fallback resource tracker when the primary tracker fails.
+        
+        This ensures cleanup operations can still proceed even without the full
+        resource tracking functionality.
+        """
+        try:
+            class FallbackResourceTracker:
+                """Minimal fallback resource tracker for emergency cleanup."""
+                
+                def __init__(self):
+                    self.logger = get_logger(__name__)
+                    self.resources = {}
+                    
+                def cleanup_all_resources(self) -> Dict[str, int]:
+                    """Fallback cleanup that does basic resource cleanup."""
+                    try:
+                        self.logger.info("CRITICAL FIX: Using fallback resource tracker for cleanup")
+                        success_count = 0
+                        error_count = 0
+                        
+                        # Basic cleanup without tracking
+                        for resource_id, resource_info in self.resources.items():
+                            try:
+                                resource = resource_info.get("resource")
+                                if resource and hasattr(resource, "Delete"):
+                                    resource.Delete()
+                                    success_count += 1
+                            except Exception:
+                                error_count += 1
+                        
+                        return {
+                            "total": len(self.resources),
+                            "success": success_count,
+                            "errors": error_count
+                        }
+                    except Exception as e:
+                        self.logger.error(f"CRITICAL FIX: Fallback cleanup failed: {e}")
+                        return {"total": 0, "success": 0, "errors": 1}
+                
+                def get_statistics(self) -> Dict[str, Any]:
+                    """Return minimal statistics for fallback tracker."""
+                    return {
+                        "total_tracked": len(self.resources),
+                        "fallback_mode": True
+                    }
+            
+            self.resource_tracker = FallbackResourceTracker()
+            self.logger.warning("CRITICAL FIX: Fallback resource tracker created - limited cleanup functionality")
+            
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Failed to create fallback resource tracker: {e}")
+            self.resource_tracker = None
 
     def _setup_cleanup_phases(self) -> None:
         """Set up cleanup phases and their priorities."""
@@ -427,35 +529,155 @@ class VTKCleanupCoordinator:
             return True
 
     def _final_cleanup(self) -> Optional[bool]:
-        """Final cleanup phase: Last cleanup operations."""
+        """Final cleanup phase: Last cleanup operations with robust resource tracker handling."""
         try:
-            # Clean up all tracked resources in the resource tracker
-            try:
-                cleanup_stats = self.resource_tracker.cleanup_all_resources()
-                self.logger.debug(
-                    f"Resource tracker cleanup: {cleanup_stats['success']} "
-                    f"cleaned, {cleanup_stats['errors']} errors"
-                )
-            except Exception as e:
-                self.logger.debug(f"Error cleaning tracked resources: {e}")
+            # CRITICAL FIX: Enhanced resource tracker cleanup with comprehensive error handling
+            self._perform_robust_resource_tracker_cleanup()
 
-            # Clear all resource references
-            for name, resource_info in self.cleanup_resources.items():
-                resource_info["resource"] = None
-                resource_info["cleaned"] = True
+            # Clear all resource references with enhanced logging
+            self._clear_resource_references()
 
-            # Clear context cache
-            self.context_manager.clear_context_cache()
+            # Clear context cache with error handling
+            self._clear_context_cache_safely()
 
-            # Force garbage collection
+            # Force garbage collection with timing
+            start_time = time.time()
             gc.collect()
+            gc_time = time.time() - start_time
+            self.logger.debug(f"CRITICAL FIX: Garbage collection completed in {gc_time:.3f}s")
 
-            self.logger.debug("Final cleanup completed")
+            self.logger.info("CRITICAL FIX: Final cleanup phase completed successfully")
             return True
 
         except Exception as e:
-            self.logger.debug(f"Final cleanup error: {e}")
+            self.logger.error(f"CRITICAL FIX: Final cleanup error: {e}")
             return True
+
+    def _perform_robust_resource_tracker_cleanup(self) -> None:
+        """
+        CRITICAL FIX: Perform resource tracker cleanup with multiple fallback strategies.
+        
+        This method ensures resource cleanup happens even if the resource tracker
+        becomes unavailable during shutdown.
+        """
+        try:
+            if self.resource_tracker is not None:
+                try:
+                    # Verify tracker is still functional
+                    stats = self.resource_tracker.get_statistics()
+                    if isinstance(stats, dict):
+                        self.logger.info("CRITICAL FIX: Resource tracker is functional, performing cleanup")
+                        cleanup_stats = self.resource_tracker.cleanup_all_resources()
+                        
+                        self.logger.info(
+                            f"CRITICAL FIX: Resource tracker cleanup completed - "
+                            f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
+                        )
+                    else:
+                        raise ValueError("Resource tracker returned invalid statistics")
+                        
+                except Exception as e:
+                    self.logger.warning(f"CRITICAL FIX: Resource tracker cleanup failed: {e}")
+                    # Try to reinitialize the tracker
+                    self._attempt_tracker_reinitialization()
+            else:
+                self.logger.warning("CRITICAL FIX: Resource tracker is None, attempting emergency cleanup")
+                self._perform_emergency_cleanup()
+
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Critical error in resource tracker cleanup: {e}")
+            # Last resort: perform basic cleanup without tracking
+            self._perform_basic_emergency_cleanup()
+
+    def _attempt_tracker_reinitialization(self) -> None:
+        """Attempt to reinitialize the resource tracker during cleanup."""
+        try:
+            self.logger.info("CRITICAL FIX: Attempting to reinitialize resource tracker")
+            self._initialize_resource_tracker_with_fallback()
+            
+            if self.resource_tracker is not None:
+                self.logger.info("CRITICAL FIX: Resource tracker reinitialized successfully")
+                # Try cleanup again with reinitialized tracker
+                cleanup_stats = self.resource_tracker.cleanup_all_resources()
+                self.logger.info(
+                    f"CRITICAL FIX: Reinitialized tracker cleanup - "
+                    f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
+                )
+            else:
+                self.logger.warning("CRITICAL FIX: Failed to reinitialize resource tracker")
+                
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Failed to reinitialize resource tracker: {e}")
+
+    def _perform_emergency_cleanup(self) -> None:
+        """Perform emergency cleanup when resource tracker is unavailable."""
+        try:
+            self.logger.warning("CRITICAL FIX: Performing emergency cleanup without resource tracker")
+            
+            # Try to get a fresh resource tracker instance
+            try:
+                emergency_tracker = get_vtk_resource_tracker()
+                if emergency_tracker is not None:
+                    cleanup_stats = emergency_tracker.cleanup_all_resources()
+                    self.logger.info(
+                        f"CRITICAL FIX: Emergency tracker cleanup - "
+                        f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
+                    )
+                else:
+                    raise ValueError("Emergency tracker is also None")
+            except Exception:
+                self.logger.warning("CRITICAL FIX: Emergency tracker unavailable, using basic cleanup")
+                self._perform_basic_emergency_cleanup()
+                
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Emergency cleanup failed: {e}")
+
+    def _perform_basic_emergency_cleanup(self) -> None:
+        """Perform basic emergency cleanup without any resource tracking."""
+        try:
+            self.logger.warning("CRITICAL FIX: Performing basic emergency cleanup")
+            
+            # Clean up any VTK objects we can find
+            vtk.vtkObject.GlobalWarningDisplayOff()  # Suppress warnings during emergency cleanup
+            
+            # Force garbage collection multiple times
+            for i in range(3):
+                gc.collect()
+                time.sleep(0.01)
+            
+            self.logger.info("CRITICAL FIX: Basic emergency cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Basic emergency cleanup failed: {e}")
+
+    def _clear_resource_references(self) -> None:
+        """Clear all resource references with enhanced logging."""
+        try:
+            cleared_count = 0
+            for resource_name, resource_info in self.cleanup_resources.items():
+                try:
+                    resource_info["resource"] = None
+                    resource_info["cleaned"] = True
+                    cleared_count += 1
+                    self.logger.debug(f"CRITICAL FIX: Cleared resource reference: {resource_name}")
+                except Exception as e:
+                    self.logger.debug(f"CRITICAL FIX: Error clearing resource {resource_name}: {e}")
+            
+            self.logger.info(f"CRITICAL FIX: Cleared {cleared_count} resource references")
+            
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Error clearing resource references: {e}")
+
+    def _clear_context_cache_safely(self) -> None:
+        """Clear context cache with comprehensive error handling."""
+        try:
+            if hasattr(self.context_manager, 'clear_context_cache'):
+                self.context_manager.clear_context_cache()
+                self.logger.debug("CRITICAL FIX: Context cache cleared successfully")
+            else:
+                self.logger.debug("CRITICAL FIX: Context manager does not have clear_context_cache method")
+        except Exception as e:
+            self.logger.debug(f"CRITICAL FIX: Context cache clear error: {e}")
 
     def _post_cleanup(self) -> Optional[bool]:
         """Post-cleanup phase: Verify cleanup."""

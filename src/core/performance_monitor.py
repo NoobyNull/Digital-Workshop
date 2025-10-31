@@ -462,6 +462,78 @@ class PerformanceMonitor:
         """
         return self.performance_profile
 
+    def get_performance_report(self) -> Dict[str, Any]:
+        """
+        Get comprehensive performance report for viewer widget integration.
+        
+        Returns:
+            Dictionary containing system information and performance profile
+        """
+        try:
+            # Get current memory stats
+            memory_stats = self._get_memory_stats()
+            
+            # Create system info dictionary
+            system_info = {
+                'memory_total_gb': memory_stats.total_mb / 1024.0,
+                'memory_available_gb': memory_stats.available_mb / 1024.0,
+                'memory_used_percent': memory_stats.percent_used,
+                'process_memory_mb': memory_stats.process_mb,
+                'performance_level': self.performance_profile.performance_level.value,
+                'cpu_count': psutil.cpu_count(),
+            }
+            
+            # Create performance report
+            report = {
+                'system_info': system_info,
+                'performance_profile': {
+                    'performance_level': self.performance_profile.performance_level.value,
+                    'max_memory_mb': self.performance_profile.max_memory_mb,
+                    'recommended_cache_size_mb': self.performance_profile.recommended_cache_size_mb,
+                    'max_triangles_for_full_quality': self.performance_profile.max_triangles_for_full_quality,
+                    'adaptive_quality_enabled': self.performance_profile.adaptive_quality_enabled,
+                    'background_thread_count': self.performance_profile.background_thread_count,
+                    'chunk_size': self.performance_profile.chunk_size,
+                },
+                'current_stats': {
+                    'memory_percent': memory_stats.percent_used,
+                    'process_memory_mb': memory_stats.process_mb,
+                    'active_operations': len(self.active_operations),
+                    'completed_operations': len(self.completed_operations),
+                }
+            }
+            
+            return report
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate performance report: {str(e)}")
+            # Return fallback report
+            return {
+                'system_info': {
+                    'memory_total_gb': 8.0,
+                    'memory_available_gb': 4.0,
+                    'memory_used_percent': 50.0,
+                    'process_memory_mb': 100.0,
+                    'performance_level': 'standard',
+                    'cpu_count': 4,
+                },
+                'performance_profile': {
+                    'performance_level': 'standard',
+                    'max_memory_mb': 2048,
+                    'recommended_cache_size_mb': 256,
+                    'max_triangles_for_full_quality': 100000,
+                    'adaptive_quality_enabled': True,
+                    'background_thread_count': 4,
+                    'chunk_size': 5000,
+                },
+                'current_stats': {
+                    'memory_percent': 50.0,
+                    'process_memory_mb': 100.0,
+                    'active_operations': 0,
+                    'completed_operations': 0,
+                }
+            }
+
     def get_operation_metrics(self, operation_name: Optional[str] = None,
                             limit: int = 100) -> List[OperationMetrics]:
         """

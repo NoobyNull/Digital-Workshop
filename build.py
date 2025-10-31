@@ -33,11 +33,11 @@ BUILD_CONFIG = {
     "version": "1.0.0",
     "main_script": "src/main.py",
     "spec_file": "pyinstaller.spec",
-    "installer_script": "installer/inno_setup.iss",
+    "installer_script": "config/installer.nsi",
     "dist_dir": "dist",
     "build_dir": "build",
-    "installer_dir": "installer",
-    "assets_dir": "installer/assets"
+    "installer_dir": "config",
+    "assets_dir": "resources"
 }
 
 class BuildManager:
