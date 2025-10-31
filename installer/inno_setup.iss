@@ -3,7 +3,7 @@
 ; Updated to reflect current project structure after cleanup
 
 #define MyAppName "Digital Workshop"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Digital Workshop Development Team"
 #define MyAppURL "https://digitalworkshop.local"
 #define MyAppExeName "Digital Workshop.exe"
