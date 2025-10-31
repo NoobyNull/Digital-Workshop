@@ -63,9 +63,15 @@ def list_theme_presets() -> list[str]:
     return ThemeManager.instance().available_presets()
 
 
-def apply_theme_preset(preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+def apply_theme_preset(
+    preset_name: str,
+    custom_mode: Optional[str] = None,
+    base_primary: Optional[str] = None,
+) -> None:
     """Apply a theme preset via ThemeManager."""
-    ThemeManager.instance().apply_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
+    ThemeManager.instance().apply_preset(
+        preset_name, custom_mode=custom_mode, base_primary=base_primary
+    )
 
 
 def load_theme_from_settings() -> None:
@@ -84,6 +90,7 @@ def save_theme_to_settings() -> None:
 # ============================================================
 # Prebuilt QSS snippets (unchanged for backward compatibility)
 # ============================================================
+
 
 def qss_button_base() -> str:
     return (
@@ -217,4 +224,3 @@ def qss_groupbox_base() -> str:
         f"  color: {COLORS.text};"
         f"}}"
     )
-

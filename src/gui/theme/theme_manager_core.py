@@ -17,9 +17,14 @@ from typing import Any, Dict, Optional, Tuple, Union
 from PySide6.QtCore import QStandardPaths
 from PySide6.QtGui import QColor
 
-from .theme_constants import FALLBACK_COLOR, _normalize_hex, hex_to_qcolor, hex_to_vtk_rgb
+from .theme_constants import (
+    FALLBACK_COLOR,
+    _normalize_hex,
+    hex_to_qcolor,
+    hex_to_vtk_rgb,
+)
 from .theme_defaults import ThemeDefaults
-from .theme_palette import derive_mode_palette, PRESETS
+from .theme_palette import PRESETS, derive_mode_palette
 
 
 class ThemeManager:
@@ -38,12 +43,18 @@ class ThemeManager:
 
     def __init__(self) -> None:
         self._logger = logging.getLogger("gui.theme")
-        self._colors: Dict[str, str] = {k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()}
+        self._colors: Dict[str, str] = {
+            k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()
+        }
         self._version: int = 0  # bump whenever theme is updated
         self._preset_name: str = "custom"  # last applied preset name
         # CSS caches
-        self._css_file_cache: Dict[str, Tuple[float, int, str]] = {}  # path -> (mtime, version, processed_css)
-        self._css_text_cache: Dict[str, Tuple[int, str]] = {}  # key -> (version, processed_css)
+        self._css_file_cache: Dict[str, Tuple[float, int, str]] = (
+            {}
+        )  # path -> (mtime, version, processed_css)
+        self._css_text_cache: Dict[str, Tuple[int, str]] = (
+            {}
+        )  # key -> (version, processed_css)
         # Widget registry: weak refs to (widget, css_path, css_text)
         self._widgets: "weakref.WeakSet[Any]" = weakref.WeakSet()
         self._widget_sources: Dict[int, Tuple[Optional[str], Optional[str]]] = {}
@@ -68,7 +79,12 @@ class ThemeManager:
         """Get a color by name. Returns FALLBACK_COLOR if not found."""
         if name in self._colors:
             return _normalize_hex(self._colors[name])
-        self._log_json(logging.WARNING, "theme_fallback_color", variable=name, context=context or "")
+        self._log_json(
+            logging.WARNING,
+            "theme_fallback_color",
+            variable=name,
+            context=context or "",
+        )
         return FALLBACK_COLOR
 
     def set_colors(self, overrides: Dict[str, Any]) -> None:
@@ -82,7 +98,11 @@ class ThemeManager:
             self._version += 1
             self._css_file_cache.clear()
             self._css_text_cache.clear()
-            self._log_json(logging.INFO, "theme_updated", changed_keys=[k for k in overrides.keys() if k in self._colors])
+            self._log_json(
+                logging.INFO,
+                "theme_updated",
+                changed_keys=[k for k in overrides.keys() if k in self._colors],
+            )
 
     def available_presets(self) -> list[str]:
         """Return list of available built-in theme presets."""
@@ -93,18 +113,33 @@ class ThemeManager:
         """Name of the last applied preset. 'custom' when user edited manually."""
         return getattr(self, "_preset_name", "custom")
 
-    def apply_preset(self, preset_name: str, *, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+    def apply_preset(
+        self,
+        preset_name: str,
+        *,
+        custom_mode: Optional[str] = None,
+        base_primary: Optional[str] = None,
+    ) -> None:
         """Apply a named preset."""
         name = (preset_name or "custom").lower()
         if name in PRESETS:
             preset_colors = PRESETS[name]
             primary = preset_colors.get("primary", ThemeDefaults.primary)
-            mode = "dark" if preset_colors.get("window_bg", "#ffffff").lower() == "#000000" else "auto"
+            mode = (
+                "dark"
+                if preset_colors.get("window_bg", "#ffffff").lower() == "#000000"
+                else "auto"
+            )
             derived = derive_mode_palette(primary, mode=mode)
             merged = {**derived, **preset_colors}
             self.set_colors(merged)
             self._preset_name = name
-            self._log_json(logging.INFO, "theme_preset_applied", preset=name, colors_defined=len(merged))
+            self._log_json(
+                logging.INFO,
+                "theme_preset_applied",
+                preset=name,
+                colors_defined=len(merged),
+            )
             return
 
         # Custom derived theme
@@ -113,7 +148,9 @@ class ThemeManager:
         derived = derive_mode_palette(seed, mode=mode)
         self.set_colors(derived)
         self._preset_name = "custom"
-        self._log_json(logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed)
+        self._log_json(
+            logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed
+        )
 
     def qcolor(self, name: str) -> QColor:
         return hex_to_qcolor(self.get_color(name, context="qcolor"))
@@ -146,7 +183,9 @@ class ThemeManager:
             self._css_text_cache[key] = (self._version, processed)
             return processed
         except Exception as exc:
-            self._log_json(logging.ERROR, "css_template_processing_error", error=str(exc))
+            self._log_json(
+                logging.ERROR, "css_template_processing_error", error=str(exc)
+            )
             return css_text
 
     def process_css_file(self, path: Union[str, Path]) -> str:
@@ -160,7 +199,9 @@ class ThemeManager:
                 text = Path(p).read_text(encoding="utf-8")
                 return self.process_css_template(text)
             except Exception as exc2:
-                self._log_json(logging.ERROR, "css_file_read_error", path=p, error=str(exc2))
+                self._log_json(
+                    logging.ERROR, "css_file_read_error", path=p, error=str(exc2)
+                )
                 return ""
 
         cached = self._css_file_cache.get(p)
@@ -173,15 +214,26 @@ class ThemeManager:
             self._css_file_cache[p] = (mtime, self._version, processed)
             return processed
         except Exception as exc:
-            self._log_json(logging.ERROR, "css_file_processing_error", path=p, error=str(exc))
+            self._log_json(
+                logging.ERROR, "css_file_processing_error", path=p, error=str(exc)
+            )
             return ""
 
-    def register_widget(self, widget: Any, *, css_path: Optional[Union[str, Path]] = None, css_text: Optional[str] = None) -> None:
+    def register_widget(
+        self,
+        widget: Any,
+        *,
+        css_path: Optional[Union[str, Path]] = None,
+        css_text: Optional[str] = None,
+    ) -> None:
         """Register a widget for style application."""
         try:
             self._widgets.add(widget)
             key = id(widget)
-            self._widget_sources[key] = (str(css_path) if css_path is not None else None, css_text)
+            self._widget_sources[key] = (
+                str(css_path) if css_path is not None else None,
+                css_text,
+            )
         except Exception as exc:
             self._log_json(logging.ERROR, "widget_register_error", error=str(exc))
 
@@ -201,7 +253,13 @@ class ThemeManager:
                 ss = ""
             if hasattr(widget, "setStyleSheet"):
                 widget.setStyleSheet(ss)
-                self._log_json(logging.DEBUG, "stylesheet_applied", widget=str(widget), css_path=css_path or "", css_text_len=len(css_text or ""))
+                self._log_json(
+                    logging.DEBUG,
+                    "stylesheet_applied",
+                    widget=str(widget),
+                    css_path=css_path or "",
+                    css_text_len=len(css_text or ""),
+                )
         except Exception as exc:
             self._log_json(logging.ERROR, "stylesheet_apply_error", error=str(exc))
 
@@ -252,10 +310,14 @@ class ThemeManager:
     def export_theme(self, file_path: Union[str, Path]) -> None:
         """Export current theme to a JSON file at file_path."""
         try:
-            Path(file_path).write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
+            Path(file_path).write_text(
+                json.dumps(self.colors, indent=2), encoding="utf-8"
+            )
             self._log_json(logging.INFO, "theme_exported", path=str(file_path))
         except Exception as exc:
-            self._log_json(logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc))
+            self._log_json(
+                logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc)
+            )
 
     def import_theme(self, file_path: Union[str, Path]) -> None:
         """Import a theme from a JSON file at file_path."""
@@ -265,5 +327,6 @@ class ThemeManager:
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_imported", path=str(file_path))
         except Exception as exc:
-            self._log_json(logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc))
-
+            self._log_json(
+                logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc)
+            )

@@ -70,7 +70,7 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         # Brighter primaries work well with light UI by default
         dark = _relative_luminance_from_hex(p) < 0.35
     else:
-        dark = (mode == "dark")
+        dark = mode == "dark"
 
     if dark:
         window_bg = "#1e1f22"
@@ -116,7 +116,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "pressed": pressed,
         "selection_bg": selection_bg,
         "selection_text": selection_text,
-
         # Menubar
         "menubar_bg": surface,
         "menubar_text": text,
@@ -124,17 +123,14 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "menubar_item_hover_bg": p,
         "menubar_item_hover_text": primary_text,
         "menubar_item_pressed_bg": primary_hover,
-
         # Status bar
         "statusbar_bg": surface,
         "statusbar_text": text,
         "statusbar_border": border,
-
         # Toolbars
         "toolbar_bg": surface,
         "toolbar_border": border,
         "toolbar_handle_bg": border,
-
         "toolbutton_bg": "transparent",
         "toolbutton_border": "transparent",
         "toolbutton_hover_bg": hover,
@@ -143,14 +139,12 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "toolbutton_checked_bg": p,
         "toolbutton_checked_border": p,
         "toolbutton_checked_text": primary_text,
-
         # Dock
         "dock_bg": window_bg,
         "dock_text": text,
         "dock_border": border,
         "dock_title_bg": surface,
         "dock_title_border": border,
-
         # Buttons
         "button_bg": surface,
         "button_text": text,
@@ -168,7 +162,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "button_disabled_bg": _mix_hex(surface, border_light, 0.5),
         "button_disabled_text": "#9aa0a6",
         "button_disabled_border": _lighten(border, 0.2),
-
         # Inputs
         "input_bg": input_bg,
         "input_text": text,
@@ -176,24 +169,23 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "input_focus_border": p,
         "input_disabled_bg": _mix_hex(input_bg, border_light, 0.3),
         "input_disabled_text": "#9aa0a6",
-
         # Combo
         "combobox_bg": input_bg,
         "combobox_text": text,
         "combobox_border": border,
         "combobox_focus_border": p,
         "combobox_arrow_color": "#666666" if not dark else "#b7b7b7",
-
         # Progress
         "progress_bg": window_bg,
         "progress_text": text,
         "progress_border": border,
         "progress_chunk": p,
-        "progress_disabled_border": _lighten(border, 0.15) if not dark else _darken(border, 0.15),
+        "progress_disabled_border": (
+            _lighten(border, 0.15) if not dark else _darken(border, 0.15)
+        ),
         "progress_disabled_bg": _mix_hex(window_bg, surface, 0.5),
         "progress_disabled_text": "#a0a0a0",
         "progress_disabled_chunk": _mix_hex(p, surface, 0.65),
-
         # Tabs
         "tab_pane_border": border,
         "tab_pane_bg": window_bg,
@@ -203,7 +195,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "tab_selected_bg": window_bg,
         "tab_selected_border": p,
         "tab_hover_bg": hover,
-
         # Tables & Lists
         "table_bg": window_bg,
         "table_text": text,
@@ -213,42 +204,34 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "header_bg": header_bg,
         "header_text": text,
         "header_border": border,
-
         # Scrollbars
         "scrollbar_bg": surface,
         "scrollbar_border": border,
         "scrollbar_handle_bg": _mix_hex(border, p, 0.10),
         "scrollbar_handle_hover_bg": _mix_hex(border, p, 0.25),
-
         # Splitters
         "splitter_handle_bg": border,
-
         # Group Boxes
         "groupbox_border": border,
         "groupbox_bg": window_bg,
         "groupbox_text": text,
         "groupbox_title_text": text,
-
         # Slider & Spinbox
         "slider_groove_bg": surface,
         "slider_groove_border": border,
         "slider_handle": p,
         "slider_handle_border": p,
-
         "spinbox_bg": input_bg,
         "spinbox_text": text,
         "spinbox_border": border,
         "spinbox_focus_border": p,
-
         # Date edits
         "dateedit_bg": input_bg,
         "dateedit_text": text,
         "dateedit_border": border,
         "dateedit_focus_border": p,
-
         # Labels
         "label_text": text,
-
         # Focus
         "focus_border": _mix_hex(p, "#2684ff", 0.5),
     }
@@ -297,4 +280,3 @@ PRESETS: Dict[str, Dict[str, str]] = {
     "modern": PRESET_MODERN,
     "high_contrast": PRESET_HIGH_CONTRAST,
 }
-

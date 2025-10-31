@@ -7,13 +7,21 @@ Shows primaryColor, primaryLightColor, secondaryColor, etc. with visual swatches
 Single Responsibility: Display and allow inspection of qt-material theme colors.
 """
 
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGridLayout, QWidget, QScrollArea, QComboBox
-)
 from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class QtMaterialColorPicker(QDialog):
@@ -138,6 +146,7 @@ class QtMaterialColorPicker(QDialog):
         """Populate the variant combo box with available qt-material variants."""
         try:
             from src.gui.theme.simple_service import ThemeService
+
             service = ThemeService.instance()
 
             # Get current theme type
@@ -167,13 +176,27 @@ class QtMaterialColorPicker(QDialog):
             # Get colors from environment (set by qt-material)
             colors = {
                 "primaryColor": os.environ.get("QTMATERIAL_PRIMARYCOLOR", "#2196F3"),
-                "primaryLightColor": os.environ.get("QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"),
-                "primaryDarkColor": os.environ.get("QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"),
-                "secondaryColor": os.environ.get("QTMATERIAL_SECONDARYCOLOR", "#FFC107"),
-                "secondaryLightColor": os.environ.get("QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"),
-                "secondaryDarkColor": os.environ.get("QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"),
-                "primaryTextColor": os.environ.get("QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"),
-                "secondaryTextColor": os.environ.get("QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"),
+                "primaryLightColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"
+                ),
+                "primaryDarkColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"
+                ),
+                "secondaryColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYCOLOR", "#FFC107"
+                ),
+                "secondaryLightColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"
+                ),
+                "secondaryDarkColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"
+                ),
+                "primaryTextColor": os.environ.get(
+                    "QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"
+                ),
+                "secondaryTextColor": os.environ.get(
+                    "QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"
+                ),
             }
 
             # Update swatches
@@ -182,7 +205,8 @@ class QtMaterialColorPicker(QDialog):
                     swatch = self.color_swatches[color_name]
 
                     # Set background color
-                    swatch.setStyleSheet(f"""
+                    swatch.setStyleSheet(
+                        f"""
                         QPushButton {{
                             background-color: {hex_color};
                             border: 1px solid #cccccc;
@@ -193,7 +217,8 @@ class QtMaterialColorPicker(QDialog):
                         QPushButton:hover {{
                             border: 2px solid #999999;
                         }}
-                    """)
+                    """
+                    )
 
                     # Set button text to hex value
                     swatch.setText(hex_color.upper())
@@ -228,6 +253,7 @@ class QtMaterialColorPicker(QDialog):
         """
         try:
             from src.gui.theme.simple_service import ThemeService
+
             service = ThemeService.instance()
 
             # Get the full variant name (e.g., "blue" -> "dark_blue" or "light_blue")
@@ -254,4 +280,3 @@ class QtMaterialColorPicker(QDialog):
                 self.showMaximized()
         except Exception:
             pass
-

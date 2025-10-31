@@ -110,4 +110,3 @@ class ThemeSwitcher(QComboBox):
             self.blockSignals(True)
             self.setCurrentIndex(index)
             self.blockSignals(False)
-

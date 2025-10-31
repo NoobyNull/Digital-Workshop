@@ -25,7 +25,7 @@ import logging
 import re
 import time
 import weakref
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -53,6 +53,7 @@ FALLBACK_COLOR = "#E31C79"  # Hot pink for undefined colors
 # Helpers
 # ============================================================
 
+
 def _normalize_hex(h: str) -> str:
     """
     Return a normalized #rrggbb hex string for inputs that look like hex codes.
@@ -71,7 +72,11 @@ def _normalize_hex(h: str) -> str:
         return lower
 
     # If already a valid #rrggbb, return normalized lowercase
-    if lower.startswith("#") and len(lower) == 7 and all(c in "0123456789abcdef" for c in lower[1:]):
+    if (
+        lower.startswith("#")
+        and len(lower) == 7
+        and all(c in "0123456789abcdef" for c in lower[1:])
+    ):
         return lower
 
     # Accept 3 or 6 hex digits with optional '#'
@@ -113,6 +118,7 @@ def hex_to_vtk_rgb(hex_code: str) -> Tuple[float, float, float]:
 # Grouped by functional categories to align with stylesheet
 # ============================================================
 
+
 @dataclass(frozen=True)
 class ThemeDefaults:
     # Window & UI Elements
@@ -130,8 +136,8 @@ class ThemeDefaults:
     menubar_item_pressed_bg: str = "#106ebe"
 
     # Surfaces
-    surface: str = "#f5f5f5"            # toolbars, panes
-    surface_alt: str = "#ffffff"        # cards/panels inner background
+    surface: str = "#f5f5f5"  # toolbars, panes
+    surface_alt: str = "#ffffff"  # cards/panels inner background
     card_bg: str = "#ffffff"
     surface_grad_start: str = "#fafafa"  # subtle gradient example
     surface_grad_end: str = "#f2f2f2"
@@ -325,9 +331,11 @@ class ThemeDefaults:
 # Preset utilities and built-in presets
 # ============================================================
 
+
 def _srgb_to_linear(c: float) -> float:
     """Convert 0..1 sRGB channel to linear space."""
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
 
 def _relative_luminance_from_hex(h: str) -> float:
     """WCAG relative luminance of a hex color."""
@@ -340,9 +348,11 @@ def _relative_luminance_from_hex(h: str) -> float:
     bl = _srgb_to_linear(b / 255.0)
     return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
 
+
 def _choose_text_for_bg(bg_hex: str) -> str:
     """Choose black or white text for contrast against given background."""
     return "#000000" if _relative_luminance_from_hex(bg_hex) >= 0.5 else "#ffffff"
+
 
 def _mix_hex(a_hex: str, b_hex: str, t: float) -> str:
     """Linear mix of two hex colors a..b with t in [0..1]."""
@@ -353,13 +363,16 @@ def _mix_hex(a_hex: str, b_hex: str, t: float) -> str:
     b = int(round(a_b + (b_b - a_b) * t))
     return f"#{r:02x}{g:02x}{b:02x}"
 
+
 def _lighten(hex_code: str, amount: float) -> str:
     """Lighten color by mixing with white."""
     return _mix_hex(hex_code, "#ffffff", min(max(amount, 0.0), 1.0))
 
+
 def _darken(hex_code: str, amount: float) -> str:
     """Darken color by mixing with black."""
     return _mix_hex(hex_code, "#000000", min(max(amount, 0.0), 1.0))
+
 
 def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]:
     """
@@ -377,7 +390,7 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         # Brighter primaries work well with light UI by default
         dark = _relative_luminance_from_hex(p) < 0.35
     else:
-        dark = (mode == "dark")
+        dark = mode == "dark"
 
     if dark:
         window_bg = "#1e1f22"
@@ -423,7 +436,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "pressed": pressed,
         "selection_bg": selection_bg,
         "selection_text": selection_text,
-
         # Menubar
         "menubar_bg": surface,
         "menubar_text": text,
@@ -431,17 +443,14 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "menubar_item_hover_bg": p,
         "menubar_item_hover_text": primary_text,
         "menubar_item_pressed_bg": primary_hover,
-
         # Status bar
         "statusbar_bg": surface,
         "statusbar_text": text,
         "statusbar_border": border,
-
         # Toolbars
         "toolbar_bg": surface,
         "toolbar_border": border,
         "toolbar_handle_bg": border,
-
         "toolbutton_bg": "transparent",
         "toolbutton_border": "transparent",
         "toolbutton_hover_bg": hover,
@@ -450,14 +459,12 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "toolbutton_checked_bg": p,
         "toolbutton_checked_border": p,
         "toolbutton_checked_text": primary_text,
-
         # Dock
         "dock_bg": window_bg,
         "dock_text": text,
         "dock_border": border,
         "dock_title_bg": surface,
         "dock_title_border": border,
-
         # Buttons
         "button_bg": surface,
         "button_text": text,
@@ -475,7 +482,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "button_disabled_bg": _mix_hex(surface, border_light, 0.5),
         "button_disabled_text": "#9aa0a6",
         "button_disabled_border": _lighten(border, 0.2),
-
         # Inputs
         "input_bg": input_bg,
         "input_text": text,
@@ -483,24 +489,23 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "input_focus_border": p,
         "input_disabled_bg": _mix_hex(input_bg, border_light, 0.3),
         "input_disabled_text": "#9aa0a6",
-
         # Combo
         "combobox_bg": input_bg,
         "combobox_text": text,
         "combobox_border": border,
         "combobox_focus_border": p,
         "combobox_arrow_color": "#666666" if not dark else "#b7b7b7",
-
         # Progress
         "progress_bg": window_bg,
         "progress_text": text,
         "progress_border": border,
         "progress_chunk": p,
-        "progress_disabled_border": _lighten(border, 0.15) if not dark else _darken(border, 0.15),
+        "progress_disabled_border": (
+            _lighten(border, 0.15) if not dark else _darken(border, 0.15)
+        ),
         "progress_disabled_bg": _mix_hex(window_bg, surface, 0.5),
         "progress_disabled_text": "#a0a0a0",
         "progress_disabled_chunk": _mix_hex(p, surface, 0.65),
-
         # Tabs
         "tab_pane_border": border,
         "tab_pane_bg": window_bg,
@@ -510,7 +515,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "tab_selected_bg": window_bg,
         "tab_selected_border": p,
         "tab_hover_bg": hover,
-
         # Tables & Lists
         "table_bg": window_bg,
         "table_text": text,
@@ -520,46 +524,39 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "header_bg": header_bg,
         "header_text": text,
         "header_border": border,
-
         # Scrollbars
         "scrollbar_bg": surface,
         "scrollbar_border": border,
         "scrollbar_handle_bg": _mix_hex(border, p, 0.10),
         "scrollbar_handle_hover_bg": _mix_hex(border, p, 0.25),
-
         # Splitters
         "splitter_handle_bg": border,
-
         # Group Boxes
         "groupbox_border": border,
         "groupbox_bg": window_bg,
         "groupbox_text": text,
         "groupbox_title_text": text,
-
         # Slider & Spinbox
         "slider_groove_bg": surface,
         "slider_groove_border": border,
         "slider_handle": p,
         "slider_handle_border": p,
-
         "spinbox_bg": input_bg,
         "spinbox_text": text,
         "spinbox_border": border,
         "spinbox_focus_border": p,
-
         # Date edits
         "dateedit_bg": input_bg,
         "dateedit_text": text,
         "dateedit_border": border,
         "dateedit_focus_border": p,
-
         # Labels
         "label_text": text,
-
         # Focus
         "focus_border": _mix_hex(p, "#2684ff", 0.5),
     }
     return derived
+
 
 # Modern preset - professional blue scheme
 PRESET_MODERN: Dict[str, str] = {
@@ -608,6 +605,7 @@ PRESETS: Dict[str, Dict[str, str]] = {
 # ThemeManager Singleton
 # ============================================================
 
+
 class ThemeManager:
     """
     ThemeManager provides:
@@ -625,12 +623,18 @@ class ThemeManager:
 
     def __init__(self) -> None:
         self._logger = logging.getLogger("gui.theme")
-        self._colors: Dict[str, str] = {k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()}
+        self._colors: Dict[str, str] = {
+            k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()
+        }
         self._version: int = 0  # bump whenever theme is updated
         self._preset_name: str = "custom"  # last applied preset name
         # CSS caches
-        self._css_file_cache: Dict[str, Tuple[float, int, str]] = {}  # path -> (mtime, version, processed_css)
-        self._css_text_cache: Dict[str, Tuple[int, str]] = {}  # key -> (version, processed_css)
+        self._css_file_cache: Dict[str, Tuple[float, int, str]] = (
+            {}
+        )  # path -> (mtime, version, processed_css)
+        self._css_text_cache: Dict[str, Tuple[int, str]] = (
+            {}
+        )  # key -> (version, processed_css)
         # Widget registry: weak refs to (widget, css_path, css_text)
         self._widgets: "weakref.WeakSet[Any]" = weakref.WeakSet()
         self._widget_sources: Dict[int, Tuple[Optional[str], Optional[str]]] = {}
@@ -667,7 +671,12 @@ class ThemeManager:
         """
         if name in self._colors:
             return _normalize_hex(self._colors[name])
-        self._log_json(logging.WARNING, "theme_fallback_color", variable=name, context=context or "")
+        self._log_json(
+            logging.WARNING,
+            "theme_fallback_color",
+            variable=name,
+            context=context or "",
+        )
         return FALLBACK_COLOR
 
     def set_colors(self, overrides: Dict[str, Any]) -> None:
@@ -685,7 +694,11 @@ class ThemeManager:
             # Invalidate caches
             self._css_file_cache.clear()
             self._css_text_cache.clear()
-            self._log_json(logging.INFO, "theme_updated", changed_keys=[k for k in overrides.keys() if k in self._colors])
+            self._log_json(
+                logging.INFO,
+                "theme_updated",
+                changed_keys=[k for k in overrides.keys() if k in self._colors],
+            )
 
     # ------------- Presets API -------------
     def available_presets(self) -> list[str]:
@@ -697,7 +710,13 @@ class ThemeManager:
         """Name of the last applied preset. 'custom' when user edited manually."""
         return getattr(self, "_preset_name", "custom")
 
-    def apply_preset(self, preset_name: str, *, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+    def apply_preset(
+        self,
+        preset_name: str,
+        *,
+        custom_mode: Optional[str] = None,
+        base_primary: Optional[str] = None,
+    ) -> None:
         """
         Apply a named preset.
         - preset_name: 'modern', 'high_contrast', or 'custom'
@@ -712,7 +731,11 @@ class ThemeManager:
             preset_colors = PRESETS[name]
             # Derive full palette from preset's primary color
             primary = preset_colors.get("primary", ThemeDefaults.primary)
-            mode = "dark" if preset_colors.get("window_bg", "#ffffff").lower() == "#000000" else "auto"
+            mode = (
+                "dark"
+                if preset_colors.get("window_bg", "#ffffff").lower() == "#000000"
+                else "auto"
+            )
             derived = derive_mode_palette(primary, mode=mode)
 
             # Merge: derived palette first, then preset overrides on top
@@ -720,7 +743,12 @@ class ThemeManager:
             self.set_colors(merged)
 
             self._preset_name = name
-            self._log_json(logging.INFO, "theme_preset_applied", preset=name, colors_defined=len(merged))
+            self._log_json(
+                logging.INFO,
+                "theme_preset_applied",
+                preset=name,
+                colors_defined=len(merged),
+            )
             return
 
         # Custom derived theme
@@ -729,7 +757,9 @@ class ThemeManager:
         derived = derive_mode_palette(seed, mode=mode)
         self.set_colors(derived)
         self._preset_name = "custom"
-        self._log_json(logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed)
+        self._log_json(
+            logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed
+        )
 
     # ------------- QColor / VTK helpers -------------
 
@@ -775,7 +805,9 @@ class ThemeManager:
             self._css_text_cache[key] = (self._version, processed)
             return processed
         except Exception as exc:
-            self._log_json(logging.ERROR, "css_template_processing_error", error=str(exc))
+            self._log_json(
+                logging.ERROR, "css_template_processing_error", error=str(exc)
+            )
             return css_text  # fail-safe: return unprocessed
 
     def process_css_file(self, path: Union[str, Path]) -> str:
@@ -793,7 +825,9 @@ class ThemeManager:
                 text = Path(p).read_text(encoding="utf-8")
                 return self.process_css_template(text)
             except Exception as exc2:
-                self._log_json(logging.ERROR, "css_file_read_error", path=p, error=str(exc2))
+                self._log_json(
+                    logging.ERROR, "css_file_read_error", path=p, error=str(exc2)
+                )
                 return ""
 
         cached = self._css_file_cache.get(p)
@@ -806,12 +840,20 @@ class ThemeManager:
             self._css_file_cache[p] = (mtime, self._version, processed)
             return processed
         except Exception as exc:
-            self._log_json(logging.ERROR, "css_file_processing_error", path=p, error=str(exc))
+            self._log_json(
+                logging.ERROR, "css_file_processing_error", path=p, error=str(exc)
+            )
             return ""
 
     # ------------- Widget registry -------------
 
-    def register_widget(self, widget: Any, *, css_path: Optional[Union[str, Path]] = None, css_text: Optional[str] = None) -> None:
+    def register_widget(
+        self,
+        widget: Any,
+        *,
+        css_path: Optional[Union[str, Path]] = None,
+        css_text: Optional[str] = None,
+    ) -> None:
         """
         Register a widget for style application. Provide either css_path or raw css_text
         (which can contain {{VARIABLE_NAME}} placeholders). If neither provided,
@@ -820,7 +862,10 @@ class ThemeManager:
         try:
             self._widgets.add(widget)
             key = id(widget)
-            self._widget_sources[key] = (str(css_path) if css_path is not None else None, css_text)
+            self._widget_sources[key] = (
+                str(css_path) if css_path is not None else None,
+                css_text,
+            )
         except Exception as exc:
             self._log_json(logging.ERROR, "widget_register_error", error=str(exc))
 
@@ -842,7 +887,13 @@ class ThemeManager:
                 ss = ""
             if hasattr(widget, "setStyleSheet"):
                 widget.setStyleSheet(ss)
-                self._log_json(logging.DEBUG, "stylesheet_applied", widget=str(widget), css_path=css_path or "", css_text_len=len(css_text or ""))
+                self._log_json(
+                    logging.DEBUG,
+                    "stylesheet_applied",
+                    widget=str(widget),
+                    css_path=css_path or "",
+                    css_text_len=len(css_text or ""),
+                )
         except Exception as exc:
             self._log_json(logging.ERROR, "stylesheet_apply_error", error=str(exc))
 
@@ -902,10 +953,14 @@ class ThemeManager:
     def export_theme(self, file_path: Union[str, Path]) -> None:
         """Export current theme to a JSON file at file_path."""
         try:
-            Path(file_path).write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
+            Path(file_path).write_text(
+                json.dumps(self.colors, indent=2), encoding="utf-8"
+            )
             self._log_json(logging.INFO, "theme_exported", path=str(file_path))
         except Exception as exc:
-            self._log_json(logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc))
+            self._log_json(
+                logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc)
+            )
 
     def import_theme(self, file_path: Union[str, Path]) -> None:
         """Import a theme from a JSON file at file_path."""
@@ -915,12 +970,15 @@ class ThemeManager:
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_imported", path=str(file_path))
         except Exception as exc:
-            self._log_json(logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc))
+            self._log_json(
+                logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc)
+            )
 
 
 # ============================================================
 # Backward-compatible API and convenience wrappers
 # ============================================================
+
 
 class _ColorsProxy:
     """
@@ -956,6 +1014,7 @@ def vtk_rgb(name: str) -> Tuple[float, float, float]:
 
 # ---------- Persistence and runtime updates (backward-compatible) ----------
 
+
 def theme_to_dict() -> Dict[str, str]:
     """Dump current theme colors as a dict of strings."""
     return ThemeManager.instance().colors
@@ -969,13 +1028,21 @@ def set_theme(overrides: Dict[str, Any]) -> None:
     """
     ThemeManager.instance().set_colors({k: str(v) for k, v in overrides.items()})
 
+
 def list_theme_presets() -> list[str]:
     """List names of available theme presets."""
     return ThemeManager.instance().available_presets()
 
-def apply_theme_preset(preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+
+def apply_theme_preset(
+    preset_name: str,
+    custom_mode: Optional[str] = None,
+    base_primary: Optional[str] = None,
+) -> None:
     """Apply a theme preset via ThemeManager."""
-    ThemeManager.instance().apply_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
+    ThemeManager.instance().apply_preset(
+        preset_name, custom_mode=custom_mode, base_primary=base_primary
+    )
 
 
 def load_theme_from_settings() -> None:
@@ -994,6 +1061,7 @@ def save_theme_to_settings() -> None:
 # ============================================================
 # Prebuilt QSS snippets (unchanged for backward compatibility)
 # ============================================================
+
 
 def qss_button_base() -> str:
     return (

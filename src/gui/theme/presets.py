@@ -20,12 +20,10 @@ PRESET_LIGHT: Dict[str, str] = {
     "surface": "#f5f5f5",
     "surface_grad_start": "#f9f9f9",
     "surface_grad_end": "#f0f0f0",
-
     # Borders & Dividers
     "border": "#d0d0d0",
     "border_light": "#e8e8e8",
     "focus_border": "#0078d4",
-
     # Menu & Toolbar
     "menubar_bg": "#f5f5f5",
     "menubar_text": "#000000",
@@ -33,17 +31,14 @@ PRESET_LIGHT: Dict[str, str] = {
     "menubar_item_hover_text": "#000000",
     "toolbar_bg": "#f5f5f5",
     "toolbar_text": "#000000",
-
     # Status Bar
     "statusbar_bg": "#f5f5f5",
     "statusbar_text": "#000000",
     "statusbar_border": "#d0d0d0",
-
     # Dock Widgets
     "dock_title_bg": "#e8e8e8",
     "dock_title_text": "#000000",
     "dock_title_border": "#d0d0d0",
-
     # Buttons
     "button_default_bg": "#f0f0f0",
     "button_default_text": "#000000",
@@ -52,24 +47,20 @@ PRESET_LIGHT: Dict[str, str] = {
     "button_hover_text": "#000000",
     "button_pressed_bg": "#d0d0d0",
     "button_pressed_text": "#000000",
-
     # Inputs
     "input_bg": "#ffffff",
     "input_text": "#000000",
     "input_border": "#d0d0d0",
     "input_focus_border": "#0078d4",
-
     # Accent / Brand
     "primary": "#0078d4",
     "primary_hover": "#106ebe",
     "primary_text": "#ffffff",
-
     # Interactions
     "hover": "#e1e1e1",
     "pressed": "#d0d0d0",
     "selection_bg": "#0078d4",
     "selection_text": "#ffffff",
-
     # Viewer / 3D
     "canvas_bg": "#f0f0f0",
     "model_surface": "#6496c8",
@@ -77,7 +68,6 @@ PRESET_LIGHT: Dict[str, str] = {
     "model_specular": "#ffffff",
     "light_color": "#ffffff",
     "edge_color": "#000000",
-
     # Status Indicators
     "status_success_bg": "#d4edda",
     "status_success_text": "#155724",
@@ -101,12 +91,10 @@ PRESET_DARK: Dict[str, str] = {
     "surface": "#2d2d2d",
     "surface_grad_start": "#333333",
     "surface_grad_end": "#2a2a2a",
-
     # Borders & Dividers
     "border": "#404040",
     "border_light": "#555555",
     "focus_border": "#0078d4",
-
     # Menu & Toolbar
     "menubar_bg": "#2d2d2d",
     "menubar_text": "#e0e0e0",
@@ -114,17 +102,14 @@ PRESET_DARK: Dict[str, str] = {
     "menubar_item_hover_text": "#ffffff",
     "toolbar_bg": "#2d2d2d",
     "toolbar_text": "#e0e0e0",
-
     # Status Bar
     "statusbar_bg": "#2d2d2d",
     "statusbar_text": "#e0e0e0",
     "statusbar_border": "#404040",
-
     # Dock Widgets
     "dock_title_bg": "#333333",
     "dock_title_text": "#e0e0e0",
     "dock_title_border": "#404040",
-
     # Buttons
     "button_default_bg": "#333333",
     "button_default_text": "#e0e0e0",
@@ -133,24 +118,20 @@ PRESET_DARK: Dict[str, str] = {
     "button_hover_text": "#ffffff",
     "button_pressed_bg": "#555555",
     "button_pressed_text": "#ffffff",
-
     # Inputs
     "input_bg": "#2a2a2a",
     "input_text": "#e0e0e0",
     "input_border": "#404040",
     "input_focus_border": "#0078d4",
-
     # Accent / Brand
     "primary": "#0078d4",
     "primary_hover": "#1084d7",
     "primary_text": "#ffffff",
-
     # Interactions
     "hover": "#404040",
     "pressed": "#555555",
     "selection_bg": "#0078d4",
     "selection_text": "#ffffff",
-
     # Viewer / 3D
     "canvas_bg": "#1a1a1a",
     "model_surface": "#6496c8",
@@ -158,7 +139,6 @@ PRESET_DARK: Dict[str, str] = {
     "model_specular": "#ffffff",
     "light_color": "#ffffff",
     "edge_color": "#cccccc",
-
     # Status Indicators
     "status_success_bg": "#1e4620",
     "status_success_text": "#90ee90",
@@ -182,12 +162,10 @@ PRESET_HIGH_CONTRAST: Dict[str, str] = {
     "surface": "#000000",
     "surface_grad_start": "#000000",
     "surface_grad_end": "#000000",
-
     # Borders & Dividers
     "border": "#ffffff",
     "border_light": "#e0e0e0",
     "focus_border": "#ffff00",
-
     # Menu & Toolbar
     "menubar_bg": "#000000",
     "menubar_text": "#ffffff",
@@ -195,17 +173,14 @@ PRESET_HIGH_CONTRAST: Dict[str, str] = {
     "menubar_item_hover_text": "#000000",
     "toolbar_bg": "#000000",
     "toolbar_text": "#ffffff",
-
     # Status Bar
     "statusbar_bg": "#000000",
     "statusbar_text": "#ffffff",
     "statusbar_border": "#ffffff",
-
     # Dock Widgets
     "dock_title_bg": "#000000",
     "dock_title_text": "#ffffff",
     "dock_title_border": "#ffffff",
-
     # Buttons
     "button_default_bg": "#000000",
     "button_default_text": "#ffffff",
@@ -214,24 +189,20 @@ PRESET_HIGH_CONTRAST: Dict[str, str] = {
     "button_hover_text": "#000000",
     "button_pressed_bg": "#c0c0c0",
     "button_pressed_text": "#000000",
-
     # Inputs
     "input_bg": "#000000",
     "input_text": "#ffffff",
     "input_border": "#ffffff",
     "input_focus_border": "#ffff00",
-
     # Accent / Brand
     "primary": "#ffff00",
     "primary_hover": "#ffea00",
     "primary_text": "#000000",
-
     # Interactions
     "hover": "#ffffff",
     "pressed": "#c0c0c0",
     "selection_bg": "#ffff00",
     "selection_text": "#000000",
-
     # Viewer / 3D
     "canvas_bg": "#000000",
     "model_surface": "#ffff00",
@@ -239,7 +210,6 @@ PRESET_HIGH_CONTRAST: Dict[str, str] = {
     "model_specular": "#ffffff",
     "light_color": "#ffffff",
     "edge_color": "#ffffff",
-
     # Status Indicators
     "status_success_bg": "#000000",
     "status_success_text": "#00ff00",
@@ -263,12 +233,10 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "surface": "#eee8d5",
     "surface_grad_start": "#f5f0e8",
     "surface_grad_end": "#ebe6d9",
-
     # Borders & Dividers
     "border": "#d6d0c8",
     "border_light": "#e8e3db",
     "focus_border": "#268bd2",
-
     # Menu & Toolbar
     "menubar_bg": "#eee8d5",
     "menubar_text": "#657b83",
@@ -276,17 +244,14 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "menubar_item_hover_text": "#073642",
     "toolbar_bg": "#eee8d5",
     "toolbar_text": "#657b83",
-
     # Status Bar
     "statusbar_bg": "#eee8d5",
     "statusbar_text": "#657b83",
     "statusbar_border": "#d6d0c8",
-
     # Dock Widgets
     "dock_title_bg": "#d6d0c8",
     "dock_title_text": "#657b83",
     "dock_title_border": "#c5bfb7",
-
     # Buttons
     "button_default_bg": "#eee8d5",
     "button_default_text": "#657b83",
@@ -295,24 +260,20 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "button_hover_text": "#073642",
     "button_pressed_bg": "#c5bfb7",
     "button_pressed_text": "#073642",
-
     # Inputs
     "input_bg": "#fdf6e3",
     "input_text": "#657b83",
     "input_border": "#d6d0c8",
     "input_focus_border": "#268bd2",
-
     # Accent / Brand
     "primary": "#268bd2",
     "primary_hover": "#2aa198",
     "primary_text": "#fdf6e3",
-
     # Interactions
     "hover": "#d6d0c8",
     "pressed": "#c5bfb7",
     "selection_bg": "#268bd2",
     "selection_text": "#fdf6e3",
-
     # Viewer / 3D
     "canvas_bg": "#eee8d5",
     "model_surface": "#268bd2",
@@ -320,7 +281,6 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "model_specular": "#fdf6e3",
     "light_color": "#fdf6e3",
     "edge_color": "#073642",
-
     # Status Indicators
     "status_success_bg": "#d5f4e6",
     "status_success_text": "#27ae60",
@@ -344,12 +304,10 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "surface": "#073642",
     "surface_grad_start": "#0d3f47",
     "surface_grad_end": "#0a3840",
-
     # Borders & Dividers
     "border": "#1a4d56",
     "border_light": "#2a5f68",
     "focus_border": "#268bd2",
-
     # Menu & Toolbar
     "menubar_bg": "#073642",
     "menubar_text": "#839496",
@@ -357,17 +315,14 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "menubar_item_hover_text": "#93a1a1",
     "toolbar_bg": "#073642",
     "toolbar_text": "#839496",
-
     # Status Bar
     "statusbar_bg": "#073642",
     "statusbar_text": "#839496",
     "statusbar_border": "#1a4d56",
-
     # Dock Widgets
     "dock_title_bg": "#0d3f47",
     "dock_title_text": "#839496",
     "dock_title_border": "#1a4d56",
-
     # Buttons
     "button_default_bg": "#073642",
     "button_default_text": "#839496",
@@ -376,24 +331,20 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "button_hover_text": "#93a1a1",
     "button_pressed_bg": "#2a5f68",
     "button_pressed_text": "#93a1a1",
-
     # Inputs
     "input_bg": "#002b36",
     "input_text": "#839496",
     "input_border": "#1a4d56",
     "input_focus_border": "#268bd2",
-
     # Accent / Brand
     "primary": "#268bd2",
     "primary_hover": "#2aa198",
     "primary_text": "#002b36",
-
     # Interactions
     "hover": "#1a4d56",
     "pressed": "#2a5f68",
     "selection_bg": "#268bd2",
     "selection_text": "#002b36",
-
     # Viewer / 3D
     "canvas_bg": "#002b36",
     "model_surface": "#268bd2",
@@ -401,7 +352,6 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "model_specular": "#93a1a1",
     "light_color": "#93a1a1",
     "edge_color": "#839496",
-
     # Status Indicators
     "status_success_bg": "#0d3f2d",
     "status_success_text": "#2ecc71",
@@ -435,4 +385,3 @@ def get_preset(name: str) -> Dict[str, str]:
 def list_presets() -> list[str]:
     """List all available preset names."""
     return list(PRESETS.keys())
-
