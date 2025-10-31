@@ -49,10 +49,10 @@ class VTKSceneManager:
         except Exception as e:
             logger.warning(f"Failed to load grid/ground settings from config: {e}")
             self.grid_visible = True
-            self.grid_color = "#CCCCCC"
+            self.grid_color = vtk_rgb('grid')
             self.grid_size = 10.0
             self.ground_visible = True
-            self.ground_color = "#999999"
+            self.ground_color = vtk_rgb('ground')
             self.ground_offset = 0.5
 
     @log_function_call(logger)
@@ -244,9 +244,20 @@ class VTKSceneManager:
         self.grid_actor = vtk.vtkActor()
         self.grid_actor.SetMapper(mapper)
 
-        # Apply grid color from config
-        grid_rgb = self._hex_to_rgb(self.grid_color)
-        self.grid_actor.GetProperty().SetColor(*grid_rgb)
+        # Apply grid color from config (handle theme string, hex string, and RGB tuple)
+        if isinstance(self.grid_color, str):
+            if self.grid_color.lower() == "theme":
+                # Use theme system color
+                grid_rgb = vtk_rgb('grid')
+                self.grid_actor.GetProperty().SetColor(*grid_rgb)
+            else:
+                # Hex string from config - convert to RGB
+                grid_rgb = self._hex_to_rgb(self.grid_color)
+                self.grid_actor.GetProperty().SetColor(*grid_rgb)
+        else:
+            # RGB tuple from vtk_rgb() - use directly
+            self.grid_actor.GetProperty().SetColor(*self.grid_color)
+        
         self.grid_actor.GetProperty().SetRepresentationToWireframe()
         self.grid_actor.SetVisibility(self.grid_visible)
 
@@ -277,9 +288,20 @@ class VTKSceneManager:
         self.ground_actor = vtk.vtkActor()
         self.ground_actor.SetMapper(mapper)
 
-        # Apply ground color from config
-        ground_rgb = self._hex_to_rgb(self.ground_color)
-        self.ground_actor.GetProperty().SetColor(*ground_rgb)
+        # Apply ground color from config (handle theme string, hex string, and RGB tuple)
+        if isinstance(self.ground_color, str):
+            if self.ground_color.lower() == "theme":
+                # Use theme system color
+                ground_rgb = vtk_rgb('ground')
+                self.ground_actor.GetProperty().SetColor(*ground_rgb)
+            else:
+                # Hex string from config - convert to RGB
+                ground_rgb = self._hex_to_rgb(self.ground_color)
+                self.ground_actor.GetProperty().SetColor(*ground_rgb)
+        else:
+            # RGB tuple from vtk_rgb() - use directly
+            self.ground_actor.GetProperty().SetColor(*self.ground_color)
+        
         self.ground_actor.GetProperty().SetOpacity(0.3)
         self.ground_actor.SetVisibility(self.ground_visible)
 

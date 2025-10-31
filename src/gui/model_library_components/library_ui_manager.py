@@ -158,7 +158,7 @@ class LibraryUIManager:
         self.library_widget.list_view.setModel(self.library_widget.proxy_model)
         self.library_widget.list_view.setSortingEnabled(True)
         self.library_widget.list_view.setSelectionBehavior(QTableView.SelectRows)
-        self.library_widget.list_view.setAlternatingRowColors(True)
+        # Removed setAlternatingRowColors(True) - qt-material handles alternating row colors via theme
         header = self.library_widget.list_view.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for col in range(1, 6):

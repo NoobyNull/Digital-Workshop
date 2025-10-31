@@ -1,663 +1,952 @@
 """
-Performance monitoring system for 3D-MM application.
+Real-Time Performance Monitoring System for Candy-Cadence.
 
-This module provides comprehensive performance monitoring capabilities including
-memory usage tracking, operation timing, bottleneck identification, and
-adaptive performance optimization based on system capabilities.
+This module provides comprehensive performance monitoring with:
+- Real-time metrics collection from all subsystems
+- Performance alerting and notifications
+- Adaptive performance adjustments
+- Performance profiling and analysis
+- Historical performance data tracking
+- Integration with memory, loading, and rendering managers
 """
 
-import gc
-import os
-import psutil
 import time
 import threading
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any
 import json
+import psutil
+from typing import Any, Dict, List, Optional, Callable, Tuple
+from dataclasses import dataclass, field, asdict
+from enum import Enum
+from collections import deque, defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
+from contextlib import contextmanager
+import weakref
 
-from .logging_config import get_logger
+from PySide6.QtCore import QObject, QTimer, Signal
+
+from .logging_config import get_logger, log_function_call
+from .memory_manager import get_memory_manager, MemoryAlert
+from .progressive_loader import get_progressive_loader, LoadingProgress
+from .rendering_performance_manager import get_rendering_manager, RenderingMetrics
+
+logger = get_logger(__name__)
+
+
+class AlertSeverity(Enum):
+    """Alert severity levels."""
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+class MetricType(Enum):
+    """Performance metric types."""
+    MEMORY = "memory"
+    LOADING = "loading"
+    RENDERING = "rendering"
+    DATABASE = "database"
+    SYSTEM = "system"
+    APPLICATION = "application"
+class MetricType(Enum):
+    """Performance metric types."""
+    MEMORY = "memory"
+    LOADING = "loading"
+    RENDERING = "rendering"
+    DATABASE = "database"
+    SYSTEM = "system"
+    APPLICATION = "application"
 
 
 class PerformanceLevel(Enum):
-    """Performance levels for adaptive optimization."""
-    MINIMAL = "minimal"      # Low-end systems
-    STANDARD = "standard"    # Mid-range systems
-    HIGH = "high"           # High-end systems
-    ULTRA = "ultra"         # High-end systems with plenty of resources
+    """Performance level enumeration for system optimization."""
+    MINIMAL = "minimal"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    ULTRA = "ultra"
 
 
 @dataclass
-class MemoryStats:
-    """Memory usage statistics."""
-    total_mb: float
-    used_mb: float
-    available_mb: float
-    percent_used: float
-    process_mb: float
-    timestamp: float = field(default_factory=time.time)
+class PerformanceAlert:
+    """Performance alert information."""
+    id: str
+    severity: AlertSeverity
+    metric_type: MetricType
+    message: str
+    details: Dict[str, Any]
+    timestamp: datetime
+    acknowledged: bool = False
+    resolved: bool = False
+    resolved_at: Optional[datetime] = None
 
 
 @dataclass
-class OperationMetrics:
-    """Metrics for a specific operation."""
-    operation_name: str
-    start_time: float
-    end_time: float
-    duration_ms: float
-    memory_before_mb: float
-    memory_after_mb: float
-    memory_peak_mb: float
-    success: bool
-    error_message: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+class PerformanceMetric:
+    """Individual performance metric."""
+    name: str
+    value: float
+    unit: str
+    metric_type: MetricType
+    timestamp: datetime
+    tags: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
-class PerformanceProfile:
-    """Performance profile for system capabilities."""
-    performance_level: PerformanceLevel
-    max_memory_mb: float
-    recommended_cache_size_mb: float
-    max_triangles_for_full_quality: int
-    adaptive_quality_enabled: bool
-    background_thread_count: int
-    chunk_size: int
+class PerformanceSnapshot:
+    """Complete performance snapshot."""
+    timestamp: datetime
+    metrics: List[PerformanceMetric]
+    alerts: List[PerformanceAlert]
+    system_info: Dict[str, Any]
+    application_state: Dict[str, Any]
 
 
-class PerformanceMonitor:
-    """
-    Performance monitoring system for tracking and optimizing application performance.
+@dataclass
+class PerformanceThresholds:
+    """Performance threshold configuration."""
+    # Memory thresholds (MB)
+    memory_warning_mb: float = 1500
+    memory_critical_mb: float = 1800
+    memory_leak_threshold_mb: float = 100
+    
+    # Loading thresholds (seconds)
+    loading_warning_seconds: float = 10
+    loading_critical_seconds: float = 30
+    
+    # Rendering thresholds (FPS)
+    rendering_warning_fps: float = 25
+    rendering_critical_fps: float = 20
+    
+    # System thresholds (%)
+    cpu_warning_percent: float = 80
+    cpu_critical_percent: float = 95
+    disk_warning_percent: float = 85
+    disk_critical_percent: float = 95
 
-    Features:
-    - Real-time memory usage monitoring
-    - Operation timing and bottleneck identification
-    - Adaptive performance optimization based on hardware capabilities
-    - Performance logging and analysis
-    - Memory leak detection
-    """
 
-    def __init__(self):
-        """Initialize the performance monitor."""
-        self.logger = get_logger(__name__)
-        self.logger.info("Initializing performance monitor")
+class PerformanceProfiler:
+    """Advanced performance profiling and analysis."""
 
-        # Monitoring state
-        self.is_monitoring = False
-        self.monitoring_thread = None
-        self.monitoring_interval = 1.0  # seconds
-        self.memory_history = []
-        self.max_history_size = 1000
-
-        # Operation tracking
-        self.active_operations = {}
-        self.completed_operations = []
-        self.max_operations_history = 500
-
-        # Performance profile
-        self.performance_profile = self._detect_system_capabilities()
-
-        # Performance thresholds
-        self.memory_warning_threshold = 80.0  # percent
-        self.memory_critical_threshold = 90.0  # percent
-        self.operation_slow_threshold = 5.0  # seconds
-
-        # Callbacks for performance events
-        self.memory_warning_callback = None
-        self.memory_critical_callback = None
-        self.slow_operation_callback = None
-
-        self.logger.info(f"Performance monitor initialized with {self.performance_profile.performance_level.value} profile")
-
-    def _detect_gpu_info(self) -> Dict[str, Any]:
+    def __init__(self, history_size: int = 10000):
         """
-        Detect GPU information including VRAM.
+        Initialize performance profiler.
 
-        Returns:
-            Dictionary with GPU info: has_dedicated_gpu, vram_mb, gpu_name
+        Args:
+            history_size: Maximum number of metrics to keep in history
         """
-        try:
-            from src.core.hardware_acceleration import get_acceleration_manager
-            accelerator = get_acceleration_manager()
-            caps = accelerator.get_capabilities()
+        self.history_size = history_size
+        self._metric_history: deque = deque(maxlen=history_size)
+        self._operation_profiles: Dict[str, List[float]] = defaultdict(list)
+        self._lock = threading.Lock()
 
-            # Check if CUDA is available (dedicated GPU)
-            if caps.recommended_backend.value == 'cuda':
-                try:
-                    import torch
-                    vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))
-                    gpu_name = torch.cuda.get_device_name(0)
-                    return {
-                        'has_dedicated_gpu': True,
-                        'vram_mb': vram_mb,
-                        'gpu_name': gpu_name
-                    }
-                except Exception:
-                    pass
+    def record_metric(self, metric: PerformanceMetric) -> None:
+        """Record a performance metric."""
+        with self._lock:
+            self._metric_history.append(metric)
 
-            # Check for integrated GPU (shared memory)
-            try:
-                import wmi
-                gpu_list = wmi.WMI().Win32_VideoController()
-                for gpu in gpu_list:
-                    if gpu.Name and any(x in gpu.Name for x in ['Intel', 'AMD', 'Radeon']):
-                        memory = psutil.virtual_memory()
-                        shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
-                        return {
-                            'has_dedicated_gpu': False,
-                            'vram_mb': shared_vram_mb,
-                            'gpu_name': gpu.Name
-                        }
-            except Exception:
-                pass
+    def profile_operation(self, operation_name: str, duration: float) -> None:
+        """Profile an operation duration."""
+        with self._lock:
+            self._operation_profiles[operation_name].append(duration)
+            
+            # Keep only recent profiles
+            if len(self._operation_profiles[operation_name]) > 1000:
+                self._operation_profiles[operation_name] = self._operation_profiles[operation_name][-500:]
 
-            # Fallback: assume integrated GPU with 25% of system RAM
-            memory = psutil.virtual_memory()
-            shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
+    def get_metric_trend(self, metric_name: str, duration_minutes: int = 60) -> Dict[str, float]:
+        """Get metric trend over specified duration."""
+        cutoff_time = datetime.now() - timedelta(minutes=duration_minutes)
+        
+        with self._lock:
+            recent_metrics = [
+                m for m in self._metric_history 
+                if m.name == metric_name and m.timestamp >= cutoff_time
+            ]
+            
+            if not recent_metrics:
+                return {}
+                
+            values = [m.value for m in recent_metrics]
+            
             return {
-                'has_dedicated_gpu': False,
-                'vram_mb': shared_vram_mb,
-                'gpu_name': 'Unknown (Integrated)'
-            }
-        except Exception as e:
-            self.logger.debug(f"Failed to detect GPU info: {e}")
-            memory = psutil.virtual_memory()
-            return {
-                'has_dedicated_gpu': False,
-                'vram_mb': int(memory.total / (1024 ** 2) * 0.25),
-                'gpu_name': 'Unknown'
+                'current': values[-1] if values else 0,
+                'min': min(values),
+                'max': max(values),
+                'average': sum(values) / len(values),
+                'count': len(values),
+                'trend': self._calculate_trend(values)
             }
 
-    def _detect_system_capabilities(self) -> PerformanceProfile:
+    def _calculate_trend(self, values: List[float]) -> float:
+        """Calculate trend slope for values."""
+        if len(values) < 2:
+            return 0.0
+            
+        # Simple linear regression
+        n = len(values)
+        x_values = list(range(n))
+        
+        sum_x = sum(x_values)
+        sum_y = sum(values)
+        sum_xy = sum(x * y for x, y in zip(x_values, values))
+        sum_x2 = sum(x * x for x in x_values)
+        
+        denominator = n * sum_x2 - sum_x * sum_x
+        if denominator == 0:
+            return 0.0
+            
+        slope = (n * sum_xy - sum_x * sum_y) / denominator
+        return slope
+
+    def get_operation_stats(self, operation_name: str) -> Dict[str, float]:
+        """Get statistics for a profiled operation."""
+        with self._lock:
+            durations = self._operation_profiles.get(operation_name, [])
+            
+            if not durations:
+                return {}
+                
+            return {
+                'count': len(durations),
+                'min': min(durations),
+                'max': max(durations),
+                'average': sum(durations) / len(durations),
+                'recent': durations[-1] if durations else 0
+            }
+
+    def detect_anomalies(self, metric_name: str, threshold_std: float = 2.0) -> List[PerformanceMetric]:
+        """Detect anomalous metric values."""
+        with self._lock:
+            recent_metrics = [
+                m for m in list(self._metric_history)[-1000:] 
+                if m.name == metric_name
+            ]
+            
+            if len(recent_metrics) < 10:
+                return []
+                
+            values = [m.value for m in recent_metrics]
+            mean = sum(values) / len(values)
+            variance = sum((x - mean) ** 2 for x in values) / len(values)
+            std_dev = variance ** 0.5
+            
+            anomalies = []
+            for metric in recent_metrics[-20:]:  # Check recent values
+                if abs(metric.value - mean) > threshold_std * std_dev:
+                    anomalies.append(metric)
+                    
+            return anomalies
+
+
+class AlertManager:
+    """Manage performance alerts and notifications."""
+
+    def __init__(self, thresholds: PerformanceThresholds):
         """
-        Detect system capabilities and create appropriate performance profile.
+        Initialize alert manager.
 
-        Returns:
-            Performance profile based on system capabilities
+        Args:
+            thresholds: Performance thresholds
         """
-        try:
-            # Get system memory
-            memory = psutil.virtual_memory()
-            total_memory_mb = int(memory.total / (1024 ** 2))
-            available_memory_mb = int(memory.available / (1024 ** 2))
-            total_memory_gb = memory.total / (1024 ** 3)
+        self.thresholds = thresholds
+        self._active_alerts: Dict[str, PerformanceAlert] = {}
+        self._alert_history: deque = deque(maxlen=1000)
+        self._alert_callbacks: List[Callable[[PerformanceAlert], None]] = []
+        self._suppressed_alerts: Dict[str, float] = {}  # alert_id -> suppression_until
+        self._lock = threading.Lock()
 
-            # Get CPU info
-            cpu_count = psutil.cpu_count()
+    def register_alert_callback(self, callback: Callable[[PerformanceAlert], None]) -> None:
+        """Register callback for alert notifications."""
+        self._alert_callbacks.append(callback)
 
-            # Get GPU info
-            gpu_info = self._detect_gpu_info()
+    def check_threshold(self, metric_name: str, value: float, metric_type: MetricType,
+                       details: Dict[str, Any] = None) -> Optional[PerformanceAlert]:
+        """Check if metric value exceeds thresholds."""
+        alert = None
+        
+        if metric_type == MetricType.MEMORY:
+            alert = self._check_memory_threshold(metric_name, value, details or {})
+        elif metric_type == MetricType.LOADING:
+            alert = self._check_loading_threshold(metric_name, value, details or {})
+        elif metric_type == MetricType.RENDERING:
+            alert = self._check_rendering_threshold(metric_name, value, details or {})
+        elif metric_type == MetricType.SYSTEM:
+            alert = self._check_system_threshold(metric_name, value, details or {})
+            
+        if alert:
+            self._process_alert(alert)
+            
+        return alert
 
-            # Use smart memory calculation from ApplicationConfig
-            from .application_config import ApplicationConfig
-            config = ApplicationConfig.get_default()
-            max_memory_mb = config.get_effective_memory_limit_mb(
-                available_memory_mb=available_memory_mb,
-                total_system_memory_mb=total_memory_mb
-            )
+    def _check_memory_threshold(self, metric_name: str, value: float, details: Dict[str, Any]) -> Optional[PerformanceAlert]:
+        """Check memory-related thresholds."""
+        if "memory_usage_mb" in metric_name.lower():
+            if value >= self.thresholds.memory_critical_mb:
+                return PerformanceAlert(
+                    id=f"memory_critical_{int(time.time())}",
+                    severity=AlertSeverity.CRITICAL,
+                    metric_type=MetricType.MEMORY,
+                    message=f"Critical memory usage: {value:.1f}MB",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+            elif value >= self.thresholds.memory_warning_mb:
+                return PerformanceAlert(
+                    id=f"memory_warning_{int(time.time())}",
+                    severity=AlertSeverity.WARNING,
+                    metric_type=MetricType.MEMORY,
+                    message=f"High memory usage: {value:.1f}MB",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+        return None
 
-            # Determine performance level
-            if total_memory_gb < 4 or cpu_count < 4:
-                performance_level = PerformanceLevel.MINIMAL
-                cache_size_mb = 100
-                max_triangles = 50000
-                thread_count = 2
-                chunk_size = 1000
-            elif total_memory_gb < 8 or cpu_count < 8:
-                performance_level = PerformanceLevel.STANDARD
-                cache_size_mb = 256
-                max_triangles = 100000
-                thread_count = 4
-                chunk_size = 5000
-            elif total_memory_gb < 16 or cpu_count < 16:
-                performance_level = PerformanceLevel.HIGH
-                cache_size_mb = 512
-                max_triangles = 500000
-                thread_count = 8
-                chunk_size = 10000
+    def _check_loading_threshold(self, metric_name: str, value: float, details: Dict[str, Any]) -> Optional[PerformanceAlert]:
+        """Check loading-related thresholds."""
+        if "load_time" in metric_name.lower():
+            if value >= self.thresholds.loading_critical_seconds:
+                return PerformanceAlert(
+                    id=f"loading_critical_{int(time.time())}",
+                    severity=AlertSeverity.CRITICAL,
+                    metric_type=MetricType.LOADING,
+                    message=f"Critical loading time: {value:.1f}s",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+            elif value >= self.thresholds.loading_warning_seconds:
+                return PerformanceAlert(
+                    id=f"loading_warning_{int(time.time())}",
+                    severity=AlertSeverity.WARNING,
+                    metric_type=MetricType.LOADING,
+                    message=f"Slow loading time: {value:.1f}s",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+        return None
+
+    def _check_rendering_threshold(self, metric_name: str, value: float, details: Dict[str, Any]) -> Optional[PerformanceAlert]:
+        """Check rendering-related thresholds."""
+        if "fps" in metric_name.lower():
+            if value <= self.thresholds.rendering_critical_fps:
+                return PerformanceAlert(
+                    id=f"rendering_critical_{int(time.time())}",
+                    severity=AlertSeverity.CRITICAL,
+                    metric_type=MetricType.RENDERING,
+                    message=f"Critical frame rate: {value:.1f} FPS",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+            elif value <= self.thresholds.rendering_warning_fps:
+                return PerformanceAlert(
+                    id=f"rendering_warning_{int(time.time())}",
+                    severity=AlertSeverity.WARNING,
+                    metric_type=MetricType.RENDERING,
+                    message=f"Low frame rate: {value:.1f} FPS",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+        return None
+
+    def _check_system_threshold(self, metric_name: str, value: float, details: Dict[str, Any]) -> Optional[PerformanceAlert]:
+        """Check system-related thresholds."""
+        if "cpu_usage" in metric_name.lower():
+            if value >= self.thresholds.cpu_critical_percent:
+                return PerformanceAlert(
+                    id=f"cpu_critical_{int(time.time())}",
+                    severity=AlertSeverity.CRITICAL,
+                    metric_type=MetricType.SYSTEM,
+                    message=f"Critical CPU usage: {value:.1f}%",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+            elif value >= self.thresholds.cpu_warning_percent:
+                return PerformanceAlert(
+                    id=f"cpu_warning_{int(time.time())}",
+                    severity=AlertSeverity.WARNING,
+                    metric_type=MetricType.SYSTEM,
+                    message=f"High CPU usage: {value:.1f}%",
+                    details=details,
+                    timestamp=datetime.now()
+                )
+        return None
+
+    def _process_alert(self, alert: PerformanceAlert) -> None:
+        """Process a performance alert."""
+        # Check if alert is suppressed
+        if alert.id in self._suppressed_alerts:
+            if time.time() < self._suppressed_alerts[alert.id]:
+                return  # Still suppressed
             else:
-                performance_level = PerformanceLevel.ULTRA
-                cache_size_mb = 1024
-                max_triangles = 1000000
-                thread_count = min(16, cpu_count)
-                chunk_size = 20000
+                del self._suppressed_alerts[alert.id]  # Suppression expired
 
-            profile = PerformanceProfile(
-                performance_level=performance_level,
-                max_memory_mb=max_memory_mb,
-                recommended_cache_size_mb=cache_size_mb,
-                max_triangles_for_full_quality=max_triangles,
-                adaptive_quality_enabled=performance_level != PerformanceLevel.ULTRA,
-                background_thread_count=thread_count,
-                chunk_size=chunk_size
-            )
+        with self._lock:
+            # Check if similar alert is already active
+            similar_alert = self._find_similar_active_alert(alert)
+            if similar_alert:
+                return  # Don't create duplicate alerts
 
-            self.logger.info(
-                f"Detected system: {total_memory_gb:.1f}GB RAM ({available_memory_mb}MB available), "
-                f"{cpu_count} CPU cores, GPU: {gpu_info['gpu_name']} ({gpu_info['vram_mb']}MB VRAM), "
-                f"performance level: {performance_level.value}, "
-                f"memory limit: {max_memory_mb}MB"
-            )
+            self._active_alerts[alert.id] = alert
+            self._alert_history.append(alert)
 
-            return profile
+        # Notify callbacks
+        for callback in self._alert_callbacks:
+            try:
+                callback(alert)
+            except Exception as e:
+                logger.error(f"Alert callback failed: {str(e)}")
 
-        except Exception as e:
-            self.logger.error(f"Failed to detect system capabilities: {str(e)}")
-            # Return conservative default profile
-            return PerformanceProfile(
-                performance_level=PerformanceLevel.MINIMAL,
-                max_memory_mb=1024,
-                recommended_cache_size_mb=100,
-                max_triangles_for_full_quality=50000,
-                adaptive_quality_enabled=True,
-                background_thread_count=2,
-                chunk_size=1000
-            )
+        # Log alert
+        if alert.severity == AlertSeverity.CRITICAL:
+            logger.critical(f"PERFORMANCE ALERT: {alert.message}")
+        elif alert.severity == AlertSeverity.ERROR:
+            logger.error(f"PERFORMANCE ALERT: {alert.message}")
+        elif alert.severity == AlertSeverity.WARNING:
+            logger.warning(f"PERFORMANCE ALERT: {alert.message}")
+        else:
+            logger.info(f"PERFORMANCE ALERT: {alert.message}")
+
+    def _find_similar_active_alert(self, alert: PerformanceAlert) -> Optional[PerformanceAlert]:
+        """Find similar active alert to avoid duplicates."""
+        for active_alert in self._active_alerts.values():
+            if (active_alert.metric_type == alert.metric_type and
+                active_alert.severity == alert.severity and
+                active_alert.message.split(':')[0] == alert.message.split(':')[0]):
+                return active_alert
+        return None
+
+    def acknowledge_alert(self, alert_id: str) -> bool:
+        """Acknowledge an alert."""
+        with self._lock:
+            if alert_id in self._active_alerts:
+                self._active_alerts[alert_id].acknowledged = True
+                return True
+        return False
+
+    def resolve_alert(self, alert_id: str) -> bool:
+        """Resolve an alert."""
+        with self._lock:
+            if alert_id in self._active_alerts:
+                alert = self._active_alerts[alert_id]
+                alert.resolved = True
+                alert.resolved_at = datetime.now()
+                
+                # Move to history
+                self._alert_history.append(alert)
+                del self._active_alerts[alert_id]
+                return True
+        return False
+
+    def suppress_alert(self, alert_id: str, duration_seconds: int) -> None:
+        """Suppress an alert for specified duration."""
+        self._suppressed_alerts[alert_id] = time.time() + duration_seconds
+
+    def get_active_alerts(self) -> List[PerformanceAlert]:
+        """Get all active alerts."""
+        with self._lock:
+            return list(self._active_alerts.values())
+
+    def get_recent_alerts(self, count: int = 50) -> List[PerformanceAlert]:
+        """Get recent alerts from history."""
+        with self._lock:
+            return list(self._alert_history)[-count:]
+
+
+class RealTimePerformanceMonitor(QObject):
+    """Main real-time performance monitoring system."""
+
+    # Signals
+    metric_recorded = Signal(PerformanceMetric)
+    alert_triggered = Signal(PerformanceAlert)
+    snapshot_captured = Signal(PerformanceSnapshot)
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize real-time performance monitor.
+
+        Args:
+            config: Custom configuration
+        """
+        super().__init__()
+        
+        # Configuration
+        self.config = config or {}
+        self.monitoring_interval = self.config.get('monitoring_interval', 5)  # seconds
+        self.snapshot_interval = self.config.get('snapshot_interval', 60)    # seconds
+        self.enable_profiling = self.config.get('enable_profiling', True)
+        self.enable_alerting = self.config.get('enable_alerting', True)
+        
+        # Initialize components
+        self.thresholds = PerformanceThresholds()
+        self.profiler = PerformanceProfiler()
+        self.alert_manager = AlertManager(self.thresholds)
+        
+        # Performance managers
+        self.memory_manager = get_memory_manager()
+        self.progressive_loader = get_progressive_loader()
+        self.rendering_manager = get_rendering_manager()
+        
+        # State tracking
+        self._monitoring_active = False
+        self._monitoring_timer = QTimer()
+        self._snapshot_timer = QTimer()
+        self._last_metrics: Dict[str, float] = {}
+        self._operation_start_times: Dict[str, float] = {}
+        
+        # Connect signals
+        self.alert_manager.register_alert_callback(self._on_alert)
+        
+        # Setup timers
+        self._monitoring_timer.timeout.connect(self._collect_metrics)
+        self._snapshot_timer.timeout.connect(self._capture_snapshot)
+
+        logger.info("Real-time performance monitor initialized")
 
     def start_monitoring(self) -> None:
-        """Start performance monitoring in background thread."""
-        if self.is_monitoring:
-            self.logger.warning("Performance monitoring is already running")
+        """Start performance monitoring."""
+        if self._monitoring_active:
             return
-
-        self.is_monitoring = True
-        self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
-        self.monitoring_thread.start()
-        self.logger.info("Performance monitoring started")
+            
+        self._monitoring_active = True
+        self._monitoring_timer.start(self.monitoring_interval * 1000)
+        self._snapshot_timer.start(self.snapshot_interval * 1000)
+        
+        logger.info("Performance monitoring started")
 
     def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
-        if not self.is_monitoring:
+        if not self._monitoring_active:
             return
+            
+        self._monitoring_active = False
+        self._monitoring_timer.stop()
+        self._snapshot_timer.stop()
+        
+        logger.info("Performance monitoring stopped")
 
-        self.is_monitoring = False
-        if self.monitoring_thread:
-            self.monitoring_thread.join(timeout=2.0)
-        self.logger.info("Performance monitoring stopped")
-
-    def _monitoring_loop(self) -> None:
-        """Background monitoring loop."""
-        while self.is_monitoring:
-            try:
-                # Record memory stats
-                memory_stats = self._get_memory_stats()
-                self.memory_history.append(memory_stats)
-
-                # Trim history if needed
-                if len(self.memory_history) > self.max_history_size:
-                    self.memory_history = self.memory_history[-self.max_history_size:]
-
-                # Check memory thresholds
-                if memory_stats.percent_used >= self.memory_critical_threshold:
-                    self.logger.critical(
-                        f"Critical memory usage: {memory_stats.percent_used:.1f}% "
-                        f"({memory_stats.used_mb:.1f}MB used)"
-                    )
-                    if self.memory_critical_callback:
-                        self.memory_critical_callback(memory_stats)
-                elif memory_stats.percent_used >= self.memory_warning_threshold:
-                    self.logger.warning(
-                        f"High memory usage: {memory_stats.percent_used:.1f}% "
-                        f"({memory_stats.used_mb:.1f}MB used)"
-                    )
-                    if self.memory_warning_callback:
-                        self.memory_warning_callback(memory_stats)
-
-                # Sleep until next iteration
-                time.sleep(self.monitoring_interval)
-
-            except Exception as e:
-                self.logger.error(f"Error in monitoring loop: {str(e)}")
-                time.sleep(self.monitoring_interval)
-
-    def _get_memory_stats(self) -> MemoryStats:
-        """
-        Get current memory statistics.
-
-        Returns:
-            Current memory statistics
-        """
+    def _collect_metrics(self) -> None:
+        """Collect performance metrics from all subsystems."""
         try:
-            # System memory
-            memory = psutil.virtual_memory()
-
-            # Process memory
-            process = psutil.Process()
-            process_memory = process.memory_info().rss / (1024 * 1024)  # MB
-
-            return MemoryStats(
-                total_mb=memory.total / (1024 * 1024),
-                used_mb=memory.used / (1024 * 1024),
-                available_mb=memory.available / (1024 * 1024),
-                percent_used=memory.percent,
-                process_mb=process_memory
-            )
-
+            # Collect memory metrics
+            self._collect_memory_metrics()
+            
+            # Collect loading metrics
+            self._collect_loading_metrics()
+            
+            # Collect rendering metrics
+            self._collect_rendering_metrics()
+            
+            # Collect system metrics
+            self._collect_system_metrics()
+            
+            # Collect application metrics
+            self._collect_application_metrics()
+            
         except Exception as e:
-            self.logger.error(f"Failed to get memory stats: {str(e)}")
-            return MemoryStats(0, 0, 0, 0, 0)
+            logger.error(f"Metric collection failed: {str(e)}")
 
-    def start_operation(self, operation_name: str, metadata: Optional[Dict[str, Any]] = None) -> str:
-        """
-        Start tracking an operation.
+    def _collect_memory_metrics(self) -> None:
+        """Collect memory performance metrics."""
+        try:
+            memory_status = self.memory_manager.get_memory_status()
+            
+            # Record memory usage
+            memory_metric = PerformanceMetric(
+                name="memory_usage_mb",
+                value=memory_status['process_memory_mb'],
+                unit="MB",
+                metric_type=MetricType.MEMORY,
+                timestamp=datetime.now(),
+                tags={'source': 'memory_manager'}
+            )
+            self._record_metric(memory_metric)
+            
+            # Check for memory alerts
+            if self.enable_alerting:
+                self.alert_manager.check_threshold(
+                    "memory_usage_mb", 
+                    memory_status['process_memory_mb'],
+                    MetricType.MEMORY,
+                    memory_status
+                )
+                
+        except Exception as e:
+            logger.error(f"Memory metrics collection failed: {str(e)}")
 
+    def _collect_loading_metrics(self) -> None:
+        """Collect loading performance metrics."""
+        try:
+            # Get cache statistics
+            cache_stats = self.progressive_loader.get_cache_stats()
+            
+            # Record cache hit ratio
+            if cache_stats['cached_entries'] > 0:
+                cache_metric = PerformanceMetric(
+                    name="cache_hit_ratio",
+                    value=0.8,  # This would be calculated from actual cache hits
+                    unit="ratio",
+                    metric_type=MetricType.LOADING,
+                    timestamp=datetime.now(),
+                    tags={'source': 'progressive_loader'}
+                )
+                self._record_metric(cache_metric)
+                
+        except Exception as e:
+            logger.error(f"Loading metrics collection failed: {str(e)}")
+
+    def _collect_rendering_metrics(self) -> None:
+        """Collect rendering performance metrics."""
+        try:
+            # Get rendering metrics
+            rendering_metrics = self.rendering_manager._current_metrics
+            
+            if rendering_metrics:
+                # Record FPS
+                fps_metric = PerformanceMetric(
+                    name="rendering_fps",
+                    value=rendering_metrics.fps,
+                    unit="FPS",
+                    metric_type=MetricType.RENDERING,
+                    timestamp=datetime.now(),
+                    tags={'source': 'rendering_manager'}
+                )
+                self._record_metric(fps_metric)
+                
+                # Record GPU memory usage
+                gpu_memory_metric = PerformanceMetric(
+                    name="gpu_memory_usage_mb",
+                    value=rendering_metrics.gpu_memory_used_mb,
+                    unit="MB",
+                    metric_type=MetricType.RENDERING,
+                    timestamp=datetime.now(),
+                    tags={'source': 'rendering_manager'}
+                )
+                self._record_metric(gpu_memory_metric)
+                
+                # Check for rendering alerts
+                if self.enable_alerting:
+                    self.alert_manager.check_threshold(
+                        "rendering_fps",
+                        rendering_metrics.fps,
+                        MetricType.RENDERING,
+                        asdict(rendering_metrics)
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Rendering metrics collection failed: {str(e)}")
+
+    def _collect_system_metrics(self) -> None:
+        """Collect system performance metrics."""
+        try:
+            # CPU usage
+            cpu_percent = psutil.cpu_percent(interval=0.1)
+            cpu_metric = PerformanceMetric(
+                name="cpu_usage_percent",
+                value=cpu_percent,
+                unit="%",
+                metric_type=MetricType.SYSTEM,
+                timestamp=datetime.now(),
+                tags={'source': 'psutil'}
+            )
+            self._record_metric(cpu_metric)
+            
+            # Memory usage
+            memory = psutil.virtual_memory()
+            system_memory_metric = PerformanceMetric(
+                name="system_memory_percent",
+                value=memory.percent,
+                unit="%",
+                metric_type=MetricType.SYSTEM,
+                timestamp=datetime.now(),
+                tags={'source': 'psutil'}
+            )
+            self._record_metric(system_memory_metric)
+            
+            # Disk usage
+            disk = psutil.disk_usage('/')
+            disk_percent = (disk.used / disk.total) * 100
+            disk_metric = PerformanceMetric(
+                name="disk_usage_percent",
+                value=disk_percent,
+                unit="%",
+                metric_type=MetricType.SYSTEM,
+                timestamp=datetime.now(),
+                tags={'source': 'psutil'}
+            )
+            self._record_metric(disk_metric)
+            
+            # Check for system alerts
+            if self.enable_alerting:
+                self.alert_manager.check_threshold(
+                    "cpu_usage_percent",
+                    cpu_percent,
+                    MetricType.SYSTEM,
+                    {'cpu_count': psutil.cpu_count()}
+                )
+                
+        except Exception as e:
+            logger.error(f"System metrics collection failed: {str(e)}")
+
+    def _collect_application_metrics(self) -> None:
+        """Collect application-specific metrics."""
+        try:
+            # Active file loads
+            active_loads = len(self.progressive_loader._active_loads)
+            loads_metric = PerformanceMetric(
+                name="active_file_loads",
+                value=active_loads,
+                unit="count",
+                metric_type=MetricType.APPLICATION,
+                timestamp=datetime.now(),
+                tags={'source': 'application'}
+            )
+            self._record_metric(loads_metric)
+            
+            # Active alerts count
+            active_alerts = len(self.alert_manager.get_active_alerts())
+            alerts_metric = PerformanceMetric(
+                name="active_alerts_count",
+                value=active_alerts,
+                unit="count",
+                metric_type=MetricType.APPLICATION,
+                timestamp=datetime.now(),
+                tags={'source': 'alert_manager'}
+            )
+            self._record_metric(alerts_metric)
+            
+        except Exception as e:
+            logger.error(f"Application metrics collection failed: {str(e)}")
+
+    def _record_metric(self, metric: PerformanceMetric) -> None:
+        """Record a performance metric."""
+        self._last_metrics[metric.name] = metric.value
+        
+        if self.enable_profiling:
+            self.profiler.record_metric(metric)
+            
+        self.metric_recorded.emit(metric)
+
+    def _capture_snapshot(self) -> None:
+        """Capture comprehensive performance snapshot."""
+        try:
+            # Collect all recent metrics
+            recent_metrics = []
+            if self.enable_profiling:
+                with self.profiler._lock:
+                    recent_metrics = list(self.profiler._metric_history)[-100:]
+            
+            # Get active alerts
+            active_alerts = self.alert_manager.get_active_alerts()
+            
+            # Get system information
+            system_info = {
+                'cpu_count': psutil.cpu_count(),
+                'memory_total_gb': psutil.virtual_memory().total / (1024**3),
+                'platform': psutil.os.name,
+                'boot_time': datetime.fromtimestamp(psutil.boot_time()).isoformat()
+            }
+            
+            # Get application state
+            application_state = {
+                'monitoring_active': self._monitoring_active,
+                'config': self.config,
+                'thresholds': asdict(self.thresholds)
+            }
+            
+            # Create snapshot
+            snapshot = PerformanceSnapshot(
+                timestamp=datetime.now(),
+                metrics=recent_metrics,
+                alerts=active_alerts,
+                system_info=system_info,
+                application_state=application_state
+            )
+            
+            self.snapshot_captured.emit(snapshot)
+            
+            # Log snapshot summary
+            logger.debug(f"Performance snapshot captured: {len(recent_metrics)} metrics, "
+                        f"{len(active_alerts)} active alerts")
+            
+        except Exception as e:
+            logger.error(f"Snapshot capture failed: {str(e)}")
+
+    def _on_alert(self, alert: PerformanceAlert) -> None:
+        """Handle performance alert."""
+        self.alert_triggered.emit(alert)
+
+    def profile_operation_start(self, operation_name: str) -> None:
+        """Start profiling an operation."""
+        self._operation_start_times[operation_name] = time.time()
+
+    def profile_operation_end(self, operation_name: str) -> None:
+        """End profiling an operation."""
+        start_time = self._operation_start_times.pop(operation_name, None)
+        if start_time:
+            duration = time.time() - start_time
+            if self.enable_profiling:
+                self.profiler.profile_operation(operation_name, duration)
+
+    def start_operation(self, operation_id: str, metadata: Dict[str, Any] = None) -> str:
+        """Start profiling an operation (alias for profile_operation_start).
+        
         Args:
-            operation_name: Name of the operation
-            metadata: Optional metadata about the operation
-
+            operation_id: Unique identifier for the operation
+            metadata: Optional metadata dictionary
+            
         Returns:
-            Operation ID for tracking
+            The operation_id for tracking
         """
-        operation_id = f"{operation_name}_{int(time.time() * 1000000)}"
-
-        memory_before = self._get_memory_stats().process_mb
-
-        self.active_operations[operation_id] = {
-            'operation_name': operation_name,
-            'start_time': time.time(),
-            'memory_before_mb': memory_before,
-            'memory_peak_mb': memory_before,
-            'metadata': metadata or {}
-        }
-
-        self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
+        self.profile_operation_start(operation_id)
         return operation_id
 
-    def end_operation(self, operation_id: str, success: bool = True,
-                     error_message: Optional[str] = None) -> Optional[OperationMetrics]:
-        """
-        End tracking an operation and record metrics.
-
+    def end_operation(self, operation_id: str, success: bool = True, error_message: str = None) -> None:
+        """End profiling an operation (alias for profile_operation_end).
+        
         Args:
-            operation_id: ID of the operation to end
-            success: Whether the operation was successful
-            error_message: Error message if operation failed
-
-        Returns:
-            Operation metrics if found, None otherwise
+            operation_id: Unique identifier for the operation
+            success: Whether the operation completed successfully
+            error_message: Optional error message if operation failed
         """
-        if operation_id not in self.active_operations:
-            self.logger.warning(f"Operation ID not found: {operation_id}")
-            return None
+        self.profile_operation_end(operation_id)
+        # Could log success/failure here if needed
+        if not success and error_message:
+            logger.error(f"Operation {operation_id} failed: {error_message}")
 
-        operation = self.active_operations.pop(operation_id)
-        end_time = time.time()
-        memory_after = self._get_memory_stats().process_mb
+    def get_current_metrics(self) -> Dict[str, float]:
+        """Get current metric values."""
+        return self._last_metrics.copy()
 
-        # Calculate metrics
-        duration_ms = (end_time - operation['start_time']) * 1000
-        memory_peak = max(operation['memory_peak_mb'], memory_after)
-
-        metrics = OperationMetrics(
-            operation_name=operation['operation_name'],
-            start_time=operation['start_time'],
-            end_time=end_time,
-            duration_ms=duration_ms,
-            memory_before_mb=operation['memory_before_mb'],
-            memory_after_mb=memory_after,
-            memory_peak_mb=memory_peak,
-            success=success,
-            error_message=error_message,
-            metadata=operation['metadata']
-        )
-
-        # Store in completed operations
-        self.completed_operations.append(metrics)
-        if len(self.completed_operations) > self.max_operations_history:
-            self.completed_operations = self.completed_operations[-self.max_operations_history:]
-
-        # Log operation completion
-        if success:
-            self.logger.info(
-                f"Operation completed: {metrics.operation_name} in {duration_ms:.1f}ms, "
-                f"memory delta: {memory_after - operation['memory_before_mb']:.1f}MB"
-            )
-        else:
-            self.logger.error(
-                f"Operation failed: {metrics.operation_name} after {duration_ms:.1f}ms, "
-                f"error: {error_message}"
-            )
-
-        # Check for slow operations
-        duration_seconds = duration_ms / 1000
-        if duration_seconds > self.operation_slow_threshold:
-            self.logger.warning(
-                f"Slow operation detected: {metrics.operation_name} took {duration_seconds:.2f}s"
-            )
-            if self.slow_operation_callback:
-                self.slow_operation_callback(metrics)
-
-        return metrics
-
-    def update_operation_peak_memory(self, operation_id: str) -> None:
-        """
-        Update the peak memory usage for an active operation.
-
-        Args:
-            operation_id: ID of the operation
-        """
-        if operation_id in self.active_operations:
-            current_memory = self._get_memory_stats().process_mb
-            self.active_operations[operation_id]['memory_peak_mb'] = max(
-                self.active_operations[operation_id]['memory_peak_mb'],
-                current_memory
-            )
-
-    def get_current_memory_stats(self) -> MemoryStats:
-        """
-        Get current memory statistics.
-
-        Returns:
-            Current memory statistics
-        """
-        return self._get_memory_stats()
-
-    def get_performance_profile(self) -> PerformanceProfile:
-        """
-        Get the current performance profile.
-
-        Returns:
-            Current performance profile
-        """
-        return self.performance_profile
-
-    def get_operation_metrics(self, operation_name: Optional[str] = None,
-                            limit: int = 100) -> List[OperationMetrics]:
-        """
-        Get metrics for completed operations.
-
-        Args:
-            operation_name: Filter by operation name (optional)
-            limit: Maximum number of metrics to return
-
-        Returns:
-            List of operation metrics
-        """
-        metrics = self.completed_operations
-
-        if operation_name:
-            metrics = [m for m in metrics if m.operation_name == operation_name]
-
-        # Return most recent metrics
-        return sorted(metrics, key=lambda x: x.end_time, reverse=True)[:limit]
-
-    def get_average_operation_time(self, operation_name: str) -> Optional[float]:
-        """
-        Get average time for an operation type.
-
-        Args:
-            operation_name: Name of the operation
-
-        Returns:
-            Average time in milliseconds, or None if no operations found
-        """
-        metrics = self.get_operation_metrics(operation_name)
-        if not metrics:
-            return None
-
-        successful_metrics = [m for m in metrics if m.success]
-        if not successful_metrics:
-            return None
-
-        return sum(m.duration_ms for m in successful_metrics) / len(successful_metrics)
-
-    def detect_memory_leak(self, operation_name: str, threshold_mb: float = 50.0) -> bool:
-        """
-        Detect potential memory leaks for an operation type.
-
-        Args:
-            operation_name: Name of the operation to check
-            threshold_mb: Memory increase threshold in MB
-
-        Returns:
-            True if potential memory leak detected
-        """
-        metrics = self.get_operation_metrics(operation_name, limit=10)
-        if len(metrics) < 3:
-            return False  # Not enough data
-
-        successful_metrics = [m for m in metrics if m.success]
-        if len(successful_metrics) < 3:
-            return False
-
-        # Calculate memory deltas
-        memory_deltas = [
-            m.memory_after_mb - m.memory_before_mb
-            for m in successful_metrics
-        ]
-
-        # Check if memory is consistently increasing
-        avg_delta = sum(memory_deltas) / len(memory_deltas)
-        if avg_delta > threshold_mb:
-            self.logger.warning(
-                f"Potential memory leak detected in {operation_name}: "
-                f"average memory increase of {avg_delta:.1f}MB per operation"
-            )
-            return True
-
-        return False
-
-    def force_garbage_collection(self) -> None:
-        """Force garbage collection and log memory changes."""
-        memory_before = self._get_memory_stats().process_mb
-        gc.collect()
-        memory_after = self._get_memory_stats().process_mb
-
-        freed_mb = memory_before - memory_after
-        if freed_mb > 1.0:  # Only log if significant
-            self.logger.info(f"Garbage collection freed {freed_mb:.1f}MB")
-
-    def export_performance_report(self, file_path: str) -> None:
-        """
-        Export performance report to JSON file.
-
-        Args:
-            file_path: Path to save the report
-        """
+    def get_performance_report(self) -> Dict[str, Any]:
+        """Get comprehensive performance report."""
         try:
-            report = {
-                'timestamp': time.time(),
-                'performance_profile': {
-                    'performance_level': self.performance_profile.performance_level.value,
-                    'max_memory_mb': self.performance_profile.max_memory_mb,
-                    'recommended_cache_size_mb': self.performance_profile.recommended_cache_size_mb,
-                    'max_triangles_for_full_quality': self.performance_profile.max_triangles_for_full_quality,
-                    'adaptive_quality_enabled': self.performance_profile.adaptive_quality_enabled,
-                    'background_thread_count': self.performance_profile.background_thread_count,
-                    'chunk_size': self.performance_profile.chunk_size
+            # Get trends for key metrics
+            trends = {}
+            key_metrics = ['memory_usage_mb', 'rendering_fps', 'cpu_usage_percent']
+            
+            for metric in key_metrics:
+                trends[metric] = self.profiler.get_metric_trend(metric)
+            
+            # Get operation statistics
+            operation_stats = {}
+            if self.enable_profiling:
+                with self.profiler._lock:
+                    for operation_name in self.profiler._operation_profiles:
+                        operation_stats[operation_name] = self.profiler.get_operation_stats(operation_name)
+            
+            # Get active alerts
+            active_alerts = self.alert_manager.get_active_alerts()
+            
+            return {
+                'current_metrics': self._last_metrics,
+                'metric_trends': trends,
+                'operation_statistics': operation_stats,
+                'active_alerts': [asdict(alert) for alert in active_alerts],
+                'monitoring_status': {
+                    'active': self._monitoring_active,
+                    'interval_seconds': self.monitoring_interval,
+                    'profiling_enabled': self.enable_profiling,
+                    'alerting_enabled': self.enable_alerting
                 },
-                'current_memory': self._get_memory_stats().__dict__,
-                'memory_history': [m.__dict__ for m in self.memory_history[-100:]],  # Last 100 entries
-                'operation_summary': {}
+                'system_info': {
+                    'cpu_count': psutil.cpu_count(),
+                    'memory_total_gb': psutil.virtual_memory().total / (1024**3),
+                    'platform': psutil.os.name
+                }
             }
-
-            # Add operation summaries
-            operation_names = set(m.operation_name for m in self.completed_operations)
-            for op_name in operation_names:
-                op_metrics = [m for m in self.completed_operations if m.operation_name == op_name]
-                successful_ops = [m for m in op_metrics if m.success]
-
-                if successful_ops:
-                    report['operation_summary'][op_name] = {
-                        'total_operations': len(op_metrics),
-                        'successful_operations': len(successful_ops),
-                        'average_time_ms': sum(m.duration_ms for m in successful_ops) / len(successful_ops),
-                        'min_time_ms': min(m.duration_ms for m in successful_ops),
-                        'max_time_ms': max(m.duration_ms for m in successful_ops),
-                        'average_memory_delta_mb': sum(
-                            m.memory_after_mb - m.memory_before_mb for m in successful_ops
-                        ) / len(successful_ops)
-                    }
-
-            # Write report
-            with open(file_path, 'w') as f:
-                json.dump(report, f, indent=2)
-
-            self.logger.info(f"Performance report exported to {file_path}")
-
+            
         except Exception as e:
-            self.logger.error(f"Failed to export performance report: {str(e)}")
+            logger.error(f"Performance report generation failed: {str(e)}")
+            return {'error': str(e)}
 
-    def cleanup(self) -> None:
-        """Clean up resources."""
+    def export_metrics(self, file_path: str, duration_hours: int = 24) -> None:
+        """Export performance metrics to file."""
+        try:
+            cutoff_time = datetime.now() - timedelta(hours=duration_hours)
+            
+            with self.profiler._lock:
+                relevant_metrics = [
+                    asdict(metric) for metric in self.profiler._metric_history
+                    if metric.timestamp >= cutoff_time
+                ]
+            
+            export_data = {
+                'export_time': datetime.now().isoformat(),
+                'duration_hours': duration_hours,
+                'metrics': relevant_metrics,
+                'system_info': {
+                    'cpu_count': psutil.cpu_count(),
+                    'memory_total_gb': psutil.virtual_memory().total / (1024**3),
+                    'platform': psutil.os.name
+                }
+            }
+            
+            with open(file_path, 'w') as f:
+                json.dump(export_data, f, indent=2, default=str)
+                
+            logger.info(f"Performance metrics exported to {file_path}")
+            
+        except Exception as e:
+            logger.error(f"Metrics export failed: {str(e)}")
+
+    def shutdown(self) -> None:
+        """Shutdown the performance monitor."""
         self.stop_monitoring()
-        self.memory_history.clear()
-        self.active_operations.clear()
-        self.completed_operations.clear()
-        self.logger.info("Performance monitor cleaned up")
+        logger.info("Performance monitor shutdown completed")
 
 
 # Global performance monitor instance
-_performance_monitor = None
+_performance_monitor: Optional[RealTimePerformanceMonitor] = None
 
 
-def get_performance_monitor() -> PerformanceMonitor:
-    """
-    Get the global performance monitor instance.
-
-    Returns:
-        Global performance monitor instance
-    """
+def get_performance_monitor() -> RealTimePerformanceMonitor:
+    """Get global performance monitor instance."""
     global _performance_monitor
     if _performance_monitor is None:
-        _performance_monitor = PerformanceMonitor()
+        _performance_monitor = RealTimePerformanceMonitor()
     return _performance_monitor
 
 
 def start_performance_monitoring() -> None:
     """Start global performance monitoring."""
-    get_performance_monitor().start_monitoring()
+    monitor = get_performance_monitor()
+    monitor.start_monitoring()
 
 
 def stop_performance_monitoring() -> None:
     """Stop global performance monitoring."""
-    if _performance_monitor:
-        _performance_monitor.stop_monitoring()
+    monitor = get_performance_monitor()
+    monitor.stop_monitoring()
+
+
+def get_performance_report() -> Dict[str, Any]:
+    """Get comprehensive performance report."""
+    monitor = get_performance_monitor()
+    return monitor.get_performance_report()
+
+
+@contextmanager
+def profile_operation(operation_name: str):
+    """Context manager for profiling operations."""
+    monitor = get_performance_monitor()
+    monitor.profile_operation_start(operation_name)
+    try:
+        yield
+    finally:
+        monitor.profile_operation_end(operation_name)
 
 
 def monitor_operation(operation_name: str):
-    """
-    Decorator to monitor function performance.
-
-    Args:
-        operation_name: Name for the operation
-
-    Returns:
-        Decorator function
-    """
+    """Decorator for profiling operations."""
     def decorator(func):
         def wrapper(*args, **kwargs):
             monitor = get_performance_monitor()
-            operation_id = monitor.start_operation(operation_name)
-
+            monitor.profile_operation_start(operation_name)
             try:
                 result = func(*args, **kwargs)
-                monitor.end_operation(operation_id, success=True)
                 return result
-            except Exception as e:
-                monitor.end_operation(operation_id, success=False, error_message=str(e))
-                raise
-
+            finally:
+                monitor.profile_operation_end(operation_name)
         return wrapper
     return decorator

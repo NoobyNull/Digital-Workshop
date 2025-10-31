@@ -51,6 +51,9 @@ class PreferencesDialog(QDialog):
         # Use native title bar (removed frameless window flag)
         # This allows the OS to handle the title bar and window controls
 
+        # Apply qt-material theme to this dialog
+        self._apply_qt_material_theme()
+
         self._setup_ui()
 
     def _setup_ui(self):
@@ -147,6 +150,70 @@ class PreferencesDialog(QDialog):
         self.theming_tab.reload_from_current()
         self._on_theme_live_applied()
 
+    def _apply_qt_material_theme(self) -> None:
+        """Apply qt-material theme to this dialog using the same service as main application."""
+        try:
+            from src.gui.theme.qt_material_service import QtMaterialThemeService
+            service = QtMaterialThemeService.instance()
+            
+            # Get current theme and apply it to the entire application (same as main window)
+            current_theme, variant = service.get_current_theme()
+            
+            # Ensure we default to dark/blue theme if no theme is set
+            if not current_theme or current_theme == "":
+                current_theme = "dark"
+                variant = "blue"
+            
+            # Apply theme using the same service as the main application
+            # This ensures consistency between main window and preferences dialog
+            result = service.apply_theme(current_theme, variant)
+            
+            if not result:
+                # If QtMaterialThemeService.apply_theme failed, try to apply directly as fallback
+                self._apply_theme_directly()
+                
+        except Exception as e:
+            # Silently fail if theme application fails
+            pass
+    
+    def _apply_theme_directly(self) -> None:
+        """Fallback: Apply theme directly to this dialog (legacy method)."""
+        try:
+            from src.gui.theme.qt_material_service import QtMaterialThemeService
+            service = QtMaterialThemeService.instance()
+            
+            # Get current theme and variant
+            current_theme, variant = service.get_current_theme()
+            
+            # Apply the theme to this dialog using qt-material
+            if current_theme == "light":
+                theme_name = f"light_{variant}.xml"
+                from qt_material import apply_stylesheet
+                apply_stylesheet(self, theme=theme_name, invert_secondary=True)
+            elif current_theme == "dark":
+                theme_name = f"dark_{variant}.xml"
+                from qt_material import apply_stylesheet
+                apply_stylesheet(self, theme=theme_name)
+            elif current_theme == "auto":
+                # Try to detect OS theme
+                try:
+                    import darkdetect
+                    if darkdetect.isDark():
+                        theme_name = f"dark_{variant}.xml"
+                        from qt_material import apply_stylesheet
+                        apply_stylesheet(self, theme=theme_name)
+                    else:
+                        theme_name = f"light_{variant}.xml"
+                        from qt_material import apply_stylesheet
+                        apply_stylesheet(self, theme=theme_name, invert_secondary=True)
+                except ImportError:
+                    theme_name = f"dark_{variant}.xml"
+                    from qt_material import apply_stylesheet
+                    apply_stylesheet(self, theme=theme_name)
+        except Exception as e:
+            # Silently fail if theme application fails
+            pass
+
 
 class ThemingTab(QWidget):
     """
@@ -188,8 +255,8 @@ class ThemingTab(QWidget):
     def _setup_material_theme_selector(self, parent_layout: QVBoxLayout) -> None:
         """Setup qt-material theme mode and variant selector."""
         try:
-            from src.gui.theme.simple_service import ThemeService
-            self.service = ThemeService.instance()
+            from src.gui.theme.qt_material_service import QtMaterialThemeService
+            self.service = QtMaterialThemeService.instance()
 
             # Material theme group
             mat_group = QFrame()
@@ -235,7 +302,7 @@ class ThemingTab(QWidget):
             parent_layout.addWidget(mat_group)
 
         except Exception as e:
-            # Silently fail if ThemeService not available
+            # Silently fail if QtMaterialThemeService not available
             pass
 
     def _populate_material_variants(self) -> None:
@@ -249,20 +316,35 @@ class ThemingTab(QWidget):
 
             # Get current theme type
             theme_type, _ = self.service.get_current_theme()
-            variants = self.service.get_qt_material_variants(theme_type)
+            variants = self.service.get_available_variants(theme_type)
 
             for variant in variants:
-                # Extract color name from variant (e.g., "dark_blue" -> "blue")
-                color_name = variant.split("_", 1)[1] if "_" in variant else variant
-                self.variant_combo.addItem(color_name.title(), variant)
+                self.variant_combo.addItem(variant.title(), variant)
+
+            # Set current variant
+            current_theme, current_variant = self.service.get_current_theme()
+            if current_variant in variants:
+                index = self.variant_combo.findText(current_variant.title())
+                if index >= 0:
+                    self.variant_combo.setCurrentIndex(index)
 
             self.variant_combo.blockSignals(False)
         except Exception:
             pass
 
     def _apply_theme_styling(self) -> None:
-        """Apply theme styling (no-op - qt-material handles this)."""
-        pass
+        """Apply qt-material theme styling to this tab."""
+        try:
+            # Get the current application stylesheet and apply it to this tab
+            from PySide6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app:
+                app_stylesheet = app.styleSheet()
+                if app_stylesheet:
+                    self.setStyleSheet(app_stylesheet)
+        except Exception as e:
+            # Silently fail if theme application fails
+            pass
 
     def _on_theme_mode_changed(self, index: int) -> None:
         """Handle theme mode change (Dark/Light/Auto)."""
@@ -274,8 +356,11 @@ class ThemingTab(QWidget):
             if not mode:
                 return
 
-            # Apply the new theme mode
-            self.service.apply_theme(mode, "qt-material")
+            # Get current variant to maintain it across theme changes
+            _, current_variant = self.service.get_current_theme()
+            
+            # Apply the new theme mode with current variant
+            self.service.apply_theme(mode, current_variant)
 
             # Update variant selector to show correct variants for new mode
             self._populate_material_variants()
@@ -295,17 +380,16 @@ class ThemingTab(QWidget):
             if not self.service or not variant_name:
                 return
 
-            # Set the variant and apply theme
-            self.service.set_qt_material_variant(variant_name.lower())
-            current_theme, _ = self.service.get_current_theme()
-            self.service.apply_theme(current_theme, "qt-material")
+            # Set the variant using the correct method
+            result = self.service.set_theme_variant(variant_name.lower())
 
-            # Reapply styling to this tab
-            self._apply_theme_styling()
+            if result:
+                # Reapply styling to this tab
+                self._apply_theme_styling()
 
-            # Notify parent of theme change
-            if callable(self.on_live_apply):
-                self.on_live_apply()
+                # Notify parent of theme change
+                if callable(self.on_live_apply):
+                    self.on_live_apply()
         except Exception:
             pass
 class ViewerSettingsTab(QWidget):
@@ -1221,7 +1305,20 @@ class AdvancedTab(QWidget):
             "metadata, and library information. The database will be recreated on next startup."
         )
         db_warning.setWordWrap(True)
-        db_warning.setStyleSheet("color: #ffa500; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+        # Apply theme-aware warning styling
+        try:
+            if COLORS:
+                warning_color = getattr(COLORS, 'warning', '#ffa500')
+                warning_bg = getattr(COLORS, 'warning_bg', 'rgba(255, 165, 0, 0.1)')
+            else:
+                # Fallback colors
+                warning_color = '#ffa500'
+                warning_bg = 'rgba(255, 165, 0, 0.1)'
+            
+            db_warning.setStyleSheet(f"color: {warning_color}; padding: 8px; background-color: {warning_bg}; border-radius: 4px;")
+        except (AttributeError, TypeError):
+            # Fallback if theme system fails
+            db_warning.setStyleSheet("color: #ffa500; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
         db_layout.addWidget(db_warning)
 
         reset_db_button = QPushButton("Reset Database")
@@ -1247,7 +1344,20 @@ class AdvancedTab(QWidget):
             "the application to its default state. This action cannot be undone."
         )
         warning.setWordWrap(True)
-        warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
+        # Apply theme-aware warning styling
+        try:
+            if COLORS:
+                error_color = getattr(COLORS, 'error', '#ff6b6b')
+                error_bg = getattr(COLORS, 'error_bg', 'rgba(255, 107, 107, 0.1)')
+            else:
+                # Fallback colors
+                error_color = '#ff6b6b'
+                error_bg = 'rgba(255, 107, 107, 0.1)'
+            
+            warning.setStyleSheet(f"color: {error_color}; padding: 8px; background-color: {error_bg}; border-radius: 4px;")
+        except (AttributeError, TypeError):
+            # Fallback if theme system fails
+            warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
         system_layout.addWidget(warning)
 
         # Reset button
@@ -1490,4 +1600,5 @@ class AdvancedTab(QWidget):
                 "Reset Failed",
                 f"An error occurred during system reset:\n\n{str(e)}"
             )
+
 

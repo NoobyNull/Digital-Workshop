@@ -8,11 +8,11 @@ It uses the new modular Application class for initialization and execution.
 
 import argparse
 import sys
-import os
+from pathlib import Path
 
 # Add the parent directory to the Python path so we can import from src
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parent_dir)
+parent_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(parent_dir))
 
 from src.core.application import Application
 from src.core.application_config import ApplicationConfig
@@ -163,9 +163,9 @@ def main():
         exit_code = app.run()
         return exit_code
 
-    except RuntimeError as e:
+    except RuntimeError as error:
         # Handle any exceptions during startup
-        exception_handler.handle_startup_error(e)
+        exception_handler.handle_startup_error(error)
         return 1
 
 

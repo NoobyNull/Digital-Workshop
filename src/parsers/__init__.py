@@ -13,7 +13,7 @@ from .stl_parser import STLParser, STLFormat, STLModel, STLProgressCallback
 from .obj_parser import OBJParser, OBJMaterial, OBJFace
 from .threemf_parser import ThreeMFParser, ThreeMFObject, ThreeMFComponent, ThreeMFBuildItem
 from .step_parser import STEPParser, STEPEntity, STEPCartesianPoint, STEPDirection
-from .format_detector import FormatDetector
+from .format_detector import EnhancedFormatDetector
 
 __all__ = [
     # Base classes and utilities
