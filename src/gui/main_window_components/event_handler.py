@@ -10,12 +10,13 @@ from typing import List, Optional
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger, get_activity_logger, log_function_call
 from src.core.database_manager import get_database_manager
 from src.gui.preferences import PreferencesDialog
 
 
 logger = get_logger(__name__)
+activity_logger = get_activity_logger(__name__)
 
 
 class EventHandler:
@@ -63,7 +64,7 @@ class EventHandler:
 
     def on_models_added(self, model_ids: List[int]) -> None:
         """Handle models added to the library."""
-        logger.info(f"Added {len(model_ids)} models to library")
+        activity_logger.info(f"Added {len(model_ids)} models to library")
 
         if model_ids:
             self.main_window.status_label.setText(f"Added {len(model_ids)} models to library")
@@ -74,7 +75,7 @@ class EventHandler:
     def on_metadata_saved(self, model_id: int) -> None:
         """Handle metadata saved event from the metadata editor."""
         try:
-            logger.info(f"Metadata saved for model ID: {model_id}")
+            activity_logger.info(f"Metadata saved for model ID: {model_id}")
             self.main_window.status_label.setText("Metadata saved")
 
             if hasattr(self.main_window, "model_library_widget"):
@@ -98,7 +99,30 @@ class EventHandler:
         """Show preferences dialog."""
         logger.info("Opening preferences dialog")
         dlg = PreferencesDialog(self.main_window, on_reset_layout=self.main_window._reset_dock_layout_and_save)
+        dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
         dlg.exec_()
+
+    def _on_viewer_settings_changed(self) -> None:
+        """Handle viewer settings changed from preferences dialog."""
+        try:
+            logger.info("Viewer settings changed from preferences, syncing to lighting panel and manager")
+
+            # Reload lighting settings from QSettings and apply to lighting manager
+            if hasattr(self.main_window, '_settings_manager'):
+                self.main_window._settings_manager.load_lighting_settings()
+                logger.info("Lighting settings reloaded and synced to popup and manager")
+            elif hasattr(self.main_window, '_load_lighting_settings'):
+                # Fallback: call load_lighting_settings directly
+                self.main_window._load_lighting_settings()
+                logger.info("Lighting settings reloaded directly from main window")
+
+            # Reload viewer settings to scene manager
+            if hasattr(self.main_window.viewer_widget, 'scene_manager'):
+                self.main_window.viewer_widget.scene_manager.reload_viewer_settings()
+                logger.info("Viewer settings reloaded to scene manager")
+
+        except Exception as e:
+            logger.error(f"Failed to sync viewer settings: {e}")
 
     def show_theme_manager(self) -> None:
         """Show the Theme Manager dialog."""
@@ -260,16 +284,16 @@ class EventHandler:
         logger.info("Showing about dialog")
 
         about_text = (
-            "<h3>3D-MM - 3D Model Manager</h3>"
+            "<h3>Digital Workshop</h3>"
             "<p>Version 1.0.0</p>"
             "<p>A desktop application for managing and viewing 3D models.</p>"
             "<p><b>Supported formats:</b> STL, OBJ, STEP, MF3</p>"
             "<p><b>Requirements:</b> Windows 7+, Python 3.8+, PySide5</p>"
             "<br>"
-            "<p>&copy; 2023 3D-MM Development Team</p>"
+            "<p>&copy; 2023 Digital Workshop Development Team</p>"
         )
 
-        QMessageBox.about(self.main_window, "About 3D-MM", about_text)
+        QMessageBox.about(self.main_window, "About Digital Workshop", about_text)
 
     @log_function_call(logger)
     def generate_library_screenshots(self) -> None:

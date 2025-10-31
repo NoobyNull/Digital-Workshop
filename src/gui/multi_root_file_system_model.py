@@ -1,5 +1,5 @@
 """
-Multi-root file system model for 3D-MM application.
+Multi-root file system model for Digital Workshop.
 
 Provides a unified tree view of files from multiple root folders,
 with filtering and navigation capabilities.

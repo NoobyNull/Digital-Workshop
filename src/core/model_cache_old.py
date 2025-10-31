@@ -1,5 +1,5 @@
 """
-Simple model cache system for 3D-MM application.
+Simple model cache system for Digital Workshop.
 
 This module provides a basic caching system for 3D models that relies on the OS
 for memory management instead of implementing custom memory management.

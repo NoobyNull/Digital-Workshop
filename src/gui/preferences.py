@@ -27,9 +27,9 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.theme import (
-    COLORS,
     set_theme, save_theme_to_settings, theme_to_dict, color as color_hex, hex_to_rgb
 )
+from src.gui.theme.color_helper import get_theme_color
 from src.gui.files_tab import FilesTab
 
 
@@ -37,8 +37,10 @@ class PreferencesDialog(QDialog):
     """
     Application preferences dialog with multiple tabs.
     Emits theme_changed whenever the Theming tab applies updates.
+    Emits viewer_settings_changed whenever viewer settings are modified.
     """
     theme_changed = Signal()
+    viewer_settings_changed = Signal()
 
     def __init__(self, parent=None, on_reset_layout=None):
         super().__init__(parent)
@@ -51,10 +53,13 @@ class PreferencesDialog(QDialog):
         # Use native title bar (removed frameless window flag)
         # This allows the OS to handle the title bar and window controls
 
-        # Apply qt-material theme to this dialog
-        self._apply_qt_material_theme()
-
         self._setup_ui()
+        
+        # Load and restore last selected tab
+        self._restore_last_tab()
+        
+        # Connect signal to save tab index when changed
+        self.tabs.currentChanged.connect(self._save_current_tab)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -62,22 +67,19 @@ class PreferencesDialog(QDialog):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
 
-        # Create tabs in logical order
-        self.window_layout_tab = WindowLayoutTab(on_reset_layout=self.on_reset_layout)
+        # Create new consolidated tabs
+        self.general_tab = GeneralTab(on_reset_layout=self.on_reset_layout)
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
         self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
-        self.performance_tab = PerformanceSettingsTab()
         self.files_tab = FilesTab()
         self.advanced_tab = AdvancedTab()
 
-        # Add tabs in logical order: UI → Content → System → Advanced
-        self.tabs.addTab(self.window_layout_tab, "Window & Layout")
-        self.tabs.addTab(self.theming_tab, "Theming")
+        # Add tabs in new consolidated structure
+        self.tabs.addTab(self.general_tab, "General")
+        self.tabs.addTab(self.theming_tab, "Appearance")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
-        self.tabs.addTab(self.thumbnail_settings_tab, "Thumbnail Settings")
-        self.tabs.addTab(self.performance_tab, "Performance")
-        self.tabs.addTab(self.files_tab, "Files")
+        self.tabs.addTab(self.thumbnail_settings_tab, "Content")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
         # Dialog action buttons
@@ -98,6 +100,65 @@ class PreferencesDialog(QDialog):
         self.btn_close.clicked.connect(self.reject)
         self.btn_save.clicked.connect(self._save_and_notify)
         self.btn_reset.clicked.connect(self._reset_to_defaults)
+    
+    def _restore_last_tab(self):
+        """Restore the last selected tab from QSettings."""
+        try:
+            from PySide6.QtCore import QSettings
+            from src.core.logging_config import get_logger
+            
+            settings = QSettings()
+            last_tab = settings.value("preferences/last_tab_index", 0, type=int)
+            
+            # Debug logging
+            logger = get_logger(__name__)
+            logger.debug(f"Attempting to restore preferences tab index: {last_tab} (total tabs: {self.tabs.count()})")
+            
+            # Validate the tab index to ensure it's within range
+            if 0 <= last_tab < self.tabs.count():
+                self.tabs.setCurrentIndex(last_tab)
+                logger.debug(f"Successfully restored tab index: {last_tab}")
+            else:
+                # Invalid index, default to first tab
+                self.tabs.setCurrentIndex(0)
+                logger.warning(f"Invalid tab index {last_tab}, defaulting to 0")
+        except Exception as e:
+            # On error, default to first tab
+            try:
+                from src.core.logging_config import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Failed to restore tab index: {e}")
+            except Exception:
+                pass
+            self.tabs.setCurrentIndex(0)
+    
+    def _save_current_tab(self):
+        """Save the current tab index to QSettings."""
+        try:
+            from PySide6.QtCore import QSettings
+            from src.core.logging_config import get_logger
+            
+            settings = QSettings()
+            tab_index = self.tabs.currentIndex()
+            settings.setValue("preferences/last_tab_index", tab_index)
+            settings.sync()  # Force immediate write to disk
+            
+            # Debug logging
+            logger = get_logger(__name__)
+            logger.debug(f"Saved preferences tab index: {tab_index}")
+        except Exception as e:
+            # Log error if possible
+            try:
+                from src.core.logging_config import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Failed to save tab index: {e}")
+            except Exception:
+                pass
+    
+    def closeEvent(self, event):
+        """Handle dialog close event and save current tab as backup."""
+        self._save_current_tab()
+        super().closeEvent(event)
 
     def _toggle_maximize(self) -> None:
         """Toggle window maximize/restore state."""
@@ -115,26 +176,37 @@ class PreferencesDialog(QDialog):
 
     def _save_and_notify(self):
         try:
+            from src.core.logging_config import get_logger
+            logger = get_logger(__name__)
+            logger.info("=== PREFERENCES SAVE STARTED ===")
+            
             save_theme_to_settings()
+            logger.info("✓ Theme settings saved")
 
-            # Save window settings
-            if hasattr(self, 'window_layout_tab'):
-                self.window_layout_tab.save_settings()
+            # Save general settings (window + performance)
+            if hasattr(self, 'general_tab'):
+                self.general_tab.save_settings()
+                logger.info("✓ General tab settings saved")
 
             # Save viewer settings
             if hasattr(self, 'viewer_settings_tab'):
                 self.viewer_settings_tab.save_settings()
+                logger.info("✓ Viewer settings tab saved to QSettings")
 
             # Save thumbnail settings
             if hasattr(self, 'thumbnail_settings_tab'):
                 self.thumbnail_settings_tab.save_settings()
+                logger.info("✓ Thumbnail settings saved")
 
-            # Save performance settings
-            if hasattr(self, 'performance_tab'):
-                self.performance_tab.save_settings()
+            # Emit viewer settings changed signal
+            logger.info("Emitting viewer_settings_changed signal...")
+            self.viewer_settings_changed.emit()
+            logger.info("✓ viewer_settings_changed signal emitted")
+            logger.info("=== PREFERENCES SAVE COMPLETE ===")
 
             QMessageBox.information(self, "Saved", "All settings saved successfully.")
         except Exception as e:
+            logger.error(f"ERROR during save: {e}", exc_info=True)
             QMessageBox.warning(self, "Save Failed", f"Failed to save settings:\n{e}")
 
     def _reset_to_defaults(self):
@@ -149,70 +221,6 @@ class PreferencesDialog(QDialog):
         set_theme(default_map)
         self.theming_tab.reload_from_current()
         self._on_theme_live_applied()
-
-    def _apply_qt_material_theme(self) -> None:
-        """Apply qt-material theme to this dialog using the same service as main application."""
-        try:
-            from src.gui.theme.qt_material_service import QtMaterialThemeService
-            service = QtMaterialThemeService.instance()
-            
-            # Get current theme and apply it to the entire application (same as main window)
-            current_theme, variant = service.get_current_theme()
-            
-            # Ensure we default to dark/blue theme if no theme is set
-            if not current_theme or current_theme == "":
-                current_theme = "dark"
-                variant = "blue"
-            
-            # Apply theme using the same service as the main application
-            # This ensures consistency between main window and preferences dialog
-            result = service.apply_theme(current_theme, variant)
-            
-            if not result:
-                # If QtMaterialThemeService.apply_theme failed, try to apply directly as fallback
-                self._apply_theme_directly()
-                
-        except Exception as e:
-            # Silently fail if theme application fails
-            pass
-    
-    def _apply_theme_directly(self) -> None:
-        """Fallback: Apply theme directly to this dialog (legacy method)."""
-        try:
-            from src.gui.theme.qt_material_service import QtMaterialThemeService
-            service = QtMaterialThemeService.instance()
-            
-            # Get current theme and variant
-            current_theme, variant = service.get_current_theme()
-            
-            # Apply the theme to this dialog using qt-material
-            if current_theme == "light":
-                theme_name = f"light_{variant}.xml"
-                from qt_material import apply_stylesheet
-                apply_stylesheet(self, theme=theme_name, invert_secondary=True)
-            elif current_theme == "dark":
-                theme_name = f"dark_{variant}.xml"
-                from qt_material import apply_stylesheet
-                apply_stylesheet(self, theme=theme_name)
-            elif current_theme == "auto":
-                # Try to detect OS theme
-                try:
-                    import darkdetect
-                    if darkdetect.isDark():
-                        theme_name = f"dark_{variant}.xml"
-                        from qt_material import apply_stylesheet
-                        apply_stylesheet(self, theme=theme_name)
-                    else:
-                        theme_name = f"light_{variant}.xml"
-                        from qt_material import apply_stylesheet
-                        apply_stylesheet(self, theme=theme_name, invert_secondary=True)
-                except ImportError:
-                    theme_name = f"dark_{variant}.xml"
-                    from qt_material import apply_stylesheet
-                    apply_stylesheet(self, theme=theme_name)
-        except Exception as e:
-            # Silently fail if theme application fails
-            pass
 
 
 class ThemingTab(QWidget):
@@ -239,7 +247,7 @@ class ThemingTab(QWidget):
         layout.setSpacing(12)
 
         # Header
-        hdr = QLabel("Select your preferred theme mode and color variant.")
+        hdr = QLabel("Select your preferred theme mode.")
         hdr.setWordWrap(True)
         layout.addWidget(hdr)
 
@@ -253,10 +261,10 @@ class ThemingTab(QWidget):
         self._apply_theme_styling()
 
     def _setup_material_theme_selector(self, parent_layout: QVBoxLayout) -> None:
-        """Setup qt-material theme mode and variant selector."""
+        """Setup qt-material theme mode selector."""
         try:
-            from src.gui.theme.qt_material_service import QtMaterialThemeService
-            self.service = QtMaterialThemeService.instance()
+            from src.gui.theme.simple_service import ThemeService
+            self.service = ThemeService.instance()
 
             # Material theme group
             mat_group = QFrame()
@@ -284,114 +292,54 @@ class ThemingTab(QWidget):
             mode_layout.addStretch()
             mat_layout.addLayout(mode_layout)
 
-            # Variant selector
-            mat_desc = QLabel("Select a Material Design color variant:")
-            mat_desc.setWordWrap(True)
-            mat_layout.addWidget(mat_desc)
-
-            variant_layout = QHBoxLayout()
-            variant_layout.addWidget(QLabel("Variant:"))
-
-            self.variant_combo = QComboBox()
-            self._populate_material_variants()
-            self.variant_combo.currentTextChanged.connect(self._on_material_variant_changed)
-            variant_layout.addWidget(self.variant_combo)
-            variant_layout.addStretch()
-
-            mat_layout.addLayout(variant_layout)
             parent_layout.addWidget(mat_group)
 
         except Exception as e:
-            # Silently fail if QtMaterialThemeService not available
-            pass
-
-    def _populate_material_variants(self) -> None:
-        """Populate material variant combo."""
-        try:
-            if not self.service:
-                return
-
-            self.variant_combo.blockSignals(True)
-            self.variant_combo.clear()
-
-            # Get current theme type
-            theme_type, _ = self.service.get_current_theme()
-            variants = self.service.get_available_variants(theme_type)
-
-            for variant in variants:
-                self.variant_combo.addItem(variant.title(), variant)
-
-            # Set current variant
-            current_theme, current_variant = self.service.get_current_theme()
-            if current_variant in variants:
-                index = self.variant_combo.findText(current_variant.title())
-                if index >= 0:
-                    self.variant_combo.setCurrentIndex(index)
-
-            self.variant_combo.blockSignals(False)
-        except Exception:
-            pass
-
-    def _apply_theme_styling(self) -> None:
-        """Apply qt-material theme styling to this tab."""
-        try:
-            # Get the current application stylesheet and apply it to this tab
-            from PySide6.QtWidgets import QApplication
-            app = QApplication.instance()
-            if app:
-                app_stylesheet = app.styleSheet()
-                if app_stylesheet:
-                    self.setStyleSheet(app_stylesheet)
-        except Exception as e:
-            # Silently fail if theme application fails
+            # Silently fail if ThemeService not available
             pass
 
     def _on_theme_mode_changed(self, index: int) -> None:
-        """Handle theme mode change (Dark/Light/Auto)."""
+        """Handle theme mode change."""
         try:
             if not self.service:
                 return
 
-            mode = self.mode_combo.itemData(index)
-            if not mode:
-                return
-
-            # Get current variant to maintain it across theme changes
-            _, current_variant = self.service.get_current_theme()
-            
-            # Apply the new theme mode with current variant
-            self.service.apply_theme(mode, current_variant)
-
-            # Update variant selector to show correct variants for new mode
-            self._populate_material_variants()
-
-            # Reapply styling to this tab
-            self._apply_theme_styling()
-
-            # Notify parent of theme change
-            if callable(self.on_live_apply):
-                self.on_live_apply()
-        except Exception:
-            pass
-
-    def _on_material_variant_changed(self, variant_name: str) -> None:
-        """Handle material variant change."""
-        try:
-            if not self.service or not variant_name:
-                return
-
-            # Set the variant using the correct method
-            result = self.service.set_theme_variant(variant_name.lower())
-
-            if result:
-                # Reapply styling to this tab
-                self._apply_theme_styling()
-
-                # Notify parent of theme change
-                if callable(self.on_live_apply):
+            theme_mode = self.mode_combo.currentData()
+            if theme_mode:
+                self.service.set_theme(theme_mode)
+                if self.on_live_apply:
                     self.on_live_apply()
-        except Exception:
+        except Exception as e:
             pass
+
+    def _apply_theme_styling(self) -> None:
+        """Apply theme styling to the tab."""
+        try:
+            # This is a placeholder for any additional styling
+            # QDarkStyleSheet handles most styling automatically
+            pass
+        except Exception as e:
+            pass
+
+    def reload_from_current(self) -> None:
+        """Reload theme selector from current theme."""
+        try:
+            if not self.service:
+                return
+
+            current_theme, _ = self.service.get_current_theme()
+            self.mode_combo.setCurrentIndex({"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0))
+        except Exception as e:
+            pass
+
+    def save_settings(self) -> None:
+        """Save theming settings."""
+        try:
+            if self.service:
+                self.service.apply_theme(self.mode_combo.currentData())
+        except Exception as e:
+            pass
+
 class ViewerSettingsTab(QWidget):
     """3D Viewer settings tab: grid, ground plane, camera, and lighting."""
 
@@ -514,12 +462,42 @@ class ViewerSettingsTab(QWidget):
         lighting_label = QLabel("<b>Lighting (Advanced)</b>")
         lighting_layout.addRow(lighting_label)
 
+        # Light Position X
+        self.light_pos_x_slider = QSlider(Qt.Horizontal)
+        self.light_pos_x_slider.setRange(-200, 200)
+        self.light_pos_x_slider.setValue(100)
+        self.light_pos_x_label = QLabel("100")
+        pos_x_row = QHBoxLayout()
+        pos_x_row.addWidget(self.light_pos_x_slider)
+        pos_x_row.addWidget(self.light_pos_x_label)
+        lighting_layout.addRow("Light position X:", pos_x_row)
+
+        # Light Position Y
+        self.light_pos_y_slider = QSlider(Qt.Horizontal)
+        self.light_pos_y_slider.setRange(-200, 200)
+        self.light_pos_y_slider.setValue(100)
+        self.light_pos_y_label = QLabel("100")
+        pos_y_row = QHBoxLayout()
+        pos_y_row.addWidget(self.light_pos_y_slider)
+        pos_y_row.addWidget(self.light_pos_y_label)
+        lighting_layout.addRow("Light position Y:", pos_y_row)
+
+        # Light Position Z
+        self.light_pos_z_slider = QSlider(Qt.Horizontal)
+        self.light_pos_z_slider.setRange(-200, 200)
+        self.light_pos_z_slider.setValue(100)
+        self.light_pos_z_label = QLabel("100")
+        pos_z_row = QHBoxLayout()
+        pos_z_row.addWidget(self.light_pos_z_slider)
+        pos_z_row.addWidget(self.light_pos_z_label)
+        lighting_layout.addRow("Light position Z:", pos_z_row)
+
         self.light_color_btn = QPushButton()
         self.light_color_btn.setMaximumWidth(100)
         lighting_layout.addRow("Light color:", self.light_color_btn)
 
         self.light_intensity_slider = QSlider(Qt.Horizontal)
-        self.light_intensity_slider.setRange(0, 100)
+        self.light_intensity_slider.setRange(0, 200)
         self.light_intensity_slider.setValue(80)
         self.light_intensity_label = QLabel("0.8")
         intensity_row = QHBoxLayout()
@@ -527,10 +505,39 @@ class ViewerSettingsTab(QWidget):
         intensity_row.addWidget(self.light_intensity_label)
         lighting_layout.addRow("Light intensity:", intensity_row)
 
+        # Light Cone Angle
+        self.light_cone_angle_slider = QSlider(Qt.Horizontal)
+        self.light_cone_angle_slider.setRange(1, 90)
+        self.light_cone_angle_slider.setValue(90)
+        self.light_cone_angle_label = QLabel("90°")
+        cone_angle_row = QHBoxLayout()
+        cone_angle_row.addWidget(self.light_cone_angle_slider)
+        cone_angle_row.addWidget(self.light_cone_angle_label)
+        lighting_layout.addRow("Light cone angle:", cone_angle_row)
+
         self.enable_fill_light_check = QCheckBox("Enable fill light")
         lighting_layout.addRow(self.enable_fill_light_check)
 
         layout.addWidget(lighting_group)
+
+        # Background Gradient Group
+        gradient_group = QFrame()
+        gradient_layout = QFormLayout(gradient_group)
+        gradient_label = QLabel("<b>Background Gradient</b>")
+        gradient_layout.addRow(gradient_label)
+
+        self.enable_gradient_check = QCheckBox("Enable gradient background")
+        gradient_layout.addRow(self.enable_gradient_check)
+
+        self.gradient_top_color_btn = QPushButton()
+        self.gradient_top_color_btn.setMaximumWidth(100)
+        gradient_layout.addRow("Top color (sky):", self.gradient_top_color_btn)
+
+        self.gradient_bottom_color_btn = QPushButton()
+        self.gradient_bottom_color_btn.setMaximumWidth(100)
+        gradient_layout.addRow("Bottom color (ground):", self.gradient_bottom_color_btn)
+
+        layout.addWidget(gradient_group)
 
         layout.addStretch()
 
@@ -545,70 +552,118 @@ class ViewerSettingsTab(QWidget):
         self.fps_limit_combo.currentIndexChanged.connect(self._on_settings_changed)
         self.zoom_speed_slider.valueChanged.connect(self._on_zoom_speed_changed)
         self.auto_fit_check.stateChanged.connect(self._on_settings_changed)
+        self.light_pos_x_slider.valueChanged.connect(self._on_light_pos_x_changed)
+        self.light_pos_y_slider.valueChanged.connect(self._on_light_pos_y_changed)
+        self.light_pos_z_slider.valueChanged.connect(self._on_light_pos_z_changed)
         self.light_color_btn.clicked.connect(self._on_light_color_clicked)
         self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
+        self.light_cone_angle_slider.valueChanged.connect(self._on_light_cone_angle_changed)
         self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
 
+        # Gradient signals
+        self.enable_gradient_check.stateChanged.connect(self._on_settings_changed)
+        self.gradient_top_color_btn.clicked.connect(self._on_gradient_top_color_clicked)
+        self.gradient_bottom_color_btn.clicked.connect(self._on_gradient_bottom_color_clicked)
+
     def _load_settings(self) -> None:
-        """Load current settings from config."""
+        """Load current settings from QSettings with fallback to ApplicationConfig."""
         try:
+            from PySide6.QtCore import QSettings
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
+            settings = QSettings()
 
-            self.grid_visible_check.setChecked(config.grid_visible)
-            self._update_color_button(self.grid_color_btn, config.grid_color)
-            self.grid_size_slider.setValue(int(config.grid_size))
+            # Grid settings - load from QSettings with fallback to config
+            self.grid_visible_check.setChecked(settings.value("viewer/grid_visible", config.grid_visible, type=bool))
+            grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self._update_color_button(self.grid_color_btn, grid_color)
+            self.grid_size_slider.setValue(int(settings.value("viewer/grid_size", config.grid_size, type=float)))
 
-            self.ground_visible_check.setChecked(config.ground_visible)
-            self._update_color_button(self.ground_color_btn, config.ground_color)
-            self.ground_offset_slider.setValue(int(config.ground_offset * 10))
+            # Ground settings
+            self.ground_visible_check.setChecked(settings.value("viewer/ground_visible", config.ground_visible, type=bool))
+            ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
+            self._update_color_button(self.ground_color_btn, ground_color)
+            self.ground_offset_slider.setValue(int(settings.value("viewer/ground_offset", config.ground_offset, type=float) * 10))
 
-            self.mouse_sensitivity_slider.setValue(int(config.mouse_sensitivity * 10))
-            self.fps_limit_combo.setCurrentIndex(
-                {0: 0, 120: 1, 60: 2, 30: 3}.get(config.fps_limit, 0)
-            )
-            self.zoom_speed_slider.setValue(int(config.zoom_speed * 10))
-            self.auto_fit_check.setChecked(config.auto_fit_on_load)
+            # Camera settings
+            self.mouse_sensitivity_slider.setValue(int(settings.value("viewer/mouse_sensitivity", config.mouse_sensitivity, type=float) * 10))
+            fps_limit = int(settings.value("viewer/fps_limit", config.fps_limit, type=int))
+            self.fps_limit_combo.setCurrentIndex({0: 0, 120: 1, 60: 2, 30: 3}.get(fps_limit, 0))
+            self.zoom_speed_slider.setValue(int(settings.value("viewer/zoom_speed", config.zoom_speed, type=float) * 10))
+            self.auto_fit_check.setChecked(settings.value("viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool))
 
-            self._update_color_button(self.light_color_btn, self._rgb_to_hex(
-                config.default_light_color_r,
-                config.default_light_color_g,
-                config.default_light_color_b
-            ))
-            self.light_intensity_slider.setValue(int(config.default_light_intensity * 100))
-            self.enable_fill_light_check.setChecked(config.enable_fill_light)
+            # Lighting settings
+            pos_x = settings.value("lighting/position_x", 90.0, type=float)
+            pos_y = settings.value("lighting/position_y", 90.0, type=float)
+            pos_z = settings.value("lighting/position_z", 180.0, type=float)
+            self.light_pos_x_slider.setValue(int(pos_x))
+            self.light_pos_y_slider.setValue(int(pos_y))
+            self.light_pos_z_slider.setValue(int(pos_z))
+
+            r = settings.value("lighting/color_r", config.default_light_color_r, type=float)
+            g = settings.value("lighting/color_g", config.default_light_color_g, type=float)
+            b = settings.value("lighting/color_b", config.default_light_color_b, type=float)
+            self._update_color_button(self.light_color_btn, self._rgb_to_hex(r, g, b))
+            self.light_intensity_slider.setValue(int(settings.value("lighting/intensity", config.default_light_intensity, type=float) * 100))
+            cone_angle = settings.value("lighting/cone_angle", 90.0, type=float)
+            self.light_cone_angle_slider.setValue(int(cone_angle))
+            self.light_cone_angle_label.setText(f"{int(cone_angle)}°")
+            self.enable_fill_light_check.setChecked(settings.value("lighting/enable_fill_light", config.enable_fill_light, type=bool))
+
+            # Load gradient settings
+            self.enable_gradient_check.setChecked(settings.value("viewer/enable_gradient", config.enable_gradient, type=bool))
+            gradient_top = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
+            gradient_bottom = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
+            self._update_color_button(self.gradient_top_color_btn, gradient_top)
+            self._update_color_button(self.gradient_bottom_color_btn, gradient_bottom)
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to load viewer settings: {e}")
 
     def save_settings(self) -> None:
-        """Save viewer settings to config."""
+        """Save viewer settings to QSettings."""
         try:
-            from src.core.application_config import ApplicationConfig
-            config = ApplicationConfig.get_default()
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
 
-            config.grid_visible = self.grid_visible_check.isChecked()
-            config.grid_color = self.grid_color_btn.palette().button().color().name()
-            config.grid_size = float(self.grid_size_slider.value())
+            # Grid settings
+            settings.setValue("viewer/grid_visible", self.grid_visible_check.isChecked())
+            settings.setValue("viewer/grid_color", self.grid_color_btn.palette().button().color().name())
+            settings.setValue("viewer/grid_size", float(self.grid_size_slider.value()))
 
-            config.ground_visible = self.ground_visible_check.isChecked()
-            config.ground_color = self.ground_color_btn.palette().button().color().name()
-            config.ground_offset = float(self.ground_offset_slider.value()) / 10.0
+            # Ground settings
+            settings.setValue("viewer/ground_visible", self.ground_visible_check.isChecked())
+            settings.setValue("viewer/ground_color", self.ground_color_btn.palette().button().color().name())
+            settings.setValue("viewer/ground_offset", float(self.ground_offset_slider.value()) / 10.0)
 
-            config.mouse_sensitivity = float(self.mouse_sensitivity_slider.value()) / 10.0
-            config.fps_limit = self.fps_limit_combo.currentData()
-            config.zoom_speed = float(self.zoom_speed_slider.value()) / 10.0
-            config.auto_fit_on_load = self.auto_fit_check.isChecked()
+            # Camera settings
+            settings.setValue("viewer/mouse_sensitivity", float(self.mouse_sensitivity_slider.value()) / 10.0)
+            settings.setValue("viewer/fps_limit", int(self.fps_limit_combo.currentData()))
+            settings.setValue("viewer/zoom_speed", float(self.zoom_speed_slider.value()) / 10.0)
+            settings.setValue("viewer/auto_fit_on_load", self.auto_fit_check.isChecked())
 
-            r, g, b = self._hex_to_rgb(self.light_color_btn.palette().button().color().name())
-            config.default_light_color_r = r
-            config.default_light_color_g = g
-            config.default_light_color_b = b
-            config.default_light_intensity = float(self.light_intensity_slider.value()) / 100.0
-            config.enable_fill_light = self.enable_fill_light_check.isChecked()
+            # Lighting settings
+            settings.setValue("lighting/position_x", float(self.light_pos_x_slider.value()))
+            settings.setValue("lighting/position_y", float(self.light_pos_y_slider.value()))
+            settings.setValue("lighting/position_z", float(self.light_pos_z_slider.value()))
+
+            light_color = self.light_color_btn.palette().button().color().name()
+            r, g, b = self._hex_to_rgb(light_color)
+            settings.setValue("lighting/color_r", r)
+            settings.setValue("lighting/color_g", g)
+            settings.setValue("lighting/color_b", b)
+            settings.setValue("lighting/intensity", float(self.light_intensity_slider.value()) / 100.0)
+            settings.setValue("lighting/cone_angle", float(self.light_cone_angle_slider.value()))
+            settings.setValue("lighting/enable_fill_light", self.enable_fill_light_check.isChecked())
+
+            # Gradient settings
+            settings.setValue("viewer/enable_gradient", self.enable_gradient_check.isChecked())
+            settings.setValue("viewer/gradient_top_color", self.gradient_top_color_btn.palette().button().color().name())
+            settings.setValue("viewer/gradient_bottom_color", self.gradient_bottom_color_btn.palette().button().color().name())
 
             if self.logger:
-                self.logger.info("Viewer settings saved")
+                self.logger.info("Viewer settings saved to QSettings")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to save viewer settings: {e}")
@@ -659,9 +714,45 @@ class ViewerSettingsTab(QWidget):
         """Update zoom speed label."""
         self.zoom_speed_label.setText(f"{value / 10.0:.1f}x")
 
+    def _on_light_pos_x_changed(self, value: int) -> None:
+        """Update light position X label."""
+        self.light_pos_x_label.setText(f"{value}")
+
+    def _on_light_pos_y_changed(self, value: int) -> None:
+        """Update light position Y label."""
+        self.light_pos_y_label.setText(f"{value}")
+
+    def _on_light_pos_z_changed(self, value: int) -> None:
+        """Update light position Z label."""
+        self.light_pos_z_label.setText(f"{value}")
+
     def _on_light_intensity_changed(self, value: int) -> None:
         """Update light intensity label."""
         self.light_intensity_label.setText(f"{value / 100.0:.2f}")
+
+    def _on_light_cone_angle_changed(self, value: int) -> None:
+        """Update light cone angle label."""
+        self.light_cone_angle_label.setText(f"{value}°")
+
+    def _on_gradient_top_color_clicked(self) -> None:
+        """Handle gradient top color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.gradient_top_color_btn.palette().button().color()),
+            self,
+            "Select Gradient Top Color (Sky)"
+        )
+        if color.isValid():
+            self._update_color_button(self.gradient_top_color_btn, color.name())
+
+    def _on_gradient_bottom_color_clicked(self) -> None:
+        """Handle gradient bottom color picker."""
+        color = QColorDialog.getColor(
+            QColor(self.gradient_bottom_color_btn.palette().button().color()),
+            self,
+            "Select Gradient Bottom Color (Ground)"
+        )
+        if color.isValid():
+            self._update_color_button(self.gradient_bottom_color_btn, color.name())
 
     def _on_settings_changed(self) -> None:
         """Handle settings change."""
@@ -688,6 +779,278 @@ class ViewerSettingsTab(QWidget):
     def _rgb_to_hex(r: float, g: float, b: float) -> str:
         """Convert RGB (0-1 range) to hex color."""
         return f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
+
+
+class GeneralTab(QWidget):
+    """General settings tab: window, layout, and performance settings combined."""
+    
+    def __init__(self, on_reset_layout: Callable | None = None, parent=None):
+        super().__init__(parent)
+        self.on_reset_layout = on_reset_layout
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+    
+    def _setup_ui(self):
+        """Setup the combined general settings UI."""
+        # Create scroll area for all content
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+        
+        # Header
+        header = QLabel("General Application Settings")
+        header.setStyleSheet("font-weight: bold; font-size: 13pt;")
+        layout.addWidget(header)
+        
+        desc = QLabel("Configure window behavior, layout management, and system performance.")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+        
+        # === Window Settings Section ===
+        window_section = QFrame()
+        window_layout = QVBoxLayout(window_section)
+        
+        window_label = QLabel("<b>Window & Layout</b>")
+        window_label.setStyleSheet("font-size: 11pt;")
+        window_layout.addWidget(window_label)
+        
+        # Window dimensions
+        dim_form = QFormLayout()
+        
+        self.window_width_spin = QSpinBox()
+        self.window_width_spin.setRange(800, 3840)
+        self.window_width_spin.setValue(1200)
+        self.window_width_spin.setSuffix(" px")
+        dim_form.addRow("Default width:", self.window_width_spin)
+        
+        self.window_height_spin = QSpinBox()
+        self.window_height_spin.setRange(600, 2160)
+        self.window_height_spin.setValue(800)
+        self.window_height_spin.setSuffix(" px")
+        dim_form.addRow("Default height:", self.window_height_spin)
+        
+        self.min_width_spin = QSpinBox()
+        self.min_width_spin.setRange(400, 1200)
+        self.min_width_spin.setValue(800)
+        self.min_width_spin.setSuffix(" px")
+        dim_form.addRow("Minimum width:", self.min_width_spin)
+        
+        self.min_height_spin = QSpinBox()
+        self.min_height_spin.setRange(300, 1000)
+        self.min_height_spin.setValue(600)
+        self.min_height_spin.setSuffix(" px")
+        dim_form.addRow("Minimum height:", self.min_height_spin)
+        
+        window_layout.addLayout(dim_form)
+        
+        # Startup behavior
+        self.maximize_startup_check = QCheckBox("Maximize window on startup")
+        self.remember_size_check = QCheckBox("Remember window size on exit")
+        window_layout.addWidget(self.maximize_startup_check)
+        window_layout.addWidget(self.remember_size_check)
+        
+        # Layout reset
+        reset_row = QHBoxLayout()
+        reset_row.addWidget(QLabel("Reset the window and dock layout to default positions."))
+        reset_row.addStretch(1)
+        self.btn_reset_layout = QPushButton("Reset Layout")
+        reset_row.addWidget(self.btn_reset_layout)
+        window_layout.addLayout(reset_row)
+        
+        layout.addWidget(window_section)
+        
+        # Separator line
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line)
+        
+        # === Performance Settings Section ===
+        perf_section = QFrame()
+        perf_layout = QVBoxLayout(perf_section)
+        
+        perf_label = QLabel("<b>Performance & Memory</b>")
+        perf_label.setStyleSheet("font-size: 11pt;")
+        perf_layout.addWidget(perf_label)
+        
+        perf_desc = QLabel(
+            "Configure memory allocation. Smart calculation: min(doubled_minimum, 50% available, total - 20%)"
+        )
+        perf_desc.setWordWrap(True)
+        perf_layout.addWidget(perf_desc)
+        
+        # Memory mode
+        self.auto_radio = QCheckBox("Auto (Smart Calculation)")
+        self.auto_radio.setChecked(True)
+        perf_layout.addWidget(self.auto_radio)
+        
+        self.manual_radio = QCheckBox("Manual Override")
+        perf_layout.addWidget(self.manual_radio)
+        
+        # Manual override slider
+        slider_form = QFormLayout()
+        slider_layout = QHBoxLayout()
+        
+        self.memory_slider = QSlider(Qt.Horizontal)
+        self.memory_slider.setMinimum(10)
+        self.memory_slider.setMaximum(95)
+        self.memory_slider.setValue(80)
+        self.memory_slider.setTickPosition(QSlider.TicksBelow)
+        self.memory_slider.setTickInterval(5)
+        slider_layout.addWidget(self.memory_slider)
+        
+        self.memory_value_label = QLabel("80%")
+        self.memory_value_label.setMinimumWidth(80)
+        slider_layout.addWidget(self.memory_value_label)
+        
+        slider_form.addRow("Cache limit (% of RAM):", slider_layout)
+        perf_layout.addLayout(slider_form)
+        
+        # System info
+        self.system_info_label = QLabel()
+        self.system_info_label.setWordWrap(True)
+        self.system_info_label.setStyleSheet("padding: 8px; background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;")
+        perf_layout.addWidget(self.system_info_label)
+        
+        layout.addWidget(perf_section)
+        
+        layout.addStretch(1)
+        
+        scroll.setWidget(container)
+        
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+        
+        # Connect signals
+        self.btn_reset_layout.clicked.connect(self._handle_reset)
+        self.auto_radio.toggled.connect(self._on_mode_changed)
+        self.manual_radio.toggled.connect(self._on_mode_changed)
+        self.memory_slider.valueChanged.connect(self._on_slider_changed)
+        
+        # Update system info
+        self._update_system_info()
+    
+    def _load_settings(self) -> None:
+        """Load current settings from config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            
+            # Window settings
+            self.window_width_spin.setValue(config.default_window_width)
+            self.window_height_spin.setValue(config.default_window_height)
+            self.min_width_spin.setValue(config.minimum_window_width)
+            self.min_height_spin.setValue(config.minimum_window_height)
+            self.maximize_startup_check.setChecked(config.maximize_on_startup)
+            self.remember_size_check.setChecked(config.remember_window_size)
+            
+            # Performance settings
+            if config.use_manual_memory_override:
+                self.manual_radio.setChecked(True)
+                self.auto_radio.setChecked(False)
+                if config.manual_cache_limit_percent:
+                    self.memory_slider.setValue(config.manual_cache_limit_percent)
+            else:
+                self.auto_radio.setChecked(True)
+                self.manual_radio.setChecked(False)
+            
+            self._on_mode_changed()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load general settings: {e}")
+    
+    def save_settings(self) -> None:
+        """Save all general settings to config."""
+        try:
+            from src.core.application_config import ApplicationConfig
+            config = ApplicationConfig.get_default()
+            
+            # Save window settings
+            config.default_window_width = self.window_width_spin.value()
+            config.default_window_height = self.window_height_spin.value()
+            config.minimum_window_width = self.min_width_spin.value()
+            config.minimum_window_height = self.min_height_spin.value()
+            config.maximize_on_startup = self.maximize_startup_check.isChecked()
+            config.remember_window_size = self.remember_size_check.isChecked()
+            
+            # Save performance settings
+            config.use_manual_memory_override = self.manual_radio.isChecked()
+            if self.manual_radio.isChecked():
+                config.manual_cache_limit_percent = self.memory_slider.value()
+            
+            if self.logger:
+                self.logger.info("General settings saved")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save general settings: {e}")
+    
+    def _handle_reset(self):
+        """Handle layout reset."""
+        try:
+            if callable(self.on_reset_layout):
+                self.on_reset_layout()
+                QMessageBox.information(self, "Layout Reset", "Window layout has been reset to defaults.")
+        except Exception as e:
+            QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
+    
+    def _on_mode_changed(self) -> None:
+        """Handle memory mode change."""
+        is_manual = self.manual_radio.isChecked()
+        self.memory_slider.setEnabled(is_manual)
+        self._update_system_info()
+    
+    def _on_slider_changed(self, value: int) -> None:
+        """Handle slider change."""
+        self.memory_value_label.setText(f"{value}%")
+        self._update_system_info()
+    
+    def _update_system_info(self) -> None:
+        """Update system information display."""
+        try:
+            import psutil
+            from src.core.application_config import ApplicationConfig
+            
+            memory = psutil.virtual_memory()
+            total_mb = int(memory.total / (1024 ** 2))
+            available_mb = int(memory.available / (1024 ** 2))
+            
+            config = ApplicationConfig.get_default()
+            
+            if self.manual_radio.isChecked():
+                percent = self.memory_slider.value()
+                limit_mb = int(total_mb * (percent / 100))
+                info_text = (
+                    f"<b>Manual Mode:</b> {percent}% of {total_mb} MB = <b>{limit_mb} MB</b><br>"
+                    f"System Total: {total_mb} MB | Available: {available_mb} MB"
+                )
+            else:
+                limit_mb = config.get_effective_memory_limit_mb(available_mb, total_mb)
+                hard_max = int(total_mb * (100 - config.system_memory_reserve_percent) / 100)
+                fifty_percent = available_mb // 2
+                doubled_min = config.min_memory_specification_mb * 2
+                
+                info_text = (
+                    f"<b>Smart Calculation:</b> <b>{limit_mb} MB</b><br>"
+                    f"System Total: {total_mb} MB | Available: {available_mb} MB<br>"
+                    f"Calculated from: min({doubled_min}, {fifty_percent}, {hard_max})"
+                )
+            
+            self.system_info_label.setText(info_text)
+        except Exception as e:
+            self.system_info_label.setText(f"Error: {e}")
 
 
 class WindowLayoutTab(QWidget):
@@ -844,6 +1207,7 @@ class ThumbnailSettingsTab(QWidget):
         except Exception:
             pass
         self._setup_ui()
+
         self._load_settings()
 
     def _setup_ui(self) -> None:
@@ -921,7 +1285,7 @@ class ThumbnailSettingsTab(QWidget):
         self.preview_label.setMinimumHeight(120)
         self.preview_label.setMinimumWidth(120)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        self.preview_label.setStyleSheet(f"border: 1px solid {get_theme_color('border')}; border-radius: 4px;")
         bg_preview_container.addWidget(self.preview_label)
 
         # Material preview
@@ -934,7 +1298,7 @@ class ThumbnailSettingsTab(QWidget):
         self.material_preview_label.setMinimumHeight(120)
         self.material_preview_label.setMinimumWidth(120)
         self.material_preview_label.setAlignment(Qt.AlignCenter)
-        self.material_preview_label.setStyleSheet("border: 1px solid #ccc; border-radius: 4px;")
+        self.material_preview_label.setStyleSheet(f"border: 1px solid {get_theme_color('border')}; border-radius: 4px;")
         mat_preview_container.addWidget(self.material_preview_label)
 
         preview_h_layout.addLayout(bg_preview_container)
@@ -977,30 +1341,55 @@ class ThumbnailSettingsTab(QWidget):
                 self.logger.error(f"Failed to populate materials: {e}")
 
     def _load_settings(self) -> None:
-        """Load current settings."""
+        """Load current settings from QSettings with fallback to ApplicationConfig."""
         try:
             from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
 
             config = ApplicationConfig.get_default()
+            settings = QSettings()
 
-            # Load background
-            if config.thumbnail_bg_image:
+            if self.logger:
+                self.logger.info("=== THUMBNAIL SETTINGS LOAD ===")
+
+            # Load from QSettings with fallback to ApplicationConfig
+            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+
+            if self.logger:
+                self.logger.info(f"Loaded from QSettings: bg={bg_image}, material={material}")
+
+            # Update ApplicationConfig for runtime compatibility
+            if bg_image:
+                config.thumbnail_bg_image = bg_image
+            if material:
+                config.thumbnail_material = material
+
+            # Load background into UI
+            if bg_image:
                 for i in range(self.bg_list.count()):
                     item = self.bg_list.item(i)
-                    if item.data(Qt.UserRole) == config.thumbnail_bg_image:
+                    if item.data(Qt.UserRole) == bg_image:
                         self.bg_list.setCurrentItem(item)
+                        if self.logger:
+                            self.logger.info(f"✓ Set background to: {bg_image}")
                         break
 
-            # Load material
-            if config.thumbnail_material:
-                idx = self.material_combo.findData(config.thumbnail_material)
+            # Load material into UI
+            if material:
+                idx = self.material_combo.findData(material)
                 if idx >= 0:
                     self.material_combo.setCurrentIndex(idx)
+                    if self.logger:
+                        self.logger.info(f"✓ Set material to: {material}")
 
             self._update_preview()
+            
+            if self.logger:
+                self.logger.info("=== THUMBNAIL SETTINGS LOAD COMPLETE ===")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to load settings: {e}")
+                self.logger.error(f"Failed to load thumbnail settings: {e}", exc_info=True)
 
     def _on_background_selected(self) -> None:
         """Handle background selection."""
@@ -1073,25 +1462,37 @@ class ThumbnailSettingsTab(QWidget):
         return settings
 
     def save_settings(self) -> None:
-        """Save thumbnail settings to application config."""
+        """Save thumbnail settings to QSettings for persistence."""
         try:
             from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
 
             config = ApplicationConfig.get_default()
-            settings = self.get_settings()
-
-            config.thumbnail_bg_image = settings["background_image"]
-            config.thumbnail_material = settings["material"]
+            settings = QSettings()  # Use QSettings for persistence
+            settings_dict = self.get_settings()
 
             if self.logger:
-                self.logger.info(
-                    f"Saved thumbnail settings: "
-                    f"bg={settings['background_image']}, "
-                    f"material={settings['material']}"
-                )
+                self.logger.info("=== THUMBNAIL SETTINGS SAVE ===")
+                self.logger.info(f"Attempting to save: bg={settings_dict['background_image']}, material={settings_dict['material']}")
+
+            # Save to QSettings (persistent storage)
+            settings.setValue("thumbnail/background_image", settings_dict["background_image"])
+            settings.setValue("thumbnail/material", settings_dict["material"])
+            settings.sync()  # Force immediate write to disk
+
+            # Also update ApplicationConfig for runtime compatibility
+            config.thumbnail_bg_image = settings_dict["background_image"]
+            config.thumbnail_material = settings_dict["material"]
+
+            if self.logger:
+                self.logger.info("✓ Content settings saved to QSettings (persistent)")
+                self.logger.info(f"QSettings thumbnail/background_image = {settings_dict['background_image']}")
+                self.logger.info(f"QSettings thumbnail/material = {settings_dict['material']}")
+                self.logger.info(f"ApplicationConfig also updated for runtime compatibility")
+                self.logger.info("=== THUMBNAIL SETTINGS SAVE COMPLETE ===")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to save settings: {e}")
+                self.logger.error(f"Failed to save settings: {e}", exc_info=True)
 
 class PerformanceSettingsTab(QWidget):
     """Performance settings tab for memory allocation and system optimization."""
@@ -1142,20 +1543,20 @@ class PerformanceSettingsTab(QWidget):
         override_group = QFrame()
         override_layout = QVBoxLayout(override_group)
 
-        override_label = QLabel("<b>Manual Memory Limit (MB)</b>")
+        override_label = QLabel("<b>Cache Limit (% of System RAM)</b>")
         override_layout.addWidget(override_label)
 
         slider_layout = QHBoxLayout()
         self.memory_slider = QSlider(Qt.Horizontal)
-        self.memory_slider.setMinimum(512)
-        self.memory_slider.setMaximum(4096)
-        self.memory_slider.setValue(1024)
+        self.memory_slider.setMinimum(10)
+        self.memory_slider.setMaximum(95)
+        self.memory_slider.setValue(80)
         self.memory_slider.setTickPosition(QSlider.TicksBelow)
-        self.memory_slider.setTickInterval(512)
+        self.memory_slider.setTickInterval(5)
         slider_layout.addWidget(self.memory_slider)
 
-        self.memory_value_label = QLabel("1024 MB")
-        self.memory_value_label.setMinimumWidth(80)
+        self.memory_value_label = QLabel("80%")
+        self.memory_value_label.setMinimumWidth(100)
         slider_layout.addWidget(self.memory_value_label)
 
         override_layout.addLayout(slider_layout)
@@ -1192,7 +1593,7 @@ class PerformanceSettingsTab(QWidget):
 
     def _on_slider_changed(self, value: int) -> None:
         """Handle slider change."""
-        self.memory_value_label.setText(f"{value} MB")
+        self.memory_value_label.setText(f"{value}%")
         self._update_system_info()
 
     def _update_system_info(self) -> None:
@@ -1208,9 +1609,10 @@ class PerformanceSettingsTab(QWidget):
             config = ApplicationConfig.get_default()
 
             if self.manual_radio.isChecked():
-                limit_mb = self.memory_slider.value()
+                percent = self.memory_slider.value()
+                limit_mb = int(total_mb * (percent / 100))
                 info_text = (
-                    f"Manual Override: {limit_mb} MB\n"
+                    f"Cache Limit: {percent}% of {total_mb} MB = {limit_mb} MB\n"
                     f"System Total: {total_mb} MB\n"
                     f"Available: {available_mb} MB\n"
                     f"Reserve: {config.system_memory_reserve_percent}%"
@@ -1242,8 +1644,8 @@ class PerformanceSettingsTab(QWidget):
             if config.use_manual_memory_override:
                 self.manual_radio.setChecked(True)
                 self.auto_radio.setChecked(False)
-                if config.manual_memory_override_mb:
-                    self.memory_slider.setValue(config.manual_memory_override_mb)
+                if config.manual_cache_limit_percent:
+                    self.memory_slider.setValue(config.manual_cache_limit_percent)
             else:
                 self.auto_radio.setChecked(True)
                 self.manual_radio.setChecked(False)
@@ -1262,13 +1664,13 @@ class PerformanceSettingsTab(QWidget):
             config.use_manual_memory_override = self.manual_radio.isChecked()
 
             if self.manual_radio.isChecked():
-                config.manual_memory_override_mb = self.memory_slider.value()
+                config.manual_cache_limit_percent = self.memory_slider.value()
 
             if self.logger:
                 self.logger.info(
                     f"Saved performance settings: "
                     f"manual={config.use_manual_memory_override}, "
-                    f"override_mb={config.manual_memory_override_mb}"
+                    f"cache_limit_percent={config.manual_cache_limit_percent}%"
                 )
         except Exception as e:
             if self.logger:
@@ -1280,6 +1682,14 @@ class AdvancedTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = None
+        self.theme_manager = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -1290,7 +1700,7 @@ class AdvancedTab(QWidget):
 
         # Header
         header = QLabel("Advanced Settings")
-        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        header.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {get_theme_color('text_primary')};")
         layout.addWidget(header)
 
         # Database Reset Section
@@ -1305,20 +1715,7 @@ class AdvancedTab(QWidget):
             "metadata, and library information. The database will be recreated on next startup."
         )
         db_warning.setWordWrap(True)
-        # Apply theme-aware warning styling
-        try:
-            if COLORS:
-                warning_color = getattr(COLORS, 'warning', '#ffa500')
-                warning_bg = getattr(COLORS, 'warning_bg', 'rgba(255, 165, 0, 0.1)')
-            else:
-                # Fallback colors
-                warning_color = '#ffa500'
-                warning_bg = 'rgba(255, 165, 0, 0.1)'
-            
-            db_warning.setStyleSheet(f"color: {warning_color}; padding: 8px; background-color: {warning_bg}; border-radius: 4px;")
-        except (AttributeError, TypeError):
-            # Fallback if theme system fails
-            db_warning.setStyleSheet("color: #ffa500; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+        db_warning.setStyleSheet(f"color: {get_theme_color('warning')}; padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
         db_layout.addWidget(db_warning)
 
         reset_db_button = QPushButton("Reset Database")
@@ -1344,20 +1741,7 @@ class AdvancedTab(QWidget):
             "the application to its default state. This action cannot be undone."
         )
         warning.setWordWrap(True)
-        # Apply theme-aware warning styling
-        try:
-            if COLORS:
-                error_color = getattr(COLORS, 'error', '#ff6b6b')
-                error_bg = getattr(COLORS, 'error_bg', 'rgba(255, 107, 107, 0.1)')
-            else:
-                # Fallback colors
-                error_color = '#ff6b6b'
-                error_bg = 'rgba(255, 107, 107, 0.1)'
-            
-            warning.setStyleSheet(f"color: {error_color}; padding: 8px; background-color: {error_bg}; border-radius: 4px;")
-        except (AttributeError, TypeError):
-            # Fallback if theme system fails
-            warning.setStyleSheet("color: #ff6b6b; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
+        warning.setStyleSheet(f"color: {get_theme_color('error')}; padding: 8px; background-color: rgba(255, 107, 107, 0.1); border-radius: 4px;")
         system_layout.addWidget(warning)
 
         # Reset button
@@ -1601,4 +1985,7 @@ class AdvancedTab(QWidget):
                 f"An error occurred during system reset:\n\n{str(e)}"
             )
 
+    def save_settings(self) -> None:
+        """Save advanced settings (no-op for this tab)."""
+        pass
 

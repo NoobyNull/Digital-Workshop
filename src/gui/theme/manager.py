@@ -1,5 +1,5 @@
 """
-Theme system for 3D-MM application.
+Theme system for Digital Workshop.
 
 Centralizes ALL UI colors as variables and provides helpers to use them
 consistently across Qt widgets, Qt3D, and VTK. This makes the color scheme

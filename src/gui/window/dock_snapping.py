@@ -14,7 +14,7 @@ import logging
 from typing import Optional, Dict
 
 from PySide6.QtCore import Qt, QObject, QEvent
-from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QFrame
+from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QFrame, QSizePolicy
 from PySide6.QtGui import QCursor
 
 from src.gui.theme import hex_to_rgb
@@ -171,11 +171,38 @@ class DockDragHandler(QObject):
             target_area = area_map[edge]
             if not (self._dock.allowedAreas() & target_area):
                 return
+
+            # For right dock widgets, ensure central widget resizes properly
+            if edge == "right":
+                self._ensure_central_widget_resize()
+
             # Perform snap
             self._mw._snap_dock_to_edge(self._dock, edge)
         except Exception as e:
             try:
                 self._logger.warning(f"Snap finalize failed: {e}")
+            except Exception:
+                pass
+
+    def _ensure_central_widget_resize(self) -> None:
+        """Ensure central widget resizes properly when right docks are moved."""
+        try:
+            # Force layout update to ensure central widget adjusts
+            central_widget = self._mw.centralWidget()
+            if central_widget:
+                # Update the central widget to trigger proper resizing
+                central_widget.updateGeometry()
+                # Force the main window to recalculate its layout
+                self._mw.updateGeometry()
+
+                # If the central widget is a splitter or tab widget, ensure it resizes
+                if hasattr(central_widget, 'setSizePolicy'):
+                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+                self._logger.debug("Central widget resize ensured for right dock movement")
+        except Exception as e:
+            try:
+                self._logger.debug(f"Failed to ensure central widget resize: {e}")
             except Exception:
                 pass
 

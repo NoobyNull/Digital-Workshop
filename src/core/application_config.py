@@ -15,17 +15,17 @@ class ApplicationConfig:
     """Centralized application configuration and metadata."""
 
     # Application Identity
-    name: str = "3D-MM"
-    display_name: str = "3D Model Manager"
+    name: str = "Digital Workshop"
+    display_name: str = "Digital Workshop"
     version: str = "1.0.0"
     build_number: Optional[str] = None
 
     # Organization Information
-    organization_name: str = "3D-MM Development Team"
-    organization_domain: str = "3dmm.local"
+    organization_name: str = "Digital Workshop Development Team"
+    organization_domain: str = "digitalworkshop.local"
 
     # Application Paths and Settings
-    app_data_subdir: str = "3D-MM"
+    app_data_subdir: str = "Digital Workshop"
 
     # Feature Flags
     enable_hardware_acceleration: bool = True
@@ -38,7 +38,7 @@ class ApplicationConfig:
 
     # Memory Override Settings
     use_manual_memory_override: bool = False
-    manual_memory_override_mb: Optional[int] = None
+    manual_cache_limit_percent: int = 80  # Allow cache to use up to 80% of total system RAM
     min_memory_specification_mb: int = 512
     system_memory_reserve_percent: int = 20
 
@@ -59,6 +59,11 @@ class ApplicationConfig:
     ground_visible: bool = True
     ground_color: str = "theme"  # Use theme ground color, fallback to "#999999"
     ground_offset: float = 0.5
+    
+    # 3D Viewer - Background Gradient Settings
+    gradient_top_color: str = "#4A6FA5"  # Light sky blue
+    gradient_bottom_color: str = "#1E3A5F"  # Dark ground blue
+    enable_gradient: bool = True
 
     # Camera & Interaction Settings
     mouse_sensitivity: float = 1.0
@@ -68,20 +73,21 @@ class ApplicationConfig:
     auto_fit_on_load: bool = True
 
     # Lighting Settings
-    default_light_position_x: float = 100.0
-    default_light_position_y: float = 100.0
-    default_light_position_z: float = 100.0
+    default_light_position_x: float = 90.0
+    default_light_position_y: float = 90.0
+    default_light_position_z: float = 180.0
     default_light_color_r: float = 1.0
     default_light_color_g: float = 1.0
     default_light_color_b: float = 1.0
-    default_light_intensity: float = 0.8
-    default_light_cone_angle: float = 30.0
+    default_light_intensity: float = 1.2
+    default_light_cone_angle: float = 90.0
     enable_fill_light: bool = True
     fill_light_intensity: float = 0.3
 
     # Logging Configuration
     log_level: str = "INFO"
     enable_file_logging: bool = True
+    enable_console_logging: bool = False  # Console logging disabled by default
     log_retention_days: int = 30
 
     # Thumbnail Generation Configuration
@@ -97,7 +103,13 @@ class ApplicationConfig:
         """
         Calculate effective memory limit using smart algorithm.
 
-        Algorithm: min(doubled_minimum, 50% available, total - 20%)
+        Algorithm: max(minimum, min(50% available, total - 20%))
+
+        This ensures:
+        - App always has minimum needed to run
+        - Never uses more than 50% of available (leaves room for OS/other apps)
+        - Always reserves 20% of total for OS
+        - Scales intelligently with system resources
 
         Args:
             available_memory_mb: Available system memory (if None, uses max_memory_usage_mb)
@@ -107,8 +119,10 @@ class ApplicationConfig:
             Effective memory limit in MB
         """
         # If manual override is enabled, use it
-        if self.use_manual_memory_override and self.manual_memory_override_mb is not None:
-            return self.manual_memory_override_mb
+        if self.use_manual_memory_override:
+            # Calculate cache limit as percentage of total system RAM
+            if total_system_memory_mb is not None:
+                return int(total_system_memory_mb * (self.manual_cache_limit_percent / 100))
 
         # Use provided values or defaults
         if available_memory_mb is None:
@@ -116,18 +130,18 @@ class ApplicationConfig:
         if total_system_memory_mb is None:
             total_system_memory_mb = available_memory_mb
 
-        # Calculate three candidates
-        minimum_doubled_mb = self.min_memory_specification_mb * 2
+        # Calculate safe upper bounds
         fifty_percent_mb = available_memory_mb // 2
         hard_max_mb = int(
             total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
         )
 
-        # Take minimum of all three
-        calculated_limit = min(minimum_doubled_mb, fifty_percent_mb, hard_max_mb)
-
-        # Ensure we don't go below minimum
-        calculated_limit = max(calculated_limit, self.min_memory_specification_mb)
+        # Smart calculation: ensure minimum, but don't exceed safe limits
+        # max(minimum, min(50% available, total - 20% reserve))
+        calculated_limit = max(
+            self.min_memory_specification_mb,
+            min(fifty_percent_mb, hard_max_mb)
+        )
 
         return calculated_limit
 

@@ -12,7 +12,7 @@ import logging
 from typing import Optional, List
 
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget
+from PySide6.QtWidgets import QMainWindow, QDockWidget, QTextEdit, QTabWidget, QSizePolicy
 
 from src.gui.lighting_control_panel import LightingControlPanel
 
@@ -49,7 +49,7 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.model_library_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
 
         # Create model library widget
@@ -118,7 +118,7 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.properties_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
 
         # Placeholder for model properties
@@ -141,8 +141,14 @@ class DockManager:
             pass
         # Let qt-material handle all dock styling
 
-        # Default to right side but user can move anywhere
-        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+        # Add as dock widget to the right side
+        # The dock system will automatically manage layout and tabification
+        try:
+            self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+            self.logger.info("Properties dock added to right dock area")
+        except Exception as e:
+            self.logger.warning(f"Failed to add properties dock: {e}")
+
         try:
             self._register_dock_for_snapping(self.properties_dock)
         except Exception:
@@ -153,6 +159,15 @@ class DockManager:
         except Exception:
             pass
 
+        # Ensure proper central widget resizing by setting size constraints
+        try:
+            # Set minimum width for right docks to ensure they don't disappear
+            self.properties_dock.setMinimumWidth(200)
+            # Ensure the dock widget can resize properly
+            self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        except Exception as e:
+            self.logger.warning(f"Failed to set properties dock size constraints: {e}")
+
         # Lighting control dialog (floating, initially hidden)
         try:
             self.main_window.lighting_panel = LightingControlPanel(self.main_window)
@@ -160,6 +175,27 @@ class DockManager:
             self.main_window.lighting_panel.hide()
             # Dialog will float above main window when shown
             self.logger.info("Lighting control panel created as floating dialog")
+
+            # Connect lighting panel signals to main window handlers
+            try:
+                if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
+                    self.main_window.lighting_panel.position_changed.connect(self.main_window._update_light_position)
+                    self.main_window.lighting_panel.color_changed.connect(self.main_window._update_light_color)
+                    self.main_window.lighting_panel.intensity_changed.connect(self.main_window._update_light_intensity)
+                    self.main_window.lighting_panel.cone_angle_changed.connect(self.main_window._update_light_cone_angle)
+
+                    # Initialize panel with current lighting properties
+                    props = self.main_window.lighting_manager.get_properties()
+                    self.main_window.lighting_panel.set_values(
+                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
+                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
+                        intensity=float(props.get("intensity", 0.8)),
+                        cone_angle=float(props.get("cone_angle", 30.0)),
+                        emit_signals=False,
+                    )
+                    self.logger.info("Lighting panel signals connected to main window handlers")
+            except Exception as e:
+                self.logger.warning(f"Failed to connect lighting panel signals: {e}")
         except Exception as e:
             self.logger.warning(f"Failed to create LightingControlPanel: {e}")
 
@@ -171,8 +207,21 @@ class DockManager:
             Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea
         )
         self.metadata_dock.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
         )
+
+        # Set minimum width for right dock widgets to ensure proper resizing
+        # This ensures they don't disappear and maintains proper layout
+        self.properties_dock.setMinimumWidth(250)
+        self.metadata_dock.setMinimumWidth(300)
+
+        # Set size policies for proper resizing behavior
+        self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.metadata_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+        # Set maximum width to prevent them from taking too much space
+        self.properties_dock.setMaximumWidth(400)
+        self.metadata_dock.setMaximumWidth(500)
 
         # Create metadata editor widget and wrap in a bottom tab bar for reduced clutter
         try:
@@ -235,9 +284,30 @@ class DockManager:
             )
             self.metadata_dock.setWidget(metadata_widget)
 
-        # Default to right side but user can move anywhere
-        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-        # Don't force stacking - let users arrange as they prefer
+        # Add to right dock container if it exists (splitter-based layout)
+        # Otherwise add as dock widget (fallback)
+        # Add as dock widget to the right side and tabify with properties dock
+        # This creates a tabbed interface for Properties and Metadata
+        try:
+            self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+            try:
+                self.main_window.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+                self.logger.info("Properties and Metadata docks tabified for unified resizing")
+
+                # Connect to tab bar to allow expanding metadata when active
+                try:
+                    # Get the tab bar for the tabified docks
+                    tab_bar = self.properties_dock.tabBar()
+                    if tab_bar:
+                        tab_bar.currentChanged.connect(self._on_right_dock_tab_changed)
+                        self.logger.info("Connected tab change handler for right dock expansion")
+                except Exception:
+                    pass
+            except Exception:
+                pass
+        except Exception as e:
+            self.logger.warning(f"Failed to add metadata dock: {e}")
+
         try:
             self._register_dock_for_snapping(self.metadata_dock)
         except Exception:
@@ -304,6 +374,15 @@ class DockManager:
             self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
 
         self.logger.debug("Dock widgets setup completed")
+
+    def _on_right_dock_tab_changed(self, index: int) -> None:
+        """Handle tab changes in the right dock area to allow expansion."""
+        try:
+            # When metadata tab is active, it can expand to fill the right side
+            # This is handled by Qt's dock system automatically
+            self.logger.debug(f"Right dock tab changed to index {index}")
+        except Exception as e:
+            self.logger.warning(f"Error handling dock tab change: {e}")
 
     def iter_docks(self) -> List[QDockWidget]:
         """Iterate over all known dock widgets."""

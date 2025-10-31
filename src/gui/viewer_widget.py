@@ -1,5 +1,5 @@
 """
-PyQt3D viewer widget for 3D-MM application (Facade).
+PyQt3D viewer widget for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored 3D viewer.
 All functionality has been moved to src/gui/viewer_components/ package.

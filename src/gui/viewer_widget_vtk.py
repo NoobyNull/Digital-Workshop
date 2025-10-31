@@ -1,5 +1,5 @@
 """
-VTK-based 3D viewer widget for 3D-MM application.
+VTK-based 3D viewer widget for Digital Workshop.
 
 This module provides a compatibility layer for the refactored viewer widget.
 The actual implementation is in src.gui.viewer_3d.viewer_widget_facade.

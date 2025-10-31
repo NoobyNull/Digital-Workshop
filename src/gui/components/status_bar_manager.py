@@ -65,13 +65,16 @@ class StatusBarManager:
 
         # qt-material handles statusbar styling automatically
 
-        # Permanent status message
+        # Main status message - larger and takes up available space
         self.status_label = QLabel("Ready")
-        self.status_bar.addWidget(self.status_label)
+        self.status_label.setMinimumWidth(300)  # Give it more space
+        # Qt-material handles font styling automatically
+        self.status_bar.addWidget(self.status_label, 1)  # Stretch factor 1 to take available space
 
         # Progress bar for long operations
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
+        self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         # Hash indicator button
@@ -84,16 +87,30 @@ class StatusBarManager:
 
         # Memory usage indicator
         self.memory_label = QLabel("Memory: N/A")
+        self.memory_label.setMinimumWidth(120)
+        self.memory_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_bar.addPermanentWidget(self.memory_label)
 
         # Layout Edit Mode indicator
         self.layout_edit_indicator = QLabel("Layout Edit Mode: OFF")
+        self.layout_edit_indicator.setMinimumWidth(150)
+        self.layout_edit_indicator.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
 
         # Deduplication status widget (add last to be on the far right)
         self.dedup_status_widget = DeduplicationStatusWidget()
         # Add with 0 stretch to ensure it's positioned on the far right
         self.status_bar.addPermanentWidget(self.dedup_status_widget, 0)
+
+        # Theme cycle button (far right)
+        self.theme_button = QPushButton()
+        self.theme_button.setFixedSize(24, 24)
+        self.theme_button.setToolTip("Cycle theme (Light/Dark/System)")
+        self.theme_button.clicked.connect(self._cycle_theme)
+        self.status_bar.addPermanentWidget(self.theme_button, 0)
+
+        # Update initial icon
+        self._update_theme_icon()
 
         # Initialize background hasher
         self.background_hasher = None
@@ -257,6 +274,39 @@ class StatusBarManager:
                 self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
         except Exception as e:
             self.logger.warning(f"Failed to update layout edit mode indicator: {e}")
+
+    def _cycle_theme(self) -> None:
+        """Handle cycle theme action."""
+        if hasattr(self.main_window, '_cycle_theme'):
+            self.main_window._cycle_theme()
+
+    def _update_theme_icon(self) -> None:
+        """Update the theme button icon based on current theme."""
+        try:
+            # Get current theme
+            from src.gui.theme.simple_service import ThemeService
+            service = ThemeService.instance()
+            current_theme, _ = service.get_current_theme()
+
+            # Determine icon based on theme
+            if current_theme == "light":
+                icon_name = "fa5s.sun"
+            elif current_theme == "dark":
+                icon_name = "fa5s.moon"
+            else:  # auto
+                icon_name = "fa5s.desktop"
+
+            # Set icon if qtawesome is available
+            try:
+                import qtawesome as qta
+                icon = qta.icon(icon_name)
+                self.theme_button.setIcon(icon)
+            except Exception:
+                # Fallback to text
+                self.theme_button.setText(current_theme[0].upper())
+
+        except Exception as e:
+            self.logger.warning(f"Failed to update theme icon: {e}")
 
 
 # Convenience function for easy status bar setup

@@ -56,11 +56,8 @@ class WindowTitleBarManager(QObject):
     @staticmethod
     def _get_logger() -> logging.Logger:
         """Get logger instance."""
-        try:
-            from src.core.logging_config import get_logger
-            return get_logger(__name__)
-        except Exception:
-            return logging.getLogger(__name__)
+        from src.core.logging_config import get_logger
+        return get_logger(__name__)
 
     def register_window(self, window: QWidget, title_bar: Optional[CustomTitleBar] = None) -> None:
         """

@@ -1,5 +1,5 @@
 """
-JSON logging configuration with rotation for 3D-MM application.
+JSON logging configuration with rotation for Digital Workshop application.
 
 This module provides a centralized logging configuration with JSON formatting
 and rotating file handlers to ensure efficient log management without memory leaks.
@@ -15,6 +15,30 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+# For user-specific directories
+import platform
+
+
+class SimpleFormatter(logging.Formatter):
+    """
+    Simple text formatter for activity messages.
+
+    Formats log records as simple text with timestamp and message only.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format a log record as simple text.
+
+        Args:
+            record: The log record to format
+
+        Returns:
+            Simple formatted log entry as string
+        """
+        timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S")
+        return f"[{timestamp}] {record.getMessage()}"
 
 
 class JSONFormatter(logging.Formatter):
@@ -87,7 +111,7 @@ class TimestampRotatingFileHandler(logging.Handler):
         """
         super().__init__()
         self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         self.max_bytes = max_bytes
         self.backup_count = backup_count
         self.current_file = None
@@ -195,7 +219,7 @@ class TimestampRotatingFileHandler(logging.Handler):
 def setup_logging(
     log_level: str = "INFO",
     log_dir: str = "logs",
-    enable_console: bool = True,
+    enable_console: bool = False,
     max_bytes: int = 10*1024*1024,
     backup_count: int = 5
 ) -> logging.Logger:
@@ -205,15 +229,20 @@ def setup_logging(
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_dir: Directory to store log files
-        enable_console: Whether to enable console logging
+        enable_console: Whether to enable console logging (default: False, logs go to file only)
         max_bytes: Maximum bytes before rotation
         backup_count: Number of backup files to keep
 
     Returns:
         Configured logger instance
     """
+    # Use user-specific log directory if default is used
+    if log_dir == "logs":
+        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+        log_dir = str(app_data / 'DigitalWorkshop' / 'logs')
+
     # Create the application logger
-    logger = logging.getLogger("3D-MM")
+    logger = logging.getLogger("Digital Workshop")
     logger.setLevel(getattr(logging, log_level.upper()))
 
     # Clear any existing handlers
@@ -234,10 +263,7 @@ def setup_logging(
     # Add console handler if requested
     if enable_console:
         console_handler = logging.StreamHandler(sys.stdout)
-        console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        console_handler.setFormatter(console_formatter)
+        console_handler.setFormatter(json_formatter)
         logger.addHandler(console_handler)
 
     return logger
@@ -253,7 +279,39 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logging.getLogger(f"3D-MM.{name}")
+    return logging.getLogger(f"Digital Workshop.{name}")
+
+
+def get_activity_logger(name: str) -> logging.Logger:
+    """
+    Get an activity logger that always logs to console with simple formatting.
+
+    Used for user-visible activities like importing, rendering, analyzing models.
+    These messages are always shown in the console regardless of --log-console flag.
+
+    Args:
+        name: Logger name (typically __name__ of the calling module)
+
+    Returns:
+        Activity logger instance
+    """
+    logger = logging.getLogger(f"Digital Workshop.Activity.{name}")
+
+    # Clear any existing handlers to avoid duplicates
+    logger.handlers.clear()
+
+    # Set to INFO level to show activity messages
+    logger.setLevel(logging.INFO)
+
+    # Add console handler with simple formatting
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(SimpleFormatter())
+    logger.addHandler(console_handler)
+
+    # Prevent propagation to parent logger to avoid duplicate messages
+    logger.propagate = False
+
+    return logger
 
 
 def log_function_call(logger: logging.Logger):

@@ -1,148 +1,110 @@
 """
-Qt-Material-Only Theme System
+Consolidated Theme Management System
 
-This module provides a clean, qt-material-only public API for the theme system,
-completely eliminating all legacy static theming and remnants. No circular
-dependencies, no legacy color systems, no ThemeManager references.
+This module provides a single, consolidated theme management system that eliminates
+conflicting theme services and provides a unified entry point for all theme operations.
 
 Public API:
-- QtMaterialThemeService: Unified qt-material theme management
-- VTKColorProvider: VTK color integration from qt-material
-- QtMaterialThemeSwitcher: Qt-material theme selection widget
-- QtMaterialColorPicker: Material Design color picker dialog
-- QtMaterialThemeDialog: Comprehensive theme configuration dialog
+- QtMaterialThemeService: Primary qt-material-based theme service (recommended)
+- ThemeService: Backward compatibility theme service using PySide6 built-in styling
 
 Usage:
-    from src.gui.theme import QtMaterialThemeService, vtk_rgb
-    
-    service = QtMaterialThemeService.instance()
-    service.apply_theme("dark", "blue")
-    service.save_settings()
-    
-    # VTK integration
-    bg_color = vtk_rgb("canvas_bg")
+    from src.gui.theme import QtMaterialThemeService
+
+    # Get primary theme service instance
+    theme_service = QtMaterialThemeService.instance()
+
+    # Apply themes
+    theme_service.apply_theme("dark", "blue")
+    theme_service.apply_theme("light", "amber")
+
+    # Or use backward compatibility service
+    from src.gui.theme import ThemeService
+    legacy_service = ThemeService.instance()
+    legacy_service.apply_theme("dark")
 
 Architecture:
-- qt-material ONLY: No other theme systems or static color management
-- Zero Legacy Remnants: Complete removal of all static theming
-- Eliminated Circular Dependencies: No ThemeManager, no recursion
-- Clean API: qt-material-focused public interface only
+- Single Entry Point: Consolidated to QtMaterialThemeService as primary
+- Backward Compatibility: ThemeService available for legacy code
+- No Conflicts: Eliminates multiple competing theme managers
+- VTK Integration: Direct connection to VTK color provider
+- Clean Dependencies: Minimal external library requirements
+
+Benefits:
+- Eliminates theme service conflicts and race conditions
+- Provides consistent theme application timing
+- Maintains backward compatibility for existing code
+- Supports both qt-material and built-in PySide6 styling
+- Clear migration path from legacy systems
 """
 
 # ============================================================
-# Qt-Material Core Imports
+# Unified Theme System Imports
 # ============================================================
 
+# Core theme system - consolidated to single entry point
 from .qt_material_service import QtMaterialThemeService
-from .vtk_color_provider import VTKColorProvider, get_vtk_color_provider, vtk_rgb
-from .qt_material_ui import (
-    QtMaterialThemeSwitcher,
-    QtMaterialColorPicker,
-    QtMaterialThemeDialog,
-    create_theme_switcher,
-    create_color_picker,
-    create_theme_dialog
+
+# ThemeService for backward compatibility (used in tests and other modules)
+from .simple_service import ThemeService
+
+# Import COLORS and other constants from theme_api for backward compatibility
+try:
+    from .theme_api import COLORS
+except ImportError:
+    # Fallback: create a simple COLORS proxy
+    class _SimpleColorsProxy:
+        def __getattr__(self, name):
+            return "#E31C79"  # Fallback color
+    COLORS = _SimpleColorsProxy()
+
+# Import constants
+from .theme_constants import (
+    FALLBACK_COLOR,
+    SPACING_4,
+    SPACING_8,
+    SPACING_12,
+    SPACING_16,
+    SPACING_24,
 )
 
-# ============================================================
-# Backward Compatibility Aliases (Minimal)
-# ============================================================
+# Import VTK color function
+from .theme_service import vtk_rgb
 
-# Primary backward compatibility alias
-ThemeService = QtMaterialThemeService
+# Backward compatibility - ThemeManager alias for QtMaterialThemeService
+from .qt_material_service import QtMaterialThemeService as ThemeManager
 
-# UI component aliases for backward compatibility
-ThemeSwitcher = QtMaterialThemeSwitcher
-SimpleThemeSwitcher = QtMaterialThemeSwitcher  # Simplified version
-ColorPicker = QtMaterialColorPicker
-ThemeDialog = QtMaterialThemeDialog
-
-# Legacy class aliases for backward compatibility
-ThemeDefaults = QtMaterialThemeService  # Alias for theme defaults
-FALLBACK_COLOR = "#1976D2"  # Default blue color
-
-# Legacy color constants
-COLORS = {
-    "primary": "#1976D2",
-    "secondary": "#424242",
-    "background": "#121212",
-    "surface": "#1E1E1E",
-    "error": "#F44336",
-    "warning": "#FF9800",
-    "success": "#4CAF50",
-    "info": "#2196F3"
-}
-
-# ============================================================
-# Legacy Spacing Constants (for backward compatibility)
-# ============================================================
-
-# Spacing constants for UI layout
-SPACING_4 = 4
-SPACING_8 = 8
-SPACING_12 = 12
-SPACING_16 = 16
-SPACING_24 = 24
-SPACING_32 = 32
+# No backward compatibility - pure dynamic system only
 
 # ============================================================
 # Public API Exports
 # ============================================================
 
 __all__ = [
-    # Core Qt-Material Service (new unified API)
+    # ============================================================
+    # Consolidated Theme System (Single Entry Point)
+    # ============================================================
+
+    # Primary theme service (qt-material based)
     "QtMaterialThemeService",
-    
-    # VTK Integration
-    "VTKColorProvider",
-    "get_vtk_color_provider",
-    "vtk_rgb",
-    
-    # UI Components
-    "QtMaterialThemeSwitcher",
-    "QtMaterialColorPicker",
-    "QtMaterialThemeDialog",
-    
-    # Convenience Functions
-    "create_theme_switcher",
-    "create_color_picker",
-    "create_theme_dialog",
-    
-    # Minimal Backward Compatibility
+
+    # Backward compatibility theme service
     "ThemeService",
-    "ThemeSwitcher",
-    "SimpleThemeSwitcher",
-    "ColorPicker",
-    "ThemeDialog",
-    
-    # Legacy Functions
-    "load_theme_from_settings",
-    "save_theme_to_settings",
-    "hex_to_rgb",
-    "apply_theme_preset",
-    "qss_tabs_lists_labels",
-    "get_theme_color",
-    "get_current_theme_name",
-    "get_current_theme_variant",
-    "apply_theme_with_variant",
-    "get_theme_colors",
-    "rgb_to_hex",
-    "is_dark_theme",
-    "is_light_theme",
-    
-    # Legacy Classes and Constants
+
+    # Backward compatibility alias for QtMaterialThemeService
     "ThemeManager",
-    "ThemeDefaults",
+
+    # Colors and constants
     "COLORS",
     "FALLBACK_COLOR",
-    
-    # Legacy Spacing Constants
     "SPACING_4",
     "SPACING_8",
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
-    "SPACING_32"
+
+    # VTK integration
+    "vtk_rgb",
 ]
 
 # ============================================================
@@ -537,50 +499,7 @@ def is_light_theme() -> bool:
     return not is_dark_theme()
 
 
-# ============================================================
-# Legacy ThemeManager Compatibility Class
-# ============================================================
-
-class LegacyThemeManager:
-    """
-    Legacy ThemeManager compatibility class.
-    
-    Provides backward compatibility for legacy ThemeManager usage
-    while delegating to QtMaterialThemeService.
-    """
-    
-    def __init__(self):
-        self._service = QtMaterialThemeService.instance()
-    
-    def apply_theme(self, theme_name: str, variant: str = None) -> bool:
-        """Legacy apply_theme method."""
-        return self._service.apply_theme(theme_name, variant)
-    
-    def get_color(self, color_name: str) -> str:
-        """Legacy get_color method."""
-        return self._service.get_color(color_name)
-    
-    def save_settings(self) -> None:
-        """Legacy save_settings method."""
-        self._service.save_settings()
-    
-    def load_settings(self) -> None:
-        """Legacy load_settings method."""
-        self._service.load_settings()
-
-
-# Create singleton instance for backward compatibility
-_theme_manager_instance = None
-
-def get_theme_manager() -> LegacyThemeManager:
-    """Get singleton ThemeManager instance (backward compatibility)."""
-    global _theme_manager_instance
-    if _theme_manager_instance is None:
-        _theme_manager_instance = LegacyThemeManager()
-    return _theme_manager_instance
-
-# Export as ThemeManager for backward compatibility
-ThemeManager = get_theme_manager()
+# Legacy theme managers removed - consolidated to single entry point
 
 
 # Auto-log status on import for debugging

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-3D-MM (3D Model Manager) - Quick Start Script
+Digital Workshop (3D Model Manager) - Quick Start Script
 
-This script helps users quickly set up and run the 3D-MM application
+This script helps users quickly set up and run the Digital Workshop application
 with automatic dependency checking and circular import fixes.
 """
 
@@ -19,7 +19,7 @@ def check_python_version():
         print(f"Error: Python 3.8 or higher is required. You have Python {version.major}.{version.minor}.{version.micro}")
         return False
     elif (version.major, version.minor) >= (3, 13):
-        print(f"Warning: Python {version.major}.{version.minor}.{version.micro} detected. 3D-MM is tested with Python 3.8-3.12")
+        print(f"Warning: Python {version.major}.{version.minor}.{version.micro} detected. Digital Workshop is tested with Python 3.8-3.12")
         try:
             response = input("Continue anyway? (y/n): ")
             if response.lower() != 'y':
@@ -139,8 +139,8 @@ def fix_circular_imports():
     return True
 
 def run_application():
-    """Run the 3D-MM application."""
-    print("\nStarting 3D-MM application...")
+    """Run the Digital Workshop application."""
+    print("\nStarting Digital Workshop application...")
     
     try:
         # Change to src directory temporarily
@@ -168,7 +168,7 @@ def run_application():
 
 def main():
     """Main function to check and run the application."""
-    print("3D-MM (3D Model Manager) - Quick Start")
+    print("Digital Workshop (3D Model Manager) - Quick Start")
     print("=" * 50)
     
     # Check if we're in the right directory

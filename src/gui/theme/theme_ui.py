@@ -1,5 +1,5 @@
 """
-Consolidated theme UI components for 3D-MM application.
+Consolidated theme UI components for Digital Workshop.
 
 This module consolidates UI-related theme components from:
 - ui/theme_switcher.py - Quick theme selection dropdown

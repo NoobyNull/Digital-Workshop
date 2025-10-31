@@ -5,7 +5,7 @@
    may flag these as errors; this header disables such warnings intentionally. */
 
 /**
- * Main Window Stylesheet for 3D-MM Application (Theme-enabled)
+ * Main Window Stylesheet for Digital Workshop Application (Theme-enabled)
  *
  * This stylesheet uses ThemeManager variables via {{text}} placeholders.
  * All hardcoded hex colors were replaced with descriptive variables from ThemeDefaults.

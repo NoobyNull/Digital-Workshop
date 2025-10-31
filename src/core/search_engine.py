@@ -1,5 +1,5 @@
 """
-Search engine for 3D-MM application using SQLite FTS5.
+Search engine for Digital Workshop using SQLite FTS5.
 
 This module provides advanced search functionality including full-text search,
 filtering, search history, and saved searches with proper error handling
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 class SearchEngine:
     """
-    Search engine for 3D-MM application.
+    Search engine for Digital Workshop.
 
     Provides full-text search using SQLite FTS5, filtering options,
     search history, and saved searches functionality.

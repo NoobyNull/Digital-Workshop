@@ -1,5 +1,5 @@
 """
-System theme detection for 3D-MM application.
+System theme detection for Digital Workshop.
 
 Detects OS dark mode preference and applies appropriate theme.
 Supports Windows, macOS, and Linux.

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-3D-MM (3D Model Manager) - Settings Migration Module
+Digital Workshop - Settings Migration Module
 
 This module handles settings and database migration between different versions
-of the 3D-MM application, ensuring smooth upgrades without data loss.
+of Digital Workshop, ensuring smooth upgrades without data loss.
 """
 
 import os
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class SettingsMigrator:
     """Handles migration of settings and data between application versions."""
 
-    def __init__(self, app_name: str = "3D-MM"):
+    def __init__(self, app_name: str = "Digital Workshop"):
         """Initialize the settings migrator.
 
         Args:

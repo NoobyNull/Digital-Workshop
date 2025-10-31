@@ -5,7 +5,7 @@ Handles model geometry creation, rendering modes, and actor management.
 """
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, Callable
 
 import vtk
 from vtk.util import numpy_support as vtk_np
@@ -38,6 +38,16 @@ class ModelRenderer:
         self.renderer = renderer
         self.actor = None
         self.render_mode = RenderMode.SOLID
+        self.progress_callback: Optional[Callable[[float, str], None]] = None
+
+    def set_progress_callback(self, callback: Optional[Callable[[float, str], None]]) -> None:
+        """Set callback for progress updates during rendering."""
+        self.progress_callback = callback
+
+    def _emit_progress(self, progress: float, message: str) -> None:
+        """Emit progress update if callback is set."""
+        if self.progress_callback:
+            self.progress_callback(progress, message)
 
     @log_function_call(logger)
     def create_vtk_polydata(self, model: STLModel) -> vtk.vtkPolyData:
@@ -51,6 +61,7 @@ class ModelRenderer:
             vtk.vtkPolyData with the model geometry
         """
         logger.info(f"Creating VTK polydata for {len(model.triangles)} triangles")
+        self._emit_progress(0.0, "Creating VTK polydata...")
 
         # Create points
         points = vtk.vtkPoints()
@@ -64,7 +75,8 @@ class ModelRenderer:
         normals.SetName("Normals")
 
         # Process each triangle
-        for triangle in model.triangles:
+        total_triangles = len(model.triangles)
+        for idx, triangle in enumerate(model.triangles):
             # Add vertices
             point_id1 = points.InsertNextPoint(
                 triangle.vertex1.x, triangle.vertex1.y, triangle.vertex1.z
@@ -88,6 +100,11 @@ class ModelRenderer:
             normals.InsertNextTuple(normal)
             normals.InsertNextTuple(normal)
             normals.InsertNextTuple(normal)
+
+            # Emit progress every 10000 triangles
+            if idx % 10000 == 0 and idx > 0:
+                progress = (idx / total_triangles) * 100.0
+                self._emit_progress(progress, f"Processing {idx:,}/{total_triangles:,} triangles")
 
         # Create polydata
         polydata = vtk.vtkPolyData()
@@ -128,6 +145,8 @@ class ModelRenderer:
                 logger.warning("Vertex array length is not multiple of 3; falling back")
                 return self.create_vtk_polydata(model)  # type: ignore[arg-type]
 
+            self._emit_progress(0.0, "Creating VTK polydata from arrays...")
+
             # Create points from vertex array
             points = vtk.vtkPoints()
             points_vtk = vtk_np.numpy_to_vtk(vertex_array, deep=True)
@@ -143,6 +162,11 @@ class ModelRenderer:
                 triangle.GetPointIds().SetId(1, i * 3 + 1)
                 triangle.GetPointIds().SetId(2, i * 3 + 2)
                 triangles.InsertNextCell(triangle)
+
+                # Emit progress every 100000 triangles
+                if i % 100000 == 0 and i > 0:
+                    progress = (i / num_triangles) * 100.0
+                    self._emit_progress(progress, f"Processing {i:,}/{num_triangles:,} triangles")
 
             # Create polydata
             polydata = vtk.vtkPolyData()

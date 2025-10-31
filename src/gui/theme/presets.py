@@ -1,5 +1,5 @@
 """
-Theme presets for 3D-MM application.
+Theme presets for Digital Workshop.
 
 Defines built-in theme presets: Light, Dark, High Contrast, Solarized, etc.
 Each preset is a dictionary mapping color variable names to hex values.

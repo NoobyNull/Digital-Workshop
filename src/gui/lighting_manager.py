@@ -1,5 +1,5 @@
 """
-Lighting manager for a single VTK light in the 3D-MM application.
+Lighting manager for a single VTK light in Digital Workshop.
 
 Responsibilities:
 - Create and manage a single vtkLight attached to a provided renderer
@@ -46,10 +46,10 @@ class LightingManager:
         except Exception as e:
             self.logger.warning(f"Failed to load lighting settings from config: {e}")
             # Default light properties
-            self.position = [100.0, 100.0, 100.0]  # X, Y, Z
+            self.position = [90.0, 90.0, 180.0]  # X, Y, Z
             self.color = [1.0, 1.0, 1.0]  # RGB normalized
-            self.intensity = 0.8
-            self.cone_angle = 30.0  # Cone angle in degrees (for spotlight)
+            self.intensity = 1.2
+            self.cone_angle = 90.0  # Cone angle in degrees (for spotlight)
             self.enable_fill_light = True
             self.fill_light_intensity = 0.3
 

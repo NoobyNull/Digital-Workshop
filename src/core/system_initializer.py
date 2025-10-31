@@ -15,7 +15,7 @@ from PySide6.QtCore import QStandardPaths, QDir
 from PySide6.QtWidgets import QApplication
 
 from .application_config import ApplicationConfig
-from .logging_config import setup_logging
+from .logging_config import setup_logging, get_logger
 
 
 class SystemInitializer:
@@ -39,8 +39,8 @@ class SystemInitializer:
         try:
             self._setup_application_metadata()
             self._setup_high_dpi_support()
-            self._setup_logging()
             self._create_directories()
+            self._setup_logging()
             self.logger.info("System initialization completed successfully")
             return True
         except RuntimeError as e:
@@ -68,20 +68,14 @@ class SystemInitializer:
         app_data_path = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         log_dir = os.path.join(app_data_path, "logs")
 
-        if self.config.enable_file_logging:
-            setup_logging(
-                log_level=self.config.log_level,
-                log_dir=log_dir,
-                enable_console=True
-            )
-        else:
-            setup_logging(
-                log_level=self.config.log_level,
-                log_dir=log_dir,
-                enable_console=True
-            )
+        # Setup logging with console enabled only if explicitly requested
+        setup_logging(
+            log_level=self.config.log_level,
+            log_dir=log_dir,
+            enable_console=self.config.enable_console_logging
+        )
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.logger.info("Logging system initialized")
 
     def _create_directories(self) -> None:
@@ -103,11 +97,11 @@ class SystemInitializer:
         # Create directories
         for dir_path in app_dirs:
             if QDir().mkpath(dir_path):
-                self.logger.debug("Created directory: %s", dir_path)
+                print(f"Created directory: {dir_path}")
             else:
-                self.logger.debug("Directory already exists: %s", dir_path)
+                print(f"Directory already exists: {dir_path}")
 
-        self.logger.debug("Application directories created")
+        print("Application directories created")
 
     def get_app_data_path(self) -> Path:
         """Get the application data directory path.

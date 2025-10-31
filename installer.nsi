@@ -1,0 +1,25 @@
+!include "MUI2.nsh"
+
+Name "Digital Workshop"
+
+OutFile "Digital-Workshop-Installer.exe"
+
+InstallDir "$PROGRAMFILES\Digital Workshop"
+
+Page directory
+
+Page instfiles
+
+Section
+
+  SetOutPath $INSTDIR
+
+  File "dist\run.exe"
+
+  Rename "$INSTDIR\run.exe" "$INSTDIR\Digital Workshop.exe"
+
+  CreateShortcut "$DESKTOP\Digital Workshop.lnk" "$INSTDIR\Digital Workshop.exe"
+
+  CreateShortcut "$SMPROGRAMS\Digital Workshop.lnk" "$INSTDIR\Digital Workshop.exe"
+
+SectionEnd

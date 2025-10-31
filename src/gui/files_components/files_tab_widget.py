@@ -5,18 +5,18 @@ Provides UI for managing root folders used by the file browser.
 """
 
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, QDir, QThread
+from PySide6.QtCore import Qt, QPoint
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget,
-    QListWidgetItem, QCheckBox, QLineEdit, QFileDialog, QMessageBox,
-    QGroupBox, QInputDialog, QFrame, QSizePolicy, QProgressBar, QComboBox
+    QListWidgetItem, QCheckBox, QFileDialog, QMessageBox,
+    QGroupBox, QInputDialog, QProgressBar, QComboBox,
+    QMenu
 )
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
-from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
+from src.gui.theme import SPACING_4, SPACING_8, SPACING_12
 from src.gui.files_components.file_maintenance_worker import FileMaintenanceWorker
 
 
@@ -63,6 +63,7 @@ class FilesTab(QWidget):
         # Folders list
         self.folders_list = QListWidget()
         self.folders_list.setMinimumHeight(200)
+        self.folders_list.setContextMenuPolicy(Qt.CustomContextMenu)
         folders_layout.addWidget(self.folders_list)
 
         # Buttons row
@@ -163,6 +164,7 @@ class FilesTab(QWidget):
         self.validate_button.clicked.connect(self._validate_folders)
         self.folders_list.itemSelectionChanged.connect(self._update_button_states)
         self.folders_list.itemChanged.connect(self._on_item_changed)
+        self.folders_list.customContextMenuRequested.connect(self._show_context_menu)
         self.start_maintenance_button.clicked.connect(self._start_maintenance)
         self.cancel_maintenance_button.clicked.connect(self._cancel_maintenance)
 
@@ -327,7 +329,32 @@ class FilesTab(QWidget):
     def _on_item_changed(self, item: QListWidgetItem) -> None:
         """Handle item changes."""
         # Could be used for additional item-specific updates
-        pass
+
+    def _show_context_menu(self, position: QPoint) -> None:
+        """Show context menu for the folders list."""
+        menu = QMenu(self)
+        
+        # Add Root Folder action - always available
+        add_action = menu.addAction("Add Root Folder")
+        add_action.triggered.connect(self._add_folder)
+        
+        # Get item at position
+        item = self.folders_list.itemAt(position)
+        
+        if item:
+            # Add separator
+            menu.addSeparator()
+            
+            # Edit action for selected item
+            edit_action = menu.addAction("Edit Folder Name")
+            edit_action.triggered.connect(self._edit_folder)
+            
+            # Remove action for selected item
+            remove_action = menu.addAction("Remove Folder")
+            remove_action.triggered.connect(self._remove_folder)
+        
+        # Show menu at cursor position
+        menu.exec(self.folders_list.mapToGlobal(position))
 
     def _validate_folders(self) -> None:
         """Validate all configured folders."""

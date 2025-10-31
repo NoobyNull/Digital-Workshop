@@ -1,5 +1,5 @@
 """
-Model library interface for 3D-MM application.
+Model library interface for Digital Workshop.
 
 Provides a model library widget with:
 - File browser
@@ -26,7 +26,8 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTreeView, QListView,
     QTableView, QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
     QGroupBox, QTabWidget, QFrame, QMenu, QMessageBox, QHeaderView,
-    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox
+    QFileSystemModel, QButtonGroup, QToolButton, QCheckBox, QDialog,
+    QFileDialog, QInputDialog
 )
 
 from src.core.logging_config import get_logger
@@ -336,17 +337,6 @@ class ModelLibraryWidget(QWidget):
         controls_layout.addWidget(QLabel("Search:"))
         controls_layout.addWidget(self.search_box)
 
-        self.category_filter = QComboBox()
-        self.category_filter.addItem("All Categories")
-        controls_layout.addWidget(QLabel("Category:"))
-        controls_layout.addWidget(self.category_filter)
-
-        self.format_filter = QComboBox()
-        self.format_filter.addItem("All Formats")
-        self.format_filter.addItems(["STL", "OBJ", "3MF", "STEP"])
-        controls_layout.addWidget(QLabel("Format:"))
-        controls_layout.addWidget(self.format_filter)
-
         parent_layout.addWidget(controls_frame)
 
     def _create_file_browser(self, parent_layout: QVBoxLayout) -> None:
@@ -472,8 +462,6 @@ class ModelLibraryWidget(QWidget):
 
         # Filters / search (maintained across views)
         self.search_box.textChanged.connect(self._apply_filters)
-        self.category_filter.currentIndexChanged.connect(self._apply_filters)
-        self.format_filter.currentIndexChanged.connect(self._apply_filters)
 
         # Drag-and-drop
         self.setAcceptDrops(True)
@@ -768,64 +756,206 @@ class ModelLibraryWidget(QWidget):
             pass
 
     def _show_context_menu(self, position) -> None:
-        """Show a minimal context menu for the model list/grid."""
+        """Show context menu for the model list/grid with full file operations."""
         try:
             view = self.sender()
             index = view.indexAt(position)
             if not index.isValid():
                 return
-            src_index = self.proxy_model.mapToSource(index)
-            item = self.list_model.item(src_index.row(), 0)
-            if not item:
+            
+            # Get all selected model IDs
+            selected_models = self.get_selected_models()
+            if not selected_models:
                 return
-            model_id = item.data(Qt.UserRole)
+            
             menu = QMenu(self)
-            open_action = QAction("Open", self)
-            open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
-            menu.addAction(open_action)
-
-            # Add separator and remove action
-            menu.addSeparator()
-            remove_action = QAction("Remove", self)
-            remove_action.triggered.connect(lambda: self._remove_model(int(model_id)))
-            menu.addAction(remove_action)
+            
+            # Single selection actions
+            if len(selected_models) == 1:
+                model_id = selected_models[0]
+                
+                # Open action
+                open_action = QAction("Open in Viewer", self)
+                open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
+                menu.addAction(open_action)
+                
+                menu.addSeparator()
+                
+                # Update/Edit metadata action
+                update_action = QAction("Edit Metadata...", self)
+                update_action.triggered.connect(lambda: self._update_model_metadata(int(model_id)))
+                menu.addAction(update_action)
+                
+                # Analyze model action
+                analyze_action = QAction("Analyze && Fix Errors...", self)
+                analyze_action.triggered.connect(lambda: self._analyze_model(int(model_id)))
+                menu.addAction(analyze_action)
+                
+                menu.addSeparator()
+                
+                # File location action
+                show_file_action = QAction("Show in File Explorer", self)
+                show_file_action.triggered.connect(lambda: self._show_file_in_explorer(int(model_id)))
+                menu.addAction(show_file_action)
+                
+                menu.addSeparator()
+                
+                # Remove action
+                remove_action = QAction("Remove from Library", self)
+                remove_action.triggered.connect(lambda: self._remove_model(int(model_id)))
+                menu.addAction(remove_action)
+                
+            # Multiple selection actions
+            else:
+                count = len(selected_models)
+                
+                # Bulk update metadata
+                bulk_update_action = QAction(f"Edit Metadata for {count} Models...", self)
+                bulk_update_action.triggered.connect(lambda: self._bulk_update_metadata(selected_models))
+                menu.addAction(bulk_update_action)
+                
+                menu.addSeparator()
+                
+                # Bulk remove action
+                bulk_remove_action = QAction(f"Remove {count} Models from Library", self)
+                bulk_remove_action.triggered.connect(lambda: self._bulk_remove_models(selected_models))
+                menu.addAction(bulk_remove_action)
 
             menu.exec_(view.mapToGlobal(position))
-        except Exception:
-            # Fail silently in tests if something goes wrong with context menu
-            pass
+        except Exception as e:
+            self.logger.error(f"Error showing context menu: {e}")
 
     def _show_file_tree_context_menu(self, position) -> None:
         """Show context menu for the file tree with import and open options."""
         try:
             index = self.file_tree.indexAt(position)
-            if not index.isValid():
-                return
-
-            # Map from proxy to source model
-            source_index = self.file_proxy_model.mapToSource(index)
-            path = self.file_model.get_file_path(source_index)
-            if not path:
-                return
-
             menu = QMenu(self)
+            
+            # Add Root Folder action - always available
+            add_root_action = QAction("Add Root Folder", self)
+            add_root_action.triggered.connect(self._add_root_folder_from_context)
+            menu.addAction(add_root_action)
+            
+            # Check if clicking on a valid file/folder
+            if index.isValid():
+                source_index = self.file_proxy_model.mapToSource(index)
+                path = self.file_model.get_file_path(source_index)
+                
+                # Check if this is a root folder node
+                node = self.file_model.get_node(source_index)
+                is_root_folder = node and hasattr(node, 'root_folder') and node.root_folder is not None
 
-            # Import action (for files and folders)
-            import_action = QAction("Import", self)
-            import_action.triggered.connect(lambda: self._import_from_context_menu(path))
-            menu.addAction(import_action)
+                if is_root_folder:
+                    # Remove Root Folder action for root folder nodes
+                    menu.addSeparator()
+                    remove_root_action = QAction("Remove Root Folder", self)
+                    remove_root_action.triggered.connect(lambda: self._remove_root_folder_from_context(node.root_folder))
+                    menu.addAction(remove_root_action)
 
-            # Open in native app action (for files only)
-            if Path(path).is_file():
-                menu.addSeparator()
-                open_action = QAction("Open in Native App", self)
-                open_action.triggered.connect(lambda: self._open_in_native_app(path))
-                menu.addAction(open_action)
+                if path and Path(path).exists():
+                    # Add separator before file-specific actions
+                    menu.addSeparator()
+                    
+                    # Import action (for files and folders)
+                    import_action = QAction("Import", self)
+                    import_action.triggered.connect(lambda: self._import_from_context_menu(path))
+                    menu.addAction(import_action)
+
+                    # Open in native app action (for files only)
+                    if Path(path).is_file():
+                        open_action = QAction("Open in Native App", self)
+                        open_action.triggered.connect(lambda: self._open_in_native_app(path))
+                        menu.addAction(open_action)
 
             menu.exec_(self.file_tree.mapToGlobal(position))
 
         except Exception as e:
             self.logger.error(f"Error showing file tree context menu: {e}")
+
+    def _add_root_folder_from_context(self) -> None:
+        """Add a new root folder via context menu."""
+        try:
+            # Open folder selection dialog
+            folder_path = QFileDialog.getExistingDirectory(
+                self,
+                "Select Root Folder",
+                str(Path.home()),
+                QFileDialog.ShowDirsOnly
+            )
+
+            if not folder_path:
+                return
+
+            # Get display name
+            folder_name = Path(folder_path).name
+            display_name, ok = QInputDialog.getText(
+                self,
+                "Folder Display Name",
+                "Enter a display name for this folder:",
+                text=folder_name
+            )
+
+            if not ok or not display_name.strip():
+                return
+
+            # Add to manager
+            if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Added folder '{display_name}'"
+                )
+                # Refresh the file browser to show the new root folder
+                self._refresh_file_browser()
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    "Failed to add folder. It may already exist or be inaccessible."
+                )
+        except Exception as e:
+            self.logger.error(f"Failed to add root folder: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to add root folder: {e}"
+            )
+
+    def _remove_root_folder_from_context(self, root_folder) -> None:
+        """Remove a root folder via context menu."""
+        try:
+            # Confirm removal
+            reply = QMessageBox.question(
+                self,
+                "Confirm Removal",
+                f"Are you sure you want to remove '{root_folder.display_name}' from the root folders?\n\n"
+                f"This will not delete any files, only remove the folder from the file browser.",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                if self.root_folder_manager.remove_folder(root_folder.id):
+                    QMessageBox.information(
+                        self,
+                        "Success",
+                        f"Removed folder '{root_folder.display_name}'"
+                    )
+                    # Refresh the file browser
+                    self._refresh_file_browser()
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Error",
+                        "Failed to remove folder."
+                    )
+        except Exception as e:
+            self.logger.error(f"Failed to remove root folder: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to remove root folder: {e}"
+            )
 
     def _import_from_context_menu(self, path: str) -> None:
         """Import files/folders from context menu selection."""
@@ -916,6 +1046,434 @@ class ModelLibraryWidget(QWidget):
 
     def _refresh_models(self) -> None:
         self._load_models_from_database()
+
+    def _update_model_metadata(self, model_id: int) -> None:
+        """
+        Open metadata editor dialog for a single model.
+        
+        Args:
+            model_id: ID of the model to edit metadata for
+        """
+        try:
+            self.logger.info(f"Opening metadata editor for model ID: {model_id}")
+            
+            # Get model info to display in dialog title
+            model_info = self.db_manager.get_model(model_id)
+            if not model_info:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+            
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
+            
+            # Create metadata editor dialog
+            from src.gui.metadata_components import MetadataEditorWidget
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle(f"Edit Metadata - {model_name}")
+            dialog.setMinimumSize(600, 700)
+            
+            dialog_layout = QVBoxLayout(dialog)
+            dialog_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # Create metadata editor widget
+            editor = MetadataEditorWidget(dialog)
+            dialog_layout.addWidget(editor)
+            
+            # Load model metadata
+            editor.load_model_metadata(model_id)
+            
+            # Create button box
+            button_frame = QFrame()
+            button_layout = QHBoxLayout(button_frame)
+            button_layout.setContentsMargins(SPACING_12, SPACING_8, SPACING_12, SPACING_12)
+            button_layout.addStretch()
+            
+            save_close_btn = QPushButton("Save && Close")
+            save_close_btn.setDefault(True)
+            save_close_btn.clicked.connect(lambda: self._save_metadata_and_close(dialog, editor, model_id))
+            button_layout.addWidget(save_close_btn)
+            
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(dialog.close)
+            button_layout.addWidget(close_btn)
+            
+            dialog_layout.addWidget(button_frame)
+            
+            # Show dialog
+            result = dialog.exec()
+            
+            # If metadata was saved, reload models
+            if result == QDialog.Accepted or editor.has_unsaved_changes():
+                self._load_models_from_database()
+            
+            self.logger.info(f"Metadata editor closed for model ID: {model_id}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open metadata editor: {e}")
+            # Fallback to simple metadata edit if dialog fails
+            self._simple_metadata_edit(model_id, model_info if 'model_info' in locals() else None)
+
+    def _save_metadata_and_close(self, dialog: QDialog, editor, model_id: int) -> None:
+        """
+        Save metadata and close the dialog.
+        
+        Args:
+            dialog: The metadata editor dialog
+            editor: The metadata editor widget
+            model_id: ID of the model being edited
+        """
+        try:
+            self.logger.info(f"Saving metadata for model ID: {model_id}")
+            
+            # Validate input
+            if not editor._validate_input():
+                return
+            
+            # Collect metadata
+            metadata = {
+                'title': editor.title_field.text().strip(),
+                'description': editor.description_field.toPlainText().strip(),
+                'keywords': editor.keywords_field.text().strip(),
+                'category': editor.category_field.currentText().strip(),
+                'source': editor.source_field.text().strip(),
+                'rating': editor.star_rating.get_rating()
+            }
+            
+            # Remove empty category
+            if not metadata['category']:
+                metadata['category'] = None
+            
+            # Save to database
+            success = editor._save_to_database(metadata)
+            
+            if success:
+                self.status_label.setText(f"Metadata saved for model")
+                self.logger.info(f"Metadata saved successfully for model ID: {model_id}")
+                
+                # Reload models to reflect changes
+                self._load_models_from_database()
+                
+                # Close dialog
+                dialog.accept()
+            else:
+                QMessageBox.warning(dialog, "Error", "Failed to save metadata")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to save metadata: {e}")
+            QMessageBox.critical(dialog, "Error", f"Failed to save metadata: {str(e)}")
+
+    def _simple_metadata_edit(self, model_id: int, model_info: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Simple fallback metadata editing using input dialogs.
+        
+        Args:
+            model_id: ID of the model to edit
+            model_info: Optional model information dictionary
+        """
+        try:
+            if model_info is None:
+                model_info = self.db_manager.get_model(model_id)
+                if not model_info:
+                    QMessageBox.warning(self, "Error", "Model not found")
+                    return
+            
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
+            
+            # Simple title edit
+            new_title, ok = QInputDialog.getText(
+                self,
+                "Edit Title",
+                f"Enter new title for '{model_name}':",
+                text=model_info.get("title", model_info.get("filename", ""))
+            )
+            
+            if ok and new_title.strip():
+                # Update title in database
+                self.db_manager.update_model_metadata(
+                    model_id,
+                    title=new_title.strip()
+                )
+                
+                self.status_label.setText(f"Updated title for '{model_name}'")
+                self.logger.info(f"Updated title for model ID {model_id}")
+                
+                # Reload models
+                self._load_models_from_database()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to edit metadata: {e}")
+            QMessageBox.warning(self, "Error", f"Failed to edit metadata: {str(e)}")
+
+    def _show_file_in_explorer(self, model_id: int) -> None:
+        """
+        Open file explorer and select the model file.
+        
+        Args:
+            model_id: ID of the model to show in explorer
+        """
+        try:
+            # Get model info
+            model_info = self.db_manager.get_model(model_id)
+            if not model_info:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+            
+            file_path = model_info.get("file_path")
+            if not file_path:
+                QMessageBox.warning(self, "Error", "File path not found for this model")
+                return
+            
+            # Check if file exists
+            if not Path(file_path).exists():
+                reply = QMessageBox.question(
+                    self,
+                    "File Not Found",
+                    f"The file does not exist at:\n{file_path}\n\n"
+                    "Do you want to remove this model from the library?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self._remove_model(model_id)
+                return
+            
+            # Open file explorer and select the file
+            import subprocess
+            import sys
+            
+            if sys.platform == 'win32':
+                # Windows: Use explorer with /select
+                subprocess.Popen(['explorer', '/select,', str(Path(file_path))])
+            elif sys.platform == 'darwin':
+                # macOS: Use open with -R (reveal)
+                subprocess.Popen(['open', '-R', str(Path(file_path))])
+            else:
+                # Linux: Open parent directory (selection not universally supported)
+                parent_dir = str(Path(file_path).parent)
+                subprocess.Popen(['xdg-open', parent_dir])
+            
+            self.logger.info(f"Opened file explorer for: {file_path}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to show file in explorer: {e}")
+            QMessageBox.warning(self, "Error", f"Failed to open file explorer: {str(e)}")
+
+    def _bulk_update_metadata(self, model_ids: List[int]) -> None:
+        """
+        Update metadata for multiple selected models.
+        
+        Args:
+            model_ids: List of model IDs to update
+        """
+        try:
+            count = len(model_ids)
+            self.logger.info(f"Starting bulk metadata update for {count} models")
+            
+            # Ask what field to update
+            fields = ["Category", "Rating", "Keywords", "Source"]
+            field, ok = QInputDialog.getItem(
+                self,
+                "Bulk Update Metadata",
+                f"Select field to update for {count} models:",
+                fields,
+                0,
+                False
+            )
+            
+            if not ok:
+                return
+            
+            # Get the value to set
+            if field == "Category":
+                # Load categories
+                categories = self.db_manager.get_categories()
+                category_names = [""] + [cat['name'] for cat in categories]
+                
+                value, ok = QInputDialog.getItem(
+                    self,
+                    "Select Category",
+                    f"Select category for {count} models:",
+                    category_names,
+                    0,
+                    True  # Editable
+                )
+                if not ok:
+                    return
+                    
+            elif field == "Rating":
+                value, ok = QInputDialog.getInt(
+                    self,
+                    "Set Rating",
+                    f"Enter rating (0-5) for {count} models:",
+                    0, 0, 5, 1
+                )
+                if not ok:
+                    return
+                    
+            else:  # Keywords or Source
+                value, ok = QInputDialog.getText(
+                    self,
+                    f"Set {field}",
+                    f"Enter {field.lower()} for {count} models:"
+                )
+                if not ok or not value.strip():
+                    return
+            
+            # Confirm bulk update
+            reply = QMessageBox.question(
+                self,
+                "Confirm Bulk Update",
+                f"Update {field} for {count} models?\n\n"
+                f"This will set {field} to: {value}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply != QMessageBox.Yes:
+                return
+            
+            # Show progress
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, count)
+            
+            # Update each model
+            success_count = 0
+            for i, model_id in enumerate(model_ids):
+                try:
+                    # Update based on field
+                    kwargs = {}
+                    if field == "Category":
+                        kwargs['category'] = value if value else None
+                    elif field == "Rating":
+                        kwargs['rating'] = value
+                    elif field == "Keywords":
+                        kwargs['keywords'] = value
+                    elif field == "Source":
+                        kwargs['source'] = value
+                    
+                    # Update metadata
+                    self.db_manager.update_model_metadata(model_id, **kwargs)
+                    success_count += 1
+                    
+                    # Update progress
+                    self.progress_bar.setValue(i + 1)
+                    self.status_label.setText(f"Updating metadata... ({i + 1}/{count})")
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to update model {model_id}: {e}")
+            
+            # Hide progress
+            self.progress_bar.setVisible(False)
+            
+            # Show result
+            if success_count == count:
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Successfully updated {field} for {success_count} models"
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Partial Success",
+                    f"Updated {success_count} of {count} models\n"
+                    f"Check logs for details on failures"
+                )
+            
+            # Reload models
+            self._load_models_from_database()
+            self.status_label.setText("Ready")
+            
+            self.logger.info(f"Bulk update completed: {success_count}/{count} models updated")
+            
+        except Exception as e:
+            self.logger.error(f"Bulk metadata update failed: {e}")
+            self.progress_bar.setVisible(False)
+            self.status_label.setText("Ready")
+            QMessageBox.critical(self, "Error", f"Bulk update failed: {str(e)}")
+
+    def _bulk_remove_models(self, model_ids: List[int]) -> None:
+        """
+        Remove multiple models from the library with confirmation.
+        
+        Args:
+            model_ids: List of model IDs to remove
+        """
+        try:
+            count = len(model_ids)
+            self.logger.info(f"Starting bulk removal of {count} models")
+            
+            # Show confirmation dialog
+            reply = QMessageBox.question(
+                self,
+                "Confirm Bulk Removal",
+                f"Are you sure you want to remove {count} models from the library?\n\n"
+                "This will only remove them from the library, not delete the files.",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply != QMessageBox.Yes:
+                return
+            
+            # Show progress
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, count)
+            
+            # Remove each model
+            success_count = 0
+            for i, model_id in enumerate(model_ids):
+                try:
+                    # Get model info for cache cleanup
+                    model_info = self.db_manager.get_model(model_id)
+                    
+                    # Remove from database
+                    if self.db_manager.delete_model(model_id):
+                        success_count += 1
+                        
+                        # Remove from cache if present
+                        if model_info and model_info.get("file_path"):
+                            try:
+                                self.model_cache.remove(model_info["file_path"])
+                            except Exception:
+                                pass  # Continue even if cache removal fails
+                    
+                    # Update progress
+                    self.progress_bar.setValue(i + 1)
+                    self.status_label.setText(f"Removing models... ({i + 1}/{count})")
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to remove model {model_id}: {e}")
+            
+            # Hide progress
+            self.progress_bar.setVisible(False)
+            
+            # Show result
+            if success_count == count:
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Successfully removed {success_count} models from the library"
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Partial Success",
+                    f"Removed {success_count} of {count} models\n"
+                    f"Check logs for details on failures"
+                )
+            
+            # Reload models
+            self._load_models_from_database()
+            self.status_label.setText("Ready")
+            
+            self.logger.info(f"Bulk removal completed: {success_count}/{count} models removed")
+            
+        except Exception as e:
+            self.logger.error(f"Bulk removal failed: {e}")
+            self.progress_bar.setVisible(False)
+            self.status_label.setText("Ready")
+            QMessageBox.critical(self, "Error", f"Bulk removal failed: {str(e)}")
 
     def _refresh_file_browser(self) -> None:
         """Refresh the file browser by re-indexing directories."""
@@ -1083,6 +1641,96 @@ class ModelLibraryWidget(QWidget):
         except Exception:
             pass
         gc.collect()
+
+    def _analyze_model(self, model_id: int) -> None:
+        """Analyze model for errors and offer fixing."""
+        try:
+            # Get the model from database
+            from src.core.database_manager import get_database_manager
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(model_id)
+
+            if not model_data:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Load the model file
+            file_path = model_data.get('file_path')
+            if not file_path:
+                QMessageBox.warning(self, "Error", "Model file path not found")
+                return
+
+            # Load full geometry (not just metadata) for analysis
+            # Try to get from cache first, but ensure it has full geometry
+            cached_model = self.model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
+            if cached_model and cached_model.triangles:
+                model = cached_model
+            else:
+                # Load full geometry from file
+                fmt = FormatDetector().detect_format(Path(file_path))
+                if fmt == ModelFormat.STL:
+                    parser = STLParser()
+                elif fmt == ModelFormat.OBJ:
+                    parser = OBJParser()
+                elif fmt == ModelFormat.THREE_MF:
+                    parser = ThreeMFParser()
+                elif fmt == ModelFormat.STEP:
+                    parser = STEPParser()
+                else:
+                    QMessageBox.critical(self, "Error", f"Unsupported model format: {fmt}")
+                    return
+
+                model = parser.parse_file(file_path)
+                if model:
+                    # Cache the full geometry for future use
+                    self.model_cache.put(file_path, CacheLevel.GEOMETRY_FULL, model)
+
+            # Validate model has geometry (either triangles or array-based)
+            if not model:
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
+                return
+
+            # Check if model has triangles (handle both list and array-based)
+            has_triangles = False
+            if model.triangles is not None:
+                try:
+                    has_triangles = len(model.triangles) > 0
+                except (TypeError, ValueError):
+                    has_triangles = False
+
+            has_vertex_array = model.vertex_array is not None
+
+            if not has_triangles and not has_vertex_array:
+                QMessageBox.critical(self, "Error", f"Failed to load model geometry: {file_path}")
+                return
+
+            # If model is array-based but analyzer needs triangles, we need to convert
+            # For now, show a warning that array-based models cannot be analyzed
+            if not has_triangles and has_vertex_array:
+                QMessageBox.warning(self, "Warning", "This model uses array-based geometry and cannot be analyzed for errors at this time.")
+                return
+
+            # Open model analyzer dialog
+            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
+            dialog = ModelAnalyzerDialog(model, file_path, self)
+
+            if dialog.exec() == QDialog.Accepted:
+                # Model was fixed and saved
+                # Update database with new file hash
+                try:
+                    new_hash = calculate_file_hash(file_path)
+
+                    # Update model file hash in database
+                    db_manager.update_file_hash(model_id, new_hash)
+
+                    # Reload the model in viewer
+                    self.model_double_clicked.emit(model_id)
+                except Exception as e:
+                    self.logger.error(f"Failed to update database after fix: {e}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to analyze model: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
 
     def closeEvent(self, event) -> None:
         self.cleanup()

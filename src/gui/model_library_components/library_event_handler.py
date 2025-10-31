@@ -10,9 +10,10 @@ from typing import List
 
 from PySide6.QtCore import Qt, QModelIndex, QRegularExpression
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import QMenu, QMessageBox
+from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog
 
 from src.core.logging_config import get_logger
+from src.core.root_folder_manager import RootFolderManager
 
 logger = get_logger(__name__)
 
@@ -39,6 +40,8 @@ class LibraryEventHandler:
 
     def setup_connections(self) -> None:
         """Setup signal connections."""
+        self.logger.info("Setting up connections in LibraryEventHandler")
+        
         self.library_widget.view_tabs.currentChanged.connect(self.on_tab_changed)
 
         self.library_widget.file_tree.clicked.connect(self.on_file_tree_clicked)
@@ -52,8 +55,6 @@ class LibraryEventHandler:
         self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
 
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
-        self.library_widget.category_filter.currentIndexChanged.connect(self.apply_filters)
-        self.library_widget.format_filter.currentIndexChanged.connect(self.apply_filters)
 
         self.library_widget.setAcceptDrops(True)
         self.library_widget.list_view.setAcceptDrops(True)
@@ -64,8 +65,14 @@ class LibraryEventHandler:
         self.library_widget.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.library_widget.grid_view.customContextMenuRequested.connect(self.show_context_menu)
 
-        self.library_widget.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.file_tree.customContextMenuRequested.connect(self.show_file_tree_context_menu)
+        # Set up file tree context menu
+        self.logger.info(f"Setting up file_tree context menu. Widget exists: {hasattr(self.library_widget, 'file_tree')}")
+        if hasattr(self.library_widget, 'file_tree'):
+            self.library_widget.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.library_widget.file_tree.customContextMenuRequested.connect(self.show_file_tree_context_menu)
+            self.logger.info("File tree context menu connection established")
+        else:
+            self.logger.error("file_tree widget not found!")
 
     def on_tab_changed(self, index: int) -> None:
         """Handle tab change to update view mode."""
@@ -147,28 +154,101 @@ class LibraryEventHandler:
 
     def show_file_tree_context_menu(self, position) -> None:
         """Show context menu for file tree."""
+        self.logger.info(f"show_file_tree_context_menu called at position: {position}")
         try:
             index = self.library_widget.file_tree.indexAt(position)
-            if not index.isValid():
-                return
-
-            source_index = self.library_widget.file_proxy_model.mapToSource(index)
-            file_path = self.library_widget.file_model.get_file_path(source_index)
-
-            if not file_path or not Path(file_path).exists():
-                return
-
+            self.logger.info(f"Index valid: {index.isValid()}")
+            
             menu = QMenu(self.library_widget)
-            import_action = menu.addAction("Import")
-            open_action = menu.addAction("Open in Explorer")
-            action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
+            
+            # Add Root Folder action - always available
+            add_root_action = menu.addAction("Add Root Folder")
+            self.logger.info("Added 'Add Root Folder' action to menu")
+            
+            # Check if clicking on a valid file/folder
+            if index.isValid():
+                source_index = self.library_widget.file_proxy_model.mapToSource(index)
+                file_path = self.library_widget.file_model.get_file_path(source_index)
 
-            if action == import_action:
-                self.library_widget._import_from_context_menu(file_path)
-            elif action == open_action:
-                self.library_widget._open_in_native_app(file_path)
+                if file_path and Path(file_path).exists():
+                    # Add separator before file-specific actions
+                    menu.addSeparator()
+                    
+                    # File/folder specific actions
+                    import_action = menu.addAction("Import")
+                    open_action = menu.addAction("Open in Explorer")
+                    
+                    # Execute menu
+                    action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
+
+                    if action == add_root_action:
+                        self._add_root_folder()
+                    elif action == import_action:
+                        self.library_widget._import_from_context_menu(file_path)
+                    elif action == open_action:
+                        self.library_widget._open_in_native_app(file_path)
+                    return
+            
+            # If no valid file/folder, just show Add Root Folder option
+            action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
+            if action == add_root_action:
+                self._add_root_folder()
+                
         except Exception as e:
-            self.logger.warning(f"Failed to show file tree context menu: {e}")
+            self.logger.error(f"Failed to show file tree context menu: {e}", exc_info=True)
+
+    def _add_root_folder(self) -> None:
+        """Add a new root folder via dialog."""
+        try:
+            # Get RootFolderManager instance
+            root_folder_manager = RootFolderManager.get_instance()
+            
+            # Open folder selection dialog
+            folder_path = QFileDialog.getExistingDirectory(
+                self.library_widget,
+                "Select Root Folder",
+                str(Path.home()),
+                QFileDialog.ShowDirsOnly
+            )
+
+            if not folder_path:
+                return
+
+            # Get display name
+            folder_name = Path(folder_path).name
+            display_name, ok = QInputDialog.getText(
+                self.library_widget,
+                "Folder Display Name",
+                "Enter a display name for this folder:",
+                text=folder_name
+            )
+
+            if not ok or not display_name.strip():
+                return
+
+            # Add to manager
+            if root_folder_manager.add_folder(folder_path, display_name.strip()):
+                QMessageBox.information(
+                    self.library_widget,
+                    "Success",
+                    f"Added folder '{display_name}'"
+                )
+                # Refresh the file browser to show the new root folder
+                if hasattr(self.library_widget, '_refresh_file_browser'):
+                    self.library_widget._refresh_file_browser()
+            else:
+                QMessageBox.warning(
+                    self.library_widget,
+                    "Error",
+                    "Failed to add folder. It may already exist or be inaccessible."
+                )
+        except Exception as e:
+            self.logger.error(f"Failed to add root folder: {e}")
+            QMessageBox.critical(
+                self.library_widget,
+                "Error",
+                f"Failed to add root folder: {e}"
+            )
 
     def drag_enter_event(self, event: QDragEnterEvent) -> None:
         """Handle drag enter event."""

@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDockWidget, QTextEdit, QTabWidget
 
 from src.core.logging_config import get_logger, log_function_call
-from src.gui.theme import ThemeManager
+from src.gui.theme import QtMaterialThemeService
 
 
 logger = get_logger(__name__)
@@ -92,7 +92,7 @@ class DockManager:
 
             # Theme the dock header
             try:
-                tm = ThemeManager.instance()
+                tm = UnifiedThemeManager.instance()
                 _dock_css_meta = """
                     QDockWidget#MetadataDock::title {
                         background-color: {{dock_title_bg}};
@@ -221,7 +221,7 @@ class DockManager:
 
             # Theme the dock header
             try:
-                tm = ThemeManager.instance()
+                tm = UnifiedThemeManager.instance()
                 _dock_css_ml = """
                     QDockWidget#ModelLibraryDock::title {
                         background-color: {{dock_title_bg}};

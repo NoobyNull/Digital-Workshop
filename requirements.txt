@@ -1,4 +1,4 @@
-# 3D-MM (3D Model Manager) - Python Dependencies
+# Digital Workshop - Python Dependencies
 
 # Core GUI Framework
 # Primary option: PySide6 (recommended for Python 3.8+)
@@ -43,7 +43,7 @@ cx-freeze>=6.15.0
 qtawesome>=1.3.0
 
 # Professional Themes
-qt-material>=2.14
+qdarkstyle>=3.2.0
 
 # Fast non-cryptographic hashing for file identification and cache keys
 xxhash>=3.0.0

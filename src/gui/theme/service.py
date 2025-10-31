@@ -1,5 +1,5 @@
 """
-Unified theme service for 3D-MM application.
+Unified theme service for Digital Workshop.
 
 Provides a single API for all theme operations:
 - Apply presets

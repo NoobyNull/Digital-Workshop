@@ -132,7 +132,7 @@ class ScreenshotGenerator:
         """Load a model from file."""
         try:
             parser = STLParser()
-            model = parser.parse(model_path)
+            model = parser.parse_file(model_path)
             return model
         except Exception as e:
             self.logger.error(f"Failed to load model {model_path}: {e}")

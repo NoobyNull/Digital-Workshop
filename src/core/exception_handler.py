@@ -128,7 +128,7 @@ class ExceptionHandler:
         Args:
             error: The exception that occurred during startup
         """
-        error_msg = f"Failed to start 3D-MM application: {str(error)}"
+        error_msg = f"Failed to start Digital Workshop application: {str(error)}"
         print(error_msg)
 
         # Try to show a dialog if possible

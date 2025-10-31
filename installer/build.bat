@@ -1,11 +1,11 @@
 @echo off
-REM 3D-MM (3D Model Manager) - Windows Build Script
-REM This script provides an easy way to build the 3D-MM application on Windows
+REM Digital Workshop - Windows Build Script
+REM This script provides an easy way to build the Digital Workshop application on Windows
 
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo 3D-MM (3D Model Manager) Build Script
+echo Digital Workshop Build Script
 echo ========================================
 echo.
 
@@ -156,20 +156,20 @@ echo ========================================
 echo.
 
 REM Check if executable was created
-if exist "dist\3D-MM.exe" (
-    echo Executable created: dist\3D-MM.exe
-    
+if exist "dist\Digital Workshop.exe" (
+    echo Executable created: dist\Digital Workshop.exe
+
     REM Show file size
-    for %%F in ("dist\3D-MM.exe") do echo Executable size: %%~zF bytes
+    for %%F in ("dist\Digital Workshop.exe") do echo Executable size: %%~zF bytes
     echo.
 )
 
 REM Check if installer was created
-if exist "dist\3D-MM-Setup-1.0.0.exe" (
-    echo Installer created: dist\3D-MM-Setup-1.0.0.exe
-    
+if exist "dist\Digital Workshop-Setup-1.0.0.exe" (
+    echo Installer created: dist\Digital Workshop-Setup-1.0.0.exe
+
     REM Show file size
-    for %%F in ("dist\3D-MM-Setup-1.0.0.exe") do echo Installer size: %%~zF bytes
+    for %%F in ("dist\Digital Workshop-Setup-1.0.0.exe") do echo Installer size: %%~zF bytes
     echo.
 )
 
@@ -181,7 +181,7 @@ if exist "dist\build_report.json" (
 
 echo Build artifacts are located in the dist\ directory.
 echo.
-echo To test the application, run: dist\3D-MM.exe
+echo To test the application, run: dist\Digital Workshop.exe
 echo.
 
 pause
@@ -205,7 +205,7 @@ exit /b 0
 
 :show_help
 echo.
-echo 3D-MM Build Script
+echo Digital Workshop Build Script
 echo.
 echo Usage: build.bat [options]
 echo.

@@ -1,5 +1,5 @@
 """
-GUI components for 3D-MM application.
+GUI components for Digital Workshop.
 
 This package contains all user interface components including the main window,
 3D viewer, model library interface, and metadata editing widgets.

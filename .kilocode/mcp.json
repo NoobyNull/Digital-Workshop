@@ -25,7 +25,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "d:/Candy-Cadence"
+        "d:/Digital Workshop"
       ]
     },
     "sequentialthinking": {

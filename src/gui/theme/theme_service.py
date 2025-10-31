@@ -1,5 +1,5 @@
 """
-Consolidated theme service for 3D-MM application.
+Consolidated theme service for Digital Workshop.
 
 This module consolidates the theme service functionality from:
 - simple_service.py - Qt-material focused service (primary base)
@@ -22,9 +22,9 @@ from PySide6.QtWidgets import QApplication
 from .theme_core import (
     ThemePersistence,
     get_preset,
+    list_presets,
     hex_to_qcolor,
     hex_to_vtk_rgb,
-    list_presets,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,9 +106,7 @@ class SystemThemeDetector:
         try:
             import winreg
 
-            registry_path = (
-                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-            )
+            registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
             registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
             value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
             winreg.CloseKey(registry_key)
@@ -134,7 +132,7 @@ class SystemThemeDetector:
                 capture_output=True,
                 text=True,
                 timeout=2,
-                check=False,
+                check=False
             )
 
             # If command succeeds and output contains "Dark", it's dark mode
@@ -165,17 +163,12 @@ class SystemThemeDetector:
             # Check GNOME dconf settings
             try:
                 import subprocess
-
                 result = subprocess.run(
-                    [
-                        "dconf",
-                        "read",
-                        "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme",
-                    ],
+                    ["dconf", "read", "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme"],
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    check=False,
+                    check=False
                 )
                 if result.returncode == 0 and "true" in result.stdout.lower():
                     return "dark"
@@ -235,7 +228,7 @@ class SystemThemeDetector:
 class ThemeService:
     """
     Unified theme service focusing on qt-material themes.
-
+    
     This service consolidates:
     - Qt-material theme management
     - System theme detection
@@ -256,24 +249,23 @@ class ThemeService:
 
     def __init__(self):
         """Initialize theme service."""
-        if hasattr(self, "_initialized"):
+        if hasattr(self, '_initialized'):
             return
-
-        self.settings = QSettings("Candy-Cadence", "3D-MM")
+            
+        self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._detector = SystemThemeDetector()
         self._persistence = ThemePersistence()
         self._auto_save_enabled = True
         self._current_preset = "light"
-
+        
         # Import ThemeManager from __init__ to avoid circular imports
         try:
             from . import ThemeManager
-
             self._manager = ThemeManager.instance()
         except Exception as e:
             logger.warning("Failed to initialize ThemeManager: %s", e)
             self._manager = None
-
+            
         self._load_saved_theme()
         self._initialized = True
         logger.info("ThemeService initialized")
@@ -292,7 +284,7 @@ class ThemeService:
     def apply_theme(
         self,
         theme: ThemeType = "dark",
-        library: ThemeLibrary = "qt-material",  # noqa: ARG002 - kept for compatibility
+        library: ThemeLibrary = "qt-material"  # noqa: ARG002 - kept for compatibility
     ) -> bool:
         """
         Apply a professional Material Design theme.
@@ -334,7 +326,6 @@ class ThemeService:
                 # Try to detect OS theme
                 try:
                     import darkdetect
-
                     if darkdetect.isDark():
                         theme_name = f"dark_{variant}.xml"
                         apply_stylesheet(app, theme=theme_name)
@@ -352,7 +343,6 @@ class ThemeService:
             # Notify WindowTitleBarManager to update all title bars
             try:
                 from src.gui.window.title_bar_manager import WindowTitleBarManager
-
                 manager = WindowTitleBarManager.instance()
                 manager.update_all_title_bars(theme)
             except Exception:
@@ -376,7 +366,7 @@ class ThemeService:
                 "variants": {
                     "dark": QT_MATERIAL_DARK_THEMES,
                     "light": QT_MATERIAL_LIGHT_THEMES,
-                },
+                }
             }
         }
 
@@ -501,17 +491,10 @@ class ThemeService:
         """List names of available theme presets."""
         return self.get_available_presets()
 
-    def apply_theme_preset(
-        self,
-        preset_name: str,
-        custom_mode: Optional[str] = None,
-        base_primary: Optional[str] = None,
-    ) -> None:
+    def apply_theme_preset(self, preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
         """Apply a theme preset via ThemeManager."""
         if self._manager:
-            self._manager.apply_preset(
-                preset_name, custom_mode=custom_mode, base_primary=base_primary
-            )
+            self._manager.apply_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
 
     def load_theme_from_settings(self) -> None:
         """
@@ -661,7 +644,6 @@ class ThemeService:
 # Backward Compatibility API
 # ============================================================
 
-
 class _ColorsProxy:
     """
     Proxy object to allow f-string usage like f"color: {COLORS.text};"
@@ -720,16 +702,10 @@ def list_theme_presets() -> list[str]:
     return service.list_theme_presets()
 
 
-def apply_theme_preset(
-    preset_name: str,
-    custom_mode: Optional[str] = None,
-    base_primary: Optional[str] = None,
-) -> None:
+def apply_theme_preset(preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
     """Apply a theme preset via ThemeService."""
     service = ThemeService.instance()
-    service.apply_theme_preset(
-        preset_name, custom_mode=custom_mode, base_primary=base_primary
-    )
+    service.apply_theme_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
 
 
 def load_theme_from_settings() -> None:

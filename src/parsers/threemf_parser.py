@@ -1,5 +1,5 @@
 """
-3MF file parser for 3D-MM application.
+3MF file parser for Digital Workshop.
 
 This module provides parsing functionality for 3D Manufacturing Format (3MF) files.
 It includes memory-efficient processing, progress reporting, and comprehensive error handling.

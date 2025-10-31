@@ -15,7 +15,7 @@ from typing import Optional, List
 from PySide6.QtCore import QTimer, QSettings
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
-from src.core.logging_config import get_logger
+from src.core.logging_config import get_logger, get_activity_logger
 from src.core.database_manager import get_database_manager
 from src.parsers.stl_parser import STLParser, STLProgressCallback
 
@@ -38,6 +38,7 @@ class ModelLoader:
         """
         self.main_window = main_window
         self.logger = logger or get_logger(__name__)
+        self.activity_logger = get_activity_logger(__name__)
         self.current_model_id = None
 
     def open_model(self) -> None:
@@ -70,11 +71,11 @@ class ModelLoader:
         if success:
             if hasattr(self.main_window, 'status_label'):
                 self.main_window.status_label.setText(f"Loaded: {filename}")
-            self.logger.info(f"Model loaded successfully: {filename}")
+            self.activity_logger.info(f"Model loaded successfully: {filename}")
         else:
             if hasattr(self.main_window, 'status_label'):
                 self.main_window.status_label.setText(f"Failed to load: {filename}")
-            self.logger.error(f"Failed to load model: {filename} - {error_message}")
+            self.activity_logger.error(f"Failed to load model: {filename} - {error_message}")
             QMessageBox.warning(
                 self.main_window,
                 "Load Error",
@@ -99,7 +100,7 @@ class ModelLoader:
             # Create STL parser
             parser = STLParser()
 
-            # Create progress callback
+            # Create progress callback for parsing stage
             progress_callback = STLProgressCallback(
                 callback_func=lambda progress, message: self.update_loading_progress(progress, message)
             )
@@ -109,7 +110,9 @@ class ModelLoader:
 
             # Load model into viewer if available
             if hasattr(self.main_window, 'viewer_widget') and hasattr(self.main_window.viewer_widget, 'load_model'):
-                success = self.main_window.viewer_widget.load_model(model)
+                # Create progress callback for rendering stage
+                render_progress_callback = lambda progress, message: self.update_loading_progress(progress, message)
+                success = self.main_window.viewer_widget.load_model(model, render_progress_callback)
                 self.finish_model_loading(file_path, success, "" if success else "Failed to load model into viewer")
             else:
                 self.finish_model_loading(file_path, False, "3D viewer not available")
@@ -265,7 +268,7 @@ class ModelLoader:
         Args:
             model_ids: List of IDs of added models
         """
-        self.logger.info(f"Added {len(model_ids)} models to library")
+        self.activity_logger.info(f"Added {len(model_ids)} models to library")
 
         # Update status
         if model_ids and hasattr(self.main_window, 'status_label'):

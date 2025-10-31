@@ -1,4 +1,4 @@
-# 3D-MM Installer Assets
+# Digital Workshop Installer Assets
 
 This directory contains graphical assets and resources used by the Inno Setup installer.
 
@@ -18,7 +18,7 @@ This directory contains graphical assets and resources used by the Inno Setup in
 ## Notes
 
 Replace these placeholder files with actual branded assets before creating the final installer.
-Images should be professional and represent the 3D-MM application branding.
+Images should be professional and represent the Digital Workshop application branding.
 
 ## Image Specifications
 

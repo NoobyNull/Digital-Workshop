@@ -1,5 +1,5 @@
 """
-Files tab widget for 3D-MM application (Facade).
+Files tab widget for Digital Workshop (Facade).
 
 This module provides backward-compatible access to the refactored files tab.
 All functionality has been moved to src/gui/files_components/ package.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-3D-MM (3D Model Manager) - Automated Build Script
+Digital Workshop - Automated Build Script
 
-This script automates the entire build and packaging process for the 3D-MM application,
+This script automates the entire build and packaging process for the Digital Workshop application,
 including PyInstaller packaging and Inno Setup installer creation.
 """
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Build configuration
 BUILD_CONFIG = {
-    "app_name": "3D-MM",
+    "app_name": "Digital Workshop",
     "version": "1.0.0",
     "main_script": "src/main.py",
     "spec_file": "pyinstaller.spec",
@@ -41,7 +41,7 @@ BUILD_CONFIG = {
 }
 
 class BuildManager:
-    """Manages the build and packaging process for 3D-MM."""
+    """Manages the build and packaging process for Digital Workshop."""
     
     def __init__(self, config=None):
         """Initialize the build manager with configuration."""
@@ -72,7 +72,7 @@ class BuildManager:
         logger.info(f"Python version: {python_version.major}.{python_version.minor}.{python_version.micro}")
         
         if python_version < (3, 8):
-            raise RuntimeError("Python 3.8 or higher is required for building 3D-MM")
+            raise RuntimeError("Python 3.8 or higher is required for building Digital Workshop")
         
         # Check PyInstaller
         try:
@@ -330,7 +330,7 @@ class BuildManager:
 
 def main():
     """Main function to run the build script."""
-    parser = argparse.ArgumentParser(description="Build 3D-MM application")
+    parser = argparse.ArgumentParser(description="Build Digital Workshop application")
     parser.add_argument("--no-tests", action="store_true", help="Skip running tests")
     parser.add_argument("--no-installer", action="store_true", help="Skip creating installer")
     parser.add_argument("--clean-only", action="store_true", help="Only clean build directories")

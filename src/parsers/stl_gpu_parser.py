@@ -1,5 +1,5 @@
 """
-GPU-Accelerated STL Parser for 3D-MM.
+GPU-Accelerated STL Parser for Digital Workshop.
 
 This module provides high-performance STL parsing using CUDA/OpenCL acceleration,
 optimized for large files with millions of triangles. It integrates with the existing

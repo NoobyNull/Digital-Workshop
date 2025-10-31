@@ -51,14 +51,14 @@ class SettingsManager:
         try:
             settings = QSettings()
             if settings.contains("lighting/position_x"):
-                pos_x = settings.value("lighting/position_x", 100.0, type=float)
-                pos_y = settings.value("lighting/position_y", 100.0, type=float)
-                pos_z = settings.value("lighting/position_z", 100.0, type=float)
+                pos_x = settings.value("lighting/position_x", 90.0, type=float)
+                pos_y = settings.value("lighting/position_y", 90.0, type=float)
+                pos_z = settings.value("lighting/position_z", 180.0, type=float)
                 col_r = settings.value("lighting/color_r", 1.0, type=float)
                 col_g = settings.value("lighting/color_g", 1.0, type=float)
                 col_b = settings.value("lighting/color_b", 1.0, type=float)
-                intensity = settings.value("lighting/intensity", 0.8, type=float)
-                cone_angle = settings.value("lighting/cone_angle", 30.0, type=float)
+                intensity = settings.value("lighting/intensity", 1.2, type=float)
+                cone_angle = settings.value("lighting/cone_angle", 90.0, type=float)
 
                 props = {
                     "position": (float(pos_x), float(pos_y), float(pos_z)),

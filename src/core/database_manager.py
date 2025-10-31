@@ -1,5 +1,5 @@
 """
-SQLite database manager for 3D-MM application - Compatibility Layer.
+SQLite database manager for Digital Workshop - Compatibility Layer.
 
 REFACTORED: This module now acts as a compatibility layer.
 The actual implementation has been split into modular components in src/core/database/
@@ -42,8 +42,14 @@ def _get_default_db_path() -> str:
         app_data.mkdir(parents=True, exist_ok=True)
         return str(app_data / "3dmm.db")
     except Exception as e:
-        logger.warning(f"Failed to get AppData path: {e}, falling back to relative path")
-        return "data/3dmm.db"
+        logger.warning(f"Failed to get AppData path: {e}, falling back to user data path")
+        # Fallback to user-specific directory
+        import os
+        from pathlib import Path
+        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+        db_dir = app_data / 'DigitalWorkshop' / 'data'
+        db_dir.mkdir(parents=True, exist_ok=True)
+        return str(db_dir / "3dmm.db")
 
 
 def get_database_manager(db_path: Optional[str] = None) -> DatabaseManager:

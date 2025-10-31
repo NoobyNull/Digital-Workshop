@@ -1,5 +1,5 @@
 """
-Hardware Acceleration Detection module for 3D-MM.
+Hardware Acceleration Detection module for Digital Workshop.
 Provides vendor-agnostic detection for NVIDIA CUDA, AMD/Intel OpenCL, and graceful CPU fallback.
 """
 

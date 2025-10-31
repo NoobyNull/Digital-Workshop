@@ -1,5 +1,5 @@
 """
-Base parser interface for 3D-MM application.
+Base parser interface for Digital Workshop.
 
 This module provides the common interface and data structures that all 3D format parsers
 must implement. It ensures consistent behavior across different format parsers.

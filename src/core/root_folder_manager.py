@@ -1,5 +1,5 @@
 """
-Root folder manager for 3D-MM application.
+Root folder manager for Digital Workshop.
 
 Manages configuration of multiple root folders for the file browser,
 with persistence to application settings.

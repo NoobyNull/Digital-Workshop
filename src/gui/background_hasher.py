@@ -1,8 +1,10 @@
 """
-Background hashing worker for 3D-MM application.
+Background hashing worker for Digital Workshop.
 
 Processes unhashed models in the background without blocking the UI.
 Provides duplicate detection and file recovery functionality.
+
+Enhanced to use the new FastHasher for optimal performance.
 """
 
 from pathlib import Path
@@ -12,7 +14,8 @@ from PySide6.QtCore import QThread, Signal
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
-from src.utils.file_hash import calculate_file_hash
+from src.core.fast_hasher import FastHasher
+from src.core.cancellation_token import CancellationToken
 
 
 class BackgroundHasher(QThread):
@@ -35,6 +38,8 @@ class BackgroundHasher(QThread):
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.db_manager = get_database_manager()
+        self.fast_hasher = FastHasher()
+        self.cancellation_token = CancellationToken()
         self._paused = False
         self._running = True
 
@@ -52,6 +57,7 @@ class BackgroundHasher(QThread):
         """Stop background hashing completely."""
         self._running = False
         self._paused = False
+        self.cancellation_token.cancel()
         self.logger.info("Background hashing stopped")
 
     def is_paused(self) -> bool:
@@ -92,14 +98,19 @@ class BackgroundHasher(QThread):
                 # Emit progress
                 self.hash_progress.emit(filename)
 
-                # Calculate hash
-                file_hash = calculate_file_hash(file_path)
+                # Calculate hash using FastHasher
+                result = self.fast_hasher.hash_file(
+                    file_path,
+                    cancellation_token=self.cancellation_token
+                )
 
-                if not file_hash:
-                    self.logger.error(f"Failed to calculate hash for {filename}")
+                if not result.success:
+                    self.logger.error(f"Failed to calculate hash for {filename}: {result.error}")
                     # Mark with empty hash so we don't try again
                     self.db_manager.update_file_hash(model_id, "")
                     continue
+                
+                file_hash = result.hash_value
 
                 # Check for duplicates before updating
                 existing = self.db_manager.find_model_by_hash(file_hash)

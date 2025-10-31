@@ -12,7 +12,7 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QSizePolicy
 
 from src.gui.theme import qss_tabs_lists_labels, SPACING_8, SPACING_16
 from src.gui.material_manager import MaterialManager
@@ -54,7 +54,12 @@ class CentralWidgetManager:
                 except ImportError:
                     Viewer3DWidget = None
 
-            self.main_window.viewer_widget = Viewer3DWidget(self.main_window)
+            if Viewer3DWidget is not None:
+                self.main_window.viewer_widget = Viewer3DWidget(self.main_window)
+            else:
+                # Fallback: create a placeholder widget
+                self.main_window.viewer_widget = QLabel("3D Viewer not available")
+                self.logger.warning("Viewer3DWidget not available, using placeholder")
 
             # Connect signals
             self.main_window.viewer_widget.model_loaded.connect(self._on_model_loaded)
@@ -96,22 +101,9 @@ class CentralWidgetManager:
             if hasattr(self.main_window.viewer_widget, "save_view_requested"):
                 self.main_window.viewer_widget.save_view_requested.connect(self._save_current_view)
 
-            try:
-                if hasattr(self.main_window, "lighting_panel") and self.main_window.lighting_panel and self.main_window.lighting_manager:
-                    self.main_window.lighting_panel.position_changed.connect(self._update_light_position)
-                    self.main_window.lighting_panel.color_changed.connect(self._update_light_color)
-                    self.main_window.lighting_panel.intensity_changed.connect(self._update_light_intensity)
-                    self.main_window.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
-                    props = self.main_window.lighting_manager.get_properties()
-                    self.main_window.lighting_panel.set_values(
-                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
-                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
-                        intensity=float(props.get("intensity", 0.8)),
-                        cone_angle=float(props.get("cone_angle", 30.0)),
-                        emit_signals=False,
-                    )
-            except Exception as e:
-                self.logger.warning(f"Failed to connect lighting panel: {e}")
+            # Note: Lighting panel is created later in dock_manager, so we'll connect it there
+            # This is just a placeholder to ensure the signal exists
+            self.logger.debug("Lighting panel will be connected in dock_manager after creation")
 
             if hasattr(self.main_window.viewer_widget, "apply_theme"):
                 try:
@@ -157,6 +149,10 @@ class CentralWidgetManager:
             if tab_bar:
                 tab_bar.setExpanding(True)  # This makes tabs expand to fill available space
                 tab_bar.setUsesScrollButtons(False)
+
+            # Make hero tabs sticky to all sides
+            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
         except Exception:
             pass
 
@@ -164,7 +160,7 @@ class CentralWidgetManager:
         # No need to apply custom stylesheets here - let qt-material handle it
 
         # Add tabs: Model (viewer) + placeholders
-        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model")
+        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model Previewer")
 
         def _placeholder(title: str, body: str) -> QWidget:
             w = QWidget()
@@ -179,20 +175,52 @@ class CentralWidgetManager:
             v.addStretch(1)
             return w
 
-        self.main_window.hero_tabs.addTab(_placeholder("GP", "G-code Previewer placeholder\n\nPreview, simulate, and inspect G-code toolpaths."), "GP")
+        # Create G-code Previewer widget
+        try:
+            self.logger.info("Attempting to import GcodePreviewerWidget...")
+            from src.gui.gcode_previewer_components import GcodePreviewerWidget
+            self.logger.info("GcodePreviewerWidget imported successfully")
+
+            self.logger.info("Creating GcodePreviewerWidget instance...")
+            self.main_window.gcode_previewer_widget = GcodePreviewerWidget(self.main_window)
+            self.logger.info("GcodePreviewerWidget instance created")
+
+            self.logger.info("Adding G-code Previewer tab...")
+            self.main_window.hero_tabs.addTab(self.main_window.gcode_previewer_widget, "G Code Previewer")
+            self.logger.info("G-code Previewer widget created successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
+            self.main_window.hero_tabs.addTab(_placeholder("GCP", "G-code Previewer\n\nComponent unavailable."), "G Code Previewer")
 
         # Create CLO widget
         try:
             from src.gui.CLO import CutListOptimizerWidget
             self.main_window.clo_widget = CutListOptimizerWidget()
-            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "CLO")
+            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "Cut List Optimizer")
             self.logger.info("CLO widget created successfully")
         except Exception as e:
             self.logger.warning(f"Failed to create CLO widget: {e}")
-            self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "CLO")
+            self.main_window.hero_tabs.addTab(_placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."), "Cut List Optimizer")
 
-        self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds placeholder\n\nCalculate optimal CNC feeds and speeds."), "F&S")
-        self.main_window.hero_tabs.addTab(_placeholder("Project Cost Calculator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Calculator")
+        # Create Feeds & Speeds widget
+        try:
+            from src.gui.feeds_and_speeds import FeedsAndSpeedsWidget
+            self.main_window.feeds_and_speeds_widget = FeedsAndSpeedsWidget(self.main_window)
+            self.main_window.hero_tabs.addTab(self.main_window.feeds_and_speeds_widget, "Feed and Speed")
+            self.logger.info("Feeds & Speeds widget created successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
+            self.main_window.hero_tabs.addTab(_placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."), "Feed and Speed")
+
+        self.main_window.hero_tabs.addTab(_placeholder("Project Cost Estimator", "Cost Calculator placeholder\n\nEstimate material, machine, and labor costs."), "Project Cost Estimator")
+
+        # Setup dynamic tab naming
+        try:
+            from src.gui.components.dynamic_tab_manager import setup_dynamic_tabs
+            self.main_window.dynamic_tab_manager = setup_dynamic_tabs(self.main_window.hero_tabs)
+            self.logger.info("Dynamic tab manager initialized")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize dynamic tab manager: {e}")
 
         # Persist active hero tab on change
         try:
@@ -209,11 +237,24 @@ class CentralWidgetManager:
         except Exception:
             pass
 
-        # Make Hero Tabs the central widget
+        # Set hero tabs as the central widget
+        # The dock system will automatically manage all other widgets around it
+        # This ensures 100% window fill and proper "sticky" behavior
         try:
             self.main_window.setCentralWidget(self.main_window.hero_tabs)
+
+            # Ensure hero tabs fill all available space
+            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
+
+            # Connect to main window resize events for real-time updates
+            if hasattr(self.main_window, '_force_central_widget_layout'):
+                # Force initial layout
+                self.main_window._force_central_widget_layout()
+
+            self.logger.info("Hero tabs set as central widget - dock system will manage layout")
         except Exception as e:
-            self.logger.warning(f"Failed to set hero tabs as central widget: {e}")
+            self.logger.warning(f"Failed to set central widget: {e}")
 
         # 3) Ensure all docks are visible but don't force positioning
         try:
