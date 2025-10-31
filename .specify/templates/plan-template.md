@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-All development MUST align with Candy-Cadence Constitution v1.0.0:
+All development MUST align with Candy-Cadence Constitution v1.2.0:
 
 **Performance Mandate Check:**
 - Load times: <5s (<100MB), <15s (100-500MB), <30s (>500MB)
@@ -65,7 +65,15 @@ All development MUST align with Candy-Cadence Constitution v1.0.0:
 - OpenGL 3.3 Core Profile minimum, DirectX 11.0 via ANGLE fallback
 - Python 3.8-3.12, PySide6 6.0.0+, VTK 9.2.0+, SQLite 3.0+ compatibility
 - Context menus and Windows shell integration
-- Inno Setup installer with proper registry integration
+
+**Distribution & Deployment Check:**
+- Standalone installer (EXE) distribution required
+- No Python or dependency installation required for end users
+- All runtime dependencies handled by installer
+- Windows registry entries and uninstallation capabilities
+- Digital signing for security and version information
+- Straightforward installation for non-technical users
+- Advanced configuration options for power users
 
 ## Project Structure
 

@@ -90,7 +90,7 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
-**Candy-Cadence Constitution v1.0.0 Compliance Requirements:**
+**Candy-Cadence Constitution v1.2.0 Compliance Requirements:**
 
 - **FR-006**: System MUST comply with Performance Mandate: models <100MB load in <5s, <500MB in <15s, >500MB in <30s
 - **FR-007**: System MUST maintain <2GB memory usage during typical operations with no memory leaks
@@ -102,6 +102,11 @@
 - **FR-013**: System MUST store all user data locally under user control (SQLite database)
 - **FR-014**: System MUST follow Windows desktop application conventions and integration standards
 - **FR-015**: System MUST support Windows 7 SP1+ (64-bit) with OpenGL 3.3+ or DirectX 11+ fallback
+- **FR-016**: System MUST be distributed as standalone installer (EXE) with no Python/dependency installation required
+- **FR-017**: System MUST handle all runtime dependencies through installer with Windows registry entries
+- **FR-018**: System MUST provide standard Windows uninstallation capabilities
+- **FR-019**: System MUST include digital signing for security and version information
+- **FR-020**: System MUST provide straightforward installation for non-technical users with advanced options for power users
 
 *Example of marking unclear requirements:*
 

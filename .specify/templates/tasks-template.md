@@ -48,7 +48,7 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-**Candy-Cadence Constitution v1.0.0 Setup Requirements:**
+**Candy-Cadence Constitution v1.2.0 Setup Requirements:**
 - [ ] T001 Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
@@ -59,6 +59,11 @@ description: "Task list template for feature implementation"
 - [ ] T008 [P] Configure OpenGL 3.3 Core Profile and DirectX 11.0 ANGLE fallback
 - [ ] T009 Setup performance monitoring and benchmarking framework
 - [ ] T010 Initialize memory leak detection and testing infrastructure
+- [ ] T011 [P] Setup standalone installer build system (Inno Setup/PyInstaller)
+- [ ] T012 [P] Configure digital signing for installer security
+- [ ] T013 [P] Setup Windows registry integration for installer
+- [ ] T014 [P] Configure automatic update checking mechanism
+- [ ] T015 [P] Create installer testing and validation framework
 
 ---
 
