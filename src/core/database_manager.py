@@ -45,7 +45,6 @@ def _get_default_db_path() -> str:
         logger.warning(f"Failed to get AppData path: {e}, falling back to user data path")
         # Fallback to user-specific directory
         import os
-        from pathlib import Path
         app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
         db_dir = app_data / 'DigitalWorkshop' / 'data'
         db_dir.mkdir(parents=True, exist_ok=True)

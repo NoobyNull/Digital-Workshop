@@ -174,6 +174,7 @@ class ThemeDefaults:
     success: str = "#52c41a"
     warning: str = "#faad14"
     error: str = "#ff4d4f"
+    critical: str = "#d32f2f"  # Darker red for critical issues
 
     status_good_bg: str = "#d4edda"
     status_good_text: str = "#155724"

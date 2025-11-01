@@ -249,21 +249,22 @@ apply_theme_preset("custom", custom_mode="dark", base_primary="#ff6b35")
 |---|---|---|
 | label_text | #000000 | QLabel text color |
 
-## Status Indicators (12)
+## Status Indicators (13)
 | Variable | Default | Usage |
 |---|---|---|
 | success | #52c41a | Generic success accent |
 | warning | #faad14 | Generic warning accent |
 | error | #ff4d4f | Generic error accent |
-| status_good_bg | #d4edda | “Good” badge background |
-| status_good_text | #155724 | “Good” badge text |
-| status_good_border | #c3e6cb | “Good” badge border |
-| status_warning_bg | #fff3cd | “Warning” badge background |
-| status_warning_text | #856404 | “Warning” badge text |
-| status_warning_border | #ffeeba | “Warning” badge border |
-| status_error_bg | #f8d7da | “Error” badge background |
-| status_error_text | #721c24 | “Error” badge text |
-| status_error_border | #f5c6cb | “Error” badge border |
+| critical | #d32f2f | Critical error accent (darker red) |
+| status_good_bg | #d4edda | "Good" badge background |
+| status_good_text | #155724 | "Good" badge text |
+| status_good_border | #c3e6cb | "Good" badge border |
+| status_warning_bg | #fff3cd | "Warning" badge background |
+| status_warning_text | #856404 | "Warning" badge text |
+| status_warning_border | #ffeeba | "Warning" badge border |
+| status_error_bg | #f8d7da | "Error" badge background |
+| status_error_text | #721c24 | "Error" badge text |
+| status_error_border | #f5c6cb | "Error" badge border |
 
 ## Loading Overlay / Misc (1)
 | Variable | Default | Usage |

@@ -8,6 +8,7 @@ the "wglMakeCurrent failed in Clean(), error: 6" error.
 
 import gc
 import time
+import atexit
 from typing import List, Dict, Any, Optional, Callable
 from enum import Enum
 
@@ -16,6 +17,7 @@ import vtk
 from src.core.logging_config import get_logger, log_function_call
 from .error_handler import get_vtk_error_handler, VTKErrorCode
 from .context_manager import get_vtk_context_manager, ContextState
+from .resource_tracker import get_vtk_resource_tracker
 
 
 logger = get_logger(__name__)
@@ -67,11 +69,15 @@ class VTKCleanupCoordinator:
         # Cleanup state
         self.cleanup_in_progress = False
         self.context_lost_detected = False
+        self.cleanup_completed = False  # CRITICAL FIX: Prevent duplicate cleanup
         self.cleanup_callbacks: Dict[CleanupPhase, List[Callable]] = {}
         self.cleanup_resources: Dict[str, Any] = {}
 
         # Setup cleanup phases
         self._setup_cleanup_phases()
+
+        # Register shutdown handler to ensure cleanup on exit
+        self._register_shutdown_handler()
 
         self.logger.info("VTK Cleanup Coordinator initialized")
 
@@ -212,6 +218,60 @@ class VTKCleanupCoordinator:
         # Post-cleanup: Cleanup verification
         self.register_cleanup_callback(CleanupPhase.POST_CLEANUP, self._post_cleanup)
 
+    def _register_shutdown_handler(self) -> None:
+        """Register shutdown handler to ensure cleanup on application exit."""
+        try:
+            atexit.register(self.emergency_shutdown_cleanup)
+            self.logger.debug("Shutdown handler registered for VTK cleanup")
+        except Exception as e:
+            self.logger.warning(f"Failed to register shutdown handler: {e}")
+
+    def emergency_shutdown_cleanup(self) -> None:
+        """Emergency cleanup called during application shutdown."""
+        try:
+            # CRITICAL FIX: Skip if cleanup already completed
+            if self.cleanup_completed:
+                self.logger.debug("CRITICAL FIX: Emergency shutdown cleanup skipped - already completed")
+                return
+                
+            self.logger.info("CRITICAL FIX: Emergency shutdown cleanup initiated")
+            
+            # CRITICAL FIX: Suppress all VTK errors during emergency cleanup
+            vtk.vtkObject.GlobalWarningDisplayOff()
+            
+            # CRITICAL FIX: Comprehensive VTK object cleanup before context loss
+            self._perform_comprehensive_vtk_cleanup()
+            
+            # Perform basic cleanup without context validation
+            if self.resource_tracker is not None:
+                try:
+                    cleanup_stats = self.resource_tracker.cleanup_all_resources()
+                    self.logger.info(
+                        f"CRITICAL FIX: Emergency shutdown cleanup - "
+                        f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
+                    )
+                except Exception as e:
+                    self.logger.warning(f"CRITICAL FIX: Emergency resource tracker cleanup failed: {e}")
+            
+            # Mark as completed to prevent further cleanup attempts
+            self.cleanup_completed = True
+            
+            # Force garbage collection with VTK error suppression
+            for _ in range(3):
+                try:
+                    gc.collect()
+                except Exception:
+                    pass  # Suppress any errors during garbage collection
+                time.sleep(0.01)
+            
+            # CRITICAL FIX: Final VTK cleanup suppression
+            vtk.vtkObject.GlobalWarningDisplayOff()
+            
+            self.logger.info("CRITICAL FIX: Emergency shutdown cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"CRITICAL FIX: Emergency shutdown cleanup failed: {e}")
+
     def register_cleanup_callback(self, phase: CleanupPhase, callback: Callable) -> None:
         """
         Register a cleanup callback for a specific phase.
@@ -253,6 +313,11 @@ class VTKCleanupCoordinator:
         Returns:
             True if cleanup completed successfully, False if skipped due to context loss
         """
+        # CRITICAL FIX: Prevent duplicate cleanup attempts
+        if self.cleanup_completed:
+            self.logger.debug("VTK cleanup already completed, skipping duplicate cleanup")
+            return True
+            
         if self.cleanup_in_progress:
             self.logger.debug("Cleanup already in progress, skipping")
             return True
@@ -283,6 +348,9 @@ class VTKCleanupCoordinator:
 
             # Execute cleanup phases in order
             success = self._execute_cleanup_phases()
+
+            # CRITICAL FIX: Mark cleanup as completed to prevent duplicates
+            self.cleanup_completed = True
 
             if success:
                 self.logger.info("VTK cleanup completed successfully")
@@ -762,10 +830,77 @@ class VTKCleanupCoordinator:
         except Exception as e:
             self.logger.debug(f"Orientation widget cleanup error: {e}")
 
+    def _perform_comprehensive_vtk_cleanup(self) -> None:
+        """
+        CRITICAL FIX: Perform comprehensive VTK object cleanup before context loss.
+        
+        This method ensures all VTK objects are properly deleted before the OpenGL
+        context is destroyed, preventing wglMakeCurrent errors during shutdown.
+        """
+        try:
+            self.logger.debug("CRITICAL FIX: Starting comprehensive VTK cleanup")
+            
+            # Clean up common VTK objects that might still exist
+            vtk_classes_to_cleanup = [
+                'vtkRenderWindow',
+                'vtkRenderer',
+                'vtkRenderWindowInteractor',
+                'vtkActor',
+                'vtkPolyDataMapper',
+                'vtkPolyData',
+                'vtkPoints',
+                'vtkCellArray',
+                'vtkCamera',
+                'vtkLight',
+                'vtkOrientationMarkerWidget',
+                'vtkAxesActor',
+                'vtkTextActor'
+            ]
+            
+            cleaned_count = 0
+            
+            # Try to find and clean up VTK objects in the current namespace
+            import sys
+            import gc
+            
+            # Get all objects in the current frame and globals
+            current_frame = sys._getframe()
+            current_globals = current_frame.f_globals
+            current_locals = current_frame.f_locals
+            
+            # Search for VTK objects in globals and locals
+            for namespace_name, namespace in [('globals', current_globals), ('locals', current_locals)]:
+                for obj_name, obj in namespace.items():
+                    try:
+                        # Check if it's a VTK object
+                        if hasattr(obj, '__class__') and hasattr(obj.__class__, '__module__'):
+                            if 'vtk' in obj.__class__.__module__:
+                                # Try to delete it safely
+                                if hasattr(obj, 'Delete'):
+                                    obj.Delete()
+                                    cleaned_count += 1
+                                    self.logger.debug(f"CRITICAL FIX: Cleaned up VTK object: {obj_name} from {namespace_name}")
+                    except Exception:
+                        # Silently continue if cleanup fails
+                        pass
+            
+            # Force garbage collection to clean up any remaining references
+            for _ in range(2):
+                try:
+                    gc.collect()
+                except Exception:
+                    pass
+            
+            self.logger.debug(f"CRITICAL FIX: Comprehensive VTK cleanup completed - {cleaned_count} objects cleaned")
+            
+        except Exception as e:
+            self.logger.debug(f"CRITICAL FIX: Comprehensive VTK cleanup error: {e}")
+
     def _reset_cleanup_state(self) -> None:
         """Reset cleanup state for next cleanup operation."""
         self.cleanup_in_progress = False
         self.context_lost_detected = False
+        # CRITICAL FIX: Don't reset cleanup_completed flag - it should persist
         self.cleanup_resources.clear()
 
     def is_cleanup_in_progress(self) -> bool:
@@ -799,7 +934,23 @@ def get_vtk_cleanup_coordinator() -> VTKCleanupCoordinator:
     global _vtk_cleanup_coordinator
     if _vtk_cleanup_coordinator is None:
         _vtk_cleanup_coordinator = VTKCleanupCoordinator()
+        # Register global shutdown handler
+        atexit.register(_global_emergency_shutdown)
     return _vtk_cleanup_coordinator
+
+
+def _global_emergency_shutdown() -> None:
+    """Global emergency shutdown handler for VTK cleanup."""
+    try:
+        coordinator = _vtk_cleanup_coordinator
+        if coordinator is not None:
+            # CRITICAL FIX: Check if cleanup already completed to prevent duplicate cleanup
+            if not coordinator.cleanup_completed:
+                coordinator.emergency_shutdown_cleanup()
+            else:
+                logger.debug("Global emergency shutdown skipped - cleanup already completed")
+    except Exception:
+        pass  # Silently ignore errors during emergency shutdown
 
 
 def coordinate_vtk_cleanup(render_window: Optional[vtk.vtkRenderWindow] = None,

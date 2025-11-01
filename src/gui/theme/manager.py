@@ -283,6 +283,7 @@ class ThemeDefaults:
     success: str = "#52c41a"
     warning: str = "#faad14"
     error: str = "#ff4d4f"
+    critical: str = "#d32f2f"  # Darker red for critical issues
 
     status_good_bg: str = "#d4edda"
     status_good_text: str = "#155724"
@@ -672,7 +673,7 @@ class ThemeManager:
         if name in self._colors:
             return _normalize_hex(self._colors[name])
         self._log_json(
-            logging.WARNING,
+            logging.DEBUG,
             "theme_fallback_color",
             variable=name,
             context=context or "",
