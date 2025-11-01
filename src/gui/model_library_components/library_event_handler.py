@@ -14,6 +14,9 @@ from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager
+from src.core.import_thumbnail_service import ImportThumbnailService
+from src.core.fast_hasher import FastHasher
+from src.core.database_manager import get_database_manager
 
 logger = get_logger(__name__)
 
@@ -144,10 +147,14 @@ class LibraryEventHandler:
                 return
 
             menu = QMenu(self.library_widget)
+            generate_preview_action = menu.addAction("Generate Preview")
+            menu.addSeparator()
             remove_action = menu.addAction("Remove from Library")
             action = menu.exec(self.library_widget.list_view.mapToGlobal(position))
 
-            if action == remove_action:
+            if action == generate_preview_action:
+                self._generate_preview(model_id)
+            elif action == remove_action:
                 self.library_widget._remove_model(model_id)
         except Exception as e:
             self.logger.warning(f"Failed to show context menu: {e}")
@@ -271,4 +278,64 @@ class LibraryEventHandler:
                         files.append(p)
             if files:
                 self.library_widget.model_manager.load_models(files)
+
+    def _generate_preview(self, model_id: int) -> None:
+        """Generate preview image for a model."""
+        try:
+            self.logger.info(f"Generating preview for model ID: {model_id}")
+            
+            # Get model information from database
+            db_manager = get_database_manager()
+            model = db_manager.get_model(model_id)
+            
+            if not model:
+                QMessageBox.warning(self.library_widget, "Error", "Model not found in database")
+                return
+            
+            model_path = model.get('file_path')
+            if not model_path or not Path(model_path).exists():
+                QMessageBox.warning(self.library_widget, "Error", "Model file not found on disk")
+                return
+            
+            # Get file hash
+            hasher = FastHasher()
+            hash_result = hasher.hash_file(model_path)
+            file_hash = hash_result.hash_value if hash_result.success else None
+            
+            if not file_hash:
+                QMessageBox.warning(self.library_widget, "Error", "Failed to compute file hash")
+                return
+            
+            # Generate thumbnail
+            thumbnail_service = ImportThumbnailService()
+            result = thumbnail_service.generate_thumbnail(
+                model_path=model_path,
+                file_hash=file_hash,
+                force_regenerate=True
+            )
+            
+            if result.success:
+                QMessageBox.information(
+                    self.library_widget,
+                    "Success",
+                    f"Preview generated successfully!\nSaved to: {result.thumbnail_path}"
+                )
+                self.logger.info(f"Preview generated for model {model_id}: {result.thumbnail_path}")
+                
+                # Refresh the library view to show updated thumbnail
+                if hasattr(self.library_widget, '_refresh_model_display'):
+                    self.library_widget._refresh_model_display(model_id)
+            else:
+                error_msg = result.error or "Unknown error"
+                QMessageBox.warning(
+                    self.library_widget,
+                    "Error",
+                    f"Failed to generate preview: {error_msg}"
+                )
+                self.logger.error(f"Preview generation failed for model {model_id}: {error_msg}")
+                
+        except Exception as e:
+            error_msg = f"Exception during preview generation: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self.library_widget, "Error", error_msg)
 
