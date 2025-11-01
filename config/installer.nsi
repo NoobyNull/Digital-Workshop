@@ -14,9 +14,7 @@ Section
 
   SetOutPath $INSTDIR
 
-  File "dist\run.exe"
-
-  Rename "$INSTDIR\run.exe" "$INSTDIR\Digital Workshop.exe"
+  File "dist\Digital Workshop.exe"
 
   CreateShortcut "$DESKTOP\Digital Workshop.lnk" "$INSTDIR\Digital Workshop.exe"
 
