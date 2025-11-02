@@ -15,7 +15,7 @@ Environment variables are the **recommended way** to provide API keys because:
 
 **Temporary (current session only):**
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 ```
 
@@ -25,7 +25,7 @@ python main.py
 3. Click "Environment Variables"
 4. Under "User variables", click "New"
 5. Variable name: `GOOGLE_API_KEY`
-6. Variable value: `AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c`
+6. Variable value: `YOUR_GOOGLE_API_KEY`
 7. Click OK and restart your terminal/IDE
 
 **Verify it's set:**
@@ -37,7 +37,7 @@ echo %GOOGLE_API_KEY%
 
 **Temporary (current session only):**
 ```powershell
-$env:GOOGLE_API_KEY="AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+$env:GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 python main.py
 ```
 
@@ -45,7 +45,7 @@ python main.py
 1. Open PowerShell as Administrator
 2. Run:
 ```powershell
-[Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c", "User")
+[Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_GOOGLE_API_KEY", "User")
 ```
 3. Restart PowerShell
 
@@ -58,7 +58,7 @@ $env:GOOGLE_API_KEY
 
 **Temporary (current session only):**
 ```bash
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 ```
 
@@ -66,13 +66,13 @@ python main.py
 
 For Bash (~/.bashrc or ~/.bash_profile):
 ```bash
-echo 'export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c' >> ~/.bashrc
+echo 'export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 For Zsh (~/.zshrc):
 ```bash
-echo 'export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c' >> ~/.zshrc
+echo 'export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -97,7 +97,7 @@ echo $GOOGLE_API_KEY
             "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "env": {
-                "GOOGLE_API_KEY": "AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+                "GOOGLE_API_KEY": "YOUR_GOOGLE_API_KEY"
             }
         }
     ]
@@ -107,7 +107,7 @@ echo $GOOGLE_API_KEY
 **Method 2: .env File**
 1. Create `.env` file in project root:
 ```
-GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 2. Install python-dotenv:
@@ -126,14 +126,14 @@ load_dotenv()
 1. Go to Run → Edit Configurations
 2. Select your Python configuration
 3. Click "Environment variables" field
-4. Add: `GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c`
+4. Add: `GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY`
 5. Click OK
 
 ### Jupyter Notebook
 
 ```python
 import os
-os.environ['GOOGLE_API_KEY'] = 'AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c'
+os.environ['GOOGLE_API_KEY'] = 'YOUR_GOOGLE_API_KEY'
 
 # Now run your code
 ```
@@ -144,7 +144,7 @@ You can set multiple provider keys:
 
 **Windows Command Prompt:**
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 set OPENAI_API_KEY=sk-...
 set ANTHROPIC_API_KEY=sk-ant-...
 python main.py
@@ -152,7 +152,7 @@ python main.py
 
 **Linux/Mac:**
 ```bash
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 export OPENAI_API_KEY=sk-...
 export ANTHROPIC_API_KEY=sk-ant-...
 python main.py
@@ -172,7 +172,7 @@ python main.py
 Create `run_app.bat`:
 ```batch
 @echo off
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 pause
 ```
@@ -184,7 +184,7 @@ Then double-click `run_app.bat` to run the app.
 Create `run_app.sh`:
 ```bash
 #!/bin/bash
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 ```
 
@@ -198,12 +198,12 @@ chmod +x run_app.sh
 
 In your Dockerfile:
 ```dockerfile
-ENV GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+ENV GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 Or pass at runtime:
 ```bash
-docker run -e GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c my-app
+docker run -e GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY my-app
 ```
 
 ## Verification

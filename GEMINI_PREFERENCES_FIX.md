@@ -82,19 +82,19 @@ Metadata Editor can access ai_service
 
 **Windows Command Prompt:**
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 ```
 
 **Windows PowerShell:**
 ```powershell
-$env:GOOGLE_API_KEY="AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+$env:GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 python main.py
 ```
 
 **Linux/Mac:**
 ```bash
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 python main.py
 ```
 
@@ -140,7 +140,7 @@ python main.py
 
 ### Run the Test Suite
 ```bash
-python tests/test_gemini_integration.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_gemini_integration.py YOUR_GOOGLE_API_KEY
 ```
 
 ### Expected Output
@@ -157,7 +157,7 @@ Results: 4/4 tests passed
 
 ### Step 1: Set Environment Variable
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 ### Step 2: Run Application

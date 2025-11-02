@@ -91,11 +91,11 @@ All 4 tests PASS:
 
 ### Run the Test Suite
 ```bash
-python tests/test_preferences_gemini.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_preferences_gemini.py YOUR_GOOGLE_API_KEY
 ```
 
 ### Manual Test in Preferences
-1. Set environment variable: `set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c`
+1. Set environment variable: `set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY`
 2. Run application: `python main.py`
 3. Open Preferences (Ctrl+,)
 4. Go to AI tab

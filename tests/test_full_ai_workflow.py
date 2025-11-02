@@ -48,11 +48,16 @@ def test_full_workflow():
         # Step 2: Simulate preferences save (user enters API key and saves)
         logger.info("\n[STEP 2] Simulating preferences save...")
         settings = QSettings()
-        test_api_key = "AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+        # Use environment variable for API key (set GOOGLE_API_KEY before running)
+        test_api_key = os.getenv("GOOGLE_API_KEY", "")
+        if not test_api_key:
+            logger.warning("  GOOGLE_API_KEY environment variable not set, skipping API key test")
+            logger.info("  To run this test, set: export GOOGLE_API_KEY=your_api_key")
+            return True
         settings.setValue("ai/provider_id", "gemini")
         settings.setValue("ai/api_key", test_api_key)
         settings.sync()
-        logger.info(f"  Saved API key to QSettings")
+        logger.info(f"  Saved API key to QSettings (from GOOGLE_API_KEY env var)")
         
         # Step 3: Reload AI service (simulating signal handler)
         logger.info("\n[STEP 3] Reloading AI service (after preferences save)...")

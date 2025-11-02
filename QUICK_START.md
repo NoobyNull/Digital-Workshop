@@ -7,17 +7,17 @@ Choose your method:
 
 **Windows Command Prompt:**
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 **Windows PowerShell:**
 ```powershell
-$env:GOOGLE_API_KEY="AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+$env:GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 ```
 
 **Linux/Mac:**
 ```bash
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 ### Step 2: Run Application
@@ -37,7 +37,7 @@ python main.py
 ## ✅ Verify It Works
 
 ```bash
-python tests/test_gemini_key.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_gemini_key.py YOUR_GOOGLE_API_KEY
 ```
 
 Expected: `[SUCCESS] ✓ Gemini API key is working!`
@@ -58,7 +58,7 @@ Expected: `[SUCCESS] ✓ Gemini API key is working!`
 ## 🔑 Your API Key
 
 ```
-AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+YOUR_GOOGLE_API_KEY
 ```
 
 ⚠️ **IMPORTANT:** Never commit this key to version control!

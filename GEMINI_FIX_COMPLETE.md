@@ -49,13 +49,13 @@ Your Gemini API key is now fully integrated and working with the Digital Worksho
 **Step 1: Set Environment Variable**
 ```bash
 # Windows Command Prompt
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 
 # Windows PowerShell
-$env:GOOGLE_API_KEY="AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+$env:GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 
 # Linux/Mac
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 **Step 2: Run Application**
@@ -146,7 +146,7 @@ Ready for use!
 
 ### Verify API Key Works
 ```bash
-python tests/test_gemini_key.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_gemini_key.py YOUR_GOOGLE_API_KEY
 ```
 
 ### Expected Output

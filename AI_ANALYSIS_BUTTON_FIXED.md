@@ -64,7 +64,7 @@
 
 ### Step 1: Set Environment Variable
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 ### Step 2: Run Application
@@ -107,7 +107,7 @@ python main.py
 
 ### Run the Test Suite
 ```bash
-python tests/test_ai_analysis_end_to_end.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_ai_analysis_end_to_end.py YOUR_GOOGLE_API_KEY
 ```
 
 ### Expected Output

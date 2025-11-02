@@ -37,12 +37,18 @@ def test_manual_save():
     logger.info("✓ Cleared existing AI settings")
     
     # Simulate user entering API key
-    test_api_key = "AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+    # Use environment variable for API key (set GOOGLE_API_KEY before running)
+    test_api_key = os.getenv("GOOGLE_API_KEY", "")
+    if not test_api_key:
+        logger.warning("GOOGLE_API_KEY environment variable not set, skipping test")
+        logger.info("To run this test, set: export GOOGLE_API_KEY=your_api_key")
+        return True
+
     test_provider = "gemini"
-    
+
     logger.info(f"\nSimulating user input:")
     logger.info(f"  Provider: {test_provider}")
-    logger.info(f"  API Key: {test_api_key[:20]}...")
+    logger.info(f"  API Key: {test_api_key[:20]}... (from GOOGLE_API_KEY env var)")
     
     # Simulate save
     logger.info(f"\nSaving to QSettings...")

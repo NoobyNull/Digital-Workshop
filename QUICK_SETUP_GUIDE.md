@@ -5,7 +5,7 @@
 ### Step 1: Set Environment Variable
 Open Command Prompt and run:
 ```bash
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 ```
 
 ### Step 2: Start Application
@@ -27,7 +27,7 @@ python main.py
 
 ```bash
 # Set the environment variable
-set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 
 # Navigate to project
 cd "d:\Digital Workshop"
@@ -40,7 +40,7 @@ python main.py
 
 ```powershell
 # Set the environment variable
-$env:GOOGLE_API_KEY="AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c"
+$env:GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 
 # Navigate to project
 cd "d:\Digital Workshop"
@@ -53,7 +53,7 @@ python main.py
 
 ```bash
 # Set the environment variable
-export GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+export GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
 
 # Navigate to project
 cd ~/path/to/Digital\ Workshop
@@ -75,12 +75,12 @@ echo %GOOGLE_API_KEY%
 echo $GOOGLE_API_KEY
 ```
 
-Should show: `AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c`
+Should show: `YOUR_GOOGLE_API_KEY`
 
 ### Test 2: Run Integration Tests
 ```bash
 cd "d:\Digital Workshop"
-python tests/test_gemini_integration.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_gemini_integration.py YOUR_GOOGLE_API_KEY
 ```
 
 Should show: `✓ ALL TESTS PASSED - Gemini integration is working!`

@@ -49,7 +49,7 @@ Your Gemini API key has been verified and is working correctly!
 ### Quick Start
 1. **Set environment variable:**
    ```bash
-   set GOOGLE_API_KEY=AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+   set GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
    ```
 
 2. **Run the application:**
@@ -84,7 +84,7 @@ Your Gemini API key has been verified and is working correctly!
 
 ### Test Command
 ```bash
-python tests/test_gemini_key.py AIzaSyBPSlisUcMHwaiLTcCWLlSQlmjUFhTFR2c
+python tests/test_gemini_key.py YOUR_GOOGLE_API_KEY
 ```
 
 ## Architecture
