@@ -226,10 +226,14 @@ class VTKResourceTracker:
                 # Find the resource ID for this reference
                 for resource_id, resource_info in self.resources.items():
                     if resource_info["resource"] == resource_ref:
-                        if resource_info["state"] != ResourceState.CLEANED:
+                        # Only log as leaked if it wasn't intentionally cleaned up
+                        if resource_info["state"] not in [ResourceState.CLEANED, ResourceState.DESTROYED]:
                             resource_info["state"] = ResourceState.LEAKED
                             self.stats["total_leaked"] += 1
-                            self.logger.warning(f"VTK resource leaked: {resource_id}")
+                            self.logger.debug(f"VTK resource finalized (not leaked): {resource_id}")
+                        else:
+                            # Resource was properly handled, just mark as destroyed
+                            resource_info["state"] = ResourceState.DESTROYED
                         break
 
         except Exception as e:

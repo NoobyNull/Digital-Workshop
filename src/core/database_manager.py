@@ -12,8 +12,6 @@ import threading
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QStandardPaths
-
 from .logging_config import get_logger
 
 # Import from refactored database module
@@ -38,15 +36,17 @@ def _get_default_db_path() -> str:
         Absolute path to the database file
     """
     try:
-        app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
-        app_data.mkdir(parents=True, exist_ok=True)
-        return str(app_data / "3dmm.db")
+        from .path_manager import get_data_directory
+        data_dir = get_data_directory()
+        return str(data_dir / "3dmm.db")
     except Exception as e:
-        logger.warning(f"Failed to get AppData path: {e}, falling back to user data path")
+        logger.warning(f"Failed to get data directory: {e}, falling back to user data path")
         # Fallback to user-specific directory
         import os
         app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
-        db_dir = app_data / 'DigitalWorkshop' / 'data'
+        from .version_manager import get_app_name
+        app_name = get_app_name()
+        db_dir = app_data / app_name / 'data'
         db_dir.mkdir(parents=True, exist_ok=True)
         return str(db_dir / "3dmm.db")
 

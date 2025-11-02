@@ -8,16 +8,11 @@ and rotating file handlers to ensure efficient log management without memory lea
 import json
 import logging
 import logging.handlers
-import os
 import sys
-import time
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
-
-# For user-specific directories
-import platform
+from typing import Any, Dict
 
 
 class SimpleFormatter(logging.Formatter):
@@ -236,13 +231,14 @@ def setup_logging(
     Returns:
         Configured logger instance
     """
-    # Use user-specific log directory if default is used
+    # Use installation-type aware log directory if default is used
     if log_dir == "logs":
-        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
-        log_dir = str(app_data / 'DigitalWorkshop' / 'logs')
+        from .path_manager import get_log_directory
+        log_dir = str(get_log_directory())
 
     # Create the application logger
-    logger = logging.getLogger("Digital Workshop")
+    from .version_manager import get_logger_name
+    logger = logging.getLogger(get_logger_name())
     logger.setLevel(getattr(logging, log_level.upper()))
 
     # Clear any existing handlers
@@ -279,7 +275,9 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logging.getLogger(f"Digital Workshop.{name}")
+    from .version_manager import get_logger_name
+    logger_name = get_logger_name()
+    return logging.getLogger(f"{logger_name}.{name}")
 
 
 def get_activity_logger(name: str) -> logging.Logger:
@@ -295,7 +293,9 @@ def get_activity_logger(name: str) -> logging.Logger:
     Returns:
         Activity logger instance
     """
-    logger = logging.getLogger(f"Digital Workshop.Activity.{name}")
+    from .version_manager import get_logger_name
+    logger_name = get_logger_name()
+    logger = logging.getLogger(f"{logger_name}.Activity.{name}")
 
     # Clear any existing handlers to avoid duplicates
     logger.handlers.clear()

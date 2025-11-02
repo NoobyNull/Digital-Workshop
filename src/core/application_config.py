@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Application Configuration Module
 
@@ -14,13 +13,13 @@ from typing import Optional
 class ApplicationConfig:
     """Centralized application configuration and metadata."""
 
-    # Application Identity
+    # Application Identity - these will be populated dynamically
     name: str = "Digital Workshop"
     display_name: str = "Digital Workshop"
     version: str = "1.0.0"
     build_number: Optional[str] = None
 
-    # Organization Information
+    # Organization Information - these will be populated dynamically
     organization_name: str = "Digital Workshop Development Team"
     organization_domain: str = "digitalworkshop.local"
 
@@ -103,12 +102,13 @@ class ApplicationConfig:
         """
         Calculate effective memory limit using smart algorithm.
 
-        Algorithm: max(minimum, min(50% available, total - 20%))
+        Algorithm: For systems with >32GB RAM, use adaptive scaling.
+        For smaller systems, use conservative approach.
 
         This ensures:
         - App always has minimum needed to run
-        - Never uses more than 50% of available (leaves room for OS/other apps)
-        - Always reserves 20% of total for OS
+        - High-memory systems can utilize more resources
+        - Low-memory systems remain conservative
         - Scales intelligently with system resources
 
         Args:
@@ -130,25 +130,58 @@ class ApplicationConfig:
         if total_system_memory_mb is None:
             total_system_memory_mb = available_memory_mb
 
-        # Calculate safe upper bounds
-        fifty_percent_mb = available_memory_mb // 2
-        hard_max_mb = int(
-            total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
-        )
+        # Convert to GB for easier calculation
+        total_memory_gb = total_system_memory_mb / 1024.0
 
-        # Smart calculation: ensure minimum, but don't exceed safe limits
-        # max(minimum, min(50% available, total - 20% reserve))
-        calculated_limit = max(
-            self.min_memory_specification_mb,
-            min(fifty_percent_mb, hard_max_mb)
-        )
+        # Adaptive memory calculation based on system size
+        if total_memory_gb >= 64:
+            # High-memory systems: Use up to 60% of available memory, max 16GB
+            calculated_limit = min(
+                int(available_memory_mb * 0.6),
+                16384  # 16GB max for app
+            )
+        elif total_memory_gb >= 32:
+            # Medium-high memory systems: Use up to 50% of available memory, max 8GB
+            calculated_limit = min(
+                int(available_memory_mb * 0.5),
+                8192   # 8GB max for app
+            )
+        elif total_memory_gb >= 16:
+            # Medium memory systems: Use up to 40% of available memory, max 4GB
+            calculated_limit = min(
+                int(available_memory_mb * 0.4),
+                4096   # 4GB max for app
+            )
+        else:
+            # Low memory systems: Use conservative approach
+            fifty_percent_mb = available_memory_mb // 2
+            hard_max_mb = int(
+                total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
+            )
+            calculated_limit = max(
+                self.min_memory_specification_mb,
+                min(fifty_percent_mb, hard_max_mb)
+            )
 
         return calculated_limit
 
     @classmethod
     def get_default(cls) -> "ApplicationConfig":
         """Get the default application configuration."""
-        return cls()
+        config = cls()
+        
+        # Populate with dynamic version information
+        try:
+            from .version_manager import get_display_version, get_organization_name, get_app_name
+            config.version = get_display_version()
+            config.organization_name = get_organization_name()
+            config.name = get_app_name()
+            config.display_name = get_app_name()
+        except ImportError:
+            # Fallback to defaults if version manager not available
+            pass
+            
+        return config
 
     def get_full_version_string(self) -> str:
         """Get the full version string including build number if available."""

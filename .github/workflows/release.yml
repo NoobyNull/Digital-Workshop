@@ -113,7 +113,7 @@ jobs:
           git checkout -b release/v$newVersion
           git add .
           git commit -m "Bump version to $newVersion"
-          git push origin release/v$newVersion
+          git push origin release/v$newVersion --force
 
       - name: Build application
         run: |

@@ -72,7 +72,7 @@ class PreferencesDialog(QDialog):
         self.theming_tab = ThemingTab(on_live_apply=self._on_theme_live_applied)
         self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
-        self.files_tab = FilesTab()
+        self.ai_tab = AITab()
         self.advanced_tab = AdvancedTab()
 
         # Add tabs in new consolidated structure
@@ -80,6 +80,7 @@ class PreferencesDialog(QDialog):
         self.tabs.addTab(self.theming_tab, "Appearance")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
         self.tabs.addTab(self.thumbnail_settings_tab, "Content")
+        self.tabs.addTab(self.ai_tab, "AI")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
         # Dialog action buttons
@@ -197,6 +198,11 @@ class PreferencesDialog(QDialog):
             if hasattr(self, 'thumbnail_settings_tab'):
                 self.thumbnail_settings_tab.save_settings()
                 logger.info("✓ Thumbnail settings saved")
+
+            # Save AI settings
+            if hasattr(self, 'ai_tab'):
+                self.ai_tab.save_settings()
+                logger.info("✓ AI settings saved")
 
             # Emit viewer settings changed signal
             logger.info("Emitting viewer_settings_changed signal...")
@@ -1988,4 +1994,345 @@ class AdvancedTab(QWidget):
     def save_settings(self) -> None:
         """Save advanced settings (no-op for this tab)."""
         pass
+
+
+class AITab(QWidget):
+    """AI Description Service configuration tab."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = None
+        try:
+            from src.core.logging_config import get_logger
+            self.logger = get_logger(__name__)
+        except Exception:
+            pass
+        self._setup_ui()
+        self._load_settings()
+
+    def _setup_ui(self):
+        """Setup the AI configuration UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        # Header
+        header = QLabel("AI Description Service")
+        header.setStyleSheet("font-weight: bold; font-size: 13pt;")
+        layout.addWidget(header)
+
+        desc = QLabel(
+            "Configure AI providers for automatic image description generation. "
+            "Select your preferred provider and enter API keys to enable AI-powered descriptions."
+        )
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Provider Selection Group
+        provider_group = QFrame()
+        provider_layout = QVBoxLayout(provider_group)
+
+        provider_label = QLabel("<b>AI Provider Selection</b>")
+        provider_label.setStyleSheet("font-size: 11pt;")
+        provider_layout.addWidget(provider_label)
+
+        # Provider combo box
+        provider_form = QFormLayout()
+        self.provider_combo = QComboBox()
+        self._populate_providers()
+        provider_form.addRow("Preferred Provider:", self.provider_combo)
+        provider_layout.addLayout(provider_form)
+
+        layout.addWidget(provider_group)
+
+        # API Configuration Group
+        api_group = QFrame()
+        api_layout = QVBoxLayout(api_group)
+
+        api_label = QLabel("<b>API Configuration</b>")
+        api_label.setStyleSheet("font-size: 11pt;")
+        api_layout.addWidget(api_label)
+
+        # API Key input
+        api_key_form = QFormLayout()
+        self.api_key_edit = QLineEdit()
+        self.api_key_edit.setEchoMode(QLineEdit.Password)
+        self.api_key_edit.setPlaceholderText("Enter API key for selected provider")
+        api_key_form.addRow("API Key:", self.api_key_edit)
+        api_layout.addLayout(api_key_form)
+
+        # Model selection
+        model_form = QFormLayout()
+        self.model_combo = QComboBox()
+        self.model_combo.setEditable(True)
+        model_form.addRow("Model:", self.model_combo)
+        api_layout.addLayout(model_form)
+
+        layout.addWidget(api_group)
+
+        # Custom Prompt Group
+        prompt_group = QFrame()
+        prompt_layout = QVBoxLayout(prompt_group)
+
+        prompt_label = QLabel("<b>Custom Prompt</b>")
+        prompt_label.setStyleSheet("font-size: 11pt;")
+        prompt_layout.addWidget(prompt_label)
+
+        prompt_desc = QLabel(
+            "Customize the prompt used for image description. Use {image_path} as placeholder for image path."
+        )
+        prompt_desc.setWordWrap(True)
+        prompt_layout.addWidget(prompt_desc)
+
+        self.prompt_edit = QLineEdit()
+        self.prompt_edit.setPlaceholderText("Describe this image in detail...")
+        prompt_layout.addWidget(self.prompt_edit)
+
+        layout.addWidget(prompt_group)
+
+        # Batch Processing Group
+        batch_group = QFrame()
+        batch_layout = QVBoxLayout(batch_group)
+
+        batch_label = QLabel("<b>Batch Processing</b>")
+        batch_label.setStyleSheet("font-size: 11pt;")
+        batch_layout.addWidget(batch_label)
+
+        # Batch size
+        batch_form = QFormLayout()
+        self.batch_size_spin = QSpinBox()
+        self.batch_size_spin.setRange(1, 50)
+        self.batch_size_spin.setValue(5)
+        self.batch_size_spin.setSuffix(" images")
+        batch_form.addRow("Batch Size:", self.batch_size_spin)
+        batch_layout.addLayout(batch_form)
+
+        # Enable batch processing
+        self.enable_batch_check = QCheckBox("Enable batch processing for multiple images")
+        batch_layout.addWidget(self.enable_batch_check)
+
+        layout.addWidget(batch_group)
+
+        # Test Connection Group
+        test_group = QFrame()
+        test_layout = QVBoxLayout(test_group)
+
+        test_label = QLabel("<b>Connection Test</b>")
+        test_label.setStyleSheet("font-size: 11pt;")
+        test_layout.addWidget(test_label)
+
+        test_desc = QLabel("Test your AI provider configuration to ensure it's working correctly.")
+        test_desc.setWordWrap(True)
+        test_layout.addWidget(test_desc)
+
+        test_button_row = QHBoxLayout()
+        test_button_row.addStretch(1)
+        self.test_button = QPushButton("Test Connection")
+        self.test_button.clicked.connect(self._test_connection)
+        test_button_row.addWidget(self.test_button)
+        test_layout.addLayout(test_button_row)
+
+        self.test_result_label = QLabel()
+        self.test_result_label.setWordWrap(True)
+        self.test_result_label.setStyleSheet("padding: 8px; border-radius: 4px;")
+        test_layout.addWidget(self.test_result_label)
+
+        layout.addWidget(test_group)
+
+        layout.addStretch()
+
+        # Connect signals
+        self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
+        # Also connect to activated signal for better compatibility
+        self.provider_combo.activated.connect(self._on_provider_changed)
+        self.api_key_edit.textChanged.connect(self._on_settings_changed)
+        self.model_combo.currentTextChanged.connect(self._on_settings_changed)
+        self.prompt_edit.textChanged.connect(self._on_settings_changed)
+        self.batch_size_spin.valueChanged.connect(self._on_settings_changed)
+        self.enable_batch_check.stateChanged.connect(self._on_settings_changed)
+
+    def _populate_providers(self):
+        """Populate provider combo box."""
+        try:
+            from src.gui.services.ai_description_service import AIDescriptionService
+            
+            providers = AIDescriptionService.get_provider_display_names()
+            for provider_id, provider_name in providers.items():
+                self.provider_combo.addItem(provider_name, provider_id)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to populate providers: {e}")
+
+    def _populate_models(self, provider_id: str):
+        """Populate model combo box for selected provider."""
+        try:
+            from src.gui.services.ai_description_service import AIDescriptionService
+            
+            # Clear existing items
+            self.model_combo.clear()
+            
+            # Get available models for the provider
+            models = AIDescriptionService.get_available_models(provider_id)
+            
+            if models:
+                for model_id, model_name in models.items():
+                    self.model_combo.addItem(model_name, model_id)
+            else:
+                # If no models found, add a default entry
+                self.model_combo.addItem("Default Model", "default")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to populate models for {provider_id}: {e}")
+            # Add fallback model
+            self.model_combo.clear()
+            self.model_combo.addItem("Default Model", "default")
+
+    def _load_settings(self):
+        """Load current AI settings from QSettings (excluding API keys)."""
+        try:
+            from PySide6.QtCore import QSettings
+
+            settings = QSettings()
+
+            # Load provider selection
+            provider_id = settings.value("ai/provider_id", "openai", type=str)
+            provider_index = self.provider_combo.findData(provider_id)
+            if provider_index >= 0:
+                self.provider_combo.setCurrentIndex(provider_index)
+
+            # NOTE: API keys are NOT loaded from QSettings for security reasons
+            # API keys should be provided via environment variables or secure storage
+            self.api_key_edit.setText("")
+
+            # Load model
+            model_id = settings.value("ai/model_id", "", type=str)
+
+            # Always populate models for the current provider first
+            if provider_id:
+                self._populate_models(provider_id)
+
+            if model_id:
+                model_index = self.model_combo.findData(model_id)
+                if model_index >= 0:
+                    self.model_combo.setCurrentIndex(model_index)
+                else:
+                    self.model_combo.setCurrentText(model_id)
+
+            # Load custom prompt
+            prompt = settings.value("ai/custom_prompt", "", type=str)
+            self.prompt_edit.setText(prompt)
+
+            # Load batch settings
+            batch_size = settings.value("ai/batch_size", 5, type=int)
+            self.batch_size_spin.setValue(batch_size)
+
+            enable_batch = settings.value("ai/enable_batch", False, type=bool)
+            self.enable_batch_check.setChecked(enable_batch)
+
+            if self.logger:
+                self.logger.info("AI settings loaded from QSettings (API keys excluded for security)")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to load AI settings: {e}")
+
+    def save_settings(self):
+        """Save AI settings to QSettings (excluding API keys for security)."""
+        try:
+            from PySide6.QtCore import QSettings
+
+            settings = QSettings()
+
+            # Save provider selection
+            provider_id = self.provider_combo.currentData()
+            if provider_id:
+                settings.setValue("ai/provider_id", provider_id)
+
+            # NOTE: API keys are NOT saved to QSettings for security reasons
+            # API keys should be provided via environment variables or secure storage
+            # The API key field is cleared on load to prevent accidental exposure
+
+            # Save model selection
+            model_id = self.model_combo.currentData() or self.model_combo.currentText()
+            if model_id:
+                settings.setValue("ai/model_id", model_id)
+
+            # Save custom prompt
+            prompt = self.prompt_edit.text().strip()
+            settings.setValue("ai/custom_prompt", prompt)
+
+            # Save batch settings
+            settings.setValue("ai/batch_size", self.batch_size_spin.value())
+            settings.setValue("ai/enable_batch", self.enable_batch_check.isChecked())
+            
+            settings.sync()
+            
+            if self.logger:
+                self.logger.info("AI settings saved to QSettings")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to save AI settings: {e}")
+
+    def _on_provider_changed(self, index: int):
+        """Handle provider selection change."""
+        provider_id = self.provider_combo.currentData()
+        if provider_id:
+            self._populate_models(provider_id)
+        self._on_settings_changed()
+
+    def _on_settings_changed(self):
+        """Handle settings change."""
+        # Update test result to indicate unsaved changes
+        self.test_result_label.setText("Settings changed - save to apply")
+        self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(255, 165, 0, 0.1); border-radius: 4px;")
+
+    def _test_connection(self):
+        """Test AI provider connection."""
+        try:
+            from src.gui.services.ai_description_service import AIDescriptionService
+            
+            provider_id = self.provider_combo.currentData()
+            api_key = self.api_key_edit.text().strip()
+            model_id = self.model_combo.currentData() or self.model_combo.currentText()
+            
+            if not provider_id:
+                self._show_test_result("Please select a provider", "error")
+                return
+            
+            if not api_key:
+                self._show_test_result("Please enter an API key", "error")
+                return
+            
+            if not model_id:
+                self._show_test_result("Please select or enter a model", "error")
+                return
+            
+            # Disable test button during test
+            self.test_button.setEnabled(False)
+            self.test_button.setText("Testing...")
+
+            # Test provider connection (static method)
+            success, message = AIDescriptionService.test_provider_connection(provider_id, api_key, model_id)
+            
+            if success:
+                self._show_test_result(f"✓ Connection successful! {message}", "success")
+            else:
+                self._show_test_result(f"✗ Connection failed: {message}", "error")
+                
+        except Exception as e:
+            self._show_test_result(f"✗ Test failed: {str(e)}", "error")
+        finally:
+            self.test_button.setEnabled(True)
+            self.test_button.setText("Test Connection")
+
+    def _show_test_result(self, message: str, status: str):
+        """Show test result message."""
+        self.test_result_label.setText(message)
+        
+        if status == "success":
+            self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(76, 175, 80, 0.1); border-radius: 4px; color: #4CAF50;")
+        elif status == "error":
+            self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(244, 67, 54, 0.1); border-radius: 4px; color: #f44336;")
+        else:
+            self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(158, 158, 158, 0.1); border-radius: 4px;")
 

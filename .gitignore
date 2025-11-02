@@ -387,6 +387,9 @@ downloads/
 backups/
 archive/
 old/
+# Kilo Code and Specify directories (development tools)
+.specify/
+.kilocode/
 
 # =============================================================================
 # CI/CD AND DEPLOYMENT
@@ -418,3 +421,22 @@ security_scan_results/
 # =============================================================================
 # END OF .gitignore
 # =============================================================================
+
+# Logs
+logs
+dev-debug.log
+# Dependency directories
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 

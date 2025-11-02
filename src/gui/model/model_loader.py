@@ -149,7 +149,13 @@ class ModelLoader:
         except Exception as e:
             self.logger.warning(f"Failed to reset save view button: {e}")
 
-        # Attempt to apply last-used material species
+        # Apply default material from preferences for imported models
+        try:
+            self._apply_default_material_from_preferences()
+        except Exception as e:
+            self.logger.warning(f"Failed to apply default material from preferences: {e}")
+
+        # Attempt to apply last-used material species (for library models)
         try:
             settings = QSettings()
             last_species = settings.value('material/last_species', '', type=str)
@@ -279,6 +285,29 @@ class ModelLoader:
 
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
+
+    def _apply_default_material_from_preferences(self) -> None:
+        """Apply default material from preferences for imported models."""
+        try:
+            # Get default material from thumbnail settings (which serves as default material)
+            settings = QSettings()
+            default_material = settings.value("thumbnail/material", None, type=str)
+            
+            if default_material:
+                self.logger.info(f"Applying default material from preferences: {default_material}")
+                if hasattr(self.main_window, "material_manager") and self.main_window.material_manager:
+                    species_list = self.main_window.material_manager.get_species_list()
+                    if default_material in species_list:
+                        self._apply_material_species(default_material)
+                        self.logger.info(f"✓ Successfully applied default material: {default_material}")
+                    else:
+                        self.logger.warning(f"Default material '{default_material}' not found in available materials")
+                else:
+                    self.logger.warning("Material manager not available for applying default material")
+            else:
+                self.logger.debug("No default material configured in preferences")
+        except Exception as e:
+            self.logger.error(f"Failed to apply default material from preferences: {e}")
 
     def _apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current viewer actor."""

@@ -128,9 +128,15 @@ class MaterialManager:
                         has_uv_coords = point_data.GetTCoords() is not None
                         self.logger.debug(f"[STL_TEXTURE_DEBUG] Actor has UV coordinates: {has_uv_coords}")
 
-            # For STL files, we'll apply texture even without UV coordinates
+            # Generate UV coordinates for STL models if missing (REQUIRED for texture mapping)
             if not has_uv_coords:
-                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor missing UV coordinates - applying texture without UV mapping")
+                self.logger.info(f"[STL_TEXTURE_DEBUG] Actor missing UV coordinates - generating UV mapping for STL")
+                success = self._generate_uv_coordinates(actor)
+                if success:
+                    self.logger.info(f"[STL_TEXTURE_DEBUG] Successfully generated UV coordinates for STL texture mapping")
+                    has_uv_coords = True
+                else:
+                    self.logger.warning(f"[STL_TEXTURE_DEBUG] Failed to generate UV coordinates - texture may not display properly")
 
             # Get material from material provider to check for texture
             material = self.material_provider.get_material_by_name(species_name)
@@ -544,10 +550,14 @@ class MaterialManager:
             prop.SetDiffuseColor(1.0, 1.0, 1.0)   # White diffuse - KEY FIX!
             prop.SetSpecularColor(specular, specular, specular)  # Use specular from material
 
-            # Set shininess from material
+            # Set shininess from material (with VTK compatibility check)
             shininess = float(species.get("shininess", 5.0))
             shininess = max(1.0, min(100.0, shininess))
-            prop.SetShininess(shininess)
+            if hasattr(prop, 'SetShininess'):
+                prop.SetShininess(shininess)
+            else:
+                # Fallback for VTK versions without SetShininess
+                prop.SetSpecularPower(shininess)
 
             # Enable lighting but ensure texture is visible
             prop.LightingOn()
@@ -643,5 +653,94 @@ class MaterialManager:
             # If a global/current renderer is accessible through the mapper input's producer, it could be used,
             # but generally the viewer will re-render on the UI thread.
             pass
+        except Exception:
+            pass
+
+    def _generate_uv_coordinates(self, actor: vtk.vtkActor) -> bool:
+        """
+        Generate UV coordinates for STL models to enable texture mapping.
+        
+        Uses spherical UV mapping which works well for most 3D models.
+        
+        Args:
+            actor: VTK actor to generate UV coordinates for
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.logger.info("[STL_TEXTURE_DEBUG] Generating UV coordinates using spherical mapping")
+            
+            mapper = actor.GetMapper()
+            if not mapper:
+                self.logger.warning("[STL_TEXTURE_DEBUG] No mapper found on actor")
+                return False
+                
+            input_data = mapper.GetInput()
+            if not input_data:
+                self.logger.warning("[STL_TEXTURE_DEBUG] No input data found on mapper")
+                return False
+            
+            # Get points from the polydata
+            points = input_data.GetPoints()
+            if not points:
+                self.logger.warning("[STL_TEXTURE_DEBUG] No points found in polydata")
+                return False
+            
+            num_points = points.GetNumberOfPoints()
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Generating UVs for {num_points} points")
+            
+            # Create UV coordinates array
+            uv_coords = vtk.vtkFloatArray()
+            uv_coords.SetNumberOfComponents(2)  # U, V coordinates
+            uv_coords.SetNumberOfTuples(num_points)
+            uv_coords.SetName("TextureCoordinates")
+            
+            # Get bounds to normalize coordinates
+            bounds = input_data.GetBounds()
+            center_x = (bounds[0] + bounds[1]) / 2.0
+            center_y = (bounds[2] + bounds[3]) / 2.0
+            center_z = (bounds[4] + bounds[5]) / 2.0
+            
+            # Generate spherical UV coordinates
+            for i in range(num_points):
+                point = points.GetPoint(i)
+                x, y, z = point[0] - center_x, point[1] - center_y, point[2] - center_z
+                
+                # Spherical mapping
+                length = (x*x + y*y + z*z) ** 0.5
+                if length > 0:
+                    # Normalize to unit sphere
+                    x_norm = x / length
+                    y_norm = y / length
+                    z_norm = z / length
+                    
+                    # Convert to spherical coordinates
+                    u = (np.arctan2(z_norm, x_norm) / (2 * np.pi)) + 0.5
+                    v = np.arccos(y_norm) / np.pi
+                    
+                    # Clamp to [0, 1] range
+                    u = max(0.0, min(1.0, u))
+                    v = max(0.0, min(1.0, v))
+                else:
+                    # Fallback for points at center
+                    u = 0.5
+                    v = 0.5
+                
+                uv_coords.SetTuple2(i, u, v)
+            
+            # Add UV coordinates to point data
+            point_data = input_data.GetPointData()
+            point_data.SetTCoords(uv_coords)
+            
+            # Update the mapper input
+            mapper.SetInputData(input_data)
+            
+            self.logger.info("[STL_TEXTURE_DEBUG] Successfully generated UV coordinates")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"[STL_TEXTURE_DEBUG] Failed to generate UV coordinates: {e}", exc_info=True)
+            return False
         except Exception:
             pass

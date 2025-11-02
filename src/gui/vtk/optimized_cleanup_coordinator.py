@@ -22,9 +22,10 @@ import vtk
 
 from src.core.logging_config import get_logger, log_function_call
 from .error_handler import get_vtk_error_handler, VTKErrorCode
+from .resource_tracker import get_vtk_resource_tracker
 from .enhanced_context_manager import (
-    get_enhanced_vtk_context_manager, 
-    ContextState, 
+    get_enhanced_vtk_context_manager,
+    ContextState,
     ShutdownScenario,
     detect_context_loss_early,
     coordinate_shutdown_cleanup
@@ -684,12 +685,5 @@ def coordinate_optimized_shutdown_cleanup(render_window: vtk.vtkRenderWindow,
     return get_optimized_vtk_cleanup_coordinator().coordinate_optimized_cleanup(render_window, scenario)
 
 
-# Import the missing function
-def get_vtk_resource_tracker():
-    """Get the global VTK resource tracker."""
-    try:
-        from .resource_tracker import get_vtk_resource_tracker as _get_tracker
-        return _get_tracker()
-    except ImportError:
-        logger.warning("VTK resource tracker not available")
-        return None
+# Note: get_vtk_resource_tracker is imported from .resource_tracker
+# This duplicate function has been removed to prevent naming conflicts

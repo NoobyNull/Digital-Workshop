@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Digital Workshop - Settings Migration Module
 
@@ -6,13 +5,11 @@ This module handles settings and database migration between different versions
 of Digital Workshop, ensuring smooth upgrades without data loss.
 """
 
-import os
 import json
 import sqlite3
 import shutil
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -27,12 +24,13 @@ class SettingsMigrator:
         Args:
             app_name: The name of the application
         """
+        from .path_manager import get_data_directory
+        
         self.app_name = app_name
         self.current_version = "1.0.0"
 
-        # Get application data directories
-        from PySide6.QtCore import QStandardPaths
-        self.app_data_path = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+        # Get application data directories using new path manager
+        self.app_data_path = get_data_directory()
         self.old_app_data_path = self.app_data_path.parent / f"{app_name}_old"
 
         # Database paths

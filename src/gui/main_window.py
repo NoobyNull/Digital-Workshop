@@ -1162,7 +1162,24 @@ class MainWindow(QMainWindow):
         start_time = time.time()
         self.logger.info("FIX: Starting enhanced window close sequence with comprehensive state saving")
         
-        # CRITICAL: Save window geometry and state FIRST (most important)
+        # CRITICAL: Clean up VTK resources FIRST (before any window destruction)
+        # This prevents OpenGL context errors during shutdown
+        try:
+            vtk_cleanup_start = time.time()
+            self.logger.info("FIX: Cleaning up VTK resources early to prevent OpenGL context errors")
+            if hasattr(self, "viewer_widget") and self.viewer_widget:
+                if hasattr(self.viewer_widget, "cleanup"):
+                    self.viewer_widget.cleanup()
+                    vtk_cleanup_time = time.time() - vtk_cleanup_start
+                    self.logger.info(f"SUCCESS: VTK resources cleaned up early in {vtk_cleanup_time:.3f}s")
+                else:
+                    self.logger.debug("No cleanup method found on viewer widget")
+            else:
+                self.logger.debug("No viewer widget found for VTK cleanup")
+        except Exception as e:
+            self.logger.warning(f"Failed to cleanup VTK resources early: {e}")
+
+        # CRITICAL: Save window geometry and state SECOND (most important)
         try:
             settings_start = time.time()
             self.logger.info("FIX: Saving window geometry and state (size, position, maximized state, dock layout)")
@@ -1196,21 +1213,6 @@ class MainWindow(QMainWindow):
             self.logger.info(f"SUCCESS: Viewer/window settings saved in {viewer_time:.3f}s")
         except Exception as e:
             self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
-
-        # Clean up viewer widget and VTK resources before closing
-        try:
-            cleanup_start = time.time()
-            if hasattr(self, "viewer_widget") and self.viewer_widget:
-                if hasattr(self.viewer_widget, "cleanup"):
-                    self.viewer_widget.cleanup()
-                    cleanup_time = time.time() - cleanup_start
-                    self.logger.info(f"SUCCESS: Viewer widget cleaned up in {cleanup_time:.3f}s")
-                else:
-                    self.logger.debug("No cleanup method found on viewer widget")
-            else:
-                self.logger.debug("No viewer widget found for cleanup")
-        except Exception as e:
-            self.logger.warning(f"Failed to cleanup viewer widget: {e}")
 
         # Log final window state for debugging
         try:

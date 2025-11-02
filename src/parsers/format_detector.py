@@ -55,17 +55,23 @@ class FormatDetector:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
+        self.logger.info(f"Detecting format for: {file_path.name}")
+
         # First try detection by extension
         format_by_extension = self._detect_by_extension(file_path)
+        self.logger.debug(f"Extension detection result: {format_by_extension}")
 
         if format_by_extension != ModelFormat.UNKNOWN:
             # Verify with content analysis for certain formats
             if format_by_extension == ModelFormat.STL:
                 verified_format = self._verify_stl_format(file_path)
+                self.logger.debug(f"STL verification result: {verified_format}")
                 if verified_format != ModelFormat.UNKNOWN:
                     return verified_format
             elif format_by_extension == ModelFormat.OBJ:
-                if self._verify_obj_format(file_path):
+                obj_verified = self._verify_obj_format(file_path)
+                self.logger.debug(f"OBJ verification result: {obj_verified}")
+                if obj_verified:
                     return ModelFormat.OBJ
             elif format_by_extension == ModelFormat.THREE_MF:
                 if self._verify_3mf_format(file_path):
@@ -74,9 +80,11 @@ class FormatDetector:
                 if self._verify_step_format(file_path):
                     return ModelFormat.STEP
 
+            self.logger.debug(f"Content verification failed, using extension result: {format_by_extension}")
             return format_by_extension
 
         # If extension detection fails, try content-based detection
+        self.logger.debug("Extension detection failed, trying content-based detection")
         return self._detect_by_content(file_path)
 
     def _detect_by_extension(self, file_path: Path) -> ModelFormat:
@@ -150,7 +158,27 @@ class FormatDetector:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
                 # Check for at least one vertex or face
                 content = file.read(1000).lower()
-                return 'v ' in content or 'f ' in content
+                
+                # First, check if this looks like an STL file (negative check)
+                if 'solid ' in content or 'facet normal' in content or 'endfacet' in content:
+                    self.logger.debug(f"OBJ verification: File {file_path.name} rejected - contains STL keywords")
+                    return False
+                
+                # OBJ files typically have 'v ' (vertex) or 'f ' (face) commands
+                # but we need to be more specific to avoid false positives
+                has_vertices = 'v ' in content
+                has_faces = 'f ' in content
+                
+                # OBJ files should have more structure than just random 'v' or 'f'
+                # Check for common OBJ keywords
+                obj_keywords = ['vt ', 'vn ', 'usemtl ', 'mtllib ', 'o ', 'g ']
+                has_obj_structure = any(keyword in content for keyword in obj_keywords)
+                
+                result = has_vertices and (has_faces or has_obj_structure)
+                
+                self.logger.debug(f"OBJ verification for {file_path.name}: vertices={has_vertices}, faces={has_faces}, obj_structure={has_obj_structure}, result={result}")
+                
+                return result
 
         except Exception as e:
             self.logger.warning(f"Error verifying OBJ format: {str(e)}")

@@ -790,9 +790,14 @@ class ModelLibraryWidget(QWidget):
                 analyze_action = QAction("Analyze && Fix Errors...", self)
                 analyze_action.triggered.connect(lambda: self._analyze_model(int(model_id)))
                 menu.addAction(analyze_action)
-                
+
+                # Regenerate thumbnail action
+                regenerate_action = QAction("Regenerate Thumbnail", self)
+                regenerate_action.triggered.connect(lambda: self._regenerate_thumbnail(int(model_id)))
+                menu.addAction(regenerate_action)
+
                 menu.addSeparator()
-                
+
                 # File location action
                 show_file_action = QAction("Show in File Explorer", self)
                 show_file_action.triggered.connect(lambda: self._show_file_in_explorer(int(model_id)))
@@ -1731,6 +1736,67 @@ class ModelLibraryWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to analyze model: {e}")
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
+
+    def _regenerate_thumbnail(self, model_id: int) -> None:
+        """Regenerate thumbnail for a model with current material settings."""
+        try:
+            # Get the model from database
+            model_data = self.db_manager.get_model(model_id)
+
+            if not model_data:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            # Get model file path
+            file_path = model_data.get('file_path')
+            if not file_path or not Path(file_path).exists():
+                QMessageBox.warning(self, "Error", "Model file not found on disk")
+                return
+
+            # Get file hash
+            from src.core.fast_hasher import FastHasher
+            hasher = FastHasher()
+            hash_result = hasher.hash_file(file_path)
+            file_hash = hash_result.hash_value if hash_result.success else None
+
+            if not file_hash:
+                QMessageBox.warning(self, "Error", "Failed to compute file hash")
+                return
+
+            # Generate thumbnail with force_regenerate=True
+            from src.core.import_thumbnail_service import ImportThumbnailService
+            thumbnail_service = ImportThumbnailService()
+            result = thumbnail_service.generate_thumbnail(
+                model_path=file_path,
+                file_hash=file_hash,
+                force_regenerate=True
+            )
+
+            if result.success:
+                # Update database with new thumbnail path
+                self.db_manager.update_model_thumbnail(model_id, str(result.thumbnail_path))
+
+                # Refresh the model display to show updated thumbnail
+                self._load_models_from_database()
+
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Thumbnail regenerated successfully!"
+                )
+                self.logger.info(f"Thumbnail regenerated for model {model_id}: {result.thumbnail_path}")
+            else:
+                error_msg = result.error or "Unknown error"
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    f"Failed to regenerate thumbnail: {error_msg}"
+                )
+                self.logger.error(f"Thumbnail regeneration failed for model {model_id}: {error_msg}")
+
+        except Exception as e:
+            self.logger.error(f"Error regenerating thumbnail: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to regenerate thumbnail: {str(e)}")
 
     def closeEvent(self, event) -> None:
         self.cleanup()

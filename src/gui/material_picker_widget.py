@@ -207,7 +207,7 @@ class MaterialPickerWidget(QDialog):
         # Update material info for MTL files
         try:
             if self.model_format:
-                from core.data_structures import ModelFormat
+                from src.core.data_structures import ModelFormat
 
                 if self.model_format == ModelFormat.STL:
                     # STL files: Show MTL material properties

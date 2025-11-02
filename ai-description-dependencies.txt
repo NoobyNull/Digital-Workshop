@@ -1,0 +1,19 @@
+# AI Description Service Dependencies
+# Add these to the main project's requirements.txt
+
+# Core AI provider SDKs
+openai==1.3.0
+anthropic==0.7.7
+google-generativeai==0.3.2
+
+# Additional AI providers
+requests==2.31.0
+pillow==10.0.1
+python-dotenv==1.0.0
+
+# Optional providers (install as needed)
+# ollama - install via: curl -fsSL https://ollama.ai/install.sh | sh
+# xai - requires beta access
+# zai - requires platform access
+# perplexity - requires API key
+# aistudio - requires platform access

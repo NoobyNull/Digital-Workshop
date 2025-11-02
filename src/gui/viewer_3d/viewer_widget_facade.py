@@ -91,6 +91,9 @@ class Viewer3DWidget(QWidget):
         self._init_modules()
         self._setup_performance_monitoring()
 
+        # Connect internal signals
+        self.material_selected.connect(self._on_material_selected)
+
         # Update performance settings based on system info
         perf_report = self.performance_monitor.get_performance_report()
         system_info = perf_report.get('system_info', {})
@@ -793,4 +796,151 @@ class Viewer3DWidget(QWidget):
     def rotate_z_negative(self) -> None:
         """Rotate model -90° around Z axis."""
         self.rotate_model_geometry("Z", -90)
+
+    def apply_material_to_current_model(self, material_name: str, material_manager=None) -> bool:
+        """
+        Apply material to the currently loaded model.
+        
+        Args:
+            material_name: Name of the material to apply
+            material_manager: MaterialManager instance (optional, will be found if not provided)
+            
+        Returns:
+            True if material was applied successfully
+        """
+        try:
+            if not self.actor:
+                self.logger.warning("No model loaded to apply material to")
+                return False
+                
+            # Get material manager if not provided
+            if material_manager is None:
+                material_manager = self._get_material_manager()
+                if not material_manager:
+                    self.logger.warning("Material manager not available")
+                    return False
+                    
+            # Apply material using the model renderer
+            success = self.model_renderer.apply_material(material_name, material_manager)
+            
+            if success:
+                self.logger.info(f"Applied material '{material_name}' to current model")
+                # Force a render update
+                self.scene_manager.render()
+            else:
+                self.logger.warning(f"Failed to apply material '{material_name}'")
+                
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
+            return False
+
+    def apply_default_material_to_current_model(self, material_manager=None) -> bool:
+        """
+        Apply the default material from preferences to the current model.
+        
+        Args:
+            material_manager: MaterialManager instance (optional, will be found if not provided)
+            
+        Returns:
+            True if default material was applied successfully
+        """
+        try:
+            # Get material manager if not provided
+            if material_manager is None:
+                material_manager = self._get_material_manager()
+                if not material_manager:
+                    self.logger.warning("Material manager not available for default material")
+                    return False
+                    
+            # Apply default material using the model renderer
+            success = self.model_renderer.apply_default_material(material_manager)
+            
+            if success:
+                self.logger.info("Applied default material to current model")
+                # Force a render update
+                self.scene_manager.render()
+            else:
+                self.logger.warning("Failed to apply default material")
+                
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error applying default material: {e}", exc_info=True)
+            return False
+
+    def _get_material_manager(self):
+        """
+        Get the material manager from the main window or application.
+
+        Returns:
+            MaterialManager instance or None if not found
+        """
+        try:
+            parent = self.parent()
+
+            # Try to get from parent window (main window) - check multiple times
+            if parent and hasattr(parent, 'material_manager'):
+                mm = getattr(parent, 'material_manager', None)
+                if mm is not None:
+                    self.logger.debug("Found material manager on parent window")
+                    return mm
+
+            # Try to get from application
+            from PySide6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app and hasattr(app, 'material_manager'):
+                mm = getattr(app, 'material_manager', None)
+                if mm is not None:
+                    self.logger.debug("Found material manager on application")
+                    return mm
+
+            # Try to get from central widget manager
+            if parent and hasattr(parent, 'central_widget_manager'):
+                cwm = getattr(parent, 'central_widget_manager', None)
+                if cwm and hasattr(cwm, 'material_manager'):
+                    mm = getattr(cwm, 'material_manager', None)
+                    if mm is not None:
+                        self.logger.debug("Found material manager on central widget manager")
+                        return mm
+
+            # If still not found, try to create one as a fallback
+            try:
+                from src.core.database_manager import get_database_manager
+                from src.gui.material_manager import MaterialManager
+                self.logger.warning("Material manager not found, creating fallback instance")
+                return MaterialManager(get_database_manager())
+            except Exception as fallback_error:
+                self.logger.debug(f"Could not create fallback material manager: {fallback_error}")
+
+            self.logger.debug("Material manager not found in any location")
+            return None
+
+        except Exception as e:
+            self.logger.error(f"Error getting material manager: {e}", exc_info=True)
+            return None
+
+    def _on_material_selected(self, material_name: str) -> None:
+        """
+        Handle material selection from the material picker.
+        
+        Args:
+            material_name: Name of the selected material
+        """
+        try:
+            self.logger.info(f"Material selected: {material_name}")
+            success = self.apply_material_to_current_model(material_name)
+            
+            if success:
+                # Save the material selection as the last used
+                from PySide6.QtCore import QSettings
+                settings = QSettings()
+                settings.setValue('material/last_species', material_name)
+                self.logger.info(f"Saved material selection: {material_name}")
+            else:
+                self.logger.warning(f"Failed to apply selected material: {material_name}")
+                
+        except Exception as e:
+            self.logger.error(f"Error handling material selection: {e}", exc_info=True)
 

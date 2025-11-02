@@ -6,17 +6,21 @@ star rating system, category management, and database integration.
 """
 
 import gc
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QLineEdit, QTextEdit, QComboBox, QPushButton, QLabel,
-    QFrame, QScrollArea, QMessageBox
+    QFrame, QScrollArea, QMessageBox, QSizePolicy
 )
 
 from src.core.logging_config import get_logger, log_function_call
 from src.core.database_manager import get_database_manager
+from src.core.import_thumbnail_service import ImportThumbnailService
+from src.core.fast_hasher import FastHasher
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from .star_rating_widget import StarRatingWidget
 
@@ -85,6 +89,9 @@ class MetadataEditorWidget(QWidget):
         # Create model info group
         self._create_model_info_group(content_layout)
 
+        # Create preview image group
+        self._create_preview_image_group(content_layout)
+
         # Create metadata form
         self._create_metadata_form(content_layout)
 
@@ -130,6 +137,40 @@ class MetadataEditorWidget(QWidget):
         # Model triangle count
         self.model_triangles_label = QLabel("-")
         group_layout.addRow("Triangles:", self.model_triangles_label)
+
+        parent_layout.addWidget(group)
+
+    def _create_preview_image_group(self, parent_layout: QVBoxLayout) -> None:
+        """Create the preview image group."""
+        group = QGroupBox("Preview Image")
+        group_layout = QVBoxLayout(group)
+        group_layout.setContentsMargins(SPACING_12, SPACING_12, SPACING_12, SPACING_12)
+        group_layout.setSpacing(SPACING_8)
+
+        # Preview image label
+        self.preview_image_label = QLabel()
+        self.preview_image_label.setAlignment(Qt.AlignCenter)
+        self.preview_image_label.setMinimumHeight(200)
+        self.preview_image_label.setStyleSheet("""
+            QLabel {
+                border: 2px dashed #ccc;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                color: #666;
+            }
+        """)
+        self.preview_image_label.setText("No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one")
+        group_layout.addWidget(self.preview_image_label)
+
+        # Preview actions
+        preview_button_layout = QHBoxLayout()
+        
+        self.generate_preview_button = QPushButton("Generate Preview")
+        self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
+        preview_button_layout.addWidget(self.generate_preview_button)
+        
+        preview_button_layout.addStretch()
+        group_layout.addLayout(preview_button_layout)
 
         parent_layout.addWidget(group)
 
@@ -286,6 +327,9 @@ class MetadataEditorWidget(QWidget):
                 'source': model.get('source', ''),
                 'rating': model.get('rating', 0)
             }
+
+            # Load preview image
+            self._load_preview_image(model_id)
 
             # Reset dirty state
             self._reset_dirty_state()
@@ -548,6 +592,9 @@ class MetadataEditorWidget(QWidget):
         self.model_size_label.setText("-")
         self.model_triangles_label.setText("-")
 
+        # Clear preview image
+        self._clear_preview_image()
+
         # Clear metadata fields
         self.title_field.clear()
         self.description_field.clear()
@@ -588,6 +635,127 @@ class MetadataEditorWidget(QWidget):
         }
 
         return current_metadata != self.original_metadata
+
+    def _load_preview_image(self, model_id: int) -> None:
+        """Load and display the preview image for the current model."""
+        try:
+            # Get model information
+            model = self.db_manager.get_model(model_id)
+            if not model:
+                self._clear_preview_image()
+                return
+            
+            model_path = model.get('file_path')
+            if not model_path or not Path(model_path).exists():
+                self._clear_preview_image()
+                return
+            
+            # Get file hash and thumbnail path
+            hasher = FastHasher()
+            hash_result = hasher.hash_file(model_path)
+            file_hash = hash_result.hash_value if hash_result.success else None
+            
+            if not file_hash:
+                self._clear_preview_image()
+                return
+            
+            thumbnail_service = ImportThumbnailService()
+            thumbnail_path = thumbnail_service.get_thumbnail_path(file_hash)
+            
+            if thumbnail_path and thumbnail_path.exists():
+                # Load and display the thumbnail
+                pixmap = QPixmap(str(thumbnail_path))
+                if not pixmap.isNull():
+                    # Scale the image to fit the label while maintaining aspect ratio
+                    scaled_pixmap = pixmap.scaled(
+                        self.preview_image_label.size(),
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+                    self.preview_image_label.setPixmap(scaled_pixmap)
+                    self.preview_image_label.setText("")  # Clear any placeholder text
+                    self.logger.debug(f"Loaded preview image for model {model_id}")
+                else:
+                    self._clear_preview_image()
+            else:
+                self._clear_preview_image()
+                
+        except Exception as e:
+            self.logger.error(f"Failed to load preview image for model {model_id}: {str(e)}")
+            self._clear_preview_image()
+
+    def _clear_preview_image(self) -> None:
+        """Clear the preview image display."""
+        self.preview_image_label.clear()
+        self.preview_image_label.setText("No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one")
+        self.preview_image_label.setStyleSheet("""
+            QLabel {
+                border: 2px dashed #ccc;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                color: #666;
+            }
+        """)
+
+    def _generate_preview_for_current_model(self) -> None:
+        """Generate preview image for the currently loaded model."""
+        if self.current_model_id is None:
+            QMessageBox.warning(self, "Warning", "No model selected")
+            return
+        
+        try:
+            self.logger.info(f"Generating preview for model ID: {self.current_model_id}")
+            
+            # Get model information
+            model = self.db_manager.get_model(self.current_model_id)
+            if not model:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+            
+            model_path = model.get('file_path')
+            if not model_path or not Path(model_path).exists():
+                QMessageBox.warning(self, "Error", "Model file not found on disk")
+                return
+            
+            # Get file hash
+            hasher = FastHasher()
+            hash_result = hasher.hash_file(model_path)
+            file_hash = hash_result.hash_value if hash_result.success else None
+            
+            if not file_hash:
+                QMessageBox.warning(self, "Error", "Failed to compute file hash")
+                return
+            
+            # Generate thumbnail
+            thumbnail_service = ImportThumbnailService()
+            result = thumbnail_service.generate_thumbnail(
+                model_path=model_path,
+                file_hash=file_hash,
+                force_regenerate=True
+            )
+            
+            if result.success:
+                # Reload the preview image
+                self._load_preview_image(self.current_model_id)
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    "Preview generated successfully!"
+                )
+                self.logger.info(f"Preview generated for model {self.current_model_id}")
+            else:
+                error_msg = result.error or "Unknown error"
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    f"Failed to generate preview: {error_msg}"
+                )
+                self.logger.error(f"Preview generation failed for model {self.current_model_id}: {error_msg}")
+                
+        except Exception as e:
+            error_msg = f"Exception during preview generation: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, "Error", error_msg)
 
     def cleanup(self) -> None:
         """Clean up resources before widget destruction."""

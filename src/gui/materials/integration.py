@@ -126,7 +126,7 @@ class MaterialLightingIntegrator:
                 self.logger.info("Applying STL material")
                 if not material_has_texture:
                     # STL files: Apply only material properties (colors, shininess) - no textures
-                    self._apply_stl_material_properties(self.main_window.viewer_widget.actor, species_name)
+                    self.apply_stl_material_properties(self.main_window.viewer_widget.actor, species_name)
                     if hasattr(self.main_window, 'statusBar'):
                         self.main_window.statusBar().showMessage(f"Applied STL material properties: {species_name}", 2000)
                     self.logger.info(f"Applied STL material properties for '{species_name}'")
@@ -186,7 +186,8 @@ class MaterialLightingIntegrator:
                 return
 
             # Parse MTL file directly using VTK approach
-            mtl_props = self._parse_mtl_direct(material['mtl_path'])
+            # Convert Path object to string for file operations
+            mtl_props = self.parse_mtl_direct(str(material['mtl_path']))
 
             # Apply properties to VTK actor
             prop = actor.GetProperty()

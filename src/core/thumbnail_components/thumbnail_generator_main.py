@@ -46,6 +46,17 @@ class ThumbnailGenerator:
         # Material provider for discovering texture images
         self.material_provider = MaterialProvider()
 
+        # Material manager for consistent material application
+        # (same code used for runtime material application)
+        self.material_manager = None
+        try:
+            from src.gui.material_manager import MaterialManager
+            from src.core.database_manager import get_database_manager
+            self.material_manager = MaterialManager(get_database_manager())
+            self.logger.debug("MaterialManager initialized for thumbnail generation")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize MaterialManager for thumbnails: {e}")
+
         # Default thumbnail size
         self.thumbnail_size = (1080, 1080)
 
@@ -212,7 +223,16 @@ class ThumbnailGenerator:
 
             # Apply material texture if specified
             if material:
-                self._apply_texture_material(actor, material)
+                # Use MaterialManager for consistent material application
+                # (same code used for runtime material application)
+                if self.material_manager:
+                    success = self.material_manager.apply_material_to_actor(actor, material)
+                    if not success:
+                        self.logger.warning(f"Failed to apply material '{material}' using MaterialManager, using fallback")
+                        self._apply_texture_material_fallback(actor, material)
+                else:
+                    self.logger.debug("MaterialManager not available, using fallback material application")
+                    self._apply_texture_material_fallback(actor, material)
             else:
                 # Default appearance without material
                 prop = actor.GetProperty()
@@ -508,9 +528,12 @@ class ThumbnailGenerator:
         g = int(hex_color[2:4], 16) / 255.0
         b = int(hex_color[4:6], 16) / 255.0
         return (r, g, b)
-    def _apply_texture_material(self, actor: vtk.vtkActor, material_name: str) -> bool:
+    def _apply_texture_material_fallback(self, actor: vtk.vtkActor, material_name: str) -> bool:
         """
-        Apply texture material to actor using texture images from materials folder.
+        Fallback method to apply texture material to actor using texture images from materials folder.
+
+        This is a fallback when MaterialManager is not available.
+        For normal operation, use MaterialManager.apply_material_to_actor() instead.
 
         CRITICAL: Generates UV texture coordinates for STL models which don't have them.
 

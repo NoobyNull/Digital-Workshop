@@ -311,3 +311,70 @@ class ModelRenderer:
         """Get the current actor."""
         return self.actor
 
+    def apply_material(self, material_name: str, material_manager) -> bool:
+        """
+        Apply material to the current actor using the material manager.
+        
+        Args:
+            material_name: Name of the material to apply
+            material_manager: MaterialManager instance
+            
+        Returns:
+            True if material was applied successfully
+        """
+        if not self.actor:
+            logger.warning("No actor available for material application")
+            return False
+            
+        try:
+            logger.info(f"Applying material '{material_name}' to actor")
+            success = material_manager.apply_material_to_actor(self.actor, material_name)
+            
+            if success:
+                logger.info(f"Material '{material_name}' applied successfully")
+                
+                # CRITICAL FIX: Force mapper update and re-render to ensure texture is visible
+                # This is the same fix applied to screenshot generator for consistent behavior
+                mapper = self.actor.GetMapper()
+                if mapper:
+                    logger.debug("Forcing mapper update to ensure UV coordinates are recognized")
+                    input_data = mapper.GetInput()
+                    if input_data:
+                        mapper.SetInputData(input_data)
+                        logger.debug("Mapper updated with latest data")
+                
+                # Force a render update
+                if hasattr(self.renderer, 'GetRenderWindow'):
+                    self.renderer.GetRenderWindow().Render()
+                    logger.debug("Forced render update after material application")
+            else:
+                logger.warning(f"Failed to apply material '{material_name}'")
+                
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
+            return False
+
+    def apply_default_material(self, material_manager) -> bool:
+        """
+        Apply the default material from preferences.
+        
+        Args:
+            material_manager: MaterialManager instance
+            
+        Returns:
+            True if default material was applied successfully
+        """
+        try:
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
+            default_material = settings.value('thumbnail/material', 'maple', type=str)
+            
+            logger.info(f"Applying default material: {default_material}")
+            return self.apply_material(default_material, material_manager)
+            
+        except Exception as e:
+            logger.error(f"Failed to apply default material: {e}", exc_info=True)
+            return False
+

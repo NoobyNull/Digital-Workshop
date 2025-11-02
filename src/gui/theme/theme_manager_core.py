@@ -80,7 +80,7 @@ class ThemeManager:
         if name in self._colors:
             return _normalize_hex(self._colors[name])
         self._log_json(
-            logging.WARNING,
+            logging.DEBUG,
             "theme_fallback_color",
             variable=name,
             context=context or "",

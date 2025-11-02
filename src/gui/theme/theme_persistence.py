@@ -43,7 +43,9 @@ class ThemePersistence:
 
     def __init__(self):
         """Initialize theme persistence manager."""
-        self.settings = QSettings("Digital Workshop", "Digital Workshop")
+        from src.core.version_manager import get_settings_names
+        org_name, app_name = get_settings_names()
+        self.settings = QSettings(org_name, app_name)
         self._mutex = QMutex()
         self._cache_mutex = QMutex()
 

@@ -112,20 +112,31 @@ class PerformanceMonitor:
 
     def _detect_gpu_info(self) -> Dict[str, Any]:
         """
-        Detect GPU information including VRAM.
+        Detect GPU information including VRAM with improved fallback detection.
 
         Returns:
             Dictionary with GPU info: has_dedicated_gpu, vram_mb, gpu_name
         """
         try:
+            # First try hardware acceleration manager
             from src.core.hardware_acceleration import get_acceleration_manager
             accelerator = get_acceleration_manager()
             caps = accelerator.get_capabilities()
 
-            # Check if CUDA is available (dedicated GPU)
-            if caps.recommended_backend.value == 'cuda':
-                try:
-                    import torch
+            # Check if we have detected devices from hardware acceleration
+            if caps.devices:
+                # Use the first detected device
+                device = caps.devices[0]
+                return {
+                    'has_dedicated_gpu': device.backend.value != 'cpu',
+                    'vram_mb': device.memory_mb or 0,
+                    'gpu_name': f"{device.vendor} {device.name}" if device.vendor else device.name
+                }
+
+            # Check for CUDA with PyTorch as fallback
+            try:
+                import torch
+                if torch.cuda.is_available():
                     vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))
                     gpu_name = torch.cuda.get_device_name(0)
                     return {
@@ -133,40 +144,92 @@ class PerformanceMonitor:
                         'vram_mb': vram_mb,
                         'gpu_name': gpu_name
                     }
-                except Exception:
-                    pass
+            except Exception:
+                pass
 
-            # Check for integrated GPU (shared memory)
+            # Try WMI for Windows GPU detection
             try:
                 import wmi
                 gpu_list = wmi.WMI().Win32_VideoController()
                 for gpu in gpu_list:
-                    if gpu.Name and any(x in gpu.Name for x in ['Intel', 'AMD', 'Radeon']):
-                        memory = psutil.virtual_memory()
-                        shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
+                    if gpu.Name and gpu.Name.strip():
+                        # Check if it's a dedicated GPU
+                        name_lower = gpu.Name.lower()
+                        is_dedicated = any(x in name_lower for x in [
+                            'nvidia', 'geforce', 'gtx', 'rtx', 'amd', 'radeon', 'rx ', 'vega'
+                        ])
+                        
+                        # Try to get video memory
+                        vram_mb = None
+                        if hasattr(gpu, 'AdapterRAM') and gpu.AdapterRAM:
+                            try:
+                                vram_mb = int(gpu.AdapterRAM) // (1024 * 1024)
+                            except Exception:
+                                pass
+                        
+                        # If no dedicated memory info, estimate based on system RAM
+                        if vram_mb is None:
+                            memory = psutil.virtual_memory()
+                            if is_dedicated:
+                                vram_mb = int(memory.total / (1024 ** 2) * 0.1)  # 10% for dedicated
+                            else:
+                                vram_mb = int(memory.total / (1024 ** 2) * 0.25)  # 25% for integrated
+                        
                         return {
-                            'has_dedicated_gpu': False,
-                            'vram_mb': shared_vram_mb,
-                            'gpu_name': gpu.Name
+                            'has_dedicated_gpu': is_dedicated,
+                            'vram_mb': vram_mb,
+                            'gpu_name': gpu.Name.strip()
                         }
             except Exception:
                 pass
 
-            # Fallback: assume integrated GPU with 25% of system RAM
+            # Try system information via registry (Windows)
+            try:
+                if platform.system() == "Windows":
+                    import winreg
+                    try:
+                        # Try to get GPU info from registry
+                        registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+                        key = winreg.OpenKey(registry, r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}")
+                        # This is complex, so we'll just fall through to the final fallback
+                        winreg.CloseKey(key)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+            # Final fallback: use system memory to estimate
             memory = psutil.virtual_memory()
-            shared_vram_mb = int(memory.total / (1024 ** 2) * 0.25)
+            total_gb = memory.total / (1024 ** 3)
+            
+            # Make educated guess based on system memory
+            if total_gb >= 32:
+                # High-end system likely has dedicated GPU
+                estimated_vram = 8192  # 8GB
+                gpu_type = "Dedicated GPU (Estimated)"
+            elif total_gb >= 16:
+                # Mid-range system, might have dedicated GPU
+                estimated_vram = 4096  # 4GB
+                gpu_type = "Dedicated GPU (Estimated)"
+            else:
+                # Lower-end system, likely integrated
+                estimated_vram = int(memory.total / (1024 ** 2) * 0.25)
+                gpu_type = "Integrated GPU (Estimated)"
+            
             return {
-                'has_dedicated_gpu': False,
-                'vram_mb': shared_vram_mb,
-                'gpu_name': 'Unknown (Integrated)'
+                'has_dedicated_gpu': total_gb >= 16,
+                'vram_mb': estimated_vram,
+                'gpu_name': gpu_type
             }
+            
         except Exception as e:
             self.logger.debug(f"Failed to detect GPU info: {e}")
+            # Absolute fallback
             memory = psutil.virtual_memory()
             return {
                 'has_dedicated_gpu': False,
                 'vram_mb': int(memory.total / (1024 ** 2) * 0.25),
-                'gpu_name': 'Unknown'
+                'gpu_name': 'Unknown GPU'
             }
 
     def _detect_system_capabilities(self) -> PerformanceProfile:

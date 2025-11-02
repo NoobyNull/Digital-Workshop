@@ -120,7 +120,7 @@ class CentralWidgetManager:
             self.main_window.viewer_widget.setPlainText(
                 "3D Model Viewer\n\n"
                 "Failed to load 3D viewer component.\n"
-                "Please ensure VTK or PyQt3D is properly installed.\n\n"
+                "Please ensure VTK is properly installed.\n\n"
                 "Features will include:\n"
                 "- Interactive 3D model rendering\n"
                 "- Multiple view modes (wireframe, solid, textured)\n"

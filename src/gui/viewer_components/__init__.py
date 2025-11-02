@@ -1,7 +1,7 @@
 """
 Viewer Components - Modular 3D viewer system.
 
-This package provides a 3D visualization widget using PyQt3D with interactive
+This package provides a 3D visualization widget using VTK with interactive
 camera controls, configurable lighting, and multiple rendering modes.
 
 Public API:

@@ -5,7 +5,7 @@
 <!-- Focus: Core principles with practical, straightforward requirements -->
 <!-- Governance: Amendment procedures and versioning policy retained -->
 
-# Candy-Cadence Constitution
+# Digital Workshop Constitution
 <!-- Formerly 3D-MM: 3D Model Management and Visualization Application -->
 
 ## Core Principles

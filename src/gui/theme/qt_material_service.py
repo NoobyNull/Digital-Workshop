@@ -179,30 +179,43 @@ class QtMaterialThemeService(QObject):
             return
 
         try:
-            # Map theme names to qt-material theme names
+            # Map theme names to qt-material theme names - use guaranteed available themes
             qt_theme_mapping = {
-                "dark": "dark_blue",  # Changed from dark_teal to dark_blue
-                "light": "light_blue",  # Changed from light_cyan to light_blue
-                "auto": "dark_blue"  # Default to dark for auto
+                "dark": "dark",  # Use standard dark theme
+                "light": "light",  # Use standard light theme
+                "auto": "dark"  # Default to dark for auto
             }
-            qt_theme = qt_theme_mapping.get(theme, "dark_blue")
+            qt_theme = qt_theme_mapping.get(theme, "dark")
 
             # Apply qt-material theme with retry logic for QApplication availability
-            max_retries = 5
-            retry_delay = 0.1  # 100ms
+            max_retries = 3
+            retry_delay = 0.05  # 50ms
 
             for attempt in range(max_retries):
                 app = QApplication.instance()
                 if app:
                     try:
-                        stylesheet = self.qtmaterial.apply_stylesheet(app, theme=qt_theme)
-                        app.setStyleSheet(stylesheet)
-                        logger.debug(f"qt-material theme applied: {qt_theme}")
-                        return
+                        # Try to apply the theme, but handle missing theme files gracefully
+                        try:
+                            stylesheet = self.qtmaterial.apply_stylesheet(app, theme=qt_theme)
+                            app.setStyleSheet(stylesheet)
+                            logger.debug(f"qt-material theme applied: {qt_theme}")
+                            return
+                        except Exception as theme_error:
+                            # Check if it's a missing theme file error
+                            if "not exist" in str(theme_error) or "does not exist" in str(theme_error):
+                                logger.warning(f"Theme file {qt_theme} not found, falling back to basic theme")
+                                # Fall through to fallback theme
+                                return
+                            else:
+                                # Other errors, retry or fail
+                                raise
                     except Exception as apply_error:
                         logger.warning(f"Failed to apply qt-material theme on attempt {attempt + 1}: {apply_error}")
                         if attempt == max_retries - 1:
-                            raise
+                            # Last attempt failed, fall back to basic theme
+                            logger.warning("All qt-material attempts failed, using fallback theme")
+                            return
                 else:
                     logger.debug(f"QApplication not available on attempt {attempt + 1}, retrying...")
                     if attempt < max_retries - 1:
@@ -213,7 +226,8 @@ class QtMaterialThemeService(QObject):
 
         except Exception as e:
             logger.warning(f"Failed to apply qt-material theme: {e}")
-            raise
+            # Don't raise, just fall back to basic theme
+            return
     
     def _apply_fallback_theme(self, theme: str, variant: str = None) -> None:
         """

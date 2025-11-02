@@ -16,7 +16,7 @@ import numpy as np
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLParser, STLModel
-from src.core.data_structures import ModelFormat
+from src.core.data_structures import ModelFormat, Model, LoadingState
 
 
 class ScreenshotGenerator:
@@ -64,30 +64,39 @@ class ScreenshotGenerator:
             Path to the saved screenshot, or None if failed
         """
         try:
+            self.logger.info(f"Starting screenshot generation for: {model_path}")
+            
             # Create off-screen render window
             render_window = vtk.vtkRenderWindow()
             render_window.SetSize(self.width, self.height)
             render_window.SetOffScreenRendering(True)
+            self.logger.debug(f"Created render window: {self.width}x{self.height}")
 
             # Create renderer
             renderer = vtk.vtkRenderer()
             render_window.AddRenderer(renderer)
+            self.logger.debug("Created renderer")
 
             # Set background (image or color)
             self._set_background(renderer)
 
             # Load model
+            self.logger.info("Loading model...")
             model = self._load_model(model_path)
             if not model:
                 self.logger.error(f"Failed to load model: {model_path}")
                 return None
 
+            self.logger.info(f"Model loaded: {len(model.triangles)} triangles, stats: {model.stats}")
+            
             # Create actor
+            self.logger.info("Creating actor from model...")
             actor = self._create_actor_from_model(model)
             if not actor:
                 self.logger.error(f"Failed to create actor for model: {model_path}")
                 return None
 
+            self.logger.info(f"Actor created successfully: {actor}")
             renderer.AddActor(actor)
 
             # Apply material if provided
@@ -95,8 +104,21 @@ class ScreenshotGenerator:
             mat_to_apply = material_name or self.default_material_name
             if material_manager and mat_to_apply:
                 try:
-                    material_manager.apply_material_to_actor(actor, mat_to_apply)
-                    self.logger.debug(f"Applied material '{mat_to_apply}' to screenshot")
+                    self.logger.info(f"Applying material '{mat_to_apply}' to actor...")
+                    success = material_manager.apply_material_to_actor(actor, mat_to_apply)
+                    if success:
+                        self.logger.info(f"Successfully applied material '{mat_to_apply}' to screenshot")
+                        
+                        # CRITICAL FIX: Force mapper update and re-render to ensure texture is visible
+                        mapper = actor.GetMapper()
+                        if mapper:
+                            self.logger.debug("Forcing mapper update to ensure UV coordinates are recognized")
+                            input_data = mapper.GetInput()
+                            if input_data:
+                                mapper.SetInputData(input_data)
+                                self.logger.debug("Mapper updated with latest data")
+                    else:
+                        self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
                 except Exception as e:
                     self.logger.warning(f"Failed to apply material: {e}")
 
@@ -104,11 +126,30 @@ class ScreenshotGenerator:
             self._setup_lighting(renderer)
 
             # Setup camera
+            self.logger.info("Setting up camera...")
             renderer.ResetCamera()
             renderer.ResetCameraClippingRange()
-
-            # Render
+            
+            # Log camera position and bounds
+            camera = renderer.GetActiveCamera()
+            if camera:
+                self.logger.debug(f"Camera position: {camera.GetPosition()}")
+                self.logger.debug(f"Camera focal point: {camera.GetFocalPoint()}")
+                self.logger.debug(f"Camera view up: {camera.GetViewUp()}")
+            
+            # Log renderer bounds
+            bounds = renderer.ComputeVisiblePropBounds()
+            self.logger.debug(f"Renderer visible bounds: {bounds}")
+            
+            # CRITICAL FIX: Double render to ensure material/texture is fully applied
+            self.logger.info("Performing initial render...")
             render_window.Render()
+            self.logger.info("Initial render completed")
+            
+            # Additional render pass to ensure texture mapping is fully processed
+            self.logger.info("Performing texture mapping render pass...")
+            render_window.Render()
+            self.logger.info("Texture mapping render completed")
 
             # Capture screenshot
             screenshot_path = output_path or self._get_temp_screenshot_path()
@@ -132,7 +173,8 @@ class ScreenshotGenerator:
         """Load a model from file."""
         try:
             parser = STLParser()
-            model = parser.parse_file(model_path)
+            # Force full geometry loading for screenshots (disable lazy loading)
+            model = parser.parse_file(model_path, lazy_loading=False)
             return model
         except Exception as e:
             self.logger.error(f"Failed to load model {model_path}: {e}")
@@ -141,21 +183,84 @@ class ScreenshotGenerator:
     def _create_actor_from_model(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from a model."""
         try:
-            # Create polydata from model
+            self.logger.info(f"Creating actor from model with {len(model.triangles)} triangles")
+            
+            # Check if model is array-based (using the same logic as ModelRenderer)
+            if hasattr(model, 'is_array_based') and model.is_array_based():
+                self.logger.info("Using array-based model creation")
+                return self._create_actor_from_arrays(model)
+            else:
+                self.logger.info("Using triangle-based model creation")
+                return self._create_actor_from_triangles(model)
+                
+        except Exception as e:
+            self.logger.error(f"Failed to create actor: {e}", exc_info=True)
+            return None
+
+    def _create_actor_from_triangles(self, model: STLModel) -> Optional[vtk.vtkActor]:
+        """Create a VTK actor from triangle-based model."""
+        try:
+            self.logger.info(f"Creating actor from {len(model.triangles)} triangles")
+            
+            # Create polydata from model (following the working ModelRenderer pattern)
             points = vtk.vtkPoints()
             cells = vtk.vtkCellArray()
+            
+            # Create normals array (crucial for lighting)
+            normals = vtk.vtkFloatArray()
+            normals.SetNumberOfComponents(3)
+            normals.SetName("Normals")
 
-            for triangle in model.triangles:
-                cell = vtk.vtkTriangle()
-                for i, vertex_idx in enumerate(triangle.vertex_indices):
-                    vertex = model.vertices[vertex_idx]
-                    points.InsertNextPoint(vertex.x, vertex.y, vertex.z)
-                    cell.GetPointIds().SetId(i, points.GetNumberOfPoints() - 1)
-                cells.InsertNextCell(cell)
+            self.logger.debug(f"Processing {len(model.triangles)} triangles...")
+            for i, triangle in enumerate(model.triangles):
+                if i % 1000 == 0:  # Log progress for large models
+                    self.logger.debug(f"Processing triangle {i}/{len(model.triangles)}")
+                
+                try:
+                    # Add vertices using direct access (following working pattern)
+                    point_id1 = points.InsertNextPoint(
+                        triangle.vertex1.x, triangle.vertex1.y, triangle.vertex1.z
+                    )
+                    point_id2 = points.InsertNextPoint(
+                        triangle.vertex2.x, triangle.vertex2.y, triangle.vertex2.z
+                    )
+                    point_id3 = points.InsertNextPoint(
+                        triangle.vertex3.x, triangle.vertex3.y, triangle.vertex3.z
+                    )
 
+                    # Add triangle
+                    triangle_cell = vtk.vtkTriangle()
+                    triangle_cell.GetPointIds().SetId(0, point_id1)
+                    triangle_cell.GetPointIds().SetId(1, point_id2)
+                    triangle_cell.GetPointIds().SetId(2, point_id3)
+                    cells.InsertNextCell(triangle_cell)
+
+                    # Add normals (crucial for proper lighting)
+                    normal = [triangle.normal.x, triangle.normal.y, triangle.normal.z]
+                    normals.InsertNextTuple(normal)
+                    normals.InsertNextTuple(normal)
+                    normals.InsertNextTuple(normal)
+                    
+                except Exception as tri_error:
+                    self.logger.warning(f"Error processing triangle {i}: {tri_error}")
+                    continue
+
+            point_count = points.GetNumberOfPoints()
+            cell_count = cells.GetNumberOfCells()
+            self.logger.info(f"Created polydata: {point_count} points, {cell_count} cells")
+
+            if point_count == 0 or cell_count == 0:
+                self.logger.error("No points or cells created - model may be empty or invalid")
+                return None
+
+            # Create polydata with points, cells, and normals
             polydata = vtk.vtkPolyData()
             polydata.SetPoints(points)
             polydata.SetPolys(cells)
+            polydata.GetPointData().SetNormals(normals)
+            
+            # No need to call Update() on vtkPolyData - it's not an algorithm
+            self.logger.debug(f"Polydata bounds: {polydata.GetBounds()}")
 
             # Create mapper and actor
             mapper = vtk.vtkPolyDataMapper()
@@ -163,11 +268,92 @@ class ScreenshotGenerator:
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
-            actor.GetProperty().SetColor(0.7, 0.7, 0.7)
-
+            
+            # Set proper material properties (following working ModelRenderer pattern)
+            prop = actor.GetProperty()
+            prop.SetColor(0.8, 0.8, 0.8)  # Light gray
+            prop.SetAmbient(0.3)      # Ambient lighting
+            prop.SetDiffuse(0.7)      # Diffuse lighting
+            prop.SetSpecular(0.4)     # Specular highlights
+            prop.SetSpecularPower(20) # Shininess
+            prop.LightingOn()         # Enable lighting calculations
+            
+            self.logger.info(f"Actor created successfully with bounds: {actor.GetBounds()}")
             return actor
         except Exception as e:
-            self.logger.error(f"Failed to create actor: {e}")
+            self.logger.error(f"Failed to create actor from triangles: {e}", exc_info=True)
+            return None
+
+    def _create_actor_from_arrays(self, model: STLModel) -> Optional[vtk.vtkActor]:
+        """Create a VTK actor from array-based model (following ModelRenderer pattern)."""
+        try:
+            if not hasattr(model, 'is_array_based') or not model.is_array_based():
+                self.logger.warning("Model is not array-based, falling back to triangle creation")
+                return self._create_actor_from_triangles(model)
+
+            vertex_array = getattr(model, 'vertex_array', None)
+            normal_array = getattr(model, 'normal_array', None)
+
+            if vertex_array is None or normal_array is None:
+                self.logger.warning("Missing vertex or normal arrays, falling back to triangle creation")
+                return self._create_actor_from_triangles(model)
+
+            total_vertices = int(vertex_array.shape[0])
+            if total_vertices % 3 != 0:
+                self.logger.warning("Vertex array length is not multiple of 3; falling back")
+                return self._create_actor_from_triangles(model)
+
+            self.logger.info(f"Creating actor from arrays: {total_vertices} vertices")
+
+            # Create points from vertex array
+            points = vtk.vtkPoints()
+            points_vtk = vtk_np.numpy_to_vtk(vertex_array, deep=True)
+            points.SetData(points_vtk)
+
+            # Create triangles
+            triangles = vtk.vtkCellArray()
+            num_triangles = total_vertices // 3
+
+            for i in range(num_triangles):
+                triangle = vtk.vtkTriangle()
+                triangle.GetPointIds().SetId(0, i * 3)
+                triangle.GetPointIds().SetId(1, i * 3 + 1)
+                triangle.GetPointIds().SetId(2, i * 3 + 2)
+                triangles.InsertNextCell(triangle)
+
+            # Create polydata
+            polydata = vtk.vtkPolyData()
+            polydata.SetPoints(points)
+            polydata.SetPolys(triangles)
+
+            # Add normals
+            normals_vtk = vtk_np.numpy_to_vtk(normal_array, deep=True)
+            normals_vtk.SetNumberOfComponents(3)
+            normals_vtk.SetName("Normals")
+            polydata.GetPointData().SetNormals(normals_vtk)
+
+            self.logger.info(f"Created array-based polydata: {points.GetNumberOfPoints()} points, {triangles.GetNumberOfCells()} cells")
+
+            # Create mapper and actor
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputData(polydata)
+
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+            
+            # Set proper material properties (following working ModelRenderer pattern)
+            prop = actor.GetProperty()
+            prop.SetColor(0.8, 0.8, 0.8)  # Light gray
+            prop.SetAmbient(0.3)      # Ambient lighting
+            prop.SetDiffuse(0.7)      # Diffuse lighting
+            prop.SetSpecular(0.4)     # Specular highlights
+            prop.SetSpecularPower(20) # Shininess
+            prop.LightingOn()         # Enable lighting calculations
+            
+            self.logger.info(f"Array-based actor created successfully with bounds: {actor.GetBounds()}")
+            return actor
+        except Exception as e:
+            self.logger.error(f"Failed to create actor from arrays: {e}", exc_info=True)
             return None
 
     def _setup_lighting(self, renderer: vtk.vtkRenderer) -> None:

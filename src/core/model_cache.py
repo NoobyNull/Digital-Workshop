@@ -95,7 +95,8 @@ class ModelCache:
             # Default to user local app data directory
             import os
             app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
-            self.cache_dir = app_data / 'DigitalWorkshop' / 'cache'
+            from .path_manager import get_cache_directory
+            self.cache_dir = get_cache_directory()
         else:
             self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
