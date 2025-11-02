@@ -66,17 +66,17 @@ class BuildManager:
     def check_dependencies(self):
         """Check if required build tools are available."""
         logger.info("Checking build dependencies...")
-        
+
         # Check Python
         python_version = sys.version_info
         logger.info(f"Python version: {python_version.major}.{python_version.minor}.{python_version.micro}")
-        
+
         if python_version < (3, 8):
             raise RuntimeError("Python 3.8 or higher is required for building Digital Workshop")
-        
+
         # Check PyInstaller
         try:
-            result = subprocess.run([sys.executable, "-m", "PyInstaller", "--version"], 
+            result = subprocess.run([sys.executable, "-m", "PyInstaller", "--version"],
                                   capture_output=True, text=True)
             if result.returncode == 0:
                 logger.info(f"PyInstaller version: {result.stdout.strip()}")
@@ -85,17 +85,17 @@ class BuildManager:
         except Exception as e:
             logger.error("PyInstaller not found. Please install it with: pip install pyinstaller")
             raise
-        
-        # Check Inno Setup (optional warning)
+
+        # Check NSIS (optional warning)
         try:
-            result = subprocess.run(["iscc", "/?"], capture_output=True)
+            result = subprocess.run(["makensis", "/VERSION"], capture_output=True)
             if result.returncode == 0:
-                logger.info("Inno Setup compiler found")
+                logger.info("NSIS compiler found")
             else:
-                logger.warning("Inno Setup compiler not found. Installer creation will be skipped.")
+                logger.warning("NSIS compiler not found. Installer creation will be skipped.")
         except FileNotFoundError:
-            logger.warning("Inno Setup compiler not found. Installer creation will be skipped.")
-            logger.warning("Please install Inno Setup from https://jrsoftware.org/isinfo.php")
+            logger.warning("NSIS compiler not found. Installer creation will be skipped.")
+            logger.warning("Please install NSIS from https://nsis.sourceforge.io/")
     
     def create_app_icon(self):
         """Create a placeholder application icon if it doesn't exist."""
@@ -168,39 +168,39 @@ class BuildManager:
         return True
     
     def create_installer(self):
-        """Create the Inno Setup installer."""
-        logger.info("Creating Inno Setup installer...")
-        
-        # Check if Inno Setup is available
+        """Create the NSIS installer."""
+        logger.info("Creating NSIS installer...")
+
+        # Check if NSIS is available
         try:
-            result = subprocess.run(["iscc", "/?"], capture_output=True)
+            result = subprocess.run(["makensis", "/VERSION"], capture_output=True)
             if result.returncode != 0:
-                logger.warning("Inno Setup compiler not available. Skipping installer creation.")
+                logger.warning("NSIS compiler not available. Skipping installer creation.")
                 return False
         except FileNotFoundError:
-            logger.warning("Inno Setup compiler not found. Skipping installer creation.")
+            logger.warning("NSIS compiler not found. Skipping installer creation.")
             return False
-        
+
         # Check installer assets
         if not self.check_installer_assets():
             logger.warning("Installer assets missing. Skipping installer creation.")
             return False
-        
+
         installer_script = self.project_root / self.config["installer_script"]
         if not installer_script.exists():
             logger.warning(f"Installer script not found: {installer_script}")
             return False
-        
-        cmd = ["iscc", str(installer_script)]
-        
+
+        cmd = ["makensis", str(installer_script)]
+
         logger.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.run(cmd, cwd=self.project_root)
-        
+
         if result.returncode != 0:
-            logger.error("Inno Setup installer creation failed")
+            logger.error("NSIS installer creation failed")
             return False
-        
-        logger.info("Inno Setup installer created successfully")
+
+        logger.info("NSIS installer created successfully")
         return True
     
     def run_tests(self):

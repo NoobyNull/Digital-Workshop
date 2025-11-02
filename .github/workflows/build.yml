@@ -24,24 +24,26 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Build with PyInstaller
-      run: |
-        # Build the actual application from src/main.py
-        pyinstaller --onefile --name "Digital Workshop" src/main.py
-        # Copy the executable to expected location
-        copy "dist\Digital Workshop.exe" "Digital-Workshop-Installer.exe"
-
     - name: Install NSIS
       run: choco install nsis -y
 
-    - name: Create installer
-      uses: joncloud/makensis-action@v3.6
-      with:
-        script-file: config/installer.nsi
+    - name: Build application
+      run: python build.py --no-tests
 
-    - name: Upload executable to release
+    - name: Verify build artifacts
+      run: |
+        if (!(Test-Path "dist/Digital Workshop.exe")) {
+          Write-Error "Executable not found after build"
+          exit 1
+        }
+        Write-Host "✓ Executable created successfully"
+
+    - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       with:
-        files: ./Digital-Workshop-Installer.exe
+        files: |
+          dist/Digital Workshop.exe
+          dist/Digital Workshop-Setup-*.exe
+          dist/build_report.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
