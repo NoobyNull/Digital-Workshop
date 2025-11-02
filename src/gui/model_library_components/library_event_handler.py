@@ -306,11 +306,24 @@ class LibraryEventHandler:
                 QMessageBox.warning(self.library_widget, "Error", "Failed to compute file hash")
                 return
             
-            # Generate thumbnail
+            # Load thumbnail settings from preferences
+            from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
+
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+
+            # Get current thumbnail preferences
+            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+
+            # Generate thumbnail with current preferences
             thumbnail_service = ImportThumbnailService()
             result = thumbnail_service.generate_thumbnail(
                 model_path=model_path,
                 file_hash=file_hash,
+                material=material,
+                background=bg_image,
                 force_regenerate=True
             )
             

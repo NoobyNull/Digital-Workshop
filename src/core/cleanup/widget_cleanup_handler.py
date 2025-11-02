@@ -71,23 +71,37 @@ class WidgetCleanupHandler(CleanupHandler):
         """Cleanup all widgets."""
         try:
             overall_success = True
-            
+            cleanup_results = {}
+
             # Cleanup main window if available
             if self._main_window:
+                self.logger.debug("Cleaning up main window...")
                 success = self._cleanup_main_window(self._main_window)
+                cleanup_results["main_window"] = success
                 overall_success = overall_success and success
-            
+
             # Cleanup tracked widgets
+            self.logger.debug("Cleaning up tracked widgets...")
             success = self._cleanup_tracked_widgets()
+            cleanup_results["tracked_widgets"] = success
             overall_success = overall_success and success
-            
+
             # Cleanup global widget references
+            self.logger.debug("Cleaning up global widget references...")
             self._cleanup_global_widgets()
-            
+            cleanup_results["global_widgets"] = True
+
+            # Log results
+            failed_cleanups = [name for name, success in cleanup_results.items() if not success]
+            if failed_cleanups:
+                self.logger.warning(f"Failed to cleanup {len(failed_cleanups)} widget area(s): {', '.join(failed_cleanups)}")
+            else:
+                self.logger.info("All widgets cleaned up successfully")
+
             return overall_success
-            
+
         except Exception as e:
-            self.logger.error(f"Widget cleanup failed: {e}")
+            self.logger.error(f"Widget cleanup failed: {e}", exc_info=True)
             return False
     
     def _cleanup_main_window(self, main_window) -> bool:

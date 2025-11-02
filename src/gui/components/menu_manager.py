@@ -275,7 +275,8 @@ class MenuManager:
     def _set_layout_edit_mode(self, enabled: bool) -> None:
         """Handle layout edit mode toggle."""
         if hasattr(self.main_window, '_set_layout_edit_mode'):
-            self.main_window._set_layout_edit_mode(enabled)
+            # Show message when user toggles from menu (not during initialization)
+            self.main_window._set_layout_edit_mode(enabled, show_message=True)
 
     def _show_tips(self) -> None:
         """Show tips and tricks dialog."""

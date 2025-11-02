@@ -37,18 +37,51 @@ class AIDescriptionService(QObject):
         self._initialize_providers()
     
     def _load_config(self) -> Dict[str, Any]:
-        """Load AI description configuration (excluding API keys for security)."""
+        """Load AI description configuration."""
         try:
             settings = QSettings()
 
             # Load provider configurations from QSettings
-            # NOTE: API keys are NOT loaded from QSettings for security reasons
             providers = {}
-            for provider_name in ["openai", "openrouter"]:
+            for provider_name in ["openai", "openrouter", "gemini", "anthropic"]:
                 group = f"ai_description/providers/{provider_name}"
+
+                # Get API key from multiple sources (in order of priority):
+                # 1. User-entered key in preferences (ai/api_key)
+                # 2. Provider-specific key in preferences (ai_description/providers/{provider}/api_key)
+                # 3. Environment variable
+                api_key = ""
+
+                # Check if this is the selected provider and has a user-entered key
+                selected_provider = settings.value("ai/provider_id", "openai", type=str)
+                if provider_name == selected_provider:
+                    api_key = settings.value("ai/api_key", "", type=str)
+
+                # If not found, check provider-specific setting
+                if not api_key:
+                    api_key = settings.value(f"{group}/api_key", "", type=str)
+
+                # If still not found, check environment variable
+                if not api_key:
+                    env_var_map = {
+                        "openai": "OPENAI_API_KEY",
+                        "openrouter": "OPENROUTER_API_KEY",
+                        "gemini": "GOOGLE_API_KEY",
+                        "anthropic": "ANTHROPIC_API_KEY"
+                    }
+                    api_key = os.getenv(env_var_map.get(provider_name, ""), "")
+
+                # Get default model for each provider
+                default_models = {
+                    "openai": "gpt-4-vision-preview",
+                    "openrouter": "gpt-4-vision-preview",
+                    "gemini": "gemini-2.5-flash",
+                    "anthropic": "claude-3-5-sonnet-20241022"
+                }
+
                 providers[provider_name] = {
-                    "api_key": "",  # API keys must come from environment variables
-                    "model": settings.value(f"{group}/model", "gpt-4-vision-preview", type=str),
+                    "api_key": api_key,
+                    "model": settings.value(f"{group}/model", default_models.get(provider_name, ""), type=str),
                     "base_url": settings.value(f"{group}/base_url", "", type=str),
                     "enabled": settings.value(f"{group}/enabled", False, type=bool)
                 }
@@ -125,10 +158,30 @@ class AIDescriptionService(QObject):
                 }
             },
             "custom_prompts": {
-                "default": "Analyze this image and provide a detailed description including objects, colors, textures, and overall composition.",
-                "mechanical": "Analyze this mechanical part. Describe its function, materials, manufacturing considerations, and technical specifications.",
-                "artistic": "Analyze this artistic work. Describe the style, techniques, colors, composition, and artistic intent.",
-                "architectural": "Analyze this architectural image. Describe the building style, materials, design elements, and spatial relationships."
+                "default": """Analyze this image and provide a structured response in JSON format with the following fields:
+- title: A concise, descriptive title for the image (string)
+- description: A detailed description including objects, colors, textures, and overall composition (string)
+- metadata_keywords: A list of relevant keywords that describe the image content, style, and context (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+                "mechanical": """Analyze this mechanical part and provide a structured response in JSON format with the following fields:
+- title: A concise title for the mechanical part (string)
+- description: Describe its function, materials, manufacturing considerations, and technical specifications (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+                "artistic": """Analyze this artistic work and provide a structured response in JSON format with the following fields:
+- title: A concise title for the artwork (string)
+- description: Describe the style, techniques, colors, composition, and artistic intent (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+                "architectural": """Analyze this architectural image and provide a structured response in JSON format with the following fields:
+- title: A concise title for the building or structure (string)
+- description: Describe the building style, materials, design elements, and spatial relationships (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text."""
             },
             "settings": {
                 "default_provider": "openai",
@@ -140,17 +193,37 @@ class AIDescriptionService(QObject):
     def _get_default_prompt(self, prompt_type: str) -> str:
         """Get default prompt for a specific type."""
         defaults = {
-            "default": "Analyze this image and provide a detailed description including objects, colors, textures, and overall composition.",
-            "mechanical": "Analyze this mechanical part. Describe its function, materials, manufacturing considerations, and technical specifications.",
-            "artistic": "Analyze this artistic work. Describe the style, techniques, colors, composition, and artistic intent.",
-            "architectural": "Analyze this architectural image. Describe the building style, materials, design elements, and spatial relationships."
+            "default": """Analyze this image and provide a structured response in JSON format with the following fields:
+- title: A concise, descriptive title for the image (string)
+- description: A detailed description including objects, colors, textures, and overall composition (string)
+- metadata_keywords: A list of relevant keywords that describe the image content, style, and context (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+            "mechanical": """Analyze this mechanical part and provide a structured response in JSON format with the following fields:
+- title: A concise title for the mechanical part (string)
+- description: Describe its function, materials, manufacturing considerations, and technical specifications (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+            "artistic": """Analyze this artistic work and provide a structured response in JSON format with the following fields:
+- title: A concise title for the artwork (string)
+- description: Describe the style, techniques, colors, composition, and artistic intent (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text.""",
+            "architectural": """Analyze this architectural image and provide a structured response in JSON format with the following fields:
+- title: A concise title for the building or structure (string)
+- description: Describe the building style, materials, design elements, and spatial relationships (string)
+- metadata_keywords: A list of relevant keywords (array of strings)
+
+Return ONLY valid JSON, no additional text."""
         }
         return defaults.get(prompt_type, defaults["default"])
     
     def _initialize_providers(self):
         """Initialize AI providers based on configuration."""
         providers_config = self.config.get("providers", {})
-        
+
         # Initialize OpenAI provider
         openai_config = providers_config.get("openai", {})
         if openai_config.get("api_key"):
@@ -163,7 +236,7 @@ class AIDescriptionService(QObject):
                 self.logger.info("OpenAI provider initialized")
             except Exception as e:
                 self.logger.error("Failed to initialize OpenAI provider: %s", e)
-        
+
         # Initialize OpenRouter provider
         openrouter_config = providers_config.get("openrouter", {})
         if openrouter_config.get("api_key"):
@@ -176,11 +249,41 @@ class AIDescriptionService(QObject):
                 self.logger.info("OpenRouter provider initialized")
             except Exception as e:
                 self.logger.error("Failed to initialize OpenRouter provider: %s", e)
-        
+
+        # Initialize Gemini provider
+        gemini_config = providers_config.get("gemini", {})
+        if gemini_config.get("api_key"):
+            try:
+                from .providers.gemini_provider import GeminiProvider
+                self.providers["gemini"] = GeminiProvider(
+                    api_key=gemini_config["api_key"],
+                    model=gemini_config.get("model", "gemini-2.5-flash")
+                )
+                self.logger.info("Gemini provider initialized")
+            except Exception as e:
+                self.logger.error("Failed to initialize Gemini provider: %s", e)
+
+        # Initialize Anthropic provider
+        anthropic_config = providers_config.get("anthropic", {})
+        if anthropic_config.get("api_key"):
+            try:
+                from .providers.anthropic_provider import AnthropicProvider
+                self.providers["anthropic"] = AnthropicProvider(
+                    api_key=anthropic_config["api_key"],
+                    model=anthropic_config.get("model", "claude-3-5-sonnet-20241022")
+                )
+                self.logger.info("Anthropic provider initialized")
+            except Exception as e:
+                self.logger.error("Failed to initialize Anthropic provider: %s", e)
+
         # Set current provider
         default_provider = self.config.get("settings", {}).get("default_provider", "openai")
         if default_provider in self.providers:
             self.current_provider = self.providers[default_provider]
+        elif self.providers:
+            # If default provider not available, use first available provider
+            self.current_provider = next(iter(self.providers.values()))
+            self.logger.info("Default provider not available, using first available provider")
     
     @staticmethod
     def get_available_providers() -> List[str]:
@@ -227,8 +330,9 @@ class AIDescriptionService(QObject):
                 "claude-3-sonnet-20240229": "Claude 3 Sonnet"
             },
             "gemini": {
-                "gemini-1.5-pro-vision-latest": "Gemini 1.5 Pro Vision",
-                "gemini-1.5-flash": "Gemini 1.5 Flash"
+                "gemini-2.5-flash": "Gemini 2.5 Flash",
+                "gemini-2.5-pro-preview-03-25": "Gemini 2.5 Pro Preview",
+                "gemini-2.5-flash-lite-preview-06-17": "Gemini 2.5 Flash Lite"
             },
             "xai": {
                 "grok-vision-beta": "Grok Vision Beta"
@@ -405,17 +509,28 @@ class AIDescriptionService(QObject):
             
             # Perform analysis
             result = provider.analyze_image(image_path, analysis_prompt)
-            
+
             self.progress_updated.emit(90)
-            
+
             # Add metadata
             result["provider_used"] = provider_name or "current"
             result["image_path"] = image_path
-            result["timestamp"] = str(QApplication.instance().property("current_time"))
-            
+
+            # Get timestamp safely (QApplication might not exist in tests)
+            try:
+                app = QApplication.instance()
+                if app:
+                    result["timestamp"] = str(app.property("current_time"))
+                else:
+                    from datetime import datetime
+                    result["timestamp"] = datetime.now().isoformat()
+            except Exception:
+                from datetime import datetime
+                result["timestamp"] = datetime.now().isoformat()
+
             self.progress_updated.emit(100)
             self.analysis_completed.emit(result)
-            
+
             return result
             
         except Exception as e:

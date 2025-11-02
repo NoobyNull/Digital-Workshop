@@ -88,6 +88,15 @@ class MainWindow(QMainWindow):
         self.activity_logger = get_activity_logger(__name__)
         self.logger.info("Initializing main window")
 
+        # Initialize AI Description Service
+        try:
+            from src.gui.services.ai_description_service import AIDescriptionService
+            self.ai_service = AIDescriptionService()
+            self.logger.info("AI Description Service initialized")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize AI Description Service: {e}")
+            self.ai_service = None
+
         # Hide window during initialization to prevent blinking
         self.hide()
 
@@ -212,8 +221,10 @@ class MainWindow(QMainWindow):
                 settings.value("ui/layout_edit_mode", False, type=bool)
             )
             # When saved value is True, enable edit mode; otherwise lock
+            # Don't show message during initialization to avoid overlay artifacts
             self._set_layout_edit_mode(
-                bool(settings.value("ui/layout_edit_mode", False, type=bool))
+                bool(settings.value("ui/layout_edit_mode", False, type=bool)),
+                show_message=False
             )
             if hasattr(self, "toggle_layout_edit_action"):
                 self.toggle_layout_edit_action.setChecked(
@@ -222,7 +233,7 @@ class MainWindow(QMainWindow):
         except Exception:
             # If settings fail, lock layout
             try:
-                self._set_layout_edit_mode(False)
+                self._set_layout_edit_mode(False, show_message=False)
             except Exception:
                 pass
 
@@ -780,8 +791,13 @@ class MainWindow(QMainWindow):
 
     # Snapping system removed - Qt handles dock management automatically
 
-    def _set_layout_edit_mode(self, enabled: bool) -> None:
-        """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable."""
+    def _set_layout_edit_mode(self, enabled: bool, show_message: bool = False) -> None:
+        """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable.
+
+        Args:
+            enabled: Whether to enable layout edit mode
+            show_message: Whether to show a status message (default False to avoid initialization artifacts)
+        """
         try:
             self.layout_edit_mode = bool(enabled)
             # Use native Qt dock features for layout edit mode
@@ -807,14 +823,16 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
 
-            # Status feedback
-            try:
-                self.statusBar().showMessage(
-                    "Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked",
-                    2000,
-                )
-            except Exception:
-                pass
+            # Status feedback - only show message if explicitly requested
+            # This prevents overlay artifacts during initialization
+            if show_message:
+                try:
+                    self.statusBar().showMessage(
+                        "Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked",
+                        2000,
+                    )
+                except Exception:
+                    pass
         except Exception as e:
             self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
 
@@ -1415,6 +1433,8 @@ class MainWindow(QMainWindow):
         """
         Handle model selection from the model library.
 
+        Synchronizes the metadata tab to display the selected model's metadata.
+
         Args:
             model_id: ID of the selected model
         """
@@ -1428,10 +1448,41 @@ class MainWindow(QMainWindow):
             if hasattr(self.toolbar_manager, "edit_model_action"):
                 self.toolbar_manager.edit_model_action.setEnabled(True)
 
+            # Synchronize metadata tab to selected model
+            self._sync_metadata_to_selected_model(model_id)
+
             self.logger.debug(f"Model selected: {model_id}")
 
         except Exception as e:
             self.logger.error(f"Failed to handle model selection: {e}")
+
+    def _sync_metadata_to_selected_model(self, model_id: int) -> None:
+        """
+        Synchronize the metadata tab to display the selected model's metadata.
+
+        This method ensures that when a model is selected in the library,
+        the metadata editor widget is updated to show that model's metadata.
+
+        Args:
+            model_id: ID of the selected model
+        """
+        try:
+            # Check if metadata editor exists
+            if not hasattr(self, 'metadata_editor') or self.metadata_editor is None:
+                self.logger.debug(f"Metadata editor not available for model {model_id}")
+                return
+
+            # Load metadata for the selected model
+            self.metadata_editor.load_model_metadata(model_id)
+            self.logger.debug(f"Metadata synchronized for model {model_id}")
+
+            # Switch to metadata tab to show the loaded metadata
+            if hasattr(self, 'metadata_tabs') and self.metadata_tabs:
+                self.metadata_tabs.setCurrentIndex(0)  # Switch to Metadata tab
+                self.logger.debug(f"Switched to Metadata tab for model {model_id}")
+
+        except Exception as e:
+            self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
 
     def _edit_model(self) -> None:
         """Analyze the currently selected model for errors."""
@@ -1643,6 +1694,8 @@ class MainWindow(QMainWindow):
         dlg.theme_changed.connect(self._on_theme_changed)
         # Connect viewer settings change signal to update VTK scene
         dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
+        # Connect AI settings change signal to reload AI service
+        dlg.ai_settings_changed.connect(self._on_ai_settings_changed)
         dlg.exec_()
 
     def _on_theme_changed(self) -> None:
@@ -1720,6 +1773,26 @@ class MainWindow(QMainWindow):
             self.logger.error(
                 f"FATAL ERROR applying viewer settings: {e}", exc_info=True
             )
+
+    def _on_ai_settings_changed(self) -> None:
+        """Handle AI settings change from preferences dialog."""
+        try:
+            self.logger.info("=== AI SETTINGS CHANGED SIGNAL RECEIVED ===")
+
+            # Reload AI service with new settings
+            if self.ai_service:
+                self.logger.info("Reloading AI service configuration...")
+                # Reload config from QSettings
+                self.ai_service.config = self.ai_service._load_config()
+                # Re-initialize providers with new config
+                self.ai_service._initialize_providers()
+                self.logger.info(f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}")
+            else:
+                self.logger.warning("AI service not available, skipping reload")
+
+            self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
+        except Exception as e:
+            self.logger.error(f"ERROR reloading AI service: {e}", exc_info=True)
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""

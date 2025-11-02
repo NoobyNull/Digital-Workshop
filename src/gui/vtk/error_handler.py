@@ -6,6 +6,7 @@ including graceful handling of OpenGL context loss and proper error logging.
 """
 
 import json
+import logging
 import traceback
 from typing import Dict, Any, Optional, Callable
 from enum import Enum
@@ -329,7 +330,8 @@ class VTKErrorHandler:
 
         def reenable_errors():
             self.suppress_errors = False
-            self.logger.debug("VTK error suppression ended")
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug("VTK error suppression ended")
 
         # Schedule re-enabling of errors
         from PySide6.QtCore import QTimer

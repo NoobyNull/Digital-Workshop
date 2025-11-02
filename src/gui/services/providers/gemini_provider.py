@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 import google.generativeai as genai
 from .base_provider import BaseProvider
 
+
 class GeminiProvider(BaseProvider):
     """Google Gemini vision provider."""
     
@@ -90,3 +91,4 @@ class GeminiProvider(BaseProvider):
         except Exception as e:
             self.logger.error("Error analyzing image with Gemini: %s", str(e))
             raise
+

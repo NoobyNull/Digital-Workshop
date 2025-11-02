@@ -88,7 +88,8 @@ class EventCoordinator:
             if hasattr(self.main_window, 'layout_edit_mode') and self.main_window.layout_edit_mode:
                 self.logger.info("Locking layout edit mode before application close")
                 if hasattr(self.main_window, '_set_layout_edit_mode'):
-                    self.main_window._set_layout_edit_mode(False)
+                    # Don't show message during close
+                    self.main_window._set_layout_edit_mode(False, show_message=False)
                 if hasattr(self.main_window, 'toggle_layout_edit_action'):
                     self.main_window.toggle_layout_edit_action.setChecked(False)
                 # Persist the locked state

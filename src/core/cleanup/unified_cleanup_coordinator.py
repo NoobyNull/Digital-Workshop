@@ -44,9 +44,34 @@ class CleanupError(Exception):
 
 
 @dataclass
+class PhaseError:
+    """Detailed error information for a cleanup phase."""
+
+    phase: str
+    handler: str
+    error_message: str
+    error_type: str
+    timestamp: float = 0.0
+    is_critical: bool = False
+    recovery_attempted: bool = False
+    recovery_successful: bool = False
+
+    def __str__(self) -> str:
+        """Return a formatted error string."""
+        severity = "CRITICAL" if self.is_critical else "ERROR"
+        recovery_info = ""
+        if self.recovery_attempted:
+            recovery_info = f" [Recovery: {'successful' if self.recovery_successful else 'failed'}]"
+        return (
+            f"{severity} in {self.phase} ({self.handler}): {self.error_message} "
+            f"({self.error_type}){recovery_info}"
+        )
+
+
+@dataclass
 class CleanupStats:
     """Statistics for cleanup operations."""
-    
+
     total_phases: int = 0
     completed_phases: int = 0
     failed_phases: int = 0
@@ -54,10 +79,65 @@ class CleanupStats:
     total_duration: float = 0.0
     context_lost: bool = False
     errors: List[str] = None
-    
+    phase_errors: Dict[str, List[PhaseError]] = None
+    handler_stats: Dict[str, Dict[str, Any]] = None
+    verification_report: Optional[Any] = None
+
     def __post_init__(self):
         if self.errors is None:
             self.errors = []
+        if self.phase_errors is None:
+            self.phase_errors = {}
+        if self.handler_stats is None:
+            self.handler_stats = {}
+
+    def add_phase_error(self, phase_error: PhaseError) -> None:
+        """Add a detailed phase error."""
+        phase_name = phase_error.phase
+        if phase_name not in self.phase_errors:
+            self.phase_errors[phase_name] = []
+        self.phase_errors[phase_name].append(phase_error)
+        # Also add to simple errors list for backward compatibility
+        self.errors.append(str(phase_error))
+
+    def get_error_summary(self) -> str:
+        """Get a summary of all errors."""
+        if not self.errors:
+            return "No errors"
+
+        summary_lines = [f"Cleanup completed with {len(self.errors)} error(s):"]
+        for error in self.errors:
+            summary_lines.append(f"  - {error}")
+        return "\n".join(summary_lines)
+
+    def get_detailed_report(self) -> str:
+        """Get a detailed error report."""
+        lines = [
+            "=== Cleanup Statistics ===",
+            f"Total phases: {self.total_phases}",
+            f"Completed: {self.completed_phases}",
+            f"Failed: {self.failed_phases}",
+            f"Skipped: {self.skipped_phases}",
+            f"Duration: {self.total_duration:.3f}s",
+            f"Context lost: {self.context_lost}",
+            ""
+        ]
+
+        if self.phase_errors:
+            lines.append("=== Phase Errors ===")
+            for phase_name, errors in self.phase_errors.items():
+                lines.append(f"\n{phase_name}:")
+                for error in errors:
+                    lines.append(f"  {error}")
+
+        if self.handler_stats:
+            lines.append("\n=== Handler Statistics ===")
+            for handler_name, stats in self.handler_stats.items():
+                lines.append(f"\n{handler_name}:")
+                for key, value in stats.items():
+                    lines.append(f"  {key}: {value}")
+
+        return "\n".join(lines)
 
 
 class CleanupHandler:
@@ -157,8 +237,7 @@ class UnifiedCleanupCoordinator:
                 return True
             return False
     
-    @log_function_call
-    def coordinate_cleanup(self, 
+    def coordinate_cleanup(self,
                           render_window=None,
                           renderer=None,
                           interactor=None,
@@ -166,46 +245,87 @@ class UnifiedCleanupCoordinator:
                           application=None) -> CleanupStats:
         """
         Coordinate the complete cleanup process.
-        
+
         Args:
             render_window: VTK render window (optional)
             renderer: VTK renderer (optional)
             interactor: VTK interactor (optional)
             main_window: Main application window (optional)
             application: Application instance (optional)
-            
+
         Returns:
             CleanupStats with cleanup results
         """
         if self._cleanup_in_progress:
             self.logger.warning("Cleanup already in progress, skipping")
             return self._stats
-        
+
         start_time = time.time()
-        
+
         try:
             self._cleanup_in_progress = True
             self._stats = CleanupStats()
+            self.logger.info("=" * 60)
             self.logger.info("Starting unified cleanup process")
-            
+            self.logger.info(f"Resources: render_window={render_window is not None}, "
+                           f"renderer={renderer is not None}, "
+                           f"interactor={interactor is not None}, "
+                           f"main_window={main_window is not None}")
+            self.logger.info("=" * 60)
+
             # Initialize context and validate
             self._initialize_cleanup_context(render_window, renderer, interactor)
-            
+
             # Execute cleanup phases in dependency order
             success = self._execute_cleanup_phases(
                 render_window, renderer, interactor, main_window, application
             )
-            
+
             # Update statistics
             self._stats.total_duration = time.time() - start_time
-            
+
+            # Log detailed report
+            self.logger.info("=" * 60)
+            self.logger.info("Cleanup Summary:")
+            self.logger.info(f"  Total phases: {self._stats.total_phases}")
+            self.logger.info(f"  Completed: {self._stats.completed_phases}")
+            self.logger.info(f"  Failed: {self._stats.failed_phases}")
+            self.logger.info(f"  Skipped: {self._stats.skipped_phases}")
+            self.logger.info(f"  Duration: {self._stats.total_duration:.3f}s")
+
+            if self._stats.handler_stats:
+                self.logger.info("\nHandler Statistics:")
+                for handler_name, stats in self._stats.handler_stats.items():
+                    self.logger.info(
+                        f"  {handler_name}: "
+                        f"executed={stats['phases_executed']}, "
+                        f"succeeded={stats['phases_succeeded']}, "
+                        f"failed={stats['phases_failed']}, "
+                        f"duration={stats['total_duration']:.3f}s"
+                    )
+
             if success:
-                self.logger.info(f"Unified cleanup completed successfully in {self._stats.total_duration:.3f}s")
+                self.logger.info("Status: CLEANUP SUCCESSFUL ✓")
             else:
-                self.logger.warning(f"Unified cleanup completed with errors in {self._stats.total_duration:.3f}s")
-            
+                self.logger.warning("Status: CLEANUP COMPLETED WITH ERRORS")
+                if self._stats.phase_errors:
+                    self.logger.warning("\nPhase Errors:")
+                    for phase_name, errors in self._stats.phase_errors.items():
+                        for error in errors:
+                            self.logger.warning(f"  {error}")
+
+            self.logger.info("=" * 60)
+
+            # Run verification
+            self.logger.info("Running cleanup verification...")
+            verification_report = self._run_verification()
+            self._stats.verification_report = verification_report
+
+            # Log verification results
+            self.logger.info(verification_report.get_summary())
+
             return self._stats
-            
+
         except Exception as e:
             self.logger.error(f"Error during unified cleanup: {e}", exc_info=True)
             self._stats.errors.append(str(e))
@@ -254,11 +374,11 @@ class UnifiedCleanupCoordinator:
             self.logger.debug(f"VTK context validation error: {e}")
             self._context_state = CleanupContext.UNKNOWN
     
-    def _execute_cleanup_phases(self, render_window, renderer, interactor, 
+    def _execute_cleanup_phases(self, render_window, renderer, interactor,
                                main_window, application) -> bool:
         """
         Execute cleanup phases in dependency order.
-        
+
         Returns:
             True if all phases completed successfully
         """
@@ -270,42 +390,65 @@ class UnifiedCleanupCoordinator:
             CleanupPhase.RESOURCE_CLEANUP,
             CleanupPhase.VERIFICATION
         ]
-        
+
         self._stats.total_phases = len(phases)
         overall_success = True
-        
+        phase_start_time = 0.0
+
         for phase in phases:
+            phase_start_time = time.time()
             try:
-                self.logger.debug(f"Executing cleanup phase: {phase.value}")
+                self.logger.info(f"Starting cleanup phase: {phase.value}")
                 phase_success = self._execute_phase(
                     phase, render_window, renderer, interactor, main_window, application
                 )
-                
+
+                phase_duration = time.time() - phase_start_time
+
                 if phase_success:
                     self._stats.completed_phases += 1
-                    self.logger.debug(f"Phase {phase.value} completed successfully")
+                    self.logger.info(
+                        f"Phase {phase.value} completed successfully ({phase_duration:.3f}s)"
+                    )
                 else:
                     self._stats.skipped_phases += 1
-                    self.logger.debug(f"Phase {phase.value} skipped (context lost or other reason)")
-                    
+                    self.logger.info(
+                        f"Phase {phase.value} skipped (context lost or other reason) ({phase_duration:.3f}s)"
+                    )
+
             except Exception as e:
+                phase_duration = time.time() - phase_start_time
                 self._stats.failed_phases += 1
-                self._stats.errors.append(f"Phase {phase.value}: {str(e)}")
+
+                # Create detailed error record
+                phase_error = PhaseError(
+                    phase=phase.value,
+                    handler="UnifiedCoordinator",
+                    error_message=str(e),
+                    error_type=type(e).__name__,
+                    timestamp=time.time(),
+                    is_critical=(phase == CleanupPhase.PRE_CLEANUP)
+                )
+                self._stats.add_phase_error(phase_error)
+
                 overall_success = False
-                self.logger.error(f"Phase {phase.value} failed: {e}")
-                
+                self.logger.error(
+                    f"Phase {phase.value} failed after {phase_duration:.3f}s: {e}",
+                    exc_info=True
+                )
+
                 # Continue with other phases unless it's a critical error
                 if phase == CleanupPhase.PRE_CLEANUP:
                     self.logger.error("Pre-cleanup failed, aborting remaining phases")
                     break
-        
+
         return overall_success
     
     def _execute_phase(self, phase: CleanupPhase, render_window, renderer, interactor,
                       main_window, application) -> bool:
         """
         Execute a specific cleanup phase.
-        
+
         Returns:
             True if phase completed successfully
         """
@@ -314,34 +457,88 @@ class UnifiedCleanupCoordinator:
             handler for handler in self._handlers.values()
             if handler.enabled and handler.can_handle(phase)
         ]
-        
+
         if not capable_handlers:
             self.logger.debug(f"No handlers available for phase {phase.value}")
             return True
-        
+
         # Sort handlers by dependencies
         sorted_handlers = self._sort_handlers_by_dependencies(capable_handlers)
-        
+
         phase_success = True
-        
-        for handler in sorted_handlers:
+        handler_count = len(sorted_handlers)
+
+        for idx, handler in enumerate(sorted_handlers, 1):
+            handler_start_time = time.time()
             try:
-                self.logger.debug(f"Handler {handler.name} executing phase {phase.value}")
-                
+                self.logger.info(
+                    f"Handler {idx}/{handler_count}: {handler.name} executing phase {phase.value}"
+                )
+
                 # Set context-specific data for handlers
                 self._get_phase_context_data(phase, render_window, renderer,
                                            interactor, main_window, application)
-                
+
                 handler_success = handler.execute(phase, self._context_state)
-                
-                if not handler_success:
-                    self.logger.warning(f"Handler {handler.name} failed phase {phase.value}")
+                handler_duration = time.time() - handler_start_time
+
+                # Track handler statistics
+                if handler.name not in self._stats.handler_stats:
+                    self._stats.handler_stats[handler.name] = {
+                        "phases_executed": 0,
+                        "phases_succeeded": 0,
+                        "phases_failed": 0,
+                        "total_duration": 0.0
+                    }
+
+                self._stats.handler_stats[handler.name]["phases_executed"] += 1
+                self._stats.handler_stats[handler.name]["total_duration"] += handler_duration
+
+                if handler_success:
+                    self._stats.handler_stats[handler.name]["phases_succeeded"] += 1
+                    self.logger.info(
+                        f"Handler {handler.name} completed phase {phase.value} ({handler_duration:.3f}s)"
+                    )
+                else:
+                    self._stats.handler_stats[handler.name]["phases_failed"] += 1
+                    self.logger.warning(
+                        f"Handler {handler.name} failed phase {phase.value} ({handler_duration:.3f}s)"
+                    )
                     phase_success = False
-                    
+
             except Exception as e:
-                self.logger.error(f"Handler {handler.name} error in phase {phase.value}: {e}")
+                handler_duration = time.time() - handler_start_time
+
+                # Create detailed error record
+                phase_error = PhaseError(
+                    phase=phase.value,
+                    handler=handler.name,
+                    error_message=str(e),
+                    error_type=type(e).__name__,
+                    timestamp=time.time(),
+                    is_critical=False
+                )
+                self._stats.add_phase_error(phase_error)
+
+                # Track handler statistics
+                if handler.name not in self._stats.handler_stats:
+                    self._stats.handler_stats[handler.name] = {
+                        "phases_executed": 0,
+                        "phases_succeeded": 0,
+                        "phases_failed": 0,
+                        "total_duration": 0.0
+                    }
+
+                self._stats.handler_stats[handler.name]["phases_executed"] += 1
+                self._stats.handler_stats[handler.name]["phases_failed"] += 1
+                self._stats.handler_stats[handler.name]["total_duration"] += handler_duration
+
+                self.logger.error(
+                    f"Handler {handler.name} error in phase {phase.value} ({handler_duration:.3f}s): {e}",
+                    exc_info=True
+                )
                 phase_success = False
-        
+
         return phase_success
     
     def _sort_handlers_by_dependencies(self, handlers: List[CleanupHandler]) -> List[CleanupHandler]:
@@ -398,10 +595,29 @@ class UnifiedCleanupCoordinator:
         """Get the current cleanup context state."""
         return self._context_state
     
+    def _run_verification(self) -> Any:
+        """
+        Run cleanup verification and resource leak detection.
+
+        Returns:
+            CleanupVerificationReport with verification results
+        """
+        try:
+            from .cleanup_verification import get_cleanup_verifier
+
+            verifier = get_cleanup_verifier()
+            report = verifier.verify_cleanup(self._stats)
+
+            return report
+
+        except Exception as e:
+            self.logger.error(f"Verification failed: {e}", exc_info=True)
+            return None
+
     def get_stats(self) -> CleanupStats:
         """Get cleanup statistics."""
         return self._stats
-    
+
     def enable_handler(self, handler_name: str) -> bool:
         """Enable a specific handler."""
         if handler_name in self._handlers:
