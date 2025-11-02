@@ -121,11 +121,27 @@ class InstallationDetector:
     def _is_system_installation(self) -> bool:
         """
         Check if this is a system-wide installation.
-        
+
         Returns:
             bool: True if system installation
         """
-        # Check if running with elevated privileges (admin)
+        # First, check the registry for explicit installation type marker
+        if platform.system() == 'Windows':
+            try:
+                import winreg
+                try:
+                    # Check HKEY_LOCAL_MACHINE for system installation marker
+                    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Digital Workshop") as key:
+                        install_type, _ = winreg.QueryValueEx(key, "InstallationType")
+                        if install_type == "system":
+                            return True
+                except (OSError, FileNotFoundError):
+                    # Registry key doesn't exist in HKLM
+                    pass
+            except ImportError:
+                pass
+
+        # Fallback: Check if running with elevated privileges (admin)
         try:
             if platform.system() == 'Windows':
                 import ctypes
