@@ -142,11 +142,14 @@ class Application:
             self.qt_app.exit(exit_code)
 
     def cleanup(self) -> None:
-        """Cleanup application resources."""
+        """Cleanup application resources using unified cleanup coordinator."""
         if not self._is_initialized:
             return
 
         try:
+            # Use unified cleanup coordinator for VTK and other resources
+            self._perform_unified_cleanup()
+
             # Cleanup main window
             if self.main_window:
                 self.main_window.close()
@@ -174,6 +177,46 @@ class Application:
         except RuntimeError as e:
             if self.logger:
                 self.logger.error("Error during cleanup: %s", str(e))
+
+    def _perform_unified_cleanup(self) -> None:
+        """Perform unified cleanup using the cleanup coordinator."""
+        try:
+            from src.core.cleanup.unified_cleanup_coordinator import UnifiedCleanupCoordinator
+
+            coordinator = UnifiedCleanupCoordinator()
+
+            # Get VTK resources from main window if available
+            render_window = None
+            renderer = None
+            interactor = None
+
+            if self.main_window and hasattr(self.main_window, 'viewer'):
+                viewer = self.main_window.viewer
+                if viewer and hasattr(viewer, 'render_window'):
+                    render_window = viewer.render_window
+                if viewer and hasattr(viewer, 'renderer'):
+                    renderer = viewer.renderer
+                if viewer and hasattr(viewer, 'interactor'):
+                    interactor = viewer.interactor
+
+            # Coordinate cleanup with all resources
+            stats = coordinator.coordinate_cleanup(
+                render_window=render_window,
+                renderer=renderer,
+                interactor=interactor,
+                main_window=self.main_window,
+                application=self
+            )
+
+            if self.logger:
+                self.logger.info(
+                    f"Unified cleanup completed: {stats.completed_phases} phases, "
+                    f"{stats.failed_phases} failures, {stats.total_duration:.3f}s"
+                )
+
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Unified cleanup failed, continuing with standard cleanup: {e}")
 
     def _create_qt_application(self, argv: list) -> bool:
         """Create the QApplication instance.

@@ -38,9 +38,11 @@ class PreferencesDialog(QDialog):
     Application preferences dialog with multiple tabs.
     Emits theme_changed whenever the Theming tab applies updates.
     Emits viewer_settings_changed whenever viewer settings are modified.
+    Emits ai_settings_changed whenever AI settings are modified.
     """
     theme_changed = Signal()
     viewer_settings_changed = Signal()
+    ai_settings_changed = Signal()  # New signal for AI settings changes
 
     def __init__(self, parent=None, on_reset_layout=None):
         super().__init__(parent)
@@ -203,6 +205,10 @@ class PreferencesDialog(QDialog):
             if hasattr(self, 'ai_tab'):
                 self.ai_tab.save_settings()
                 logger.info("✓ AI settings saved")
+                # Emit AI settings changed signal
+                logger.info("Emitting ai_settings_changed signal...")
+                self.ai_settings_changed.emit()
+                logger.info("✓ ai_settings_changed signal emitted")
 
             # Emit viewer settings changed signal
             logger.info("Emitting viewer_settings_changed signal...")
@@ -2053,11 +2059,23 @@ class AITab(QWidget):
         api_label.setStyleSheet("font-size: 11pt;")
         api_layout.addWidget(api_label)
 
+        # Environment variable status
+        env_status_desc = QLabel(
+            "API keys can be provided via environment variables (recommended for security):\n"
+            "• GOOGLE_API_KEY for Gemini\n"
+            "• OPENAI_API_KEY for OpenAI\n"
+            "• ANTHROPIC_API_KEY for Anthropic\n"
+            "• OPENROUTER_API_KEY for OpenRouter"
+        )
+        env_status_desc.setWordWrap(True)
+        env_status_desc.setStyleSheet("font-size: 9pt; color: #666;")
+        api_layout.addWidget(env_status_desc)
+
         # API Key input
         api_key_form = QFormLayout()
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.Password)
-        self.api_key_edit.setPlaceholderText("Enter API key for selected provider")
+        self.api_key_edit.setPlaceholderText("Enter API key for selected provider (or use environment variable)")
         api_key_form.addRow("API Key:", self.api_key_edit)
         api_layout.addLayout(api_key_form)
 
@@ -2189,7 +2207,7 @@ class AITab(QWidget):
             self.model_combo.addItem("Default Model", "default")
 
     def _load_settings(self):
-        """Load current AI settings from QSettings (excluding API keys)."""
+        """Load current AI settings from QSettings."""
         try:
             from PySide6.QtCore import QSettings
 
@@ -2197,13 +2215,35 @@ class AITab(QWidget):
 
             # Load provider selection
             provider_id = settings.value("ai/provider_id", "openai", type=str)
+            if self.logger:
+                self.logger.info(f"Loaded provider_id from QSettings: {provider_id}")
             provider_index = self.provider_combo.findData(provider_id)
             if provider_index >= 0:
                 self.provider_combo.setCurrentIndex(provider_index)
 
-            # NOTE: API keys are NOT loaded from QSettings for security reasons
-            # API keys should be provided via environment variables or secure storage
-            self.api_key_edit.setText("")
+            # Load API key from QSettings (user-entered key takes precedence over env var)
+            api_key = settings.value("ai/api_key", "", type=str)
+            if self.logger:
+                self.logger.info(f"Loaded api_key from QSettings: {'[PRESENT]' if api_key else '[EMPTY]'} (length: {len(api_key)})")
+
+            if api_key:
+                self.api_key_edit.setText(api_key)
+                if self.logger:
+                    self.logger.info(f"✓ API key loaded from QSettings (length: {len(api_key)})")
+            else:
+                # If no saved key, check environment variable
+                import os
+                env_var_map = {
+                    "openai": "OPENAI_API_KEY",
+                    "openrouter": "OPENROUTER_API_KEY",
+                    "gemini": "GOOGLE_API_KEY",
+                    "anthropic": "ANTHROPIC_API_KEY"
+                }
+                env_key = os.getenv(env_var_map.get(provider_id, ""), "")
+                if env_key:
+                    self.api_key_edit.setText(env_key)
+                    if self.logger:
+                        self.logger.info(f"✓ API key loaded from environment variable")
 
             # Load model
             model_id = settings.value("ai/model_id", "", type=str)
@@ -2231,13 +2271,13 @@ class AITab(QWidget):
             self.enable_batch_check.setChecked(enable_batch)
 
             if self.logger:
-                self.logger.info("AI settings loaded from QSettings (API keys excluded for security)")
+                self.logger.info("✓ AI settings loaded from QSettings")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to load AI settings: {e}")
+                self.logger.error(f"Failed to load AI settings: {e}", exc_info=True)
 
     def save_settings(self):
-        """Save AI settings to QSettings (excluding API keys for security)."""
+        """Save AI settings to QSettings."""
         try:
             from PySide6.QtCore import QSettings
 
@@ -2245,15 +2285,28 @@ class AITab(QWidget):
 
             # Save provider selection
             provider_id = self.provider_combo.currentData()
+            if self.logger:
+                self.logger.info(f"Saving provider_id: {provider_id}")
             if provider_id:
                 settings.setValue("ai/provider_id", provider_id)
 
-            # NOTE: API keys are NOT saved to QSettings for security reasons
-            # API keys should be provided via environment variables or secure storage
-            # The API key field is cleared on load to prevent accidental exposure
+            # Save API key if provided by user
+            api_key = self.api_key_edit.text().strip()
+            if self.logger:
+                self.logger.info(f"API key from field: {'[PRESENT]' if api_key else '[EMPTY]'} (length: {len(api_key)})")
+
+            if api_key:
+                settings.setValue("ai/api_key", api_key)
+                if self.logger:
+                    self.logger.info(f"✓ API key saved to preferences (length: {len(api_key)})")
+            else:
+                if self.logger:
+                    self.logger.warning("API key field is empty, not saving")
 
             # Save model selection
             model_id = self.model_combo.currentData() or self.model_combo.currentText()
+            if self.logger:
+                self.logger.info(f"Saving model_id: {model_id}")
             if model_id:
                 settings.setValue("ai/model_id", model_id)
 
@@ -2264,14 +2317,18 @@ class AITab(QWidget):
             # Save batch settings
             settings.setValue("ai/batch_size", self.batch_size_spin.value())
             settings.setValue("ai/enable_batch", self.enable_batch_check.isChecked())
-            
+
             settings.sync()
-            
+
             if self.logger:
-                self.logger.info("AI settings saved to QSettings")
+                self.logger.info("✓ AI settings synced to QSettings")
+                # Verify what was saved
+                saved_provider = settings.value("ai/provider_id", "", type=str)
+                saved_api_key = settings.value("ai/api_key", "", type=str)
+                self.logger.info(f"Verification - provider_id: {saved_provider}, api_key: {'[PRESENT]' if saved_api_key else '[EMPTY]'}")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to save AI settings: {e}")
+                self.logger.error(f"Failed to save AI settings: {e}", exc_info=True)
 
     def _on_provider_changed(self, index: int):
         """Handle provider selection change."""
@@ -2289,20 +2346,38 @@ class AITab(QWidget):
     def _test_connection(self):
         """Test AI provider connection."""
         try:
+            import os
             from src.gui.services.ai_description_service import AIDescriptionService
-            
+
             provider_id = self.provider_combo.currentData()
             api_key = self.api_key_edit.text().strip()
             model_id = self.model_combo.currentData() or self.model_combo.currentText()
-            
+
             if not provider_id:
                 self._show_test_result("Please select a provider", "error")
                 return
-            
+
+            # Check for API key from environment variable if not entered in UI
             if not api_key:
-                self._show_test_result("Please enter an API key", "error")
-                return
-            
+                env_var_map = {
+                    "openai": "OPENAI_API_KEY",
+                    "openrouter": "OPENROUTER_API_KEY",
+                    "gemini": "GOOGLE_API_KEY",
+                    "anthropic": "ANTHROPIC_API_KEY"
+                }
+                env_var = env_var_map.get(provider_id)
+                if env_var:
+                    api_key = os.getenv(env_var, "").strip()
+                    if api_key:
+                        self._show_test_result(f"✓ Using API key from environment variable: {env_var}", "info")
+
+                if not api_key:
+                    self._show_test_result(
+                        f"Please enter an API key or set the {env_var} environment variable",
+                        "error"
+                    )
+                    return
+
             if not model_id:
                 self._show_test_result("Please select or enter a model", "error")
                 return
@@ -2328,11 +2403,13 @@ class AITab(QWidget):
     def _show_test_result(self, message: str, status: str):
         """Show test result message."""
         self.test_result_label.setText(message)
-        
+
         if status == "success":
             self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(76, 175, 80, 0.1); border-radius: 4px; color: #4CAF50;")
         elif status == "error":
             self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(244, 67, 54, 0.1); border-radius: 4px; color: #f44336;")
+        elif status == "info":
+            self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(33, 150, 243, 0.1); border-radius: 4px; color: #2196F3;")
         else:
             self.test_result_label.setStyleSheet("padding: 8px; background-color: rgba(158, 158, 158, 0.1); border-radius: 4px;")
 

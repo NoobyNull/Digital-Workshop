@@ -16,6 +16,7 @@ Features:
 """
 
 import json
+import logging
 import time
 import gc
 from pathlib import Path
@@ -137,6 +138,10 @@ class ImportThumbnailService:
     
     def _log_json(self, event: str, data: dict) -> None:
         """Log event in JSON format as required by quality standards."""
+        # Only log if DEBUG level is enabled to reduce verbosity
+        if not self.logger.isEnabledFor(logging.DEBUG):
+            return
+
         log_entry = {
             "event": event,
             "timestamp": time.time(),
@@ -266,14 +271,15 @@ class ImportThumbnailService:
                 "hash": file_hash[:16] + "...",
                 "force_regenerate": force_regenerate
             })
-            
+
             thumbnail_path = self.thumbnail_generator.generate_thumbnail(
                 model_path=model_path,
                 file_hash=file_hash,
                 output_dir=self._storage_dir,
                 background=background,
                 size=size or self.DEFAULT_THUMBNAIL_SIZE,
-                material=material
+                material=material,
+                force_regenerate=force_regenerate
             )
             
             generation_time = time.time() - start_time

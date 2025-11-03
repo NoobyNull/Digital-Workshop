@@ -7,6 +7,7 @@ adaptive performance optimization based on system capabilities.
 """
 
 import gc
+import logging
 import os
 import psutil
 import time
@@ -223,7 +224,8 @@ class PerformanceMonitor:
             }
             
         except Exception as e:
-            self.logger.debug(f"Failed to detect GPU info: {e}")
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(f"Failed to detect GPU info: {e}")
             # Absolute fallback
             memory = psutil.virtual_memory()
             return {
@@ -424,7 +426,8 @@ class PerformanceMonitor:
             'metadata': metadata or {}
         }
 
-        self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
         return operation_id
 
     def end_operation(self, operation_id: str, success: bool = True,

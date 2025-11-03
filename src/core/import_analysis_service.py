@@ -22,6 +22,7 @@ Example:
 """
 
 import json
+import logging
 import time
 import gc
 import math
@@ -255,6 +256,10 @@ class ImportAnalysisService:
     
     def _log_json(self, event: str, data: dict) -> None:
         """Log event in JSON format as required by quality standards."""
+        # Only log if DEBUG level is enabled to reduce verbosity
+        if not self.logger.isEnabledFor(logging.DEBUG):
+            return
+
         log_entry = {
             "event": event,
             "timestamp": time.time(),

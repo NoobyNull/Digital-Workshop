@@ -6,6 +6,7 @@ for the float caching system. It measures the actual performance
 bottlenecks and validates improvement assumptions.
 """
 
+import logging
 import time
 import threading
 from dataclasses import dataclass
@@ -148,7 +149,8 @@ class FloatCacheAnalyzer:
         if context['object_creation_start']:
             creation_time = time.time() - context['object_creation_start']
             context['object_creation_time'] = creation_time
-            self.logger.debug(f"Object creation completed in {creation_time:.3f}s")
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(f"Object creation completed in {creation_time:.3f}s")
     
     def mark_array_creation_start(self, context: Dict[str, Any]) -> None:
         """Mark the start of NumPy array creation."""

@@ -164,11 +164,16 @@ class MetadataEditorWidget(QWidget):
 
         # Preview actions
         preview_button_layout = QHBoxLayout()
-        
+
         self.generate_preview_button = QPushButton("Generate Preview")
         self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
         preview_button_layout.addWidget(self.generate_preview_button)
-        
+
+        self.run_ai_analysis_button = QPushButton("Run AI Analysis")
+        self.run_ai_analysis_button.clicked.connect(self._run_ai_analysis)
+        self.run_ai_analysis_button.setToolTip("Analyze the preview image with AI to generate metadata")
+        preview_button_layout.addWidget(self.run_ai_analysis_button)
+
         preview_button_layout.addStretch()
         group_layout.addLayout(preview_button_layout)
 
@@ -726,15 +731,36 @@ class MetadataEditorWidget(QWidget):
                 QMessageBox.warning(self, "Error", "Failed to compute file hash")
                 return
             
-            # Generate thumbnail
+            # Load thumbnail settings from preferences
+            from src.core.application_config import ApplicationConfig
+            from PySide6.QtCore import QSettings
+
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+
+            # Get current thumbnail preferences
+            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+
+            # Generate thumbnail with current preferences
             thumbnail_service = ImportThumbnailService()
             result = thumbnail_service.generate_thumbnail(
                 model_path=model_path,
                 file_hash=file_hash,
+                material=material,
+                background=bg_image,
                 force_regenerate=True
             )
             
             if result.success:
+                # Save thumbnail path to database
+                if result.thumbnail_path:
+                    self.db_manager.update_model_thumbnail(
+                        self.current_model_id,
+                        str(result.thumbnail_path)
+                    )
+                    self.logger.info(f"Saved thumbnail path to database: {result.thumbnail_path}")
+
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
                 QMessageBox.information(
@@ -756,6 +782,138 @@ class MetadataEditorWidget(QWidget):
             error_msg = f"Exception during preview generation: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self, "Error", error_msg)
+
+    def _run_ai_analysis(self) -> None:
+        """Run AI analysis on the preview image to generate metadata."""
+        if self.current_model_id is None:
+            QMessageBox.warning(self, "Warning", "No model selected")
+            return
+
+        try:
+            # Get the thumbnail path
+            model = self.db_manager.get_model(self.current_model_id)
+            if not model:
+                QMessageBox.warning(self, "Error", "Model not found in database")
+                return
+
+            thumbnail_path = model.get('thumbnail_path')
+            if not thumbnail_path or not Path(thumbnail_path).exists():
+                QMessageBox.warning(
+                    self,
+                    "No Preview",
+                    "Please generate a preview image first before running AI analysis."
+                )
+                return
+
+            # Get AI service from parent window
+            ai_service = self._get_ai_service()
+            if not ai_service:
+                QMessageBox.warning(
+                    self,
+                    "AI Service Unavailable",
+                    "AI description service is not available. Please configure an AI provider in settings."
+                )
+                return
+
+            # Check if any provider is available and configured
+            if not ai_service.providers:
+                QMessageBox.warning(
+                    self,
+                    "No AI Providers Available",
+                    "No AI providers are configured. Please set an API key environment variable:\n"
+                    "- GOOGLE_API_KEY for Gemini\n"
+                    "- OPENAI_API_KEY for OpenAI\n"
+                    "- ANTHROPIC_API_KEY for Anthropic"
+                )
+                return
+
+            # Use the first available provider if current_provider is not set
+            if not ai_service.current_provider:
+                ai_service.current_provider = next(iter(ai_service.providers.values()))
+                self.logger.info(f"Set current provider to: {list(ai_service.providers.keys())[0]}")
+
+            # Check if provider is configured
+            if not ai_service.current_provider.is_configured():
+                QMessageBox.warning(
+                    self,
+                    "AI Provider Not Configured",
+                    "The selected AI provider is not properly configured. Please check your API key settings."
+                )
+                return
+
+            # Disable button during analysis
+            self.run_ai_analysis_button.setEnabled(False)
+            self.run_ai_analysis_button.setText("Analyzing...")
+
+            # Run analysis
+            self.logger.info(f"Running AI analysis on preview for model {self.current_model_id}")
+            result = ai_service.analyze_image(thumbnail_path)
+
+            # Apply results to metadata
+            self._apply_ai_results(result)
+
+            self.logger.info(f"AI analysis completed for model {self.current_model_id}")
+            QMessageBox.information(
+                self,
+                "Analysis Complete",
+                "AI analysis completed successfully. Metadata has been updated."
+            )
+
+        except ValueError as e:
+            QMessageBox.warning(self, "Configuration Error", str(e))
+            self.logger.warning(f"AI analysis configuration error: {e}")
+        except Exception as e:
+            error_msg = f"AI analysis failed: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, "Error", error_msg)
+        finally:
+            # Re-enable button
+            self.run_ai_analysis_button.setEnabled(True)
+            self.run_ai_analysis_button.setText("Run AI Analysis")
+
+    def _get_ai_service(self):
+        """Get the AI description service from the parent window."""
+        try:
+            # Try to get from parent window
+            parent = self.parent()
+            while parent:
+                if hasattr(parent, 'ai_service'):
+                    return parent.ai_service
+                parent = parent.parent()
+
+            # If not found in parent hierarchy, try to create one
+            from src.gui.services.ai_description_service import AIDescriptionService
+            return AIDescriptionService()
+        except Exception as e:
+            self.logger.error(f"Failed to get AI service: {e}")
+            return None
+
+    def _apply_ai_results(self, result: Dict[str, Any]) -> None:
+        """Apply AI analysis results to metadata fields."""
+        try:
+            # Update title if provided
+            if 'title' in result and result['title']:
+                self.title_field.setText(result['title'])
+                self.logger.info(f"Updated title: {result['title']}")
+
+            # Update description if provided
+            if 'description' in result and result['description']:
+                self.description_field.setPlainText(result['description'])
+                self.logger.info(f"Updated description: {result['description'][:50]}...")
+
+            # Update keywords if provided
+            if 'metadata_keywords' in result and result['metadata_keywords']:
+                keywords_str = ', '.join(result['metadata_keywords'])
+                self.keywords_field.setText(keywords_str)
+                self.logger.info(f"Updated keywords: {keywords_str}")
+
+            # Mark as changed
+            self.metadata_changed.emit(self.current_model_id)
+            self.logger.info(f"Applied AI analysis results to model {self.current_model_id}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to apply AI results: {e}")
+            raise
 
     def cleanup(self) -> None:
         """Clean up resources before widget destruction."""

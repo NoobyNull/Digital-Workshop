@@ -6,11 +6,15 @@ Provides AI-powered image analysis capabilities for the application.
 from .base_provider import BaseProvider
 from .openai_provider import OpenAIProvider
 from .openrouter_provider import OpenRouterProvider
+from .gemini_provider import GeminiProvider
+from .anthropic_provider import AnthropicProvider
 
 __all__ = [
     'BaseProvider',
     'OpenAIProvider',
     'OpenRouterProvider',
+    'GeminiProvider',
+    'AnthropicProvider',
     'get_provider_class'
 ]
 
@@ -19,8 +23,8 @@ def get_provider_class(provider_id: str):
     provider_mapping = {
         'openai': OpenAIProvider,
         'openrouter': OpenRouterProvider,
-        'anthropic': None,  # To be implemented
-        'gemini': None,     # To be implemented
+        'anthropic': AnthropicProvider,
+        'gemini': GeminiProvider,
         'xai': None,        # To be implemented
         'zai': None,        # To be implemented
         'perplexity': None, # To be implemented

@@ -18,6 +18,8 @@ from src.gui.widgets.add_tool_dialog import AddToolDialog
 from .tool_library_manager import ToolLibraryManager, Tool
 from .personal_toolbox_manager import PersonalToolboxManager
 from .unit_converter import UnitConverter
+from src.core.services.tab_data_manager import TabDataManager
+from src.core.database_manager import get_database_manager
 
 logger = get_logger(__name__)
 
@@ -29,28 +31,30 @@ class FeedsAndSpeedsWidget(QWidget):
         """Initialize the widget."""
         super().__init__(parent)
         self.logger = logger
-        
+
         # Initialize database path
         self.db_path = str(Path.home() / ".digital_workshop" / "tools.db")
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize managers
         self.tool_database_manager = ToolDatabaseManager(self.db_path)
         self.provider_repo = ProviderRepository(self.db_path)
         self.personal_toolbox_manager = PersonalToolboxManager()
         self.unit_converter = UnitConverter()
-        
+        self.tab_data_manager = TabDataManager(get_database_manager())
+
         # Keep old manager for backward compatibility during migration
         self.tool_library_manager = ToolLibraryManager()
-        
+
         # Load default library (import if needed)
         self._load_default_library()
-        
+
         # UI state
         self.is_metric = self.personal_toolbox_manager.get_auto_convert_to_metric()
         self.selected_tool: Optional[Dict[str, Any]] = None
         self.selected_provider_id: Optional[int] = None
-        
+        self.current_project_id: Optional[str] = None
+
         # Setup UI
         self._setup_ui()
     
@@ -585,6 +589,80 @@ Calculated:
   Surface Speed: {self.unit_converter.format_value(surface_speed, self.is_metric, 'feed_rate')}
   Material Removal Rate: {(stepdown * stepover * feed):.2f} cu.in/min
         """
-        
+
         return results.strip()
+
+    def set_current_project(self, project_id: str) -> None:
+        """Set the current project for saving/loading data."""
+        self.current_project_id = project_id
+
+    def save_to_project(self) -> None:
+        """Save feeds and speeds data to current project."""
+        if not self.current_project_id:
+            QMessageBox.warning(self, "No Project", "Please select a project first")
+            return
+
+        # Gather data from personal toolbox
+        tools_data = self.personal_toolbox_manager.get_all_tools()
+        presets_data = self.personal_toolbox_manager.get_all_presets()
+
+        # Create data structure
+        feeds_speeds_data = {
+            'tools': tools_data,
+            'presets': presets_data,
+            'is_metric': self.is_metric
+        }
+
+        # Save to project
+        success, message = self.tab_data_manager.save_tab_data_to_project(
+            project_id=self.current_project_id,
+            tab_name="Feed and Speed",
+            data=feeds_speeds_data,
+            filename="feeds_and_speeds.json",
+            category="Feed and Speed"
+        )
+
+        if success:
+            QMessageBox.information(self, "Success", message)
+        else:
+            QMessageBox.critical(self, "Error", message)
+
+    def load_from_project(self) -> None:
+        """Load feeds and speeds data from current project."""
+        if not self.current_project_id:
+            QMessageBox.warning(self, "No Project", "Please select a project first")
+            return
+
+        # Load from project
+        success, data, message = self.tab_data_manager.load_tab_data_from_project(
+            project_id=self.current_project_id,
+            filename="feeds_and_speeds.json"
+        )
+
+        if not success:
+            QMessageBox.warning(self, "Load Failed", message)
+            return
+
+        # Restore data to personal toolbox
+        try:
+            tools_data = data.get('tools', [])
+            presets_data = data.get('presets', [])
+
+            # Clear existing tools and presets
+            self.personal_toolbox_manager.clear_all()
+
+            # Restore tools
+            for tool in tools_data:
+                self.personal_toolbox_manager.add_tool(tool)
+
+            # Restore presets
+            for preset in presets_data:
+                self.personal_toolbox_manager.add_preset(preset)
+
+            # Refresh UI
+            self._refresh_tool_list()
+
+            QMessageBox.information(self, "Success", message)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to restore data: {str(e)}")
 

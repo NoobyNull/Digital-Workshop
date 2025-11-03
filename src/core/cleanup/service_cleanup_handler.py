@@ -72,31 +72,49 @@ class ServiceCleanupHandler(CleanupHandler):
         """Cleanup all services."""
         try:
             overall_success = True
-            
+            cleanup_results = {}
+
             # Cleanup application bootstrap services
+            self.logger.debug("Cleaning up bootstrap services...")
             success = self._cleanup_bootstrap_services()
+            cleanup_results["bootstrap_services"] = success
             overall_success = overall_success and success
-            
+
             # Cleanup background threads
+            self.logger.debug("Cleaning up background threads...")
             success = self._cleanup_background_threads()
+            cleanup_results["background_threads"] = success
             overall_success = overall_success and success
-            
+
             # Cleanup caches
+            self.logger.debug("Cleaning up caches...")
             success = self._cleanup_caches()
+            cleanup_results["caches"] = success
             overall_success = overall_success and success
-            
+
             # Cleanup database connections
+            self.logger.debug("Cleaning up database connections...")
             success = self._cleanup_database_connections()
+            cleanup_results["database_connections"] = success
             overall_success = overall_success and success
-            
+
             # Cleanup memory manager
+            self.logger.debug("Cleaning up memory manager...")
             success = self._cleanup_memory_manager()
+            cleanup_results["memory_manager"] = success
             overall_success = overall_success and success
-            
+
+            # Log results
+            failed_services = [name for name, success in cleanup_results.items() if not success]
+            if failed_services:
+                self.logger.warning(f"Failed to cleanup {len(failed_services)} service(s): {', '.join(failed_services)}")
+            else:
+                self.logger.info("All services cleaned up successfully")
+
             return overall_success
-            
+
         except Exception as e:
-            self.logger.error(f"Service cleanup failed: {e}")
+            self.logger.error(f"Service cleanup failed: {e}", exc_info=True)
             return False
     
     def _cleanup_bootstrap_services(self) -> bool:

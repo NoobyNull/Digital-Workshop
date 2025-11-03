@@ -122,12 +122,52 @@ class DatabaseOperations:
                     )
                 """)
 
+                # Create projects table for project management
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS projects (
+                        id TEXT PRIMARY KEY,
+                        name TEXT UNIQUE NOT NULL,
+                        base_path TEXT,
+                        import_tag TEXT,
+                        original_path TEXT,
+                        structure_type TEXT,
+                        import_date DATETIME,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+                # Create files table for file tracking
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        project_id TEXT NOT NULL,
+                        file_path TEXT NOT NULL,
+                        file_name TEXT NOT NULL,
+                        file_size INTEGER,
+                        file_hash TEXT,
+                        status TEXT DEFAULT 'pending',
+                        link_type TEXT,
+                        original_path TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+                    )
+                """)
+
                 # Create indexes
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_thumbnail_path ON models(thumbnail_path)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_category ON model_metadata(category)")
+
+                # Create indexes for projects and files
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
 
                 # Run migrations
                 self.migrate_schema(cursor)
@@ -206,6 +246,56 @@ class DatabaseOperations:
                 cursor.execute("ALTER TABLE models ADD COLUMN linked_model_id INTEGER REFERENCES models(id)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_linked_model_id ON models(linked_model_id)")
                 logger.info("linked_model_id column added successfully")
+
+            # Migration 5: Ensure projects table exists (for project management)
+            cursor.execute("PRAGMA table_info(projects)")
+            projects_columns = cursor.fetchall()
+
+            if not projects_columns:
+                logger.info("Creating projects table")
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS projects (
+                        id TEXT PRIMARY KEY,
+                        name TEXT UNIQUE NOT NULL,
+                        base_path TEXT,
+                        import_tag TEXT,
+                        original_path TEXT,
+                        structure_type TEXT,
+                        import_date DATETIME,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)")
+                logger.info("projects table created successfully")
+
+            # Migration 6: Ensure files table exists (for file tracking)
+            cursor.execute("PRAGMA table_info(files)")
+            files_columns = cursor.fetchall()
+
+            if not files_columns:
+                logger.info("Creating files table")
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        project_id TEXT NOT NULL,
+                        file_path TEXT NOT NULL,
+                        file_name TEXT NOT NULL,
+                        file_size INTEGER,
+                        file_hash TEXT,
+                        status TEXT DEFAULT 'pending',
+                        link_type TEXT,
+                        original_path TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+                    )
+                """)
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
+                logger.info("files table created successfully")
 
         except sqlite3.Error as e:
             logger.error(f"Failed to migrate database schema: {str(e)}")

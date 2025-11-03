@@ -158,17 +158,27 @@ class VTKCleanupHandler(CleanupHandler):
         try:
             if self._resource_tracker:
                 self.logger.debug("Cleaning up VTK resources via resource tracker")
-                
+
                 cleanup_stats = self._resource_tracker.cleanup_all_resources()
-                
+
+                success_count = cleanup_stats.get('success', 0)
+                error_count = cleanup_stats.get('errors', 0)
+
                 self.logger.info(
                     f"Resource tracker cleanup completed: "
-                    f"{cleanup_stats.get('success', 0)} cleaned, "
-                    f"{cleanup_stats.get('errors', 0)} errors"
+                    f"{success_count} cleaned, {error_count} errors"
                 )
-                
+
+                # Log details about failed resources if any
+                if error_count > 0:
+                    failed_resources = cleanup_stats.get('failed_resources', [])
+                    if failed_resources:
+                        self.logger.warning(f"Failed to cleanup {error_count} resource(s):")
+                        for resource_info in failed_resources:
+                            self.logger.warning(f"  - {resource_info}")
+
         except Exception as e:
-            self.logger.warning(f"Resource tracker cleanup failed: {e}")
+            self.logger.warning(f"Resource tracker cleanup failed: {e}", exc_info=True)
     
     def _cleanup_resource_tracker_basic(self) -> None:
         """Basic resource tracker cleanup without OpenGL operations."""

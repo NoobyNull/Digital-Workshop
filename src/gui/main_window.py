@@ -88,6 +88,15 @@ class MainWindow(QMainWindow):
         self.activity_logger = get_activity_logger(__name__)
         self.logger.info("Initializing main window")
 
+        # Initialize AI Description Service
+        try:
+            from src.gui.services.ai_description_service import AIDescriptionService
+            self.ai_service = AIDescriptionService()
+            self.logger.info("AI Description Service initialized")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize AI Description Service: {e}")
+            self.ai_service = None
+
         # Hide window during initialization to prevent blinking
         self.hide()
 
@@ -212,8 +221,10 @@ class MainWindow(QMainWindow):
                 settings.value("ui/layout_edit_mode", False, type=bool)
             )
             # When saved value is True, enable edit mode; otherwise lock
+            # Don't show message during initialization to avoid overlay artifacts
             self._set_layout_edit_mode(
-                bool(settings.value("ui/layout_edit_mode", False, type=bool))
+                bool(settings.value("ui/layout_edit_mode", False, type=bool)),
+                show_message=False
             )
             if hasattr(self, "toggle_layout_edit_action"):
                 self.toggle_layout_edit_action.setChecked(
@@ -222,7 +233,7 @@ class MainWindow(QMainWindow):
         except Exception:
             # If settings fail, lock layout
             try:
-                self._set_layout_edit_mode(False)
+                self._set_layout_edit_mode(False, show_message=False)
             except Exception:
                 pass
 
@@ -302,6 +313,7 @@ class MainWindow(QMainWindow):
 
         # Set up individual dock widgets using native Qt
         self._setup_model_library_dock()
+        self._setup_project_manager_dock()
         self._setup_properties_dock()
         self._setup_metadata_dock()
 
@@ -368,6 +380,66 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to setup model library dock: {e}")
+
+    def _setup_project_manager_dock(self) -> None:
+        """Set up project manager dock using native Qt."""
+        try:
+            self.project_manager_dock = QDockWidget("Project Manager", self)
+            self.project_manager_dock.setObjectName("ProjectManagerDock")
+
+            # Configure with native Qt dock features
+            self.project_manager_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea
+                | Qt.RightDockWidgetArea
+                | Qt.TopDockWidgetArea
+                | Qt.BottomDockWidgetArea
+            )
+            self.project_manager_dock.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
+            )
+
+            # Create project manager widget
+            try:
+                from src.gui.project_manager import ProjectTreeWidget
+                from src.core.database.database_manager import DatabaseManager
+
+                db_manager = get_database_manager()
+                self.project_manager_widget = ProjectTreeWidget(db_manager, self)
+
+                # Connect signals
+                self.project_manager_widget.project_opened.connect(
+                    self._on_project_opened
+                )
+                self.project_manager_widget.project_created.connect(
+                    self._on_project_created
+                )
+                self.project_manager_widget.project_deleted.connect(
+                    self._on_project_deleted
+                )
+                self.project_manager_widget.tab_switch_requested.connect(
+                    self._on_tab_switch_requested
+                )
+
+                self.project_manager_dock.setWidget(self.project_manager_widget)
+                self.logger.info("Project manager dock created successfully")
+
+            except Exception as e:
+                self.logger.warning(f"Failed to create project manager widget: {e}")
+                # Native Qt fallback
+                fallback_widget = QLabel("Project Manager\n\nComponent unavailable.")
+                fallback_widget.setAlignment(Qt.AlignCenter)
+                self.project_manager_dock.setWidget(fallback_widget)
+
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.LeftDockWidgetArea, self.project_manager_dock)
+
+            # Connect visibility signal for menu synchronization
+            self.project_manager_dock.visibilityChanged.connect(
+                lambda visible: self._update_project_manager_action_state()
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to setup project manager dock: {e}")
 
     def _setup_properties_dock(self) -> None:
         """Set up properties dock using native Qt."""
@@ -780,8 +852,13 @@ class MainWindow(QMainWindow):
 
     # Snapping system removed - Qt handles dock management automatically
 
-    def _set_layout_edit_mode(self, enabled: bool) -> None:
-        """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable."""
+    def _set_layout_edit_mode(self, enabled: bool, show_message: bool = False) -> None:
+        """Toggle Layout Edit Mode: when off, docks are locked; when on, docks movable/floatable.
+
+        Args:
+            enabled: Whether to enable layout edit mode
+            show_message: Whether to show a status message (default False to avoid initialization artifacts)
+        """
         try:
             self.layout_edit_mode = bool(enabled)
             # Use native Qt dock features for layout edit mode
@@ -807,14 +884,16 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
 
-            # Status feedback
-            try:
-                self.statusBar().showMessage(
-                    "Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked",
-                    2000,
-                )
-            except Exception:
-                pass
+            # Status feedback - only show message if explicitly requested
+            # This prevents overlay artifacts during initialization
+            if show_message:
+                try:
+                    self.statusBar().showMessage(
+                        "Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked",
+                        2000,
+                    )
+                except Exception:
+                    pass
         except Exception as e:
             self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
 
@@ -1103,6 +1182,9 @@ class MainWindow(QMainWindow):
             settings.setValue("window_geometry", self.saveGeometry())
             settings.setValue("window_state", self.saveState())
 
+            # CRITICAL FIX: Also save dock state separately for deferred restoration
+            settings.setValue("window/dock_state", self.saveState())
+
             # Save current tab index
             if hasattr(self, "hero_tabs") and self.hero_tabs:
                 settings.setValue(
@@ -1127,30 +1209,63 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event) -> None:
         """Handle window show event - geometry restoration now happens during init.
-        
+
         FIX: Window geometry restoration has been moved to __init__ phase for proper
         timing coordination. This showEvent now only handles show-specific logic.
+
+        CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
+        when multiple widgets are being repainted simultaneously during window show.
         """
         import time
         start_time = time.time()
-        
+
         try:
             # FIX: Window geometry restoration now happens during initialization
             # Only log that we're showing the window
             self.logger.debug("FIX: Window show event - geometry already restored during init")
-            
+
             # Mark that we've been shown (for any show-specific logic)
             if not hasattr(self, "_window_shown"):
                 self._window_shown = True
                 self.logger.debug("FIX: First window show event completed")
-            
+
+                # CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
+                # Use QTimer.singleShot to defer to the next event loop iteration
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(100, self._deferred_dock_layout_restoration)
+
         except Exception as e:
             self.logger.warning(f"Failed to handle window show event: {e}")
 
         total_time = time.time() - start_time
         self.logger.debug(f"showEvent completed in {total_time:.3f}s")
-        
+
         super().showEvent(event)
+
+    def _deferred_dock_layout_restoration(self) -> None:
+        """
+        Deferred dock layout restoration to prevent recursive repaint errors.
+
+        CRITICAL FIX: This method is called via QTimer.singleShot after the window
+        is fully shown to prevent recursive repaint errors when multiple widgets
+        are being repainted simultaneously during dock layout restoration.
+        """
+        try:
+            self.logger.debug("CRITICAL FIX: Starting deferred dock layout restoration")
+
+            # Restore dock layout from QSettings
+            settings = QSettings()
+            dock_state = settings.value("window/dock_state", None)
+
+            if dock_state:
+                # Restore the dock layout
+                self.restoreState(dock_state)
+                self.logger.debug("CRITICAL FIX: Dock layout restored from QSettings")
+            else:
+                self.logger.debug("CRITICAL FIX: No saved dock layout found")
+
+        except Exception as e:
+            self.logger.warning(f"CRITICAL FIX: Failed to restore dock layout: {e}")
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing.
@@ -1415,6 +1530,8 @@ class MainWindow(QMainWindow):
         """
         Handle model selection from the model library.
 
+        Synchronizes the metadata tab to display the selected model's metadata.
+
         Args:
             model_id: ID of the selected model
         """
@@ -1428,10 +1545,41 @@ class MainWindow(QMainWindow):
             if hasattr(self.toolbar_manager, "edit_model_action"):
                 self.toolbar_manager.edit_model_action.setEnabled(True)
 
+            # Synchronize metadata tab to selected model
+            self._sync_metadata_to_selected_model(model_id)
+
             self.logger.debug(f"Model selected: {model_id}")
 
         except Exception as e:
             self.logger.error(f"Failed to handle model selection: {e}")
+
+    def _sync_metadata_to_selected_model(self, model_id: int) -> None:
+        """
+        Synchronize the metadata tab to display the selected model's metadata.
+
+        This method ensures that when a model is selected in the library,
+        the metadata editor widget is updated to show that model's metadata.
+
+        Args:
+            model_id: ID of the selected model
+        """
+        try:
+            # Check if metadata editor exists
+            if not hasattr(self, 'metadata_editor') or self.metadata_editor is None:
+                self.logger.debug(f"Metadata editor not available for model {model_id}")
+                return
+
+            # Load metadata for the selected model
+            self.metadata_editor.load_model_metadata(model_id)
+            self.logger.debug(f"Metadata synchronized for model {model_id}")
+
+            # Switch to metadata tab to show the loaded metadata
+            if hasattr(self, 'metadata_tabs') and self.metadata_tabs:
+                self.metadata_tabs.setCurrentIndex(0)  # Switch to Metadata tab
+                self.logger.debug(f"Switched to Metadata tab for model {model_id}")
+
+        except Exception as e:
+            self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
 
     def _edit_model(self) -> None:
         """Analyze the currently selected model for errors."""
@@ -1635,6 +1783,87 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Failed to handle metadata changed event: {str(e)}")
 
+    def _on_project_opened(self, project_id: str) -> None:
+        """
+        Handle project opened event from project manager.
+
+        Args:
+            project_id: ID of the opened project
+        """
+        try:
+            self.logger.info(f"Project opened: {project_id}")
+            self.status_label.setText(f"Project opened: {project_id}")
+
+            # Set current project for all tabs that support tab data save/load
+            if hasattr(self, 'clo_widget') and self.clo_widget:
+                try:
+                    self.clo_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Cut List Optimizer: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Cut List Optimizer: {e}")
+
+            if hasattr(self, 'feeds_and_speeds_widget') and self.feeds_and_speeds_widget:
+                try:
+                    self.feeds_and_speeds_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Feed and Speed: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Feed and Speed: {e}")
+
+            if hasattr(self, 'cost_estimator_widget') and self.cost_estimator_widget:
+                try:
+                    self.cost_estimator_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Cost Estimator: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
+
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project opened event: {str(e)}")
+
+    def _on_project_created(self, project_id: str) -> None:
+        """
+        Handle project created event from project manager.
+
+        Args:
+            project_id: ID of the created project
+        """
+        try:
+            self.logger.info(f"Project created: {project_id}")
+            self.status_label.setText(f"Project created: {project_id}")
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project created event: {str(e)}")
+
+    def _on_project_deleted(self, project_id: str) -> None:
+        """
+        Handle project deleted event from project manager.
+
+        Args:
+            project_id: ID of the deleted project
+        """
+        try:
+            self.logger.info(f"Project deleted: {project_id}")
+            self.status_label.setText(f"Project deleted: {project_id}")
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project deleted event: {str(e)}")
+
+    def _update_project_manager_action_state(self) -> None:
+        """Update project manager action state based on dock visibility."""
+        try:
+            if hasattr(self, "project_manager_dock"):
+                # Update menu action if it exists
+                if hasattr(self, "toggle_project_manager_action"):
+                    self.toggle_project_manager_action.setChecked(
+                        self.project_manager_dock.isVisible()
+                    )
+
+        except Exception as e:
+            self.logger.debug(f"Failed to update project manager action state: {e}")
+
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
         self.logger.info("Opening preferences dialog")
@@ -1643,6 +1872,8 @@ class MainWindow(QMainWindow):
         dlg.theme_changed.connect(self._on_theme_changed)
         # Connect viewer settings change signal to update VTK scene
         dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
+        # Connect AI settings change signal to reload AI service
+        dlg.ai_settings_changed.connect(self._on_ai_settings_changed)
         dlg.exec_()
 
     def _on_theme_changed(self) -> None:
@@ -1720,6 +1951,26 @@ class MainWindow(QMainWindow):
             self.logger.error(
                 f"FATAL ERROR applying viewer settings: {e}", exc_info=True
             )
+
+    def _on_ai_settings_changed(self) -> None:
+        """Handle AI settings change from preferences dialog."""
+        try:
+            self.logger.info("=== AI SETTINGS CHANGED SIGNAL RECEIVED ===")
+
+            # Reload AI service with new settings
+            if self.ai_service:
+                self.logger.info("Reloading AI service configuration...")
+                # Reload config from QSettings
+                self.ai_service.config = self.ai_service._load_config()
+                # Re-initialize providers with new config
+                self.ai_service._initialize_providers()
+                self.logger.info(f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}")
+            else:
+                self.logger.warning("AI service not available, skipping reload")
+
+            self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
+        except Exception as e:
+            self.logger.error(f"ERROR reloading AI service: {e}", exc_info=True)
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
@@ -2085,6 +2336,28 @@ class MainWindow(QMainWindow):
                 self.showMaximized()
         except Exception as e:
             self.logger.warning(f"Failed to toggle maximize: {e}")
+
+    def _on_tab_switch_requested(self, tab_name: str) -> None:
+        """Handle tab switch request from project manager."""
+        try:
+            # Map tab names to indices - must match actual tab names added in _add_placeholder_tabs
+            tab_map = {
+                'Model Previewer': 0,
+                'G Code Previewer': 1,
+                'Cut List Optimizer': 2,
+                'Feed and Speed': 3,  # Note: actual tab name is "Feed and Speed" not "Feeds & Speeds"
+                'Project Cost Estimator': 4,
+            }
+
+            tab_index = tab_map.get(tab_name)
+            if tab_index is not None and hasattr(self, 'hero_tabs'):
+                self.hero_tabs.setCurrentIndex(tab_index)
+                self.logger.info(f"Switched to tab: {tab_name}")
+            else:
+                self.logger.warning(f"Unknown tab name: {tab_name}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to switch tab: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 

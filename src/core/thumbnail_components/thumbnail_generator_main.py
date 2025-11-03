@@ -69,7 +69,8 @@ class ThumbnailGenerator:
         output_dir: Path,
         background: Optional[Union[str, Tuple[float, float, float]]] = None,
         size: Optional[Tuple[int, int]] = None,
-        material: Optional[str] = None
+        material: Optional[str] = None,
+        force_regenerate: bool = False
     ) -> Optional[Path]:
         """
         Generate a thumbnail for a 3D model.
@@ -81,6 +82,7 @@ class ThumbnailGenerator:
             background: Background color (R,G,B tuple 0-1) or image path, or None for settings
             size: Output size as (width, height), or None for default 1080x1080
             material: Optional wood species name to apply material texture (e.g., 'Oak', 'Walnut')
+            force_regenerate: If True, regenerate even if thumbnail already exists
 
         Returns:
             Path to generated thumbnail PNG, or None on failure
@@ -95,10 +97,18 @@ class ThumbnailGenerator:
             # Determine output path
             thumbnail_path = output_dir / f"{file_hash}.png"
 
-            # Check if thumbnail already exists
-            if thumbnail_path.exists():
+            # Check if thumbnail already exists (unless forced)
+            if thumbnail_path.exists() and not force_regenerate:
                 self.logger.info(f"Thumbnail already exists: {thumbnail_path}")
                 return thumbnail_path
+
+            # If force regenerating, remove the old thumbnail
+            if force_regenerate and thumbnail_path.exists():
+                try:
+                    thumbnail_path.unlink()
+                    self.logger.info(f"Removed existing thumbnail for regeneration: {thumbnail_path}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to remove existing thumbnail: {e}")
 
             self.logger.info(f"Generating thumbnail for: {model_path}")
 
@@ -447,9 +457,14 @@ class ThumbnailGenerator:
             # Create texture
             texture = vtk.vtkTexture()
             texture.SetInputConnection(reader.GetOutputPort())
+            texture.InterpolateOn()  # Enable interpolation for better quality
 
-            # Create background actor
+            # Create background actor with proper positioning
             plane = vtk.vtkPlaneSource()
+            plane.SetOrigin(-1, -1, -1)  # Position behind the model
+            plane.SetPoint1(1, -1, -1)
+            plane.SetPoint2(-1, 1, -1)
+
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputConnection(plane.GetOutputPort())
 
@@ -457,11 +472,16 @@ class ThumbnailGenerator:
             actor.SetMapper(mapper)
             actor.SetTexture(texture)
 
-            # Position behind everything
+            # Disable lighting for background
             actor.GetProperty().LightingOff()
+            actor.GetProperty().SetOpacity(1.0)
 
+            # Add actor to renderer with proper layer
             renderer.AddActor(actor)
             renderer.SetLayer(0)
+
+            # Ensure the background is rendered behind all other actors
+            actor.GetProperty().SetRepresentationToSurface()
 
         except Exception as e:
             self.logger.error(f"Error setting background image: {e}", exc_info=True)

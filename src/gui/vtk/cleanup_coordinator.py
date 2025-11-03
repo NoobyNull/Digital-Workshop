@@ -8,7 +8,6 @@ the "wglMakeCurrent failed in Clean(), error: 6" error.
 
 import gc
 import time
-import atexit
 from typing import List, Dict, Any, Optional, Callable
 from enum import Enum
 
@@ -75,9 +74,6 @@ class VTKCleanupCoordinator:
 
         # Setup cleanup phases
         self._setup_cleanup_phases()
-
-        # Register shutdown handler to ensure cleanup on exit
-        self._register_shutdown_handler()
 
         self.logger.info("VTK Cleanup Coordinator initialized")
 
@@ -217,14 +213,6 @@ class VTKCleanupCoordinator:
 
         # Post-cleanup: Cleanup verification
         self.register_cleanup_callback(CleanupPhase.POST_CLEANUP, self._post_cleanup)
-
-    def _register_shutdown_handler(self) -> None:
-        """Register shutdown handler to ensure cleanup on application exit."""
-        try:
-            atexit.register(self.emergency_shutdown_cleanup)
-            self.logger.debug("Shutdown handler registered for VTK cleanup")
-        except Exception as e:
-            self.logger.warning(f"Failed to register shutdown handler: {e}")
 
     def emergency_shutdown_cleanup(self) -> None:
         """Emergency cleanup called during application shutdown."""
@@ -934,23 +922,7 @@ def get_vtk_cleanup_coordinator() -> VTKCleanupCoordinator:
     global _vtk_cleanup_coordinator
     if _vtk_cleanup_coordinator is None:
         _vtk_cleanup_coordinator = VTKCleanupCoordinator()
-        # Register global shutdown handler
-        atexit.register(_global_emergency_shutdown)
     return _vtk_cleanup_coordinator
-
-
-def _global_emergency_shutdown() -> None:
-    """Global emergency shutdown handler for VTK cleanup."""
-    try:
-        coordinator = _vtk_cleanup_coordinator
-        if coordinator is not None:
-            # CRITICAL FIX: Check if cleanup already completed to prevent duplicate cleanup
-            if not coordinator.cleanup_completed:
-                coordinator.emergency_shutdown_cleanup()
-            else:
-                logger.debug("Global emergency shutdown skipped - cleanup already completed")
-    except Exception:
-        pass  # Silently ignore errors during emergency shutdown
 
 
 def coordinate_vtk_cleanup(render_window: Optional[vtk.vtkRenderWindow] = None,

@@ -314,47 +314,51 @@ def get_activity_logger(name: str) -> logging.Logger:
     return logger
 
 
-def log_function_call(logger: logging.Logger):
+def log_function_call(logger: logging.Logger, enable_logging: bool = False):
     """
     Decorator to automatically log function calls with parameters and return values.
 
     Args:
         logger: Logger instance to use for logging
+        enable_logging: Whether to enable function call logging (default: False for less verbose output)
 
     Returns:
         Decorator function
     """
     def decorator(func):
         def wrapper(*args, **kwargs):
-            # Create a custom log record to avoid conflicts with reserved attributes
-            try:
-                logger.debug(
-                    f"Calling {func.__name__}",
-                    extra={
-                        "custom_function": func.__name__,
-                        "custom_args": str(args),
-                        "custom_kwargs": str(kwargs)
-                    }
-                )
-            except:
-                # If logging fails, continue with the function
-                pass
-
-            try:
-                result = func(*args, **kwargs)
+            # Only log if explicitly enabled
+            if enable_logging:
                 try:
                     logger.debug(
-                        f"Completed {func.__name__}",
+                        f"Calling {func.__name__}",
                         extra={
                             "custom_function": func.__name__,
-                            "custom_result": str(result)[:100]  # Limit result length
+                            "custom_args": str(args),
+                            "custom_kwargs": str(kwargs)
                         }
                     )
                 except:
                     # If logging fails, continue with the function
                     pass
+
+            try:
+                result = func(*args, **kwargs)
+                if enable_logging:
+                    try:
+                        logger.debug(
+                            f"Completed {func.__name__}",
+                            extra={
+                                "custom_function": func.__name__,
+                                "custom_result": str(result)[:100]  # Limit result length
+                            }
+                        )
+                    except:
+                        # If logging fails, continue with the function
+                        pass
                 return result
             except Exception as e:
+                # Always log errors regardless of enable_logging setting
                 try:
                     logger.error(
                         f"Error in {func.__name__}: {str(e)}",
