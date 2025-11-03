@@ -56,9 +56,20 @@ jobs:
 
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
       with:
         files: |
           dist/Digital Workshop.exe
           dist/build_report.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifacts as workflow artifacts
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Digital-Workshop-Build
+        path: |
+          dist/Digital Workshop.exe
+          dist/build_report.json
+        retention-days: 30
