@@ -175,29 +175,48 @@ class BuildManager:
         try:
             result = subprocess.run(["makensis", "/VERSION"], capture_output=True)
             if result.returncode != 0:
-                logger.warning("NSIS compiler not available. Skipping installer creation.")
+                logger.error("NSIS compiler not available. Cannot create installer.")
                 return False
         except FileNotFoundError:
-            logger.warning("NSIS compiler not found. Skipping installer creation.")
+            logger.error("NSIS compiler not found. Cannot create installer.")
             return False
 
         # Check installer assets
         if not self.check_installer_assets():
-            logger.warning("Installer assets missing. Skipping installer creation.")
+            logger.error("Installer assets missing. Cannot create installer.")
             return False
 
         installer_script = self.project_root / self.config["installer_script"]
         if not installer_script.exists():
-            logger.warning(f"Installer script not found: {installer_script}")
+            logger.error(f"Installer script not found: {installer_script}")
             return False
 
         cmd = ["makensis", str(installer_script)]
 
         logger.info(f"Running command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, cwd=self.project_root)
+        result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
         if result.returncode != 0:
             logger.error("NSIS installer creation failed")
+            logger.error(f"STDOUT: {result.stdout}")
+            logger.error(f"STDERR: {result.stderr}")
+            return False
+
+        # Move installer to dist directory
+        version = self.config["version"]
+        installer_name = f"Digital Workshop-Setup-{version}.exe"
+        source_installer = self.project_root / installer_name
+        dest_installer = self.project_root / self.config["dist_dir"] / installer_name
+
+        if source_installer.exists():
+            try:
+                shutil.move(str(source_installer), str(dest_installer))
+                logger.info(f"Moved installer to {dest_installer}")
+            except Exception as e:
+                logger.error(f"Failed to move installer: {e}")
+                return False
+        else:
+            logger.error(f"Installer not found at {source_installer}")
             return False
 
         logger.info("NSIS installer created successfully")
@@ -281,32 +300,34 @@ class BuildManager:
     def build(self, run_tests_flag=False, create_installer_flag=True):
         """Run the complete build process."""
         logger.info(f"Starting build for {self.config['app_name']} v{self.config['version']}")
-        
+
         try:
             # Clean previous builds
             self.clean_build_dirs()
-            
+
             # Check dependencies
             self.check_dependencies()
-            
+
             # Run tests if requested
             if run_tests_flag:
                 if not self.run_tests():
                     logger.warning("Tests failed but continuing with build")
-            
+
             # Create app icon if needed
             self.create_app_icon()
-            
+
             # Run PyInstaller
             self.run_pyinstaller()
-            
+
             # Create installer if requested
             if create_installer_flag:
-                self.create_installer()
-            
+                installer_success = self.create_installer()
+                if not installer_success:
+                    logger.error("Installer creation failed - build will continue but installer will not be available")
+
             # Create build report
             report = self.create_build_report()
-            
+
             logger.info("Build completed successfully!")
             return report
             

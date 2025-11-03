@@ -38,12 +38,19 @@ jobs:
         }
         Write-Host "✓ Executable created successfully"
 
+        # Check if installer was created
+        $installerExists = Test-Path "dist/Digital Workshop-Setup-*.exe"
+        if ($installerExists) {
+          Write-Host "✓ Installer created successfully"
+        } else {
+          Write-Warning "⚠ Installer was not created - this may indicate NSIS is not installed or there was an error"
+        }
+
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           dist/Digital Workshop.exe
-          dist/Digital Workshop-Setup-*.exe
           dist/build_report.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
