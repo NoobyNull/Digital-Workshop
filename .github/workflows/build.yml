@@ -34,6 +34,7 @@ jobs:
 
     - name: Install NSIS
       run: choco install nsis -y
+      continue-on-error: true
 
     - name: Build application
       run: python build.py --no-tests
