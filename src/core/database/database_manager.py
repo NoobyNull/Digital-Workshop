@@ -14,6 +14,8 @@ from .db_operations import DatabaseOperations
 from .model_repository import ModelRepository
 from .metadata_repository import MetadataRepository
 from .db_maintenance import DatabaseMaintenance
+from .project_repository import ProjectRepository
+from .file_repository import FileRepository
 
 logger = get_logger(__name__)
 
@@ -42,6 +44,8 @@ class DatabaseManager:
         self._model_repo = ModelRepository(self._db_ops.get_connection)
         self._metadata_repo = MetadataRepository(self._db_ops.get_connection)
         self._maintenance = DatabaseMaintenance(self._db_ops.get_connection)
+        self._project_repo = ProjectRepository(self._db_ops.get_connection)
+        self._file_repo = FileRepository(self._db_ops.get_connection)
 
         # Initialize database schema
         self._db_ops.initialize_schema()
@@ -293,6 +297,100 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to update category {category_id}: {e}")
             return False
+
+    # ===== Project Operations (delegated to ProjectRepository) =====
+
+    def create_project(
+        self,
+        name: str,
+        base_path: Optional[str] = None,
+        import_tag: Optional[str] = None,
+        original_path: Optional[str] = None,
+        structure_type: Optional[str] = None
+    ) -> str:
+        """Create a new project."""
+        return self._project_repo.create_project(
+            name, base_path, import_tag, original_path, structure_type
+        )
+
+    def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """Get project by ID."""
+        return self._project_repo.get_project(project_id)
+
+    def get_project_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """Get project by name (case-insensitive)."""
+        return self._project_repo.get_project_by_name(name)
+
+    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+        """List all projects."""
+        return self._project_repo.list_projects(limit, offset)
+
+    def list_imported_projects(self) -> List[Dict[str, Any]]:
+        """List all imported projects."""
+        return self._project_repo.list_imported_projects()
+
+    def update_project(self, project_id: str, **kwargs) -> bool:
+        """Update project fields."""
+        return self._project_repo.update_project(project_id, **kwargs)
+
+    def delete_project(self, project_id: str) -> bool:
+        """Delete project and associated files."""
+        return self._project_repo.delete_project(project_id)
+
+    def get_project_count(self) -> int:
+        """Get total number of projects."""
+        return self._project_repo.get_project_count()
+
+    # ===== File Operations (delegated to FileRepository) =====
+
+    def add_file(
+        self,
+        project_id: str,
+        file_path: str,
+        file_name: str,
+        file_size: Optional[int] = None,
+        file_hash: Optional[str] = None,
+        status: str = "pending",
+        link_type: Optional[str] = None,
+        original_path: Optional[str] = None
+    ) -> int:
+        """Add a file to a project."""
+        return self._file_repo.add_file(
+            project_id, file_path, file_name, file_size, file_hash,
+            status, link_type, original_path
+        )
+
+    def get_file(self, file_id: int) -> Optional[Dict[str, Any]]:
+        """Get file by ID."""
+        return self._file_repo.get_file(file_id)
+
+    def get_files_by_project(self, project_id: str) -> List[Dict[str, Any]]:
+        """Get all files in a project."""
+        return self._file_repo.get_files_by_project(project_id)
+
+    def get_files_by_status(self, project_id: str, status: str) -> List[Dict[str, Any]]:
+        """Get files by status in a project."""
+        return self._file_repo.get_files_by_status(project_id, status)
+
+    def update_file_status(self, file_id: int, status: str) -> bool:
+        """Update file status."""
+        return self._file_repo.update_file_status(file_id, status)
+
+    def update_file(self, file_id: int, **kwargs) -> bool:
+        """Update file fields."""
+        return self._file_repo.update_file(file_id, **kwargs)
+
+    def delete_file(self, file_id: int) -> bool:
+        """Delete a file record."""
+        return self._file_repo.delete_file(file_id)
+
+    def get_file_count_by_project(self, project_id: str) -> int:
+        """Get total number of files in a project."""
+        return self._file_repo.get_file_count_by_project(project_id)
+
+    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+        """Find duplicate file by hash in a project."""
+        return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
 
     # ===== Connection Management =====
 

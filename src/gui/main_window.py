@@ -313,6 +313,7 @@ class MainWindow(QMainWindow):
 
         # Set up individual dock widgets using native Qt
         self._setup_model_library_dock()
+        self._setup_project_manager_dock()
         self._setup_properties_dock()
         self._setup_metadata_dock()
 
@@ -379,6 +380,63 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to setup model library dock: {e}")
+
+    def _setup_project_manager_dock(self) -> None:
+        """Set up project manager dock using native Qt."""
+        try:
+            self.project_manager_dock = QDockWidget("Project Manager", self)
+            self.project_manager_dock.setObjectName("ProjectManagerDock")
+
+            # Configure with native Qt dock features
+            self.project_manager_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea
+                | Qt.RightDockWidgetArea
+                | Qt.TopDockWidgetArea
+                | Qt.BottomDockWidgetArea
+            )
+            self.project_manager_dock.setFeatures(
+                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
+            )
+
+            # Create project manager widget
+            try:
+                from src.gui.project_manager import ProjectManagerWidget
+                from src.core.database.database_manager import DatabaseManager
+
+                db_manager = get_database_manager()
+                self.project_manager_widget = ProjectManagerWidget(db_manager, self)
+
+                # Connect signals
+                self.project_manager_widget.project_opened.connect(
+                    self._on_project_opened
+                )
+                self.project_manager_widget.project_created.connect(
+                    self._on_project_created
+                )
+                self.project_manager_widget.project_deleted.connect(
+                    self._on_project_deleted
+                )
+
+                self.project_manager_dock.setWidget(self.project_manager_widget)
+                self.logger.info("Project manager dock created successfully")
+
+            except Exception as e:
+                self.logger.warning(f"Failed to create project manager widget: {e}")
+                # Native Qt fallback
+                fallback_widget = QLabel("Project Manager\n\nComponent unavailable.")
+                fallback_widget.setAlignment(Qt.AlignCenter)
+                self.project_manager_dock.setWidget(fallback_widget)
+
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.LeftDockWidgetArea, self.project_manager_dock)
+
+            # Connect visibility signal for menu synchronization
+            self.project_manager_dock.visibilityChanged.connect(
+                lambda visible: self._update_project_manager_action_state()
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to setup project manager dock: {e}")
 
     def _setup_properties_dock(self) -> None:
         """Set up properties dock using native Qt."""
@@ -1685,6 +1743,64 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to handle metadata changed event: {str(e)}")
+
+    def _on_project_opened(self, project_id: str) -> None:
+        """
+        Handle project opened event from project manager.
+
+        Args:
+            project_id: ID of the opened project
+        """
+        try:
+            self.logger.info(f"Project opened: {project_id}")
+            self.status_label.setText(f"Project opened: {project_id}")
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project opened event: {str(e)}")
+
+    def _on_project_created(self, project_id: str) -> None:
+        """
+        Handle project created event from project manager.
+
+        Args:
+            project_id: ID of the created project
+        """
+        try:
+            self.logger.info(f"Project created: {project_id}")
+            self.status_label.setText(f"Project created: {project_id}")
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project created event: {str(e)}")
+
+    def _on_project_deleted(self, project_id: str) -> None:
+        """
+        Handle project deleted event from project manager.
+
+        Args:
+            project_id: ID of the deleted project
+        """
+        try:
+            self.logger.info(f"Project deleted: {project_id}")
+            self.status_label.setText(f"Project deleted: {project_id}")
+            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle project deleted event: {str(e)}")
+
+    def _update_project_manager_action_state(self) -> None:
+        """Update project manager action state based on dock visibility."""
+        try:
+            if hasattr(self, "project_manager_dock"):
+                # Update menu action if it exists
+                if hasattr(self, "toggle_project_manager_action"):
+                    self.toggle_project_manager_action.setChecked(
+                        self.project_manager_dock.isVisible()
+                    )
+
+        except Exception as e:
+            self.logger.debug(f"Failed to update project manager action state: {e}")
 
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
