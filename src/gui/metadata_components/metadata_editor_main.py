@@ -753,6 +753,14 @@ class MetadataEditorWidget(QWidget):
             )
             
             if result.success:
+                # Save thumbnail path to database
+                if result.thumbnail_path:
+                    self.db_manager.update_model_thumbnail(
+                        self.current_model_id,
+                        str(result.thumbnail_path)
+                    )
+                    self.logger.info(f"Saved thumbnail path to database: {result.thumbnail_path}")
+
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
                 QMessageBox.information(

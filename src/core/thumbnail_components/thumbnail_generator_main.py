@@ -457,9 +457,14 @@ class ThumbnailGenerator:
             # Create texture
             texture = vtk.vtkTexture()
             texture.SetInputConnection(reader.GetOutputPort())
+            texture.InterpolateOn()  # Enable interpolation for better quality
 
-            # Create background actor
+            # Create background actor with proper positioning
             plane = vtk.vtkPlaneSource()
+            plane.SetOrigin(-1, -1, -1)  # Position behind the model
+            plane.SetPoint1(1, -1, -1)
+            plane.SetPoint2(-1, 1, -1)
+
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputConnection(plane.GetOutputPort())
 
@@ -467,11 +472,16 @@ class ThumbnailGenerator:
             actor.SetMapper(mapper)
             actor.SetTexture(texture)
 
-            # Position behind everything
+            # Disable lighting for background
             actor.GetProperty().LightingOff()
+            actor.GetProperty().SetOpacity(1.0)
 
+            # Add actor to renderer with proper layer
             renderer.AddActor(actor)
             renderer.SetLayer(0)
+
+            # Ensure the background is rendered behind all other actors
+            actor.GetProperty().SetRepresentationToSurface()
 
         except Exception as e:
             self.logger.error(f"Error setting background image: {e}", exc_info=True)

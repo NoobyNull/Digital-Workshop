@@ -400,11 +400,11 @@ class MainWindow(QMainWindow):
 
             # Create project manager widget
             try:
-                from src.gui.project_manager import ProjectManagerWidget
+                from src.gui.project_manager import ProjectTreeWidget
                 from src.core.database.database_manager import DatabaseManager
 
                 db_manager = get_database_manager()
-                self.project_manager_widget = ProjectManagerWidget(db_manager, self)
+                self.project_manager_widget = ProjectTreeWidget(db_manager, self)
 
                 # Connect signals
                 self.project_manager_widget.project_opened.connect(
@@ -415,6 +415,9 @@ class MainWindow(QMainWindow):
                 )
                 self.project_manager_widget.project_deleted.connect(
                     self._on_project_deleted
+                )
+                self.project_manager_widget.tab_switch_requested.connect(
+                    self._on_tab_switch_requested
                 )
 
                 self.project_manager_dock.setWidget(self.project_manager_widget)
@@ -1179,6 +1182,9 @@ class MainWindow(QMainWindow):
             settings.setValue("window_geometry", self.saveGeometry())
             settings.setValue("window_state", self.saveState())
 
+            # CRITICAL FIX: Also save dock state separately for deferred restoration
+            settings.setValue("window/dock_state", self.saveState())
+
             # Save current tab index
             if hasattr(self, "hero_tabs") and self.hero_tabs:
                 settings.setValue(
@@ -1203,30 +1209,63 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event) -> None:
         """Handle window show event - geometry restoration now happens during init.
-        
+
         FIX: Window geometry restoration has been moved to __init__ phase for proper
         timing coordination. This showEvent now only handles show-specific logic.
+
+        CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
+        when multiple widgets are being repainted simultaneously during window show.
         """
         import time
         start_time = time.time()
-        
+
         try:
             # FIX: Window geometry restoration now happens during initialization
             # Only log that we're showing the window
             self.logger.debug("FIX: Window show event - geometry already restored during init")
-            
+
             # Mark that we've been shown (for any show-specific logic)
             if not hasattr(self, "_window_shown"):
                 self._window_shown = True
                 self.logger.debug("FIX: First window show event completed")
-            
+
+                # CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
+                # Use QTimer.singleShot to defer to the next event loop iteration
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(100, self._deferred_dock_layout_restoration)
+
         except Exception as e:
             self.logger.warning(f"Failed to handle window show event: {e}")
 
         total_time = time.time() - start_time
         self.logger.debug(f"showEvent completed in {total_time:.3f}s")
-        
+
         super().showEvent(event)
+
+    def _deferred_dock_layout_restoration(self) -> None:
+        """
+        Deferred dock layout restoration to prevent recursive repaint errors.
+
+        CRITICAL FIX: This method is called via QTimer.singleShot after the window
+        is fully shown to prevent recursive repaint errors when multiple widgets
+        are being repainted simultaneously during dock layout restoration.
+        """
+        try:
+            self.logger.debug("CRITICAL FIX: Starting deferred dock layout restoration")
+
+            # Restore dock layout from QSettings
+            settings = QSettings()
+            dock_state = settings.value("window/dock_state", None)
+
+            if dock_state:
+                # Restore the dock layout
+                self.restoreState(dock_state)
+                self.logger.debug("CRITICAL FIX: Dock layout restored from QSettings")
+            else:
+                self.logger.debug("CRITICAL FIX: No saved dock layout found")
+
+        except Exception as e:
+            self.logger.warning(f"CRITICAL FIX: Failed to restore dock layout: {e}")
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing.
@@ -1754,6 +1793,29 @@ class MainWindow(QMainWindow):
         try:
             self.logger.info(f"Project opened: {project_id}")
             self.status_label.setText(f"Project opened: {project_id}")
+
+            # Set current project for all tabs that support tab data save/load
+            if hasattr(self, 'clo_widget') and self.clo_widget:
+                try:
+                    self.clo_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Cut List Optimizer: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Cut List Optimizer: {e}")
+
+            if hasattr(self, 'feeds_and_speeds_widget') and self.feeds_and_speeds_widget:
+                try:
+                    self.feeds_and_speeds_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Feed and Speed: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Feed and Speed: {e}")
+
+            if hasattr(self, 'cost_estimator_widget') and self.cost_estimator_widget:
+                try:
+                    self.cost_estimator_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for Cost Estimator: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
+
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
@@ -2274,6 +2336,28 @@ class MainWindow(QMainWindow):
                 self.showMaximized()
         except Exception as e:
             self.logger.warning(f"Failed to toggle maximize: {e}")
+
+    def _on_tab_switch_requested(self, tab_name: str) -> None:
+        """Handle tab switch request from project manager."""
+        try:
+            # Map tab names to indices - must match actual tab names added in _add_placeholder_tabs
+            tab_map = {
+                'Model Previewer': 0,
+                'G Code Previewer': 1,
+                'Cut List Optimizer': 2,
+                'Feed and Speed': 3,  # Note: actual tab name is "Feed and Speed" not "Feeds & Speeds"
+                'Project Cost Estimator': 4,
+            }
+
+            tab_index = tab_map.get(tab_name)
+            if tab_index is not None and hasattr(self, 'hero_tabs'):
+                self.hero_tabs.setCurrentIndex(tab_index)
+                self.logger.info(f"Switched to tab: {tab_name}")
+            else:
+                self.logger.warning(f"Unknown tab name: {tab_name}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to switch tab: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 

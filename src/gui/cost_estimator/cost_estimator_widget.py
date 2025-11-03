@@ -25,6 +25,8 @@ from .cost_calculator import (
     PricingStrategy,
 )
 from .material_cost_manager import MaterialCostManager
+from src.core.services.tab_data_manager import TabDataManager
+from src.core.database_manager import get_database_manager
 
 logger = get_logger(__name__)
 
@@ -43,9 +45,11 @@ class CostEstimatorWidget(QWidget):
         # Initialize managers
         self.calculator = ProfessionalCostCalculator()
         self.material_manager = MaterialCostManager()
+        self.tab_data_manager = TabDataManager(get_database_manager())
 
         # Current estimate
         self.current_estimate: Optional[CostEstimate] = None
+        self.current_project_id: Optional[str] = None
 
         # Setup UI
         self._setup_ui()
@@ -385,3 +389,91 @@ class CostEstimatorWidget(QWidget):
             )
 
         self.summary_display.setText(summary_html)
+
+    def set_current_project(self, project_id: str) -> None:
+        """Set the current project for saving/loading data."""
+        self.current_project_id = project_id
+
+    def save_to_project(self) -> None:
+        """Save cost estimate data to current project."""
+        if not self.current_project_id:
+            QMessageBox.warning(self, "No Project", "Please select a project first")
+            return
+
+        # Gather data from UI
+        materials_data = self.material_manager.get_all_materials()
+
+        # Create data structure
+        cost_estimate_data = {
+            'materials': materials_data,
+            'machine_setup_hours': self.machine_setup_hours.value(),
+            'machine_run_hours': self.machine_run_hours.value(),
+            'machine_hourly_rate': self.machine_hourly_rate.value(),
+            'labor_design_hours': self.labor_design_hours.value(),
+            'labor_setup_hours': self.labor_setup_hours.value(),
+            'labor_run_hours': self.labor_run_hours.value(),
+            'labor_hourly_rate': self.labor_hourly_rate.value(),
+            'quantity': self.quantity_spinbox.value(),
+            'pricing_strategy': self.pricing_strategy_combo.currentText(),
+            'profit_margin': self.profit_margin_spinbox.value()
+        }
+
+        # Save to project
+        success, message = self.tab_data_manager.save_tab_data_to_project(
+            project_id=self.current_project_id,
+            tab_name="Project Cost Estimator",
+            data=cost_estimate_data,
+            filename="cost_estimate.json",
+            category="Cost Sheets"
+        )
+
+        if success:
+            QMessageBox.information(self, "Success", message)
+        else:
+            QMessageBox.critical(self, "Error", message)
+
+    def load_from_project(self) -> None:
+        """Load cost estimate data from current project."""
+        if not self.current_project_id:
+            QMessageBox.warning(self, "No Project", "Please select a project first")
+            return
+
+        # Load from project
+        success, data, message = self.tab_data_manager.load_tab_data_from_project(
+            project_id=self.current_project_id,
+            filename="cost_estimate.json"
+        )
+
+        if not success:
+            QMessageBox.warning(self, "Load Failed", message)
+            return
+
+        # Restore data to UI
+        try:
+            # Restore machine time
+            self.machine_setup_hours.setValue(data.get('machine_setup_hours', 0.0))
+            self.machine_run_hours.setValue(data.get('machine_run_hours', 0.0))
+            self.machine_hourly_rate.setValue(data.get('machine_hourly_rate', 50.0))
+
+            # Restore labor
+            self.labor_design_hours.setValue(data.get('labor_design_hours', 0.0))
+            self.labor_setup_hours.setValue(data.get('labor_setup_hours', 0.0))
+            self.labor_run_hours.setValue(data.get('labor_run_hours', 0.0))
+            self.labor_hourly_rate.setValue(data.get('labor_hourly_rate', 50.0))
+
+            # Restore quantity and pricing
+            self.quantity_spinbox.setValue(data.get('quantity', 1))
+            self.profit_margin_spinbox.setValue(data.get('profit_margin', 30.0))
+
+            # Restore pricing strategy
+            strategy = data.get('pricing_strategy', 'Markup')
+            index = self.pricing_strategy_combo.findText(strategy)
+            if index >= 0:
+                self.pricing_strategy_combo.setCurrentIndex(index)
+
+            # Trigger recalculation
+            self._on_calculate()
+
+            QMessageBox.information(self, "Success", message)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to restore data: {str(e)}")
