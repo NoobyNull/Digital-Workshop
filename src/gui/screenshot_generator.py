@@ -374,31 +374,44 @@ class ScreenshotGenerator:
             self.logger.warning(f"Failed to setup lighting: {e}")
 
     def _set_background(self, renderer: vtk.vtkRenderer) -> None:
-        """Set background from image file or default color."""
+        """Set background from image file or default color.
+
+        Uses a plane-based approach to fill the entire viewport with the background image,
+        positioned far behind the model to ensure proper depth ordering.
+        """
         try:
             if self.background_image and Path(self.background_image).exists():
                 # Load background image
-                img = Image.open(self.background_image)
-                img_array = np.array(img)
+                reader = vtk.vtkPNGReader()
+                reader.SetFileName(self.background_image)
+                reader.Update()
 
-                # Create VTK image data
-                vtk_img = vtk.vtkImageData()
-                vtk_img.SetDimensions(img_array.shape[1], img_array.shape[0], 1)
+                # Create a large plane positioned far behind the model to fill viewport
+                plane = vtk.vtkPlaneSource()
+                plane.SetOrigin(-100, -100, -100)  # Far back, wide coverage
+                plane.SetPoint1(100, -100, -100)
+                plane.SetPoint2(-100, 100, -100)
+                plane.SetResolution(1, 1)  # Single quad for efficiency
 
-                # Convert to VTK format
-                depth_array = vtk_np.numpy_to_vtk(
-                    img_array.reshape(-1, 3), deep=True
-                )
-                depth_array.SetNumberOfComponents(3)
-                vtk_img.GetPointData().SetScalars(depth_array)
+                # Create mapper and actor
+                mapper = vtk.vtkPolyDataMapper()
+                mapper.SetInputConnection(plane.GetOutputPort())
 
-                # Create texture
+                actor = vtk.vtkActor()
+                actor.SetMapper(mapper)
+
+                # Create and apply texture
                 texture = vtk.vtkTexture()
-                texture.SetInputData(vtk_img)
+                texture.SetInputConnection(reader.GetOutputPort())
+                texture.InterpolateOn()
+                texture.EdgeClampOn()  # Prevent edge artifacts
 
-                # Set as background
-                renderer.SetBackgroundTexture(texture)
-                renderer.TexturedBackgroundOn()
+                actor.GetProperty().SetTexture("map_ka", texture)
+                actor.GetProperty().LightingOff()  # Preserve image colors
+
+                # Add background actor to renderer
+                renderer.AddActor(actor)
+                renderer.ResetCamera()
                 self.logger.debug(f"Set background image: {self.background_image}")
             else:
                 # Use default light gray background

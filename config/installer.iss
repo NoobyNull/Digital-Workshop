@@ -2,7 +2,7 @@
 ; This script creates a professional Windows installer for Digital Workshop
 
 #define MyAppName "Digital Workshop"
-#define MyAppVersion "0.1.0"
+#define MyAppVersion "0.1.4"
 #define MyAppPublisher "Digital Workshop Development Team"
 #define MyAppURL "https://github.com/NoobyNull/Digital-Workshop"
 #define MyAppExeName "Digital Workshop.exe"

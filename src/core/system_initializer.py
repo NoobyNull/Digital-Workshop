@@ -79,29 +79,41 @@ class SystemInitializer:
         self.logger.info("Logging system initialized")
 
     def _create_directories(self) -> None:
-        """Create necessary directories for the application."""
-        app_data_path = QStandardPaths.writableLocation(
-            QStandardPaths.AppDataLocation
-        )
+        """Create necessary directories for the application.
+
+        Only prints messages for newly created directories, not for existing ones.
+        Uses Path for consistent cross-platform path handling.
+        """
+        # Get app data path and normalize it
+        app_data_path = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
 
         # Define required directories
         app_dirs = [
             app_data_path,
-            os.path.join(app_data_path, "models"),
-            os.path.join(app_data_path, "logs"),
-            os.path.join(app_data_path, "temp"),
-            os.path.join(app_data_path, "cache"),
-            os.path.join(app_data_path, "themes"),
+            app_data_path / "models",
+            app_data_path / "logs",
+            app_data_path / "temp",
+            app_data_path / "cache",
+            app_data_path / "themes",
         ]
 
-        # Create directories
+        # Create directories - only print for newly created ones
+        created_count = 0
         for dir_path in app_dirs:
-            if QDir().mkpath(dir_path):
-                print(f"Created directory: {dir_path}")
-            else:
-                print(f"Directory already exists: {dir_path}")
+            # Check if directory already exists
+            if dir_path.exists() and dir_path.is_dir():
+                # Directory already exists, skip
+                continue
 
-        print("Application directories created")
+            # Try to create the directory
+            if QDir().mkpath(str(dir_path)):
+                print(f"Created directory: {dir_path}")
+                created_count += 1
+            else:
+                print(f"Failed to create directory: {dir_path}")
+
+        if created_count > 0:
+            print(f"Application directories initialized ({created_count} new directories created)")
 
     def get_app_data_path(self) -> Path:
         """Get the application data directory path.

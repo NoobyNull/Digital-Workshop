@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # Build configuration
 BUILD_CONFIG = {
     "app_name": "Digital Workshop",
-    "version": "0.1.0",
+    "version": "0.1.4",
     "main_script": "src/main.py",
     "spec_file": "pyinstaller.spec",
     "installer_script": "config/installer.iss",

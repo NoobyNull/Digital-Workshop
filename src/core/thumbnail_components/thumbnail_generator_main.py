@@ -441,6 +441,9 @@ class ThumbnailGenerator:
         """
         Set a background image for the renderer.
 
+        Uses a plane-based approach to fill the entire viewport with the background image,
+        positioned far behind the model to ensure proper depth ordering and full coverage.
+
         Args:
             renderer: VTK renderer
             image_path: Path to background image file
@@ -454,25 +457,27 @@ class ThumbnailGenerator:
             reader.SetFileName(image_path)
             reader.Update()
 
-            # Create texture
+            # Create texture with interpolation and edge clamping
             texture = vtk.vtkTexture()
             texture.SetInputConnection(reader.GetOutputPort())
             texture.InterpolateOn()  # Enable interpolation for better quality
+            texture.EdgeClampOn()  # Prevent edge artifacts during scaling
 
-            # Create background actor with proper positioning
+            # Create large background plane positioned far behind the model to fill viewport
             plane = vtk.vtkPlaneSource()
-            plane.SetOrigin(-1, -1, -1)  # Position behind the model
-            plane.SetPoint1(1, -1, -1)
-            plane.SetPoint2(-1, 1, -1)
+            plane.SetOrigin(-100, -100, -100)  # Far back, wide coverage
+            plane.SetPoint1(100, -100, -100)
+            plane.SetPoint2(-100, 100, -100)
+            plane.SetResolution(1, 1)  # Single quad for efficiency
 
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputConnection(plane.GetOutputPort())
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
-            actor.SetTexture(texture)
+            actor.GetProperty().SetTexture("map_ka", texture)
 
-            # Disable lighting for background
+            # Disable lighting for background to preserve image colors
             actor.GetProperty().LightingOff()
             actor.GetProperty().SetOpacity(1.0)
 

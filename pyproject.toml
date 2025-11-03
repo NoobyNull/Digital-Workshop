@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "code-quality-validator"
-version = "1.0.0"
+version = "0.1.4"
 description = "Code Formatting and Linting Validation System"
 authors = [
     {name = "Development Team", email = "dev@example.com"}
