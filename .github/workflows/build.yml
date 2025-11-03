@@ -55,9 +55,19 @@ jobs:
           Write-Warning "⚠ Installer was not created - this may indicate NSIS is not installed or there was an error"
         }
 
+    - name: Get latest release tag
+      id: get_tag
+      run: |
+        $tag = git describe --tags --abbrev=0 2>$null
+        if ($LASTEXITCODE -ne 0) {
+          $tag = "v1.0.0"
+        }
+        Write-Host "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ steps.get_tag.outputs.tag }}
         files: |
           dist/Digital Workshop.exe
           dist/build_report.json
