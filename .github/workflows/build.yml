@@ -27,12 +27,8 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Install NSIS
-      run: choco install nsis -y
-      continue-on-error: true
-
     - name: Build application
-      run: python build.py --no-tests
+      run: python build.py --no-tests --no-installer
 
     - name: Verify build artifacts
       run: |
@@ -42,13 +38,9 @@ jobs:
         }
         Write-Host "✓ Executable created successfully"
 
-        # Check if installer was created
-        $installerExists = Test-Path "dist/Digital Workshop-Setup-*.exe"
-        if ($installerExists) {
-          Write-Host "✓ Installer created successfully"
-        } else {
-          Write-Warning "⚠ Installer was not created - this may indicate NSIS is not installed or there was an error"
-        }
+        # List all artifacts in dist directory
+        Write-Host "`nBuild artifacts:"
+        Get-ChildItem -Path "dist" -File | ForEach-Object { Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" }
 
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
