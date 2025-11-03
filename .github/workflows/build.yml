@@ -27,8 +27,11 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+
     - name: Build application
-      run: python build.py --no-tests --no-installer
+      run: python build.py --no-tests
 
     - name: Verify build artifacts
       run: |

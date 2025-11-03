@@ -30,10 +30,10 @@ logger = logging.getLogger(__name__)
 # Build configuration
 BUILD_CONFIG = {
     "app_name": "Digital Workshop",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "main_script": "src/main.py",
     "spec_file": "pyinstaller.spec",
-    "installer_script": "config/installer.nsi",
+    "installer_script": "config/installer.iss",
     "dist_dir": "dist",
     "build_dir": "build",
     "installer_dir": "config",
@@ -168,17 +168,34 @@ class BuildManager:
         return True
     
     def create_installer(self):
-        """Create the NSIS installer."""
-        logger.info("Creating NSIS installer...")
+        """Create the Inno Setup installer."""
+        logger.info("Creating Inno Setup installer...")
 
-        # Check if NSIS is available
-        try:
-            result = subprocess.run(["makensis", "/VERSION"], capture_output=True)
-            if result.returncode != 0:
-                logger.error("NSIS compiler not available. Cannot create installer.")
-                return False
-        except FileNotFoundError:
-            logger.error("NSIS compiler not found. Cannot create installer.")
+        # Check if Inno Setup is available
+        inno_paths = [
+            r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+            r"C:\Program Files\Inno Setup 6\ISCC.exe",
+            r"C:\Program Files (x86)\Inno Setup 5\ISCC.exe",
+            r"C:\Program Files\Inno Setup 5\ISCC.exe",
+        ]
+
+        iscc_exe = None
+        for path in inno_paths:
+            if Path(path).exists():
+                iscc_exe = path
+                break
+
+        if not iscc_exe:
+            try:
+                result = subprocess.run(["where", "ISCC.exe"], capture_output=True, text=True, check=False)
+                if result.returncode == 0:
+                    iscc_exe = result.stdout.strip().split('\n')[0]
+            except Exception:
+                pass
+
+        if not iscc_exe:
+            logger.error("Inno Setup compiler (ISCC.exe) not found. Cannot create installer.")
+            logger.info("Please install Inno Setup from: https://jrsoftware.org/isdl.php")
             return False
 
         # Check installer assets
@@ -191,32 +208,28 @@ class BuildManager:
             logger.error(f"Installer script not found: {installer_script}")
             return False
 
-        cmd = ["makensis", str(installer_script)]
+        cmd = [iscc_exe, str(installer_script)]
 
         logger.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
         if result.returncode != 0:
-            logger.error("NSIS installer creation failed")
+            logger.error("Inno Setup installer creation failed")
             logger.error(f"STDOUT: {result.stdout}")
             logger.error(f"STDERR: {result.stderr}")
             return False
 
-        # Move installer to dist directory
-        version = self.config["version"]
-        installer_name = f"Digital Workshop-Setup-{version}.exe"
-        source_installer = self.project_root / installer_name
-        dest_installer = self.project_root / self.config["dist_dir"] / installer_name
-
-        if source_installer.exists():
-            try:
-                shutil.move(str(source_installer), str(dest_installer))
-                logger.info(f"Moved installer to {dest_installer}")
-            except Exception as e:
-                logger.error(f"Failed to move installer: {e}")
-                return False
+        # Inno Setup outputs to Output directory by default
+        output_dir = self.project_root / "Output"
+        if output_dir.exists():
+            for installer in output_dir.glob("*.exe"):
+                dest = self.project_root / self.config["dist_dir"] / installer.name
+                shutil.move(str(installer), str(dest))
+                logger.info(f"Moved installer to {dest}")
+            # Clean up Output directory
+            shutil.rmtree(output_dir)
         else:
-            logger.error(f"Installer not found at {source_installer}")
+            logger.warning("Output directory not found after Inno Setup compilation")
             return False
 
         logger.info("NSIS installer created successfully")
