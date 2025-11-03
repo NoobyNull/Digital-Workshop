@@ -390,6 +390,9 @@ old/
 # Kilo Code and Specify directories (development tools)
 .specify/
 .kilocode/
+.kilo/
+specs/
+samples/
 
 # =============================================================================
 # CI/CD AND DEPLOYMENT
