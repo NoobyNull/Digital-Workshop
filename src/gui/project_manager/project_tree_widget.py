@@ -10,7 +10,7 @@ from typing import Optional, Dict, List
 import tempfile
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTreeWidget, QTreeWidgetItem,
-    QMessageBox, QFileDialog, QInputDialog, QHeaderView
+    QMessageBox, QFileDialog, QInputDialog, QHeaderView, QMenu
 )
 from PySide6.QtCore import Qt, Signal, QMimeData
 from PySide6.QtGui import QIcon, QDrag
@@ -102,6 +102,8 @@ class ProjectTreeWidget(QWidget):
         self.tree_widget.setHeaderLabels(["Projects & Files"])
         self.tree_widget.itemDoubleClicked.connect(self._on_item_double_clicked)
         self.tree_widget.itemClicked.connect(self._on_item_clicked)
+        self.tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_widget.customContextMenuRequested.connect(self._on_context_menu)
         layout.addWidget(self.tree_widget)
 
         # Buttons
@@ -114,6 +116,10 @@ class ProjectTreeWidget(QWidget):
         import_btn = QPushButton("Import Library")
         import_btn.clicked.connect(self._import_library)
         button_layout.addWidget(import_btn)
+
+        add_files_btn = QPushButton("Add Files")
+        add_files_btn.clicked.connect(self._add_files_to_project)
+        button_layout.addWidget(add_files_btn)
 
         refresh_btn = QPushButton("Refresh")
         refresh_btn.clicked.connect(self._refresh_project_tree)
@@ -237,24 +243,68 @@ class ProjectTreeWidget(QWidget):
             file_path = item.data(0, Qt.UserRole)
             self._handle_file_selection(file_path, open_file=True)
 
+    def _on_context_menu(self, position) -> None:
+        """Handle right-click context menu."""
+        try:
+            item = self.tree_widget.itemAt(position)
+            if not item:
+                return
+
+            item_type = item.data(0, Qt.UserRole + 1)
+
+            # Create context menu
+            menu = QMenu(self)
+
+            if item_type == 'project':
+                # Project context menu
+                add_files_action = menu.addAction("Add Files")
+                add_files_action.triggered.connect(self._add_files_to_project)
+
+                menu.addSeparator()
+
+                open_action = menu.addAction("Open Project")
+                open_action.triggered.connect(lambda: self._open_project(item.data(0, Qt.UserRole)))
+
+                export_action = menu.addAction("Export as DWW")
+                export_action.triggered.connect(self._export_project_as_dww)
+
+                menu.addSeparator()
+
+                delete_action = menu.addAction("Delete Project")
+                delete_action.triggered.connect(self._delete_selected_project)
+
+            elif item_type == 'file':
+                # File context menu
+                open_action = menu.addAction("Open File")
+                open_action.triggered.connect(
+                    lambda: self._handle_file_selection(item.data(0, Qt.UserRole), open_file=True)
+                )
+
+            # Show menu at cursor position
+            if menu.actions():
+                menu.exec(self.tree_widget.mapToGlobal(position))
+
+        except Exception as e:
+            logger.error(f"Error showing context menu: {str(e)}")
+
     def _handle_file_selection(self, file_path: str, open_file: bool = False) -> None:
         """Handle file selection and tab switching."""
         try:
             if not file_path or not Path(file_path).exists():
                 logger.warning(f"File not found: {file_path}")
                 return
-            
+
             # Determine tab based on file extension
             file_ext = Path(file_path).suffix.lower()
             tab_name = FILE_TYPE_TAB_MAP.get(file_ext)
-            
+
             if tab_name:
                 self.file_selected.emit(file_path, tab_name)
                 self.tab_switch_requested.emit(tab_name)
                 logger.info(f"File selected: {file_path}, switching to {tab_name}")
             else:
                 logger.debug(f"No tab mapping for file type: {file_ext}")
-                
+
         except Exception as e:
             logger.error(f"Error handling file selection: {str(e)}")
 
@@ -284,6 +334,76 @@ class ProjectTreeWidget(QWidget):
         except Exception as e:
             logger.error(f"Failed to create project: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to create project: {str(e)}")
+
+    def _add_files_to_project(self) -> None:
+        """Add files to selected project."""
+        try:
+            current_item = self.tree_widget.currentItem()
+            if not current_item:
+                QMessageBox.warning(self, "No Selection", "Please select a project.")
+                return
+
+            # Get the project item (could be a file or category, need to find parent project)
+            item_type = current_item.data(0, Qt.UserRole + 1)
+            project_item = current_item
+
+            # If not a project, find the parent project
+            if item_type != 'project':
+                parent = current_item.parent()
+                while parent and parent.data(0, Qt.UserRole + 1) != 'project':
+                    parent = parent.parent()
+                if not parent:
+                    QMessageBox.warning(self, "Invalid Selection", "Please select a project or item within a project.")
+                    return
+                project_item = parent
+
+            project_id = project_item.data(0, Qt.UserRole)
+
+            # Open file dialog to select files
+            files, _ = QFileDialog.getOpenFileNames(
+                self,
+                "Add Files to Project",
+                "",
+                "All Files (*)"
+            )
+
+            if not files:
+                return
+
+            # Add files to project
+            added_count = 0
+            for file_path in files:
+                try:
+                    file_name = Path(file_path).name
+                    file_size = Path(file_path).stat().st_size
+
+                    # Add file to database
+                    self.db_manager.add_file(
+                        project_id=project_id,
+                        file_path=file_path,
+                        file_name=file_name,
+                        file_size=file_size,
+                        status="linked",
+                        link_type="original"
+                    )
+                    added_count += 1
+                    logger.info(f"Added file to project: {file_name}")
+                except Exception as e:
+                    logger.warning(f"Failed to add file {file_path}: {str(e)}")
+
+            if added_count > 0:
+                self._refresh_project_tree()
+                QMessageBox.information(
+                    self,
+                    "Files Added",
+                    f"Successfully added {added_count} file(s) to project."
+                )
+            else:
+                QMessageBox.warning(self, "No Files Added", "Failed to add files to project.")
+
+        except Exception as e:
+            logger.error(f"Failed to add files to project: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to add files: {str(e)}")
 
     def _import_library(self) -> None:
         """Import existing library."""
