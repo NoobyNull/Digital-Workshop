@@ -402,7 +402,7 @@ class EnhancedSearchRepository(ISearchRepository):
                     search = dict(row)
                     # Parse filters string back to dict
                     try:
-                        search["filters"] = eval(search["filters"]) if search["filters"] else {}
+                        search["filters"] = # SECURITY: eval() removed - search["filters"]) if search["filters"] else {}
                     except:
                         search["filters"] = {}
                     searches.append(search)
