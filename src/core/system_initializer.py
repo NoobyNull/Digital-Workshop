@@ -21,7 +21,7 @@ from .logging_config import setup_logging, get_logger
 class SystemInitializer:
     """Handles system-level initialization for the application."""
 
-    def __init__(self, config: ApplicationConfig):
+    def __init__(self, config: ApplicationConfig) -> None:
         """Initialize the SystemInitializer with application configuration.
 
         Args:

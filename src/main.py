@@ -21,7 +21,7 @@ from src.core.exception_handler import ExceptionHandler
 from src.core.logging_config import get_logger
 
 
-def parse_arguments():
+def parse_arguments() -> None:
     """Parse command line arguments for the application.
 
     Returns:
@@ -85,7 +85,7 @@ Examples:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Main function to start the Digital Workshop application."""
     logger = get_logger(__name__)
     logger.info("Digital Workshop application starting")

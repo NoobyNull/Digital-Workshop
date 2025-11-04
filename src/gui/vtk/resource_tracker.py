@@ -54,7 +54,7 @@ class VTKResourceTracker:
     and cleanup status to ensure no resources are leaked during VTK operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource tracker."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()

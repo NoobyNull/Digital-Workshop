@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class CameraController:
     """Manages camera controls for VTK viewer with pan, tilt, rotate, and zoom."""
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """Initialize camera controller.
 
         Args:

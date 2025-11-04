@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class DatabaseOperations:
     """Handles database connection and schema operations."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """
         Initialize database operations.
 

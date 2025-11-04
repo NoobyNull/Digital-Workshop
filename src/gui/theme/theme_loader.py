@@ -22,7 +22,7 @@ class ThemeLoader:
     from JSON files instead of hardcoding them in Python.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """
         Initialize the theme loader.
 

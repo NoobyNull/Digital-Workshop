@@ -35,7 +35,7 @@ class ThumbnailResizer:
     # Naming convention: {hash}_{size}.png
     # Example: abc123def456_1280.png, abc123def456_512.png, abc123def456_128.png
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the thumbnail resizer."""
         self.logger = get_logger(__name__)
 

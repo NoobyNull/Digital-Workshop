@@ -17,7 +17,7 @@ except ImportError:
 class ExportManager:
     """Manages export of VTK visualizations to images and videos."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the export manager."""
         self.render_window: Optional[vtk.vtkRenderWindow] = None
 

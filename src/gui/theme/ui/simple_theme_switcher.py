@@ -17,7 +17,7 @@ class SimpleThemeSwitcher(QWidget):
 
     theme_changed = Signal(str)  # Emitted when theme changes
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize theme switcher.
 

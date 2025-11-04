@@ -47,7 +47,7 @@ class ThreadPoolCoordinator:
     to worker processes, and aggregates results from parallel parsing.
     """
 
-    def __init__(self, max_workers: Optional[int] = None):
+    def __init__(self, max_workers: Optional[int] = None) -> None:
         """
         Initialize the thread pool coordinator.
 

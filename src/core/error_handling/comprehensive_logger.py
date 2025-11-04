@@ -39,7 +39,7 @@ class LogContext:
     timestamp: Optional[str] = None
     custom_fields: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize timestamp and system info if not provided."""
         if self.timestamp is None:
             self.timestamp = datetime.utcnow().isoformat()
@@ -63,7 +63,7 @@ class PerformanceMetrics:
     operation_count: int = 0
     error_count: int = 0
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Calculate final metrics."""
         if self.end_time is None:
             self.end_time = time.time()
@@ -120,7 +120,7 @@ class ComprehensiveLogger:
         # System info cache
         self._system_info = self._get_system_info() if enable_system_metrics else {}
 
-    def _setup_loggers(self):
+    def _setup_loggers(self) -> None:
         """Setup structured loggers for different purposes."""
         # Main application logger
         self.app_logger = logging.getLogger("app")
@@ -163,7 +163,7 @@ class ComprehensiveLogger:
         console_handler.setFormatter(console_formatter)
         self.error_logger.addHandler(console_handler)
 
-    def _setup_json_file_handler(self, logger: logging.Logger, filename: str):
+    def _setup_json_file_handler(self, logger: logging.Logger, filename: str) -> None:
         """Setup JSON file handler with rotation."""
         log_file = self.log_dir / filename
 
@@ -446,7 +446,7 @@ class ComprehensiveLogger:
                 "system_info": self._system_info,
             }
 
-    def log_error_report(self, error_report, context: Optional[LogContext] = None):
+    def log_error_report(self, error_report, context: Optional[LogContext] = None) -> None:
         """Log error report from error reporter."""
         log_context = context or LogContext()
         log_context.component = "error_reporter"

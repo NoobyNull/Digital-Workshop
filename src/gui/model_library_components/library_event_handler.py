@@ -31,7 +31,7 @@ class ViewMode(Enum):
 class LibraryEventHandler:
     """Handles events and user interactions in the library."""
 
-    def __init__(self, library_widget):
+    def __init__(self, library_widget) -> None:
         """
         Initialize event handler.
 

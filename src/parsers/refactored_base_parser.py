@@ -43,7 +43,7 @@ from src.core.performance_monitor import get_performance_monitor
 class StreamingProgressCallback:
     """Enhanced progress callback for streaming operations."""
 
-    def __init__(self, callback_func: Optional[Callable[[float, str], None]] = None):
+    def __init__(self, callback_func: Optional[Callable[[float, str], None]] = None) -> None:
         self.callback_func = callback_func
         self.last_report_time = 0
         self.report_interval = 0.05  # Report more frequently for streaming
@@ -83,7 +83,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
     - Caching mechanisms
     """
 
-    def __init__(self, parser_name: str, supported_formats: List[ModelFormat]):
+    def __init__(self, parser_name: str, supported_formats: List[ModelFormat]) -> None:
         """
         Initialize the refactored base parser.
 
@@ -567,7 +567,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
                 operation="cleanup_resources",
             )
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup when parser is destroyed."""
         try:
             if hasattr(self, "_executor"):

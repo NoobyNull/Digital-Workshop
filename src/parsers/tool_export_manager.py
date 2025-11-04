@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 class ToolExportManager:
     """Manager for exporting tools to external database formats."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize export manager with database path."""
         self.db_path = db_path
         self.logger = logger

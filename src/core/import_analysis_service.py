@@ -140,7 +140,7 @@ class AnalysisWorker(QThread):
         self.logger = get_logger(__name__)
         self.service = None  # Will be set by parent
 
-    def run(self):
+    def run(self) -> None:
         """Execute the analysis in background thread."""
         try:
             if self.service:
@@ -192,7 +192,7 @@ class BatchAnalysisWorker(QThread):
         self.cancellation_token = cancellation_token or CancellationToken()
         self.logger = get_logger(__name__)
 
-    def run(self):
+    def run(self) -> None:
         """Execute batch analysis."""
         try:
             result = self.service._analyze_batch_internal(
@@ -230,7 +230,7 @@ class ImportAnalysisService:
         >>> result = service.get_analysis_result(1)
     """
 
-    def __init__(self, database_manager=None):
+    def __init__(self, database_manager=None) -> None:
         """
         Initialize the import analysis service.
 
@@ -475,13 +475,13 @@ class ImportAnalysisService:
             parser_progress = None
             if progress_callback:
 
-                def parser_progress_wrapper(percent, message):
+                def parser_progress_wrapper(percent, message) -> None:
                     # Map parser progress (0-100) to our range (0-40)
                     mapped_percent = int(percent * 0.4)
                     progress_callback(mapped_percent, 100, message)
 
                 class ProgressWrapper:
-                    def report(self, percent, message):
+                    def report(self, percent, message) -> None:
                         parser_progress_wrapper(percent, message)
 
                 parser_progress = ProgressWrapper()

@@ -15,7 +15,7 @@ QVTKRenderWindowInteractor = None
 class VTKWidget(QWidget):
     """Qt widget for VTK rendering with advanced camera controls."""
 
-    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None):
+    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None) -> None:
         """Initialize the VTK widget."""
         super().__init__(parent)
 

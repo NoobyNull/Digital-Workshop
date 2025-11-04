@@ -24,7 +24,7 @@ class EventCoordinator:
     proper resource management throughout the application lifecycle.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the event coordinator.
 

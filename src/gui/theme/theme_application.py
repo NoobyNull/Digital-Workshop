@@ -87,7 +87,7 @@ class ThemeApplication(QObject):
     application_completed = Signal(bool, str)  # success, message
     application_failed = Signal(str, str)  # error_message, component
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme application coordinator."""
         super().__init__()
 

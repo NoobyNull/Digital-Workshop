@@ -37,7 +37,7 @@ class VTKFallbackRenderer:
     functionality when the primary VTK rendering context becomes invalid.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the fallback renderer."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()

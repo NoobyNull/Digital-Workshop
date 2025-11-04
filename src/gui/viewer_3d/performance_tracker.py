@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class PerformanceTracker:
     """Tracks performance metrics like FPS."""
 
-    def __init__(self, update_callback: Optional[Callable[[float], None]] = None):
+    def __init__(self, update_callback: Optional[Callable[[float], None]] = None) -> None:
         """
         Initialize performance tracker.
 

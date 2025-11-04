@@ -89,7 +89,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
     BINARY_TRIANGLE_COUNT_SIZE = 4
     BINARY_TRIANGLE_SIZE = 50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the refactored STL parser."""
         super().__init__(parser_name="STL", supported_formats=[ModelFormat.STL])
 

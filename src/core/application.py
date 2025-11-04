@@ -25,7 +25,7 @@ from src.gui.main_window import MainWindow
 class Application:
     """Main application class that manages the application lifecycle."""
 
-    def __init__(self, config: Optional[ApplicationConfig] = None):
+    def __init__(self, config: Optional[ApplicationConfig] = None) -> None:
         """Initialize the Application with optional configuration.
 
         Args:

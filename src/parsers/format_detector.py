@@ -25,7 +25,7 @@ class FormatDetector:
     - Comprehensive error handling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the format detector."""
         self.logger = get_logger(__name__)
 

@@ -81,11 +81,11 @@ class FileSystemProxyModel(QSortFilterProxyModel):
     Proxy model that filters out hidden folders and handles network paths.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
 
-    def filterAcceptsRow(self, source_row, source_parent):
+    def filterAcceptsRow(self, source_row, source_parent) -> None:
         """Override to filter out hidden folders and network paths."""
         # Get the source model index
         source_model = self.sourceModel()
@@ -135,7 +135,7 @@ class ModelLoadWorker(QThread):
     error_occurred = Signal(str)
     finished = Signal()
 
-    def __init__(self, file_paths: List[str]):
+    def __init__(self, file_paths: List[str]) -> None:
         super().__init__()
         self.file_paths = file_paths
         self._is_cancelled = False
@@ -301,7 +301,7 @@ class ModelLibraryWidget(QWidget):
     model_double_clicked = Signal(int)
     models_added = Signal(list)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
 
         self.logger = get_logger(__name__)

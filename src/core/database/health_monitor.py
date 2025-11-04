@@ -103,7 +103,7 @@ class DatabaseHealthReport:
 class DatabaseHealthMonitor:
     """Comprehensive database health monitoring system."""
 
-    def __init__(self, db_path: str, monitoring_interval: int = 30):
+    def __init__(self, db_path: str, monitoring_interval: int = 30) -> None:
         """
         Initialize database health monitor.
 

@@ -297,7 +297,7 @@ class HardwareDetector:
 class LevelOfDetailManager:
     """Manage level-of-detail for 3D models."""
 
-    def __init__(self, config: RenderingConfig):
+    def __init__(self, config: RenderingConfig) -> None:
         """
         Initialize LOD manager.
 
@@ -429,7 +429,7 @@ class LevelOfDetailManager:
 class VSyncManager:
     """Manage VSync settings for tear-free rendering."""
 
-    def __init__(self, config: RenderingConfig):
+    def __init__(self, config: RenderingConfig) -> None:
         """
         Initialize VSync manager.
 
@@ -507,7 +507,7 @@ class VSyncManager:
 class FrameRateMonitor:
     """Monitor and optimize frame rate performance."""
 
-    def __init__(self, config: RenderingConfig):
+    def __init__(self, config: RenderingConfig) -> None:
         """
         Initialize frame rate monitor.
 
@@ -597,7 +597,7 @@ class FrameRateMonitor:
 class RenderingPerformanceManager:
     """Main 3D rendering performance management system."""
 
-    def __init__(self, config: Optional[RenderingConfig] = None):
+    def __init__(self, config: Optional[RenderingConfig] = None) -> None:
         """
         Initialize rendering performance manager.
 

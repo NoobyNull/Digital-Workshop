@@ -41,7 +41,7 @@ class ModelEditorDialog(QDialog):
 
     model_saved = Signal(str)  # Emitted with path to saved model
 
-    def __init__(self, model: STLModel, parent=None):
+    def __init__(self, model: STLModel, parent=None) -> None:
         """
         Initialize model editor dialog.
 

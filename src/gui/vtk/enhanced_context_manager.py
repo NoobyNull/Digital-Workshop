@@ -54,7 +54,7 @@ class EnhancedVTKContextManager:
     - Prevention of VTK cleanup after OpenGL context destruction
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the enhanced VTK context manager."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()

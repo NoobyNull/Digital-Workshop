@@ -22,7 +22,7 @@ class AIDescriptionService(QObject):
     analysis_failed = Signal(str)  # Error message
     progress_updated = Signal(int)  # Progress percentage
 
-    def __init__(self, config_manager=None):
+    def __init__(self, config_manager=None) -> None:
         """
         Initialize the AI Description Service.
 
@@ -127,7 +127,7 @@ class AIDescriptionService(QObject):
             )
             return self._get_default_config()
 
-    def _save_config(self):
+    def _save_config(self) -> None:
         """Save AI description configuration."""
         try:
             settings = QSettings()
@@ -237,7 +237,7 @@ Return ONLY valid JSON, no additional text.""",
         }
         return defaults.get(prompt_type, defaults["default"])
 
-    def _initialize_providers(self):
+    def _initialize_providers(self) -> None:
         """Initialize AI providers based on configuration."""
         providers_config = self.config.get("providers", {})
 
@@ -562,7 +562,7 @@ Return ONLY valid JSON, no additional text.""",
         """Get custom prompts configuration."""
         return self.config.get("custom_prompts", {})
 
-    def set_custom_prompt(self, prompt_type: str, prompt_text: str):
+    def set_custom_prompt(self, prompt_type: str, prompt_text: str) -> None:
         """Set a custom prompt."""
         self.config.setdefault("custom_prompts", {})[prompt_type] = prompt_text
         self._save_config()
@@ -571,7 +571,7 @@ Return ONLY valid JSON, no additional text.""",
         """Get service settings."""
         return self.config.get("settings", {})
 
-    def update_settings(self, settings: Dict[str, Any]):
+    def update_settings(self, settings: Dict[str, Any]) -> None:
         """Update service settings."""
         self.config.setdefault("settings", {}).update(settings)
         self._save_config()

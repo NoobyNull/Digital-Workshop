@@ -25,7 +25,7 @@ class InstallationType(Enum):
 class InstallationDetector:
     """Detects the current installation type."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the installation detector."""
         self._installation_type: Optional[InstallationType] = None
         self._detection_performed = False

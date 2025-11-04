@@ -41,7 +41,7 @@ class ThemePersistence:
     - Performance monitoring for debugging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme persistence manager."""
         from src.core.version_manager import get_settings_names
 

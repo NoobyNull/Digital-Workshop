@@ -13,7 +13,7 @@ from .library_event_handler import LibraryEventHandler
 class ModelLibraryFacade:
     """Facade pattern for model library components."""
 
-    def __init__(self, library_widget):
+    def __init__(self, library_widget) -> None:
         """
         Initialize facade.
 
@@ -51,15 +51,15 @@ class ModelLibraryFacade:
         """Update model view."""
         self.model_manager.update_model_view()
 
-    def get_selected_model_id(self):
+    def get_selected_model_id(self) -> None:
         """Get selected model ID."""
         return self.model_manager.get_selected_model_id()
 
-    def get_selected_models(self):
+    def get_selected_models(self) -> None:
         """Get selected model IDs."""
         return self.model_manager.get_selected_models()
 
-    def load_models(self, file_paths):
+    def load_models(self, file_paths) -> None:
         """Load models from file paths."""
         self.model_manager.load_models(file_paths)
 

@@ -158,7 +158,7 @@ class CleanupVerificationReport:
 class CleanupVerifier:
     """Verifies cleanup operations and detects resource leaks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cleanup verifier."""
         self.logger = get_logger(__name__)
         self.report = CleanupVerificationReport()

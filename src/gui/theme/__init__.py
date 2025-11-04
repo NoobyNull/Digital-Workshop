@@ -43,7 +43,7 @@ try:
 except ImportError:
     # Fallback: create a simple COLORS proxy
     class _SimpleColorsProxy:
-        def __getattr__(self, name):
+        def __getattr__(self, name) -> None:
             return "#E31C79"  # Fallback color
 
     COLORS = _SimpleColorsProxy()

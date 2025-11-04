@@ -15,7 +15,7 @@ class GcodeLoaderThread(QThread):
     finished_loading = Signal(list)  # Emits all moves when complete
     error_occurred = Signal(str)  # Emits error message
 
-    def __init__(self, filepath: str, batch_size: int = 5000):
+    def __init__(self, filepath: str, batch_size: int = 5000) -> None:
         """
         Initialize the loader thread.
 

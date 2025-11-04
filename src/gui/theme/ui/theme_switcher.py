@@ -26,7 +26,7 @@ class ThemeSwitcher(QComboBox):
 
     theme_changed = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme switcher.
 

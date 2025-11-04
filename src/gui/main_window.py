@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
     model_loaded = Signal(str)  # Emitted when a model is loaded
     model_selected = Signal(int)  # Emitted when a model is selected
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the main window.
 
@@ -1919,7 +1919,7 @@ class MainWindow(QMainWindow):
             # Store reference to original _load_models method
             original_load_models = self.model_library_widget._load_models
 
-            def _load_models_with_status_update(file_paths):
+            def _load_models_with_status_update(file_paths) -> None:
                 """Wrapper to connect status updates when loading starts."""
                 # Call original method
                 original_load_models(file_paths)

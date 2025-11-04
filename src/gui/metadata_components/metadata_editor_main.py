@@ -53,7 +53,7 @@ class MetadataEditorWidget(QWidget):
     metadata_saved = Signal(int)  # Emitted when metadata is saved (model_id)
     metadata_changed = Signal(int)  # Emitted when metadata is changed (model_id)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the metadata editor widget.
 
@@ -892,7 +892,7 @@ class MetadataEditorWidget(QWidget):
             self.run_ai_analysis_button.setEnabled(True)
             self.run_ai_analysis_button.setText("Run AI Analysis")
 
-    def _get_ai_service(self):
+    def _get_ai_service(self) -> None:
         """Get the AI description service from the parent window."""
         try:
             # Try to get from parent window

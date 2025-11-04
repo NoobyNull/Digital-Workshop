@@ -45,7 +45,7 @@ class LegacyThemeManager(QObject):
     colors_updated = Signal(dict)  # color_dict
     error_occurred = Signal(str)  # error_message
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize legacy theme manager with backward compatibility."""
         super().__init__()
 

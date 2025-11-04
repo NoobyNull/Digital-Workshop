@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class ToolMigrationUtility:
     """Utility for migrating tool data from JSON to SQLite."""
 
-    def __init__(self, sqlite_db_path: str):
+    def __init__(self, sqlite_db_path: str) -> None:
         """Initialize migration utility with target SQLite database path."""
         self.db_path = sqlite_db_path
         self.logger = logger

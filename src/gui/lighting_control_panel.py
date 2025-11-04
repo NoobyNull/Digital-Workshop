@@ -27,7 +27,7 @@ class LightingControlPanel(QDialog):
     color_changed = Signal(float, float, float)  # R, G, B normalized
     intensity_changed = Signal(float)  # 0-2.0
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Lighting Controls")
         self.setObjectName("LightingControlPanel")

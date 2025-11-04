@@ -40,7 +40,7 @@ class FilesTab(QWidget):
     that are used by the file browser in the model library.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()

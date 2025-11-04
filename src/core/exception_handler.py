@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QMessageBox, QWidget
 class ExceptionHandler:
     """Centralized exception handling for the application."""
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """Initialize the ExceptionHandler.
 
         Args:

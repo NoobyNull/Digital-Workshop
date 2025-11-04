@@ -25,7 +25,7 @@ class MaterialProvider:
     # Default materials directory
     DEFAULT_MATERIALS_DIR = Path(__file__).parent.parent / "resources" / "materials"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the material provider."""
         self.logger = get_logger(__name__)
         self.logger.info("MaterialProvider initialized")

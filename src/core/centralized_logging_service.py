@@ -96,7 +96,7 @@ class CentralizedLoggingService:
     - Correlation ID tracking
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize the centralized logging service.
 
         Args:
@@ -456,7 +456,7 @@ class CentralizedLoggingService:
 
 
 # Decorator for automatic performance and error logging
-def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INFO):
+def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INFO) -> None:
     """
     Decorator for automatic operation logging with performance and error tracking.
 
@@ -467,7 +467,7 @@ def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INF
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             operation = operation_name or f"{func.__module__}.{func.__name__}"
             start_time = time.time()
 

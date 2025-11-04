@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow) -> None:
         if not MainWindow.objectName():
             MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1600, 1000)
@@ -203,7 +203,7 @@ class Ui_MainWindow(object):
 
     # setupUi
 
-    def retranslateUi(self, MainWindow):
+    def retranslateUi(self, MainWindow) -> None:
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", "3D-MM - 3D Model Manager", None)
         )

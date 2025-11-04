@@ -27,7 +27,7 @@ class BackgroundProvider:
     # Default background color (light gray)
     DEFAULT_COLOR = "#F5F5F5"
 
-    def __init__(self, settings_manager=None):
+    def __init__(self, settings_manager=None) -> None:
         """
         Initialize the background provider.
 

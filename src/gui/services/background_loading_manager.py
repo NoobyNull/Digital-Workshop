@@ -63,7 +63,7 @@ class BackgroundLoadingManager:
     requests from users.
     """
 
-    def __init__(self, max_concurrent_jobs: int = 2):
+    def __init__(self, max_concurrent_jobs: int = 2) -> None:
         """
         Initialize the background loading manager.
 
@@ -152,7 +152,7 @@ class BackgroundLoadingManager:
         job.future = future
 
         # Add completion callback
-        def on_completion(fut: Future):
+        def on_completion(fut: Future) -> None:
             try:
                 result = fut.result()
                 with self._lock:
@@ -335,7 +335,7 @@ class BackgroundLoadingManager:
                     raise Exception("Insufficient memory for loading operation")
 
                 # Coordinate parsing with enhanced progress tracking
-                def enhanced_progress_callback(progress: float, message: str):
+                def enhanced_progress_callback(progress: float, message: str) -> None:
                     self._update_job_progress(job, progress, message, progress_callback)
 
                     # Record performance metrics
@@ -410,7 +410,7 @@ class BackgroundLoadingManager:
         if callback:
             callback(progress, message)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup executor on destruction."""
         if hasattr(self, "executor"):
             self.executor.shutdown(wait=False)

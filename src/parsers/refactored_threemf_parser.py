@@ -76,7 +76,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
     - Comprehensive error handling and logging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the refactored 3MF parser."""
         super().__init__(parser_name="3MF", supported_formats=[ModelFormat.THREE_MF])
         self.logger = get_logger(self.__class__.__name__)

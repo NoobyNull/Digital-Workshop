@@ -22,7 +22,7 @@ activity_logger = get_activity_logger(__name__)
 class EventHandler:
     """Handles events and user actions in the main window."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         """
         Initialize event handler.
 

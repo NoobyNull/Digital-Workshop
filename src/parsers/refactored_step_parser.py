@@ -146,7 +146,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
     - Comprehensive error handling and logging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the refactored STEP parser."""
         super().__init__(parser_name="STEP", supported_formats=[ModelFormat.STEP])
         self.logger = get_logger(self.__class__.__name__)

@@ -40,7 +40,7 @@ class TransactionError(DatabaseError):
 class ConnectionPool:
     """Thread-safe connection pool for database connections."""
 
-    def __init__(self, db_path: str, max_connections: int = 10, timeout: float = 30.0):
+    def __init__(self, db_path: str, max_connections: int = 10, timeout: float = 30.0) -> None:
         """
         Initialize connection pool.
 
@@ -161,7 +161,7 @@ class ConnectionPool:
 class Transaction:
     """Represents a database transaction with state tracking."""
 
-    def __init__(self, connection: sqlite3.Connection, transaction_id: str = None):
+    def __init__(self, connection: sqlite3.Connection, transaction_id: str = None) -> None:
         """
         Initialize transaction.
 
@@ -221,7 +221,7 @@ class Transaction:
 class TransactionManager:
     """Comprehensive transaction management system."""
 
-    def __init__(self, db_path: str, max_retries: int = 3, retry_delay: float = 0.1):
+    def __init__(self, db_path: str, max_retries: int = 3, retry_delay: float = 0.1) -> None:
         """
         Initialize transaction manager.
 
@@ -275,7 +275,7 @@ class TransactionManager:
         )
 
     @contextmanager
-    def transaction(self, transaction_id: str = None):
+    def transaction(self, transaction_id: str = None) -> None:
         """
         Context manager for database transactions.
 
@@ -463,7 +463,7 @@ class TransactionManager:
         logger.info("Transaction manager closed")
 
 
-def transactional(max_retries: int = 3, retry_delay: float = 0.1):
+def transactional(max_retries: int = 3, retry_delay: float = 0.1) -> None:
     """
     Decorator for automatic transaction management.
 
@@ -477,7 +477,7 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1):
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             # This would need to be integrated with the transaction manager
             # For now, just execute the function with basic error handling
             try:
@@ -494,7 +494,7 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1):
 class DatabaseHealthMonitor:
     """Monitor database health and performance."""
 
-    def __init__(self, connection_pool: ConnectionPool):
+    def __init__(self, connection_pool: ConnectionPool) -> None:
         """
         Initialize health monitor.
 

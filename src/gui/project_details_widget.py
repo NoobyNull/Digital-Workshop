@@ -38,7 +38,7 @@ class ProjectDetailsWidget(QWidget):
     - Attached Resources: list of files associated with the model
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.current_model_id: Optional[int] = None

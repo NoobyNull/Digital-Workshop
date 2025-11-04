@@ -16,7 +16,7 @@ class PersonalToolboxManager:
     SETTINGS_KEY = "feeds_and_speeds/personal_toolbox"
     UNIT_CONVERSION_KEY = "feeds_and_speeds/auto_convert_to_metric"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize personal toolbox manager."""
         self.settings = QSettings()
         self.logger = logger

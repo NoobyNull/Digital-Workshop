@@ -23,7 +23,7 @@ class VersionInfo:
 class VersionManager:
     """Manages version information for different installation types."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the version manager."""
         self._base_name = "DigitalWorkshop"
         self._base_version = "0.1.5"

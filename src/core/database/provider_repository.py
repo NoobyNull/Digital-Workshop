@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class ProviderRepository:
     """Repository for provider operations."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize repository with database path."""
         self.db_path = Path(db_path)
         self.logger = logger
@@ -24,7 +24,7 @@ class ProviderRepository:
         """Get database connection with proper management."""
         return sqlite3.connect(self.db_path)
 
-    def _close_connection(self, conn: sqlite3.Connection):
+    def _close_connection(self, conn: sqlite3.Connection) -> None:
         """Explicitly close database connection."""
         if conn:
             try:

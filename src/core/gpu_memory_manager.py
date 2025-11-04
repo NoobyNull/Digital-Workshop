@@ -44,7 +44,7 @@ class GPUMemoryManager:
     - Memory-efficient data streaming for large files
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU memory manager."""
         self.logger = get_logger(__name__)
         self.gpu_accelerator = get_gpu_accelerator()
@@ -328,7 +328,7 @@ class GPUMemoryManager:
             self.memory_stats = MemoryStats()
             self.logger.info("GPU memory manager cleanup completed")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor - ensure cleanup."""
         self.cleanup()
 

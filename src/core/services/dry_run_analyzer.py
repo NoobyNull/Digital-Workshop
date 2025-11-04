@@ -39,7 +39,7 @@ class DryRunReport:
 class DryRunAnalyzer:
     """Analyzes import without performing file operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dry run analyzer."""
         self.logger = logger
         self.file_filter = FileTypeFilter()

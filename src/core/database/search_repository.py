@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class SearchRepository:
     """Repository for model search and filtering operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize search repository.
 

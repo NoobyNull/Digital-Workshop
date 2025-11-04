@@ -38,7 +38,7 @@ class ThemeUpdateError(Exception):
     and affected widgets.
     """
 
-    def __init__(self, message: str, failed_widgets: List[str] = None):
+    def __init__(self, message: str, failed_widgets: List[str] = None) -> None:
         """
         Initialize theme update error.
 
@@ -58,7 +58,7 @@ class WidgetRegistry:
     safe access to widget references.
     """
 
-    def __init__(self, widget: QWidget, widget_name: str = None):
+    def __init__(self, widget: QWidget, widget_name: str = None) -> None:
         """
         Initialize widget registry entry.
 
@@ -223,7 +223,7 @@ class ThemeRegistry(QObject):
     theme_update_completed = Signal(int, int)  # successful_updates, failed_updates
     registry_cleanup_completed = Signal(int)  # removed_count
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme registry."""
         super().__init__()
 

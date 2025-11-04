@@ -24,7 +24,7 @@ class MenuManager:
     to provide a complete menu system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the menu manager.
 

@@ -32,7 +32,7 @@ class BackgroundHasher(QThread):
     duplicate_found = Signal(int, int, str, str)  # new_id, existing_id, new_path, old_path
     all_complete = Signal()
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize the background hasher.
 
@@ -44,7 +44,7 @@ class BackgroundHasher(QThread):
         self._is_paused = False
         self._is_stopped = False
 
-    def run(self):
+    def run(self) -> None:
         """Main thread execution method."""
         try:
             # Get all models that need hashing
@@ -103,15 +103,15 @@ class BackgroundHasher(QThread):
                 hasher.update(chunk)
         return hasher.hexdigest()
 
-    def pause(self):
+    def pause(self) -> None:
         """Pause the background processing."""
         self._is_paused = True
 
-    def resume(self):
+    def resume(self) -> None:
         """Resume the background processing."""
         self._is_paused = False
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the background processing."""
         self._is_stopped = True
 
@@ -128,7 +128,7 @@ class BackgroundProcessor:
     between background tasks and the main UI thread.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the background processor.
 

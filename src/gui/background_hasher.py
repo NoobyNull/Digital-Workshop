@@ -33,7 +33,7 @@ class BackgroundHasher(QThread):
     duplicate_found = Signal(int, int, str, str)  # new_model_id, existing_id, new_path, old_path
     all_complete = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.db_manager = get_database_manager()

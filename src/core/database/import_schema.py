@@ -159,7 +159,7 @@ GROUP BY s.id;
 """
 
 
-def get_all_schema_statements():
+def get_all_schema_statements() -> None:
     """
     Get all schema creation statements in order.
 
@@ -184,7 +184,7 @@ def get_all_schema_statements():
     return statements
 
 
-def get_models_table_extensions():
+def get_models_table_extensions() -> None:
     """
     Get ALTER TABLE statements for extending models table.
 

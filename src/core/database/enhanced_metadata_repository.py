@@ -23,7 +23,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
     transaction management, and comprehensive error handling.
     """
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize enhanced metadata repository.
 
@@ -619,7 +619,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
             return []
 
     @contextmanager
-    def transaction(self):
+    def transaction(self) -> None:
         """
         Context manager for database transactions.
 

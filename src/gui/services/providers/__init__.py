@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-def get_provider_class(provider_id: str):
+def get_provider_class(provider_id: str) -> None:
     """Get provider class by ID."""
     provider_mapping = {
         "openai": OpenAIProvider,

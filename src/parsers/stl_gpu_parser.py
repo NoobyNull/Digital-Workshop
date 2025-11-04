@@ -67,7 +67,7 @@ class STLGPUParser(BaseParser):
     BINARY_TRIANGLE_COUNT_SIZE = 4
     BINARY_TRIANGLE_SIZE = 50
 
-    def __init__(self, config: Optional[GPUParseConfig] = None):
+    def __init__(self, config: Optional[GPUParseConfig] = None) -> None:
         """Initialize GPU-accelerated STL parser."""
         super().__init__()
         self.config = config or GPUParseConfig()
@@ -442,7 +442,7 @@ class STLGPUParser(BaseParser):
         if progress_callback:
 
             class STLCallbackAdapter:
-                def report(self, progress: float, message: str):
+                def report(self, progress: float, message: str) -> None:
                     progress_callback.report(progress, message)
 
             stl_callback = STLCallbackAdapter()

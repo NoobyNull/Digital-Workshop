@@ -51,11 +51,11 @@ class SpecificErrorHandler:
         self.reraise = reraise
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit context manager with specific error handling."""
         if exc_type is None:
             return False  # No exception occurred
@@ -71,7 +71,7 @@ class SpecificErrorHandler:
         """Use as decorator."""
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             try:
                 return func(*args, **kwargs)
             except self.expected_errors as e:
@@ -158,7 +158,7 @@ class SpecificErrorHandler:
 class ShutdownErrorHandler(SpecificErrorHandler):
     """Specialized handler for shutdown operations."""
 
-    def __init__(self, operation_name: str, context_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, operation_name: str, context_info: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(
             context=ErrorContext.SHUTDOWN,
             expected_errors=(RuntimeError, OSError, IOError),
@@ -171,7 +171,7 @@ class ShutdownErrorHandler(SpecificErrorHandler):
 class VTKErrorHandler(SpecificErrorHandler):
     """Specialized handler for VTK operations."""
 
-    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(
             context=ErrorContext.RENDERING,
             expected_errors=(RuntimeError, OSError),
@@ -214,7 +214,7 @@ class FileIOErrorHandler(SpecificErrorHandler):
 class MemoryErrorHandler(SpecificErrorHandler):
     """Specialized handler for memory-related errors."""
 
-    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(
             context=ErrorContext.NORMAL_OPERATION,
             expected_errors=(MemoryError,),
@@ -230,7 +230,7 @@ class MemoryErrorHandler(SpecificErrorHandler):
 
 # Context managers for specific operations
 @contextmanager
-def handle_shutdown_errors(operation_name: str, context_info: Optional[Dict[str, Any]] = None):
+def handle_shutdown_errors(operation_name: str, context_info: Optional[Dict[str, Any]] = None) -> None:
     """
     Context manager for shutdown operations with specific error handling.
 
@@ -245,7 +245,7 @@ def handle_shutdown_errors(operation_name: str, context_info: Optional[Dict[str,
 
 
 @contextmanager
-def handle_vtk_errors(operation: str, context_info: Optional[Dict[str, Any]] = None):
+def handle_vtk_errors(operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
     """
     Context manager for VTK operations with specific error handling.
 
@@ -279,7 +279,7 @@ def handle_file_io_errors(
 
 
 @contextmanager
-def handle_memory_errors(operation: str, context_info: Optional[Dict[str, Any]] = None):
+def handle_memory_errors(operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
     """
     Context manager for memory operations with specific error handling.
 
@@ -310,7 +310,7 @@ def specific_error_handler(
             expected_errors=(RuntimeError, OSError),
             recovery_strategy=ErrorRecoveryStrategy.GRACEFUL_SHUTDOWN
         )
-        def cleanup_vtk_resources():
+        def cleanup_vtk_resources() -> None:
             # Cleanup code here
             pass
     """
@@ -334,7 +334,7 @@ def shutdown_safe(func: Callable) -> Callable:
 
     Usage:
         @shutdown_safe
-        def cleanup_vtk():
+        def cleanup_vtk() -> None:
             # VTK cleanup code
             pass
     """
@@ -353,7 +353,7 @@ def vtk_safe(func: Callable) -> Callable:
 
     Usage:
         @vtk_safe
-        def render_scene():
+        def render_scene() -> None:
             # VTK rendering code
             pass
     """
@@ -366,13 +366,13 @@ def vtk_safe(func: Callable) -> Callable:
     )(func)
 
 
-def file_io_safe(operation: str, file_path: Optional[Path] = None):
+def file_io_safe(operation: str, file_path: Optional[Path] = None) -> None:
     """
     Decorator for file I/O safe functions.
 
     Usage:
         @file_io_safe("load_model", Path("model.stl"))
-        def load_model_file():
+        def load_model_file() -> None:
             # File loading code
             pass
     """
@@ -398,20 +398,20 @@ def file_io_safe(operation: str, file_path: Optional[Path] = None):
 
 
 # Performance monitoring wrapper
-def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION):
+def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION) -> None:
     """
     Decorator to monitor operation performance and handle errors.
 
     Usage:
         @monitor_operation("model_loading", ErrorContext.FILE_LOADING)
-        def load_model():
+        def load_model() -> None:
             # Model loading code
             pass
     """
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             start_time = time.time()
             operation_id = f"{func.__name__}_{int(start_time * 1000)}"
 

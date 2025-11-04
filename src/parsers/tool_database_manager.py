@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 class ToolDatabaseManager:
     """Unified manager for tool database operations."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize manager with database path."""
         self.db_path = db_path
         self.logger = logger

@@ -67,7 +67,7 @@ class OBJParser(BaseParser):
     - Performance optimization for different file sizes
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the OBJ parser."""
         super().__init__()
         self.materials: Dict[str, OBJMaterial] = {}

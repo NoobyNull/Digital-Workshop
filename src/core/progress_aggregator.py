@@ -51,7 +51,7 @@ class ChunkProgress:
     error: Optional[str] = None
     sub_operations: Dict[str, SubOperationProgress] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.sub_operations is None:
             self.sub_operations = {}
 
@@ -92,7 +92,7 @@ class ProgressAggregator:
     calculates overall progress for display in the UI.
     """
 
-    def __init__(self, total_chunks: int):
+    def __init__(self, total_chunks: int) -> None:
         """
         Initialize the progress aggregator.
 

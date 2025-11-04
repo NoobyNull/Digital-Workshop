@@ -67,7 +67,7 @@ class OptimizedVTKCleanupCoordinator:
     5. Comprehensive logging and error handling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the optimized cleanup coordinator."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()
@@ -153,7 +153,7 @@ class OptimizedVTKCleanupCoordinator:
             class FallbackResourceTracker:
                 """Minimal fallback resource tracker for emergency cleanup."""
 
-                def __init__(self):
+                def __init__(self) -> None:
                     self.logger = get_logger(__name__)
                     self.resources = {}
 

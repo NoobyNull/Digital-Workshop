@@ -27,7 +27,7 @@ class GcodeTimeline(QWidget):
     pause_requested = Signal()  # Emits when pause is requested
     stop_requested = Signal()  # Emits when stop is requested
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """Initialize the timeline widget."""
         super().__init__(parent)
 

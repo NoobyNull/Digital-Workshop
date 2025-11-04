@@ -62,7 +62,7 @@ class MigrationResult:
 class DatabaseVersion:
     """Database version information."""
 
-    def __init__(self, major: int, minor: int, patch: int = 0):
+    def __init__(self, major: int, minor: int, patch: int = 0) -> None:
         """
         Initialize database version.
 
@@ -132,7 +132,7 @@ class DatabaseVersion:
 class MigrationManager:
     """Comprehensive database migration management system."""
 
-    def __init__(self, db_path: str, migrations_dir: str = None, backup_dir: str = None):
+    def __init__(self, db_path: str, migrations_dir: str = None, backup_dir: str = None) -> None:
         """
         Initialize migration manager.
 

@@ -32,7 +32,7 @@ class ParseError(Exception):
 class ProgressCallback:
     """Callback interface for progress reporting during parsing."""
 
-    def __init__(self, callback_func=None):
+    def __init__(self, callback_func=None) -> None:
         """
         Initialize progress callback.
 
@@ -67,7 +67,7 @@ class BaseParser(ABC):
     This ensures consistent behavior and interface across all parsers.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the parser."""
         self.logger = get_logger(self.__class__.__name__)
         self._cancel_parsing = False
@@ -75,7 +75,7 @@ class BaseParser(ABC):
         self._model_cache = None  # Lazy initialization
 
     @property
-    def model_cache(self):
+    def model_cache(self) -> None:
         """Lazy initialization of model_cache to avoid circular imports."""
         if self._model_cache is None:
             from src.core.model_cache import get_model_cache

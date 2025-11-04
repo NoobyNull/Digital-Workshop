@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class AddToolDialog(QDialog):
     """Dialog for adding tools from the tool database."""
 
-    def __init__(self, db_path: str, parent=None):
+    def __init__(self, db_path: str, parent=None) -> None:
         """Initialize Add Tool dialog.
 
         Args:
@@ -48,7 +48,7 @@ class AddToolDialog(QDialog):
         self._setup_ui()
         self._load_providers()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup the dialog UI."""
         self.setWindowTitle("Add Tool")
         self.setGeometry(100, 100, 600, 500)
@@ -87,7 +87,7 @@ class AddToolDialog(QDialog):
 
         self.setLayout(layout)
 
-    def _load_providers(self):
+    def _load_providers(self) -> None:
         """Load providers from database."""
         try:
             providers = self.provider_repo.get_all_providers()
@@ -103,7 +103,7 @@ class AddToolDialog(QDialog):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load providers: %s", e)
 
-    def _on_provider_selected(self):
+    def _on_provider_selected(self) -> None:
         """Handle provider selection change."""
         items = self.provider_list.selectedItems()
         if items:
@@ -113,7 +113,7 @@ class AddToolDialog(QDialog):
         else:
             self.tool_list.clear()
 
-    def _load_tools_for_provider(self, provider_id: int):
+    def _load_tools_for_provider(self, provider_id: int) -> None:
         """Load tools for selected provider.
 
         Args:
@@ -133,7 +133,7 @@ class AddToolDialog(QDialog):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load tools: %s", e)
 
-    def _on_tool_selected(self):
+    def _on_tool_selected(self) -> None:
         """Handle tool selection change."""
         items = self.tool_list.selectedItems()
         if items:

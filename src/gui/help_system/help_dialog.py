@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class HelpDialog(QDialog):
     """Searchable help dialog."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize help dialog."""
         super().__init__(parent)
         self.setWindowTitle("Help - Search Documentation")

@@ -24,7 +24,7 @@ class ToolbarManager:
     and styling to provide a complete toolbar system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the toolbar manager.
 
@@ -87,7 +87,7 @@ class ToolbarManager:
             toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
             self.logger.info("Toolbar in text-only mode (qtawesome unavailable)")
 
-        def _icon(name: str):
+        def _icon(name: str) -> None:
             if not icons_ok or qta is None:
                 return QIcon()
             try:

@@ -19,7 +19,7 @@ from src.core.logging_config import get_logger, log_function_call
 
 
 class LightingManager:
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """Initialize with VTK renderer reference"""
         self.renderer = renderer
         self.light = None

@@ -23,7 +23,7 @@ class VTKCleanupHandler(CleanupHandler):
     - Graphics resource cleanup
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the VTK cleanup handler."""
         super().__init__("VTKCleanupHandler")
         self._resource_tracker = None
@@ -262,7 +262,7 @@ class VTKCleanupHandler(CleanupHandler):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register VTK resource %s: {e}", name)
 
-    def _determine_resource_type(self, resource: Any):
+    def _determine_resource_type(self, resource: Any) -> None:
         """Determine the VTK resource type."""
         try:
             from src.gui.vtk.resource_tracker import ResourceType

@@ -81,7 +81,7 @@ class ConnectionMetrics:
 class DatabaseErrorHandler:
     """Comprehensive database error handler with recovery mechanisms."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """
         Initialize database error handler.
 
@@ -601,7 +601,7 @@ class DatabaseErrorHandler:
 class ConnectionManager:
     """Enhanced connection manager with health monitoring."""
 
-    def __init__(self, db_path: str, error_handler: DatabaseErrorHandler):
+    def __init__(self, db_path: str, error_handler: DatabaseErrorHandler) -> None:
         """
         Initialize connection manager.
 
@@ -616,7 +616,7 @@ class ConnectionManager:
         self._lock = threading.Lock()
 
     @contextmanager
-    def get_connection(self, timeout: float = None):
+    def get_connection(self, timeout: float = None) -> None:
         """
         Get a database connection with automatic health monitoring.
 
@@ -759,7 +759,7 @@ class ConnectionManager:
 class GracefulDegradationManager:
     """Manages graceful degradation when database is unavailable."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize graceful degradation manager."""
         self.degradation_level = 0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
         self.available_features = set()

@@ -42,7 +42,7 @@ class GcodePreviewerWidget(QWidget):
 
     gcode_loaded = Signal(str)  # Emits filepath when G-code is loaded
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """Initialize the G-code previewer widget."""
         super().__init__(parent)
         self.logger = get_logger(__name__)

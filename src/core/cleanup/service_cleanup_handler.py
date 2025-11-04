@@ -22,7 +22,7 @@ class ServiceCleanupHandler(CleanupHandler):
     - Thread cleanup
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the service cleanup handler."""
         super().__init__("ServiceCleanupHandler")
         self._application = None

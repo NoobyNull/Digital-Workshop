@@ -88,7 +88,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
     - Comprehensive error handling and logging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the refactored OBJ parser."""
         super().__init__(parser_name="OBJ", supported_formats=[ModelFormat.OBJ])
         self.logger = get_logger(self.__class__.__name__)

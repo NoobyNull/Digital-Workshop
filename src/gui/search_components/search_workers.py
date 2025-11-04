@@ -46,7 +46,7 @@ class SearchWorker(QThread):
         self.offset = offset
         self.search_engine = get_search_engine()
 
-    def run(self):
+    def run(self) -> None:
         """
         Execute the search operation.
         """
@@ -66,7 +66,7 @@ class SearchSuggestionWorker(QThread):
 
     suggestions_ready = Signal(list)
 
-    def __init__(self, query: str, limit: int = 10):
+    def __init__(self, query: str, limit: int = 10) -> None:
         """
         Initialize the suggestion worker.
 
@@ -79,7 +79,7 @@ class SearchSuggestionWorker(QThread):
         self.limit = limit
         self.search_engine = get_search_engine()
 
-    def run(self):
+    def run(self) -> None:
         """
         Get search suggestions.
         """

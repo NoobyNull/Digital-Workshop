@@ -375,7 +375,7 @@ def get_activity_logger(name: str) -> logging.Logger:
     return logger
 
 
-def log_function_call(logger: logging.Logger, enable_logging: bool = False):
+def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> None:
     """
     Decorator to automatically log function calls with parameters and return values.
 
@@ -387,8 +387,8 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
         Decorator function
     """
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func) -> None:
+        def wrapper(*args, **kwargs) -> None:
             # Only log if explicitly enabled
             if enable_logging:
                 try:

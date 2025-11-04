@@ -31,7 +31,7 @@ class Material:
 class MaterialCostManager:
     """Manages material costs and library."""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """
         Initialize the material cost manager.
 

@@ -905,7 +905,7 @@ class ThemePersistence:
 
     THEME_FILENAME = "theme.json"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize persistence handler."""
         self._app_data_path = self._get_app_data_path()
 

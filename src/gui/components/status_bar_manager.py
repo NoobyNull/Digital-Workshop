@@ -33,7 +33,7 @@ class StatusBarManager:
     memory usage display, and background process status updates.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the status bar manager.
 

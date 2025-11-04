@@ -62,7 +62,7 @@ class FastHasher:
     SMALL_FILE_THRESHOLD = 10 * 1024 * 1024  # 10MB
     MEDIUM_FILE_THRESHOLD = 100 * 1024 * 1024  # 100MB
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the fast hasher with logging."""
         self.logger = get_logger(__name__)
         self._log_json(

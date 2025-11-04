@@ -93,7 +93,7 @@ class CostEstimate:
 class CostCalculator:
     """Main cost calculator for projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cost calculator."""
         self.material_cost_per_unit = 0.0
         self.machine_hourly_rate = 0.0
@@ -192,7 +192,7 @@ class CostCalculator:
 class ProfessionalCostCalculator:
     """Professional cost calculator for CNC woodworking projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the calculator with default rates."""
         # Hourly rates
         self.labor_hourly_rate = 25.0

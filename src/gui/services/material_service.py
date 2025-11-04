@@ -63,7 +63,7 @@ class MaterialValidationWorker(QThread):
     validation_completed = Signal(str, object)  # material_name, MaterialValidationResult
     validation_progress = Signal(str, float)  # material_name, progress_percentage
 
-    def __init__(self, material_data: Dict[str, Any], material_name: str):
+    def __init__(self, material_data: Dict[str, Any], material_name: str) -> None:
         """
         Initialize material validation worker.
 
@@ -218,7 +218,7 @@ class MaterialValidationWorker(QThread):
 class MaterialService(IMaterialService):
     """Enhanced material service with validation, preview, and search capabilities."""
 
-    def __init__(self, ui_service: IViewerUIService):
+    def __init__(self, ui_service: IViewerUIService) -> None:
         """
         Initialize material service.
 

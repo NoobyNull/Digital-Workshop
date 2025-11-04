@@ -69,7 +69,7 @@ class SystemThemeDetector:
     - Linux: Environment variable detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self._current_mode: Literal["light", "dark"] = "light"
         self._enabled = False
@@ -252,7 +252,7 @@ class ThemeService:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme service."""
         if hasattr(self, "_initialized"):
             return
@@ -624,7 +624,7 @@ class ThemeService:
         self.apply_preset("light")
         logger.info("Theme reset to default")
 
-    def get_manager(self):
+    def get_manager(self) -> None:
         """Get the underlying ThemeManager instance."""
         return self._manager
 

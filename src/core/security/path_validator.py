@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class PathValidator:
     """Validates file paths to prevent directory traversal attacks."""
 
-    def __init__(self, base_directory: Optional[str] = None):
+    def __init__(self, base_directory: Optional[str] = None) -> None:
         """Initialize path validator with optional base directory.
         
         Args:

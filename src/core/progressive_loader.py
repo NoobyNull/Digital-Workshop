@@ -175,7 +175,7 @@ class HardwareDetector:
 class FileChunker:
     """Efficient file chunking with multiple strategies."""
 
-    def __init__(self, config: LoadingConfig):
+    def __init__(self, config: LoadingConfig) -> None:
         """
         Initialize file chunker.
 
@@ -254,7 +254,7 @@ class FileChunker:
 class ProgressTracker:
     """Track loading progress with detailed metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize progress tracker."""
         self._progress_callbacks: List[Callable[[LoadingProgress], None]] = []
         self._current_progress: Optional[LoadingProgress] = None
@@ -340,7 +340,7 @@ class LoadingWorker(QObject):
     loading_failed = Signal(str, str)  # file_path, error_message
     loading_cancelled = Signal(str)  # file_path
 
-    def __init__(self, worker_id: int, config: LoadingConfig):
+    def __init__(self, worker_id: int, config: LoadingConfig) -> None:
         """
         Initialize loading worker.
 
@@ -443,7 +443,7 @@ class LoadingWorker(QObject):
 class ProgressiveLoader(QObject):
     """Main progressive loading manager."""
 
-    def __init__(self, max_workers: int = None):
+    def __init__(self, max_workers: int = None) -> None:
         """
         Initialize progressive loader.
 

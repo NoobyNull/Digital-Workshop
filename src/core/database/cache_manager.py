@@ -77,7 +77,7 @@ class CacheStats:
 class MemoryCache:
     """High-performance in-memory cache with LRU eviction."""
 
-    def __init__(self, max_size_mb: int = 100, strategy: CacheStrategy = CacheStrategy.LRU):
+    def __init__(self, max_size_mb: int = 100, strategy: CacheStrategy = CacheStrategy.LRU) -> None:
         """
         Initialize memory cache.
 
@@ -277,7 +277,7 @@ class MemoryCache:
 class DiskCache:
     """Persistent disk-based cache with compression."""
 
-    def __init__(self, cache_dir: str, max_size_mb: int = 500):
+    def __init__(self, cache_dir: str, max_size_mb: int = 500) -> None:
         """
         Initialize disk cache.
 
@@ -560,7 +560,7 @@ class DiskCache:
 class DatabaseCacheManager:
     """Comprehensive database cache manager with multi-level caching."""
 
-    def __init__(self, db_path: str, memory_cache_mb: int = 100, disk_cache_mb: int = 500):
+    def __init__(self, db_path: str, memory_cache_mb: int = 100, disk_cache_mb: int = 500) -> None:
         """
         Initialize database cache manager.
 
@@ -595,7 +595,7 @@ class DatabaseCacheManager:
     def _start_background_cleanup(self) -> None:
         """Start background cache cleanup thread."""
 
-        def cleanup_worker():
+        def cleanup_worker() -> None:
             while True:
                 try:
                     self._cleanup_expired_entries()
@@ -901,7 +901,7 @@ class DatabaseCacheManager:
         }
 
     @contextmanager
-    def cached_query(self, query: str, params: Tuple = None, ttl_seconds: float = None):
+    def cached_query(self, query: str, params: Tuple = None, ttl_seconds: float = None) -> None:
         """
         Context manager for cached query execution.
 

@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class ProjectManager:
     """Manages project lifecycle and operations."""
 
-    def __init__(self, db_manager: DatabaseManager):
+    def __init__(self, db_manager: DatabaseManager) -> None:
         """
         Initialize project manager.
 

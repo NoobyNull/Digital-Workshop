@@ -21,7 +21,7 @@ from src.gui.walkthrough import WalkthroughManager
 class StartupTipsDialog(QDialog):
     """Dialog that shows helpful tips on application startup."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Digital Workshop - Getting Started")
         self.setMinimumWidth(600)
@@ -155,7 +155,7 @@ class StartupTipsDialog(QDialog):
 class ContextualHelpWidget(QFrame):
     """Small widget that shows contextual help in the UI."""
 
-    def __init__(self, title: str, content: str, parent=None):
+    def __init__(self, title: str, content: str, parent=None) -> None:
         super().__init__(parent)
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         self.setStyleSheet(

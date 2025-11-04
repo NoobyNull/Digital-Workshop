@@ -80,7 +80,7 @@ class FloatCacheAnalyzer:
     4. Monitor memory usage patterns
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the float cache analyzer."""
         self.logger = get_logger(__name__)
         self.metrics: List[FloatParsingMetrics] = []

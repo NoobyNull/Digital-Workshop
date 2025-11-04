@@ -24,7 +24,7 @@ class SystemThemeDetector:
     - Linux: Environment variable detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self._current_mode: Literal["light", "dark"] = "light"
         self._enabled = False

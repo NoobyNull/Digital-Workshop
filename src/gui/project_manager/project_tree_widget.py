@@ -79,7 +79,7 @@ class ProjectTreeWidget(QWidget):
     file_selected = Signal(str, str)  # file_path, tab_name
     tab_switch_requested = Signal(str)  # tab_name
 
-    def __init__(self, db_manager: DatabaseManager, parent=None):
+    def __init__(self, db_manager: DatabaseManager, parent=None) -> None:
         """
         Initialize project tree widget.
 

@@ -28,7 +28,7 @@ class LayoutPersistenceManager:
     user experience across application sessions.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the layout persistence manager.
 

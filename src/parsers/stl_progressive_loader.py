@@ -43,7 +43,7 @@ class LODConfig:
     sampling_ratios: Dict[LODLevel, float] = None
     max_triangles_per_level: Dict[LODLevel, int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.levels is None:
             self.levels = [
                 LODLevel.ULTRA_LOW,
@@ -81,7 +81,7 @@ class LODModel:
     current_lod: LODLevel = LODLevel.FULL
     lod_stats: Dict[LODLevel, Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.lod_stats is None:
             self.lod_stats = {}
 

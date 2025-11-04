@@ -35,7 +35,7 @@ class CentralWidgetManager:
     and layout coordination.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the central widget manager.
 

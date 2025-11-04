@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class DataEncryptor:
     """Encrypts and decrypts sensitive data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize data encryptor."""
         self._check_cryptography_available()
 

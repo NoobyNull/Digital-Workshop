@@ -48,7 +48,7 @@ class ThemeDialog(QDialog):
 
     theme_applied = Signal(str)  # Emitted when theme is applied
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme dialog.
 

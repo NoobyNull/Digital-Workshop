@@ -57,7 +57,7 @@ class Tool:
 class ToolLibraryManager:
     """Manages tool libraries from JSON files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tool library manager."""
         self.libraries: Dict[str, List[Tool]] = {}
         self.logger = logger

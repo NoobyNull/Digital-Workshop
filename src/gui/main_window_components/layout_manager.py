@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class LayoutManager:
     """Manages window layout persistence and dock snapping."""
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize layout manager.
 

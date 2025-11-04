@@ -60,7 +60,7 @@ class QueryStats:
 class QueryCache:
     """LRU cache for query results with TTL support."""
 
-    def __init__(self, max_size: int = 1000, ttl: float = 300.0):
+    def __init__(self, max_size: int = 1000, ttl: float = 300.0) -> None:
         """
         Initialize query cache.
 
@@ -154,7 +154,7 @@ class QueryCache:
 class QueryOptimizer:
     """Advanced query optimizer with indexing strategies."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize query optimizer.
 
@@ -639,7 +639,7 @@ class QueryOptimizer:
 class IndexManager:
     """Manager for database indexes with usage tracking."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize index manager.
 
@@ -833,7 +833,7 @@ class IndexManager:
 
 
 @contextmanager
-def query_performance_monitor(optimizer: QueryOptimizer, query: str):
+def query_performance_monitor(optimizer: QueryOptimizer, query: str) -> None:
     """
     Context manager to monitor query performance.
 

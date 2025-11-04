@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 class ModelAnalyzerDialog(QDialog):
     """Dialog for analyzing models and fixing errors."""
 
-    def __init__(self, model: STLModel, file_path: str, parent=None):
+    def __init__(self, model: STLModel, file_path: str, parent=None) -> None:
         """
         Initialize model analyzer dialog.
 

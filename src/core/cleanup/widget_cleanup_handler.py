@@ -23,7 +23,7 @@ class WidgetCleanupHandler(CleanupHandler):
     - Widget hierarchy cleanup
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the widget cleanup handler."""
         super().__init__("WidgetCleanupHandler")
         self._main_window = None
@@ -253,7 +253,7 @@ class WidgetCleanupHandler(CleanupHandler):
             # Find and cleanup any QTimer objects
             timers_cleaned = 0
 
-            def cleanup_timer_recursive(obj):
+            def cleanup_timer_recursive(obj) -> None:
                 nonlocal timers_cleaned
                 if isinstance(obj, QObject):
                     # Get all children
@@ -282,7 +282,7 @@ class WidgetCleanupHandler(CleanupHandler):
             self.logger.debug("Disconnecting signals")
 
             # Disconnect signals from the widget and its children
-            def disconnect_signals_recursive(obj):
+            def disconnect_signals_recursive(obj) -> None:
                 if isinstance(obj, QObject):
                     try:
                         # Disconnect all signals

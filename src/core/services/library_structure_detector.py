@@ -85,7 +85,7 @@ class LibraryStructureDetector:
         "metadata",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize library structure detector."""
         self.logger = logger
 

@@ -339,13 +339,13 @@ class MaterialPickerWidget(QDialog):
         base_color = QColor(193, 154, 107)  # Oak-ish default
         grain_color = QColor(139, 115, 85)
 
-        def _pick_base():
+        def _pick_base() -> None:
             nonlocal base_color
             c = QColorDialog.getColor(base_color, self, "Pick Base Color")
             if c.isValid():
                 base_color = c
 
-        def _pick_grain():
+        def _pick_grain() -> None:
             nonlocal grain_color
             c = QColorDialog.getColor(grain_color, self, "Pick Grain Color")
             if c.isValid():
@@ -389,7 +389,7 @@ class MaterialPickerWidget(QDialog):
         self._style_button(cancel_btn)
         v.addWidget(btns)
 
-        def _save():
+        def _save() -> None:
             name = name_edit.text().strip()
             if not name:
                 QMessageBox.warning(dlg, "Validation", "Species name is required.")

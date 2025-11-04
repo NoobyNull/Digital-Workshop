@@ -18,7 +18,7 @@ class FileMaintenanceWorker(QThread):
     finished = Signal(dict)  # result dict
     error = Signal(str)  # error message
 
-    def __init__(self, operation: str):
+    def __init__(self, operation: str) -> None:
         super().__init__()
         self.operation = operation
         self.logger = get_logger(__name__)

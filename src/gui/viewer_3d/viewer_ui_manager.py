@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class ViewerUIManager:
     """Manages the viewer UI layout and controls."""
 
-    def __init__(self, parent_widget: QWidget):
+    def __init__(self, parent_widget: QWidget) -> None:
         """
         Initialize UI manager.
 

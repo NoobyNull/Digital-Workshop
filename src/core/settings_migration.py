@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SettingsMigrator:
     """Handles migration of settings and data between application versions."""
 
-    def __init__(self, app_name: str = "Digital Workshop"):
+    def __init__(self, app_name: str = "Digital Workshop") -> None:
         """Initialize the settings migrator.
 
         Args:
@@ -125,7 +125,7 @@ class SettingsMigrator:
             logger.error("Settings migration failed: %s", e)
             return False
 
-    def _migrate_settings_file(self):
+    def _migrate_settings_file(self) -> None:
         """Migrate the settings.json file."""
         logger.info("Migrating settings file...")
 
@@ -191,7 +191,7 @@ class SettingsMigrator:
 
         return merged
 
-    def _migrate_database(self):
+    def _migrate_database(self) -> None:
         """Migrate the database from previous version."""
         logger.info("Migrating database...")
 
@@ -209,7 +209,7 @@ class SettingsMigrator:
             logger.error("Failed to migrate database: %s", e)
             raise
 
-    def _upgrade_database(self):
+    def _upgrade_database(self) -> None:
         """Upgrade the database schema if needed."""
         logger.info("Upgrading database schema...")
 
@@ -259,7 +259,7 @@ class SettingsMigrator:
             logger.error("Failed to upgrade database: %s", e)
             raise
 
-    def _migrate_user_data(self):
+    def _migrate_user_data(self) -> None:
         """Migrate user data files."""
         logger.info("Migrating user data...")
 
@@ -308,7 +308,7 @@ class SettingsMigrator:
             logger.error("Failed to migrate user data: %s", e)
             raise
 
-    def _update_version_info(self):
+    def _update_version_info(self) -> None:
         """Update version information in settings."""
         try:
             # Load current settings

@@ -24,7 +24,7 @@ from src.core.material_provider import MaterialProvider
 
 
 class MaterialManager:
-    def __init__(self, database_manager):
+    def __init__(self, database_manager) -> None:
         """Initialize with database manager reference"""
         self.db = database_manager
         self.logger = get_logger(__name__)

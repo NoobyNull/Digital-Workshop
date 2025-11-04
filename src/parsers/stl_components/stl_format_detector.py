@@ -19,7 +19,7 @@ class STLFormatDetector:
     BINARY_TRIANGLE_COUNT_SIZE = 4
     BINARY_TRIANGLE_SIZE = 50
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the format detector."""
         self.logger = get_logger("parsers.stl")
 

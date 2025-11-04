@@ -131,7 +131,7 @@ class ModelLoadingWorker(QThread):
         try:
             # Create a simple model structure
             class DummyModel:
-                def __init__(self):
+                def __init__(self) -> None:
                     self.filename = (
                         self.file_path.name if hasattr(self, "file_path") else "model.stl"
                     )
@@ -152,7 +152,7 @@ class ModelLoadingWorker(QThread):
 class EnhancedViewerService(IEnhancedViewerService):
     """Enhanced viewer service with async loading, progress tracking, and performance optimization."""
 
-    def __init__(self, viewer_widget: Viewer3DWidget, ui_service: IViewerUIService):
+    def __init__(self, viewer_widget: Viewer3DWidget, ui_service: IViewerUIService) -> None:
         """
         Initialize enhanced viewer service.
 
@@ -229,7 +229,7 @@ class EnhancedViewerService(IEnhancedViewerService):
             self.cancellation_requested = False
 
             # Create cancellation token
-            def cancellation_check():
+            def cancellation_check() -> None:
                 return self.cancellation_requested or (cancellation_token and cancellation_token())
 
             # Create and start loading worker

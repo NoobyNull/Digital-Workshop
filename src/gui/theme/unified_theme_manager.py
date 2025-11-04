@@ -68,7 +68,7 @@ class UnifiedThemeManager(QObject):
     theme_validation_failed = Signal(str, list)  # error_message, error_list
     system_ready = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize unified theme manager."""
         super().__init__()
 

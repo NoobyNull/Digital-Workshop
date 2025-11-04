@@ -34,7 +34,7 @@ class LoadingProgressWidget(QWidget):
     # Signals
     cancel_requested = Signal()  # Emitted when user clicks cancel button
 
-    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the loading progress widget.
 
@@ -220,7 +220,7 @@ class LoadingProgressWidget(QWidget):
             steps = max(1, abs(to_value - from_value) // 2)  # 2-3 steps for small changes
             step_size = (to_value - from_value) / steps
 
-            def animate_step(current_step: int = 0):
+            def animate_step(current_step: int = 0) -> None:
                 if current_step >= steps:
                     self.progress_bar.setValue(to_value)
                     return

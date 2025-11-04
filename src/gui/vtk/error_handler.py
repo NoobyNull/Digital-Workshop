@@ -49,7 +49,7 @@ class VTKErrorHandler:
     Provides detailed logging for debugging and implements fallback strategies.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the VTK error handler."""
         self.logger = get_logger(__name__)
         self.error_counts: Dict[VTKErrorCode, int] = {}
@@ -117,11 +117,11 @@ class VTKErrorHandler:
         try:
             # Create a custom error observer class that inherits from vtk.vtkCommand
             class VTKErrorObserver(vtk.vtkCommand):
-                def __init__(self, handler):
+                def __init__(self, handler) -> None:
                     super().__init__()
                     self.handler = handler
 
-                def Execute(self, obj, event, calldata):
+                def Execute(self, obj, event, calldata) -> None:
                     if self.handler.suppress_errors:
                         return
 
@@ -335,7 +335,7 @@ class VTKErrorHandler:
         """
         self.suppress_errors = True
 
-        def reenable_errors():
+        def reenable_errors() -> None:
             self.suppress_errors = False
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("VTK error suppression ended")

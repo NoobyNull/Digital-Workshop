@@ -54,7 +54,7 @@ class NotificationType(Enum):
 class NotificationWidget(QWidget):
     """Widget for displaying notifications."""
 
-    def __init__(self, notification: Notification, parent=None):
+    def __init__(self, notification: Notification, parent=None) -> None:
         """
         Initialize notification widget.
 
@@ -157,7 +157,7 @@ class NotificationWidget(QWidget):
 class ProgressWidget(QWidget):
     """Widget for displaying progress information."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize progress widget.
 
@@ -232,7 +232,7 @@ class ProgressWidget(QWidget):
 class ViewerUIService(IViewerUIService):
     """Implementation of viewer UI service."""
 
-    def __init__(self, parent_widget: QWidget):
+    def __init__(self, parent_widget: QWidget) -> None:
         """
         Initialize viewer UI service.
 
@@ -456,7 +456,7 @@ class ViewerUIService(IViewerUIService):
 class NotificationService(INotificationService):
     """Implementation of notification service."""
 
-    def __init__(self, parent_widget: QWidget):
+    def __init__(self, parent_widget: QWidget) -> None:
         """
         Initialize notification service.
 

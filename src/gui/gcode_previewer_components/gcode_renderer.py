@@ -14,7 +14,7 @@ class GcodeRenderer:
     # Class-level vtk module (loaded once per class)
     _vtk_module: Optional["VtkModule"] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the renderer."""
         # Lazy load VTK at instance creation
         self._ensure_vtk_loaded()
@@ -87,7 +87,7 @@ class GcodeRenderer:
                 ) from e
 
     @property
-    def vtk(self):
+    def vtk(self) -> None:
         """Access VTK module."""
         return self._vtk_module
 
@@ -174,7 +174,7 @@ class GcodeRenderer:
         line.GetPointIds().SetId(1, end_id)
         lines.InsertNextCell(line)
 
-    def _create_actor(self, points, lines, color: tuple, line_width: float):
+    def _create_actor(self, points, lines, color: tuple, line_width: float) -> None:
         """Create a VTK actor from points and lines."""
         polydata = self.vtk.vtkPolyData()
         polydata.SetPoints(points)
@@ -202,11 +202,11 @@ class GcodeRenderer:
 
         self.renderer.AddActor(axes)
 
-    def get_renderer(self):
+    def get_renderer(self) -> None:
         """Get the VTK renderer."""
         return self.renderer
 
-    def get_render_window(self):
+    def get_render_window(self) -> None:
         """Get the VTK render window."""
         return self.render_window
 

@@ -29,7 +29,7 @@ class MeshError:
 class ModelErrorDetector:
     """Detects various mesh errors in 3D models."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """Initialize error detector with a model."""
         self.model = model
         self.triangles = model.triangles

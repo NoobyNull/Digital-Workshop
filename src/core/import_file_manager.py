@@ -115,7 +115,7 @@ class ImportFileManager:
         "other": "Other_Files",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the import file manager."""
         self.logger = get_logger(__name__)
         self.fast_hasher = FastHasher()
@@ -452,7 +452,7 @@ class ImportFileManager:
                     session.created_directories.append(str(target_path.parent))
 
                 # Copy file
-                def copy_progress(percent):
+                def copy_progress(percent) -> None:
                     if progress_callback:
                         progress_callback(f"Copying {source_path.name}", 50 + (percent // 2))
 

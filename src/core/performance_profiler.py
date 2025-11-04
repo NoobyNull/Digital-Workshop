@@ -106,7 +106,7 @@ class PerformanceProfiler:
     Collects, analyzes, and reports performance metrics for loading operations.
     """
 
-    def __init__(self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0):
+    def __init__(self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0) -> None:
         """
         Initialize performance profiler.
 
@@ -275,7 +275,7 @@ class PerformanceProfiler:
             return "\n".join(report_lines)
 
     @log_function_call
-    def profile_function(self, operation: str):
+    def profile_function(self, operation: str) -> None:
         """
         Decorator for profiling functions with cProfile.
 
@@ -286,9 +286,9 @@ class PerformanceProfiler:
             Profiling decorator
         """
 
-        def decorator(func):
+        def decorator(func) -> None:
             @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args, **kwargs) -> None:
                 if not self.enable_profiling:
                     return func(*args, **kwargs)
 
@@ -543,7 +543,7 @@ def get_performance_profiler() -> PerformanceProfiler:
         return _performance_profiler
 
 
-def profile_function(operation: str):
+def profile_function(operation: str) -> None:
     """
     Decorator to profile a function.
 
@@ -557,7 +557,7 @@ def profile_function(operation: str):
     return profiler.profile_function(operation)
 
 
-def time_operation(operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME):
+def time_operation(operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME) -> None:
     """
     Context manager to time an operation.
 

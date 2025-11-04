@@ -65,7 +65,7 @@ class TransformationResult:
     context_widget: Optional[QWidget] = None
     confidence: float = 1.0  # Confidence level of the transformation (0.0 to 1.0)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate transformation result after initialization."""
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
@@ -79,7 +79,7 @@ class TransformationCache:
     Thread-safe and optimized for the snapping system's performance requirements.
     """
 
-    def __init__(self, max_size: int = 1000, ttl_seconds: float = 1.0):
+    def __init__(self, max_size: int = 1000, ttl_seconds: float = 1.0) -> None:
         """
         Initialize the transformation cache.
 
@@ -215,7 +215,7 @@ class CoordinateManager:
         _system_bounds: Bounds of different coordinate systems
     """
 
-    def __init__(self, main_window: QMainWindow, cache_size: int = 1000):
+    def __init__(self, main_window: QMainWindow, cache_size: int = 1000) -> None:
         """
         Initialize the coordinate manager.
 

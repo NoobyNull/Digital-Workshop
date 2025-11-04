@@ -35,7 +35,7 @@ class ModelLoadWorker(QThread):
     error_occurred = Signal(str)
     finished = Signal()
 
-    def __init__(self, file_paths: List[str]):
+    def __init__(self, file_paths: List[str]) -> None:
         """
         Initialize the worker.
 

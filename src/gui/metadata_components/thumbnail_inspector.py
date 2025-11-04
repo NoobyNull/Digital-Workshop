@@ -27,7 +27,7 @@ class ThumbnailInspectorLabel(QLabel):
     inspector dialog on double-click.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize the thumbnail inspector label.
 
@@ -88,7 +88,7 @@ class ThumbnailInspectorDialog(QDialog):
     Dialog for viewing full-resolution thumbnails with zoom and pan controls.
     """
 
-    def __init__(self, pixmap: QPixmap, thumbnail_path: Optional[str] = None, parent=None):
+    def __init__(self, pixmap: QPixmap, thumbnail_path: Optional[str] = None, parent=None) -> None:
         """
         Initialize the thumbnail inspector dialog.
 

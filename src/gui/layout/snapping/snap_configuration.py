@@ -44,7 +44,7 @@ class SnapZone:
     priority: int = 1
     enabled: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if not 0.0 <= self.magnetism <= 1.0:
             raise ValueError(f"Magnetism must be between 0.0 and 1.0, got {self.magnetism}")
@@ -93,7 +93,7 @@ class VisualSettings:
     fade_in_duration: int = 100
     fade_out_duration: int = 200
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate visual settings after initialization."""
         if not 0.0 <= self.highlight_opacity <= 1.0:
             raise ValueError(
@@ -136,7 +136,7 @@ class PerformanceSettings:
     enable_hardware_acceleration: bool = True
     max_memory_usage_mb: int = 50
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate performance settings after initialization."""
         if self.max_snap_calculations_per_frame < 1:
             raise ValueError(
@@ -176,7 +176,7 @@ class SnapConfiguration:
 
     DEFAULT_CONFIG_FILE = "snap_configuration.json"
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         Initialize the snap configuration system.
 

@@ -10,16 +10,16 @@ __version__ = get_display_version()
 __author__ = "Digital Workshop Development Team"
 
 
-def get_version():
+def get_version() -> None:
     """Get the current version string."""
     return __version__
 
 
-def get_author():
+def get_author() -> None:
     """Get the author information."""
     return __author__
 
 
-def get_organization():
+def get_organization() -> None:
     """Get the organization name."""
     return get_organization_name()

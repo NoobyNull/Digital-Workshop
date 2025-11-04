@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class LibraryModelManager:
     """Manages model loading and database integration."""
 
-    def __init__(self, library_widget):
+    def __init__(self, library_widget) -> None:
         """
         Initialize model manager.
 

@@ -17,7 +17,7 @@ from .settings_migration import migrate_on_startup
 class ApplicationBootstrap:
     """Handles application service initialization and bootstrap sequence."""
 
-    def __init__(self, config: ApplicationConfig):
+    def __init__(self, config: ApplicationConfig) -> None:
         """Initialize the ApplicationBootstrap with configuration.
 
         Args:
@@ -138,7 +138,7 @@ class ApplicationBootstrap:
             self.logger.warning("Hardware acceleration detection failed: %s", str(e))
             return False
 
-    def get_hardware_acceleration_manager(self):
+    def get_hardware_acceleration_manager(self) -> None:
         """Get the hardware acceleration manager instance.
 
         Returns:

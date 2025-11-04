@@ -29,7 +29,7 @@ class SecurityEventType(Enum):
 class SecurityEventLogger:
     """Logs security-related events for audit trail."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize security event logger."""
         self.logger = get_logger("security")
         self.events = []

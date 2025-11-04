@@ -36,7 +36,7 @@ class VTKContextManager:
     error occurs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the VTK context manager."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()
@@ -223,7 +223,7 @@ class VTKContextManager:
             return False
 
     @contextmanager
-    def safe_vtk_operation(self, render_window: vtk.vtkRenderWindow, operation: str):
+    def safe_vtk_operation(self, render_window: vtk.vtkRenderWindow, operation: str) -> None:
         """
         Context manager for safe VTK operations with context validation.
 

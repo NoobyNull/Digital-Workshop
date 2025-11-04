@@ -9,7 +9,7 @@ from .gcode_parser import GcodeMove
 class FeedSpeedVisualizer:
     """Visualizes feed rate and spindle speed as color gradients on toolpath."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the visualizer."""
         self.feed_rate_actor = None
         self.spindle_speed_actor = None

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class TabNameConfig:
     """Configuration for a tab with long and short names."""
 
-    def __init__(self, long_name: str, short_name: str):
+    def __init__(self, long_name: str, short_name: str) -> None:
         """
         Initialize tab name configuration.
 
@@ -49,7 +49,7 @@ class DynamicTabManager:
     # Minimum width to show long names
     MIN_WIDTH_FOR_LONG_NAMES = 800
 
-    def __init__(self, tab_widget: QTabWidget):
+    def __init__(self, tab_widget: QTabWidget) -> None:
         """
         Initialize dynamic tab manager.
 

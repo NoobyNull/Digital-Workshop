@@ -22,7 +22,7 @@ class RunModeManager:
     RUN_MODE_NORMAL = "normal"
     RUN_MODE_PORTABLE = "portable"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize run mode manager."""
         self.logger = logger
         self.settings = QSettings("DigitalWorkshop", "DigitalWorkshop")

@@ -70,7 +70,7 @@ class SnapCandidate:
     widget: Optional[QWidget] = None
     confidence: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snap candidate after initialization."""
         if self.distance < 0:
             raise ValueError(f"Distance must be non-negative, got {self.distance}")
@@ -107,7 +107,7 @@ class SnapResult:
     candidates_found: int
     performance_metrics: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snap result after initialization."""
         if not 0.0 <= self.snap_strength <= 1.0:
             raise ValueError(f"Snap strength must be between 0.0 and 1.0, got {self.snap_strength}")
@@ -125,7 +125,7 @@ class SpatialIndex:
     Optimized for the snapping system's performance requirements.
     """
 
-    def __init__(self, cell_size: int = 100):
+    def __init__(self, cell_size: int = 100) -> None:
         """
         Initialize the spatial index.
 
@@ -292,7 +292,7 @@ class SnapEngine:
         _snap_history: History of recent snap operations
     """
 
-    def __init__(self, config: SnapConfiguration, coordinate_manager: CoordinateManager):
+    def __init__(self, config: SnapConfiguration, coordinate_manager: CoordinateManager) -> None:
         """
         Initialize the snap engine.
 

@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class MetadataRepository:
     """Repository for metadata and category data access operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize metadata repository.
 

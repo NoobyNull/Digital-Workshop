@@ -18,7 +18,7 @@ class GridIconDelegate(QStyledItemDelegate):
     QListView IconMode, creating a clean grid of thumbnails.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.icon_size = QSize(128, 128)
 

@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class VTKSceneManager:
     """Manages VTK scene setup and configuration."""
 
-    def __init__(self, vtk_widget):
+    def __init__(self, vtk_widget) -> None:
         """
         Initialize VTK scene manager.
 

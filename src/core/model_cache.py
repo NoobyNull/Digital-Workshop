@@ -77,7 +77,7 @@ class ModelCache:
     - Thread-safe operations
     """
 
-    def __init__(self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None):
+    def __init__(self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None) -> None:
         """
         Initialize the model cache.
 

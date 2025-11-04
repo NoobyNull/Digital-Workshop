@@ -29,7 +29,7 @@ class VTKDiagnosticTools:
     performance, and error conditions.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize diagnostic tools."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()

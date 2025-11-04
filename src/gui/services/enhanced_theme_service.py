@@ -29,7 +29,7 @@ class ThemePreviewWidget(QObject):
     preview_completed = Signal(str)  # theme_name
     preview_cancelled = Signal(str)  # theme_name
 
-    def __init__(self, theme_name: str, preview_duration_ms: int):
+    def __init__(self, theme_name: str, preview_duration_ms: int) -> None:
         """
         Initialize theme preview.
 
@@ -113,7 +113,7 @@ class ThemeValidationWorker(QThread):
     validation_completed = Signal(str, bool, str)  # theme_name, is_valid, error_message
     validation_progress = Signal(str, float)  # theme_name, progress_percentage
 
-    def __init__(self, theme_name: str, theme_path: Path):
+    def __init__(self, theme_name: str, theme_path: Path) -> None:
         """
         Initialize theme validation worker.
 
@@ -206,7 +206,7 @@ class ThemeValidationWorker(QThread):
 class EnhancedThemeService(IEnhancedThemeService):
     """Enhanced theme service with async operations and validation."""
 
-    def __init__(self, ui_service: IViewerUIService):
+    def __init__(self, ui_service: IViewerUIService) -> None:
         """
         Initialize enhanced theme service.
 

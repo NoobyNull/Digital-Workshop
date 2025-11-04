@@ -35,7 +35,7 @@ class ThemeService:
 
     _instance: Optional["ThemeService"] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme service."""
         self._logger = logging.getLogger(__name__)
         self._detector = SystemThemeDetector()
@@ -241,6 +241,6 @@ class ThemeService:
         self.apply_preset("light")
         self._logger.info("Theme reset to default")
 
-    def get_manager(self):
+    def get_manager(self) -> None:
         """Get the underlying ThemeManager instance."""
         return self._manager

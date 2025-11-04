@@ -34,7 +34,7 @@ class Face:
 class ModelGeometryAnalyzer:
     """Analyzes model geometry to detect orientation and hollow sides."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """
         Initialize analyzer with a model.
 

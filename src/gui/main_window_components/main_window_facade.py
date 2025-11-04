@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class MainWindowFacade:
     """Facade for integrating main window components."""
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize the facade.
 

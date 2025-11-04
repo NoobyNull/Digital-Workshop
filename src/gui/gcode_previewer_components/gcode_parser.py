@@ -46,7 +46,7 @@ class GcodeMove:
 class GcodeParser:
     """Parse G-code files and extract toolpath information."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the parser."""
         self.moves: List[GcodeMove] = []
         self.current_position = (0.0, 0.0, 0.0)

@@ -37,7 +37,7 @@ class CleanupContext(Enum):
 class CleanupError(Exception):
     """Exception raised during cleanup operations."""
 
-    def __init__(self, message: str, phase: CleanupPhase, context: CleanupContext):
+    def __init__(self, message: str, phase: CleanupPhase, context: CleanupContext) -> None:
         super().__init__(message)
         self.phase = phase
         self.context = context
@@ -83,7 +83,7 @@ class CleanupStats:
     handler_stats: Dict[str, Dict[str, Any]] = None
     verification_report: Optional[Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.errors is None:
             self.errors = []
         if self.phase_errors is None:
@@ -143,7 +143,7 @@ class CleanupStats:
 class CleanupHandler:
     """Base class for specialized cleanup handlers."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.logger = get_logger(f"{__name__}.{name}")
         self.enabled = True
@@ -175,7 +175,7 @@ class UnifiedCleanupCoordinator:
     specialized handlers with clear responsibility boundaries.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the unified cleanup coordinator."""
         self.logger = get_logger(__name__)
         self._handlers: Dict[str, CleanupHandler] = {}

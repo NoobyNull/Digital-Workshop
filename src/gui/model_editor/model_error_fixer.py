@@ -17,7 +17,7 @@ from src.parsers.stl_parser import STLModel
 class ModelErrorFixer:
     """Fixes various mesh errors in 3D models."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """Initialize error fixer with a model."""
         self.model = model
         self.original_triangles = model.triangles.copy()

@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 class FeedsAndSpeedsWidget(QWidget):
     """Main Feeds & Speeds Calculator Widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the widget."""
         super().__init__(parent)
         self.logger = logger

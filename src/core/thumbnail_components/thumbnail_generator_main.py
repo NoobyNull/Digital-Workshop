@@ -34,7 +34,7 @@ class ThumbnailGenerator:
     - Memory-efficient cleanup
     """
 
-    def __init__(self, settings_manager=None):
+    def __init__(self, settings_manager=None) -> None:
         """
         Initialize the thumbnail generator.
 

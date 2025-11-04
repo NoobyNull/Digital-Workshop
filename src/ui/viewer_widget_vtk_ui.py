@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_Viewer3DWidget(object):
-    def setupUi(self, Viewer3DWidget):
+    def setupUi(self, Viewer3DWidget) -> None:
         if not Viewer3DWidget.objectName():
             Viewer3DWidget.setObjectName("Viewer3DWidget")
         Viewer3DWidget.resize(400, 300)
@@ -108,7 +108,7 @@ class Ui_Viewer3DWidget(object):
 
     # setupUi
 
-    def retranslateUi(self, Viewer3DWidget):
+    def retranslateUi(self, Viewer3DWidget) -> None:
         Viewer3DWidget.setWindowTitle(
             QCoreApplication.translate("Viewer3DWidget", "VTK 3D Model Viewer", None)
         )

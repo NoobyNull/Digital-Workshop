@@ -21,7 +21,7 @@ import re
 class GcodeSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for G-code."""
 
-    def __init__(self, document: QTextDocument):
+    def __init__(self, document: QTextDocument) -> None:
         """Initialize the syntax highlighter."""
         super().__init__(document)
 
@@ -83,7 +83,7 @@ class GcodeEditorWidget(QWidget):
     content_changed = Signal(str)  # Emits edited content
     reload_requested = Signal(str)  # Emits content when reload is requested
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the G-code editor."""
         super().__init__(parent)
 

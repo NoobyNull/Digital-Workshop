@@ -47,7 +47,7 @@ class ThemeSwitcher(QComboBox):
 
     theme_changed = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme switcher.
 
@@ -138,7 +138,7 @@ class SimpleThemeSwitcher(QWidget):
 
     theme_changed = Signal(str)  # Emitted when theme changes
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize theme switcher.
 
@@ -236,7 +236,7 @@ class QtMaterialColorPicker(QDialog):
 
     theme_changed = Signal(str)  # Emitted when theme variant is changed
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the color picker dialog.
 
@@ -464,7 +464,7 @@ class ThemeDialog(QDialog):
 
     theme_applied = Signal(str)  # Emitted when theme is applied
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme dialog.
 

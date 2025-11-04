@@ -23,7 +23,7 @@ class Layer:
 class LayerAnalyzer:
     """Analyzes G-code moves and detects layers based on Z-height changes."""
 
-    def __init__(self, z_threshold: float = 0.1):
+    def __init__(self, z_threshold: float = 0.1) -> None:
         """
         Initialize the layer analyzer.
 

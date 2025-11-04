@@ -26,7 +26,7 @@ class DeduplicationStatusWidget(QWidget):
 
     duplicate_clicked = Signal()  # Emitted when duplicate indicator is clicked
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize deduplication status widget.
 

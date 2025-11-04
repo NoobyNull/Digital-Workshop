@@ -26,7 +26,7 @@ class GcodeLoaderWorker(QThread):
     loading_complete = Signal(list)  # Emits all moves
     error_occurred = Signal(str)  # Emits error message
 
-    def __init__(self, filepath: str, chunk_size: int = 100):
+    def __init__(self, filepath: str, chunk_size: int = 100) -> None:
         """Initialize the loader worker.
 
         Args:
@@ -117,7 +117,7 @@ class InteractiveGcodeLoader(QWidget):
     loading_complete = Signal(list)  # Emits all moves
     chunk_loaded = Signal(list)  # Emits chunk of moves
 
-    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None):
+    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None) -> None:
         """Initialize the interactive loader.
 
         Args:

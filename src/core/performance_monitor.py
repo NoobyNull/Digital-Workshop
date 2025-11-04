@@ -81,7 +81,7 @@ class PerformanceMonitor:
     - Memory leak detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance monitor."""
         self.logger = get_logger(__name__)
         self.logger.info("Initializing performance monitor")
@@ -810,7 +810,7 @@ def stop_performance_monitoring() -> None:
         _performance_monitor.stop_monitoring()
 
 
-def monitor_operation(operation_name: str):
+def monitor_operation(operation_name: str) -> None:
     """
     Decorator to monitor function performance.
 
@@ -821,8 +821,8 @@ def monitor_operation(operation_name: str):
         Decorator function
     """
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func) -> None:
+        def wrapper(*args, **kwargs) -> None:
             monitor = get_performance_monitor()
             operation_id = monitor.start_operation(operation_name)
 

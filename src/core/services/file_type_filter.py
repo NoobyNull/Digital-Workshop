@@ -209,7 +209,7 @@ class FileTypeFilter:
         "win.ini",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize file type filter."""
         self.logger = logger
 

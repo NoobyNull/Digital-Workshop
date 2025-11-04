@@ -69,7 +69,7 @@ class IFTService:
         ),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize IFT service."""
         self.logger = logger
         self.settings = QSettings("DigitalWorkshop", "DigitalWorkshop")

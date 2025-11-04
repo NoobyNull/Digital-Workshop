@@ -29,7 +29,7 @@ class RenderMode(Enum):
 class ModelRenderer:
     """Handles model rendering and geometry creation."""
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """
         Initialize model renderer.
 

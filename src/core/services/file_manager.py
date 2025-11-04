@@ -38,7 +38,7 @@ class FileStatus(Enum):
 class FileManager:
     """Manages file operations and tracking."""
 
-    def __init__(self, db_manager: DatabaseManager):
+    def __init__(self, db_manager: DatabaseManager) -> None:
         """
         Initialize file manager.
 

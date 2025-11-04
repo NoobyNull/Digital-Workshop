@@ -38,7 +38,7 @@ class DeduplicationDialog(QDialog):
 
     deduplication_confirmed = Signal(str)  # keep_strategy
 
-    def __init__(self, duplicate_models: List[Dict], parent=None):
+    def __init__(self, duplicate_models: List[Dict], parent=None) -> None:
         """
         Initialize deduplication dialog.
 

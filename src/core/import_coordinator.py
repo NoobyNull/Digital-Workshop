@@ -172,7 +172,7 @@ class ImportCoordinatorWorker(QThread):
         self.analysis_service = ImportAnalysisService() if run_analysis else None
         self.db_manager = get_database_manager()
 
-    def run(self):
+    def run(self) -> None:
         """Execute the coordinated import process."""
         self.start_time = time.time()
 
@@ -288,7 +288,7 @@ class ImportCoordinatorWorker(QThread):
             file_name = Path(file_info.original_path).name
 
             # Create progress callback
-            def file_progress(message: str, percent: int):
+            def file_progress(message: str, percent: int) -> None:
                 progress = ImportProgress(
                     stage=ImportWorkflowStage.HASHING,
                     overall_percent=(idx / total_files) * 100,
@@ -352,7 +352,7 @@ class ImportCoordinatorWorker(QThread):
 
             total_files = len(file_info_list)
 
-            def progress_callback(completed: int, total: int, current_file: str):
+            def progress_callback(completed: int, total: int, current_file: str) -> None:
                 progress = ImportProgress(
                     stage=ImportWorkflowStage.THUMBNAIL_GENERATION,
                     overall_percent=70 + (completed / total) * 20,  # 70-90%
@@ -436,7 +436,7 @@ class ImportCoordinatorWorker(QThread):
             self.logger.error("Failed to queue analysis: %s", e, exc_info=True)
             return None
 
-    def _handle_cancellation(self, session: ImportSession):
+    def _handle_cancellation(self, session: ImportSession) -> None:
         """Handle import cancellation."""
         self.logger.info("Import cancelled, performing rollback...")
 
@@ -463,7 +463,7 @@ class ImportCoordinatorWorker(QThread):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Cancellation handling failed: %s", e, exc_info=True)
 
-    def _update_stage(self, stage: ImportWorkflowStage, message: str):
+    def _update_stage(self, stage: ImportWorkflowStage, message: str) -> None:
         """Update current stage and emit signal."""
         self.stage_changed.emit(stage, message)
         self.logger.info("Import stage: %s - {message}", stage.value)
@@ -505,7 +505,7 @@ class ImportCoordinator(QObject):
     import_completed = Signal(object)  # ImportCoordinatorResult
     import_failed = Signal(str)  # error_message
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize the import coordinator.
 
@@ -639,15 +639,15 @@ class ImportCoordinator(QObject):
             ),
         }
 
-    def _on_stage_changed(self, stage: ImportWorkflowStage, message: str):
+    def _on_stage_changed(self, stage: ImportWorkflowStage, message: str) -> None:
         """Handle stage change from worker."""
         self.stage_changed.emit(stage, message)
 
-    def _on_progress_updated(self, progress: ImportProgress):
+    def _on_progress_updated(self, progress: ImportProgress) -> None:
         """Handle progress update from worker."""
         self.progress_updated.emit(progress)
 
-    def _on_import_completed(self, result: ImportCoordinatorResult):
+    def _on_import_completed(self, result: ImportCoordinatorResult) -> None:
         """Handle import completion."""
         if result.success:
             self._stats["successful_imports"] += 1
@@ -668,13 +668,13 @@ class ImportCoordinator(QObject):
 
         self.import_completed.emit(result)
 
-    def _on_import_failed(self, error_message: str):
+    def _on_import_failed(self, error_message: str) -> None:
         """Handle import failure."""
         self._stats["failed_imports"] += 1
         self.logger.error("Import failed: %s", error_message)
         self.import_failed.emit(error_message)
 
-    def _on_worker_finished(self):
+    def _on_worker_finished(self) -> None:
         """Handle worker thread completion."""
         self._worker = None
         self._cancellation_token = None

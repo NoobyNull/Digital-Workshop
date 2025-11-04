@@ -19,7 +19,7 @@ class CredentialsManager:
     # Supported credential types
     SUPPORTED_TYPES = {"api_key", "database_url", "auth_token"}
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize credentials manager."""
         self.security_logger = None
 

@@ -41,7 +41,7 @@ class ThemeColorHelper:
         "accent": "#ff4081",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Private constructor - use instance() instead."""
         if ThemeColorHelper._instance is not None:
             raise RuntimeError("Use ThemeColorHelper.instance() instead")

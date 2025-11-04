@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class DockManager:
     """Manages dock widgets in the main window."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         """
         Initialize dock manager.
 

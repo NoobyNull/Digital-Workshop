@@ -32,7 +32,7 @@ class DockManager:
     their associated layout and persistence functionality.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the dock manager.
 

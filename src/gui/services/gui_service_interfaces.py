@@ -24,7 +24,7 @@ class UIState(Enum):
 class ProgressInfo:
     """Information about operation progress."""
 
-    def __init__(self, current: float, total: float, message: str = ""):
+    def __init__(self, current: float, total: float, message: str = "") -> None:
         """
         Initialize progress information.
 
@@ -431,7 +431,7 @@ class IUIService(QObject):
     error_occurred = Signal(str, str, str)  # title, message, details
     notification_shown = Signal(str, str, str, int)  # id, title, message, type
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize UI service."""
         super().__init__()
 

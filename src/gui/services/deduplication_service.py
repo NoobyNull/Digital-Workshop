@@ -25,7 +25,7 @@ class DeduplicationService(QObject):
     duplicates_found = Signal(int)  # duplicate_count
     deduplication_complete = Signal()
 
-    def __init__(self, db_manager, parent=None):
+    def __init__(self, db_manager, parent=None) -> None:
         """
         Initialize deduplication service.
 

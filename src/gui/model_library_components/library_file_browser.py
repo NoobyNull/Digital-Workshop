@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class LibraryFileBrowser:
     """Manages file browser functionality."""
 
-    def __init__(self, library_widget):
+    def __init__(self, library_widget) -> None:
         """
         Initialize file browser.
 

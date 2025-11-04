@@ -60,7 +60,7 @@ class GPUBuffer:
     Provides a unified interface for GPU memory management across different backends.
     """
 
-    def __init__(self, size_bytes: int, device: GPUDevice):
+    def __init__(self, size_bytes: int, device: GPUDevice) -> None:
         """
         Initialize GPU buffer.
 
@@ -191,7 +191,7 @@ class GPUKernel(ABC):
     Provides interface for compiling and executing GPU kernels.
     """
 
-    def __init__(self, device: GPUDevice):
+    def __init__(self, device: GPUDevice) -> None:
         """
         Initialize GPU kernel.
 
@@ -301,7 +301,7 @@ class GPUAccelerator:
     Manages GPU device detection, memory allocation, and kernel execution.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU accelerator."""
         self.logger = get_logger(__name__)
         self.devices: List[GPUDevice] = []
@@ -520,7 +520,7 @@ class GPUAccelerator:
 
             self.logger.info("GPU accelerator cleanup completed")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor - ensure cleanup."""
         self.cleanup()
 

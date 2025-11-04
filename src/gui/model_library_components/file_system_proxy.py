@@ -21,7 +21,7 @@ class FileSystemProxyModel(QSortFilterProxyModel):
     - R drives outside home directory
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize the proxy model.
 
@@ -31,7 +31,7 @@ class FileSystemProxyModel(QSortFilterProxyModel):
         super().__init__(parent)
         self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
 
-    def filterAcceptsRow(self, source_row, source_parent):
+    def filterAcceptsRow(self, source_row, source_parent) -> None:
         """
         Override to filter out hidden folders and network paths.
 

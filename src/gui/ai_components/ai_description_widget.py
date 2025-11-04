@@ -35,7 +35,7 @@ from ..services.ai_description_service import AIDescriptionService
 class AIProgressDialog(QWidget):
     """Progress dialog for AI description generation."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Generating AI Description")
         self.setModal(True)
@@ -61,7 +61,7 @@ class AIProgressDialog(QWidget):
 
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -87,13 +87,13 @@ class AIProviderConfigWidget(QWidget):
     provider_configured = Signal(str, dict)  # provider_name, config
     provider_tested = Signal(str, bool)  # provider_name, success
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.providers = {}
         self.current_provider = None
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
 
         # Provider selection
@@ -149,13 +149,13 @@ class AIProviderConfigWidget(QWidget):
 
         layout.addStretch()
 
-    def set_providers(self, providers: List[str]):
+    def set_providers(self, providers: List[str]) -> None:
         """Set available providers."""
         self.provider_combo.clear()
         self.provider_combo.addItems(providers)
         self.providers = {name: {} for name in providers}
 
-    def load_provider_config(self, provider_name: str, config: Dict[str, Any]):
+    def load_provider_config(self, provider_name: str, config: Dict[str, Any]) -> None:
         """Load configuration for a specific provider."""
         self.current_provider = provider_name
 
@@ -190,14 +190,14 @@ class AIProviderConfigWidget(QWidget):
         }
         return models_map.get(provider_name, ["default"])
 
-    def _on_provider_changed(self, provider_name: str):
+    def _on_provider_changed(self, provider_name: str) -> None:
         """Handle provider selection change."""
         if provider_name in self.providers:
             # Load provider configuration
             config = self.providers[provider_name]
             self.load_provider_config(provider_name, config)
 
-    def _test_connection(self):
+    def _test_connection(self) -> None:
         """Test connection to the selected provider."""
         if not self.current_provider:
             return
@@ -212,7 +212,7 @@ class AIProviderConfigWidget(QWidget):
             f"Connection to {self.current_provider} successful!",
         )
 
-    def _clear_cache(self):
+    def _clear_cache(self) -> None:
         """Clear the AI response cache."""
         reply = QMessageBox.question(
             self,
@@ -225,7 +225,7 @@ class AIProviderConfigWidget(QWidget):
             # Clear cache logic would go here
             QMessageBox.information(self, "Cache Cleared", "AI response cache has been cleared.")
 
-    def _apply_configuration(self):
+    def _apply_configuration(self) -> None:
         """Apply current configuration."""
         if not self.current_provider:
             return
@@ -256,7 +256,7 @@ class AIDescriptionWidget(QWidget):
     description_generated = Signal(str, dict)  # image_path, result
     description_applied = Signal(str, dict)  # image_path, description_data
 
-    def __init__(self, ai_service: AIDescriptionService, parent=None):
+    def __init__(self, ai_service: AIDescriptionService, parent=None) -> None:
         super().__init__(parent)
         self.ai_service = ai_service
         self.current_image_path = None
@@ -265,7 +265,7 @@ class AIDescriptionWidget(QWidget):
         self._setup_ui()
         self._connect_signals()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup the user interface."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -467,7 +467,7 @@ class AIDescriptionWidget(QWidget):
 
         return panel
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         """Connect AI service signals."""
         if self.ai_service:
             self.ai_service.description_generated.connect(self._on_description_generated)
@@ -476,7 +476,7 @@ class AIDescriptionWidget(QWidget):
             # Update available providers
             self._update_provider_list()
 
-    def _update_provider_list(self):
+    def _update_provider_list(self) -> None:
         """Update the provider dropdown with available providers."""
         if not self.ai_service:
             return
@@ -489,14 +489,14 @@ class AIDescriptionWidget(QWidget):
         if self.ai_service.default_provider in available_providers:
             self.provider_combo.setCurrentText(self.ai_service.default_provider)
 
-    def set_image(self, image_path: str):
+    def set_image(self, image_path: str) -> None:
         """Set the current image for description generation."""
         self.current_image_path = image_path
         self.image_path_label.setText(Path(image_path).name)
         self.image_path_label.setStyleSheet("color: #495057; font-weight: bold;")
         self.generate_button.setEnabled(True)
 
-    def _select_image(self):
+    def _select_image(self) -> None:
         """Open file dialog to select an image."""
         from PySide6.QtWidgets import QFileDialog
 
@@ -510,7 +510,7 @@ class AIDescriptionWidget(QWidget):
         if file_path:
             self.set_image(file_path)
 
-    def _generate_description(self):
+    def _generate_description(self) -> None:
         """Generate AI description for the current image."""
         if not self.current_image_path:
             QMessageBox.warning(self, "No Image", "Please select an image first.")
@@ -545,7 +545,7 @@ class AIDescriptionWidget(QWidget):
             self._set_ui_enabled(True)
             self.status_label.setText("Ready")
 
-    def _display_results(self, result: Dict[str, Any]):
+    def _display_results(self, result: Dict[str, Any]) -> None:
         """Display the generated description results."""
         # Update title
         self.title_result.setText(result.get("title", "No title"))
@@ -567,7 +567,7 @@ class AIDescriptionWidget(QWidget):
 
         self.status_label.setText("Description generated successfully")
 
-    def _copy_results(self):
+    def _copy_results(self) -> None:
         """Copy results to clipboard."""
 
         result_text = f"Title: {self.title_result.text()}\n\n"
@@ -577,7 +577,7 @@ class AIDescriptionWidget(QWidget):
         QApplication.clipboard().setText(result_text)
         self.status_label.setText("Results copied to clipboard")
 
-    def _apply_to_metadata(self):
+    def _apply_to_metadata(self) -> None:
         """Apply the generated description to model metadata."""
         result_data = {
             "title": self.title_result.text(),
@@ -594,26 +594,26 @@ class AIDescriptionWidget(QWidget):
             self, "Applied", "AI description has been applied to the model metadata."
         )
 
-    def _open_provider_config(self):
+    def _open_provider_config(self) -> None:
         """Open the provider configuration dialog."""
         # This would open a modal dialog for provider configuration
         # Implementation depends on the main application's dialog system
 
-    def _on_description_generated(self, image_path: str, result: Dict[str, Any]):
+    def _on_description_generated(self, image_path: str, result: Dict[str, Any]) -> None:
         """Handle description generation completion."""
         if image_path == self.current_image_path:
             self._display_results(result)
             self._set_ui_enabled(True)
             self.status_label.setText("Description generated successfully")
 
-    def _on_error_occurred(self, image_path: str, error_message: str):
+    def _on_error_occurred(self, image_path: str, error_message: str) -> None:
         """Handle description generation errors."""
         if image_path == self.current_image_path:
             self._set_ui_enabled(True)
             self.status_label.setText("Generation failed")
             QMessageBox.critical(self, "Generation Failed", error_message)
 
-    def _set_ui_enabled(self, enabled: bool):
+    def _set_ui_enabled(self, enabled: bool) -> None:
         """Enable or disable UI elements during processing."""
         self.generate_button.setEnabled(enabled)
         self.select_image_button.setEnabled(enabled)

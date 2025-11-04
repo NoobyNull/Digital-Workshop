@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class TabDataManager:
     """Manager for saving and loading tab data to/from projects."""
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None) -> None:
         """
         Initialize tab data manager.
 

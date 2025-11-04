@@ -38,7 +38,7 @@ class ImportReport:
 class ProjectImporter:
     """Executes library import with tagging and reporting."""
 
-    def __init__(self, db_manager: DatabaseManager):
+    def __init__(self, db_manager: DatabaseManager) -> None:
         """
         Initialize project importer.
 

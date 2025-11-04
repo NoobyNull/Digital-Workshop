@@ -100,7 +100,7 @@ class AdaptiveChunker:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the adaptive chunker."""
         self.logger = get_logger(__name__)
         self.memory_manager = get_memory_manager()

@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class ToolPreferencesRepository:
     """Repository for tool database preferences."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize repository with database path."""
         self.db_path = Path(db_path)
         self.logger = logger

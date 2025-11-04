@@ -26,7 +26,7 @@ class ToolData:
     properties: Dict[str, Any] = field(default_factory=dict)
     custom_properties: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-initialization to handle geometry_data alias."""
         if self.geometry_data and not self.geometry:
             self.geometry = self.geometry_data
@@ -37,7 +37,7 @@ class ToolData:
 class ProgressCallback:
     """Callback for progress reporting during parsing."""
 
-    def __init__(self, callback: Optional[Callable[[float, str], None]] = None):
+    def __init__(self, callback: Optional[Callable[[float, str], None]] = None) -> None:
         """Initialize progress callback."""
         self.callback = callback
         self.last_report = 0.0
@@ -52,7 +52,7 @@ class ProgressCallback:
 class BaseToolParser(ABC):
     """Abstract base class for tool parsers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize parser."""
         self.logger = get_logger(self.__class__.__name__)
         self._cancelled = False

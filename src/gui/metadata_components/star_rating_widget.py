@@ -25,7 +25,7 @@ class StarRatingWidget(QWidget):
     # Signal emitted when rating changes
     rating_changed = Signal(int)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the star rating widget.
 

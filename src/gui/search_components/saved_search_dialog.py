@@ -20,7 +20,7 @@ class SavedSearchDialog(QDialog):
     Dialog for saving a search with a custom name.
     """
 
-    def __init__(self, query: str, filters: Optional[Dict[str, Any]] = None, parent=None):
+    def __init__(self, query: str, filters: Optional[Dict[str, Any]] = None, parent=None) -> None:
         """
         Initialize the saved search dialog.
 
@@ -36,7 +36,7 @@ class SavedSearchDialog(QDialog):
         self.setMinimumWidth(400)
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 

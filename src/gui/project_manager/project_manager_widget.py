@@ -33,7 +33,7 @@ class ProjectManagerWidget(QWidget):
     project_created = Signal(str)  # project_id
     project_deleted = Signal(str)  # project_id
 
-    def __init__(self, db_manager: DatabaseManager, parent=None):
+    def __init__(self, db_manager: DatabaseManager, parent=None) -> None:
         """
         Initialize project manager widget.
 

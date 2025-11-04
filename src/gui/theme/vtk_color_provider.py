@@ -35,7 +35,7 @@ class VTKColorProvider(QObject):
     # Singleton instance
     _instance = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VTK color provider."""
         super().__init__()
 

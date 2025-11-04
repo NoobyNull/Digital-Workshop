@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class ModelRepository:
     """Repository for model data access operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize model repository.
 

@@ -29,11 +29,11 @@ class Vector3D:
     y: float
     z: float
 
-    def __iter__(self):
+    def __iter__(self) -> None:
         """Allow unpacking as tuple."""
         return iter((self.x, self.y, self.z))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> None:
         """Allow indexing like tuple."""
         return [self.x, self.y, self.z][index]
 

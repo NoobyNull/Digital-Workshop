@@ -28,7 +28,7 @@ class RunModeSetupDialog(QDialog):
 
     setup_complete = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize run mode setup dialog.
 

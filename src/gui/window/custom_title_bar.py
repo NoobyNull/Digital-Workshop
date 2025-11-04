@@ -20,7 +20,7 @@ class CustomTitleBar(QWidget):
     minimize_requested = Signal()
     maximize_requested = Signal()
 
-    def __init__(self, title: str = "", parent=None):
+    def __init__(self, title: str = "", parent=None) -> None:
         """
         Initialize the custom title bar.
 
@@ -155,7 +155,7 @@ class CustomTitleBar(QWidget):
         """Update the title bar theme."""
         self._apply_theme()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
         """Handle mouse press for window dragging."""
         if event.button() == Qt.LeftButton:
             self.drag_start_pos = (
@@ -163,18 +163,18 @@ class CustomTitleBar(QWidget):
             )
             event.accept()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event) -> None:
         """Handle mouse move for window dragging."""
         if self.drag_start_pos is not None and event.buttons() == Qt.LeftButton:
             self.window().move(event.globalPosition().toPoint() - self.drag_start_pos)
             event.accept()
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event) -> None:
         """Handle mouse release."""
         self.drag_start_pos = None
         event.accept()
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event) -> None:
         """Handle double-click for maximize/restore."""
         if event.button() == Qt.LeftButton:
             self.maximize_requested.emit()

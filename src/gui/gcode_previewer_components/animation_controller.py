@@ -23,7 +23,7 @@ class AnimationController(QObject):
     state_changed = Signal(PlaybackState)  # Emits playback state
     speed_changed = Signal(float)  # Emits playback speed
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the animation controller."""
         super().__init__()
 

@@ -27,7 +27,7 @@ class DatabaseManager:
     Delegates to specialized modules for models, metadata, maintenance, and operations.
     """
 
-    def __init__(self, db_path: str = "data/3dmm.db"):
+    def __init__(self, db_path: str = "data/3dmm.db") -> None:
         """
         Initialize the database manager.
 

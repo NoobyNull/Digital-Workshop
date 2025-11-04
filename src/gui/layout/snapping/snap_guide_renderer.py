@@ -92,7 +92,7 @@ class SnapGuide:
     creation_time: float = field(default_factory=time.time)
     last_update: float = field(default_factory=time.time)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snap guide after initialization."""
         if not 0.0 <= self.opacity <= 1.0:
             raise ValueError(f"Opacity must be between 0.0 and 1.0, got {self.opacity}")
@@ -112,7 +112,7 @@ class AnimationController:
     Optimized for 60 FPS updates with minimal CPU usage.
     """
 
-    def __init__(self, visual_settings: VisualSettings):
+    def __init__(self, visual_settings: VisualSettings) -> None:
         """
         Initialize the animation controller.
 
@@ -253,7 +253,7 @@ class RenderCache:
     Uses LRU eviction and automatic cleanup of stale entries.
     """
 
-    def __init__(self, max_size: int = 500):
+    def __init__(self, max_size: int = 500) -> None:
         """
         Initialize the render cache.
 

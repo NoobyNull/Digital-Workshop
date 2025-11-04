@@ -36,7 +36,7 @@ class CostEstimatorWidget(QWidget):
     # Signals
     cost_calculated = Signal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the cost estimator widget."""
         super().__init__(parent)
         self.logger = logger

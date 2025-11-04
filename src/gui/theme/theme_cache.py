@@ -37,7 +37,7 @@ class CacheEntry:
     for intelligent cache management decisions.
     """
 
-    def __init__(self, key: str, data: Dict[str, Any], compressed: bool = False):
+    def __init__(self, key: str, data: Dict[str, Any], compressed: bool = False) -> None:
         """
         Initialize cache entry.
 
@@ -95,7 +95,7 @@ class ThemeCache:
     - Background cleanup to prevent fragmentation
     """
 
-    def __init__(self, max_size: int = None):
+    def __init__(self, max_size: int = None) -> None:
         """
         Initialize theme cache.
 

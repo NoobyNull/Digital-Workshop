@@ -31,7 +31,7 @@ class ZUpSaveDialog(QDialog):
     SAVE_AND_REPLACE = 1
     SAVE_AS_NEW = 2
 
-    def __init__(self, model_filename: str, parent=None):
+    def __init__(self, model_filename: str, parent=None) -> None:
         """
         Initialize Z-up save dialog.
 

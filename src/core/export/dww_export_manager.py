@@ -30,7 +30,7 @@ class DWWExportManager:
     # Salt length for hash verification (32 bytes = 256 bits)
     SALT_LENGTH = 32
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None) -> None:
         """
         Initialize DWW export manager.
 

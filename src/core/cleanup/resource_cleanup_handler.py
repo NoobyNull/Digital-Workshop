@@ -25,7 +25,7 @@ class ResourceCleanupHandler(CleanupHandler):
     - Temporary file cleanup
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource cleanup handler."""
         super().__init__("ResourceCleanupHandler")
         self._temp_files = []

@@ -28,7 +28,7 @@ class CollapsibleSection(QWidget):
 
     toggled = Signal(bool)  # Emits True when expanded, False when collapsed
 
-    def __init__(self, title: str, parent=None, collapsed: bool = False):
+    def __init__(self, title: str, parent=None, collapsed: bool = False) -> None:
         """
         Initialize the collapsible section.
 

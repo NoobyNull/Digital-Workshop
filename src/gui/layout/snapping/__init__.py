@@ -95,7 +95,7 @@ class SnappingSystem:
         _initialized: Whether the system has been properly initialized
     """
 
-    def __init__(self, main_window: QMainWindow, config_file: Optional[str] = None):
+    def __init__(self, main_window: QMainWindow, config_file: Optional[str] = None) -> None:
         """
         Initialize the complete snapping system.
 
@@ -440,11 +440,11 @@ class SnappingSystem:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during system cleanup: %s", e)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         self.cleanup()
 

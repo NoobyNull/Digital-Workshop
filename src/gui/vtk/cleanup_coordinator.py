@@ -55,7 +55,7 @@ class VTKCleanupCoordinator:
     during application shutdown.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cleanup coordinator."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()
@@ -140,7 +140,7 @@ class VTKCleanupCoordinator:
             class FallbackResourceTracker:
                 """Minimal fallback resource tracker for emergency cleanup."""
 
-                def __init__(self):
+                def __init__(self) -> None:
                     self.logger = get_logger(__name__)
                     self.resources = {}
 

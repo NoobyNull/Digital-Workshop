@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class DWWImportManager:
     """Manager for importing projects from DWW format."""
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None) -> None:
         """
         Initialize DWW import manager.
 

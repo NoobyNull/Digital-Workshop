@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class TempFileManager:
     """Manages temporary files with secure cleanup."""
 
-    def __init__(self, base_temp_dir: Optional[str] = None):
+    def __init__(self, base_temp_dir: Optional[str] = None) -> None:
         """Initialize temp file manager.
         
         Args:
@@ -111,7 +111,7 @@ class TempFileManager:
             except (OSError, IOError) as e:
                 logger.warning("Failed to clean up temporary file %s: %s", temp_file, e)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure cleanup on object destruction."""
         self.cleanup_all()
 

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class ToolDatabaseSchema:
     """Manages the tool database schema initialization and migrations."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize schema manager with database path."""
         self.db_path = Path(db_path)
         self.logger = logger

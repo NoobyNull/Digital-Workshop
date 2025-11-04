@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class DatabaseMaintenance:
     """Handles database maintenance and statistics operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize database maintenance.
 

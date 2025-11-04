@@ -134,7 +134,7 @@ class STEPParser(BaseParser):
     - Performance optimization for different file sizes
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the STEP parser."""
         super().__init__()
         self.entities: Dict[int, STEPEntity] = {}

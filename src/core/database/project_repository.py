@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class ProjectRepository:
     """Repository for project management operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize project repository.
 

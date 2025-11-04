@@ -73,7 +73,7 @@ class SnapEvent:
     original_event: Optional[QEvent] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snap event after initialization."""
         if self.timestamp < 0:
             raise ValueError(f"Timestamp must be non-negative, got {self.timestamp}")
@@ -87,7 +87,7 @@ class EventDebouncer:
     Uses time-based and movement-based debouncing strategies.
     """
 
-    def __init__(self, time_threshold_ms: int = 16, movement_threshold: int = 2):
+    def __init__(self, time_threshold_ms: int = 16, movement_threshold: int = 2) -> None:
         """
         Initialize the event debouncer.
 
@@ -174,7 +174,7 @@ class EventFilter(QObject):
     Optimized to avoid conflicts with other event filters.
     """
 
-    def __init__(self, event_processor: "EventProcessor"):
+    def __init__(self, event_processor: "EventProcessor") -> None:
         """
         Initialize the event filter.
 

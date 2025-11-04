@@ -116,7 +116,7 @@ class ImportWorker(QThread):
         self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
         self.analysis_service = ImportAnalysisService() if run_analysis else None
 
-    def run(self):
+    def run(self) -> None:
         """Execute the import process."""
         try:
             self.stage_changed.emit("validation", "Validating files and settings...")
@@ -146,7 +146,7 @@ class ImportWorker(QThread):
                 # Process file (hashing + copying if needed)
                 self.stage_changed.emit("hashing", f"Processing {file_name}...")
 
-                def file_progress_callback(message, percent):
+                def file_progress_callback(message, percent) -> None:
                     self.file_progress.emit(file_name, percent, message)
 
                 success, error = self.file_manager.process_file(
@@ -255,7 +255,7 @@ class ImportWorker(QThread):
             self.logger.error("Import worker failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the import operation."""
         self.cancellation_token.cancel()
 
@@ -279,7 +279,7 @@ class ImportDialog(QDialog):
         ...     print(f"Successfully imported {result.processed_files} files")
     """
 
-    def __init__(self, parent=None, root_folder_manager=None):
+    def __init__(self, parent=None, root_folder_manager=None) -> None:
         """
         Initialize the import dialog.
 
@@ -307,7 +307,7 @@ class ImportDialog(QDialog):
 
         self.logger.info("ImportDialog initialized")
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup the dialog user interface."""
         self.setWindowTitle("Import 3D Models")
         self.setMinimumSize(800, 600)
@@ -542,7 +542,7 @@ class ImportDialog(QDialog):
 
         return group
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         """Connect widget signals."""
         self.add_files_button.clicked.connect(self._on_add_files)
         self.add_folder_button.clicked.connect(self._on_add_folder)
@@ -561,7 +561,7 @@ class ImportDialog(QDialog):
         self.time_timer = QTimer(self)
         self.time_timer.timeout.connect(self._update_time_elapsed)
 
-    def _on_add_files(self):
+    def _on_add_files(self) -> None:
         """Handle add files button click."""
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
@@ -573,7 +573,7 @@ class ImportDialog(QDialog):
             files = file_dialog.selectedFiles()
             self._add_files(files)
 
-    def _on_add_folder(self):
+    def _on_add_folder(self) -> None:
         """Handle add folder button click."""
         folder = QFileDialog.getExistingDirectory(self, "Select Folder Containing Model Files")
 
@@ -597,7 +597,7 @@ class ImportDialog(QDialog):
                     "No 3D model files found in the selected folder.",
                 )
 
-    def _add_files(self, files: List[str]):
+    def _add_files(self, files: List[str]) -> None:
         """
         Add files to the import list.
 
@@ -639,7 +639,7 @@ class ImportDialog(QDialog):
         if failed_files:
             self._show_import_failures_summary(failed_files, added_count)
 
-    def _show_import_failures_summary(self, failed_files: List[tuple], added_count: int):
+    def _show_import_failures_summary(self, failed_files: List[tuple], added_count: int) -> None:
         """
         Show a summary dialog of all failed files instead of individual dialogs.
 
@@ -673,7 +673,7 @@ class ImportDialog(QDialog):
         # Show summary dialog
         QMessageBox.warning(self, "Import Summary - Some Files Failed", message)
 
-    def _on_remove_selected(self):
+    def _on_remove_selected(self) -> None:
         """Remove selected files from the list."""
         selected_items = self.file_list.selectedItems()
 
@@ -685,19 +685,19 @@ class ImportDialog(QDialog):
         self._update_import_button_state()
         self.status_label.setText(f"{len(self.selected_files)} file(s) selected")
 
-    def _on_clear_all(self):
+    def _on_clear_all(self) -> None:
         """Clear all files from the list."""
         self.selected_files.clear()
         self.file_list.clear()
         self._update_import_button_state()
         self.status_label.setText("Ready to import")
 
-    def _on_file_selection_changed(self):
+    def _on_file_selection_changed(self) -> None:
         """Handle file selection change."""
         has_selection = len(self.file_list.selectedItems()) > 0
         self.remove_button.setEnabled(has_selection)
 
-    def _on_mode_changed(self, checked: bool):
+    def _on_mode_changed(self, checked: bool) -> None:
         """Handle file management mode change."""
         if checked:  # Keep organized mode selected
             self.root_dir_label.setEnabled(True)
@@ -710,7 +710,7 @@ class ImportDialog(QDialog):
 
         self._update_import_button_state()
 
-    def _on_select_root_directory(self):
+    def _on_select_root_directory(self) -> None:
         """Handle root directory selection."""
         folder = QFileDialog.getExistingDirectory(
             self, "Select Root Directory for Organized Storage"
@@ -721,7 +721,7 @@ class ImportDialog(QDialog):
             self.root_dir_path.setStyleSheet("color: #000;")
             self._update_import_button_state()
 
-    def _update_import_button_state(self):
+    def _update_import_button_state(self) -> None:
         """Update import button enabled state."""
         has_files = len(self.selected_files) > 0
 
@@ -734,7 +734,7 @@ class ImportDialog(QDialog):
         self.import_button.setEnabled(can_import and self.current_stage == ImportStage.IDLE)
         self.clear_button.setEnabled(len(self.selected_files) > 0)
 
-    def _on_start_import(self):
+    def _on_start_import(self) -> None:
         """Start the import process."""
         # Validate settings
         if self.keep_organized_radio.isChecked():
@@ -770,7 +770,7 @@ class ImportDialog(QDialog):
         # Start import
         self._start_import_worker()
 
-    def _start_import_worker(self):
+    def _start_import_worker(self) -> None:
         """Start the import worker thread."""
         # Disable controls
         self.add_files_button.setEnabled(False)
@@ -829,29 +829,29 @@ class ImportDialog(QDialog):
         self._log_message("Import started...")
         self.status_label.setText("Importing...")
 
-    def _on_stage_changed(self, stage: str, message: str):
+    def _on_stage_changed(self, stage: str, message: str) -> None:
         """Handle import stage change."""
         self.stage_label.setText(stage.replace("_", " ").title())
         self._log_message(message)
 
-    def _on_file_progress(self, filename: str, percent: int, message: str):
+    def _on_file_progress(self, filename: str, percent: int, message: str) -> None:
         """Handle individual file progress update."""
         self.file_progress_bar.setValue(percent)
         self._log_message(f"{filename}: {message}")
 
-    def _on_overall_progress(self, current: int, total: int, percent: int):
+    def _on_overall_progress(self, current: int, total: int, percent: int) -> None:
         """Handle overall progress update."""
         self.overall_progress_bar.setValue(percent)
         self.progress_label.setText(f"{current} / {total}")
 
-    def _on_thumbnail_progress(self, current: int, total: int, current_file: str):
+    def _on_thumbnail_progress(self, current: int, total: int, current_file: str) -> None:
         """Handle thumbnail generation progress update."""
         percent = int((current / total) * 100) if total > 0 else 0
         self.thumbnail_progress_bar.setValue(percent)
         self.thumbnail_status_label.setText(f"{current}/{total}: {current_file}")
         self._log_message(f"✓ Thumbnail {current}/{total}: {current_file}")
 
-    def _on_import_completed(self, result: ImportResult):
+    def _on_import_completed(self, result: ImportResult) -> None:
         """Handle successful import completion."""
         self.current_stage = ImportStage.COMPLETED
         self.import_result = result
@@ -889,7 +889,7 @@ class ImportDialog(QDialog):
         # Close dialog
         self.accept()
 
-    def _on_import_failed(self, error_message: str):
+    def _on_import_failed(self, error_message: str) -> None:
         """Handle import failure."""
         self.current_stage = ImportStage.FAILED
         self.time_timer.stop()
@@ -903,7 +903,7 @@ class ImportDialog(QDialog):
         # Re-enable controls
         self._reset_controls()
 
-    def _on_cancel(self):
+    def _on_cancel(self) -> None:
         """Handle cancel button click."""
         if self.import_worker and self.import_worker.isRunning():
             # Confirm cancellation
@@ -931,7 +931,7 @@ class ImportDialog(QDialog):
             # Just close the dialog
             self.reject()
 
-    def _reset_controls(self):
+    def _reset_controls(self) -> None:
         """Reset controls after import completion or failure."""
         self.add_files_button.setEnabled(True)
         self.add_folder_button.setEnabled(True)
@@ -944,7 +944,7 @@ class ImportDialog(QDialog):
         self.run_analysis_check.setEnabled(True)
         self._update_import_button_state()
 
-    def _update_time_elapsed(self):
+    def _update_time_elapsed(self) -> None:
         """Update elapsed time display."""
         if self.start_time:
             elapsed = time.time() - self.start_time
@@ -952,7 +952,7 @@ class ImportDialog(QDialog):
             seconds = int(elapsed % 60)
             self.time_label.setText(f"Time: {minutes}:{seconds:02d}")
 
-    def _log_message(self, message: str):
+    def _log_message(self, message: str) -> None:
         """
         Add a message to the progress log.
 
@@ -967,12 +967,12 @@ class ImportDialog(QDialog):
         scrollbar.setValue(scrollbar.maximum())
 
     # Drag and drop support
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """Handle drag enter event."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def dropEvent(self, event: QDropEvent):
+    def dropEvent(self, event: QDropEvent) -> None:
         """Handle drop event."""
         files = []
 

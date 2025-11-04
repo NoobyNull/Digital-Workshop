@@ -33,7 +33,7 @@ class ViewOptimizer:
     and selects the best view based on visible surface area and balance.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the view optimizer."""
         self.logger = get_logger(__name__)
 

@@ -119,7 +119,7 @@ class EnhancedErrorHandler(IErrorHandler):
     - Error recovery workflows
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize the enhanced error handler.
 
         Args:
@@ -783,7 +783,7 @@ class EnhancedErrorHandler(IErrorHandler):
 
 
 # Decorator for automatic error handling
-def handle_errors(operation_name: str = None, reraise: bool = True):
+def handle_errors(operation_name: str = None, reraise: bool = True) -> None:
     """
     Decorator for automatic error handling.
 
@@ -794,7 +794,7 @@ def handle_errors(operation_name: str = None, reraise: bool = True):
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             error_handler = EnhancedErrorHandler()
             operation = operation_name or f"{func.__module__}.{func.__name__}"
 

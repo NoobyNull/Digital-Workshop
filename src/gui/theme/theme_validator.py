@@ -37,7 +37,7 @@ class ThemeValidationError(Exception):
     and suggested remediation steps.
     """
 
-    def __init__(self, message: str, errors: List[str] = None, warnings: List[str] = None):
+    def __init__(self, message: str, errors: List[str] = None, warnings: List[str] = None) -> None:
         """
         Initialize theme validation error.
 
@@ -69,7 +69,7 @@ class ThemeValidator:
     - Performance monitoring for validation operations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme validator."""
         # Color validation patterns
         self._hex_color_pattern = re.compile(r"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")

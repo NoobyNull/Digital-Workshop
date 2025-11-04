@@ -24,7 +24,7 @@ from .model_error_detector import MeshError
 class ModelErrorDialog(QDialog):
     """Dialog for displaying and fixing model errors."""
 
-    def __init__(self, errors: List[MeshError], parent=None):
+    def __init__(self, errors: List[MeshError], parent=None) -> None:
         """Initialize error dialog."""
         super().__init__(parent)
         self.errors = errors

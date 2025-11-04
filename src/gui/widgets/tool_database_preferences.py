@@ -33,7 +33,7 @@ class ToolDatabasePreferencesDialog(QDialog):
 
     preferences_changed = pyqtSignal()
 
-    def __init__(self, db_path: str, parent=None):
+    def __init__(self, db_path: str, parent=None) -> None:
         """
         Initialize preferences dialog.
 
@@ -52,7 +52,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         self._init_ui()
         self._load_preferences()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize user interface."""
         layout = QVBoxLayout()
 
@@ -116,7 +116,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def _load_preferences(self):
+    def _load_preferences(self) -> None:
         """Load preferences from repository."""
         try:
             # Load external database paths
@@ -141,7 +141,7 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.logger.error("Failed to load preferences: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load preferences: {str(e)}")
 
-    def _add_external_path(self):
+    def _add_external_path(self) -> None:
         """Add external database path."""
         file_path = QFileDialog.getExistingDirectory(self, "Select External Database Directory")
 
@@ -154,7 +154,7 @@ class ToolDatabasePreferencesDialog(QDialog):
             else:
                 QMessageBox.information(self, "Info", "Path already added")
 
-    def _remove_external_path(self):
+    def _remove_external_path(self) -> None:
         """Remove selected external database path."""
         current_item = self.paths_list.currentItem()
         if current_item:
@@ -162,7 +162,7 @@ class ToolDatabasePreferencesDialog(QDialog):
             removed_item = self.paths_list.takeItem(row)
             self.logger.info("Removed external database path: %s", removed_item.text())
 
-    def _save_and_close(self):
+    def _save_and_close(self) -> None:
         """Save preferences and close dialog."""
         try:
             # Collect paths

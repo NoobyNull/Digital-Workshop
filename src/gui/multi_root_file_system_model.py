@@ -35,7 +35,7 @@ class TreeNode:
     children: List["TreeNode"] = None
     root_folder: Optional[RootFolder] = None  # Reference to root folder for root nodes
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.children is None:
             self.children = []
 
@@ -73,16 +73,16 @@ class DirectoryIndexer(QThread):
 
     indexing_complete = Signal(dict)  # {node_path: [child_nodes]}
 
-    def __init__(self, directories_to_index: List[str]):
+    def __init__(self, directories_to_index: List[str]) -> None:
         super().__init__()
         self.directories_to_index = directories_to_index
         self.logger = get_logger(__name__)
         self._is_cancelled = False
 
-    def cancel(self):
+    def cancel(self) -> None:
         self._is_cancelled = True
 
-    def run(self):
+    def run(self) -> None:
         """Index directory contents in background."""
         indexed_data = {}
 
@@ -133,7 +133,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     indexing_started = Signal()
     indexing_completed = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()

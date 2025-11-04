@@ -57,7 +57,7 @@ class FileChunker:
     BINARY_TRIANGLE_COUNT_SIZE = 4
     BINARY_TRIANGLE_SIZE = 50  # 12 floats (48 bytes) + 2 bytes attribute
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the file chunker."""
         self.logger = get_logger(__name__)
 

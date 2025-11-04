@@ -57,7 +57,7 @@ class MemoryPool:
     and improve memory locality.
     """
 
-    def __init__(self, block_size_mb: int = 64, max_blocks: int = 10):
+    def __init__(self, block_size_mb: int = 64, max_blocks: int = 10) -> None:
         """
         Initialize memory pool.
 
@@ -124,7 +124,7 @@ class MemoryMonitor:
     for adaptive resource management.
     """
 
-    def __init__(self, update_interval_seconds: float = 1.0):
+    def __init__(self, update_interval_seconds: float = 1.0) -> None:
         """
         Initialize memory monitor.
 
@@ -270,7 +270,7 @@ class MemoryManager:
     Provides adaptive memory management based on system resources and usage patterns.
     """
 
-    def __init__(self, max_memory_gb: float = 2.0):
+    def __init__(self, max_memory_gb: float = 2.0) -> None:
         """
         Initialize memory manager.
 
@@ -458,7 +458,7 @@ class MemoryManager:
 
         return projected_usage <= self.max_memory_gb
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup on destruction."""
         try:
             self.monitor.stop_monitoring()

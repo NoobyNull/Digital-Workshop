@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class DeduplicationManager:
     """Manages duplicate detection and resolution."""
 
-    def __init__(self, db_manager):
+    def __init__(self, db_manager) -> None:
         """
         Initialize deduplication manager.
 

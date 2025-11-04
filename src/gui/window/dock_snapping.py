@@ -26,7 +26,7 @@ class SnapOverlayLayer(QWidget):
     to when dragging them around the main window.
     """
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize the snap overlay layer.
 

@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_ModelLibraryWidget(object):
-    def setupUi(self, ModelLibraryWidget):
+    def setupUi(self, ModelLibraryWidget) -> None:
         if not ModelLibraryWidget.objectName():
             ModelLibraryWidget.setObjectName("ModelLibraryWidget")
         ModelLibraryWidget.resize(1000, 700)
@@ -208,7 +208,7 @@ class Ui_ModelLibraryWidget(object):
 
     # setupUi
 
-    def retranslateUi(self, ModelLibraryWidget):
+    def retranslateUi(self, ModelLibraryWidget) -> None:
         ModelLibraryWidget.setWindowTitle(
             QCoreApplication.translate("ModelLibraryWidget", "Model Library", None)
         )

@@ -26,7 +26,7 @@ class VTKRenderingEngine:
     - Screenshot capture
     """
 
-    def __init__(self, width: int = 1280, height: int = 1280):
+    def __init__(self, width: int = 1280, height: int = 1280) -> None:
         """
         Initialize the rendering engine.
 

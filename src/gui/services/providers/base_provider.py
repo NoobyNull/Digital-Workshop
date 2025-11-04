@@ -12,7 +12,7 @@ import logging
 class BaseProvider(ABC):
     """Base class for all AI vision providers."""
 
-    def __init__(self, api_key: Optional[str] = None, **kwargs):
+    def __init__(self, api_key: Optional[str] = None, **kwargs) -> None:
         """
         Initialize the provider with API key and configuration.
 

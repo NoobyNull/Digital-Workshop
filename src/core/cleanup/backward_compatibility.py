@@ -22,7 +22,7 @@ class LegacyVTKCleanupCoordinator:
     but delegates to the new unified cleanup system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the legacy VTK cleanup coordinator."""
         self.logger = get_logger(__name__)
         self._unified_coordinator = get_unified_cleanup_coordinator()
@@ -104,7 +104,7 @@ class LegacyViewerWidgetFacade:
     but delegates to the new unified cleanup system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the legacy viewer widget facade."""
         self.logger = get_logger(__name__)
         self._unified_coordinator = get_unified_cleanup_coordinator()
@@ -154,7 +154,7 @@ class LegacyVTKSceneManager:
     but delegates to the new unified cleanup system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the legacy VTK scene manager."""
         self.logger = get_logger(__name__)
         self._unified_coordinator = get_unified_cleanup_coordinator()
@@ -246,7 +246,7 @@ def coordinate_vtk_cleanup_legacy(render_window=None, renderer=None, interactor=
 class CleanupErrorHandler:
     """Centralized error handling for cleanup operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cleanup error handler."""
         self.logger = get_logger(__name__)
         self._error_counts = {}

@@ -27,7 +27,7 @@ class LoadingStage(Enum):
 class DetailedProgressTracker:
     """Tracks detailed progress through model loading stages."""
 
-    def __init__(self, triangle_count: int = 0, file_size_mb: float = 0.0):
+    def __init__(self, triangle_count: int = 0, file_size_mb: float = 0.0) -> None:
         """
         Initialize progress tracker.
 

@@ -21,7 +21,7 @@ class PathManager:
     directory to avoid any disk persistence.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the path manager."""
         self._paths_cache: Dict[str, Path] = {}
         self._installation_type = get_installation_type()

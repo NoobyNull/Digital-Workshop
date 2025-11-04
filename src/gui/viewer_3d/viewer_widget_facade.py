@@ -66,7 +66,7 @@ class Viewer3DWidget(QWidget):
     save_view_requested = Signal()
     z_up_orientation_set = Signal()  # Emitted when Z-up is set, before save
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """Initialize the 3D viewer widget."""
         super().__init__(parent)
 
@@ -872,7 +872,7 @@ class Viewer3DWidget(QWidget):
             self.logger.error("Error applying default material: %s", e, exc_info=True)
             return False
 
-    def _get_material_manager(self):
+    def _get_material_manager(self) -> None:
         """
         Get the material manager from the main window or application.
 

@@ -33,7 +33,7 @@ class QDarkStyleThemeService:
 
     _instance: Optional["QDarkStyleThemeService"] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme service."""
         self._current_theme: ThemeType = "dark"
         self._qdarkstyle_available = self._check_qdarkstyle()

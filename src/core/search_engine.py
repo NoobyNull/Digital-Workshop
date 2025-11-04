@@ -28,7 +28,7 @@ class SearchEngine:
     search history, and saved searches functionality.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """
         Initialize the search engine.
 

@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class SettingsManager:
     """Manages application settings persistence."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         """
         Initialize settings manager.
 

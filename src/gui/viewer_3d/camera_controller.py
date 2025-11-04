@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class CameraController:
     """Manages camera positioning and view control."""
 
-    def __init__(self, renderer, render_window):
+    def __init__(self, renderer, render_window) -> None:
         """
         Initialize camera controller.
 

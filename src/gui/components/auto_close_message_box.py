@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMessageBox
 class AutoCloseMessageBox(QMessageBox):
     """Message box that automatically closes after a specified duration with countdown."""
 
-    def __init__(self, title: str, message: str, parent=None, timeout_ms: int = 5000):
+    def __init__(self, title: str, message: str, parent=None, timeout_ms: int = 5000) -> None:
         """
         Initialize auto-closing message box.
 

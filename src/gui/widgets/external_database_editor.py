@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 class ExternalDatabaseEditor(QDialog):
     """Dialog for viewing and editing external tool databases."""
 
-    def __init__(self, db_path: str, parent=None):
+    def __init__(self, db_path: str, parent=None) -> None:
         """Initialize the external database editor."""
         super().__init__(parent)
         self.db_path = db_path
@@ -46,7 +46,7 @@ class ExternalDatabaseEditor(QDialog):
 
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the UI components."""
         main_layout = QVBoxLayout()
 
@@ -85,7 +85,7 @@ class ExternalDatabaseEditor(QDialog):
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
 
-    def _create_tools_tab(self):
+    def _create_tools_tab(self) -> None:
         """Create the tools viewing tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -123,7 +123,7 @@ class ExternalDatabaseEditor(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def _create_providers_tab(self):
+    def _create_providers_tab(self) -> None:
         """Create the providers viewing tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -152,7 +152,7 @@ class ExternalDatabaseEditor(QDialog):
         self._refresh_providers_table()
         return widget
 
-    def _create_search_tab(self):
+    def _create_search_tab(self) -> None:
         """Create the advanced search tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -196,7 +196,7 @@ class ExternalDatabaseEditor(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def _refresh_tools_table(self):
+    def _refresh_tools_table(self) -> None:
         """Refresh the tools table with current data."""
         try:
             search_text = self.tools_search.text()
@@ -226,7 +226,7 @@ class ExternalDatabaseEditor(QDialog):
             self.logger.error("Failed to refresh tools table: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load tools: {str(e)}")
 
-    def _refresh_providers_table(self):
+    def _refresh_providers_table(self) -> None:
         """Refresh the providers table."""
         try:
             providers = self.db_manager.provider_repo.get_all_providers()
@@ -250,7 +250,7 @@ class ExternalDatabaseEditor(QDialog):
             self.logger.error("Failed to refresh providers: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load providers: {str(e)}")
 
-    def _perform_search(self):
+    def _perform_search(self) -> None:
         """Perform advanced search based on criteria."""
         try:
             tool_type = self.search_type.currentText()
@@ -293,20 +293,20 @@ class ExternalDatabaseEditor(QDialog):
             self.logger.error("Search failed: %s", e)
             QMessageBox.critical(self, "Error", f"Search failed: {str(e)}")
 
-    def _edit_tool(self, tool):
+    def _edit_tool(self, tool) -> None:
         """Edit a tool's properties."""
         self.logger.debug("Editing tool: %s", tool.get('guid'))
         QMessageBox.information(
             self, "Edit Tool", f"Edit functionality for: {tool.get('description')}"
         )
 
-    def _use_tool(self, tool):
+    def _use_tool(self, tool) -> None:
         """Use selected tool (typically for feeding back to Feeds and Speeds)."""
         self.logger.debug("Using tool: %s", tool.get('guid'))
         QMessageBox.information(self, "Tool Selected", f"Selected: {tool.get('description')}")
         self.accept()
 
-    def _export_database(self):
+    def _export_database(self) -> None:
         """Export database to external file."""
         try:
             file_path, _ = QFileDialog.getSaveFileName(
@@ -321,7 +321,7 @@ class ExternalDatabaseEditor(QDialog):
             self.logger.error("Export failed: %s", e)
             QMessageBox.critical(self, "Error", f"Export failed: {str(e)}")
 
-    def _import_database(self):
+    def _import_database(self) -> None:
         """Import database from external file."""
         try:
             file_path, _ = QFileDialog.getOpenFileName(

@@ -28,7 +28,7 @@ class LightingControlPanel(QDockWidget):
     color_changed = Signal(float, float, float)  # R, G, B normalized
     intensity_changed = Signal(float)  # 0-2.0
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__("Lighting", parent)
         self.setObjectName("LightingControlPanel")
         self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)

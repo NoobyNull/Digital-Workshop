@@ -23,7 +23,7 @@ class ProgressiveLoadWorker(QThread):
     loading_complete = Signal()  # Emitted when loading is complete
     error_occurred = Signal(str)  # Emitted when an error occurs
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
         """
         Initialize the progressive loading worker.
 

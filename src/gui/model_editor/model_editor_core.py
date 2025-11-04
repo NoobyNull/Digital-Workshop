@@ -34,7 +34,7 @@ class RotationAxis(Enum):
 class ModelEditor:
     """VTK-based model editor for rotation and transformation."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """
         Initialize model editor.
 

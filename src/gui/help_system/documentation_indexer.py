@@ -26,7 +26,7 @@ class HelpTopic:
     keywords: List[str] = None
     category: str = "General"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.keywords is None:
             self.keywords = []
 
@@ -63,7 +63,7 @@ class DocumentationIndexer:
         "troubleshooting": ["troubleshoot", "error", "fix", "issue"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the indexer."""
         self.topics: List[HelpTopic] = []
         self.project_root = Path(__file__).parent.parent.parent.parent

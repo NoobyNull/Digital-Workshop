@@ -34,7 +34,7 @@ class AdvancedSearchWidget(QWidget):
 
     filters_changed = Signal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize the advanced search widget.
 
@@ -46,7 +46,7 @@ class AdvancedSearchWidget(QWidget):
         self.setup_ui()
         self.load_categories()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the advanced search UI."""
         layout = QVBoxLayout(self)
 
@@ -157,7 +157,7 @@ class AdvancedSearchWidget(QWidget):
         reset_button.clicked.connect(self.reset_filters)
         layout.addWidget(reset_button)
 
-    def load_categories(self):
+    def load_categories(self) -> None:
         """Load categories from the database."""
         try:
             categories = self.db_manager.get_categories()
@@ -179,7 +179,7 @@ class AdvancedSearchWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load categories: %s", str(e))
 
-    def on_category_all_toggled(self, checked: bool):
+    def on_category_all_toggled(self, checked: bool) -> None:
         """
         Handle "All Categories" checkbox toggle.
 
@@ -194,7 +194,7 @@ class AdvancedSearchWidget(QWidget):
 
         self.on_filters_changed()
 
-    def on_category_toggled(self):
+    def on_category_toggled(self) -> None:
         """Handle individual category checkbox toggle."""
         # Check if any individual categories are selected
         any_selected = any(checkbox.isChecked() for checkbox in self.category_checkboxes.values())
@@ -206,7 +206,7 @@ class AdvancedSearchWidget(QWidget):
 
         self.on_filters_changed()
 
-    def on_filters_changed(self):
+    def on_filters_changed(self) -> None:
         """Handle any filter change."""
         # Update rating label
         rating = self.min_rating_slider.value()
@@ -267,7 +267,7 @@ class AdvancedSearchWidget(QWidget):
 
         return filters
 
-    def reset_filters(self):
+    def reset_filters(self) -> None:
         """Reset all filters to default values."""
         # Reset categories
         self.category_all_checkbox.setChecked(True)
@@ -287,7 +287,7 @@ class AdvancedSearchWidget(QWidget):
         self.min_size_spin.setValue(0)
         self.max_size_spin.setValue(0)
 
-    def set_filters(self, filters: Dict[str, Any]):
+    def set_filters(self, filters: Dict[str, Any]) -> None:
         """
         Set filter values from a dictionary.
 

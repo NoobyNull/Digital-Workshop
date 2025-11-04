@@ -24,7 +24,7 @@ class RootFolder:
     enabled: bool = True
     id: Optional[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.id is None:
             # Generate a simple ID based on path hash for uniqueness
             self.id = hash(self.path) & 0xFFFFFFFF
@@ -44,7 +44,7 @@ class RootFolderManager(QObject):
 
     _instance = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.settings = QSettings()

@@ -53,7 +53,7 @@ class ModelCache:
     - No memory limits or eviction logic
     """
 
-    def __init__(self, cache_dir: str = "cache"):
+    def __init__(self, cache_dir: str = "cache") -> None:
         """
         Initialize the model cache.
 
