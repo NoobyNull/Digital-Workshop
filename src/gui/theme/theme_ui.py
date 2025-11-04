@@ -371,27 +371,13 @@ class QtMaterialColorPicker(QDialog):
             # Get colors from environment (set by qt-material)
             colors = {
                 "primaryColor": os.environ.get("QTMATERIAL_PRIMARYCOLOR", "#2196F3"),
-                "primaryLightColor": os.environ.get(
-                    "QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"
-                ),
-                "primaryDarkColor": os.environ.get(
-                    "QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"
-                ),
-                "secondaryColor": os.environ.get(
-                    "QTMATERIAL_SECONDARYCOLOR", "#FFC107"
-                ),
-                "secondaryLightColor": os.environ.get(
-                    "QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"
-                ),
-                "secondaryDarkColor": os.environ.get(
-                    "QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"
-                ),
-                "primaryTextColor": os.environ.get(
-                    "QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"
-                ),
-                "secondaryTextColor": os.environ.get(
-                    "QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"
-                ),
+                "primaryLightColor": os.environ.get("QTMATERIAL_PRIMARYLIGHTCOLOR", "#BBDEFB"),
+                "primaryDarkColor": os.environ.get("QTMATERIAL_PRIMARYDARKCOLOR", "#1976D2"),
+                "secondaryColor": os.environ.get("QTMATERIAL_SECONDARYCOLOR", "#FFC107"),
+                "secondaryLightColor": os.environ.get("QTMATERIAL_SECONDARYLIGHTCOLOR", "#FFE082"),
+                "secondaryDarkColor": os.environ.get("QTMATERIAL_SECONDARYDARKCOLOR", "#FFA000"),
+                "primaryTextColor": os.environ.get("QTMATERIAL_PRIMARYTEXTCOLOR", "#212121"),
+                "secondaryTextColor": os.environ.get("QTMATERIAL_SECONDARYTEXTCOLOR", "#757575"),
             }
 
             # Update swatches
@@ -604,17 +590,13 @@ class ThemeDialog(QDialog):
                 col = 0
                 for color_name in sorted(categories[category]):
                     # Label
-                    label = QLabel(
-                        color_name.replace(f"{category}_", "").replace("_", " ").title()
-                    )
+                    label = QLabel(color_name.replace(f"{category}_", "").replace("_", " ").title())
                     group_layout.addWidget(label, col // 2, (col % 2) * 2)
 
                     # Color button
                     btn = QPushButton()
                     btn.setMaximumWidth(80)
-                    btn.clicked.connect(
-                        lambda checked, cn=color_name: self._on_color_clicked(cn)
-                    )
+                    btn.clicked.connect(lambda checked, cn=color_name: self._on_color_clicked(cn))
                     self.color_buttons[color_name] = btn
                     group_layout.addWidget(btn, col // 2, (col % 2) * 2 + 1)
 
@@ -707,16 +689,12 @@ class ThemeDialog(QDialog):
             if color.isValid():
                 hex_value = color.name()
                 self.service.set_color(color_name, hex_value)
-                self.color_buttons[color_name].setStyleSheet(
-                    f"background-color: {hex_value};"
-                )
+                self.color_buttons[color_name].setStyleSheet(f"background-color: {hex_value};")
                 self.theme_applied.emit("custom")
 
     def _on_export(self) -> None:
         """Export theme to file."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Export Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.export_theme(Path(path))
@@ -730,9 +708,7 @@ class ThemeDialog(QDialog):
 
     def _on_import(self) -> None:
         """Import theme from file."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Import Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.import_theme(Path(path))

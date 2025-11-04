@@ -4,7 +4,6 @@ Dock management for main window.
 Handles creation and management of dock widgets (metadata, library).
 """
 
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDockWidget, QTextEdit, QTabWidget
 
@@ -31,17 +30,12 @@ class DockManager:
         """Create the Metadata Manager dock and integrate it into the UI."""
         try:
             # Avoid recreating if it already exists
-            if (
-                hasattr(self.main_window, "metadata_dock")
-                and self.main_window.metadata_dock
-            ):
+            if hasattr(self.main_window, "metadata_dock") and self.main_window.metadata_dock:
                 return
         except Exception:
             pass
 
-        self.main_window.metadata_dock = QDockWidget(
-            "Metadata Editor", self.main_window
-        )
+        self.main_window.metadata_dock = QDockWidget("Metadata Editor", self.main_window)
         self.main_window.metadata_dock.setObjectName("MetadataDock")
         self.main_window.metadata_dock.setAllowedAreas(
             Qt.LeftDockWidgetArea
@@ -71,9 +65,7 @@ class DockManager:
             # Bottom tabs: Metadata | Notes | History
             self.main_window.metadata_tabs = QTabWidget(self.main_window)
             self.main_window.metadata_tabs.setObjectName("MetadataTabs")
-            self.main_window.metadata_tabs.addTab(
-                self.main_window.metadata_editor, "Metadata"
-            )
+            self.main_window.metadata_tabs.addTab(self.main_window.metadata_editor, "Metadata")
 
             # Notes tab (placeholder)
             notes_widget = QTextEdit()
@@ -106,9 +98,7 @@ class DockManager:
                         padding: 6px;
                     }
                 """
-                tm.register_widget(
-                    self.main_window.metadata_dock, css_text=_dock_css_meta
-                )
+                tm.register_widget(self.main_window.metadata_dock, css_text=_dock_css_meta)
                 tm.apply_stylesheet(self.main_window.metadata_dock)
             except Exception:
                 pass
@@ -125,9 +115,7 @@ class DockManager:
             self.main_window.metadata_dock.setWidget(metadata_widget)
 
         # Attach dock
-        self.main_window.addDockWidget(
-            Qt.RightDockWidgetArea, self.main_window.metadata_dock
-        )
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.metadata_dock)
 
         # Connect signals
         try:
@@ -159,9 +147,7 @@ class DockManager:
 
                 if not has_widget:
                     try:
-                        self.main_window.removeDockWidget(
-                            self.main_window.metadata_dock
-                        )
+                        self.main_window.removeDockWidget(self.main_window.metadata_dock)
                     except Exception:
                         pass
                     self.main_window.metadata_dock = None
@@ -183,9 +169,7 @@ class DockManager:
                 pass
 
             try:
-                self.main_window.statusBar().showMessage(
-                    "Metadata Manager restored", 2000
-                )
+                self.main_window.statusBar().showMessage("Metadata Manager restored", 2000)
             except Exception:
                 pass
 
@@ -206,9 +190,7 @@ class DockManager:
         except Exception:
             pass
 
-        self.main_window.model_library_dock = QDockWidget(
-            "Model Library", self.main_window
-        )
+        self.main_window.model_library_dock = QDockWidget("Model Library", self.main_window)
         self.main_window.model_library_dock.setObjectName("ModelLibraryDock")
         self.main_window.model_library_dock.setAllowedAreas(
             Qt.LeftDockWidgetArea
@@ -238,9 +220,7 @@ class DockManager:
                 self.main_window._on_models_added
             )
 
-            self.main_window.model_library_dock.setWidget(
-                self.main_window.model_library_widget
-            )
+            self.main_window.model_library_dock.setWidget(self.main_window.model_library_widget)
 
             # Theme the dock header
             try:
@@ -253,9 +233,7 @@ class DockManager:
                         padding: 6px;
                     }
                 """
-                tm.register_widget(
-                    self.main_window.model_library_dock, css_text=_dock_css_ml
-                )
+                tm.register_widget(self.main_window.model_library_dock, css_text=_dock_css_ml)
                 tm.apply_stylesheet(self.main_window.model_library_dock)
             except Exception:
                 pass
@@ -272,9 +250,7 @@ class DockManager:
             self.main_window.model_library_dock.setWidget(lib_placeholder)
 
         # Attach dock
-        self.main_window.addDockWidget(
-            Qt.LeftDockWidgetArea, self.main_window.model_library_dock
-        )
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.main_window.model_library_dock)
 
         # Connect signals
         try:
@@ -298,17 +274,13 @@ class DockManager:
                 recreate = True
             else:
                 try:
-                    has_widget = (
-                        self.main_window.model_library_dock.widget() is not None
-                    )
+                    has_widget = self.main_window.model_library_dock.widget() is not None
                 except Exception:
                     has_widget = False
 
                 if not has_widget:
                     try:
-                        self.main_window.removeDockWidget(
-                            self.main_window.model_library_dock
-                        )
+                        self.main_window.removeDockWidget(self.main_window.model_library_dock)
                     except Exception:
                         pass
                     self.main_window.model_library_dock = None

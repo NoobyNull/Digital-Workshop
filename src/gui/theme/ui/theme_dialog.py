@@ -173,17 +173,13 @@ class ThemeDialog(QDialog):
             col = 0
             for color_name in sorted(categories[category]):
                 # Label
-                label = QLabel(
-                    color_name.replace(f"{category}_", "").replace("_", " ").title()
-                )
+                label = QLabel(color_name.replace(f"{category}_", "").replace("_", " ").title())
                 group_layout.addWidget(label, col // 2, (col % 2) * 2)
 
                 # Color button
                 btn = QPushButton()
                 btn.setMaximumWidth(80)
-                btn.clicked.connect(
-                    lambda checked, cn=color_name: self._on_color_clicked(cn)
-                )
+                btn.clicked.connect(lambda checked, cn=color_name: self._on_color_clicked(cn))
                 self.color_buttons[color_name] = btn
                 group_layout.addWidget(btn, col // 2, (col % 2) * 2 + 1)
 
@@ -273,16 +269,12 @@ class ThemeDialog(QDialog):
         if color.isValid():
             hex_value = color.name()
             self.service.set_color(color_name, hex_value)
-            self.color_buttons[color_name].setStyleSheet(
-                f"background-color: {hex_value};"
-            )
+            self.color_buttons[color_name].setStyleSheet(f"background-color: {hex_value};")
             self.theme_applied.emit("custom")
 
     def _on_export(self) -> None:
         """Export theme to file."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Export Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.export_theme(Path(path))
@@ -292,9 +284,7 @@ class ThemeDialog(QDialog):
 
     def _on_import(self) -> None:
         """Import theme from file."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Import Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.import_theme(Path(path))

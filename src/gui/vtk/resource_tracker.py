@@ -155,9 +155,7 @@ class VTKResourceTracker:
             self.register_cleanup_callback(ResourceType.MAPPER, cleanup_mapper)
             self.register_cleanup_callback(ResourceType.POLYDATA, cleanup_polydata)
             self.register_cleanup_callback(ResourceType.RENDERER, cleanup_renderer)
-            self.register_cleanup_callback(
-                ResourceType.RENDER_WINDOW, cleanup_render_window
-            )
+            self.register_cleanup_callback(ResourceType.RENDER_WINDOW, cleanup_render_window)
             self.register_cleanup_callback(ResourceType.INTERACTOR, cleanup_interactor)
 
             self.logger.debug("Default cleanup callbacks registered")
@@ -215,9 +213,7 @@ class VTKResourceTracker:
                 self.stats["total_created"] += 1
                 self.stats["by_type"][resource_type.value] += 1
 
-                self.logger.debug(
-                    f"Registered VTK resource: {resource_id} ({resource_type.value})"
-                )
+                self.logger.debug(f"Registered VTK resource: {resource_id} ({resource_type.value})")
 
                 return resource_id
 
@@ -239,9 +235,7 @@ class VTKResourceTracker:
                         ]:
                             resource_info["state"] = ResourceState.LEAKED
                             self.stats["total_leaked"] += 1
-                            self.logger.debug(
-                                f"VTK resource finalized (not leaked): {resource_id}"
-                            )
+                            self.logger.debug(f"VTK resource finalized (not leaked): {resource_id}")
                         else:
                             # Resource was properly handled, just mark as destroyed
                             resource_info["state"] = ResourceState.DESTROYED
@@ -351,9 +345,7 @@ class VTKResourceTracker:
                     try:
                         self.cleanup_callbacks[resource_type.value](resource)
                     except Exception as e:
-                        self.logger.debug(
-                            f"Error in cleanup callback for {resource_id}: {e}"
-                        )
+                        self.logger.debug(f"Error in cleanup callback for {resource_id}: {e}")
 
                 # Try generic cleanup
                 try:
@@ -364,9 +356,7 @@ class VTKResourceTracker:
                     elif hasattr(resource, "TerminateApp"):
                         resource.TerminateApp()
                 except Exception as e:
-                    self.logger.debug(
-                        f"Error in generic cleanup for {resource_id}: {e}"
-                    )
+                    self.logger.debug(f"Error in generic cleanup for {resource_id}: {e}")
 
                 # Mark as cleaned BEFORE unregistering to prevent false leak warnings
                 resource_info["state"] = ResourceState.CLEANED
@@ -388,9 +378,7 @@ class VTKResourceTracker:
         """
         try:
             with self.lock:
-                self.logger.info(
-                    f"Cleaning up {len(self.resources)} tracked VTK resources"
-                )
+                self.logger.info(f"Cleaning up {len(self.resources)} tracked VTK resources")
 
                 success_count = 0
                 error_count = 0
@@ -444,9 +432,7 @@ class VTKResourceTracker:
             # Fallback: just return all resource IDs
             return list(self.resources.keys())
 
-    def register_cleanup_callback(
-        self, resource_type: ResourceType, callback: Callable
-    ) -> None:
+    def register_cleanup_callback(self, resource_type: ResourceType, callback: Callable) -> None:
         """
         Register a cleanup callback for a specific resource type.
 
@@ -514,10 +500,7 @@ class VTKResourceTracker:
                 leaked = []
                 for resource_id, resource_info in self.resources.items():
                     resource_ref = resource_info["resource"]
-                    if (
-                        resource_ref() is None
-                        and resource_info["state"] != ResourceState.CLEANED
-                    ):
+                    if resource_ref() is None and resource_info["state"] != ResourceState.CLEANED:
                         leaked.append(
                             {
                                 "resource_id": resource_id,

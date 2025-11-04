@@ -76,9 +76,7 @@ class DWWImportManager:
 
                 # Add thumbnails to count if importing them
                 if import_thumbnails:
-                    total_items += len(
-                        [f for f in file_list if f.startswith("thumbnails/")]
-                    )
+                    total_items += len([f for f in file_list if f.startswith("thumbnails/")])
 
                 current_item = 0
 
@@ -93,9 +91,7 @@ class DWWImportManager:
 
                         current_item += 1
                         if progress_callback:
-                            progress = (
-                                current_item / total_items if total_items > 0 else 1.0
-                            )
+                            progress = current_item / total_items if total_items > 0 else 1.0
                             progress_callback(
                                 progress, f"Imported {current_item}/{total_items} items"
                             )
@@ -116,11 +112,7 @@ class DWWImportManager:
 
                             current_item += 1
                             if progress_callback:
-                                progress = (
-                                    current_item / total_items
-                                    if total_items > 0
-                                    else 1.0
-                                )
+                                progress = current_item / total_items if total_items > 0 else 1.0
                                 progress_callback(
                                     progress,
                                     f"Imported {current_item}/{total_items} items",
@@ -128,9 +120,7 @@ class DWWImportManager:
 
                 # Extract metadata if available
                 try:
-                    metadata_json = dww_archive.read(
-                        "metadata/files_metadata.json"
-                    ).decode("utf-8")
+                    metadata_json = dww_archive.read("metadata/files_metadata.json").decode("utf-8")
                     metadata = json.loads(metadata_json)
                     manifest["metadata"] = metadata
                 except KeyError:
@@ -196,9 +186,7 @@ class DWWImportManager:
                     sort_keys=True,
                 )
 
-                calculated_hash = hashlib.sha256(
-                    (combined_data + salt).encode()
-                ).hexdigest()
+                calculated_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
 
                 if calculated_hash == stored_hash:
                     return True, "Integrity verified"

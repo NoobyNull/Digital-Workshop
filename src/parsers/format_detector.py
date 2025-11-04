@@ -122,9 +122,7 @@ class FormatDetector:
                 if "solid" in header_text and header_text.count("\x00") < 5:
                     # Likely ASCII, but verify by checking for "facet normal" keyword
                     file.seek(0)
-                    first_line = (
-                        file.readline().decode("utf-8", errors="ignore").strip()
-                    )
+                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
                     if first_line.lower().startswith("solid"):
                         return ModelFormat.STL
 
@@ -164,11 +162,7 @@ class FormatDetector:
                 content = file.read(1000).lower()
 
                 # First, check if this looks like an STL file (negative check)
-                if (
-                    "solid " in content
-                    or "facet normal" in content
-                    or "endfacet" in content
-                ):
+                if "solid " in content or "facet normal" in content or "endfacet" in content:
                     self.logger.debug(
                         f"OBJ verification: File {file_path.name} rejected - contains STL keywords"
                     )

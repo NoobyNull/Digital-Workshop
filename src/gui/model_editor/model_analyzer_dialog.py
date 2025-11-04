@@ -244,9 +244,7 @@ class ModelAnalyzerDialog(QDialog):
             if file_path:
                 success = STLWriter.write(self.fixed_model, file_path, binary=True)
                 if success:
-                    QMessageBox.information(
-                        self, "Success", f"Model saved to:\n{file_path}"
-                    )
+                    QMessageBox.information(self, "Success", f"Model saved to:\n{file_path}")
                     self.accept()
                 else:
                     QMessageBox.critical(self, "Error", "Failed to save model")
@@ -281,9 +279,7 @@ class ModelAnalyzerDialog(QDialog):
                 # Write fixed model to temp file
                 success = STLWriter.write(self.fixed_model, temp_path, binary=True)
                 if not success:
-                    QMessageBox.critical(
-                        self, "Error", "Failed to write fixed model to temp file"
-                    )
+                    QMessageBox.critical(self, "Error", "Failed to write fixed model to temp file")
                     Path(temp_path).unlink(missing_ok=True)
                     return
 

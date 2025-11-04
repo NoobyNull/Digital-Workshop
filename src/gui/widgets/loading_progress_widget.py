@@ -34,9 +34,7 @@ class LoadingProgressWidget(QWidget):
     # Signals
     cancel_requested = Signal()  # Emitted when user clicks cancel button
 
-    def __init__(
-        self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None):
         """
         Initialize the loading progress widget.
 
@@ -189,9 +187,7 @@ class LoadingProgressWidget(QWidget):
             time_since_last_update = current_time - self.last_progress_update
             progress_diff = abs(target_value - current_value)
 
-            if (
-                progress_diff >= 0.5 or time_since_last_update >= 0.1
-            ):  # Update every 100ms minimum
+            if progress_diff >= 0.5 or time_since_last_update >= 0.1:  # Update every 100ms minimum
                 # Smooth transition for small changes
                 if progress_diff <= 5.0 and time_since_last_update < 0.5:
                     # Animate small changes smoothly
@@ -221,9 +217,7 @@ class LoadingProgressWidget(QWidget):
         """
         try:
             # Use QTimer for smooth animation
-            steps = max(
-                1, abs(to_value - from_value) // 2
-            )  # 2-3 steps for small changes
+            steps = max(1, abs(to_value - from_value) // 2)  # 2-3 steps for small changes
             step_size = (to_value - from_value) / steps
 
             def animate_step(current_step: int = 0):
@@ -235,9 +229,7 @@ class LoadingProgressWidget(QWidget):
                 self.progress_bar.setValue(intermediate_value)
 
                 # Schedule next step
-                QTimer.singleShot(
-                    20, lambda: animate_step(current_step + 1)
-                )  # 20ms intervals
+                QTimer.singleShot(20, lambda: animate_step(current_step + 1))  # 20ms intervals
 
             animate_step()
 
@@ -246,9 +238,7 @@ class LoadingProgressWidget(QWidget):
             self.logger.debug(f"Progress animation failed, using direct update: {e}")
             self.progress_bar.setValue(to_value)
 
-    def finish_loading(
-        self, success: bool = True, final_message: str = "Completed"
-    ) -> None:
+    def finish_loading(self, success: bool = True, final_message: str = "Completed") -> None:
         """
         Finish loading operation.
 

@@ -28,9 +28,7 @@ class ModelLoader:
     and integration with the model library and viewer components.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the model loader.
 
@@ -79,9 +77,7 @@ class ModelLoader:
         else:
             if hasattr(self.main_window, "status_label"):
                 self.main_window.status_label.setText(f"Failed to load: {filename}")
-            self.activity_logger.error(
-                f"Failed to load model: {filename} - {error_message}"
-            )
+            self.activity_logger.error(f"Failed to load model: {filename} - {error_message}")
             QMessageBox.warning(
                 self.main_window,
                 "Load Error",
@@ -121,14 +117,10 @@ class ModelLoader:
                 self.main_window.viewer_widget, "load_model"
             ):
                 # Create progress callback for rendering stage
-                render_progress_callback = (
-                    lambda progress, message: self.update_loading_progress(
-                        progress, message
-                    )
+                render_progress_callback = lambda progress, message: self.update_loading_progress(
+                    progress, message
                 )
-                success = self.main_window.viewer_widget.load_model(
-                    model, render_progress_callback
-                )
+                success = self.main_window.viewer_widget.load_model(model, render_progress_callback)
                 self.finish_model_loading(
                     file_path,
                     success,
@@ -175,9 +167,7 @@ class ModelLoader:
         try:
             self._apply_default_material_from_preferences()
         except Exception as e:
-            self.logger.warning(
-                f"Failed to apply default material from preferences: {e}"
-            )
+            self.logger.warning(f"Failed to apply default material from preferences: {e}")
 
         # Attempt to apply last-used material species (for library models)
         try:
@@ -190,9 +180,7 @@ class ModelLoader:
                 ):
                     species_list = self.main_window.material_manager.get_species_list()
                     if last_species in species_list:
-                        self.logger.info(
-                            f"Applying last material species on load: {last_species}"
-                        )
+                        self.logger.info(f"Applying last material species on load: {last_species}")
                         self._apply_material_species(last_species)
                     else:
                         self.logger.warning(
@@ -285,9 +273,7 @@ class ModelLoader:
                     self.main_window.status_label.setText(f"Loading: {filename}")
                 if hasattr(self.main_window, "progress_bar"):
                     self.main_window.progress_bar.setVisible(True)
-                    self.main_window.progress_bar.setRange(
-                        0, 0
-                    )  # Indeterminate progress
+                    self.main_window.progress_bar.setRange(0, 0)  # Indeterminate progress
 
                 # Store model ID for save view functionality
                 self.current_model_id = model_id
@@ -314,17 +300,13 @@ class ModelLoader:
 
         # Update status
         if model_ids and hasattr(self.main_window, "status_label"):
-            self.main_window.status_label.setText(
-                f"Added {len(model_ids)} models to library"
-            )
+            self.main_window.status_label.setText(f"Added {len(model_ids)} models to library")
 
             # Start background hasher to process new models
             self._start_background_hasher()
 
             # Clear status after a delay
-            QTimer.singleShot(
-                3000, lambda: self.main_window.status_label.setText("Ready")
-            )
+            QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
     def _apply_default_material_from_preferences(self) -> None:
         """Apply default material from preferences for imported models."""
@@ -334,9 +316,7 @@ class ModelLoader:
             default_material = settings.value("thumbnail/material", None, type=str)
 
             if default_material:
-                self.logger.info(
-                    f"Applying default material from preferences: {default_material}"
-                )
+                self.logger.info(f"Applying default material from preferences: {default_material}")
                 if (
                     hasattr(self.main_window, "material_manager")
                     and self.main_window.material_manager
@@ -400,9 +380,7 @@ class ModelLoader:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info(
-                        f"Restored saved camera view for model ID {model_id}"
-                    )
+                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
                     if hasattr(self.main_window, "status_label"):
                         self.main_window.status_label.setText("Restored saved view")
                         QTimer.singleShot(

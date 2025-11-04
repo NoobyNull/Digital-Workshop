@@ -82,9 +82,7 @@ class RootFolderManager(QObject):
                     if self._validate_folder(folder):
                         self._folders.append(folder)
                     else:
-                        self.logger.warning(
-                            f"Skipping invalid root folder: {folder.path}"
-                        )
+                        self.logger.warning(f"Skipping invalid root folder: {folder.path}")
 
             # If no folders configured, add default user home
             if not self._folders:
@@ -123,17 +121,13 @@ class RootFolderManager(QObject):
                 self.logger.warning(f"Root folder path does not exist: {folder.path}")
                 return False
             if not path.is_dir():
-                self.logger.warning(
-                    f"Root folder path is not a directory: {folder.path}"
-                )
+                self.logger.warning(f"Root folder path is not a directory: {folder.path}")
                 return False
             # Check if we can list the directory (basic permission check)
             try:
                 list(path.iterdir())
             except PermissionError:
-                self.logger.warning(
-                    f"No permission to access root folder: {folder.path}"
-                )
+                self.logger.warning(f"No permission to access root folder: {folder.path}")
                 return False
             return True
         except Exception as e:
@@ -189,9 +183,7 @@ class RootFolderManager(QObject):
                     removed_folder = self._folders.pop(i)
                     self._save_folders()
                     self.folders_changed.emit()
-                    self.logger.info(
-                        f"Removed root folder: {removed_folder.display_name}"
-                    )
+                    self.logger.info(f"Removed root folder: {removed_folder.display_name}")
                     return True
 
             self.logger.warning(f"Root folder with ID {folder_id} not found")

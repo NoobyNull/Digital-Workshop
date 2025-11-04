@@ -83,9 +83,7 @@ class ColorRow(QWidget):
         except Exception:
             initial = QColor(255, 0, 255)  # fallback visually noticeable
 
-        color = QColorDialog.getColor(
-            initial, self, f"Select color for {self.var_name}"
-        )
+        color = QColorDialog.getColor(initial, self, f"Select color for {self.var_name}")
         if color.isValid():
             new_hex = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
             self._apply_button_style(new_hex)

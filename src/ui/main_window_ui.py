@@ -40,9 +40,7 @@ class Ui_MainWindow(object):
         MainWindow.resize(1600, 1000)
         MainWindow.setMinimumSize(QSize(1200, 800))
         MainWindow.setDockOptions(
-            QMainWindow.AllowNestedDocks
-            | QMainWindow.AllowTabbedDocks
-            | QMainWindow.AnimatedDocks
+            QMainWindow.AllowNestedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AnimatedDocks
         )
         MainWindow.setStyleSheet(
             "QMainWindow {\n"
@@ -157,9 +155,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.status_bar)
         self.model_library_dock = QDockWidget(MainWindow)
         self.model_library_dock.setObjectName("model_library_dock")
-        self.model_library_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
-        )
+        self.model_library_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.model_library_widget = QTextEdit()
         self.model_library_widget.setObjectName("model_library_widget")
         self.model_library_widget.setReadOnly(True)
@@ -167,9 +163,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
         self.properties_dock = QDockWidget(MainWindow)
         self.properties_dock.setObjectName("properties_dock")
-        self.properties_dock.setAllowedAreas(
-            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea
-        )
+        self.properties_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.properties_widget = QTextEdit()
         self.properties_widget.setObjectName("properties_widget")
         self.properties_widget.setReadOnly(True)
@@ -177,9 +171,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
         self.metadata_dock = QDockWidget(MainWindow)
         self.metadata_dock.setObjectName("metadata_dock")
-        self.metadata_dock.setAllowedAreas(
-            Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea
-        )
+        self.metadata_dock.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
         self.metadata_widget = QTextEdit()
         self.metadata_widget.setObjectName("metadata_widget")
         self.metadata_widget.setReadOnly(True)
@@ -215,13 +207,9 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", "3D-MM - 3D Model Manager", None)
         )
-        self.actionOpen.setText(
-            QCoreApplication.translate("MainWindow", "&Open Model...", None)
-        )
+        self.actionOpen.setText(QCoreApplication.translate("MainWindow", "&Open Model...", None))
         # if QT_CONFIG(shortcut)
-        self.actionOpen.setShortcut(
-            QCoreApplication.translate("MainWindow", "Ctrl+O", None)
-        )
+        self.actionOpen.setShortcut(QCoreApplication.translate("MainWindow", "Ctrl+O", None))
         # endif // QT_CONFIG(shortcut)
         # if QT_CONFIG(statustip)
         self.actionOpen.setStatusTip(
@@ -230,9 +218,7 @@ class Ui_MainWindow(object):
         # endif // QT_CONFIG(statustip)
         self.actionExit.setText(QCoreApplication.translate("MainWindow", "E&xit", None))
         # if QT_CONFIG(shortcut)
-        self.actionExit.setShortcut(
-            QCoreApplication.translate("MainWindow", "Ctrl+Q", None)
-        )
+        self.actionExit.setShortcut(QCoreApplication.translate("MainWindow", "Ctrl+Q", None))
         # endif // QT_CONFIG(shortcut)
         # if QT_CONFIG(statustip)
         self.actionExit.setStatusTip(
@@ -244,55 +230,37 @@ class Ui_MainWindow(object):
         )
         # if QT_CONFIG(statustip)
         self.actionPreferences.setStatusTip(
-            QCoreApplication.translate(
-                "MainWindow", "Open application preferences", None
-            )
+            QCoreApplication.translate("MainWindow", "Open application preferences", None)
         )
         # endif // QT_CONFIG(statustip)
-        self.actionZoomIn.setText(
-            QCoreApplication.translate("MainWindow", "Zoom &In", None)
-        )
+        self.actionZoomIn.setText(QCoreApplication.translate("MainWindow", "Zoom &In", None))
         # if QT_CONFIG(shortcut)
-        self.actionZoomIn.setShortcut(
-            QCoreApplication.translate("MainWindow", "Ctrl+=", None)
-        )
+        self.actionZoomIn.setShortcut(QCoreApplication.translate("MainWindow", "Ctrl+=", None))
         # endif // QT_CONFIG(shortcut)
         # if QT_CONFIG(statustip)
         self.actionZoomIn.setStatusTip(
             QCoreApplication.translate("MainWindow", "Zoom in on the 3D view", None)
         )
         # endif // QT_CONFIG(statustip)
-        self.actionZoomOut.setText(
-            QCoreApplication.translate("MainWindow", "Zoom &Out", None)
-        )
+        self.actionZoomOut.setText(QCoreApplication.translate("MainWindow", "Zoom &Out", None))
         # if QT_CONFIG(shortcut)
-        self.actionZoomOut.setShortcut(
-            QCoreApplication.translate("MainWindow", "Ctrl+-", None)
-        )
+        self.actionZoomOut.setShortcut(QCoreApplication.translate("MainWindow", "Ctrl+-", None))
         # endif // QT_CONFIG(shortcut)
         # if QT_CONFIG(statustip)
         self.actionZoomOut.setStatusTip(
             QCoreApplication.translate("MainWindow", "Zoom out from the 3D view", None)
         )
         # endif // QT_CONFIG(statustip)
-        self.actionResetView.setText(
-            QCoreApplication.translate("MainWindow", "&Reset View", None)
-        )
+        self.actionResetView.setText(QCoreApplication.translate("MainWindow", "&Reset View", None))
         # if QT_CONFIG(statustip)
         self.actionResetView.setStatusTip(
-            QCoreApplication.translate(
-                "MainWindow", "Reset the 3D view to default", None
-            )
+            QCoreApplication.translate("MainWindow", "Reset the 3D view to default", None)
         )
         # endif // QT_CONFIG(statustip)
-        self.actionAbout.setText(
-            QCoreApplication.translate("MainWindow", "&About 3D-MM", None)
-        )
+        self.actionAbout.setText(QCoreApplication.translate("MainWindow", "&About 3D-MM", None))
         # if QT_CONFIG(statustip)
         self.actionAbout.setStatusTip(
-            QCoreApplication.translate(
-                "MainWindow", "Show information about 3D-MM", None
-            )
+            QCoreApplication.translate("MainWindow", "Show information about 3D-MM", None)
         )
         # endif // QT_CONFIG(statustip)
         self.viewer_widget.setPlainText(
@@ -318,21 +286,13 @@ class Ui_MainWindow(object):
         self.menuEdit.setTitle(QCoreApplication.translate("MainWindow", "&Edit", None))
         self.menuView.setTitle(QCoreApplication.translate("MainWindow", "&View", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", "&Help", None))
-        self.MainToolBar.setWindowTitle(
-            QCoreApplication.translate("MainWindow", "Main", None)
-        )
+        self.MainToolBar.setWindowTitle(QCoreApplication.translate("MainWindow", "Main", None))
         self.MainToolBar.setObjectName(
             QCoreApplication.translate("MainWindow", "MainToolBar", None)
         )
-        self.status_bar.setObjectName(
-            QCoreApplication.translate("MainWindow", "status_bar", None)
-        )
-        self.status_label.setText(
-            QCoreApplication.translate("MainWindow", "Ready", None)
-        )
-        self.memory_label.setText(
-            QCoreApplication.translate("MainWindow", "Memory: N/A", None)
-        )
+        self.status_bar.setObjectName(QCoreApplication.translate("MainWindow", "status_bar", None))
+        self.status_label.setText(QCoreApplication.translate("MainWindow", "Ready", None))
+        self.memory_label.setText(QCoreApplication.translate("MainWindow", "Memory: N/A", None))
         self.model_library_dock.setObjectName(
             QCoreApplication.translate("MainWindow", "ModelLibraryDock", None)
         )

@@ -235,9 +235,7 @@ class ComprehensiveLogger:
                 "type": exception_info[0].__name__ if exception_info[0] else None,
                 "message": str(exception_info[1]) if exception_info[1] else None,
                 "traceback": (
-                    traceback.format_exception(*exception_info)
-                    if exception_info[0]
-                    else None
+                    traceback.format_exception(*exception_info) if exception_info[0] else None
                 ),
             }
 
@@ -254,9 +252,7 @@ class ComprehensiveLogger:
     ):
         """Log structured JSON entry."""
         try:
-            log_entry = self._create_log_entry(
-                level, message, context, extra_data, exception_info
-            )
+            log_entry = self._create_log_entry(level, message, context, extra_data, exception_info)
             log_line = json.dumps(log_entry, default=str)
 
             # Log to appropriate logger
@@ -294,9 +290,7 @@ class ComprehensiveLogger:
     ):
         """Log warning message."""
         with self._lock:
-            self._log_structured(
-                self.app_logger, "WARNING", message, context, extra_data
-            )
+            self._log_structured(self.app_logger, "WARNING", message, context, extra_data)
 
     def log_error(
         self,
@@ -347,9 +341,7 @@ class ComprehensiveLogger:
     ):
         """Log security-related message."""
         with self._lock:
-            self._log_structured(
-                self.security_logger, "WARNING", message, context, extra_data
-            )
+            self._log_structured(self.security_logger, "WARNING", message, context, extra_data)
 
     def start_operation(
         self,
@@ -368,9 +360,7 @@ class ComprehensiveLogger:
             log_context.operation_id = operation_id
             log_context.function = operation_name
 
-            self.log_info(
-                f"Operation started: {operation_name}", log_context, extra_data
-            )
+            self.log_info(f"Operation started: {operation_name}", log_context, extra_data)
 
     def end_operation(
         self,
@@ -382,9 +372,7 @@ class ComprehensiveLogger:
         """End tracking an operation and log performance metrics."""
         with self._lock:
             if operation_id not in self.active_operations:
-                self.log_warning(
-                    f"Operation {operation_id} not found in active operations"
-                )
+                self.log_warning(f"Operation {operation_id} not found in active operations")
                 return
 
             metrics = self.active_operations.pop(operation_id)
@@ -406,12 +394,8 @@ class ComprehensiveLogger:
             stats["count"] += 1
             stats["total_duration_ms"] += metrics.duration_ms
             stats["avg_duration_ms"] = stats["total_duration_ms"] / stats["count"]
-            stats["min_duration_ms"] = min(
-                stats["min_duration_ms"], metrics.duration_ms
-            )
-            stats["max_duration_ms"] = max(
-                stats["max_duration_ms"], metrics.duration_ms
-            )
+            stats["min_duration_ms"] = min(stats["min_duration_ms"], metrics.duration_ms)
+            stats["max_duration_ms"] = max(stats["max_duration_ms"], metrics.duration_ms)
 
             if success:
                 stats["success_count"] += 1
@@ -441,9 +425,7 @@ class ComprehensiveLogger:
                     performance_data,
                 )
             else:
-                self.log_error(
-                    f"Operation failed: {operation_id}", log_context, performance_data
-                )
+                self.log_error(f"Operation failed: {operation_id}", log_context, performance_data)
 
             # Log performance metrics if enabled
             if self.enable_performance_logging:
@@ -491,9 +473,7 @@ class ComprehensiveLogger:
                 error_data,
             )
         else:
-            self.log_error(
-                f"Error reported: {error_report.error_type}", log_context, error_data
-            )
+            self.log_error(f"Error reported: {error_report.error_type}", log_context, error_data)
 
     @contextmanager
     def operation_context(
@@ -517,9 +497,7 @@ class ComprehensiveLogger:
             )
             raise
         else:
-            self.end_operation(
-                operation_id, success=True, context=context, extra_data=extra_data
-            )
+            self.end_operation(operation_id, success=True, context=context, extra_data=extra_data)
 
 
 # Global logger instance
@@ -596,7 +574,5 @@ def operation_context(
     extra_data: Optional[Dict[str, Any]] = None,
 ):
     """Context manager for operation tracking using global logger."""
-    with get_global_logger().operation_context(
-        operation_name, context, extra_data
-    ) as operation_id:
+    with get_global_logger().operation_context(operation_name, context, extra_data) as operation_id:
         yield operation_id

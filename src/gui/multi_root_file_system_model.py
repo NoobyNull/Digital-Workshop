@@ -178,9 +178,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 root_folder=folder,
             )
             self.root_node.add_child(root_node)
-            self.logger.debug(
-                f"Added root folder: {folder.display_name} ({folder.path})"
-            )
+            self.logger.debug(f"Added root folder: {folder.display_name} ({folder.path})")
 
     def _get_node(self, index: QModelIndex) -> Optional[TreeNode]:
         """Get the TreeNode for a given model index."""
@@ -223,17 +221,13 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
 
                 for item in items:
-                    child_node = TreeNode(
-                        name=item.name, path=str(item), is_dir=item.is_dir()
-                    )
+                    child_node = TreeNode(name=item.name, path=str(item), is_dir=item.is_dir())
                     node.add_child(child_node)
 
         except Exception as e:
             self.logger.error(f"Error loading children for {node.path}: {e}")
 
-    def index(
-        self, row: int, column: int, parent: QModelIndex = QModelIndex()
-    ) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
         """Create a model index for the given row, column, and parent."""
         parent_node = self._get_node(parent)
         if not parent_node or row < 0 or row >= len(parent_node.children):
@@ -319,9 +313,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
 
         return None
 
-    def headerData(
-        self, section: int, orientation: int, role: int = Qt.DisplayRole
-    ) -> Any:
+    def headerData(self, section: int, orientation: int, role: int = Qt.DisplayRole) -> Any:
         """Get header data."""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             headers = ["Name", "Size", "Type", "Modified"]
@@ -445,9 +437,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
         self.indexer = DirectoryIndexer(root_paths)
         self.indexer.indexing_complete.connect(self._on_indexing_complete)
         self.indexer.start()
-        self.logger.debug(
-            f"Started background indexing for {len(root_paths)} root directories"
-        )
+        self.logger.debug(f"Started background indexing for {len(root_paths)} root directories")
 
         # Emit signal for status update
         self.indexing_started.emit()
@@ -455,9 +445,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     def _on_indexing_complete(self, indexed_data: dict) -> None:
         """Handle completion of background indexing."""
         self.indexed_data.update(indexed_data)
-        self.logger.debug(
-            f"Background indexing completed for {len(indexed_data)} directories"
-        )
+        self.logger.debug(f"Background indexing completed for {len(indexed_data)} directories")
 
         # Clean up indexer
         if self.indexer:

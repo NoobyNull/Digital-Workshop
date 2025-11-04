@@ -51,17 +51,13 @@ class BackgroundProvider:
                 # Check for image preference
                 bg_image = getattr(self.settings, "thumbnail_bg_image", None)
                 if bg_image and self._validate_image_path(bg_image):
-                    self.logger.debug(
-                        f"Using background image from settings: {bg_image}"
-                    )
+                    self.logger.debug(f"Using background image from settings: {bg_image}")
                     return bg_image
 
                 # Check for color preference
                 bg_color = getattr(self.settings, "thumbnail_bg_color", None)
                 if bg_color:
-                    self.logger.debug(
-                        f"Using background color from settings: {bg_color}"
-                    )
+                    self.logger.debug(f"Using background color from settings: {bg_color}")
                     return self._parse_color(bg_color)
 
             # Fall back to default
@@ -126,9 +122,7 @@ class BackgroundProvider:
             # Check extension
             supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if path.suffix.lower() not in supported_extensions:
-                self.logger.warning(
-                    f"Unsupported background image format: {path.suffix}"
-                )
+                self.logger.warning(f"Unsupported background image format: {path.suffix}")
                 return False
 
             return True
@@ -137,9 +131,7 @@ class BackgroundProvider:
             self.logger.error(f"Error validating image path: {e}", exc_info=True)
             return False
 
-    def _parse_color(
-        self, color: Union[str, Tuple, List]
-    ) -> Tuple[float, float, float]:
+    def _parse_color(self, color: Union[str, Tuple, List]) -> Tuple[float, float, float]:
         """
         Parse color from various formats to RGB tuple (0-1 range).
 

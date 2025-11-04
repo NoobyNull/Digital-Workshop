@@ -251,9 +251,7 @@ class SearchEngine:
                 # Calculate execution time
                 execution_time = (datetime.now() - start_time).total_seconds()
 
-                logger.info(
-                    f"Search completed in {execution_time:.3f}s: {len(results)} results"
-                )
+                logger.info(f"Search completed in {execution_time:.3f}s: {len(results)} results")
 
                 return {
                     "results": results,
@@ -398,9 +396,7 @@ class SearchEngine:
         return processed
 
     @log_function_call(logger)
-    def _generate_highlights(
-        self, query: str, result: Dict[str, Any]
-    ) -> Dict[str, str]:
+    def _generate_highlights(self, query: str, result: Dict[str, Any]) -> Dict[str, str]:
         """
         Generate highlighted snippets for search results.
 
@@ -420,21 +416,15 @@ class SearchEngine:
 
         # Highlight description
         if result.get("description"):
-            highlights["description"] = self._highlight_text(
-                result["description"], query_terms
-            )
+            highlights["description"] = self._highlight_text(result["description"], query_terms)
 
         # Highlight keywords
         if result.get("keywords"):
-            highlights["keywords"] = self._highlight_text(
-                result["keywords"], query_terms
-            )
+            highlights["keywords"] = self._highlight_text(result["keywords"], query_terms)
 
         # Highlight filename
         if result.get("filename"):
-            highlights["filename"] = self._highlight_text(
-                result["filename"], query_terms
-            )
+            highlights["filename"] = self._highlight_text(result["filename"], query_terms)
 
         return highlights
 
@@ -546,9 +536,7 @@ class SearchEngine:
             return []
 
     @log_function_call(logger)
-    def save_search(
-        self, name: str, query: str, filters: Optional[Dict[str, Any]]
-    ) -> int:
+    def save_search(self, name: str, query: str, filters: Optional[Dict[str, Any]]) -> int:
         """
         Save a search for later use.
 

@@ -91,9 +91,7 @@ class SystemInitializer:
         Uses Path for consistent cross-platform path handling.
         """
         # Get app data path and normalize it
-        app_data_path = Path(
-            QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        )
+        app_data_path = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
 
         # Define required directories
         app_dirs = [
@@ -121,9 +119,7 @@ class SystemInitializer:
                 print(f"Failed to create directory: {dir_path}")
 
         if created_count > 0:
-            print(
-                f"Application directories initialized ({created_count} new directories created)"
-            )
+            print(f"Application directories initialized ({created_count} new directories created)")
 
     def get_app_data_path(self) -> Path:
         """Get the application data directory path.
@@ -184,9 +180,7 @@ class SystemInitializer:
                             file_path.unlink()
                             self.logger.debug("Removed old temp file: %s", file_path)
                         except OSError as e:
-                            self.logger.warning(
-                                "Failed to remove temp file %s: %s", file_path, e
-                            )
+                            self.logger.warning("Failed to remove temp file %s: %s", file_path, e)
 
                 self.logger.info("Temporary file cleanup completed")
             except OSError as e:

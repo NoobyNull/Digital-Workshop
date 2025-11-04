@@ -42,9 +42,7 @@ class CandyCadenceException(Exception):
 class ParsingException(CandyCadenceException):
     """Base exception for all parsing-related errors."""
 
-    def __init__(
-        self, message: str, file_path: str = None, format_type: str = None, **kwargs
-    ):
+    def __init__(self, message: str, file_path: str = None, format_type: str = None, **kwargs):
         user_message = "The file format is not supported or the file is corrupted."
         recovery_suggestions = [
             "Check if the file format is supported",
@@ -97,9 +95,7 @@ class UnsupportedFormatError(ParsingException):
 class CorruptedFileError(ParsingException):
     """Raised when a file appears to be corrupted or malformed."""
 
-    def __init__(
-        self, file_path: str, format_type: str, corruption_details: str = None, **kwargs
-    ):
+    def __init__(self, file_path: str, format_type: str, corruption_details: str = None, **kwargs):
         message = f"Corrupted file detected: {file_path}"
         if corruption_details:
             message += f" Details: {corruption_details}"
@@ -130,12 +126,8 @@ class CorruptedFileError(ParsingException):
 class DatabaseException(CandyCadenceException):
     """Base exception for all database-related errors."""
 
-    def __init__(
-        self, message: str, operation: str = None, table_name: str = None, **kwargs
-    ):
-        user_message = (
-            "A database operation failed. Your data may be temporarily unavailable."
-        )
+    def __init__(self, message: str, operation: str = None, table_name: str = None, **kwargs):
+        user_message = "A database operation failed. Your data may be temporarily unavailable."
         recovery_suggestions = [
             "Check database connection",
             "Verify database file permissions",
@@ -181,12 +173,8 @@ class DatabaseConnectionError(DatabaseException):
 class FileSystemException(CandyCadenceException):
     """Base exception for all file system-related errors."""
 
-    def __init__(
-        self, message: str, file_path: str = None, operation: str = None, **kwargs
-    ):
-        user_message = (
-            "A file operation failed. Please check file permissions and paths."
-        )
+    def __init__(self, message: str, file_path: str = None, operation: str = None, **kwargs):
+        user_message = "A file operation failed. Please check file permissions and paths."
         recovery_suggestions = [
             "Check file path and permissions",
             "Verify the file exists",
@@ -236,9 +224,7 @@ class FileNotFoundException(FileSystemException):
 class ValidationException(CandyCadenceException):
     """Base exception for all validation-related errors."""
 
-    def __init__(
-        self, message: str, field_name: str = None, value: Any = None, **kwargs
-    ):
+    def __init__(self, message: str, field_name: str = None, value: Any = None, **kwargs):
         user_message = "Data validation failed. Please check the input values."
         recovery_suggestions = [
             "Check the format of input data",
@@ -261,12 +247,8 @@ ValidationError = ValidationException
 class MemoryException(CandyCadenceException):
     """Base exception for all memory-related errors."""
 
-    def __init__(
-        self, message: str, operation: str = None, memory_usage: int = None, **kwargs
-    ):
-        user_message = (
-            "The application ran out of memory. Try closing other applications."
-        )
+    def __init__(self, message: str, operation: str = None, memory_usage: int = None, **kwargs):
+        user_message = "The application ran out of memory. Try closing other applications."
         recovery_suggestions = [
             "Close other applications",
             "Restart the application",
@@ -282,16 +264,12 @@ class MemoryException(CandyCadenceException):
 class OutOfMemoryError(MemoryException):
     """Raised when the application runs out of memory."""
 
-    def __init__(
-        self, operation: str, memory_usage: int, available_memory: int = None, **kwargs
-    ):
+    def __init__(self, operation: str, memory_usage: int, available_memory: int = None, **kwargs):
         message = f"Out of memory during {operation}. Usage: {memory_usage} bytes"
         if available_memory:
             message += f", Available: {available_memory} bytes"
 
-        user_message = (
-            "The application has run out of memory and cannot continue this operation."
-        )
+        user_message = "The application has run out of memory and cannot continue this operation."
 
         recovery_suggestions = [
             "Close other applications to free up memory",
@@ -317,12 +295,8 @@ class OutOfMemoryError(MemoryException):
 class ConfigurationException(CandyCadenceException):
     """Base exception for all configuration-related errors."""
 
-    def __init__(
-        self, message: str, config_key: str = None, config_source: str = None, **kwargs
-    ):
-        user_message = (
-            "A configuration error occurred. Some features may not work correctly."
-        )
+    def __init__(self, message: str, config_key: str = None, config_source: str = None, **kwargs):
+        user_message = "A configuration error occurred. Some features may not work correctly."
         recovery_suggestions = [
             "Reset to default settings",
             "Check configuration file",
@@ -338,9 +312,7 @@ class ConfigurationException(CandyCadenceException):
 class InvalidConfigurationException(ConfigurationException):
     """Raised when configuration values are invalid."""
 
-    def __init__(
-        self, config_key: str, config_value: Any, expected_type: str = None, **kwargs
-    ):
+    def __init__(self, config_key: str, config_value: Any, expected_type: str = None, **kwargs):
         message = f"Invalid configuration value for {config_key}: {config_value}"
         if expected_type:
             message += f" (expected type: {expected_type})"
@@ -371,10 +343,10 @@ class InvalidConfigurationException(ConfigurationException):
 class PerformanceException(CandyCadenceException):
     """Base exception for all performance-related issues."""
 
-    def __init__(
-        self, message: str, operation: str = None, duration: float = None, **kwargs
-    ):
-        user_message = "A performance issue was detected. The operation may take longer than expected."
+    def __init__(self, message: str, operation: str = None, duration: float = None, **kwargs):
+        user_message = (
+            "A performance issue was detected. The operation may take longer than expected."
+        )
         recovery_suggestions = [
             "Close other applications",
             "Use smaller files",
@@ -401,7 +373,9 @@ class TimeoutException(PerformanceException):
         if actual_duration:
             message += f" (actual duration: {actual_duration} seconds)"
 
-        user_message = f"The operation '{operation}' is taking longer than expected and has been cancelled."
+        user_message = (
+            f"The operation '{operation}' is taking longer than expected and has been cancelled."
+        )
 
         recovery_suggestions = [
             "Try the operation again with smaller data",
@@ -444,9 +418,7 @@ class UIException(CandyCadenceException):
 class WidgetException(UIException):
     """Raised when a UI widget encounters an error."""
 
-    def __init__(
-        self, widget_type: str, operation: str, widget_details: str = None, **kwargs
-    ):
+    def __init__(self, widget_type: str, operation: str, widget_details: str = None, **kwargs):
         message = f"Widget error in {widget_type} during {operation}"
         if widget_details:
             message += f": {widget_details}"
@@ -484,9 +456,7 @@ EXCEPTION_MAPPING = {
 }
 
 
-def create_exception_from_code(
-    error_code: str, *args, **kwargs
-) -> CandyCadenceException:
+def create_exception_from_code(error_code: str, *args, **kwargs) -> CandyCadenceException:
     """Create an exception instance from an error code."""
     exception_class = EXCEPTION_MAPPING.get(error_code, CandyCadenceException)
     return exception_class(*args, **kwargs)

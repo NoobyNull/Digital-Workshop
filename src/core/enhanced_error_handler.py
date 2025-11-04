@@ -147,9 +147,7 @@ class EnhancedErrorHandler(IErrorHandler):
         self.default_retry_count = self.config.get("default_retry_count", 3)
         self.default_retry_delay = self.config.get("default_retry_delay", 1.0)
 
-    def handle_error(
-        self, error: Exception, context: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def handle_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> bool:
         """
         Handle an error with comprehensive processing.
 
@@ -182,9 +180,7 @@ class EnhancedErrorHandler(IErrorHandler):
             return recovery_success
 
         except Exception as handling_error:
-            self.logger.error(
-                f"Error handler failed: {str(handling_error)}", exc_info=True
-            )
+            self.logger.error(f"Error handler failed: {str(handling_error)}", exc_info=True)
             return False
 
     def log_error(self, error: Exception, level: str = "ERROR") -> None:
@@ -267,8 +263,7 @@ class EnhancedErrorHandler(IErrorHandler):
             recent_errors = [
                 error
                 for error in self._error_history
-                if (datetime.now() - error.context.timestamp).seconds
-                < 3600  # Last hour
+                if (datetime.now() - error.context.timestamp).seconds < 3600  # Last hour
             ]
 
             return {
@@ -276,15 +271,11 @@ class EnhancedErrorHandler(IErrorHandler):
                 "recent_errors": len(recent_errors),
                 "error_counts": self._error_counts.copy(),
                 "categories": {
-                    category.value: len(
-                        [e for e in recent_errors if e.category == category]
-                    )
+                    category.value: len([e for e in recent_errors if e.category == category])
                     for category in ErrorCategory
                 },
                 "severities": {
-                    severity.value: len(
-                        [e for e in recent_errors if e.severity == severity]
-                    )
+                    severity.value: len([e for e in recent_errors if e.severity == severity])
                     for severity in ErrorSeverity
                 },
             }
@@ -383,23 +374,16 @@ class EnhancedErrorHandler(IErrorHandler):
             return ErrorCategory.FILE_SYSTEM_ERROR
 
         # Parsing errors
-        if any(
-            keyword in error_message
-            for keyword in ["parse", "format", "invalid", "malformed"]
-        ):
+        if any(keyword in error_message for keyword in ["parse", "format", "invalid", "malformed"]):
             return ErrorCategory.PARSING_ERROR
 
         # Memory errors
-        if any(
-            keyword in error_message
-            for keyword in ["memory", "out of memory", "allocation"]
-        ):
+        if any(keyword in error_message for keyword in ["memory", "out of memory", "allocation"]):
             return ErrorCategory.MEMORY_ERROR
 
         # GPU errors
         if any(
-            keyword in error_message
-            for keyword in ["gpu", "opengl", "vulkan", "cuda", "graphics"]
+            keyword in error_message for keyword in ["gpu", "opengl", "vulkan", "cuda", "graphics"]
         ):
             return ErrorCategory.GPU_ERROR
 
@@ -411,16 +395,11 @@ class EnhancedErrorHandler(IErrorHandler):
             return ErrorCategory.NETWORK_ERROR
 
         # UI errors
-        if any(
-            keyword in error_message
-            for keyword in ["ui", "widget", "qt", "gui", "window"]
-        ):
+        if any(keyword in error_message for keyword in ["ui", "widget", "qt", "gui", "window"]):
             return ErrorCategory.UI_ERROR
 
         # Configuration errors
-        if any(
-            keyword in error_message for keyword in ["config", "setting", "parameter"]
-        ):
+        if any(keyword in error_message for keyword in ["config", "setting", "parameter"]):
             return ErrorCategory.CONFIGURATION_ERROR
 
         # Security errors
@@ -432,16 +411,13 @@ class EnhancedErrorHandler(IErrorHandler):
 
         # Performance errors
         if any(
-            keyword in error_message
-            for keyword in ["performance", "slow", "timeout", "deadlock"]
+            keyword in error_message for keyword in ["performance", "slow", "timeout", "deadlock"]
         ):
             return ErrorCategory.PERFORMANCE_ERROR
 
         return ErrorCategory.UNKNOWN_ERROR
 
-    def _determine_severity(
-        self, error: Exception, category: ErrorCategory
-    ) -> ErrorSeverity:
+    def _determine_severity(self, error: Exception, category: ErrorCategory) -> ErrorSeverity:
         """Determine error severity based on type and category."""
         error_type = type(error).__name__
 
@@ -516,9 +492,7 @@ class EnhancedErrorHandler(IErrorHandler):
 
         return f"An error occurred: {str(error)}"
 
-    def _generate_developer_message(
-        self, error: Exception, context: ErrorContext
-    ) -> str:
+    def _generate_developer_message(self, error: Exception, context: ErrorContext) -> str:
         """Generate detailed developer message."""
         return (
             f"Error in {context.module_name}.{context.function_name} "
@@ -679,10 +653,7 @@ class EnhancedErrorHandler(IErrorHandler):
         )
 
         # Log security events separately
-        if (
-            self.enable_security_logging
-            and error_info.category == ErrorCategory.SECURITY_ERROR
-        ):
+        if self.enable_security_logging and error_info.category == ErrorCategory.SECURITY_ERROR:
             self._security_logger.critical(
                 f"SECURITY EVENT: {error_info.user_message}",
                 extra={
@@ -729,9 +700,7 @@ class EnhancedErrorHandler(IErrorHandler):
             return False
 
         except Exception as recovery_error:
-            self.logger.error(
-                f"Recovery attempt failed: {str(recovery_error)}", exc_info=True
-            )
+            self.logger.error(f"Recovery attempt failed: {str(recovery_error)}", exc_info=True)
             return False
 
     def _handle_retry_strategy(self, error_info: ErrorInfo) -> bool:

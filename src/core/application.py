@@ -255,9 +255,7 @@ class Application:
                 settings_file = temp_dir / "settings.ini"
 
                 # Create a file-based QSettings that uses INI format
-                QSettings.setPath(
-                    QSettings.IniFormat, QSettings.UserScope, str(temp_dir)
-                )
+                QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, str(temp_dir))
                 QSettings.setDefaultFormat(QSettings.IniFormat)
 
             self.logger = get_logger(__name__)

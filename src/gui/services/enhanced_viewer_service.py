@@ -95,9 +95,7 @@ class ModelLoadingWorker(QThread):
                 if success:
                     model_info = {
                         "filename": (
-                            model.filename
-                            if hasattr(model, "filename")
-                            else self.file_path.name
+                            model.filename if hasattr(model, "filename") else self.file_path.name
                         ),
                         "file_size": file_size,
                         "triangle_count": (
@@ -109,9 +107,7 @@ class ModelLoadingWorker(QThread):
                     self.loading_completed.emit(True, str(model_info))
                     self.logger.info("Model loading completed successfully")
                 else:
-                    self.error_occurred.emit(
-                        "LOADING_ERROR", "Failed to load model into viewer"
-                    )
+                    self.error_occurred.emit("LOADING_ERROR", "Failed to load model into viewer")
             else:
                 self.error_occurred.emit("PARSING_ERROR", "Failed to parse model file")
 
@@ -137,9 +133,7 @@ class ModelLoadingWorker(QThread):
             class DummyModel:
                 def __init__(self):
                     self.filename = (
-                        self.file_path.name
-                        if hasattr(self, "file_path")
-                        else "model.stl"
+                        self.file_path.name if hasattr(self, "file_path") else "model.stl"
                     )
 
                 class Stats:
@@ -188,9 +182,7 @@ class EnhancedViewerService(IEnhancedViewerService):
     def _setup_performance_thresholds(self) -> None:
         """Setup performance optimization thresholds based on hardware."""
         perf_profile = self.performance_monitor.get_performance_profile()
-        self.max_triangles_for_full_quality = (
-            perf_profile.max_triangles_for_full_quality
-        )
+        self.max_triangles_for_full_quality = perf_profile.max_triangles_for_full_quality
         self.adaptive_quality = perf_profile.adaptive_quality_enabled
 
         # Set adaptive FPS based on hardware
@@ -238,9 +230,7 @@ class EnhancedViewerService(IEnhancedViewerService):
 
             # Create cancellation token
             def cancellation_check():
-                return self.cancellation_requested or (
-                    cancellation_token and cancellation_token()
-                )
+                return self.cancellation_requested or (cancellation_token and cancellation_token())
 
             # Create and start loading worker
             self.current_loading_worker = ModelLoadingWorker(
@@ -248,12 +238,8 @@ class EnhancedViewerService(IEnhancedViewerService):
             )
 
             # Connect signals
-            self.current_loading_worker.progress_updated.connect(
-                self._on_loading_progress
-            )
-            self.current_loading_worker.loading_completed.connect(
-                self._on_loading_completed
-            )
+            self.current_loading_worker.progress_updated.connect(self._on_loading_progress)
+            self.current_loading_worker.loading_completed.connect(self._on_loading_completed)
             self.current_loading_worker.error_occurred.connect(self._on_loading_error)
 
             # Set UI state
@@ -291,9 +277,7 @@ class EnhancedViewerService(IEnhancedViewerService):
 
             if success:
                 self.ui_service.set_ui_state(UIState.READY, "Model loaded successfully")
-                self.ui_service.show_info(
-                    "Success", f"Model loaded successfully!\n{model_info}"
-                )
+                self.ui_service.show_info("Success", f"Model loaded successfully!\n{model_info}")
                 self.logger.info("Model loading completed successfully")
             else:
                 self.ui_service.set_ui_state(UIState.ERROR, "Failed to load model")
@@ -425,9 +409,7 @@ class EnhancedViewerService(IEnhancedViewerService):
     def set_target_fps(self, fps: int) -> None:
         """Set target frame rate."""
         if fps < 15 or fps > 120:
-            self.logger.warning(
-                f"Target FPS {fps} is outside recommended range (15-120)"
-            )
+            self.logger.warning(f"Target FPS {fps} is outside recommended range (15-120)")
             return
 
         self.target_fps = fps

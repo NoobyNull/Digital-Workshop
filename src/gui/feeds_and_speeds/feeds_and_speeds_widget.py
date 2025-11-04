@@ -79,26 +79,18 @@ class FeedsAndSpeedsWidget(QWidget):
 
             if not providers:
                 # Import default library to database
-                library_path = (
-                    Path(__file__).parent.parent / "IDCWoodcraftFusion360Library.json"
-                )
+                library_path = Path(__file__).parent.parent / "IDCWoodcraftFusion360Library.json"
                 if library_path.exists():
                     self.logger.info("Importing default library to database...")
-                    success, message = (
-                        self.tool_database_manager.import_tools_from_file(
-                            str(library_path), "IDC Woodcraft"
-                        )
+                    success, message = self.tool_database_manager.import_tools_from_file(
+                        str(library_path), "IDC Woodcraft"
                     )
                     if success:
                         self.logger.info(f"Default library imported: {message}")
                     else:
-                        self.logger.warning(
-                            f"Failed to import default library: {message}"
-                        )
+                        self.logger.warning(f"Failed to import default library: {message}")
                         # Fall back to old manager
-                        self.tool_library_manager.load_library(
-                            "IDC Woodcraft", str(library_path)
-                        )
+                        self.tool_library_manager.load_library("IDC Woodcraft", str(library_path))
                 else:
                     self.logger.warning(f"Library not found: {library_path}")
             else:
@@ -190,12 +182,8 @@ class FeedsAndSpeedsWidget(QWidget):
         self.tools_table.setColumnCount(3)
         self.tools_table.setHorizontalHeaderLabels(["Tool", "Type", "Diameter"])
         self.tools_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.tools_table.horizontalHeader().setSectionResizeMode(
-            1, QHeaderView.ResizeToContents
-        )
-        self.tools_table.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.ResizeToContents
-        )
+        self.tools_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.tools_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.tools_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.tools_table.setSelectionMode(QTableWidget.SingleSelection)
         self.tools_table.itemSelectionChanged.connect(self._on_tool_selected)
@@ -294,9 +282,7 @@ class FeedsAndSpeedsWidget(QWidget):
         results_label.setStyleSheet("font-weight: bold; margin-top: 12px;")
         layout.addWidget(results_label)
 
-        self.results_display = QLabel(
-            "Select a tool and adjust parameters to see results"
-        )
+        self.results_display = QLabel("Select a tool and adjust parameters to see results")
         self.results_display.setStyleSheet(
             "background-color: #f9f9f9; padding: 8px; border-radius: 4px; font-family: monospace;"
         )
@@ -333,9 +319,7 @@ class FeedsAndSpeedsWidget(QWidget):
 
         if file_path:
             try:
-                success, message = self.tool_database_manager.import_tools_from_file(
-                    file_path
-                )
+                success, message = self.tool_database_manager.import_tools_from_file(file_path)
                 if success:
                     QMessageBox.information(self, "Success", message)
                     self._load_providers()
@@ -388,14 +372,10 @@ class FeedsAndSpeedsWidget(QWidget):
 
         # If not in properties, try direct fields (for legacy data)
         if not geometry and "geometry" in db_tool:
-            geometry = (
-                db_tool["geometry"] if isinstance(db_tool["geometry"], dict) else {}
-            )
+            geometry = db_tool["geometry"] if isinstance(db_tool["geometry"], dict) else {}
         if not start_values and "start_values" in db_tool:
             start_values = (
-                db_tool["start_values"]
-                if isinstance(db_tool["start_values"], dict)
-                else {}
+                db_tool["start_values"] if isinstance(db_tool["start_values"], dict) else {}
             )
 
         return Tool(
@@ -424,9 +404,7 @@ class FeedsAndSpeedsWidget(QWidget):
                 provider = self.provider_repo.get_provider_by_name(provider_name)
                 if provider:
                     self.selected_provider_id = provider["id"]
-                    tools = self.tool_database_manager.get_tools_by_provider(
-                        provider["id"]
-                    )
+                    tools = self.tool_database_manager.get_tools_by_provider(provider["id"])
                 else:
                     tools = []
             except Exception as e:
@@ -566,9 +544,7 @@ class FeedsAndSpeedsWidget(QWidget):
                 f"Added '{self.selected_tool.get('description', '')}' to your toolbox.",
             )
         else:
-            QMessageBox.warning(
-                self, "Already Added", "This tool is already in your toolbox."
-            )
+            QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
 
     def _on_unit_toggle(self) -> None:
         """Handle unit toggle button."""
@@ -582,9 +558,7 @@ class FeedsAndSpeedsWidget(QWidget):
         """Update unit toggle button style."""
         if self.is_metric:
             self.unit_toggle_btn.setText("MET ✓")
-            self.unit_toggle_btn.setStyleSheet(
-                "background-color: #4CAF50; color: white;"
-            )
+            self.unit_toggle_btn.setStyleSheet("background-color: #4CAF50; color: white;")
         else:
             self.unit_toggle_btn.setText("SAE")
             self.unit_toggle_btn.setStyleSheet("")

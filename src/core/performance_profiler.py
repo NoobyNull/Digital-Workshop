@@ -106,9 +106,7 @@ class PerformanceProfiler:
     Collects, analyzes, and reports performance metrics for loading operations.
     """
 
-    def __init__(
-        self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0
-    ):
+    def __init__(self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0):
         """
         Initialize performance profiler.
 
@@ -122,9 +120,7 @@ class PerformanceProfiler:
 
         # Data storage
         self.samples: List[PerformanceSample] = []
-        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(
-            dict
-        )
+        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(dict)
         self.active_timers: Dict[str, float] = {}
 
         # Thread safety
@@ -134,9 +130,7 @@ class PerformanceProfiler:
         self.profile_output_dir = Path("performance_profiles")
         self.profile_output_dir.mkdir(exist_ok=True)
 
-        self.logger.info(
-            f"PerformanceProfiler initialized (enabled: {enable_profiling})"
-        )
+        self.logger.info(f"PerformanceProfiler initialized (enabled: {enable_profiling})")
 
     @log_function_call
     @contextmanager
@@ -219,9 +213,7 @@ class PerformanceProfiler:
             self.stats[operation][metric].add_sample(value)
 
     @log_function_call
-    def get_operation_stats(
-        self, operation: str
-    ) -> Dict[PerformanceMetric, PerformanceStats]:
+    def get_operation_stats(self, operation: str) -> Dict[PerformanceMetric, PerformanceStats]:
         """
         Get performance statistics for an operation.
 
@@ -311,9 +303,7 @@ class PerformanceProfiler:
 
                     # Save profile data
                     timestamp = int(time.time())
-                    profile_file = (
-                        self.profile_output_dir / f"{operation}_{timestamp}.prof"
-                    )
+                    profile_file = self.profile_output_dir / f"{operation}_{timestamp}.prof"
 
                     # Save binary profile
                     profiler.dump_stats(str(profile_file))
@@ -323,9 +313,7 @@ class PerformanceProfiler:
                     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats(20)  # Top 20 functions
 
-                    text_report = (
-                        self.profile_output_dir / f"{operation}_{timestamp}.txt"
-                    )
+                    text_report = self.profile_output_dir / f"{operation}_{timestamp}.txt"
                     with open(text_report, "w") as f:
                         f.write(s.getvalue())
 
@@ -358,9 +346,7 @@ class PerformanceProfiler:
         if not self.enable_profiling:
             return {"error": "Profiling disabled"}
 
-        self.logger.info(
-            f"Starting benchmark: {operation_name} ({iterations} iterations)"
-        )
+        self.logger.info(f"Starting benchmark: {operation_name} ({iterations} iterations)")
 
         # Warmup
         for i in range(warmup_iterations):
@@ -571,9 +557,7 @@ def profile_function(operation: str):
     return profiler.profile_function(operation)
 
 
-def time_operation(
-    operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME
-):
+def time_operation(operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME):
     """
     Context manager to time an operation.
 

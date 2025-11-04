@@ -113,9 +113,7 @@ def build_category_map() -> Dict[str, List[str]]:
             add("Labels", k)
         elif k.startswith("status_"):
             add("Status Indicators", k)
-        elif (
-            k.startswith("primary") or k.startswith("accent_") or k.startswith("brand_")
-        ):
+        elif k.startswith("primary") or k.startswith("accent_") or k.startswith("brand_"):
             add("Accent / Brand", k)
         elif k.startswith("interaction_"):
             add("Interactions", k)

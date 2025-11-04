@@ -103,9 +103,7 @@ class ServiceCleanupHandler(CleanupHandler):
             overall_success = overall_success and success
 
             # Log results
-            failed_services = [
-                name for name, success in cleanup_results.items() if not success
-            ]
+            failed_services = [name for name, success in cleanup_results.items() if not success]
             if failed_services:
                 self.logger.warning(
                     f"Failed to cleanup {len(failed_services)} service(s): {', '.join(failed_services)}"
@@ -171,9 +169,7 @@ class ServiceCleanupHandler(CleanupHandler):
                             thread.cancel()
 
                         threads_cleaned += 1
-                        self.logger.debug(
-                            f"Cleaned up background thread: {thread.name}"
-                        )
+                        self.logger.debug(f"Cleaned up background thread: {thread.name}")
 
                 except Exception as e:
                     self.logger.warning(

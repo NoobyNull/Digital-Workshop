@@ -175,9 +175,7 @@ class STEPParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(
-            f"Starting STEP parsing: {file_path} ({file_path.stat().st_size} bytes)"
-        )
+        self.logger.info(f"Starting STEP parsing: {file_path} ({file_path.stat().st_size} bytes)")
 
         start_time = time.time()
 
@@ -193,9 +191,7 @@ class STEPParser(BaseParser):
 
             # Create model statistics
             file_size = file_path.stat().st_size
-            stats = self._create_model_stats(
-                triangles, file_size, ModelFormat.STEP, start_time
-            )
+            stats = self._create_model_stats(triangles, file_size, ModelFormat.STEP, start_time)
 
             if progress_callback:
                 progress_callback.report(100.0, "STEP parsing completed")
@@ -287,9 +283,7 @@ class STEPParser(BaseParser):
                 self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
                 continue
 
-    def _parse_parameters(
-        self, parameters_str: str
-    ) -> List[Union[str, int, float, Tuple, List]]:
+    def _parse_parameters(self, parameters_str: str) -> List[Union[str, int, float, Tuple, List]]:
         """
         Parse STEP parameters string.
 
@@ -411,16 +405,12 @@ class STEPParser(BaseParser):
                 orientation_id = entity.parameters[0]
                 magnitude = float(entity.parameters[1])
                 if isinstance(orientation_id, int):
-                    self.vectors[entity.id] = STEPVector(
-                        entity.id, orientation_id, magnitude
-                    )
+                    self.vectors[entity.id] = STEPVector(entity.id, orientation_id, magnitude)
 
         elif entity.type == "AXIS2_PLACEMENT_3D":
             if len(entity.parameters) >= 3:
                 location_id = entity.parameters[0]
-                axis_id = (
-                    entity.parameters[1] if entity.parameters[1] is not None else None
-                )
+                axis_id = entity.parameters[1] if entity.parameters[1] is not None else None
                 ref_direction_id = (
                     entity.parameters[2] if entity.parameters[2] is not None else None
                 )
@@ -444,9 +434,7 @@ class STEPParser(BaseParser):
                 bound_id = entity.parameters[0]
                 orientation = entity.parameters[1] == ".T."
                 if isinstance(bound_id, int):
-                    self.face_bounds[entity.id] = STEPFaceBound(
-                        entity.id, bound_id, orientation
-                    )
+                    self.face_bounds[entity.id] = STEPFaceBound(entity.id, bound_id, orientation)
 
         elif entity.type == "EDGE_LOOP":
             if len(entity.parameters) >= 1 and isinstance(entity.parameters[0], list):
@@ -488,9 +476,7 @@ class STEPParser(BaseParser):
             if len(entity.parameters) >= 1:
                 vertex_geometry_id = entity.parameters[0]
                 if isinstance(vertex_geometry_id, int):
-                    self.vertex_points[entity.id] = STEPVertexPoint(
-                        entity.id, vertex_geometry_id
-                    )
+                    self.vertex_points[entity.id] = STEPVertexPoint(entity.id, vertex_geometry_id)
 
     def _process_entity_references(self) -> None:
         """Process entity references to build complete geometry."""
@@ -567,9 +553,7 @@ class STEPParser(BaseParser):
 
         return triangles
 
-    def _calculate_face_normal(
-        self, v1: Vector3D, v2: Vector3D, v3: Vector3D
-    ) -> Vector3D:
+    def _calculate_face_normal(self, v1: Vector3D, v2: Vector3D, v3: Vector3D) -> Vector3D:
         """
         Calculate face normal from three vertices.
 

@@ -53,7 +53,5 @@ class STLParseError(ParseError):
     """Custom exception for STL parsing errors."""
 
 
-
 class STLProgressCallback(ProgressCallback):
     """Callback interface for progress reporting during parsing."""
-

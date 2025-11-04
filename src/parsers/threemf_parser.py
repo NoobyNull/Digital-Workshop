@@ -96,9 +96,7 @@ class ThreeMFParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(
-            f"Starting 3MF parsing: {file_path} ({file_path.stat().st_size} bytes)"
-        )
+        self.logger.info(f"Starting 3MF parsing: {file_path} ({file_path.stat().st_size} bytes)")
 
         start_time = time.time()
 
@@ -108,9 +106,7 @@ class ThreeMFParser(BaseParser):
 
             # Create model statistics
             file_size = file_path.stat().st_size
-            stats = self._create_model_stats(
-                triangles, file_size, ModelFormat.THREE_MF, start_time
-            )
+            stats = self._create_model_stats(triangles, file_size, ModelFormat.THREE_MF, start_time)
 
             self.logger.info(
                 f"Successfully parsed 3MF: {len(triangles)} triangles, "
@@ -232,9 +228,7 @@ class ThreeMFParser(BaseParser):
                 if components_elem is not None:
                     for component_elem in components_elem.findall("3mf:component", ns):
                         comp_object_id = int(component_elem.get("objectid", "0"))
-                        transform = self._parse_transform(
-                            component_elem.get("transform", "")
-                        )
+                        transform = self._parse_transform(component_elem.get("transform", ""))
                         components.append(ThreeMFComponent(comp_object_id, transform))
 
                 # Create object
@@ -318,9 +312,7 @@ class ThreeMFParser(BaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(
-                    f"Invalid transform: {transform_str}, using identity"
-                )
+                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
                 return [
                     1.0,
                     0.0,
@@ -343,9 +335,7 @@ class ThreeMFParser(BaseParser):
             return values
 
         except ValueError:
-            self.logger.warning(
-                f"Invalid transform values: {transform_str}, using identity"
-            )
+            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
             return [
                 1.0,
                 0.0,
@@ -380,9 +370,7 @@ class ThreeMFParser(BaseParser):
 
         return triangles
 
-    def _generate_triangles_for_item(
-        self, build_item: ThreeMFBuildItem
-    ) -> List[Triangle]:
+    def _generate_triangles_for_item(self, build_item: ThreeMFBuildItem) -> List[Triangle]:
         """
         Generate triangles for a specific build item.
 
@@ -476,9 +464,7 @@ class ThreeMFParser(BaseParser):
             return triangles
 
         # Combine transforms
-        combined_transform = self._multiply_matrices(
-            parent_transform, component.transform
-        )
+        combined_transform = self._multiply_matrices(parent_transform, component.transform)
 
         # Process triangles
         for triangle_indices in comp_obj.triangles:
@@ -516,9 +502,7 @@ class ThreeMFParser(BaseParser):
 
         return triangles
 
-    def _multiply_matrices(
-        self, matrix_a: List[float], matrix_b: List[float]
-    ) -> List[float]:
+    def _multiply_matrices(self, matrix_a: List[float], matrix_b: List[float]) -> List[float]:
         """
         Multiply two 4x4 matrices.
 
@@ -538,9 +522,7 @@ class ThreeMFParser(BaseParser):
 
         return result
 
-    def _apply_transform(
-        self, vertices: List[Vector3D], transform: List[float]
-    ) -> List[Vector3D]:
+    def _apply_transform(self, vertices: List[Vector3D], transform: List[float]) -> List[Vector3D]:
         """
         Apply transformation matrix to vertices.
 
@@ -559,30 +541,10 @@ class ThreeMFParser(BaseParser):
             w = 1.0
 
             # Apply transformation
-            new_x = (
-                transform[0] * x
-                + transform[1] * y
-                + transform[2] * z
-                + transform[3] * w
-            )
-            new_y = (
-                transform[4] * x
-                + transform[5] * y
-                + transform[6] * z
-                + transform[7] * w
-            )
-            new_z = (
-                transform[8] * x
-                + transform[9] * y
-                + transform[10] * z
-                + transform[11] * w
-            )
-            new_w = (
-                transform[12] * x
-                + transform[13] * y
-                + transform[14] * z
-                + transform[15] * w
-            )
+            new_x = transform[0] * x + transform[1] * y + transform[2] * z + transform[3] * w
+            new_y = transform[4] * x + transform[5] * y + transform[6] * z + transform[7] * w
+            new_z = transform[8] * x + transform[9] * y + transform[10] * z + transform[11] * w
+            new_w = transform[12] * x + transform[13] * y + transform[14] * z + transform[15] * w
 
             # Convert back to 3D coordinates
             if new_w != 0:
@@ -594,9 +556,7 @@ class ThreeMFParser(BaseParser):
 
         return transformed
 
-    def _calculate_face_normal(
-        self, v1: Vector3D, v2: Vector3D, v3: Vector3D
-    ) -> Vector3D:
+    def _calculate_face_normal(self, v1: Vector3D, v2: Vector3D, v3: Vector3D) -> Vector3D:
         """
         Calculate face normal from three vertices.
 

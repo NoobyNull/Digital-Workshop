@@ -123,12 +123,8 @@ class CentralizedLoggingService:
         # Configuration
         self.max_security_events = self.config.get("max_security_events", 10000)
         self.max_performance_metrics = self.config.get("max_performance_metrics", 10000)
-        self.enable_correlation_tracking = self.config.get(
-            "enable_correlation_tracking", True
-        )
-        self.enable_performance_logging = self.config.get(
-            "enable_performance_logging", True
-        )
+        self.enable_correlation_tracking = self.config.get("enable_correlation_tracking", True)
+        self.enable_performance_logging = self.config.get("enable_performance_logging", True)
         self.enable_security_logging = self.config.get("enable_security_logging", True)
 
         # Setup security and performance loggers
@@ -209,9 +205,7 @@ class CentralizedLoggingService:
                 self._log_with_context(logging.ERROR, str(error), **kwargs)
                 return True
         except Exception as handling_error:
-            self.logger.error(
-                f"Error logging failed: {str(handling_error)}", exc_info=True
-            )
+            self.logger.error(f"Error logging failed: {str(handling_error)}", exc_info=True)
             return False
 
     def log_critical(self, message: str, **kwargs) -> None:
@@ -233,9 +227,7 @@ class CentralizedLoggingService:
 
                 # Maintain event history size
                 if len(self._security_events) > self.max_security_events:
-                    self._security_events = self._security_events[
-                        -self.max_security_events :
-                    ]
+                    self._security_events = self._security_events[-self.max_security_events :]
 
             # Log the security event
             log_level = {
@@ -297,9 +289,7 @@ class CentralizedLoggingService:
             )
 
         except Exception as e:
-            self.logger.error(
-                f"Performance metric logging failed: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Performance metric logging failed: {str(e)}", exc_info=True)
 
     def set_correlation_id(self, correlation_id: str) -> None:
         """Set correlation ID for current context."""
@@ -400,9 +390,7 @@ class CentralizedLoggingService:
 
             # Recent performance metrics
             recent_performance_metrics = [
-                m
-                for m in self._performance_metrics
-                if m.timestamp.timestamp() > hour_ago
+                m for m in self._performance_metrics if m.timestamp.timestamp() > hour_ago
             ]
 
             return {
@@ -411,21 +399,13 @@ class CentralizedLoggingService:
                     "recent": len(recent_security_events),
                     "by_type": {
                         event_type.value: len(
-                            [
-                                e
-                                for e in recent_security_events
-                                if e.event_type == event_type
-                            ]
+                            [e for e in recent_security_events if e.event_type == event_type]
                         )
                         for event_type in SecurityEventType
                     },
                     "by_severity": {
                         severity: len(
-                            [
-                                e
-                                for e in recent_security_events
-                                if e.severity.lower() == severity
-                            ]
+                            [e for e in recent_security_events if e.severity.lower() == severity]
                         )
                         for severity in ["low", "medium", "high", "critical"]
                     },
@@ -461,16 +441,12 @@ class CentralizedLoggingService:
             with self._lock:
                 # Clean up old security events
                 self._security_events = [
-                    e
-                    for e in self._security_events
-                    if e.timestamp.timestamp() > cutoff_time
+                    e for e in self._security_events if e.timestamp.timestamp() > cutoff_time
                 ]
 
                 # Clean up old performance metrics
                 self._performance_metrics = [
-                    m
-                    for m in self._performance_metrics
-                    if m.timestamp.timestamp() > cutoff_time
+                    m for m in self._performance_metrics if m.timestamp.timestamp() > cutoff_time
                 ]
 
             self.logger.info(f"Cleaned up logs older than {days_to_keep} days")

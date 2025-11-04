@@ -75,9 +75,7 @@ class QDarkStyleThemeService:
             self._current_theme = theme
 
             if not self._qdarkstyle_available:
-                logger.debug(
-                    "QDarkStyleSheet not available, skipping theme application"
-                )
+                logger.debug("QDarkStyleSheet not available, skipping theme application")
                 return False
 
             import qdarkstyle
@@ -100,9 +98,7 @@ class QDarkStyleThemeService:
                 try:
                     from qdarkstyle.palette.dark import DarkPalette
 
-                    stylesheet = qdarkstyle.load_stylesheet(
-                        qt_api="pyside6", palette=DarkPalette
-                    )
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6", palette=DarkPalette)
                 except ImportError:
                     # Fallback: use default (light) if dark not available
                     logger.warning("Dark palette not available, using default")
@@ -135,12 +131,8 @@ class QDarkStyleThemeService:
                 try:
                     import winreg
 
-                    registry_path = (
-                        r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-                    )
-                    registry_key = winreg.OpenKey(
-                        winreg.HKEY_CURRENT_USER, registry_path
-                    )
+                    registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+                    registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
                     value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
                     winreg.CloseKey(registry_key)
                     return "light" if value == 1 else "dark"

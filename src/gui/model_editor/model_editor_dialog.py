@@ -103,9 +103,7 @@ class ModelEditorDialog(QDialog):
         button_layout.addWidget(cancel_btn)
 
         save_btn = QPushButton("Save Model")
-        save_btn.setStyleSheet(
-            "background-color: #4CAF50; color: white; font-weight: bold;"
-        )
+        save_btn.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
         save_btn.clicked.connect(self._save_model)
         button_layout.addWidget(save_btn)
 
@@ -225,9 +223,7 @@ class ModelEditorDialog(QDialog):
 
             self.editor.rotate_model(axis, degrees)
             self._update_info_display()
-            QMessageBox.information(
-                self, "Success", f"Rotated {degrees}° around {axis.value} axis"
-            )
+            QMessageBox.information(self, "Success", f"Rotated {degrees}° around {axis.value} axis")
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to rotate model: {e}")
@@ -246,9 +242,7 @@ class ModelEditorDialog(QDialog):
                     f"Applied {degrees}° rotation around {axis} axis",
                 )
             else:
-                QMessageBox.information(
-                    self, "Already Z-Up", "Model is already oriented with Z-up"
-                )
+                QMessageBox.information(self, "Already Z-Up", "Model is already oriented with Z-up")
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to detect Z-up: {e}")
@@ -347,9 +341,7 @@ class ModelEditorDialog(QDialog):
 
             # Generate output path
             original_path = (
-                Path(self.model.header)
-                if hasattr(self.model, "header")
-                else Path("model.stl")
+                Path(self.model.header) if hasattr(self.model, "header") else Path("model.stl")
             )
             output_path = original_path.parent / f"{original_path.stem}_edited.stl"
 
@@ -361,9 +353,7 @@ class ModelEditorDialog(QDialog):
             if success:
                 self.saved_path = str(output_path)
                 self.model_saved.emit(self.saved_path)
-                QMessageBox.information(
-                    self, "Success", f"Model saved to:\n{output_path}"
-                )
+                QMessageBox.information(self, "Success", f"Model saved to:\n{output_path}")
                 self.accept()
             else:
                 QMessageBox.critical(self, "Error", "Failed to write STL file")

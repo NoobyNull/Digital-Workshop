@@ -34,7 +34,6 @@ class OBJParseError(ParseError):
     """Custom exception for OBJ parsing errors."""
 
 
-
 @dataclass
 class OBJMaterial:
     """Material definition from MTL file."""
@@ -123,9 +122,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             )
 
             # Convert faces to triangles
-            triangles = self._convert_faces_to_triangles(
-                vertices, normals, texture_coords, faces
-            )
+            triangles = self._convert_faces_to_triangles(vertices, normals, texture_coords, faces)
 
             # Create result dictionary
             parsing_time = time.time()
@@ -329,9 +326,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
             file.seek(0)  # Reset to beginning
 
-            self._update_progress(
-                10.0, f"Streaming parse of {line_count} lines", progress_callback
-            )
+            self._update_progress(10.0, f"Streaming parse of {line_count} lines", progress_callback)
 
             for line in file:
                 self._check_cancellation()
@@ -396,18 +391,14 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             self._load_mtl_file(file_path.parent / mtl_file)
 
                 except (ValueError, IndexError) as e:
-                    self.logger.warning(
-                        f"Invalid line {processed_lines}: {line} - {str(e)}"
-                    )
+                    self.logger.warning(f"Invalid line {processed_lines}: {line} - {str(e)}")
                     continue
 
                 # Periodic garbage collection for large files
                 if processed_lines % 20000 == 0:
                     gc.collect()
 
-            self._update_progress(
-                95.0, "Finalizing streaming OBJ parse", progress_callback
-            )
+            self._update_progress(95.0, "Finalizing streaming OBJ parse", progress_callback)
 
             return vertices, normals, texture_coords, faces, self.materials
 
@@ -511,9 +502,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                     v3 = vertices[v3_idx]
 
                     # Calculate normal if not provided
-                    normal = self._calculate_face_normal(
-                        v1.position, v2.position, v3.position
-                    )
+                    normal = self._calculate_face_normal(v1.position, v2.position, v3.position)
 
                     # If face has normals, use the first one
                     if face.normal_indices and face.normal_indices[0] != 0:
@@ -700,9 +689,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             self.logger.warning(f"Invalid MTL line: {line} - {str(e)}")
                             continue
 
-                self.logger.info(
-                    f"Loaded {len(self.materials)} materials from {mtl_path}"
-                )
+                self.logger.info(f"Loaded {len(self.materials)} materials from {mtl_path}")
 
         except Exception as e:
             self.logger.error(f"Failed to load MTL file {mtl_path}: {str(e)}")
@@ -742,8 +729,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
                 # Check for common issues
                 if "mtllib" in content and not any(
-                    line.strip().lower().startswith("mtllib")
-                    for line in file.readlines()
+                    line.strip().lower().startswith("mtllib") for line in file.readlines()
                 ):
                     issues.append("MTL library referenced but file may be missing")
 
@@ -849,9 +835,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                 "has_normals": False,  # Would need full parse to determine
                 "has_textures": False,  # Would need full parse to determine
                 "complexity": (
-                    "high"
-                    if face_count > 10000
-                    else "medium" if face_count > 1000 else "low"
+                    "high" if face_count > 10000 else "medium" if face_count > 1000 else "low"
                 ),
             }
 

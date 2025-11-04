@@ -49,9 +49,7 @@ class OpenRouterProvider(BaseProvider):
         try:
             self.logger.info("Fetching OpenRouter models...")
             models = self.client.models.list()
-            self.logger.info(
-                "OpenRouter API response received. Total models: %d", len(models.data)
-            )
+            self.logger.info("OpenRouter API response received. Total models: %d", len(models.data))
 
             # Log all models for debugging
             all_model_ids = [model.id for model in models.data]
@@ -79,9 +77,7 @@ class OpenRouterProvider(BaseProvider):
                 "claude-3-sonnet-20240229",
             ]
 
-    def analyze_image(
-        self, image_path: str, prompt: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def analyze_image(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze image using OpenRouter's API.
 
@@ -93,9 +89,7 @@ class OpenRouterProvider(BaseProvider):
             Structured analysis results
         """
         if not self.is_configured():
-            raise ValueError(
-                "OpenRouter provider is not configured. Please provide an API key."
-            )
+            raise ValueError("OpenRouter provider is not configured. Please provide an API key.")
 
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -123,9 +117,7 @@ class OpenRouterProvider(BaseProvider):
                         {"type": "text", "text": prompt or self.get_default_prompt()},
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime_type};base64,{image_data}"
-                            },
+                            "image_url": {"url": f"data:{mime_type};base64,{image_data}"},
                         },
                     ],
                 }

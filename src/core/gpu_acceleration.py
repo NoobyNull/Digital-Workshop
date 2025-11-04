@@ -53,7 +53,6 @@ class GPUAccelerationError(Exception):
     """Exception raised for GPU acceleration errors."""
 
 
-
 class GPUBuffer:
     """
     GPU memory buffer abstraction.

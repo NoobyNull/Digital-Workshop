@@ -147,9 +147,7 @@ class AnalysisWorker(QThread):
                 result = self.service._analyze_single_model(
                     self.file_path,
                     self.model_id,
-                    lambda curr, total, msg: self.progress_updated.emit(
-                        curr, total, msg
-                    ),
+                    lambda curr, total, msg: self.progress_updated.emit(curr, total, msg),
                     self.cancellation_token,
                 )
 
@@ -303,9 +301,7 @@ class ImportAnalysisService:
             worker.progress_updated.connect(progress_callback)
 
         if completion_callback:
-            worker.analysis_completed.connect(
-                lambda mid, result: completion_callback(result)
-            )
+            worker.analysis_completed.connect(lambda mid, result: completion_callback(result))
 
         # Connect internal handlers
         worker.analysis_completed.connect(self._on_analysis_completed)
@@ -332,9 +328,7 @@ class ImportAnalysisService:
             completion_callback: Optional callback(BatchAnalysisResult) when complete
             cancellation_token: Optional cancellation token
         """
-        self._log_json(
-            "batch_analysis_started", {"total_models": len(file_model_pairs)}
-        )
+        self._log_json("batch_analysis_started", {"total_models": len(file_model_pairs)})
 
         # Create batch worker
         worker = BatchAnalysisWorker(file_model_pairs, self, cancellation_token)
@@ -521,9 +515,7 @@ class ImportAnalysisService:
             GeometryAnalysisResult with all metrics
         """
         # Basic counts
-        triangle_count = (
-            len(model.triangles) if model.triangles else model.stats.triangle_count
-        )
+        triangle_count = len(model.triangles) if model.triangles else model.stats.triangle_count
         vertex_count = triangle_count * 3
 
         # Check cancellation
@@ -537,9 +529,7 @@ class ImportAnalysisService:
         unique_vertices, vertex_count_actual = self._count_unique_vertices(
             model.triangles if model.triangles else []
         )
-        edge_map, edge_count = self._build_edge_map(
-            model.triangles if model.triangles else []
-        )
+        edge_map, edge_count = self._build_edge_map(model.triangles if model.triangles else [])
 
         # Check cancellation
         if cancellation_token is not None and cancellation_token.is_cancelled():
@@ -559,9 +549,7 @@ class ImportAnalysisService:
         if progress_callback:
             progress_callback(70, 100, "Calculating surface area...")
 
-        surface_area = self._calculate_surface_area(
-            model.triangles if model.triangles else []
-        )
+        surface_area = self._calculate_surface_area(model.triangles if model.triangles else [])
 
         # Check cancellation
         if cancellation_token and cancellation_token.is_cancelled():
@@ -749,9 +737,7 @@ class ImportAnalysisService:
         b = Vector3D(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z)
 
         # Cross product
-        cross = Vector3D(
-            a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x
-        )
+        cross = Vector3D(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 
         # Magnitude
         magnitude = math.sqrt(cross.x**2 + cross.y**2 + cross.z**2)
@@ -776,9 +762,7 @@ class ImportAnalysisService:
 
         return total_area
 
-    def _calculate_volume(
-        self, triangles: List[Triangle], is_watertight: bool
-    ) -> Optional[float]:
+    def _calculate_volume(self, triangles: List[Triangle], is_watertight: bool) -> Optional[float]:
         """
         Calculate volume using signed volume of tetrahedra method.
         Only accurate for watertight meshes.
@@ -876,9 +860,7 @@ class ImportAnalysisService:
                 progress_callback(idx, total_models, f"Analyzing {file_name}...")
 
             # Analyze model
-            result = self._analyze_single_model(
-                file_path, model_id, None, cancellation_token
-            )
+            result = self._analyze_single_model(file_path, model_id, None, cancellation_token)
             results.append(result)
 
         # Final progress
@@ -977,9 +959,7 @@ class ImportAnalysisService:
         if self._batch_worker and self._batch_worker.isRunning():
             self._batch_worker.cancellation_token.cancel()
 
-    def _on_analysis_completed(
-        self, model_id: int, result: GeometryAnalysisResult
-    ) -> None:
+    def _on_analysis_completed(self, model_id: int, result: GeometryAnalysisResult) -> None:
         """Handle analysis completion."""
         self._stats["total_analyzed"] += 1
         self._stats["total_analysis_time"] += result.analysis_time_seconds
@@ -1014,8 +994,7 @@ class ImportAnalysisService:
             "active_analyses": len(self._active_workers),
             "cached_results": len(self._results_cache),
             "avg_analysis_time": round(
-                self._stats["total_analysis_time"]
-                / max(1, self._stats["total_analyzed"]),
+                self._stats["total_analysis_time"] / max(1, self._stats["total_analyzed"]),
                 3,
             ),
         }

@@ -95,15 +95,11 @@ class ToolDatabaseSchema:
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_tools_provider_id ON tools(provider_id)"
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_tools_guid ON tools(guid)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_tools_guid ON tools(guid)")
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_tool_properties_tool_id ON tool_properties(tool_id)"
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_preferences_key ON preferences(key)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_preferences_key ON preferences(key)")
 
                 conn.commit()
                 self.logger.info("Database schema initialized successfully")

@@ -228,10 +228,7 @@ class FileChunker:
             Chunk data
         """
         try:
-            if (
-                self.config.use_memory_mapping
-                and os.path.getsize(file_path) > 100 * 1024 * 1024
-            ):
+            if self.config.use_memory_mapping and os.path.getsize(file_path) > 100 * 1024 * 1024:
                 # Use memory mapping for large files
                 return self._read_chunk_mmap(file_path, chunk)
             else:
@@ -280,9 +277,7 @@ class ProgressTracker:
                 state=LoadingState.PENDING,
             )
 
-    def update_progress(
-        self, bytes_loaded: int, chunks_completed: int, total_chunks: int
-    ) -> None:
+    def update_progress(self, bytes_loaded: int, chunks_completed: int, total_chunks: int) -> None:
         """Update loading progress."""
         with self._lock:
             if not self._current_progress:
@@ -293,17 +288,13 @@ class ProgressTracker:
             progress.chunks_completed = chunks_completed
             progress.total_chunks = total_chunks
             progress.percentage = (
-                (bytes_loaded / progress.total_bytes) * 100
-                if progress.total_bytes > 0
-                else 0
+                (bytes_loaded / progress.total_bytes) * 100 if progress.total_bytes > 0 else 0
             )
 
             # Calculate speed and ETA
             elapsed_time = time.time() - self._start_time
             if elapsed_time > 0:
-                progress.current_speed_mbps = (
-                    bytes_loaded / (1024 * 1024)
-                ) / elapsed_time
+                progress.current_speed_mbps = (bytes_loaded / (1024 * 1024)) / elapsed_time
 
                 if progress.current_speed_mbps > 0:
                     remaining_bytes = progress.total_bytes - bytes_loaded
@@ -315,9 +306,7 @@ class ProgressTracker:
             # Notify callbacks
             self._notify_progress_callbacks(progress)
 
-    def set_state(
-        self, state: LoadingState, error_message: Optional[str] = None
-    ) -> None:
+    def set_state(self, state: LoadingState, error_message: Optional[str] = None) -> None:
         """Set loading state."""
         with self._lock:
             if self._current_progress:
@@ -325,9 +314,7 @@ class ProgressTracker:
                 self._current_progress.error_message = error_message
                 self._notify_progress_callbacks(self._current_progress)
 
-    def register_progress_callback(
-        self, callback: Callable[[LoadingProgress], None]
-    ) -> None:
+    def register_progress_callback(self, callback: Callable[[LoadingProgress], None]) -> None:
         """Register progress callback."""
         self._progress_callbacks.append(callback)
 
@@ -477,9 +464,7 @@ class ProgressiveLoader(QObject):
         self.progress_tracker = ProgressTracker()
         self._active_loads: Dict[str, LoadingWorker] = {}
         self._load_queue: Queue = Queue()
-        self._executor = ThreadPoolExecutor(
-            max_workers=self.config.max_concurrent_chunks
-        )
+        self._executor = ThreadPoolExecutor(max_workers=self.config.max_concurrent_chunks)
         self._results_cache: Dict[str, Tuple[Any, float]] = {}  # (result, timestamp)
         self._lock = threading.Lock()
 
@@ -526,9 +511,7 @@ class ProgressiveLoader(QObject):
             self._active_loads[file_path] = worker
 
         # Submit to thread pool
-        future = self._executor.submit(
-            self._load_file_worker, file_path, parser_func, worker
-        )
+        future = self._executor.submit(self._load_file_worker, file_path, parser_func, worker)
 
         return future
 
@@ -538,9 +521,7 @@ class ProgressiveLoader(QObject):
         """Worker function for file loading."""
         try:
             with memory_operation(f"loading_{os.path.basename(file_path)}"):
-                result = worker.load_file_progressive(
-                    file_path, parser_func, self.progress_tracker
-                )
+                result = worker.load_file_progressive(file_path, parser_func, self.progress_tracker)
 
                 # Cache result if successful
                 if result and self.config.enable_caching:
@@ -651,9 +632,7 @@ class ProgressiveLoader(QObject):
         with self._lock:
             return {
                 "cached_entries": len(self._results_cache),
-                "cache_size_mb": sum(
-                    len(str(result)) for result, _ in self._results_cache.values()
-                )
+                "cache_size_mb": sum(len(str(result)) for result, _ in self._results_cache.values())
                 / (1024 * 1024),
                 "hardware_capability": self.hardware_capability.value,
                 "config": {

@@ -35,7 +35,6 @@ class STEPParseError(ParseError):
     """Custom exception for STEP parsing errors."""
 
 
-
 @dataclass
 class STEPEntity:
     """STEP entity representation."""
@@ -273,9 +272,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
             self._parse_entities(data_section)
 
-            self._update_progress(
-                70.0, "Processing entity references", progress_callback
-            )
+            self._update_progress(70.0, "Processing entity references", progress_callback)
 
             # Process entity references
             self._process_entity_references()
@@ -337,9 +334,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 entities_parsed += entities_in_chunk
 
                 # Update progress
-                progress = (
-                    30.0 + (file.tell() - data_start) / (data_end - data_start) * 40.0
-                )
+                progress = 30.0 + (file.tell() - data_start) / (data_end - data_start) * 40.0
                 self._update_progress(
                     progress, f"Parsed {entities_parsed} entities", progress_callback
                 )
@@ -348,9 +343,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 if entities_parsed % 10000 == 0:
                     gc.collect()
 
-            self._update_progress(
-                70.0, "Processing entity references", progress_callback
-            )
+            self._update_progress(70.0, "Processing entity references", progress_callback)
 
             # Process entity references
             self._process_entity_references()
@@ -422,9 +415,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
                 continue
 
-    def _parse_parameters(
-        self, parameters_str: str
-    ) -> List[Union[str, int, float, Tuple, List]]:
+    def _parse_parameters(self, parameters_str: str) -> List[Union[str, int, float, Tuple, List]]:
         """
         Parse STEP parameters string.
 
@@ -546,16 +537,12 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 orientation_id = entity.parameters[0]
                 magnitude = float(entity.parameters[1])
                 if isinstance(orientation_id, int):
-                    self.vectors[entity.id] = STEPVector(
-                        entity.id, orientation_id, magnitude
-                    )
+                    self.vectors[entity.id] = STEPVector(entity.id, orientation_id, magnitude)
 
         elif entity.type == "AXIS2_PLACEMENT_3D":
             if len(entity.parameters) >= 3:
                 location_id = entity.parameters[0]
-                axis_id = (
-                    entity.parameters[1] if entity.parameters[1] is not None else None
-                )
+                axis_id = entity.parameters[1] if entity.parameters[1] is not None else None
                 ref_direction_id = (
                     entity.parameters[2] if entity.parameters[2] is not None else None
                 )
@@ -579,9 +566,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 bound_id = entity.parameters[0]
                 orientation = entity.parameters[1] == ".T."
                 if isinstance(bound_id, int):
-                    self.face_bounds[entity.id] = STEPFaceBound(
-                        entity.id, bound_id, orientation
-                    )
+                    self.face_bounds[entity.id] = STEPFaceBound(entity.id, bound_id, orientation)
 
         elif entity.type == "EDGE_LOOP":
             if len(entity.parameters) >= 1 and isinstance(entity.parameters[0], list):
@@ -623,9 +608,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             if len(entity.parameters) >= 1:
                 vertex_geometry_id = entity.parameters[0]
                 if isinstance(vertex_geometry_id, int):
-                    self.vertex_points[entity.id] = STEPVertexPoint(
-                        entity.id, vertex_geometry_id
-                    )
+                    self.vertex_points[entity.id] = STEPVertexPoint(entity.id, vertex_geometry_id)
 
     def _process_entity_references(self) -> None:
         """Process entity references to build complete geometry."""

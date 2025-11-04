@@ -255,9 +255,7 @@ class SearchWidget(QWidget):
         # Update results header
         total_count = results["total_count"]
         execution_time = results["execution_time"]
-        self.results_header.setText(
-            f"Found {total_count} results in {execution_time:.3f} seconds"
-        )
+        self.results_header.setText(f"Found {total_count} results in {execution_time:.3f} seconds")
 
         # Clear and populate results list
         self.results_list.clear()
@@ -291,9 +289,7 @@ class SearchWidget(QWidget):
 
         if description:
             # Truncate long descriptions
-            desc_text = (
-                description[:100] + "..." if len(description) > 100 else description
-            )
+            desc_text = description[:100] + "..." if len(description) > 100 else description
             item_text += f"<br><i>{desc_text}</i>"
 
         # Add metadata

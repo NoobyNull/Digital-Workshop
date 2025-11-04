@@ -152,15 +152,11 @@ class AdaptiveChunker:
         )
 
         # Create chunks based on strategy
-        with self.profiler.time_operation(
-            "adaptive_chunking", PerformanceMetric.CHUNK_TIME
-        ):
+        with self.profiler.time_operation("adaptive_chunking", PerformanceMetric.CHUNK_TIME):
             if params.strategy == ChunkingStrategy.FORMAT_AWARE:
                 chunks = self._create_format_aware_chunks(file_path, analysis, params)
             elif params.strategy == ChunkingStrategy.MEMORY_CONSTRAINED:
-                chunks = self._create_memory_constrained_chunks(
-                    file_path, analysis, params
-                )
+                chunks = self._create_memory_constrained_chunks(file_path, analysis, params)
             elif params.strategy == ChunkingStrategy.ADAPTIVE_SIZE:
                 chunks = self._create_adaptive_size_chunks(file_path, analysis, params)
             else:  # FIXED_SIZE
@@ -289,9 +285,7 @@ class AdaptiveChunker:
             ChunkingParameters for the operation
         """
         # Base calculations
-        memory_limit = max_memory_usage_gb or (
-            self.system_memory_gb * 0.5
-        )  # Use 50% of RAM
+        memory_limit = max_memory_usage_gb or (self.system_memory_gb * 0.5)  # Use 50% of RAM
         available_memory_per_chunk = memory_limit / max(target_chunk_count or 4, 1)
 
         # Adjust for format complexity
@@ -377,9 +371,7 @@ class AdaptiveChunker:
 
         for i in range(total_chunks):
             start_triangle = i * triangles_per_chunk
-            end_triangle = min(
-                (i + 1) * triangles_per_chunk, analysis.estimated_triangles
-            )
+            end_triangle = min((i + 1) * triangles_per_chunk, analysis.estimated_triangles)
             chunk_triangles = end_triangle - start_triangle
 
             start_offset = data_start + (start_triangle * triangle_size)

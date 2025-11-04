@@ -41,9 +41,7 @@ class MaterialProvider:
         """
         try:
             if not self.DEFAULT_MATERIALS_DIR.exists():
-                self.logger.warning(
-                    f"Materials directory not found: {self.DEFAULT_MATERIALS_DIR}"
-                )
+                self.logger.warning(f"Materials directory not found: {self.DEFAULT_MATERIALS_DIR}")
                 return []
 
             materials = []
@@ -92,18 +90,12 @@ class MaterialProvider:
             Material info dictionary or None if not found
         """
         try:
-            self.logger.debug(
-                f"[STL_TEXTURE_DEBUG] Looking for material with name: '{name}'"
-            )
+            self.logger.debug(f"[STL_TEXTURE_DEBUG] Looking for material with name: '{name}'")
             materials = self.get_available_materials()
-            self.logger.debug(
-                f"[STL_TEXTURE_DEBUG] Found {len(materials)} available materials"
-            )
+            self.logger.debug(f"[STL_TEXTURE_DEBUG] Found {len(materials)} available materials")
 
             for material in materials:
-                self.logger.debug(
-                    f"[STL_TEXTURE_DEBUG] Checking material: '{material['name']}'"
-                )
+                self.logger.debug(f"[STL_TEXTURE_DEBUG] Checking material: '{material['name']}'")
                 if material["name"].lower() == name.lower():
                     self.logger.info(
                         f"[STL_TEXTURE_DEBUG] Found material '{name}' with texture_path: {material.get('texture_path')}"
@@ -173,9 +165,7 @@ class MaterialProvider:
                         # Specular exponent (shininess)
                         try:
                             properties["shininess"] = float(line.split()[1])
-                            self.logger.debug(
-                                f"Found shininess: {properties['shininess']}"
-                            )
+                            self.logger.debug(f"Found shininess: {properties['shininess']}")
                         except (IndexError, ValueError) as e:
                             self.logger.warning(f"Failed to parse Ns value: {e}")
 
@@ -188,9 +178,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(
-                                f"Found ambient color: {properties['ambient']}"
-                            )
+                            self.logger.debug(f"Found ambient color: {properties['ambient']}")
                         except (IndexError, ValueError) as e:
                             self.logger.warning(f"Failed to parse Ka values: {e}")
 
@@ -203,9 +191,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(
-                                f"Found diffuse color: {properties['diffuse']}"
-                            )
+                            self.logger.debug(f"Found diffuse color: {properties['diffuse']}")
                         except (IndexError, ValueError) as e:
                             self.logger.warning(f"Failed to parse Kd values: {e}")
 
@@ -218,9 +204,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(
-                                f"Found specular color: {properties['specular']}"
-                            )
+                            self.logger.debug(f"Found specular color: {properties['specular']}")
                         except (IndexError, ValueError) as e:
                             self.logger.warning(f"Failed to parse Ks values: {e}")
 
@@ -230,9 +214,7 @@ class MaterialProvider:
                         if len(parts) > 1:
                             texture_path = parts[1]
                             properties["diffuse_map"] = texture_path
-                            self.logger.debug(
-                                f"Found diffuse texture map: {texture_path}"
-                            )
+                            self.logger.debug(f"Found diffuse texture map: {texture_path}")
 
                             # Resolve relative path
                             if not Path(texture_path).is_absolute():
@@ -251,13 +233,9 @@ class MaterialProvider:
                                     )
                             else:
                                 properties["diffuse_map_resolved"] = texture_path
-                                self.logger.debug(
-                                    f"Absolute texture path: {texture_path}"
-                                )
+                                self.logger.debug(f"Absolute texture path: {texture_path}")
 
-            self.logger.info(
-                f"Parsed MTL file: {mtl_path.name} with {len(properties)} properties"
-            )
+            self.logger.info(f"Parsed MTL file: {mtl_path.name} with {len(properties)} properties")
             self.logger.debug(f"Final properties: {properties}")
 
         except Exception as e:
@@ -287,9 +265,7 @@ class MaterialProvider:
             # Check extension
             supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if texture_path.suffix.lower() not in supported_extensions:
-                self.logger.warning(
-                    f"Unsupported texture format: {texture_path.suffix}"
-                )
+                self.logger.warning(f"Unsupported texture format: {texture_path.suffix}")
                 return False
 
             return True

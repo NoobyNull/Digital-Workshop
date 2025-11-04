@@ -19,9 +19,7 @@ class StylingManager:
     This class is kept for backward compatibility but does nothing.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """Initialize the styling manager (no-op)."""
         self.main_window = main_window
         self.logger = logger or logging.getLogger(__name__)

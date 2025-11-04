@@ -59,22 +59,14 @@ class STLWriter:
                     )
 
                     # Vertices (3 vertices × 3 floats each)
-                    f.write(
-                        struct.pack("<fff", triangle.v1.x, triangle.v1.y, triangle.v1.z)
-                    )
-                    f.write(
-                        struct.pack("<fff", triangle.v2.x, triangle.v2.y, triangle.v2.z)
-                    )
-                    f.write(
-                        struct.pack("<fff", triangle.v3.x, triangle.v3.y, triangle.v3.z)
-                    )
+                    f.write(struct.pack("<fff", triangle.v1.x, triangle.v1.y, triangle.v1.z))
+                    f.write(struct.pack("<fff", triangle.v2.x, triangle.v2.y, triangle.v2.z))
+                    f.write(struct.pack("<fff", triangle.v3.x, triangle.v3.y, triangle.v3.z))
 
                     # Attribute byte count (2 bytes)
                     f.write(struct.pack("<H", triangle.attribute_byte_count))
 
-            logger.info(
-                f"Wrote binary STL with {triangle_count} triangles to {output_path}"
-            )
+            logger.info(f"Wrote binary STL with {triangle_count} triangles to {output_path}")
             return True
 
         except Exception as e:
@@ -121,9 +113,7 @@ class STLWriter:
 
                 f.write(f"endsolid {model.header}\n")
 
-            logger.info(
-                f"Wrote ASCII STL with {len(model.triangles)} triangles to {output_path}"
-            )
+            logger.info(f"Wrote ASCII STL with {len(model.triangles)} triangles to {output_path}")
             return True
 
         except Exception as e:
@@ -131,9 +121,7 @@ class STLWriter:
             return False
 
     @staticmethod
-    def write(
-        model: STLModel, output_path: str, binary: bool = True, fixed: bool = False
-    ) -> bool:
+    def write(model: STLModel, output_path: str, binary: bool = True, fixed: bool = False) -> bool:
         """
         Write model to STL file.
 

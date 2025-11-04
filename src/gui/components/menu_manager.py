@@ -24,9 +24,7 @@ class MenuManager:
     to provide a complete menu system for the main window.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the menu manager.
 
@@ -147,17 +145,13 @@ class MenuManager:
         view_menu.addAction(self.show_metadata_action)
 
         # Model Library restoration action
-        self.show_model_library_action = QAction(
-            "Show &Model Library", self.main_window
-        )
+        self.show_model_library_action = QAction("Show &Model Library", self.main_window)
         try:
             self.show_model_library_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
         except Exception:
             pass
         self.show_model_library_action.setStatusTip("Restore the Model Library panel")
-        self.show_model_library_action.setToolTip(
-            "Show the Model Library (Ctrl+Shift+L)"
-        )
+        self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
         self.show_model_library_action.triggered.connect(self._restore_model_library)
         view_menu.addAction(self.show_model_library_action)
 
@@ -179,9 +173,7 @@ class MenuManager:
         self.toggle_layout_edit_action.setStatusTip(
             "Enable rearranging docks. When off, docks are locked in place but still resize with the window."
         )
-        self.toggle_layout_edit_action.setToolTip(
-            "Toggle Layout Edit Mode (Ctrl+Shift+E)"
-        )
+        self.toggle_layout_edit_action.setToolTip("Toggle Layout Edit Mode (Ctrl+Shift+E)")
         self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
         view_menu.addAction(self.toggle_layout_edit_action)
 
@@ -189,15 +181,11 @@ class MenuManager:
         tools_menu = menubar.addMenu("&Tools")
 
         # Generate screenshots action
-        generate_screenshots_action = QAction(
-            "Generate &Screenshots for Library", self.main_window
-        )
+        generate_screenshots_action = QAction("Generate &Screenshots for Library", self.main_window)
         generate_screenshots_action.setStatusTip(
             "Generate screenshots of all models in the library with applied materials"
         )
-        generate_screenshots_action.triggered.connect(
-            self._generate_library_screenshots
-        )
+        generate_screenshots_action.triggered.connect(self._generate_library_screenshots)
         tools_menu.addAction(generate_screenshots_action)
 
         # Help menu

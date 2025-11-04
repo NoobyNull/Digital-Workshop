@@ -106,9 +106,7 @@ class SystemThemeDetector:
         try:
             import winreg
 
-            registry_path = (
-                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-            )
+            registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
             registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
             value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
             winreg.CloseKey(registry_key)
@@ -711,9 +709,7 @@ def apply_theme_preset(
 ) -> None:
     """Apply a theme preset via ThemeService."""
     service = ThemeService.instance()
-    service.apply_theme_preset(
-        preset_name, custom_mode=custom_mode, base_primary=base_primary
-    )
+    service.apply_theme_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
 
 
 def load_theme_from_settings() -> None:

@@ -79,9 +79,7 @@ class TDBToolParser(BaseToolParser):
                     # Report progress
                     if progress_callback and tool_count > 0:
                         progress = min((i + 1) / tool_count, 1.0)
-                        progress_callback.report(
-                            progress, f"Parsing tool {i + 1}/{tool_count}"
-                        )
+                        progress_callback.report(progress, f"Parsing tool {i + 1}/{tool_count}")
 
             self.logger.info(f"Parsed {len(tools)} tools from TDB file")
             return tools

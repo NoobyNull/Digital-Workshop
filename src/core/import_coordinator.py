@@ -168,9 +168,7 @@ class ImportCoordinatorWorker(QThread):
 
         # Initialize services
         self.file_manager = ImportFileManager()
-        self.thumbnail_service = (
-            ImportThumbnailService() if generate_thumbnails else None
-        )
+        self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
         self.analysis_service = ImportAnalysisService() if run_analysis else None
         self.db_manager = get_database_manager()
 
@@ -180,9 +178,7 @@ class ImportCoordinatorWorker(QThread):
 
         try:
             # Stage 1: Validation
-            self._update_stage(
-                ImportWorkflowStage.VALIDATION, "Validating import settings..."
-            )
+            self._update_stage(ImportWorkflowStage.VALIDATION, "Validating import settings...")
             if not self._validate_settings():
                 return
 
@@ -206,9 +202,7 @@ class ImportCoordinatorWorker(QThread):
                 thumbnail_result = self._generate_thumbnails(processed_files)
 
             # Stage 5: Store in database
-            self._update_stage(
-                ImportWorkflowStage.DATABASE_STORAGE, "Storing import results..."
-            )
+            self._update_stage(ImportWorkflowStage.DATABASE_STORAGE, "Storing import results...")
             stored_models = self._store_in_database(session, processed_files)
 
             # Stage 6: Queue background analysis
@@ -233,9 +227,7 @@ class ImportCoordinatorWorker(QThread):
                 duplicates_detected=import_result.duplicate_count,
             )
 
-            self._update_stage(
-                ImportWorkflowStage.COMPLETED, "Import completed successfully"
-            )
+            self._update_stage(ImportWorkflowStage.COMPLETED, "Import completed successfully")
             self.import_completed.emit(final_result)
 
             # Cleanup
@@ -326,9 +318,7 @@ class ImportCoordinatorWorker(QThread):
         self, processed_files: List[ImportFileInfo]
     ) -> Optional[ThumbnailBatchResult]:
         """Generate thumbnails for processed files."""
-        self._update_stage(
-            ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails..."
-        )
+        self._update_stage(ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails...")
 
         try:
             # Load thumbnail settings from preferences
@@ -342,9 +332,7 @@ class ImportCoordinatorWorker(QThread):
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value(
-                "thumbnail/material", config.thumbnail_material, type=str
-            )
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -414,18 +402,14 @@ class ImportCoordinatorWorker(QThread):
                     }
                     stored_models.append(model_data)
 
-            self.logger.info(
-                f"Prepared {len(stored_models)} models for database storage"
-            )
+            self.logger.info(f"Prepared {len(stored_models)} models for database storage")
 
         except Exception as e:
             self.logger.error(f"Database storage failed: {e}", exc_info=True)
 
         return stored_models
 
-    def _queue_analysis(
-        self, stored_models: List[Dict[str, Any]]
-    ) -> Optional[BatchAnalysisResult]:
+    def _queue_analysis(self, stored_models: List[Dict[str, Any]]) -> Optional[BatchAnalysisResult]:
         """Queue background analysis for imported models."""
         self._update_stage(
             ImportWorkflowStage.BACKGROUND_ANALYSIS, "Queueing background analysis..."
@@ -445,9 +429,7 @@ class ImportCoordinatorWorker(QThread):
                 file_model_pairs, cancellation_token=self.cancellation_token
             )
 
-            self.logger.info(
-                f"Queued {len(file_model_pairs)} models for background analysis"
-            )
+            self.logger.info(f"Queued {len(file_model_pairs)} models for background analysis")
             return None  # Analysis result will come later via signals
 
         except Exception as e:
@@ -650,15 +632,10 @@ class ImportCoordinator(QObject):
         return {
             **self._stats,
             "avg_import_time": (
-                self._stats["total_import_time"]
-                / max(1, self._stats["successful_imports"])
+                self._stats["total_import_time"] / max(1, self._stats["successful_imports"])
             ),
             "success_rate": (
-                (
-                    self._stats["successful_imports"]
-                    / max(1, self._stats["total_imports"])
-                )
-                * 100
+                (self._stats["successful_imports"] / max(1, self._stats["total_imports"])) * 100
             ),
         }
 

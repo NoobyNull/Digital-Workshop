@@ -38,9 +38,7 @@ class AutoCloseMessageBox(QMessageBox):
     def _update_message(self) -> None:
         """Update message with current countdown."""
         seconds_remaining = max(0, self.remaining_ms // 1000)
-        self.setText(
-            f"{self.base_message}\n\nThis window will close in {seconds_remaining}s"
-        )
+        self.setText(f"{self.base_message}\n\nThis window will close in {seconds_remaining}s")
 
     def _on_timer_tick(self) -> None:
         """Handle timer tick for countdown."""
@@ -58,9 +56,7 @@ class AutoCloseMessageBox(QMessageBox):
         super().closeEvent(event)
 
 
-def show_auto_close_message(
-    parent, title: str, message: str, timeout_ms: int = 5000
-) -> None:
+def show_auto_close_message(parent, title: str, message: str, timeout_ms: int = 5000) -> None:
     """
     Show an auto-closing information message box.
 

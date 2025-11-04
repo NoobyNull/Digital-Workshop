@@ -181,9 +181,7 @@ class TabDataManager:
             self.logger.error(f"Error getting file path: {e}")
             return None
 
-    def list_tab_data_files(
-        self, project_id: str, tab_name: str = None
-    ) -> Tuple[bool, list, str]:
+    def list_tab_data_files(self, project_id: str, tab_name: str = None) -> Tuple[bool, list, str]:
         """
         List all tab data files in a project.
 
@@ -213,10 +211,7 @@ class TabDataManager:
 
                         # Filter by tab name if provided
                         if tab_name:
-                            if (
-                                tab_name.lower().replace(" ", "_")
-                                not in str(file_path).lower()
-                            ):
+                            if tab_name.lower().replace(" ", "_") not in str(file_path).lower():
                                 continue
 
                         files.append(

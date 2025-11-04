@@ -490,8 +490,7 @@ class SnapGuideRenderer:
                         position=(start_point + end_point) / 2,
                         bounds=QRectF(start_point, end_point).normalized(),
                         color=self.config.visual.highlight_color,
-                        width=self.config.visual.guide_width
-                        + 2,  # Thicker for highlights
+                        width=self.config.visual.guide_width + 2,  # Thicker for highlights
                         style=self.config.visual.guide_style,
                         widget=context_widget,
                         metadata={"edge_name": edge_name, "snap_type": "edge"},
@@ -660,9 +659,7 @@ class SnapGuideRenderer:
             return (point - line_start).manhattanLength()
 
         # Project point onto line
-        projection = max(
-            0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length)
-        )
+        projection = max(0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length))
         projection_point = line_start + (line_vec / line_length) * projection
 
         return (point - projection_point).manhattanLength()
@@ -681,9 +678,7 @@ class SnapGuideRenderer:
             # Add to active guides
             self._active_guides.append(guide)
 
-            self.logger.debug(
-                f"Added guide {guide.guide_type.value} at {guide.position}"
-            )
+            self.logger.debug(f"Added guide {guide.guide_type.value} at {guide.position}")
         except Exception as e:
             self.logger.error(f"Failed to add guide: {e}")
 
@@ -721,9 +716,7 @@ class SnapGuideRenderer:
         """Clear all active guides."""
         try:
             # Start fade-out for all guides
-            for guide in self._active_guides[
-                :
-            ]:  # Copy list to avoid modification during iteration
+            for guide in self._active_guides[:]:  # Copy list to avoid modification during iteration
                 self.remove_guide(guide)
 
             self.logger.debug(f"Cleared {len(self._active_guides)} guides")
@@ -841,12 +834,8 @@ class SnapGuideRenderer:
             if not bounds.isEmpty():
                 # Draw corner brackets
                 margin = bounds.width() * 0.2
-                painter.drawLine(
-                    bounds.left(), bounds.top(), bounds.left() + margin, bounds.top()
-                )
-                painter.drawLine(
-                    bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin
-                )
+                painter.drawLine(bounds.left(), bounds.top(), bounds.left() + margin, bounds.top())
+                painter.drawLine(bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin)
                 painter.drawLine(
                     bounds.right() - margin, bounds.top(), bounds.right(), bounds.top()
                 )

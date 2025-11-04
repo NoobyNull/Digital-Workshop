@@ -276,9 +276,7 @@ class ThemeCache:
                 "memory_usage_bytes": self._current_memory,
                 "memory_limit_bytes": self._memory_limit,
                 "memory_usage_percent": (
-                    (self._current_memory / self._memory_limit)
-                    if self._memory_limit > 0
-                    else 0
+                    (self._current_memory / self._memory_limit) if self._memory_limit > 0 else 0
                 ),
                 "hits": self._hits,
                 "misses": self._misses,
@@ -510,15 +508,11 @@ class ThemeCache:
 
             if keys_to_remove:
                 self._cleanup_count += 1
-                logger.debug(
-                    f"Background cleanup removed {len(keys_to_remove)} old entries"
-                )
+                logger.debug(f"Background cleanup removed {len(keys_to_remove)} old entries")
 
             # Check memory pressure and cleanup if needed
             memory_usage_ratio = (
-                self._current_memory / self._memory_limit
-                if self._memory_limit > 0
-                else 0
+                self._current_memory / self._memory_limit if self._memory_limit > 0 else 0
             )
             if memory_usage_ratio > self._memory_pressure_threshold:
                 self._handle_memory_pressure()

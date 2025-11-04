@@ -76,9 +76,7 @@ class ModelGeometryAnalyzer:
                     ref_normal = group_triangles[0].normal
                     # Calculate dot product
                     dot = (
-                        normal.x * ref_normal.x
-                        + normal.y * ref_normal.y
-                        + normal.z * ref_normal.z
+                        normal.x * ref_normal.x + normal.y * ref_normal.y + normal.z * ref_normal.z
                     )
 
                     if dot > normal_threshold:
@@ -129,9 +127,7 @@ class ModelGeometryAnalyzer:
         b = Vector3D(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z)
 
         # Cross product
-        cross = Vector3D(
-            a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x
-        )
+        cross = Vector3D(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 
         # Magnitude
         magnitude = math.sqrt(cross.x**2 + cross.y**2 + cross.z**2)

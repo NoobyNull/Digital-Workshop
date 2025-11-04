@@ -212,17 +212,13 @@ class Ui_ModelLibraryWidget(object):
         ModelLibraryWidget.setWindowTitle(
             QCoreApplication.translate("ModelLibraryWidget", "Model Library", None)
         )
-        self.view_label.setText(
-            QCoreApplication.translate("ModelLibraryWidget", "View:", None)
-        )
+        self.view_label.setText(QCoreApplication.translate("ModelLibraryWidget", "View:", None))
         self.list_view_button.setText(
             QCoreApplication.translate("ModelLibraryWidget", "List View", None)
         )
         # if QT_CONFIG(tooltip)
         self.list_view_button.setToolTip(
-            QCoreApplication.translate(
-                "ModelLibraryWidget", "Show models in list view", None
-            )
+            QCoreApplication.translate("ModelLibraryWidget", "Show models in list view", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.grid_view_button.setText(
@@ -230,9 +226,7 @@ class Ui_ModelLibraryWidget(object):
         )
         # if QT_CONFIG(tooltip)
         self.grid_view_button.setToolTip(
-            QCoreApplication.translate(
-                "ModelLibraryWidget", "Show models in grid view", None
-            )
+            QCoreApplication.translate("ModelLibraryWidget", "Show models in grid view", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.import_button.setText(
@@ -250,20 +244,14 @@ class Ui_ModelLibraryWidget(object):
         )
         # if QT_CONFIG(tooltip)
         self.refresh_button.setToolTip(
-            QCoreApplication.translate(
-                "ModelLibraryWidget", "Refresh model library", None
-            )
+            QCoreApplication.translate("ModelLibraryWidget", "Refresh model library", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.file_browser_group.setTitle(
             QCoreApplication.translate("ModelLibraryWidget", "File Browser", None)
         )
-        self.path_label.setText(
-            QCoreApplication.translate("ModelLibraryWidget", "Path:", None)
-        )
-        self.path_display.setText(
-            QCoreApplication.translate("ModelLibraryWidget", "C:\\", None)
-        )
+        self.path_label.setText(QCoreApplication.translate("ModelLibraryWidget", "Path:", None))
+        self.path_display.setText(QCoreApplication.translate("ModelLibraryWidget", "C:\\", None))
         self.model_view_group.setTitle(
             QCoreApplication.translate("ModelLibraryWidget", "Models", None)
         )
@@ -275,9 +263,7 @@ class Ui_ModelLibraryWidget(object):
             self.view_tabs.indexOf(self.grid_tab),
             QCoreApplication.translate("ModelLibraryWidget", "Grid", None),
         )
-        self.status_label.setText(
-            QCoreApplication.translate("ModelLibraryWidget", "Ready", None)
-        )
+        self.status_label.setText(QCoreApplication.translate("ModelLibraryWidget", "Ready", None))
         self.model_count_label.setText(
             QCoreApplication.translate("ModelLibraryWidget", "Models: 0", None)
         )

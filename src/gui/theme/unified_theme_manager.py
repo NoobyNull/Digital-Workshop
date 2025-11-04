@@ -173,17 +173,13 @@ class UnifiedThemeManager(QObject):
 
                 # Emit success signal
                 self.theme_changed.emit(theme, variant)
-                self.theme_applied.emit(
-                    True, f"Theme {theme}/{variant} applied successfully"
-                )
+                self.theme_applied.emit(True, f"Theme {theme}/{variant} applied successfully")
 
                 # Track performance
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation(True, elapsed, operation_id)
 
-                logger.info(
-                    f"Theme {theme}/{variant} applied successfully in {elapsed:.2f}ms"
-                )
+                logger.info(f"Theme {theme}/{variant} applied successfully in {elapsed:.2f}ms")
                 return True
             else:
                 error_msg = f"Theme application failed: {theme}/{variant}"
@@ -254,9 +250,7 @@ class UnifiedThemeManager(QObject):
             True if save was successful
         """
         try:
-            theme_data = self._create_theme_data(
-                self._current_theme, self._current_variant
-            )
+            theme_data = self._create_theme_data(self._current_theme, self._current_variant)
             return self._persistence.save_theme(theme_data)
         except Exception as e:
             logger.error(f"Failed to save theme settings: {e}")
@@ -400,9 +394,7 @@ class UnifiedThemeManager(QObject):
         try:
             # Connect application signals
             self._application.application_started.connect(self._on_application_started)
-            self._application.application_completed.connect(
-                self._on_application_completed
-            )
+            self._application.application_completed.connect(self._on_application_completed)
             self._application.application_failed.connect(self._on_application_failed)
 
             # Connect registry signals
@@ -648,9 +640,7 @@ class UnifiedThemeManager(QObject):
         """
         return False
 
-    def _track_operation(
-        self, success: bool, elapsed_ms: float, operation_id: str
-    ) -> None:
+    def _track_operation(self, success: bool, elapsed_ms: float, operation_id: str) -> None:
         """Track operation performance and statistics."""
         self._operation_count += 1
         if not success:
@@ -659,9 +649,7 @@ class UnifiedThemeManager(QObject):
 
         # Log slow operations
         if elapsed_ms > 1000:  # More than 1 second
-            logger.warning(
-                f"Slow theme operation: {operation_id} took {elapsed_ms:.2f}ms"
-            )
+            logger.warning(f"Slow theme operation: {operation_id} took {elapsed_ms:.2f}ms")
 
     def _on_application_started(self, theme: str, variant: str) -> None:
         """Handle theme application started signal."""

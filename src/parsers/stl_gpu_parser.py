@@ -54,7 +54,6 @@ class STLGPUParseError(STLParseError):
     """Exception raised for GPU-accelerated STL parsing errors."""
 
 
-
 class STLGPUParser(BaseParser):
     """
     GPU-accelerated STL parser with CUDA/OpenCL support.
@@ -99,9 +98,7 @@ class STLGPUParser(BaseParser):
 
                 if "solid" in header_text and header_text.count("\x00") < 5:
                     file.seek(0)
-                    first_line = (
-                        file.readline().decode("utf-8", errors="ignore").strip()
-                    )
+                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
                     if first_line.lower().startswith("solid"):
                         return STLFormat.ASCII
 
@@ -163,23 +160,15 @@ class STLGPUParser(BaseParser):
             # Check if GPU acceleration is available
             caps = self.hardware_accel.get_capabilities()
             if caps.recommended_backend == AccelBackend.CPU:
-                self.logger.warning(
-                    "No GPU acceleration available, falling back to CPU"
-                )
+                self.logger.warning("No GPU acceleration available, falling back to CPU")
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
 
             # Configure chunking based on GPU memory
-            chunk_size = self.memory_manager.get_optimal_chunk_size(
-                file_size, triangle_count
-            )
-            self.config.chunk_size_triangles = min(
-                chunk_size, self.config.chunk_size_triangles
-            )
+            chunk_size = self.memory_manager.get_optimal_chunk_size(file_size, triangle_count)
+            self.config.chunk_size_triangles = min(chunk_size, self.config.chunk_size_triangles)
 
             if progress_callback:
-                progress_callback.report(
-                    5.0, f"GPU parsing {triangle_count:,} triangles"
-                )
+                progress_callback.report(5.0, f"GPU parsing {triangle_count:,} triangles")
 
             # Phase 1: Stream file to GPU memory
             gpu_start = time.time()
@@ -195,12 +184,8 @@ class STLGPUParser(BaseParser):
                 progress_callback.report(25.0, "File streamed to GPU")
 
             # Phase 2: Allocate output buffers
-            vertex_buffer = self.memory_manager.allocate_stl_buffer(
-                triangle_count, "vertices"
-            )
-            normal_buffer = self.memory_manager.allocate_stl_buffer(
-                triangle_count, "normals"
-            )
+            vertex_buffer = self.memory_manager.allocate_stl_buffer(triangle_count, "vertices")
+            normal_buffer = self.memory_manager.allocate_stl_buffer(triangle_count, "normals")
 
             if not vertex_buffer or not normal_buffer:
                 self._cleanup_buffers([raw_buffer, vertex_buffer, normal_buffer])
@@ -365,9 +350,7 @@ class STLGPUParser(BaseParser):
             num_chunks = max(1, (triangle_count + chunk_size - 1) // chunk_size)
 
             # For large models, provide more frequent progress updates
-            progress_interval = max(
-                1, num_chunks // 20
-            )  # Update every ~5% of processing
+            progress_interval = max(1, num_chunks // 20)  # Update every ~5% of processing
 
             # Execute kernel (assuming it supports chunked processing)
             # In a real implementation, this would be a kernel that processes in chunks
@@ -408,27 +391,21 @@ class STLGPUParser(BaseParser):
             if not vertex_bytes:
                 raise STLParseError("Failed to transfer vertex data from GPU")
 
-            vertex_array = np.frombuffer(vertex_bytes, dtype=np.float32).reshape(
-                triangle_count, 9
-            )
+            vertex_array = np.frombuffer(vertex_bytes, dtype=np.float32).reshape(triangle_count, 9)
 
             # Transfer normal data
             normal_bytes = normal_buffer.copy_from_device(normal_size)
             if not normal_bytes:
                 raise STLParseError("Failed to transfer normal data from GPU")
 
-            normal_array = np.frombuffer(normal_bytes, dtype=np.float32).reshape(
-                triangle_count, 9
-            )
+            normal_array = np.frombuffer(normal_bytes, dtype=np.float32).reshape(triangle_count, 9)
 
             return vertex_array, normal_array
 
         except Exception as e:
             raise STLParseError(f"GPU result transfer failed: {e}")
 
-    def _compute_bounds_from_arrays(
-        self, vertex_array: np.ndarray
-    ) -> Tuple[Vector3D, Vector3D]:
+    def _compute_bounds_from_arrays(self, vertex_array: np.ndarray) -> Tuple[Vector3D, Vector3D]:
         """Compute bounding box from vertex array."""
         # Flatten to get all vertex coordinates
         vertices = vertex_array.reshape(-1, 3)
@@ -560,9 +537,7 @@ class STLGPUParser(BaseParser):
     @property
     def performance_stats(self) -> Dict[str, float]:
         """Get performance statistics for the last parse operation."""
-        total_time = (
-            time.time() - self.parse_start_time if self.parse_start_time > 0 else 0
-        )
+        total_time = time.time() - self.parse_start_time if self.parse_start_time > 0 else 0
         return {
             "total_time": total_time,
             "gpu_time": self.gpu_time,

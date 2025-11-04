@@ -223,9 +223,7 @@ class AIProviderConfigWidget(QWidget):
 
         if reply == QMessageBox.Yes:
             # Clear cache logic would go here
-            QMessageBox.information(
-                self, "Cache Cleared", "AI response cache has been cleared."
-            )
+            QMessageBox.information(self, "Cache Cleared", "AI response cache has been cleared.")
 
     def _apply_configuration(self):
         """Apply current configuration."""
@@ -276,9 +274,7 @@ class AIDescriptionWidget(QWidget):
         header_layout = QHBoxLayout()
 
         self.title_label = QLabel("AI Description Generator")
-        self.title_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #2c3e50;"
-        )
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
         header_layout.addWidget(self.title_label)
 
         header_layout.addStretch()
@@ -404,9 +400,7 @@ class AIDescriptionWidget(QWidget):
         results_header = QHBoxLayout()
 
         self.results_label = QLabel("Generated Description")
-        self.results_label.setStyleSheet(
-            "font-size: 14px; font-weight: bold; color: #2c3e50;"
-        )
+        self.results_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
         results_header.addWidget(self.results_label)
 
         results_header.addStretch()
@@ -434,9 +428,7 @@ class AIDescriptionWidget(QWidget):
 
         self.title_result = QLabel("No description generated yet")
         self.title_result.setWordWrap(True)
-        self.title_result.setStyleSheet(
-            "color: #495057; font-style: italic; padding: 5px;"
-        )
+        self.title_result.setStyleSheet("color: #495057; font-style: italic; padding: 5px;")
         title_layout.addWidget(self.title_result)
 
         self.results_layout.addWidget(title_group)
@@ -447,9 +439,7 @@ class AIDescriptionWidget(QWidget):
 
         self.description_result = QLabel("No description generated yet")
         self.description_result.setWordWrap(True)
-        self.description_result.setStyleSheet(
-            "color: #495057; font-style: italic; padding: 5px;"
-        )
+        self.description_result.setStyleSheet("color: #495057; font-style: italic; padding: 5px;")
         desc_layout.addWidget(self.description_result)
 
         self.results_layout.addWidget(desc_group)
@@ -480,9 +470,7 @@ class AIDescriptionWidget(QWidget):
     def _connect_signals(self):
         """Connect AI service signals."""
         if self.ai_service:
-            self.ai_service.description_generated.connect(
-                self._on_description_generated
-            )
+            self.ai_service.description_generated.connect(self._on_description_generated)
             self.ai_service.error_occurred.connect(self._on_error_occurred)
 
             # Update available providers
@@ -561,9 +549,7 @@ class AIDescriptionWidget(QWidget):
         """Display the generated description results."""
         # Update title
         self.title_result.setText(result.get("title", "No title"))
-        self.title_result.setStyleSheet(
-            "color: #212529; font-weight: bold; padding: 5px;"
-        )
+        self.title_result.setStyleSheet("color: #212529; font-weight: bold; padding: 5px;")
 
         # Update description
         self.description_result.setText(result.get("description", "No description"))
@@ -597,8 +583,7 @@ class AIDescriptionWidget(QWidget):
             "title": self.title_result.text(),
             "description": self.description_result.text(),
             "keywords": [
-                self.keywords_result.item(i).text()
-                for i in range(self.keywords_result.count())
+                self.keywords_result.item(i).text() for i in range(self.keywords_result.count())
             ],
         }
 

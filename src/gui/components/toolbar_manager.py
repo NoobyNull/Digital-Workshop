@@ -24,9 +24,7 @@ class ToolbarManager:
     and styling to provide a complete toolbar system for the main window.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the toolbar manager.
 
@@ -157,9 +155,7 @@ class ToolbarManager:
             if icons_ok:
                 self.main_window.statusBar().showMessage("Toolbar icons active", 2000)
             else:
-                self.main_window.statusBar().showMessage(
-                    "Toolbar text-only (no qtawesome)", 2000
-                )
+                self.main_window.statusBar().showMessage("Toolbar text-only (no qtawesome)", 2000)
         except Exception:
             pass
 

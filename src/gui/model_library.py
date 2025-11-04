@@ -83,9 +83,7 @@ class FileSystemProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.home_drive = (
-            str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
-        )
+        self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
 
     def filterAcceptsRow(self, source_row, source_parent):
         """Override to filter out hidden folders and network paths."""
@@ -259,9 +257,7 @@ class ThumbnailGenerator:
                 c2 = get_theme_color("text_inverse")
                 c2.setAlpha(100)
                 painter.setBrush(QBrush(c2))
-                painter.drawRect(
-                    QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3)
-                )
+                painter.drawRect(QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3))
             else:
                 painter.setPen(QPen(get_theme_color("edge_color"), 1))
                 c3 = get_theme_color("primary")
@@ -278,9 +274,7 @@ class ThumbnailGenerator:
             c4 = get_theme_color("model_ambient")
             c4.setAlpha(200)
             painter.setBrush(QBrush(c4))
-            indicator_rect = QRectF(
-                self.size.width() - 25, self.size.height() - 15, 20, 12
-            )
+            indicator_rect = QRectF(self.size.width() - 25, self.size.height() - 15, 20, 12)
             painter.drawRect(indicator_rect)
             font = painter.font()
             font.setPointSize(6)
@@ -543,9 +537,7 @@ class ModelLibraryWidget(QWidget):
 
         # File tree context menu
         self.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.file_tree.customContextMenuRequested.connect(
-            self._show_file_tree_context_menu
-        )
+        self.file_tree.customContextMenuRequested.connect(self._show_file_tree_context_menu)
 
     def _on_tab_changed(self, index: int) -> None:
         """Handle tab change to update view mode."""
@@ -569,11 +561,7 @@ class ModelLibraryWidget(QWidget):
     def _apply_filters(self) -> None:
         if self._disposed or not hasattr(self, "proxy_model"):
             return
-        text = (
-            self.search_box.text()
-            if hasattr(self, "search_box") and self.search_box
-            else ""
-        )
+        text = self.search_box.text() if hasattr(self, "search_box") and self.search_box else ""
         try:
             from PySide6.QtCore import QRegularExpression
 
@@ -603,9 +591,7 @@ class ModelLibraryWidget(QWidget):
             ["Name", "Format", "Size", "Triangles", "Category", "Added Date"]
         )
         for model in self.current_models:
-            name_item = QStandardItem(
-                model.get("title") or model.get("filename", "Unknown")
-            )
+            name_item = QStandardItem(model.get("title") or model.get("filename", "Unknown"))
             name_item.setData(model.get("id"), Qt.UserRole)
 
             # Set icon from thumbnail if available
@@ -776,9 +762,7 @@ class ModelLibraryWidget(QWidget):
                     except Exception:
                         pass
                     try:
-                        self.model_loader.progress_updated.disconnect(
-                            self._on_load_progress
-                        )
+                        self.model_loader.progress_updated.disconnect(self._on_load_progress)
                     except Exception:
                         pass
                     try:
@@ -828,9 +812,7 @@ class ModelLibraryWidget(QWidget):
             self.models_added.emit(added_ids)
 
         if hasattr(self, "_load_operation_id"):
-            self.performance_monitor.end_operation(
-                self._load_operation_id, success=True
-            )
+            self.performance_monitor.end_operation(self._load_operation_id, success=True)
             delattr(self, "_load_operation_id")
 
         self.model_cache.optimize_cache()
@@ -889,25 +871,19 @@ class ModelLibraryWidget(QWidget):
 
                 # Open action
                 open_action = QAction("Open in Viewer", self)
-                open_action.triggered.connect(
-                    lambda: self.model_double_clicked.emit(int(model_id))
-                )
+                open_action.triggered.connect(lambda: self.model_double_clicked.emit(int(model_id)))
                 menu.addAction(open_action)
 
                 menu.addSeparator()
 
                 # Update/Edit metadata action
                 update_action = QAction("Edit Metadata...", self)
-                update_action.triggered.connect(
-                    lambda: self._update_model_metadata(int(model_id))
-                )
+                update_action.triggered.connect(lambda: self._update_model_metadata(int(model_id)))
                 menu.addAction(update_action)
 
                 # Analyze model action
                 analyze_action = QAction("Analyze && Fix Errors...", self)
-                analyze_action.triggered.connect(
-                    lambda: self._analyze_model(int(model_id))
-                )
+                analyze_action.triggered.connect(lambda: self._analyze_model(int(model_id)))
                 menu.addAction(analyze_action)
 
                 # Regenerate thumbnail action
@@ -930,9 +906,7 @@ class ModelLibraryWidget(QWidget):
 
                 # Remove action
                 remove_action = QAction("Remove from Library", self)
-                remove_action.triggered.connect(
-                    lambda: self._remove_model(int(model_id))
-                )
+                remove_action.triggered.connect(lambda: self._remove_model(int(model_id)))
                 menu.addAction(remove_action)
 
             # Multiple selection actions
@@ -940,9 +914,7 @@ class ModelLibraryWidget(QWidget):
                 count = len(selected_models)
 
                 # Bulk update metadata
-                bulk_update_action = QAction(
-                    f"Edit Metadata for {count} Models...", self
-                )
+                bulk_update_action = QAction(f"Edit Metadata for {count} Models...", self)
                 bulk_update_action.triggered.connect(
                     lambda: self._bulk_update_metadata(selected_models)
                 )
@@ -951,9 +923,7 @@ class ModelLibraryWidget(QWidget):
                 menu.addSeparator()
 
                 # Bulk remove action
-                bulk_remove_action = QAction(
-                    f"Remove {count} Models from Library", self
-                )
+                bulk_remove_action = QAction(f"Remove {count} Models from Library", self)
                 bulk_remove_action.triggered.connect(
                     lambda: self._bulk_remove_models(selected_models)
                 )
@@ -982,9 +952,7 @@ class ModelLibraryWidget(QWidget):
                 # Check if this is a root folder node
                 node = self.file_model.get_node(source_index)
                 is_root_folder = (
-                    node
-                    and hasattr(node, "root_folder")
-                    and node.root_folder is not None
+                    node and hasattr(node, "root_folder") and node.root_folder is not None
                 )
 
                 if is_root_folder:
@@ -1002,17 +970,13 @@ class ModelLibraryWidget(QWidget):
 
                     # Import action (for files and folders)
                     import_action = QAction("Import", self)
-                    import_action.triggered.connect(
-                        lambda: self._import_from_context_menu(path)
-                    )
+                    import_action.triggered.connect(lambda: self._import_from_context_menu(path))
                     menu.addAction(import_action)
 
                     # Open in native app action (for files only)
                     if Path(path).is_file():
                         open_action = QAction("Open in Native App", self)
-                        open_action.triggered.connect(
-                            lambda: self._open_in_native_app(path)
-                        )
+                        open_action.triggered.connect(lambda: self._open_in_native_app(path))
                         menu.addAction(open_action)
 
             menu.exec_(self.file_tree.mapToGlobal(position))
@@ -1045,9 +1009,7 @@ class ModelLibraryWidget(QWidget):
 
             # Add to manager
             if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
-                QMessageBox.information(
-                    self, "Success", f"Added folder '{display_name}'"
-                )
+                QMessageBox.information(self, "Success", f"Added folder '{display_name}'")
                 # Refresh the file browser to show the new root folder
                 self._refresh_file_browser()
             else:
@@ -1095,9 +1057,7 @@ class ModelLibraryWidget(QWidget):
                 if p.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
                     self._load_models([path])
                 else:
-                    QMessageBox.warning(
-                        self, "Import", f"Unsupported file format: {p.suffix}"
-                    )
+                    QMessageBox.warning(self, "Import", f"Unsupported file format: {p.suffix}")
             elif p.is_dir():
                 # Import folder recursively
                 files_to_import = []
@@ -1125,9 +1085,7 @@ class ModelLibraryWidget(QWidget):
 
             url = QUrl.fromLocalFile(file_path)
             if not QDesktopServices.openUrl(url):
-                QMessageBox.warning(
-                    self, "Open File", f"Could not open file: {file_path}"
-                )
+                QMessageBox.warning(self, "Open File", f"Could not open file: {file_path}")
 
         except Exception as e:
             self.logger.error(f"Error opening file in native app: {e}")
@@ -1142,9 +1100,7 @@ class ModelLibraryWidget(QWidget):
                 self.logger.warning(f"Model with ID {model_id} not found")
                 return
 
-            model_name = model_info.get("title") or model_info.get(
-                "filename", "Unknown"
-            )
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
 
             # Show confirmation dialog
             reply = QMessageBox.question(
@@ -1172,9 +1128,7 @@ class ModelLibraryWidget(QWidget):
                     self.status_label.setText(f"Removed '{model_name}' from library")
                     self._load_models_from_database()
 
-                    self.logger.info(
-                        f"Successfully removed model '{model_name}' (ID: {model_id})"
-                    )
+                    self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
                 else:
                     self.status_label.setText(f"Failed to remove '{model_name}'")
                     self.logger.error(f"Failed to remove model with ID {model_id}")
@@ -1202,9 +1156,7 @@ class ModelLibraryWidget(QWidget):
                 QMessageBox.warning(self, "Error", "Model not found in database")
                 return
 
-            model_name = model_info.get("title") or model_info.get(
-                "filename", "Unknown"
-            )
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
 
             # Create metadata editor dialog
             from src.gui.metadata_components import MetadataEditorWidget
@@ -1226,9 +1178,7 @@ class ModelLibraryWidget(QWidget):
             # Create button box
             button_frame = QFrame()
             button_layout = QHBoxLayout(button_frame)
-            button_layout.setContentsMargins(
-                SPACING_12, SPACING_8, SPACING_12, SPACING_12
-            )
+            button_layout.setContentsMargins(SPACING_12, SPACING_8, SPACING_12, SPACING_12)
             button_layout.addStretch()
 
             save_close_btn = QPushButton("Save && Close")
@@ -1256,9 +1206,7 @@ class ModelLibraryWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Failed to open metadata editor: {e}")
             # Fallback to simple metadata edit if dialog fails
-            self._simple_metadata_edit(
-                model_id, model_info if "model_info" in locals() else None
-            )
+            self._simple_metadata_edit(model_id, model_info if "model_info" in locals() else None)
 
     def _save_metadata_and_close(self, dialog: QDialog, editor, model_id: int) -> None:
         """
@@ -1295,9 +1243,7 @@ class ModelLibraryWidget(QWidget):
 
             if success:
                 self.status_label.setText(f"Metadata saved for model")
-                self.logger.info(
-                    f"Metadata saved successfully for model ID: {model_id}"
-                )
+                self.logger.info(f"Metadata saved successfully for model ID: {model_id}")
 
                 # Reload models to reflect changes
                 self._load_models_from_database()
@@ -1328,9 +1274,7 @@ class ModelLibraryWidget(QWidget):
                     QMessageBox.warning(self, "Error", "Model not found")
                     return
 
-            model_name = model_info.get("title") or model_info.get(
-                "filename", "Unknown"
-            )
+            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
 
             # Simple title edit
             new_title, ok = QInputDialog.getText(
@@ -1406,9 +1350,7 @@ class ModelLibraryWidget(QWidget):
 
         except Exception as e:
             self.logger.error(f"Failed to show file in explorer: {e}")
-            QMessageBox.warning(
-                self, "Error", f"Failed to open file explorer: {str(e)}"
-            )
+            QMessageBox.warning(self, "Error", f"Failed to open file explorer: {str(e)}")
 
     def _bulk_update_metadata(self, model_ids: List[int]) -> None:
         """
@@ -1476,8 +1418,7 @@ class ModelLibraryWidget(QWidget):
             reply = QMessageBox.question(
                 self,
                 "Confirm Bulk Update",
-                f"Update {field} for {count} models?\n\n"
-                f"This will set {field} to: {value}",
+                f"Update {field} for {count} models?\n\n" f"This will set {field} to: {value}",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -1537,9 +1478,7 @@ class ModelLibraryWidget(QWidget):
             self._load_models_from_database()
             self.status_label.setText("Ready")
 
-            self.logger.info(
-                f"Bulk update completed: {success_count}/{count} models updated"
-            )
+            self.logger.info(f"Bulk update completed: {success_count}/{count} models updated")
 
         except Exception as e:
             self.logger.error(f"Bulk metadata update failed: {e}")
@@ -1622,9 +1561,7 @@ class ModelLibraryWidget(QWidget):
             self._load_models_from_database()
             self.status_label.setText("Ready")
 
-            self.logger.info(
-                f"Bulk removal completed: {success_count}/{count} models removed"
-            )
+            self.logger.info(f"Bulk removal completed: {success_count}/{count} models removed")
 
         except Exception as e:
             self.logger.error(f"Bulk removal failed: {e}")
@@ -1658,17 +1595,13 @@ class ModelLibraryWidget(QWidget):
 
             for folder in enabled_folders:
                 if not Path(folder.path).exists():
-                    inaccessible_folders.append(
-                        f"{folder.display_name} ({folder.path})"
-                    )
+                    inaccessible_folders.append(f"{folder.display_name} ({folder.path})")
                     self.logger.warning(
                         f"Root folder not accessible: {folder.display_name} ({folder.path})"
                     )
 
             if inaccessible_folders:
-                folder_list = "\n".join(
-                    f"• {folder}" for folder in inaccessible_folders
-                )
+                folder_list = "\n".join(f"• {folder}" for folder in inaccessible_folders)
                 QMessageBox.warning(
                     self,
                     "Inaccessible Root Folders",
@@ -1677,9 +1610,7 @@ class ModelLibraryWidget(QWidget):
                     "You can update root folder settings in Preferences > Files.",
                 )
             else:
-                self.logger.debug(
-                    f"All {len(enabled_folders)} root folders are accessible"
-                )
+                self.logger.debug(f"All {len(enabled_folders)} root folders are accessible")
 
         except Exception as e:
             self.logger.error(f"Error validating root folders: {e}")
@@ -1701,9 +1632,7 @@ class ModelLibraryWidget(QWidget):
 
             files_to_import = []
             for index in selected_indexes:
-                if (
-                    index.column() == 0
-                ):  # Only process the first column to avoid duplicates
+                if index.column() == 0:  # Only process the first column to avoid duplicates
                     # Map from proxy to source model
                     source_index = self.file_proxy_model.mapToSource(index)
                     path = self.file_model.get_file_path(source_index)
@@ -1731,16 +1660,12 @@ class ModelLibraryWidget(QWidget):
         try:
             selected_indexes = self.file_tree.selectedIndexes()
             if not selected_indexes:
-                QMessageBox.information(
-                    self, "Import", "Please select a folder to import."
-                )
+                QMessageBox.information(self, "Import", "Please select a folder to import.")
                 return
 
             # Get the selected folder path
             selected_index = selected_indexes[0]  # Take the first selection
-            if (
-                selected_index.column() != 0
-            ):  # Make sure we're looking at the name column
+            if selected_index.column() != 0:  # Make sure we're looking at the name column
                 selected_index = selected_indexes[0].sibling(selected_index.row(), 0)
 
             # Map from proxy to source model
@@ -1749,9 +1674,7 @@ class ModelLibraryWidget(QWidget):
             folder_path = Path(path)
 
             if not folder_path.is_dir():
-                QMessageBox.warning(
-                    self, "Import", "Please select a folder, not a file."
-                )
+                QMessageBox.warning(self, "Import", "Please select a folder, not a file.")
                 return
 
             # Ask about recursive import
@@ -1804,9 +1727,7 @@ class ModelLibraryWidget(QWidget):
                 except Exception:
                     pass
                 try:
-                    self.model_loader.progress_updated.disconnect(
-                        self._on_load_progress
-                    )
+                    self.model_loader.progress_updated.disconnect(self._on_load_progress)
                 except Exception:
                     pass
                 try:
@@ -1873,9 +1794,7 @@ class ModelLibraryWidget(QWidget):
                 elif fmt == ModelFormat.STEP:
                     parser = STEPParser()
                 else:
-                    QMessageBox.critical(
-                        self, "Error", f"Unsupported model format: {fmt}"
-                    )
+                    QMessageBox.critical(self, "Error", f"Unsupported model format: {fmt}")
                     return
 
                 model = parser.parse_file(file_path)
@@ -1885,9 +1804,7 @@ class ModelLibraryWidget(QWidget):
 
             # Validate model has geometry (either triangles or array-based)
             if not model:
-                QMessageBox.critical(
-                    self, "Error", f"Failed to load model: {file_path}"
-                )
+                QMessageBox.critical(self, "Error", f"Failed to load model: {file_path}")
                 return
 
             # Check if model has triangles (handle both list and array-based)
@@ -1901,9 +1818,7 @@ class ModelLibraryWidget(QWidget):
             has_vertex_array = model.vertex_array is not None
 
             if not has_triangles and not has_vertex_array:
-                QMessageBox.critical(
-                    self, "Error", f"Failed to load model geometry: {file_path}"
-                )
+                QMessageBox.critical(self, "Error", f"Failed to load model geometry: {file_path}")
                 return
 
             # If model is array-based but analyzer needs triangles, we need to convert
@@ -1977,9 +1892,7 @@ class ModelLibraryWidget(QWidget):
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value(
-                "thumbnail/material", config.thumbnail_material, type=str
-            )
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -2005,33 +1918,25 @@ class ModelLibraryWidget(QWidget):
 
             if result.success:
                 # Update database with new thumbnail path
-                self.db_manager.update_model_thumbnail(
-                    model_id, str(result.thumbnail_path)
-                )
+                self.db_manager.update_model_thumbnail(model_id, str(result.thumbnail_path))
 
                 # Refresh the model display to show updated thumbnail
                 self._load_models_from_database()
 
-                QMessageBox.information(
-                    self, "Success", f"Thumbnail regenerated successfully!"
-                )
+                QMessageBox.information(self, "Success", f"Thumbnail regenerated successfully!")
                 self.logger.info(
                     f"Thumbnail regenerated for model {model_id}: {result.thumbnail_path}"
                 )
             else:
                 error_msg = result.error or "Unknown error"
-                QMessageBox.warning(
-                    self, "Error", f"Failed to regenerate thumbnail: {error_msg}"
-                )
+                QMessageBox.warning(self, "Error", f"Failed to regenerate thumbnail: {error_msg}")
                 self.logger.error(
                     f"Thumbnail regeneration failed for model {model_id}: {error_msg}"
                 )
 
         except Exception as e:
             self.logger.error(f"Error regenerating thumbnail: {e}")
-            QMessageBox.critical(
-                self, "Error", f"Failed to regenerate thumbnail: {str(e)}"
-            )
+            QMessageBox.critical(self, "Error", f"Failed to regenerate thumbnail: {str(e)}")
 
     def closeEvent(self, event) -> None:
         self.cleanup()

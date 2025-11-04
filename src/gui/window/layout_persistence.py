@@ -28,9 +28,7 @@ class LayoutPersistenceManager:
     user experience across application sessions.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the layout persistence manager.
 
@@ -130,9 +128,7 @@ class LayoutPersistenceManager:
 
                 # Mark that default has been saved
                 settings.setValue("layout/default_saved", True)
-                self.logger.info(
-                    "Saved current layout as default for fresh installations"
-                )
+                self.logger.info("Saved current layout as default for fresh installations")
         except Exception as e:
             self.logger.warning(f"Failed to save current layout as default: {e}")
 
@@ -162,13 +158,9 @@ class LayoutPersistenceManager:
                                 isinstance(default_hero_idx, int)
                                 and hasattr(self.main_window, "hero_tabs")
                                 and isinstance(self.main_window.hero_tabs, QTabWidget)
-                                and 0
-                                <= default_hero_idx
-                                < self.main_window.hero_tabs.count()
+                                and 0 <= default_hero_idx < self.main_window.hero_tabs.count()
                             ):
-                                self.main_window.hero_tabs.setCurrentIndex(
-                                    default_hero_idx
-                                )
+                                self.main_window.hero_tabs.setCurrentIndex(default_hero_idx)
                         except Exception:
                             pass
                         self.schedule_layout_save()
@@ -365,9 +357,7 @@ class LayoutPersistenceManager:
             dock.topLevelChanged.connect(lambda _=False: self.schedule_layout_save())
             # Some bindings expose dockLocationChanged(area)
             if hasattr(dock, "dockLocationChanged"):
-                dock.dockLocationChanged.connect(
-                    lambda _area=None: self.schedule_layout_save()
-                )
+                dock.dockLocationChanged.connect(lambda _area=None: self.schedule_layout_save())
             dock.visibilityChanged.connect(lambda _=False: self.schedule_layout_save())
         except Exception:
             pass

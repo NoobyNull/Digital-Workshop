@@ -90,25 +90,19 @@ class ModelEditor:
             self.total_rotation[axis.value] += normalized_degrees
             self.rotation_history.append((axis.value, normalized_degrees))
 
-            self.logger.info(
-                f"Rotated model {normalized_degrees}° around {axis.value} axis"
-            )
+            self.logger.info(f"Rotated model {normalized_degrees}° around {axis.value} axis")
             return self.current_model
 
         except Exception as e:
             self.logger.error(f"Failed to rotate model: {e}")
             return self.current_model
 
-    def _transform_triangle(
-        self, triangle: Triangle, transform: vtk.vtkTransform
-    ) -> Triangle:
+    def _transform_triangle(self, triangle: Triangle, transform: vtk.vtkTransform) -> Triangle:
         """Transform a triangle using VTK transformation."""
         # Transform normal
         normal_point = [triangle.normal.x, triangle.normal.y, triangle.normal.z, 0]
         transformed_normal = transform.TransformVector(normal_point)
-        new_normal = Vector3D(
-            transformed_normal[0], transformed_normal[1], transformed_normal[2]
-        )
+        new_normal = Vector3D(transformed_normal[0], transformed_normal[1], transformed_normal[2])
 
         # Transform vertices
         v1_point = [triangle.v1.x, triangle.v1.y, triangle.v1.z, 1]
@@ -123,9 +117,7 @@ class ModelEditor:
         new_v2 = Vector3D(transformed_v2[0], transformed_v2[1], transformed_v2[2])
         new_v3 = Vector3D(transformed_v3[0], transformed_v3[1], transformed_v3[2])
 
-        return Triangle(
-            new_normal, new_v1, new_v2, new_v3, triangle.attribute_byte_count
-        )
+        return Triangle(new_normal, new_v1, new_v2, new_v3, triangle.attribute_byte_count)
 
     def add_solid_plane_at_z_zero(self) -> STLModel:
         """
@@ -137,9 +129,7 @@ class ModelEditor:
         try:
             # Find all triangles with Z < 0 (bottom side)
             bottom_triangles = [
-                t
-                for t in self.current_model.triangles
-                if min(t.v1.z, t.v2.z, t.v3.z) < 0
+                t for t in self.current_model.triangles if min(t.v1.z, t.v2.z, t.v3.z) < 0
             ]
 
             if not bottom_triangles:

@@ -115,9 +115,7 @@ class ProjectImporter:
 
                     if not filter_result.is_allowed:
                         files_blocked += 1
-                        logger.debug(
-                            f"Blocked file: {file_path} ({filter_result.reason})"
-                        )
+                        logger.debug(f"Blocked file: {file_path} ({filter_result.reason})")
                         continue
 
                     # Get file info

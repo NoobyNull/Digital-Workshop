@@ -22,4 +22,3 @@ class STLParser(_OriginalSTLParser):
     - Integration with JSON logging system
     - Performance optimization for different file sizes
     """
-

@@ -137,9 +137,7 @@ class PerformanceMonitor:
                     "has_dedicated_gpu": device.backend.value != "cpu",
                     "vram_mb": device.memory_mb or 0,
                     "gpu_name": (
-                        f"{device.vendor} {device.name}"
-                        if device.vendor
-                        else device.name
+                        f"{device.vendor} {device.name}" if device.vendor else device.name
                     ),
                 }
 
@@ -148,9 +146,7 @@ class PerformanceMonitor:
                 import torch
 
                 if torch.cuda.is_available():
-                    vram_mb = int(
-                        torch.cuda.get_device_properties(0).total_memory / (1024**2)
-                    )
+                    vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024**2))
                     gpu_name = torch.cuda.get_device_name(0)
                     return {
                         "has_dedicated_gpu": True,
@@ -195,13 +191,9 @@ class PerformanceMonitor:
                         if vram_mb is None:
                             memory = psutil.virtual_memory()
                             if is_dedicated:
-                                vram_mb = int(
-                                    memory.total / (1024**2) * 0.1
-                                )  # 10% for dedicated
+                                vram_mb = int(memory.total / (1024**2) * 0.1)  # 10% for dedicated
                             else:
-                                vram_mb = int(
-                                    memory.total / (1024**2) * 0.25
-                                )  # 25% for integrated
+                                vram_mb = int(memory.total / (1024**2) * 0.25)  # 25% for integrated
 
                         return {
                             "has_dedicated_gpu": is_dedicated,
@@ -218,9 +210,7 @@ class PerformanceMonitor:
 
                     try:
                         # Try to get GPU info from registry
-                        registry = winreg.ConnectRegistry(
-                            None, winreg.HKEY_LOCAL_MACHINE
-                        )
+                        registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
                         key = winreg.OpenKey(
                             registry,
                             r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}",
@@ -325,9 +315,7 @@ class PerformanceMonitor:
             # If manual override is enabled, use percentage of total system memory for cache
             # but keep other settings based on system tier
             if config.use_manual_memory_override:
-                cache_size_mb = int(
-                    total_memory_mb * (config.manual_cache_limit_percent / 100)
-                )
+                cache_size_mb = int(total_memory_mb * (config.manual_cache_limit_percent / 100))
 
             profile = PerformanceProfile(
                 performance_level=performance_level,
@@ -368,9 +356,7 @@ class PerformanceMonitor:
             return
 
         self.is_monitoring = True
-        self.monitoring_thread = threading.Thread(
-            target=self._monitoring_loop, daemon=True
-        )
+        self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitoring_thread.start()
         self.logger.info("Performance monitoring started")
 
@@ -472,9 +458,7 @@ class PerformanceMonitor:
         }
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(
-                f"Started tracking operation: {operation_name} (ID: {operation_id})"
-            )
+            self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
         return operation_id
 
     def end_operation(
@@ -522,9 +506,7 @@ class PerformanceMonitor:
         # Store in completed operations
         self.completed_operations.append(metrics)
         if len(self.completed_operations) > self.max_operations_history:
-            self.completed_operations = self.completed_operations[
-                -self.max_operations_history :
-            ]
+            self.completed_operations = self.completed_operations[-self.max_operations_history :]
 
         # Log operation completion
         if success:
@@ -693,9 +675,7 @@ class PerformanceMonitor:
 
         return sum(m.duration_ms for m in successful_metrics) / len(successful_metrics)
 
-    def detect_memory_leak(
-        self, operation_name: str, threshold_mb: float = 50.0
-    ) -> bool:
+    def detect_memory_leak(self, operation_name: str, threshold_mb: float = 50.0) -> bool:
         """
         Detect potential memory leaks for an operation type.
 
@@ -715,9 +695,7 @@ class PerformanceMonitor:
             return False
 
         # Calculate memory deltas
-        memory_deltas = [
-            m.memory_after_mb - m.memory_before_mb for m in successful_metrics
-        ]
+        memory_deltas = [m.memory_after_mb - m.memory_before_mb for m in successful_metrics]
 
         # Check if memory is consistently increasing
         avg_delta = sum(memory_deltas) / len(memory_deltas)
@@ -769,9 +747,7 @@ class PerformanceMonitor:
             # Add operation summaries
             operation_names = set(m.operation_name for m in self.completed_operations)
             for op_name in operation_names:
-                op_metrics = [
-                    m for m in self.completed_operations if m.operation_name == op_name
-                ]
+                op_metrics = [m for m in self.completed_operations if m.operation_name == op_name]
                 successful_ops = [m for m in op_metrics if m.success]
 
                 if successful_ops:
@@ -783,8 +759,7 @@ class PerformanceMonitor:
                         "min_time_ms": min(m.duration_ms for m in successful_ops),
                         "max_time_ms": max(m.duration_ms for m in successful_ops),
                         "average_memory_delta_mb": sum(
-                            m.memory_after_mb - m.memory_before_mb
-                            for m in successful_ops
+                            m.memory_after_mb - m.memory_before_mb for m in successful_ops
                         )
                         / len(successful_ops),
                     }

@@ -61,9 +61,7 @@ class SystemThemeDetector:
         try:
             import winreg
 
-            registry_path = (
-                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-            )
+            registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
             registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
             value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
             winreg.CloseKey(registry_key)

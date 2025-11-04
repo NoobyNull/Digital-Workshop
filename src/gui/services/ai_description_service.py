@@ -133,37 +133,23 @@ class AIDescriptionService(QObject):
             settings = QSettings()
 
             # Save provider configurations
-            for provider_name, provider_config in self.config.get(
-                "providers", {}
-            ).items():
+            for provider_name, provider_config in self.config.get("providers", {}).items():
                 group = f"ai_description/providers/{provider_name}"
-                settings.setValue(
-                    f"{group}/api_key", provider_config.get("api_key", "")
-                )
+                settings.setValue(f"{group}/api_key", provider_config.get("api_key", ""))
                 settings.setValue(
                     f"{group}/model",
                     provider_config.get("model", "gpt-4-vision-preview"),
                 )
-                settings.setValue(
-                    f"{group}/base_url", provider_config.get("base_url", "")
-                )
-                settings.setValue(
-                    f"{group}/enabled", provider_config.get("enabled", False)
-                )
+                settings.setValue(f"{group}/base_url", provider_config.get("base_url", ""))
+                settings.setValue(f"{group}/enabled", provider_config.get("enabled", False))
 
             # Save custom prompts
-            for prompt_type, prompt_text in self.config.get(
-                "custom_prompts", {}
-            ).items():
-                settings.setValue(
-                    f"ai_description/custom_prompts/{prompt_type}", prompt_text
-                )
+            for prompt_type, prompt_text in self.config.get("custom_prompts", {}).items():
+                settings.setValue(f"ai_description/custom_prompts/{prompt_type}", prompt_text)
 
             # Save settings
             for setting_name, setting_value in self.config.get("settings", {}).items():
-                settings.setValue(
-                    f"ai_description/settings/{setting_name}", setting_value
-                )
+                settings.setValue(f"ai_description/settings/{setting_name}", setting_value)
 
             settings.sync()
             self.logger.debug("AI description configuration saved to QSettings")
@@ -310,17 +296,13 @@ Return ONLY valid JSON, no additional text.""",
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
         # Set current provider
-        default_provider = self.config.get("settings", {}).get(
-            "default_provider", "openai"
-        )
+        default_provider = self.config.get("settings", {}).get("default_provider", "openai")
         if default_provider in self.providers:
             self.current_provider = self.providers[default_provider]
         elif self.providers:
             # If default provider not available, use first available provider
             self.current_provider = next(iter(self.providers.values()))
-            self.logger.info(
-                "Default provider not available, using first available provider"
-            )
+            self.logger.info("Default provider not available, using first available provider")
 
     @staticmethod
     def get_available_providers() -> List[str]:
@@ -375,9 +357,7 @@ Return ONLY valid JSON, no additional text.""",
             "zai": {"zai-vision-1": "ZAI Vision 1"},
             "perplexity": {"llava-7b": "LLaVA 7B", "llava-13b": "LLaVA 13B"},
             "ollama": {"llava": "LLaVA (Local)", "bakllava": "BakLLaVA (Local)"},
-            "ai_studio": {
-                "gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"
-            },
+            "ai_studio": {"gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"},
             "openrouter": {
                 "openai/gpt-4o": "GPT-4o (via OpenRouter)",
                 "openai/gpt-4-vision-preview": "GPT-4 Vision (via OpenRouter)",
@@ -386,9 +366,7 @@ Return ONLY valid JSON, no additional text.""",
         return model_mappings.get(provider_id, {})
 
     @staticmethod
-    def test_provider_connection(
-        provider_id: str, api_key: str, model_id: str
-    ) -> tuple[bool, str]:
+    def test_provider_connection(provider_id: str, api_key: str, model_id: str) -> tuple[bool, str]:
         """Test provider connection with given credentials."""
         try:
             from .providers import get_provider_class
@@ -435,10 +413,7 @@ Return ONLY valid JSON, no additional text.""",
 
     def set_current_provider(self, provider_name: str) -> bool:
         """Set the current AI provider."""
-        if (
-            provider_name in self.providers
-            and self.providers[provider_name].is_configured()
-        ):
+        if provider_name in self.providers and self.providers[provider_name].is_configured():
             self.current_provider = self.providers[provider_name]
             # Update default provider in config
             self.config.setdefault("settings", {})["default_provider"] = provider_name
@@ -469,9 +444,7 @@ Return ONLY valid JSON, no additional text.""",
 
             # Test provider configuration
             if not provider.is_configured():
-                self.logger.error(
-                    "Provider %s failed configuration test", provider_name
-                )
+                self.logger.error("Provider %s failed configuration test", provider_name)
                 return False
 
             # Store provider
@@ -503,9 +476,7 @@ Return ONLY valid JSON, no additional text.""",
             models = provider.list_available_models()
             return len(models) > 0
         except Exception as e:
-            self.logger.error(
-                "Provider connection test failed for %s: %s", provider_name, e
-            )
+            self.logger.error("Provider connection test failed for %s: %s", provider_name, e)
             return False
 
     def analyze_image(
@@ -549,9 +520,7 @@ Return ONLY valid JSON, no additional text.""",
             if not analysis_prompt:
                 # Check for custom prompts in config
                 custom_prompts = self.config.get("custom_prompts", {})
-                analysis_prompt = custom_prompts.get(
-                    "default", provider.get_default_prompt()
-                )
+                analysis_prompt = custom_prompts.get("default", provider.get_default_prompt())
 
             self.progress_updated.emit(30)
 

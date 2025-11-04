@@ -38,27 +38,15 @@ class LightingControlPanel(QDialog):
         settings = QSettings()
         self._default_pos_x = settings.value("lighting/default_pos_x", 90.0, type=float)
         self._default_pos_y = settings.value("lighting/default_pos_y", 90.0, type=float)
-        self._default_pos_z = settings.value(
-            "lighting/default_pos_z", 180.0, type=float
-        )
+        self._default_pos_z = settings.value("lighting/default_pos_z", 180.0, type=float)
         self._default_color = (1.0, 1.0, 1.0)  # normalized RGB
-        self._default_intensity = settings.value(
-            "lighting/default_intensity", 1.2, type=float
-        )
-        self._default_cone_angle = settings.value(
-            "lighting/default_cone_angle", 90.0, type=float
-        )
+        self._default_intensity = settings.value("lighting/default_intensity", 1.2, type=float)
+        self._default_cone_angle = settings.value("lighting/default_cone_angle", 90.0, type=float)
 
         # Current values (defaults) - using angle-based positions (0-180 deg, 90 = center)
-        self._pos_x = (
-            self._default_pos_x
-        )  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_y = (
-            self._default_pos_y
-        )  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_z = (
-            self._default_pos_z
-        )  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_x = self._default_pos_x  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_y = self._default_pos_y  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_z = self._default_pos_z  # degrees, 90 = center (maps to 100 actual position)
         self._color = self._default_color  # normalized RGB
         self._intensity = self._default_intensity
         self._cone_angle = self._default_cone_angle  # Cone angle in degrees (1-90)

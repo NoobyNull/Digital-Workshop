@@ -25,9 +25,7 @@ class ExportManager:
         """Set the render window to export from."""
         self.render_window = render_window
 
-    def export_screenshot(
-        self, filepath: str, width: int = 1920, height: int = 1080
-    ) -> bool:
+    def export_screenshot(self, filepath: str, width: int = 1920, height: int = 1080) -> bool:
         """
         Export a screenshot of the current view.
 

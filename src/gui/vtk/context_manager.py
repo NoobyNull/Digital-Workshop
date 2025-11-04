@@ -61,9 +61,7 @@ class VTKContextManager:
 
         return handlers
 
-    def _windows_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _windows_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Windows-specific context validation."""
         try:
             # On Windows, check if the render window handle is valid
@@ -92,9 +90,7 @@ class VTKContextManager:
             self.logger.debug(f"Windows context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _linux_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _linux_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Linux-specific context validation."""
         try:
             if not render_window:
@@ -112,9 +108,7 @@ class VTKContextManager:
             self.logger.debug(f"Linux context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _darwin_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _darwin_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """macOS-specific context validation."""
         try:
             if not render_window:
@@ -169,14 +163,10 @@ class VTKContextManager:
             is_valid = context_state == ContextState.VALID
 
             if not is_valid:
-                self.logger.debug(
-                    f"Context validation failed for {operation}: {context_state}"
-                )
+                self.logger.debug(f"Context validation failed for {operation}: {context_state}")
                 if self.strict_mode:
                     self.error_handler.handle_error(
-                        RuntimeError(
-                            f"Invalid context for {operation}: {context_state}"
-                        ),
+                        RuntimeError(f"Invalid context for {operation}: {context_state}"),
                         f"context_validation_{operation}",
                     )
 
@@ -186,9 +176,7 @@ class VTKContextManager:
             self.logger.debug(f"Context validation exception: {e}")
             return False, ContextState.UNKNOWN
 
-    def _generic_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _generic_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Generic context validation fallback."""
         try:
             if not render_window:
@@ -246,9 +234,7 @@ class VTKContextManager:
         is_valid, context_state = self.validate_context(render_window, operation)
 
         if not is_valid:
-            self.logger.debug(
-                f"Skipping {operation} due to invalid context: {context_state}"
-            )
+            self.logger.debug(f"Skipping {operation} due to invalid context: {context_state}")
             yield False  # Operation should be skipped
             return
 

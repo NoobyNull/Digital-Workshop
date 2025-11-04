@@ -85,9 +85,7 @@ class GcodeLoaderWorker(QThread):
 
                         # Emit progress
                         progress = int((bytes_processed / file_size) * 100)
-                        self.progress_updated.emit(
-                            progress, f"Loading: {len(all_moves)} moves"
-                        )
+                        self.progress_updated.emit(progress, f"Loading: {len(all_moves)} moves")
 
                         # Emit chunk
                         if moves:

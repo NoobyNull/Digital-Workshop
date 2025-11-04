@@ -316,13 +316,9 @@ class CostEstimatorWidget(QWidget):
             )
 
             # Get material cost
-            material = self.material_manager.get_material(
-                self.material_combo.currentText()
-            )
+            material = self.material_manager.get_material(self.material_combo.currentText())
             material_cost = (
-                self.material_quantity.value() * material.cost_per_unit
-                if material
-                else 0.0
+                self.material_quantity.value() * material.cost_per_unit if material else 0.0
             )
 
             # Generate estimate
@@ -359,18 +355,10 @@ class CostEstimatorWidget(QWidget):
             return
 
         # Update section displays
-        self.material_cost_display.setText(
-            f"${self.current_estimate.total_material_cost:.2f}"
-        )
-        self.machine_cost_display.setText(
-            f"${self.current_estimate.total_machine_cost:.2f}"
-        )
-        self.labor_cost_display.setText(
-            f"${self.current_estimate.total_labor_cost:.2f}"
-        )
-        self.shop_cost_display.setText(
-            f"${self.current_estimate.total_shop_operations_cost:.2f}"
-        )
+        self.material_cost_display.setText(f"${self.current_estimate.total_material_cost:.2f}")
+        self.machine_cost_display.setText(f"${self.current_estimate.total_machine_cost:.2f}")
+        self.labor_cost_display.setText(f"${self.current_estimate.total_labor_cost:.2f}")
+        self.shop_cost_display.setText(f"${self.current_estimate.total_shop_operations_cost:.2f}")
         self.tools_cost_display.setText(f"${self.current_estimate.total_tool_cost:.2f}")
 
         # Update summary display
@@ -379,13 +367,9 @@ class CostEstimatorWidget(QWidget):
         for category, amount in breakdown.items():
             summary_html += f"{category}: <b>${amount:.2f}</b><br>"
 
-        summary_html += (
-            f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
-        )
+        summary_html += f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
         if self.current_estimate.quantity > 1:
-            summary_html += (
-                f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
-            )
+            summary_html += f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
 
         self.summary_display.setText(summary_html)
 

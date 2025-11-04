@@ -122,9 +122,7 @@ class ProjectDetailsWidget(QWidget):
         self.resources_table = QTableWidget()
         self.resources_table.setColumnCount(3)
         self.resources_table.setHorizontalHeaderLabels(["File Name", "Size", "Type"])
-        self.resources_table.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.Stretch
-        )
+        self.resources_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.resources_table.horizontalHeader().setSectionResizeMode(
             1, QHeaderView.ResizeToContents
         )
@@ -172,9 +170,7 @@ class ProjectDetailsWidget(QWidget):
             # Format dimensions
             dimensions = model_data.get("dimensions", (0, 0, 0))
             if isinstance(dimensions, (list, tuple)) and len(dimensions) >= 3:
-                dim_str = (
-                    f"{dimensions[0]:.2f} × {dimensions[1]:.2f} × {dimensions[2]:.2f}"
-                )
+                dim_str = f"{dimensions[0]:.2f} × {dimensions[1]:.2f} × {dimensions[2]:.2f}"
             else:
                 dim_str = "-"
 
@@ -183,15 +179,9 @@ class ProjectDetailsWidget(QWidget):
             self.info_labels["format"].setText(model_data.get("format", "-").upper())
             self.info_labels["file_size"].setText(size_str)
             self.info_labels["dimensions"].setText(dim_str)
-            self.info_labels["triangles"].setText(
-                f"{model_data.get('triangle_count', 0):,}"
-            )
-            self.info_labels["vertices"].setText(
-                f"{model_data.get('vertex_count', 0):,}"
-            )
-            self.info_labels["date_added"].setText(
-                str(model_data.get("date_added", "-"))
-            )
+            self.info_labels["triangles"].setText(f"{model_data.get('triangle_count', 0):,}")
+            self.info_labels["vertices"].setText(f"{model_data.get('vertex_count', 0):,}")
+            self.info_labels["date_added"].setText(str(model_data.get("date_added", "-")))
 
         except Exception as e:
             self.logger.error(f"Failed to update model info: {e}")

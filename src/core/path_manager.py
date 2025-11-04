@@ -129,9 +129,7 @@ class PathManager:
         elif self._installation_type == InstallationType.PORTABLE:
             # Portable: use directory relative to executable
             executable_dir = (
-                Path(sys.executable).parent
-                if hasattr(sys, "executable")
-                else Path.cwd()
+                Path(sys.executable).parent if hasattr(sys, "executable") else Path.cwd()
             )
             return executable_dir / "cache"
         else:  # USER or SYSTEM
@@ -173,9 +171,7 @@ class PathManager:
         if self._installation_type == InstallationType.PORTABLE:
             # Portable: use directory relative to executable
             executable_dir = (
-                Path(sys.executable).parent
-                if hasattr(sys, "executable")
-                else Path.cwd()
+                Path(sys.executable).parent if hasattr(sys, "executable") else Path.cwd()
             )
             return executable_dir / "resources"
         # USER or SYSTEM
@@ -201,9 +197,7 @@ class PathManager:
         if self._installation_type == InstallationType.PORTABLE:
             # Portable: use directory relative to executable
             executable_dir = (
-                Path(sys.executable).parent
-                if hasattr(sys, "executable")
-                else Path.cwd()
+                Path(sys.executable).parent if hasattr(sys, "executable") else Path.cwd()
             )
             return executable_dir / "config"
         # USER or SYSTEM
@@ -231,20 +225,12 @@ class PathManager:
                 except (KeyError, OSError):
                     pass  # Fall back to user data
                 return (
-                    Path(
-                        os.environ.get(
-                            "LOCALAPPDATA", Path.home() / "AppData" / "Local"
-                        )
-                    )
+                    Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
                     / app_name
                 )
             else:  # USER
                 return (
-                    Path(
-                        os.environ.get(
-                            "LOCALAPPDATA", Path.home() / "AppData" / "Local"
-                        )
-                    )
+                    Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
                     / app_name
                 )
 

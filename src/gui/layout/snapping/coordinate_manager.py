@@ -68,9 +68,7 @@ class TransformationResult:
     def __post_init__(self):
         """Validate transformation result after initialization."""
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(
-                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
-            )
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
 
 
 class TransformationCache:
@@ -261,8 +259,8 @@ class CoordinateManager:
 
             # Client coordinate system (main window client area)
             if self.main_window:
-                self._system_origins[CoordinateSystem.CLIENT] = (
-                    self.main_window.mapToGlobal(QPoint(0, 0))
+                self._system_origins[CoordinateSystem.CLIENT] = self.main_window.mapToGlobal(
+                    QPoint(0, 0)
                 )
                 self._system_bounds[CoordinateSystem.CLIENT] = self.main_window.rect()
             else:
@@ -315,8 +313,8 @@ class CoordinateManager:
                 return
 
             # Update client coordinate system
-            self._system_origins[CoordinateSystem.CLIENT] = (
-                self.main_window.mapToGlobal(QPoint(0, 0))
+            self._system_origins[CoordinateSystem.CLIENT] = self.main_window.mapToGlobal(
+                QPoint(0, 0)
             )
             self._system_bounds[CoordinateSystem.CLIENT] = self.main_window.rect()
 
@@ -380,9 +378,7 @@ class CoordinateManager:
                 target_system=target_system,
                 timestamp=time.time(),
                 context_widget=context_widget,
-                confidence=self._calculate_confidence(
-                    source_system, target_system, context_widget
-                ),
+                confidence=self._calculate_confidence(source_system, target_system, context_widget),
             )
 
             # Cache the result
@@ -549,9 +545,7 @@ class CoordinateManager:
             elif target_system == CoordinateSystem.CLIENT:
                 # Unified to client: convert to screen first
                 screen_pos = QPointF(point)
-                return screen_pos - QPointF(
-                    self._system_origins[CoordinateSystem.CLIENT]
-                )
+                return screen_pos - QPointF(self._system_origins[CoordinateSystem.CLIENT])
             elif target_system == CoordinateSystem.WIDGET and context_widget:
                 # Unified to widget: convert to screen first
                 screen_pos = QPointF(point)
@@ -568,9 +562,7 @@ class CoordinateManager:
                     return QPointF(widget_pos)
 
         # Fallback: return original point
-        self.logger.warning(
-            f"Unsupported transformation from {source_system} to {target_system}"
-        )
+        self.logger.warning(f"Unsupported transformation from {source_system} to {target_system}")
         return QPointF(point)
 
     def _find_dock_parent(self, widget: QWidget) -> Optional[QDockWidget]:
@@ -615,39 +607,26 @@ class CoordinateManager:
             return 1.0
 
         # Transformations involving the main window have high confidence
-        if (
-            source_system == CoordinateSystem.CLIENT
-            or target_system == CoordinateSystem.CLIENT
-        ):
+        if source_system == CoordinateSystem.CLIENT or target_system == CoordinateSystem.CLIENT:
             return 0.95
 
         # Widget transformations with context have good confidence
         if context_widget and (
-            source_system == CoordinateSystem.WIDGET
-            or target_system == CoordinateSystem.WIDGET
+            source_system == CoordinateSystem.WIDGET or target_system == CoordinateSystem.WIDGET
         ):
             return 0.9
 
         # Dock transformations with context have good confidence
         if context_widget and isinstance(context_widget, QDockWidget):
-            if (
-                source_system == CoordinateSystem.DOCK
-                or target_system == CoordinateSystem.DOCK
-            ):
+            if source_system == CoordinateSystem.DOCK or target_system == CoordinateSystem.DOCK:
                 return 0.9
 
         # Screen transformations are reliable
-        if (
-            source_system == CoordinateSystem.SCREEN
-            or target_system == CoordinateSystem.SCREEN
-        ):
+        if source_system == CoordinateSystem.SCREEN or target_system == CoordinateSystem.SCREEN:
             return 0.95
 
         # Unified system transformations are reliable
-        if (
-            source_system == CoordinateSystem.UNIFIED
-            or target_system == CoordinateSystem.UNIFIED
-        ):
+        if source_system == CoordinateSystem.UNIFIED or target_system == CoordinateSystem.UNIFIED:
             return 0.95
 
         # Default confidence for other transformations
@@ -739,9 +718,7 @@ class CoordinateManager:
             bounds = self.get_system_bounds(system)
             return bounds.contains(point.toPoint())
         except Exception as e:
-            self.logger.error(
-                f"Failed to check if point {point} is in system {system}: {e}"
-            )
+            self.logger.error(f"Failed to check if point {point} is in system {system}: {e}")
             return False
 
     def get_performance_stats(self) -> Dict[str, Any]:

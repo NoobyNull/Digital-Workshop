@@ -162,9 +162,7 @@ class ImportThumbnailService:
         """
         if self.storage_location == StorageLocation.CUSTOM:
             if not self.custom_storage_path:
-                raise ValueError(
-                    "Custom storage path required when storage_location is CUSTOM"
-                )
+                raise ValueError("Custom storage path required when storage_location is CUSTOM")
             storage_dir = Path(self.custom_storage_path)
         else:
             # Use AppData for default storage
@@ -449,9 +447,7 @@ class ImportThumbnailService:
                 "cached": cached,
                 "generated": successful - cached,
                 "time_seconds": round(batch_time, 3),
-                "avg_time_per_file": (
-                    round(batch_time / total_files, 3) if total_files > 0 else 0
-                ),
+                "avg_time_per_file": (round(batch_time / total_files, 3) if total_files > 0 else 0),
             },
         )
 
@@ -559,8 +555,7 @@ class ImportThumbnailService:
             "thumbnails_cached": self._stats["thumbnails_cached"],
             "total_generation_time": round(self._stats["total_generation_time"], 3),
             "avg_generation_time": round(
-                self._stats["total_generation_time"]
-                / max(1, self._stats["thumbnails_generated"]),
+                self._stats["total_generation_time"] / max(1, self._stats["thumbnails_generated"]),
                 3,
             ),
             "cache_hits": self._stats["cache_hits"],
@@ -647,9 +642,7 @@ class ImportThumbnailService:
             self.logger.error(f"Error verifying thumbnail {thumbnail_path}: {e}")
             return False
 
-    def get_thumbnail_by_size(
-        self, file_hash: str, size: str = "xlarge"
-    ) -> Optional[Path]:
+    def get_thumbnail_by_size(self, file_hash: str, size: str = "xlarge") -> Optional[Path]:
         """
         Get thumbnail path for a specific size.
 

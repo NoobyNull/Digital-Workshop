@@ -94,9 +94,7 @@ class LegacyThemeManager(QObject):
             if variant is None:
                 variant = "blue"
 
-            self._log_migration_warning(
-                "apply_theme", "UnifiedThemeManager.apply_theme"
-            )
+            self._log_migration_warning("apply_theme", "UnifiedThemeManager.apply_theme")
 
             try:
                 success = self._unified_manager.apply_theme(theme_name, variant)
@@ -147,9 +145,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "get_theme_colors", "UnifiedThemeManager.get_theme_colors"
-            )
+            self._log_migration_warning("get_theme_colors", "UnifiedThemeManager.get_theme_colors")
 
             try:
                 return self._unified_manager.get_theme_colors()
@@ -167,9 +163,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "save_settings", "UnifiedThemeManager.save_settings"
-            )
+            self._log_migration_warning("save_settings", "UnifiedThemeManager.save_settings")
 
             try:
                 return self._unified_manager.save_settings()
@@ -187,9 +181,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "load_settings", "UnifiedThemeManager.load_settings"
-            )
+            self._log_migration_warning("load_settings", "UnifiedThemeManager.load_settings")
 
             try:
                 return self._unified_manager.load_settings()
@@ -227,9 +219,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "reset_to_default", "UnifiedThemeManager.reset_to_default"
-            )
+            self._log_migration_warning("reset_to_default", "UnifiedThemeManager.reset_to_default")
 
             try:
                 return self._unified_manager.reset_to_default()
@@ -250,9 +240,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "export_theme", "UnifiedThemeManager.export_theme"
-            )
+            self._log_migration_warning("export_theme", "UnifiedThemeManager.export_theme")
 
             try:
                 return self._unified_manager.export_theme(file_path)
@@ -273,9 +261,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "import_theme", "UnifiedThemeManager.import_theme"
-            )
+            self._log_migration_warning("import_theme", "UnifiedThemeManager.import_theme")
 
             try:
                 return self._unified_manager.import_theme(file_path)
@@ -297,9 +283,7 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning(
-                "register_widget", "UnifiedThemeManager.register_widget"
-            )
+            self._log_migration_warning("register_widget", "UnifiedThemeManager.register_widget")
 
             try:
                 return self._unified_manager.register_widget(widget, widget_name)
@@ -393,9 +377,7 @@ class LegacyThemeManager(QObject):
                 lambda success, msg: None  # Handle success/failure
             )
             self._unified_manager.theme_validation_failed.connect(
-                lambda msg, errors: self.error_occurred.emit(
-                    f"Validation failed: {msg}"
-                )
+                lambda msg, errors: self.error_occurred.emit(f"Validation failed: {msg}")
             )
 
             logger.debug("Legacy theme manager signals connected")

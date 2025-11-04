@@ -83,8 +83,7 @@ class GcodeRenderer:
                 cls._vtk_module = vtk_module
             except ImportError as e:
                 raise ImportError(
-                    "VTK is required for G-code rendering. "
-                    "Install with: pip install vtk"
+                    "VTK is required for G-code rendering. " "Install with: pip install vtk"
                 ) from e
 
     @property
@@ -229,9 +228,7 @@ class GcodeRenderer:
             if self.move_data[move_type]["actor"]:
                 self.renderer.RemoveActor(self.move_data[move_type]["actor"])
                 # Properly cleanup VTK resources
-                self.move_data[move_type]["actor"].ReleaseGraphicsResources(
-                    self.render_window
-                )
+                self.move_data[move_type]["actor"].ReleaseGraphicsResources(self.render_window)
             self.move_data[move_type]["actor"] = None
 
         self.prev_point = None
@@ -307,9 +304,7 @@ class GcodeRenderer:
         for move_type in self.move_data:
             if self.move_data[move_type]["actor"]:
                 self.renderer.RemoveActor(self.move_data[move_type]["actor"])
-                self.move_data[move_type]["actor"].ReleaseGraphicsResources(
-                    self.render_window
-                )
+                self.move_data[move_type]["actor"].ReleaseGraphicsResources(self.render_window)
 
         # Clear data structures
         self.move_data.clear()

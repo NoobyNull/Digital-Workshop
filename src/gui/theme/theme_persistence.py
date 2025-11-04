@@ -355,12 +355,8 @@ class ThemePersistence:
                 self.settings.remove("")
 
                 # Save theme data with proper structure
-                self.settings.setValue(
-                    "theme_name", theme_data.get("theme_name", "dark")
-                )
-                self.settings.setValue(
-                    "theme_variant", theme_data.get("theme_variant", "blue")
-                )
+                self.settings.setValue("theme_name", theme_data.get("theme_name", "dark"))
+                self.settings.setValue("theme_variant", theme_data.get("theme_variant", "blue"))
                 self.settings.setValue(
                     "qt_material_available",
                     theme_data.get("qt_material_available", False),
@@ -372,9 +368,7 @@ class ThemePersistence:
                 self.settings.setValue(
                     "auto_save_enabled", theme_data.get("auto_save_enabled", True)
                 )
-                self.settings.setValue(
-                    "theme_version", theme_data.get("theme_version", "2.0.0")
-                )
+                self.settings.setValue("theme_version", theme_data.get("theme_version", "2.0.0"))
 
                 # Save custom colors as JSON string
                 custom_colors = theme_data.get("custom_colors", {})
@@ -486,12 +480,8 @@ class ThemePersistence:
             custom_colors = theme_data.get("custom_colors", {})
             if custom_colors:
                 for color_name, color_value in custom_colors.items():
-                    if not isinstance(color_name, str) or not isinstance(
-                        color_value, str
-                    ):
-                        logger.warning(
-                            f"Invalid custom color format: {color_name}={color_value}"
-                        )
+                    if not isinstance(color_name, str) or not isinstance(color_value, str):
+                        logger.warning(f"Invalid custom color format: {color_name}={color_value}")
                         return False
 
                     # Basic hex color validation

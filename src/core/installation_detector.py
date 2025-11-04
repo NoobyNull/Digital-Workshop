@@ -77,16 +77,11 @@ class InstallationDetector:
         src_dir = Path(__file__).parent.parent.parent
 
         # If we're in development mode (running from src/)
-        if (
-            current_script.name in ["run.py", "main.py"]
-            or current_script.parent == src_dir
-        ):
+        if current_script.name in ["run.py", "main.py"] or current_script.parent == src_dir:
             return True
 
         # Check for development environment indicators
-        if os.path.exists(src_dir / "run.py") and os.path.exists(
-            src_dir / "requirements.txt"
-        ):
+        if os.path.exists(src_dir / "run.py") and os.path.exists(src_dir / "requirements.txt"):
             return True
 
         return False

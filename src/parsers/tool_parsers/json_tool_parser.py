@@ -98,9 +98,7 @@ class JSONToolParser(BaseToolParser):
                 # Report progress
                 if progress_callback and total_tools > 0:
                     progress = min((i + 1) / total_tools, 1.0)
-                    progress_callback.report(
-                        progress, f"Parsing tool {i + 1}/{total_tools}"
-                    )
+                    progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
 
             self.logger.info(f"Parsed {len(tools)} tools from JSON file")
             return tools

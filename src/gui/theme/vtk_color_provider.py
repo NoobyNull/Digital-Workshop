@@ -281,9 +281,7 @@ class VTKColorProvider(QObject):
         for color_name in common_colors:
             self.get_vtk_color(color_name)
 
-        logger.debug(
-            f"Updated VTK color cache with {len(self._cached_vtk_colors)} colors"
-        )
+        logger.debug(f"Updated VTK color cache with {len(self._cached_vtk_colors)} colors")
 
     @staticmethod
     def _hex_to_vtk_rgb(hex_color: str) -> Tuple[float, float, float]:

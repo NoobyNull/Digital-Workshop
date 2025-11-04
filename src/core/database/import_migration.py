@@ -39,15 +39,11 @@ def check_table_exists(connection: sqlite3.Connection, table_name: str) -> bool:
         True if table exists, False otherwise
     """
     cursor = connection.cursor()
-    cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,)
-    )
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
     return cursor.fetchone() is not None
 
 
-def check_column_exists(
-    connection: sqlite3.Connection, table_name: str, column_name: str
-) -> bool:
+def check_column_exists(connection: sqlite3.Connection, table_name: str, column_name: str) -> bool:
     """
     Check if a column exists in a table.
 
@@ -163,9 +159,7 @@ def extend_models_table(connection: sqlite3.Connection) -> Tuple[bool, Optional[
                 logger.error(f"Unexpected database error adding column: {e}")
 
         connection.commit()
-        logger.info(
-            f"Models table extended successfully ({added_columns} columns added)"
-        )
+        logger.info(f"Models table extended successfully ({added_columns} columns added)")
 
         return True, None
 
@@ -192,9 +186,7 @@ def get_migration_version(connection: sqlite3.Connection) -> int:
         if not check_table_exists(connection, "schema_migrations"):
             return 0
 
-        cursor.execute(
-            "SELECT MAX(version) FROM schema_migrations WHERE component='import'"
-        )
+        cursor.execute("SELECT MAX(version) FROM schema_migrations WHERE component='import'")
         result = cursor.fetchone()
         return result[0] if result and result[0] else 0
 
@@ -293,9 +285,7 @@ def migrate_import_schema(db_manager) -> Tuple[bool, Optional[str]]:
             connection.rollback()
             return False, "Failed to update migration version"
 
-        logger.info(
-            f"Import schema migration completed successfully (v{target_version})"
-        )
+        logger.info(f"Import schema migration completed successfully (v{target_version})")
         return True, None
 
     except Exception as e:

@@ -165,12 +165,8 @@ class DatabaseOperations:
                 )
 
                 # Create indexes
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)"
                 )
@@ -182,21 +178,15 @@ class DatabaseOperations:
                 )
 
                 # Create indexes for projects and files
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)"
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)"
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
 
                 # Run migrations
                 self.migrate_schema(cursor)
@@ -249,9 +239,7 @@ class DatabaseOperations:
                 logger.info("file_hash column added successfully")
 
             # Migration 2: Add thumbnail_path column if it doesn't exist
-            has_thumbnail_path = any(
-                col[1] == "thumbnail_path" for col in model_columns
-            )
+            has_thumbnail_path = any(col[1] == "thumbnail_path" for col in model_columns)
 
             if not has_thumbnail_path:
                 logger.info("Adding thumbnail_path column to models table")
@@ -273,15 +261,11 @@ class DatabaseOperations:
 
             if "sort_order" not in category_col_names:
                 logger.info("Adding sort_order column to categories table")
-                cursor.execute(
-                    "ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0"
-                )
+                cursor.execute("ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0")
                 logger.info("sort_order column added successfully")
 
             # Migration 4: Add linked_model_id for deduplication tracking
-            has_linked_model_id = any(
-                col[1] == "linked_model_id" for col in model_columns
-            )
+            has_linked_model_id = any(col[1] == "linked_model_id" for col in model_columns)
 
             if not has_linked_model_id:
                 logger.info("Adding linked_model_id column to models table")
@@ -314,9 +298,7 @@ class DatabaseOperations:
                     )
                 """
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)"
                 )
@@ -349,12 +331,8 @@ class DatabaseOperations:
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)"
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
                 logger.info("files table created successfully")
 
         except sqlite3.Error as e:

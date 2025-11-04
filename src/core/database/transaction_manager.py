@@ -33,10 +33,8 @@ class DatabaseError(Exception):
     """Custom database exception for better error handling."""
 
 
-
 class TransactionError(DatabaseError):
     """Transaction-specific exception."""
-
 
 
 class ConnectionPool:
@@ -99,9 +97,7 @@ class ConnectionPool:
             # Wait a bit before retrying
             time.sleep(0.1)
 
-        raise DatabaseError(
-            f"Timeout waiting for database connection after {self.timeout}s"
-        )
+        raise DatabaseError(f"Timeout waiting for database connection after {self.timeout}s")
 
     def return_connection(self, conn: sqlite3.Connection) -> None:
         """
@@ -196,9 +192,7 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.COMMITTED
             duration = time.time() - self.start_time
-            logger.info(
-                f"Transaction {self.transaction_id} committed in {duration:.3f}s"
-            )
+            logger.info(f"Transaction {self.transaction_id} committed in {duration:.3f}s")
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
             raise TransactionError(f"Failed to commit transaction: {str(e)}")
@@ -210,20 +204,14 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.ROLLED_BACK
             duration = time.time() - self.start_time
-            logger.info(
-                f"Transaction {self.transaction_id} rolled back after {duration:.3f}s"
-            )
+            logger.info(f"Transaction {self.transaction_id} rolled back after {duration:.3f}s")
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
-            logger.error(
-                f"Failed to rollback transaction {self.transaction_id}: {str(e)}"
-            )
+            logger.error(f"Failed to rollback transaction {self.transaction_id}: {str(e)}")
 
     def add_operation(self, operation: str, params: tuple = None) -> None:
         """Add an operation to the transaction log."""
-        self.operations.append(
-            {"operation": operation, "params": params, "timestamp": time.time()}
-        )
+        self.operations.append({"operation": operation, "params": params, "timestamp": time.time()})
 
     def get_duration(self) -> float:
         """Get transaction duration in seconds."""
@@ -332,9 +320,7 @@ class TransactionManager:
 
             # Log transaction failure
             if transaction:
-                logger.error(
-                    f"Transaction {transaction.transaction_id} failed: {str(e)}"
-                )
+                logger.error(f"Transaction {transaction.transaction_id} failed: {str(e)}")
 
             raise TransactionError(f"Transaction failed: {str(e)}")
 
@@ -457,9 +443,7 @@ class TransactionManager:
                         cleaned_count += 1
                         logger.warning(f"Cleaned up stale transaction {tid}")
                     except Exception as e:
-                        logger.error(
-                            f"Failed to cleanup stale transaction {tid}: {str(e)}"
-                        )
+                        logger.error(f"Failed to cleanup stale transaction {tid}: {str(e)}")
 
         return cleaned_count
 
@@ -471,9 +455,7 @@ class TransactionManager:
                 try:
                     transaction.rollback()
                 except Exception as e:
-                    logger.error(
-                        f"Failed to rollback transaction during cleanup: {str(e)}"
-                    )
+                    logger.error(f"Failed to rollback transaction during cleanup: {str(e)}")
             self.active_transactions.clear()
 
         # Close connection pool
@@ -555,9 +537,7 @@ class DatabaseHealthMonitor:
 
             # Update connection metrics
             self._metrics["connection_pool_size"] = len(self.connection_pool._pool)
-            self._metrics["active_connections"] = (
-                self.connection_pool._active_connections
-            )
+            self._metrics["active_connections"] = self.connection_pool._active_connections
 
     def get_health_status(self) -> Dict[str, Any]:
         """
@@ -578,10 +558,7 @@ class DatabaseHealthMonitor:
                 metrics["success_rate"] = 0.0
 
             # Determine health status
-            if (
-                metrics["success_rate"] >= 0.95
-                and metrics["average_response_time"] < 1.0
-            ):
+            if metrics["success_rate"] >= 0.95 and metrics["average_response_time"] < 1.0:
                 status = "healthy"
             elif metrics["success_rate"] >= 0.80:
                 status = "degraded"

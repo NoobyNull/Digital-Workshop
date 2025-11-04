@@ -115,9 +115,7 @@ class DatabaseHealthMonitor:
         self.monitoring_interval = monitoring_interval
 
         # Metrics storage
-        self._metrics_history: Dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=1000)
-        )
+        self._metrics_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self._current_metrics: Dict[str, HealthMetric] = {}
         self._alerts: Dict[str, HealthAlert] = {}
 
@@ -165,9 +163,7 @@ class DatabaseHealthMonitor:
             return
 
         self._monitoring_active = True
-        self._monitoring_thread = threading.Thread(
-            target=self._monitoring_loop, daemon=True
-        )
+        self._monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self._monitoring_thread.start()
         logger.info("Database health monitoring started")
 
@@ -240,9 +236,7 @@ class DatabaseHealthMonitor:
             # Database file size
             if os.path.exists(self.db_path):
                 db_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
-                self._record_metric(
-                    "database.file.size", db_size_mb, MetricType.GAUGE, "MB"
-                )
+                self._record_metric("database.file.size", db_size_mb, MetricType.GAUGE, "MB")
 
         except Exception as e:
             logger.error(f"Failed to collect system metrics: {str(e)}")
@@ -267,19 +261,13 @@ class DatabaseHealthMonitor:
                 cursor.execute("PRAGMA page_size")
                 page_size = cursor.fetchone()[0]
 
-                self._record_metric(
-                    "database.pages.count", page_count, MetricType.GAUGE, "pages"
-                )
-                self._record_metric(
-                    "database.pages.size", page_size, MetricType.GAUGE, "bytes"
-                )
+                self._record_metric("database.pages.count", page_count, MetricType.GAUGE, "pages")
+                self._record_metric("database.pages.size", page_size, MetricType.GAUGE, "bytes")
 
                 # Database statistics
                 cursor.execute("SELECT COUNT(*) FROM models")
                 model_count = cursor.fetchone()[0]
-                self._record_metric(
-                    "database.models.count", model_count, MetricType.GAUGE, "count"
-                )
+                self._record_metric("database.models.count", model_count, MetricType.GAUGE, "count")
 
                 cursor.execute("SELECT COUNT(*) FROM model_metadata")
                 metadata_count = cursor.fetchone()[0]
@@ -363,16 +351,10 @@ class DatabaseHealthMonitor:
         status = HealthStatus.HEALTHY
         threshold = None
 
-        if (
-            metric.threshold_critical is not None
-            and metric.value >= metric.threshold_critical
-        ):
+        if metric.threshold_critical is not None and metric.value >= metric.threshold_critical:
             status = HealthStatus.CRITICAL
             threshold = metric.threshold_critical
-        elif (
-            metric.threshold_warning is not None
-            and metric.value >= metric.threshold_warning
-        ):
+        elif metric.threshold_warning is not None and metric.value >= metric.threshold_warning:
             status = HealthStatus.WARNING
             threshold = metric.threshold_warning
 
@@ -428,9 +410,7 @@ class DatabaseHealthMonitor:
             resolved_alerts = [
                 alert_id
                 for alert_id, alert in self._alerts.items()
-                if alert.resolved
-                and alert.resolved_at
-                and alert.resolved_at < cutoff_time
+                if alert.resolved and alert.resolved_at and alert.resolved_at < cutoff_time
             ]
 
             for alert_id in resolved_alerts:
@@ -508,9 +488,7 @@ class DatabaseHealthMonitor:
                     f"Critical slow query detected: {execution_time:.2f}s - {query[:100]}"
                 )
             elif execution_time > self._thresholds["query_time_warning"]:
-                logger.warning(
-                    f"Slow query detected: {execution_time:.2f}s - {query[:100]}"
-                )
+                logger.warning(f"Slow query detected: {execution_time:.2f}s - {query[:100]}")
 
     def get_current_health_status(self) -> HealthStatus:
         """
@@ -635,9 +613,7 @@ class DatabaseHealthMonitor:
             List of error-prone queries
         """
         with self._lock:
-            queries = [
-                q for q in self._query_performance.values() if q.execution_count > 0
-            ]
+            queries = [q for q in self._query_performance.values() if q.execution_count > 0]
             queries.sort(key=lambda q: q.error_count / q.execution_count, reverse=True)
             return queries[:limit]
 
@@ -726,9 +702,7 @@ class DatabaseHealthMonitor:
             if q.execution_count > 0 and q.error_count / q.execution_count > 0.05
         ]
         if error_prone:
-            recommendations.append(
-                f"Review {len(error_prone)} queries with high error rates (>5%)"
-            )
+            recommendations.append(f"Review {len(error_prone)} queries with high error rates (>5%)")
 
         # Check system resources
         cpu_metric = metrics.get("system.cpu.usage")
@@ -739,9 +713,7 @@ class DatabaseHealthMonitor:
 
         memory_metric = metrics.get("system.memory.usage")
         if memory_metric and memory_metric.value > 80:
-            recommendations.append(
-                "High memory usage detected - consider increasing system memory"
-            )
+            recommendations.append("High memory usage detected - consider increasing system memory")
 
         disk_metric = metrics.get("system.disk.usage")
         if disk_metric and disk_metric.value > 80:

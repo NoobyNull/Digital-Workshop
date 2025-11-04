@@ -68,9 +68,7 @@ class Ui_Viewer3DWidget(object):
 
         self.control_layout.addWidget(self.points_button)
 
-        self.horizontalSpacer = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
-        )
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.control_layout.addItem(self.horizontalSpacer)
 
@@ -98,9 +96,7 @@ class Ui_Viewer3DWidget(object):
 
         self.progress_layout.addWidget(self.progress_bar)
 
-        self.progressSpacer = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
-        )
+        self.progressSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.progress_layout.addItem(self.progressSpacer)
 
@@ -116,18 +112,12 @@ class Ui_Viewer3DWidget(object):
         Viewer3DWidget.setWindowTitle(
             QCoreApplication.translate("Viewer3DWidget", "VTK 3D Model Viewer", None)
         )
-        self.solid_button.setText(
-            QCoreApplication.translate("Viewer3DWidget", "Solid", None)
-        )
+        self.solid_button.setText(QCoreApplication.translate("Viewer3DWidget", "Solid", None))
         self.wireframe_button.setText(
             QCoreApplication.translate("Viewer3DWidget", "Wireframe", None)
         )
-        self.points_button.setText(
-            QCoreApplication.translate("Viewer3DWidget", "Points", None)
-        )
-        self.reset_button.setText(
-            QCoreApplication.translate("Viewer3DWidget", "Reset View", None)
-        )
+        self.points_button.setText(QCoreApplication.translate("Viewer3DWidget", "Points", None))
+        self.reset_button.setText(QCoreApplication.translate("Viewer3DWidget", "Reset View", None))
         self.progress_label.setText(
             QCoreApplication.translate("Viewer3DWidget", "Loading...", None)
         )

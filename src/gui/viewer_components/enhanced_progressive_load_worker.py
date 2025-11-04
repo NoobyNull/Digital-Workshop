@@ -71,9 +71,7 @@ class EnhancedProgressiveLoadWorker(QThread):
                 return
 
             # Model not in cache, need to parse it with detailed progress tracking
-            self.logger.info(
-                "Model not in cache - parsing with detailed progress tracking"
-            )
+            self.logger.info("Model not in cache - parsing with detailed progress tracking")
             self._parse_model_with_progress(file_path_obj, model_cache)
 
         except Exception as e:
@@ -91,9 +89,7 @@ class EnhancedProgressiveLoadWorker(QThread):
         try:
             # Create detailed progress tracker
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
-            tracker = DetailedProgressTracker(
-                triangle_count=0, file_size_mb=file_size_mb
-            )
+            tracker = DetailedProgressTracker(triangle_count=0, file_size_mb=file_size_mb)
 
             # Set callback to emit progress updates
             def emit_progress(progress: float, message: str) -> None:
@@ -142,9 +138,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             model_cache.put(str(file_path), CacheLevel.GEOMETRY_FULL, model)
 
             # Model is now ready for display
-            self.logger.info(
-                f"Model parsing completed: {model.stats.triangle_count} triangles"
-            )
+            self.logger.info(f"Model parsing completed: {model.stats.triangle_count} triangles")
             self.progress_updated.emit(
                 100, f"Model ready: {model.stats.triangle_count:,} triangles"
             )

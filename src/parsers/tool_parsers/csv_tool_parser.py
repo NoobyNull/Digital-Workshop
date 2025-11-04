@@ -167,9 +167,7 @@ class CSVToolParser(BaseToolParser):
                     # Report progress
                     if progress_callback and total_rows > 0:
                         progress = min(row_num / total_rows, 1.0)
-                        progress_callback.report(
-                            progress, f"Parsing tool {row_num}/{total_rows}"
-                        )
+                        progress_callback.report(progress, f"Parsing tool {row_num}/{total_rows}")
 
             self.logger.info(f"Parsed {len(tools)} tools from CSV file")
             return tools

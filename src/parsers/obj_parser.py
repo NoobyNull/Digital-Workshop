@@ -98,9 +98,7 @@ class OBJParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(
-            f"Starting OBJ parsing: {file_path} ({file_path.stat().st_size} bytes)"
-        )
+        self.logger.info(f"Starting OBJ parsing: {file_path} ({file_path.stat().st_size} bytes)")
 
         start_time = time.time()
 
@@ -111,15 +109,11 @@ class OBJParser(BaseParser):
             )
 
             # Convert faces to triangles
-            triangles = self._convert_faces_to_triangles(
-                vertices, normals, texture_coords, faces
-            )
+            triangles = self._convert_faces_to_triangles(vertices, normals, texture_coords, faces)
 
             # Create model statistics
             file_size = file_path.stat().st_size
-            stats = self._create_model_stats(
-                triangles, file_size, ModelFormat.OBJ, start_time
-            )
+            stats = self._create_model_stats(triangles, file_size, ModelFormat.OBJ, start_time)
 
             self.logger.info(
                 f"Successfully parsed OBJ: {len(triangles)} triangles, "
@@ -182,9 +176,7 @@ class OBJParser(BaseParser):
                     # Report progress
                     if progress_callback and i % 1000 == 0:
                         progress = (i / line_count) * 100
-                        progress_callback.report(
-                            progress, f"Parsed {i}/{line_count} lines"
-                        )
+                        progress_callback.report(progress, f"Parsed {i}/{line_count} lines")
 
                     # Strip comments and whitespace
                     line = line.strip()
@@ -373,9 +365,7 @@ class OBJParser(BaseParser):
 
         return triangles
 
-    def _calculate_face_normal(
-        self, v1: Vector3D, v2: Vector3D, v3: Vector3D
-    ) -> Vector3D:
+    def _calculate_face_normal(self, v1: Vector3D, v2: Vector3D, v3: Vector3D) -> Vector3D:
         """
         Calculate face normal from three vertices.
 
@@ -536,9 +526,7 @@ class OBJParser(BaseParser):
                             self.logger.warning(f"Invalid MTL line: {line} - {str(e)}")
                             continue
 
-                self.logger.info(
-                    f"Loaded {len(self.materials)} materials from {mtl_path}"
-                )
+                self.logger.info(f"Loaded {len(self.materials)} materials from {mtl_path}")
 
         except Exception as e:
             self.logger.error(f"Failed to load MTL file {mtl_path}: {str(e)}")

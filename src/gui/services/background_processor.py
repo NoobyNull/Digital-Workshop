@@ -29,9 +29,7 @@ class BackgroundHasher(QThread):
     # Signals for communication with main thread
     hash_progress = Signal(str)  # filename
     model_hashed = Signal(int, str)  # model_id, file_hash
-    duplicate_found = Signal(
-        int, int, str, str
-    )  # new_id, existing_id, new_path, old_path
+    duplicate_found = Signal(int, int, str, str)  # new_id, existing_id, new_path, old_path
     all_complete = Signal()
 
     def __init__(self, main_window: QMainWindow):
@@ -87,9 +85,7 @@ class BackgroundHasher(QThread):
                         self.model_hashed.emit(model["id"], file_hash)
 
                 except Exception as e:
-                    self.main_window.logger.warning(
-                        f"Failed to hash model {model['id']}: {e}"
-                    )
+                    self.main_window.logger.warning(f"Failed to hash model {model['id']}: {e}")
 
             # Signal completion
             self.all_complete.emit()
@@ -132,9 +128,7 @@ class BackgroundProcessor:
     between background tasks and the main UI thread.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the background processor.
 
@@ -176,15 +170,11 @@ class BackgroundProcessor:
             if self.background_hasher.is_paused():
                 # Resume
                 self.background_hasher.resume()
-                self.main_window.statusBar().showMessage(
-                    "Background hashing resumed", 2000
-                )
+                self.main_window.statusBar().showMessage("Background hashing resumed", 2000)
             else:
                 # Pause
                 self.background_hasher.pause()
-                self.main_window.statusBar().showMessage(
-                    "Background hashing paused", 2000
-                )
+                self.main_window.statusBar().showMessage("Background hashing paused", 2000)
         except Exception as e:
             self.logger.error(f"Failed to toggle background hasher: {e}")
 
@@ -243,9 +233,7 @@ class BackgroundProcessor:
     def _on_hashing_complete(self) -> None:
         """Handle all hashing complete."""
         try:
-            self.main_window.statusBar().showMessage(
-                "Background hashing complete", 2000
-            )
+            self.main_window.statusBar().showMessage("Background hashing complete", 2000)
             self.logger.info("Background hashing completed")
         except Exception:
             pass

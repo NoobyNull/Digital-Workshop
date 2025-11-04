@@ -127,9 +127,7 @@ class MetadataRepository:
             raise
 
     @log_function_call(logger)
-    def save_camera_orientation(
-        self, model_id: int, camera_data: Dict[str, float]
-    ) -> bool:
+    def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
         """
         Save camera orientation for a model.
 
@@ -237,9 +235,7 @@ class MetadataRepository:
                 return success
 
         except sqlite3.Error as e:
-            logger.error(
-                f"Failed to increment view count for model {model_id}: {str(e)}"
-            )
+            logger.error(f"Failed to increment view count for model {model_id}: {str(e)}")
             raise
 
     @log_function_call(logger)
@@ -273,9 +269,7 @@ class MetadataRepository:
             raise
 
     @log_function_call(logger)
-    def add_category(
-        self, name: str, color: str = "#CCCCCC", sort_order: int = 0
-    ) -> int:
+    def add_category(self, name: str, color: str = "#CCCCCC", sort_order: int = 0) -> int:
         """
         Add a new category.
 

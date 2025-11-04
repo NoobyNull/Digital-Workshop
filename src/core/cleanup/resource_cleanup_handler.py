@@ -110,9 +110,7 @@ class ResourceCleanupHandler(CleanupHandler):
                         self.logger.debug(f"Removed temporary file: {temp_file}")
                     self._temp_files.remove(temp_file)
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to remove temporary file {temp_file}: {e}"
-                    )
+                    self.logger.warning(f"Failed to remove temporary file {temp_file}: {e}")
 
             self.logger.debug(f"Cleaned up {files_cleaned} temporary files")
             return True
@@ -147,9 +145,7 @@ class ResourceCleanupHandler(CleanupHandler):
     def _cleanup_network_connections(self) -> bool:
         """Cleanup network connections."""
         try:
-            self.logger.debug(
-                f"Cleaning up {len(self._network_connections)} network connections"
-            )
+            self.logger.debug(f"Cleaning up {len(self._network_connections)} network connections")
 
             connections_cleaned = 0
             for connection in self._network_connections.copy():
@@ -172,9 +168,7 @@ class ResourceCleanupHandler(CleanupHandler):
     def _cleanup_tracked_resources(self) -> bool:
         """Cleanup tracked resources."""
         try:
-            self.logger.debug(
-                f"Cleaning up {len(self._tracked_resources)} tracked resources"
-            )
+            self.logger.debug(f"Cleaning up {len(self._tracked_resources)} tracked resources")
 
             resources_cleaned = 0
             for resource in list(self._tracked_resources):
@@ -182,9 +176,7 @@ class ResourceCleanupHandler(CleanupHandler):
                     if hasattr(resource, "cleanup"):
                         resource.cleanup()
                         resources_cleaned += 1
-                        self.logger.debug(
-                            f"Cleaned up tracked resource: {type(resource).__name__}"
-                        )
+                        self.logger.debug(f"Cleaned up tracked resource: {type(resource).__name__}")
                 except Exception as e:
                     self.logger.warning(
                         f"Failed to cleanup tracked resource {type(resource).__name__}: {e}"
@@ -244,9 +236,7 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if handle and hasattr(handle, "close"):
                 self._file_handles.append(handle)
-                self.logger.debug(
-                    f"Registered file handle for cleanup: {type(handle).__name__}"
-                )
+                self.logger.debug(f"Registered file handle for cleanup: {type(handle).__name__}")
             else:
                 self.logger.warning(f"Invalid file handle registration: {type(handle)}")
 
@@ -267,9 +257,7 @@ class ResourceCleanupHandler(CleanupHandler):
                     f"Registered network connection for cleanup: {type(connection).__name__}"
                 )
             else:
-                self.logger.warning(
-                    f"Invalid network connection registration: {type(connection)}"
-                )
+                self.logger.warning(f"Invalid network connection registration: {type(connection)}")
 
         except Exception as e:
             self.logger.warning(f"Failed to register network connection: {e}")
@@ -284,9 +272,7 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if resource:
                 self._tracked_resources.add(resource)
-                self.logger.debug(
-                    f"Registered resource for cleanup: {type(resource).__name__}"
-                )
+                self.logger.debug(f"Registered resource for cleanup: {type(resource).__name__}")
             else:
                 self.logger.warning(f"Invalid resource registration: {type(resource)}")
 

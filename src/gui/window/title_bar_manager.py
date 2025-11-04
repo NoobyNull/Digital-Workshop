@@ -60,9 +60,7 @@ class WindowTitleBarManager(QObject):
 
         return get_logger(__name__)
 
-    def register_window(
-        self, window: QWidget, title_bar: Optional[CustomTitleBar] = None
-    ) -> None:
+    def register_window(self, window: QWidget, title_bar: Optional[CustomTitleBar] = None) -> None:
         """
         Register a window with the manager.
 

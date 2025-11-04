@@ -155,9 +155,7 @@ class GcodePreviewerWidget(QWidget):
 
         self.moves_table = QTableWidget()
         self.moves_table.setColumnCount(7)
-        self.moves_table.setHorizontalHeaderLabels(
-            ["Line", "Type", "X", "Y", "Z", "Feed", "Speed"]
-        )
+        self.moves_table.setHorizontalHeaderLabels(["Line", "Type", "X", "Y", "Z", "Feed", "Speed"])
         self.moves_table.setMaximumHeight(200)
         moves_layout.addWidget(self.moves_table)
 
@@ -272,30 +270,20 @@ class GcodePreviewerWidget(QWidget):
 
     def _connect_signals(self) -> None:
         """Connect animation controller signals."""
-        self.animation_controller.frame_changed.connect(
-            self._on_animation_frame_changed
-        )
-        self.animation_controller.state_changed.connect(
-            self._on_animation_state_changed
-        )
+        self.animation_controller.frame_changed.connect(self._on_animation_frame_changed)
+        self.animation_controller.state_changed.connect(self._on_animation_state_changed)
 
         # Connect timeline signals
         if self.timeline:
             self.timeline.frame_changed.connect(self._on_timeline_frame_changed)
-            self.timeline.playback_requested.connect(
-                self._on_timeline_playback_requested
-            )
+            self.timeline.playback_requested.connect(self._on_timeline_playback_requested)
             self.timeline.pause_requested.connect(self._on_timeline_pause_requested)
             self.timeline.stop_requested.connect(self._on_timeline_stop_requested)
 
         # Connect interactive loader signals
         if self.interactive_loader:
-            self.interactive_loader.loading_complete.connect(
-                self._on_interactive_loader_complete
-            )
-            self.interactive_loader.chunk_loaded.connect(
-                self._on_interactive_loader_chunk_loaded
-            )
+            self.interactive_loader.loading_complete.connect(self._on_interactive_loader_complete)
+            self.interactive_loader.chunk_loaded.connect(self._on_interactive_loader_chunk_loaded)
 
         # Connect editor signals
         if self.editor:
@@ -457,21 +445,13 @@ class GcodePreviewerWidget(QWidget):
             row = self.moves_table.rowCount()
             self.moves_table.insertRow(row)
 
-            move_type = (
-                "Rapid" if move.is_rapid else "Cut" if move.is_cutting else "Arc"
-            )
+            move_type = "Rapid" if move.is_rapid else "Cut" if move.is_cutting else "Arc"
 
             self.moves_table.setItem(row, 0, QTableWidgetItem(str(move.line_number)))
             self.moves_table.setItem(row, 1, QTableWidgetItem(move_type))
-            self.moves_table.setItem(
-                row, 2, QTableWidgetItem(f"{move.x:.2f}" if move.x else "-")
-            )
-            self.moves_table.setItem(
-                row, 3, QTableWidgetItem(f"{move.y:.2f}" if move.y else "-")
-            )
-            self.moves_table.setItem(
-                row, 4, QTableWidgetItem(f"{move.z:.2f}" if move.z else "-")
-            )
+            self.moves_table.setItem(row, 2, QTableWidgetItem(f"{move.x:.2f}" if move.x else "-"))
+            self.moves_table.setItem(row, 3, QTableWidgetItem(f"{move.y:.2f}" if move.y else "-"))
+            self.moves_table.setItem(row, 4, QTableWidgetItem(f"{move.z:.2f}" if move.z else "-"))
             self.moves_table.setItem(
                 row,
                 5,
@@ -480,9 +460,7 @@ class GcodePreviewerWidget(QWidget):
             self.moves_table.setItem(
                 row,
                 6,
-                QTableWidgetItem(
-                    f"{move.spindle_speed:.0f}" if move.spindle_speed else "-"
-                ),
+                QTableWidgetItem(f"{move.spindle_speed:.0f}" if move.spindle_speed else "-"),
             )
 
     def _on_play(self) -> None:
@@ -529,14 +507,10 @@ class GcodePreviewerWidget(QWidget):
     def _on_viz_mode_changed(self, mode: str) -> None:
         """Handle visualization mode change."""
         if mode == "Feed Rate":
-            actor = self.feed_speed_visualizer.create_feed_rate_visualization(
-                self.moves
-            )
+            actor = self.feed_speed_visualizer.create_feed_rate_visualization(self.moves)
             self.visualization_mode = "feed_rate"
         elif mode == "Spindle Speed":
-            actor = self.feed_speed_visualizer.create_spindle_speed_visualization(
-                self.moves
-            )
+            actor = self.feed_speed_visualizer.create_spindle_speed_visualization(self.moves)
             self.visualization_mode = "spindle_speed"
         else:
             self.renderer.render_toolpath(self.moves)
@@ -600,9 +574,7 @@ class GcodePreviewerWidget(QWidget):
             # Validate file still exists
             if not os.path.exists(self.current_file):
                 self.logger.error(f"File no longer exists: {self.current_file}")
-                QMessageBox.warning(
-                    self, "File Not Found", "The G-code file no longer exists."
-                )
+                QMessageBox.warning(self, "File Not Found", "The G-code file no longer exists.")
                 return
 
             # Check file size (limit to 10MB for editor)
@@ -623,15 +595,11 @@ class GcodePreviewerWidget(QWidget):
 
             # Read file with proper error handling
             try:
-                with open(
-                    self.current_file, "r", encoding="utf-8", errors="ignore"
-                ) as f:
+                with open(self.current_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
             except (OSError, IOError) as e:
                 self.logger.error(f"Failed to read file: {e}")
-                QMessageBox.critical(
-                    self, "Read Error", f"Failed to read file: {str(e)}"
-                )
+                QMessageBox.critical(self, "Read Error", f"Failed to read file: {str(e)}")
                 return
 
             # Create editor dialog
@@ -679,9 +647,7 @@ class GcodePreviewerWidget(QWidget):
 
         layers = self.layer_analyzer.get_layers()
         for layer in layers:
-            self.layer_combo.addItem(
-                f"Layer {layer.layer_number} (Z={layer.z_height:.2f})"
-            )
+            self.layer_combo.addItem(f"Layer {layer.layer_number} (Z={layer.z_height:.2f})")
 
         self.layer_combo.blockSignals(False)
 

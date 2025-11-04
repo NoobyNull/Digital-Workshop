@@ -79,9 +79,7 @@ class ThemeManagerWidget(QDialog):
             "Light": "light",
             "Dark": "dark",
         }
-        self._custom_seed_hex = self.tm.get_color(
-            "primary", context="ThemeManagerWidget.init"
-        )
+        self._custom_seed_hex = self.tm.get_color("primary", context="ThemeManagerWidget.init")
 
         # Layout: Splitter (left controls, right preview)
         root = QVBoxLayout(self)
@@ -252,22 +250,16 @@ class ThemeManagerWidget(QDialog):
             initial = QColor(r, g, b)
         except Exception:
             initial = QColor(0, 120, 212)
-        color = QColorDialog.getColor(
-            initial, self, "Select primary color for Custom theme"
-        )
+        color = QColorDialog.getColor(initial, self, "Select primary color for Custom theme")
         if color.isValid():
-            self._custom_seed_hex = (
-                f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
-            )
+            self._custom_seed_hex = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
             self._apply_custom_now()
 
     def _apply_custom_now(self) -> None:
         """Apply derived custom theme."""
         mode_label = self.custom_mode_combo.currentText()
         mode = self._custom_mode_key_by_label.get(mode_label, "auto")
-        self.tm.apply_preset(
-            "custom", custom_mode=mode, base_primary=self._custom_seed_hex
-        )
+        self.tm.apply_preset("custom", custom_mode=mode, base_primary=self._custom_seed_hex)
         self._sync_rows_from_theme()
         self.refresh_preview()
 
@@ -321,9 +313,7 @@ class ThemeManagerWidget(QDialog):
             self.tm.export_theme(p)
             QMessageBox.information(self, "Theme", f"Theme exported to:\n{p}")
         except Exception as exc:
-            QMessageBox.warning(
-                self, "Export Failed", f"Failed to export theme:\n{exc}"
-            )
+            QMessageBox.warning(self, "Export Failed", f"Failed to export theme:\n{exc}")
 
     def _on_import(self) -> None:
         """Import theme from JSON file."""
@@ -338,9 +328,7 @@ class ThemeManagerWidget(QDialog):
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Theme imported successfully.")
         except Exception as exc:
-            QMessageBox.warning(
-                self, "Import Failed", f"Failed to import theme:\n{exc}"
-            )
+            QMessageBox.warning(self, "Import Failed", f"Failed to import theme:\n{exc}")
 
     def _on_apply(self) -> None:
         """Apply theme to application."""

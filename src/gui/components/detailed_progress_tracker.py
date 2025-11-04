@@ -97,9 +97,7 @@ class DetailedProgressTracker:
 
         self._emit_progress(progress, message)
 
-    def update_stage_progress(
-        self, current: int, total: int, message: str = ""
-    ) -> None:
+    def update_stage_progress(self, current: int, total: int, message: str = "") -> None:
         """
         Update progress within current stage.
 

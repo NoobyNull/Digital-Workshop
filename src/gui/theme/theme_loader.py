@@ -77,9 +77,7 @@ class ThemeLoader:
             for theme_name, theme_data in themes[theme_type].items():
                 if "colors" not in theme_data:
                     logger.warning(f"Theme {theme_name} missing colors section")
-                    themes[theme_type][theme_name] = self._create_default_theme(
-                        theme_name
-                    )
+                    themes[theme_type][theme_name] = self._create_default_theme(theme_name)
 
     def _create_default_theme(self, theme_name: str) -> Dict[str, Any]:
         """Create a default theme structure for missing themes."""
@@ -146,9 +144,7 @@ class ThemeLoader:
         variants = self.get_theme_variants(theme_type)
         return variants.get(variant)
 
-    def get_theme_colors(
-        self, theme_type: str, variant: str
-    ) -> Optional[Dict[str, str]]:
+    def get_theme_colors(self, theme_type: str, variant: str) -> Optional[Dict[str, str]]:
         """
         Get color definitions for a specific theme variant.
 
@@ -185,9 +181,7 @@ class ThemeLoader:
         logger.info("Reloading themes from configuration file")
         self._load_themes()
 
-    def add_theme(
-        self, theme_type: str, variant: str, theme_data: Dict[str, Any]
-    ) -> bool:
+    def add_theme(self, theme_type: str, variant: str, theme_data: Dict[str, Any]) -> bool:
         """
         Add a new theme variant.
 

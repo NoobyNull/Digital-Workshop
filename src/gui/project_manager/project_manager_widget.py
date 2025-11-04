@@ -147,9 +147,7 @@ class ProjectManagerWidget(QWidget):
 
             # Check for duplicate
             if self.project_manager.check_duplicate(name):
-                QMessageBox.warning(
-                    self, "Duplicate Project", f"Project '{name}' already exists."
-                )
+                QMessageBox.warning(self, "Duplicate Project", f"Project '{name}' already exists.")
                 return
 
             # Dry run
@@ -177,9 +175,7 @@ class ProjectManagerWidget(QWidget):
                 import_report = self.project_importer.import_project(
                     folder,
                     name,
-                    structure_type=dry_run.structure_analysis.get(
-                        "structure_type", "nested"
-                    ),
+                    structure_type=dry_run.structure_analysis.get("structure_type", "nested"),
                 )
 
                 if import_report.success:

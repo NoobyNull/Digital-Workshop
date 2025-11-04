@@ -78,15 +78,11 @@ class GPUMemoryManager:
             )
         else:
             self.allocation_strategy = MemoryStrategy.CONSERVATIVE
-            self.memory_stats.available_bytes = (
-                2 * 1024 * 1024 * 1024
-            )  # 2GB CPU fallback
+            self.memory_stats.available_bytes = 2 * 1024 * 1024 * 1024  # 2GB CPU fallback
             self.logger.info("GPU memory manager configured for CPU fallback")
 
     @log_function_call
-    def allocate_stl_buffer(
-        self, triangle_count: int, buffer_type: str
-    ) -> Optional[GPUBuffer]:
+    def allocate_stl_buffer(self, triangle_count: int, buffer_type: str) -> Optional[GPUBuffer]:
         """
         Allocate GPU buffer optimized for STL triangle data.
 
@@ -121,14 +117,10 @@ class GPUMemoryManager:
                         self.memory_stats.allocated_bytes,
                     )
 
-                    self.logger.debug(
-                        f"Allocated STL buffer: {buffer_id} ({size_bytes} bytes)"
-                    )
+                    self.logger.debug(f"Allocated STL buffer: {buffer_id} ({size_bytes} bytes)")
                     return buffer
                 else:
-                    self.logger.error(
-                        f"GPU buffer allocation failed for {size_bytes} bytes"
-                    )
+                    self.logger.error(f"GPU buffer allocation failed for {size_bytes} bytes")
                     return None
 
             except Exception as e:
@@ -235,9 +227,7 @@ class GPUMemoryManager:
                 chunk_idx = 0
 
                 while total_processed < triangle_count:
-                    current_chunk_size = min(
-                        chunk_size, triangle_count - total_processed
-                    )
+                    current_chunk_size = min(chunk_size, triangle_count - total_processed)
 
                     # Read chunk data
                     chunk_bytes = file.read(current_chunk_size * 50)
@@ -259,9 +249,7 @@ class GPUMemoryManager:
                     # Progress reporting
                     if progress_callback:
                         progress = total_processed / triangle_count
-                        progress_callback.report(
-                            progress * 100, f"Streaming chunk {chunk_idx}"
-                        )
+                        progress_callback.report(progress * 100, f"Streaming chunk {chunk_idx}")
 
             self.logger.info(f"Successfully streamed {triangle_count} triangles to GPU")
             return output_buffer
@@ -297,9 +285,7 @@ class GPUMemoryManager:
                 # Free GPU memory
                 buffer.free()
 
-                self.logger.debug(
-                    f"Freed GPU buffer: {buffer_id} ({buffer.size_bytes} bytes)"
-                )
+                self.logger.debug(f"Freed GPU buffer: {buffer_id} ({buffer.size_bytes} bytes)")
 
             except Exception as e:
                 self.logger.error(f"Error freeing GPU buffer: {e}")
@@ -316,8 +302,7 @@ class GPUMemoryManager:
             # Calculate fragmentation (simplified)
             if self.memory_stats.allocation_count > 0:
                 avg_allocation = (
-                    self.memory_stats.allocated_bytes
-                    / self.memory_stats.allocation_count
+                    self.memory_stats.allocated_bytes / self.memory_stats.allocation_count
                 )
                 # Fragmentation estimate based on allocation variance
                 self.memory_stats.fragmentation_ratio = min(

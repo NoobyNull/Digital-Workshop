@@ -69,9 +69,7 @@ class MaterialManager:
 
             # Cache hit
             if key in self.texture_cache:
-                self.logger.debug(
-                    f"Texture cache hit for species='{species_name}' size={w}x{h}"
-                )
+                self.logger.debug(f"Texture cache hit for species='{species_name}' size={w}x{h}")
                 return self.texture_cache[key]
 
             # Load from material provider - no fallback to procedural generation
@@ -82,9 +80,7 @@ class MaterialManager:
                 )
                 texture_path = material.get("texture_path")
                 if texture_path:
-                    self.logger.info(
-                        f"Found texture path for '{species_name}': {texture_path}"
-                    )
+                    self.logger.info(f"Found texture path for '{species_name}': {texture_path}")
                     try:
                         # Load actual texture image
                         img = self._load_texture_image(texture_path, (w, h))
@@ -94,17 +90,19 @@ class MaterialManager:
                         self.texture_cache[key] = img
                         return img
                     except Exception as e:
-                        error_msg = f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
+                        error_msg = (
+                            f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
+                        )
                         self.logger.error(error_msg)
                         raise RuntimeError(error_msg)
                 else:
-                    error_msg = f"No texture_path found for '{species_name}' in material: {material}"
+                    error_msg = (
+                        f"No texture_path found for '{species_name}' in material: {material}"
+                    )
                     self.logger.error(error_msg)
                     raise RuntimeError(error_msg)
             else:
-                error_msg = (
-                    f"No material found for '{species_name}' from material provider"
-                )
+                error_msg = f"No material found for '{species_name}' from material provider"
                 self.logger.error(error_msg)
                 raise RuntimeError(error_msg)
 
@@ -170,9 +168,7 @@ class MaterialManager:
                         f"[STL_TEXTURE_DEBUG] Material has texture path: {texture_path}"
                     )
                 else:
-                    self.logger.warning(
-                        f"[STL_TEXTURE_DEBUG] Material has no texture path"
-                    )
+                    self.logger.warning(f"[STL_TEXTURE_DEBUG] Material has no texture path")
             else:
                 self.logger.warning(
                     f"[STL_TEXTURE_DEBUG] No material found for species: {species_name}"
@@ -198,21 +194,16 @@ class MaterialManager:
                     "grain_pattern": "ring",
                     "roughness": 0.5,
                     "specular": mtl_props.get("specular", (0.5, 0.5, 0.5))[0],
-                    "shininess": mtl_props.get("shininess", 50.0)
-                    / 50.0,  # Normalize to [0,1]
+                    "shininess": mtl_props.get("shininess", 50.0) / 50.0,  # Normalize to [0,1]
                 }
-                self.logger.debug(
-                    f"[STL_TEXTURE_DEBUG] Created species from MTL: {species}"
-                )
+                self.logger.debug(f"[STL_TEXTURE_DEBUG] Created species from MTL: {species}")
 
                 # Use the MTL texture directly instead of calling generate_wood_texture
                 # which would fall back to procedural generation
                 try:
                     texture_path = material.get("texture_path")
                     if texture_path:
-                        self.logger.info(
-                            f"[STL_TEXTURE_DEBUG] ===== LOADING MTL TEXTURE ====="
-                        )
+                        self.logger.info(f"[STL_TEXTURE_DEBUG] ===== LOADING MTL TEXTURE =====")
                         self.logger.info(
                             f"[STL_TEXTURE_DEBUG] Loading MTL texture directly from: {texture_path}"
                         )
@@ -256,29 +247,19 @@ class MaterialManager:
                         # Configure texture properties
                         try:
                             texture.InterpolateOn()
-                            self.logger.info(
-                                "[STL_TEXTURE_DEBUG] Enabled texture interpolation"
-                            )
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to enable texture interpolation: {e}"
-                            )
+                            self.logger.warning(f"Failed to enable texture interpolation: {e}")
 
                         try:
                             texture.MipmapOn()
-                            self.logger.info(
-                                "[STL_TEXTURE_DEBUG] Enabled texture mipmaps"
-                            )
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to enable texture mipmaps: {e}"
-                            )
+                            self.logger.warning(f"Failed to enable texture mipmaps: {e}")
 
                         try:
                             texture.RepeatOn()
-                            self.logger.info(
-                                "[STL_TEXTURE_DEBUG] Enabled texture repeat"
-                            )
+                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
                         except Exception as e:
                             self.logger.warning(f"Failed to enable texture repeat: {e}")
 
@@ -288,13 +269,9 @@ class MaterialManager:
                         )
 
                         # Assign texture
-                        self.logger.info(
-                            "[STL_TEXTURE_DEBUG] Assigning MTL texture to actor"
-                        )
+                        self.logger.info("[STL_TEXTURE_DEBUG] Assigning MTL texture to actor")
                         actor.SetTexture(texture)
-                        self.logger.info(
-                            "[STL_TEXTURE_DEBUG] MTL texture assigned to actor"
-                        )
+                        self.logger.info("[STL_TEXTURE_DEBUG] MTL texture assigned to actor")
 
                         # Configure material/shading - SPECIAL HANDLING FOR STL TEXTURES
                         self.logger.info(
@@ -613,9 +590,7 @@ class MaterialManager:
         vtk_image.GetPointData().SetScalars(vtk_arr)
         return vtk_image
 
-    def _apply_material_properties(
-        self, actor: vtk.vtkActor, species: Dict[str, Any]
-    ) -> None:
+    def _apply_material_properties(self, actor: vtk.vtkActor, species: Dict[str, Any]) -> None:
         """
         Configure actor property using roughness and specular. Use PBR when available.
         """
@@ -662,9 +637,7 @@ class MaterialManager:
         appropriate material properties for lighting and shininess.
         """
         try:
-            self.logger.info(
-                "[STL_TEXTURE_DEBUG] Applying texture-safe material properties"
-            )
+            self.logger.info("[STL_TEXTURE_DEBUG] Applying texture-safe material properties")
 
             roughness = float(species.get("roughness", 0.5))
             roughness = max(0.0, min(1.0, roughness))
@@ -679,9 +652,7 @@ class MaterialManager:
             # will tint/override the texture.
             prop.SetAmbientColor(1.0, 1.0, 1.0)  # White ambient
             prop.SetDiffuseColor(1.0, 1.0, 1.0)  # White diffuse - KEY FIX!
-            prop.SetSpecularColor(
-                specular, specular, specular
-            )  # Use specular from material
+            prop.SetSpecularColor(specular, specular, specular)  # Use specular from material
 
             # Set shininess from material (with VTK compatibility check)
             shininess = float(species.get("shininess", 5.0))
@@ -729,9 +700,7 @@ class MaterialManager:
         except Exception:
             pass
 
-    def _load_texture_image(
-        self, texture_path: Path, size: Tuple[int, int]
-    ) -> np.ndarray:
+    def _load_texture_image(self, texture_path: Path, size: Tuple[int, int]) -> np.ndarray:
         """
         Load and resize a texture image from file.
 
@@ -831,9 +800,7 @@ class MaterialManager:
                 return False
 
             num_points = points.GetNumberOfPoints()
-            self.logger.info(
-                f"[STL_TEXTURE_DEBUG] Generating UVs for {num_points} points"
-            )
+            self.logger.info(f"[STL_TEXTURE_DEBUG] Generating UVs for {num_points} points")
 
             # Create UV coordinates array
             uv_coords = vtk.vtkFloatArray()
@@ -881,9 +848,7 @@ class MaterialManager:
             # Update the mapper input
             mapper.SetInputData(input_data)
 
-            self.logger.info(
-                "[STL_TEXTURE_DEBUG] Successfully generated UV coordinates"
-            )
+            self.logger.info("[STL_TEXTURE_DEBUG] Successfully generated UV coordinates")
             return True
 
         except Exception as e:

@@ -77,9 +77,7 @@ class ThumbnailResizer:
             for size_name, (width, height) in sizes.items():
                 try:
                     # Resize using high-quality resampling
-                    resized = source_image.resize(
-                        (width, height), Image.Resampling.LANCZOS
-                    )
+                    resized = source_image.resize((width, height), Image.Resampling.LANCZOS)
 
                     # Save with size suffix in filename
                     output_path = output_dir / f"{file_hash}_{width}.png"
@@ -89,9 +87,7 @@ class ThumbnailResizer:
                     self.logger.debug(f"Saved {size_name} thumbnail: {output_path}")
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Failed to resize to {size_name} ({width}x{height}): {e}"
-                    )
+                    self.logger.error(f"Failed to resize to {size_name} ({width}x{height}): {e}")
 
             return output_paths
 
@@ -99,9 +95,7 @@ class ThumbnailResizer:
             self.logger.error(f"Failed to resize thumbnails: {e}", exc_info=True)
             return output_paths
 
-    def get_thumbnail_path(
-        self, file_hash: str, output_dir: Path, size: str = "xlarge"
-    ) -> Path:
+    def get_thumbnail_path(self, file_hash: str, output_dir: Path, size: str = "xlarge") -> Path:
         """
         Get the path for a specific thumbnail size.
 
@@ -120,9 +114,7 @@ class ThumbnailResizer:
         width, height = self.SIZES[size]
         return output_dir / f"{file_hash}_{width}.png"
 
-    def get_all_thumbnail_paths(
-        self, file_hash: str, output_dir: Path
-    ) -> Dict[str, Path]:
+    def get_all_thumbnail_paths(self, file_hash: str, output_dir: Path) -> Dict[str, Path]:
         """
         Get paths for all available thumbnail sizes.
 

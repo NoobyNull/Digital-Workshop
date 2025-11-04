@@ -128,13 +128,10 @@ class DynamicTabManager:
                 try:
                     # Determine if we should use short name
                     should_use_short = (
-                        available_width < 100
-                        or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
+                        available_width < 100 or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
                     )
 
-                    new_name = (
-                        config.short_name if should_use_short else config.long_name
-                    )
+                    new_name = config.short_name if should_use_short else config.long_name
 
                     # Only update if name changed
                     if new_name != config.current_name:

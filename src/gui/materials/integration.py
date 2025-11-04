@@ -26,9 +26,7 @@ class MaterialLightingIntegrator:
     and the coordination between materials and lighting systems.
     """
 
-    def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
         """
         Initialize the material lighting integrator.
 
@@ -43,10 +41,7 @@ class MaterialLightingIntegrator:
     def toggle_lighting_panel(self) -> None:
         """Show/hide the floating lighting control dialog."""
         try:
-            if (
-                hasattr(self.main_window, "lighting_panel")
-                and self.main_window.lighting_panel
-            ):
+            if hasattr(self.main_window, "lighting_panel") and self.main_window.lighting_panel:
                 if self.main_window.lighting_panel.isVisible():
                     self.main_window.lighting_panel.hide()
                 else:
@@ -58,10 +53,7 @@ class MaterialLightingIntegrator:
 
     def update_light_position(self, x: float, y: float, z: float) -> None:
         """Update light position."""
-        if (
-            hasattr(self.main_window, "lighting_manager")
-            and self.main_window.lighting_manager
-        ):
+        if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
             try:
                 self.main_window.lighting_manager.update_position(x, y, z)
                 self._save_lighting_settings()
@@ -70,10 +62,7 @@ class MaterialLightingIntegrator:
 
     def update_light_color(self, r: float, g: float, b: float) -> None:
         """Update light color."""
-        if (
-            hasattr(self.main_window, "lighting_manager")
-            and self.main_window.lighting_manager
-        ):
+        if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
             try:
                 self.main_window.lighting_manager.update_color(r, g, b)
                 self._save_lighting_settings()
@@ -82,10 +71,7 @@ class MaterialLightingIntegrator:
 
     def update_light_intensity(self, value: float) -> None:
         """Update light intensity."""
-        if (
-            hasattr(self.main_window, "lighting_manager")
-            and self.main_window.lighting_manager
-        ):
+        if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
             try:
                 self.main_window.lighting_manager.update_intensity(value)
                 self._save_lighting_settings()
@@ -94,10 +80,7 @@ class MaterialLightingIntegrator:
 
     def update_light_cone_angle(self, angle: float) -> None:
         """Update light cone angle."""
-        if (
-            hasattr(self.main_window, "lighting_manager")
-            and self.main_window.lighting_manager
-        ):
+        if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
             try:
                 self.main_window.lighting_manager.update_cone_angle(angle)
                 self._save_lighting_settings()
@@ -125,15 +108,11 @@ class MaterialLightingIntegrator:
             # Check if this material is already applied to prevent duplicates
             current_material = getattr(self, "_current_applied_material", None)
             if current_material == species_name:
-                self.logger.debug(
-                    f"Material '{species_name}' already applied, skipping"
-                )
+                self.logger.debug(f"Material '{species_name}' already applied, skipping")
                 return
 
             # Get current model to determine format
-            current_model = getattr(
-                self.main_window.viewer_widget, "current_model", None
-            )
+            current_model = getattr(self.main_window.viewer_widget, "current_model", None)
             if not current_model:
                 self.logger.warning("No current model information available")
                 return
@@ -163,9 +142,7 @@ class MaterialLightingIntegrator:
                         self.main_window.statusBar().showMessage(
                             f"Applied STL material properties: {species_name}", 2000
                         )
-                    self.logger.info(
-                        f"Applied STL material properties for '{species_name}'"
-                    )
+                    self.logger.info(f"Applied STL material properties for '{species_name}'")
                 else:
                     # STL files: Apply full texture without UV mapping
                     ok = self.main_window.material_manager.apply_material_to_actor(
@@ -177,9 +154,7 @@ class MaterialLightingIntegrator:
                                 f"Applied STL material with texture: {species_name}",
                                 2000,
                             )
-                        self.logger.info(
-                            f"Applied STL material with texture for '{species_name}'"
-                        )
+                        self.logger.info(f"Applied STL material with texture for '{species_name}'")
                     else:
                         if hasattr(self.main_window, "statusBar"):
                             self.main_window.statusBar().showMessage(
@@ -196,9 +171,7 @@ class MaterialLightingIntegrator:
                         self.main_window.statusBar().showMessage(
                             f"Applied OBJ material with texture: {species_name}", 2000
                         )
-                    self.logger.info(
-                        f"Applied OBJ material with texture for '{species_name}'"
-                    )
+                    self.logger.info(f"Applied OBJ material with texture for '{species_name}'")
                 else:
                     if hasattr(self.main_window, "statusBar"):
                         self.main_window.statusBar().showMessage(
@@ -239,9 +212,7 @@ class MaterialLightingIntegrator:
             )
 
             if not material or not material.get("mtl_path"):
-                self.logger.warning(
-                    f"No MTL file found for STL material '{species_name}'"
-                )
+                self.logger.warning(f"No MTL file found for STL material '{species_name}'")
                 return
 
             # Parse MTL file directly using VTK approach
@@ -260,9 +231,7 @@ class MaterialLightingIntegrator:
             # Apply colors and properties
             prop.SetColor(*kd_color)
             prop.SetSpecularColor(*ks_color)
-            prop.SetSpecular(
-                0.5 if sum(ks_color) > 0 else 0.0
-            )  # Enable specular if color is set
+            prop.SetSpecular(0.5 if sum(ks_color) > 0 else 0.0)  # Enable specular if color is set
             prop.SetSpecularPower(ns_value)
             prop.SetOpacity(d_value)
 
@@ -275,9 +244,7 @@ class MaterialLightingIntegrator:
             )
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to apply MTL properties to STL for '{species_name}': {e}"
-            )
+            self.logger.error(f"Failed to apply MTL properties to STL for '{species_name}': {e}")
             # Fallback to default material
             try:
                 prop = actor.GetProperty()
@@ -332,10 +299,7 @@ class MaterialLightingIntegrator:
         """Save current lighting settings to QSettings."""
         try:
             settings = QSettings()
-            if (
-                hasattr(self.main_window, "lighting_manager")
-                and self.main_window.lighting_manager
-            ):
+            if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
                 props = self.main_window.lighting_manager.get_properties()
                 settings.setValue("lighting/position_x", float(props["position"][0]))
                 settings.setValue("lighting/position_y", float(props["position"][1]))
@@ -344,9 +308,7 @@ class MaterialLightingIntegrator:
                 settings.setValue("lighting/color_g", float(props["color"][1]))
                 settings.setValue("lighting/color_b", float(props["color"][2]))
                 settings.setValue("lighting/intensity", float(props["intensity"]))
-                settings.setValue(
-                    "lighting/cone_angle", float(props.get("cone_angle", 30.0))
-                )
+                settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 self.logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings: {e}")

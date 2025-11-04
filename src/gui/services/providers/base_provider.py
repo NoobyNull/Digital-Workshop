@@ -25,9 +25,7 @@ class BaseProvider(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
-    def analyze_image(
-        self, image_path: str, prompt: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def analyze_image(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze an image and return structured results.
 

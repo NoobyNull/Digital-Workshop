@@ -47,9 +47,7 @@ class CameraController:
         elif event.button() == Qt.RightButton:
             self.is_zooming = True
 
-    def handle_mouse_move(
-        self, event: QMouseEvent, viewport_size: Tuple[int, int]
-    ) -> None:
+    def handle_mouse_move(self, event: QMouseEvent, viewport_size: Tuple[int, int]) -> None:
         """Handle mouse move event."""
         current_pos = (event.x(), event.y())
         delta_x = current_pos[0] - self.last_mouse_pos[0]
@@ -101,9 +99,7 @@ class CameraController:
         self.camera.Elevation(elevation)
         self.camera.OrthogonalizeViewUp()
 
-    def _pan_camera(
-        self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]
-    ) -> None:
+    def _pan_camera(self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]) -> None:
         """Pan camera in the view plane."""
         # Get camera parameters
         focal_point = self.camera.GetFocalPoint()

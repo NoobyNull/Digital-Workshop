@@ -77,9 +77,7 @@ class CacheStats:
 class MemoryCache:
     """High-performance in-memory cache with LRU eviction."""
 
-    def __init__(
-        self, max_size_mb: int = 100, strategy: CacheStrategy = CacheStrategy.LRU
-    ):
+    def __init__(self, max_size_mb: int = 100, strategy: CacheStrategy = CacheStrategy.LRU):
         """
         Initialize memory cache.
 
@@ -546,9 +544,7 @@ class DiskCache:
         """Get cache statistics."""
         with self._lock:
             # Count cache files
-            file_count = sum(
-                1 for f in os.listdir(self.cache_dir) if f.endswith(".cache")
-            )
+            file_count = sum(1 for f in os.listdir(self.cache_dir) if f.endswith(".cache"))
 
             return CacheStats(
                 hits=0,  # Disk cache doesn't track hits/misses separately
@@ -564,9 +560,7 @@ class DiskCache:
 class DatabaseCacheManager:
     """Comprehensive database cache manager with multi-level caching."""
 
-    def __init__(
-        self, db_path: str, memory_cache_mb: int = 100, disk_cache_mb: int = 500
-    ):
+    def __init__(self, db_path: str, memory_cache_mb: int = 100, disk_cache_mb: int = 500):
         """
         Initialize database cache manager.
 
@@ -682,9 +676,7 @@ class DatabaseCacheManager:
         result = self.disk_cache.get(cache_key)
         if result is not None:
             # Promote to memory cache
-            self.memory_cache.put(
-                cache_key, result, ttl_seconds=self.default_ttl["model_metadata"]
-            )
+            self.memory_cache.put(cache_key, result, ttl_seconds=self.default_ttl["model_metadata"])
             return result
 
         return None
@@ -700,16 +692,10 @@ class DatabaseCacheManager:
         cache_key = self._generate_cache_key("model_metadata", model_id)
 
         # Cache in both memory and disk
-        self.memory_cache.put(
-            cache_key, metadata, ttl_seconds=self.default_ttl["model_metadata"]
-        )
-        self.disk_cache.put(
-            cache_key, metadata, ttl_seconds=self.default_ttl["model_metadata"]
-        )
+        self.memory_cache.put(cache_key, metadata, ttl_seconds=self.default_ttl["model_metadata"])
+        self.disk_cache.put(cache_key, metadata, ttl_seconds=self.default_ttl["model_metadata"])
 
-    def get_search_results(
-        self, query: str, filters: Dict[str, Any] = None
-    ) -> Optional[List[str]]:
+    def get_search_results(self, query: str, filters: Dict[str, Any] = None) -> Optional[List[str]]:
         """
         Get cached search results.
 
@@ -734,9 +720,7 @@ class DatabaseCacheManager:
         result = self.disk_cache.get(cache_key)
         if result is not None:
             # Promote to memory cache
-            self.memory_cache.put(
-                cache_key, result, ttl_seconds=self.default_ttl["search_results"]
-            )
+            self.memory_cache.put(cache_key, result, ttl_seconds=self.default_ttl["search_results"])
             return result
 
         return None
@@ -758,16 +742,10 @@ class DatabaseCacheManager:
         cache_key = self._generate_cache_key("search_results", query, **filters)
 
         # Cache in both memory and disk
-        self.memory_cache.put(
-            cache_key, results, ttl_seconds=self.default_ttl["search_results"]
-        )
-        self.disk_cache.put(
-            cache_key, results, ttl_seconds=self.default_ttl["search_results"]
-        )
+        self.memory_cache.put(cache_key, results, ttl_seconds=self.default_ttl["search_results"])
+        self.disk_cache.put(cache_key, results, ttl_seconds=self.default_ttl["search_results"])
 
-    def get_query_results(
-        self, query: str, params: Tuple = None
-    ) -> Optional[List[tuple]]:
+    def get_query_results(self, query: str, params: Tuple = None) -> Optional[List[tuple]]:
         """
         Get cached query results.
 
@@ -789,16 +767,12 @@ class DatabaseCacheManager:
         result = self.disk_cache.get(cache_key)
         if result is not None:
             # Promote to memory cache
-            self.memory_cache.put(
-                cache_key, result, ttl_seconds=self.default_ttl["query_results"]
-            )
+            self.memory_cache.put(cache_key, result, ttl_seconds=self.default_ttl["query_results"])
             return result
 
         return None
 
-    def cache_query_results(
-        self, query: str, results: List[tuple], params: Tuple = None
-    ) -> None:
+    def cache_query_results(self, query: str, results: List[tuple], params: Tuple = None) -> None:
         """
         Cache query results.
 
@@ -810,12 +784,8 @@ class DatabaseCacheManager:
         cache_key = self._generate_cache_key("query_results", query, params)
 
         # Cache in both memory and disk
-        self.memory_cache.put(
-            cache_key, results, ttl_seconds=self.default_ttl["query_results"]
-        )
-        self.disk_cache.put(
-            cache_key, results, ttl_seconds=self.default_ttl["query_results"]
-        )
+        self.memory_cache.put(cache_key, results, ttl_seconds=self.default_ttl["query_results"])
+        self.disk_cache.put(cache_key, results, ttl_seconds=self.default_ttl["query_results"])
 
     def get_thumbnail(self, model_id: str, size: str = "medium") -> Optional[bytes]:
         """
@@ -839,16 +809,12 @@ class DatabaseCacheManager:
         result = self.disk_cache.get(cache_key)
         if result is not None:
             # Promote to memory cache
-            self.memory_cache.put(
-                cache_key, result, ttl_seconds=self.default_ttl["thumbnails"]
-            )
+            self.memory_cache.put(cache_key, result, ttl_seconds=self.default_ttl["thumbnails"])
             return result
 
         return None
 
-    def cache_thumbnail(
-        self, model_id: str, thumbnail_data: bytes, size: str = "medium"
-    ) -> None:
+    def cache_thumbnail(self, model_id: str, thumbnail_data: bytes, size: str = "medium") -> None:
         """
         Cache thumbnail.
 
@@ -860,12 +826,8 @@ class DatabaseCacheManager:
         cache_key = self._generate_cache_key("thumbnail", model_id, size)
 
         # Cache in both memory and disk
-        self.memory_cache.put(
-            cache_key, thumbnail_data, ttl_seconds=self.default_ttl["thumbnails"]
-        )
-        self.disk_cache.put(
-            cache_key, thumbnail_data, ttl_seconds=self.default_ttl["thumbnails"]
-        )
+        self.memory_cache.put(cache_key, thumbnail_data, ttl_seconds=self.default_ttl["thumbnails"])
+        self.disk_cache.put(cache_key, thumbnail_data, ttl_seconds=self.default_ttl["thumbnails"])
 
     def invalidate_model_cache(self, model_id: str) -> int:
         """
@@ -934,8 +896,7 @@ class DatabaseCacheManager:
                 "entries": disk_stats.entries_count,
                 "disk_usage_mb": disk_stats.disk_usage_mb,
             },
-            "total_memory_usage_mb": memory_stats.memory_usage_mb
-            + disk_stats.disk_usage_mb,
+            "total_memory_usage_mb": memory_stats.memory_usage_mb + disk_stats.disk_usage_mb,
             "overall_hit_rate": memory_stats.hit_rate,  # Memory cache hit rate as overall indicator
         }
 

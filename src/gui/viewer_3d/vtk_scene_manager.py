@@ -47,20 +47,14 @@ class VTKSceneManager:
             self.grid_visible = settings.value(
                 "viewer/grid_visible", config.grid_visible, type=bool
             )
-            self.grid_color = settings.value(
-                "viewer/grid_color", config.grid_color, type=str
-            )
-            self.grid_size = settings.value(
-                "viewer/grid_size", config.grid_size, type=float
-            )
+            self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
 
             # Ground settings
             self.ground_visible = settings.value(
                 "viewer/ground_visible", config.ground_visible, type=bool
             )
-            self.ground_color = settings.value(
-                "viewer/ground_color", config.ground_color, type=str
-            )
+            self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
             self.ground_offset = settings.value(
                 "viewer/ground_offset", config.ground_offset, type=float
             )
@@ -76,9 +70,7 @@ class VTKSceneManager:
                 "viewer/enable_gradient", config.enable_gradient, type=bool
             )
         except Exception as e:
-            logger.warning(
-                f"Failed to load grid/ground/gradient settings from QSettings: {e}"
-            )
+            logger.warning(f"Failed to load grid/ground/gradient settings from QSettings: {e}")
             self.grid_visible = True
             self.grid_color = vtk_rgb("grid")
             self.grid_size = 10.0
@@ -186,9 +178,7 @@ class VTKSceneManager:
             try:
                 threads = max(2, int((_mp.cpu_count() or 2) * 0.5))
                 vtk.vtkMultiThreader.SetGlobalDefaultNumberOfThreads(threads)
-                logger.info(
-                    f"VTK thread count set to {threads} (fallback conservative)"
-                )
+                logger.info(f"VTK thread count set to {threads} (fallback conservative)")
             except Exception:
                 pass
 
@@ -238,9 +228,7 @@ class VTKSceneManager:
                 self.camera_widget.SetParentRenderer(self.renderer)
 
                 try:
-                    self.camera_widget.SetViewportCorner(
-                        vtk.vtkCameraOrientationWidget.UpperRight
-                    )
+                    self.camera_widget.SetViewportCorner(vtk.vtkCameraOrientationWidget.UpperRight)
                 except Exception:
                     pass
 
@@ -331,9 +319,7 @@ class VTKSceneManager:
             self.ground_actor.SetVisibility(self.ground_visible)
             logger.debug(f"Ground plane visibility toggled to {self.ground_visible}")
 
-    def update_grid(
-        self, radius: float, center_x: float = 0.0, center_y: float = 0.0
-    ) -> None:
+    def update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
         """Update grid visualization using config settings."""
         # Remove existing grid if present
         if self.grid_actor and self.renderer:
@@ -467,9 +453,7 @@ class VTKSceneManager:
             if cleanup_success:
                 logger.info("Enhanced VTK scene cleanup completed successfully")
             else:
-                logger.info(
-                    "Enhanced VTK scene cleanup completed with context loss (normal)"
-                )
+                logger.info("Enhanced VTK scene cleanup completed with context loss (normal)")
 
             # Clear local references
             self.grid_actor = None
@@ -539,20 +523,14 @@ class VTKSceneManager:
             self.grid_visible = settings.value(
                 "viewer/grid_visible", config.grid_visible, type=bool
             )
-            self.grid_color = settings.value(
-                "viewer/grid_color", config.grid_color, type=str
-            )
-            self.grid_size = settings.value(
-                "viewer/grid_size", config.grid_size, type=float
-            )
+            self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
 
             # Reload ground settings
             self.ground_visible = settings.value(
                 "viewer/ground_visible", config.ground_visible, type=bool
             )
-            self.ground_color = settings.value(
-                "viewer/ground_color", config.ground_color, type=str
-            )
+            self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
             self.ground_offset = settings.value(
                 "viewer/ground_offset", config.ground_offset, type=float
             )
@@ -586,9 +564,7 @@ class VTKSceneManager:
             logger.info("Viewer settings reloaded from QSettings and applied")
 
         except Exception as e:
-            logger.error(
-                f"Failed to reload settings from QSettings: {e}", exc_info=True
-            )
+            logger.error(f"Failed to reload settings from QSettings: {e}", exc_info=True)
 
     def update_gradient_colors(
         self,

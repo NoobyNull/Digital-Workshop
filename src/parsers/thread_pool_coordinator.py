@@ -93,9 +93,7 @@ class ThreadPoolCoordinator:
                     self.logger.info("Parsing cancelled before submitting all chunks")
                     break
 
-                future = executor.submit(
-                    self._process_chunk_worker, chunk, cancellation_token
-                )
+                future = executor.submit(self._process_chunk_worker, chunk, cancellation_token)
                 futures[future] = chunk
 
             # Collect results as they complete
@@ -110,9 +108,7 @@ class ThreadPoolCoordinator:
 
                     chunk = futures[future]
                     try:
-                        result = future.result(
-                            timeout=30
-                        )  # 30 second timeout per chunk
+                        result = future.result(timeout=30)  # 30 second timeout per chunk
                         results.append(result)
                         completed_count += 1
 
@@ -172,9 +168,7 @@ class ThreadPoolCoordinator:
             # Direct chunk processing - no parser instance needed
 
             # Process the chunk
-            triangles = ThreadPoolCoordinator._parse_chunk_data_static(
-                chunk, cancellation_token
-            )
+            triangles = ThreadPoolCoordinator._parse_chunk_data_static(chunk, cancellation_token)
 
             processing_time = time.time() - start_time
 

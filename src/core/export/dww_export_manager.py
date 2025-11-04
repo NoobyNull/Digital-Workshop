@@ -112,22 +112,16 @@ class DWWExportManager:
                             if thumbnail_path and Path(thumbnail_path).exists():
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
-                                    dww_archive.write(
-                                        thumbnail_path, arcname=thumb_arcname
-                                    )
+                                    dww_archive.write(thumbnail_path, arcname=thumb_arcname)
                                 except Exception as e:
                                     self.logger.debug(f"Failed to add thumbnail: {e}")
 
                         if progress_callback:
                             progress = (i + 1) / total_items
-                            progress_callback(
-                                progress, f"Exported {i + 1}/{total_items} files"
-                            )
+                            progress_callback(progress, f"Exported {i + 1}/{total_items} files")
 
                     except Exception as e:
-                        self.logger.error(
-                            f"Failed to add file to archive: {file_path}: {e}"
-                        )
+                        self.logger.error(f"Failed to add file to archive: {file_path}: {e}")
                         continue
 
                 # Add metadata if requested
@@ -201,22 +195,14 @@ class DWWExportManager:
                         if Path(f.get("file_path")).exists()
                         else 0
                     ),
-                    "type": (
-                        Path(f.get("file_path")).suffix.lower()
-                        if f.get("file_path")
-                        else ""
-                    ),
+                    "type": (Path(f.get("file_path")).suffix.lower() if f.get("file_path") else ""),
                     "thumbnail": f.get("thumbnail_path") is not None,
                 }
                 for f in files
                 if f.get("file_path") and Path(f.get("file_path")).exists()
             ],
             "file_count": len(
-                [
-                    f
-                    for f in files
-                    if f.get("file_path") and Path(f.get("file_path")).exists()
-                ]
+                [f for f in files if f.get("file_path") and Path(f.get("file_path")).exists()]
             ),
         }
 
@@ -286,9 +272,7 @@ class DWWExportManager:
                     sort_keys=True,
                 )
 
-                calculated_hash = hashlib.sha256(
-                    (combined_data + salt).encode()
-                ).hexdigest()
+                calculated_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
 
                 if calculated_hash == stored_hash:
                     return True, "DWW file integrity verified successfully"

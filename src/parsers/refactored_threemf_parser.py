@@ -36,7 +36,6 @@ class ThreeMFParseError(ParseError):
     """Custom exception for 3MF parsing errors."""
 
 
-
 @dataclass
 class ThreeMFComponent:
     """Component definition in 3MF."""
@@ -279,9 +278,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                         x = float(vertex_elem.get("x", "0"))
                         y = float(vertex_elem.get("y", "0"))
                         z = float(vertex_elem.get("z", "0"))
-                        vertices.append(
-                            (x, y, z)
-                        )  # Store as tuple for memory efficiency
+                        vertices.append((x, y, z))  # Store as tuple for memory efficiency
 
                 # Parse triangles
                 triangles_elem = obj_elem.find("3mf:triangles", ns)
@@ -297,9 +294,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 if components_elem is not None:
                     for component_elem in components_elem.findall("3mf:component", ns):
                         comp_object_id = int(component_elem.get("objectid", "0"))
-                        transform = self._parse_transform(
-                            component_elem.get("transform", "")
-                        )
+                        transform = self._parse_transform(component_elem.get("transform", ""))
                         components.append(ThreeMFComponent(comp_object_id, transform))
 
                 # Create object
@@ -389,9 +384,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(
-                    f"Invalid transform: {transform_str}, using identity"
-                )
+                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
                 return [
                     1.0,
                     0.0,
@@ -414,9 +407,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return values
 
         except ValueError:
-            self.logger.warning(
-                f"Invalid transform values: {transform_str}, using identity"
-            )
+            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
             return [
                 1.0,
                 0.0,
@@ -452,9 +443,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return triangles
 
-    def _generate_triangles_for_item(
-        self, build_item: ThreeMFBuildItem
-    ) -> List[Dict[str, Any]]:
+    def _generate_triangles_for_item(self, build_item: ThreeMFBuildItem) -> List[Dict[str, Any]]:
         """
         Generate triangles for a specific build item.
 
@@ -548,9 +537,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return triangles
 
         # Combine transforms
-        combined_transform = self._multiply_matrices(
-            parent_transform, component.transform
-        )
+        combined_transform = self._multiply_matrices(parent_transform, component.transform)
 
         # Process triangles
         for triangle_indices in comp_obj.triangles:
@@ -588,9 +575,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return triangles
 
-    def _multiply_matrices(
-        self, matrix_a: List[float], matrix_b: List[float]
-    ) -> List[float]:
+    def _multiply_matrices(self, matrix_a: List[float], matrix_b: List[float]) -> List[float]:
         """
         Multiply two 4x4 matrices.
 
@@ -631,30 +616,10 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             w = 1.0
 
             # Apply transformation
-            new_x = (
-                transform[0] * x
-                + transform[1] * y
-                + transform[2] * z
-                + transform[3] * w
-            )
-            new_y = (
-                transform[4] * x
-                + transform[5] * y
-                + transform[6] * z
-                + transform[7] * w
-            )
-            new_z = (
-                transform[8] * x
-                + transform[9] * y
-                + transform[10] * z
-                + transform[11] * w
-            )
-            new_w = (
-                transform[12] * x
-                + transform[13] * y
-                + transform[14] * z
-                + transform[15] * w
-            )
+            new_x = transform[0] * x + transform[1] * y + transform[2] * z + transform[3] * w
+            new_y = transform[4] * x + transform[5] * y + transform[6] * z + transform[7] * w
+            new_z = transform[8] * x + transform[9] * y + transform[10] * z + transform[11] * w
+            new_w = transform[12] * x + transform[13] * y + transform[14] * z + transform[15] * w
 
             # Convert back to 3D coordinates
             if new_w != 0:
@@ -766,9 +731,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                         root = ET.fromstring(content)
 
                         # Define namespace
-                        ns = {
-                            "3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
-                        }
+                        ns = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 
                         # Count objects
                         object_count = len(root.findall(".//3mf:object", ns))
@@ -777,15 +740,11 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                         for obj_elem in root.findall(".//3mf:object", ns):
                             vertices_elem = obj_elem.find("3mf:vertices", ns)
                             if vertices_elem is not None:
-                                vertex_count += len(
-                                    vertices_elem.findall("3mf:vertex", ns)
-                                )
+                                vertex_count += len(vertices_elem.findall("3mf:vertex", ns))
 
                             triangles_elem = obj_elem.find("3mf:triangles", ns)
                             if triangles_elem is not None:
-                                triangle_count += len(
-                                    triangles_elem.findall("3mf:triangle", ns)
-                                )
+                                triangle_count += len(triangles_elem.findall("3mf:triangle", ns))
 
             # Basic statistics
             stats = {

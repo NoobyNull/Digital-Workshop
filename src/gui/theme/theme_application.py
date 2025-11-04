@@ -114,9 +114,7 @@ class ThemeApplication(QObject):
         # Qt-material availability
         self._qt_material_available = self._check_qt_material_availability()
 
-        logger.info(
-            f"ThemeApplication initialized: qt_material={self._qt_material_available}"
-        )
+        logger.info(f"ThemeApplication initialized: qt_material={self._qt_material_available}")
 
     def apply_theme(self, theme: str, variant: str = "blue") -> bool:
         """
@@ -182,9 +180,7 @@ class ThemeApplication(QObject):
                 self._attempt_rollback()
 
             self.application_failed.emit(str(e), "theme_application")
-            self.application_completed.emit(
-                False, f"Theme application failed: {str(e)}"
-            )
+            self.application_completed.emit(False, f"Theme application failed: {str(e)}")
             return False
 
         finally:
@@ -231,13 +227,9 @@ class ThemeApplication(QObject):
             Dictionary containing application metrics
         """
         with QMutexLocker(self._application_mutex):
-            total_applications = (
-                self._successful_applications + self._failed_applications
-            )
+            total_applications = self._successful_applications + self._failed_applications
             success_rate = (
-                self._successful_applications / total_applications
-                if total_applications > 0
-                else 0
+                self._successful_applications / total_applications if total_applications > 0 else 0
             )
 
             return {
@@ -328,9 +320,7 @@ class ThemeApplication(QObject):
             if not qt_success:
                 fallback_success = self._apply_fallback_theme(theme, variant)
                 if not fallback_success:
-                    logger.error(
-                        "Both Qt-material and fallback theme application failed"
-                    )
+                    logger.error("Both Qt-material and fallback theme application failed")
                     return False
 
             # Stage 4: Widget-specific updates
@@ -406,9 +396,7 @@ class ThemeApplication(QObject):
                 try:
                     from qdarkstyle.palette.dark import DarkPalette
 
-                    stylesheet = qdarkstyle.load_stylesheet(
-                        qt_api="pyside6", palette=DarkPalette
-                    )
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6", palette=DarkPalette)
                 except ImportError:
                     stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6")
             else:
@@ -437,12 +425,8 @@ class ThemeApplication(QObject):
                 try:
                     import winreg
 
-                    registry_path = (
-                        r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-                    )
-                    registry_key = winreg.OpenKey(
-                        winreg.HKEY_CURRENT_USER, registry_path
-                    )
+                    registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+                    registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
                     value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
                     winreg.CloseKey(registry_key)
                     return "light" if value == 1 else "dark"
@@ -970,9 +954,7 @@ class ThemeApplication(QObject):
                 }
             )
 
-            logger.info(
-                f"Widget theme updates: {successful} successful, {failed} failed"
-            )
+            logger.info(f"Widget theme updates: {successful} successful, {failed} failed")
             return True  # Return True even if some widgets failed
 
         except Exception as e:

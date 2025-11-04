@@ -113,9 +113,7 @@ class ImportWorker(QThread):
 
         # Initialize services
         self.file_manager = ImportFileManager()
-        self.thumbnail_service = (
-            ImportThumbnailService() if generate_thumbnails else None
-        )
+        self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
         self.analysis_service = ImportAnalysisService() if run_analysis else None
 
     def run(self):
@@ -143,9 +141,7 @@ class ImportWorker(QThread):
                 file_name = Path(file_info.original_path).name
 
                 # Report overall progress
-                self.overall_progress.emit(
-                    idx, total_files, int((idx / total_files) * 100)
-                )
+                self.overall_progress.emit(idx, total_files, int((idx / total_files) * 100))
 
                 # Process file (hashing + copying if needed)
                 self.stage_changed.emit("hashing", f"Processing {file_name}...")
@@ -464,16 +460,12 @@ class ImportDialog(QDialog):
 
         self.generate_thumbnails_check = QCheckBox("Generate Thumbnails")
         self.generate_thumbnails_check.setChecked(True)
-        self.generate_thumbnails_check.setToolTip(
-            "Generate preview thumbnails during import"
-        )
+        self.generate_thumbnails_check.setToolTip("Generate preview thumbnails during import")
         layout.addWidget(self.generate_thumbnails_check)
 
         self.run_analysis_check = QCheckBox("Run Background Analysis")
         self.run_analysis_check.setChecked(True)
-        self.run_analysis_check.setToolTip(
-            "Analyze model geometry in the background after import"
-        )
+        self.run_analysis_check.setToolTip("Analyze model geometry in the background after import")
         layout.addWidget(self.run_analysis_check)
 
         return group
@@ -583,9 +575,7 @@ class ImportDialog(QDialog):
 
     def _on_add_folder(self):
         """Handle add folder button click."""
-        folder = QFileDialog.getExistingDirectory(
-            self, "Select Folder Containing Model Files"
-        )
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder Containing Model Files")
 
         if folder:
             # Find all model files in folder
@@ -649,9 +639,7 @@ class ImportDialog(QDialog):
         if failed_files:
             self._show_import_failures_summary(failed_files, added_count)
 
-    def _show_import_failures_summary(
-        self, failed_files: List[tuple], added_count: int
-    ):
+    def _show_import_failures_summary(self, failed_files: List[tuple], added_count: int):
         """
         Show a summary dialog of all failed files instead of individual dialogs.
 
@@ -663,8 +651,7 @@ class ImportDialog(QDialog):
 
         # Build failure list
         failure_list = "\n".join(
-            f"  • {name}: {reason}"
-            for name, reason in failed_files[:20]  # Show first 20
+            f"  • {name}: {reason}" for name, reason in failed_files[:20]  # Show first 20
         )
 
         if failure_count > 20:
@@ -744,9 +731,7 @@ class ImportDialog(QDialog):
         else:
             can_import = has_files
 
-        self.import_button.setEnabled(
-            can_import and self.current_stage == ImportStage.IDLE
-        )
+        self.import_button.setEnabled(can_import and self.current_stage == ImportStage.IDLE)
         self.clear_button.setEnabled(len(self.selected_files) > 0)
 
     def _on_start_import(self):
@@ -764,9 +749,7 @@ class ImportDialog(QDialog):
 
         # Confirm import
         file_count = len(self.selected_files)
-        total_size = sum(Path(f).stat().st_size for f in self.selected_files) / (
-            1024 * 1024
-        )
+        total_size = sum(Path(f).stat().st_size for f in self.selected_files) / (1024 * 1024)
 
         msg = (
             f"Import {file_count} file(s) ({total_size:.2f} MB)?\n\n"
@@ -779,9 +762,7 @@ class ImportDialog(QDialog):
         msg += f"Generate Thumbnails: {'Yes' if self.generate_thumbnails_check.isChecked() else 'No'}\n"
         msg += f"Run Analysis: {'Yes' if self.run_analysis_check.isChecked() else 'No'}"
 
-        reply = QMessageBox.question(
-            self, "Confirm Import", msg, QMessageBox.Yes | QMessageBox.No
-        )
+        reply = QMessageBox.question(self, "Confirm Import", msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply != QMessageBox.Yes:
             return
@@ -824,11 +805,7 @@ class ImportDialog(QDialog):
             if self.keep_organized_radio.isChecked()
             else FileManagementMode.LEAVE_IN_PLACE
         )
-        root_dir = (
-            self.root_dir_path.text()
-            if mode == FileManagementMode.KEEP_ORGANIZED
-            else None
-        )
+        root_dir = self.root_dir_path.text() if mode == FileManagementMode.KEEP_ORGANIZED else None
 
         self.import_worker = ImportWorker(
             self.selected_files,
@@ -897,9 +874,7 @@ class ImportDialog(QDialog):
         self.thumbnail_progress_bar.setValue(100)
         self.thumbnail_status_label.setText("Complete")
         self.stage_label.setText("Completed")
-        self.status_label.setText(
-            f"Import completed: {result.processed_files} file(s) imported"
-        )
+        self.status_label.setText(f"Import completed: {result.processed_files} file(s) imported")
 
         # Show completion message
         QMessageBox.information(
@@ -923,9 +898,7 @@ class ImportDialog(QDialog):
         self.stage_label.setText("Failed")
         self.status_label.setText("Import failed")
 
-        QMessageBox.critical(
-            self, "Import Failed", f"Import failed with error:\n\n{error_message}"
-        )
+        QMessageBox.critical(self, "Import Failed", f"Import failed with error:\n\n{error_message}")
 
         # Re-enable controls
         self._reset_controls()

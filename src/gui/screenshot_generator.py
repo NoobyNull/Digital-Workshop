@@ -96,9 +96,7 @@ class ScreenshotGenerator:
             if material_manager and mat_to_apply:
                 try:
                     self.logger.info(f"Applying material '{mat_to_apply}' to actor...")
-                    success = material_manager.apply_material_to_actor(
-                        actor, mat_to_apply
-                    )
+                    success = material_manager.apply_material_to_actor(actor, mat_to_apply)
                     if success:
                         self.logger.info(
                             f"Successfully applied material '{mat_to_apply}' to screenshot"
@@ -115,9 +113,7 @@ class ScreenshotGenerator:
                                 mapper.SetInputData(input_data)
                                 self.logger.debug("Mapper updated with latest data")
                     else:
-                        self.logger.warning(
-                            f"Failed to apply material '{mat_to_apply}'"
-                        )
+                        self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
                 except Exception as e:
                     self.logger.warning(f"Failed to apply material: {e}")
 
@@ -180,9 +176,7 @@ class ScreenshotGenerator:
     def _create_actor_from_model(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from a model."""
         try:
-            self.logger.info(
-                f"Creating actor from model with {len(model.triangles)} triangles"
-            )
+            self.logger.info(f"Creating actor from model with {len(model.triangles)} triangles")
 
             # Check if model is array-based (using the same logic as ModelRenderer)
             if hasattr(model, "is_array_based") and model.is_array_based():
@@ -246,14 +240,10 @@ class ScreenshotGenerator:
 
             point_count = points.GetNumberOfPoints()
             cell_count = cells.GetNumberOfCells()
-            self.logger.info(
-                f"Created polydata: {point_count} points, {cell_count} cells"
-            )
+            self.logger.info(f"Created polydata: {point_count} points, {cell_count} cells")
 
             if point_count == 0 or cell_count == 0:
-                self.logger.error(
-                    "No points or cells created - model may be empty or invalid"
-                )
+                self.logger.error("No points or cells created - model may be empty or invalid")
                 return None
 
             # Create polydata with points, cells, and normals
@@ -281,23 +271,17 @@ class ScreenshotGenerator:
             prop.SetSpecularPower(20)  # Shininess
             prop.LightingOn()  # Enable lighting calculations
 
-            self.logger.info(
-                f"Actor created successfully with bounds: {actor.GetBounds()}"
-            )
+            self.logger.info(f"Actor created successfully with bounds: {actor.GetBounds()}")
             return actor
         except Exception as e:
-            self.logger.error(
-                f"Failed to create actor from triangles: {e}", exc_info=True
-            )
+            self.logger.error(f"Failed to create actor from triangles: {e}", exc_info=True)
             return None
 
     def _create_actor_from_arrays(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from array-based model (following ModelRenderer pattern)."""
         try:
             if not hasattr(model, "is_array_based") or not model.is_array_based():
-                self.logger.warning(
-                    "Model is not array-based, falling back to triangle creation"
-                )
+                self.logger.warning("Model is not array-based, falling back to triangle creation")
                 return self._create_actor_from_triangles(model)
 
             vertex_array = getattr(model, "vertex_array", None)
@@ -311,9 +295,7 @@ class ScreenshotGenerator:
 
             total_vertices = int(vertex_array.shape[0])
             if total_vertices % 3 != 0:
-                self.logger.warning(
-                    "Vertex array length is not multiple of 3; falling back"
-                )
+                self.logger.warning("Vertex array length is not multiple of 3; falling back")
                 return self._create_actor_from_triangles(model)
 
             self.logger.info(f"Creating actor from arrays: {total_vertices} vertices")

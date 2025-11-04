@@ -71,9 +71,7 @@ class ThumbnailGenerator:
                 c2 = get_theme_color("text_inverse")
                 c2.setAlpha(100)
                 painter.setBrush(QBrush(c2))
-                painter.drawRect(
-                    QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3)
-                )
+                painter.drawRect(QRectF(cx - norm_w / 2, cy - norm_h / 2, norm_w / 3, norm_h / 3))
             else:
                 painter.setPen(QPen(get_theme_color("edge_color"), 1))
                 c3 = get_theme_color("primary")
@@ -90,9 +88,7 @@ class ThumbnailGenerator:
             c4 = get_theme_color("model_ambient")
             c4.setAlpha(200)
             painter.setBrush(QBrush(c4))
-            indicator_rect = QRectF(
-                self.size.width() - 25, self.size.height() - 15, 20, 12
-            )
+            indicator_rect = QRectF(self.size.width() - 25, self.size.height() - 15, 20, 12)
             painter.drawRect(indicator_rect)
             font = painter.font()
             font.setPointSize(6)

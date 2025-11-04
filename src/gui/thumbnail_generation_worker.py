@@ -48,12 +48,8 @@ class ThumbnailGenerationWorker(QThread):
     def run(self) -> None:
         """Generate thumbnails for all files in the list."""
         try:
-            self.logger.info(
-                f"Starting thumbnail generation for {len(self.file_info_list)} files"
-            )
-            self.logger.info(
-                f"Background: {self.background}, Material: {self.material}"
-            )
+            self.logger.info(f"Starting thumbnail generation for {len(self.file_info_list)} files")
+            self.logger.info(f"Background: {self.background}, Material: {self.material}")
 
             total = len(self.file_info_list)
 
@@ -77,9 +73,7 @@ class ThumbnailGenerationWorker(QThread):
 
                     if result.success and result.thumbnail_path:
                         self.logger.info(f"✓ Thumbnail generated: {file_name}")
-                        self.thumbnail_generated.emit(
-                            model_path, str(result.thumbnail_path)
-                        )
+                        self.thumbnail_generated.emit(model_path, str(result.thumbnail_path))
                     else:
                         error_msg = result.error or "Unknown error"
                         self.logger.warning(
@@ -102,9 +96,7 @@ class ThumbnailGenerationWorker(QThread):
             self.finished_batch.emit()
 
         except Exception as e:
-            self.logger.error(
-                f"Fatal error in thumbnail generation worker: {e}", exc_info=True
-            )
+            self.logger.error(f"Fatal error in thumbnail generation worker: {e}", exc_info=True)
             self.error_occurred.emit("", str(e))
 
     def stop(self) -> None:

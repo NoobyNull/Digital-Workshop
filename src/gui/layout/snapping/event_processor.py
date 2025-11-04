@@ -238,9 +238,7 @@ class EventFilter(QObject):
             elif event_type == QEvent.MouseButtonRelease:
                 return self._create_mouse_event(EventType.MOUSE_RELEASE, widget, event)
             elif event_type == QEvent.MouseButtonDblClick:
-                return self._create_mouse_event(
-                    EventType.MOUSE_DOUBLE_CLICK, widget, event
-                )
+                return self._create_mouse_event(EventType.MOUSE_DOUBLE_CLICK, widget, event)
             elif event_type == QEvent.Resize:
                 return self._create_resize_event(widget, event)
             elif event_type == QEvent.Move:
@@ -277,9 +275,7 @@ class EventFilter(QObject):
                 original_event=event,
                 metadata={
                     "global_position": global_pos,
-                    "mouse_buttons": (
-                        int(event.buttons()) if hasattr(event, "buttons") else 0
-                    ),
+                    "mouse_buttons": (int(event.buttons()) if hasattr(event, "buttons") else 0),
                     "keyboard_modifiers": (
                         int(event.modifiers()) if hasattr(event, "modifiers") else 0
                     ),
@@ -289,9 +285,7 @@ class EventFilter(QObject):
             self.logger.error(f"Failed to create mouse event: {e}")
             return None
 
-    def _create_resize_event(
-        self, widget: QWidget, event: QEvent
-    ) -> Optional[SnapEvent]:
+    def _create_resize_event(self, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
         """Create a resize SnapEvent."""
         try:
             # Get widget center position
@@ -463,9 +457,7 @@ class EventProcessor:
         """Periodic cleanup of resources and stale data."""
         try:
             # Clean up dead weak references
-            self._active_widgets = {
-                k: v for k, v in self._active_widgets.items() if v is not None
-            }
+            self._active_widgets = {k: v for k, v in self._active_widgets.items() if v is not None}
 
             # Clear old performance stats
             if self._performance_stats["total_events"] > 10000:
@@ -619,9 +611,7 @@ class EventProcessor:
                     try:
                         handler(event)
                     except Exception as e:
-                        self.logger.error(
-                            f"Error in event handler for {event.event_type}: {e}"
-                        )
+                        self.logger.error(f"Error in event handler for {event.event_type}: {e}")
 
             # Handle specific event types
             if event.event_type == EventType.MOUSE_MOVE:
@@ -694,9 +684,7 @@ class EventProcessor:
             self.logger.error(f"Error handling mouse release: {e}")
             return False
 
-    def _handle_widget_resize(
-        self, event: SnapEvent
-    ) -> bool:  # pylint: disable=unused-argument
+    def _handle_widget_resize(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
         """Handle widget resize events."""
         try:
             # Update coordinate systems
@@ -710,9 +698,7 @@ class EventProcessor:
             self.logger.error(f"Error handling widget resize: {e}")
             return False
 
-    def _handle_widget_move(
-        self, event: SnapEvent
-    ) -> bool:  # pylint: disable=unused-argument
+    def _handle_widget_move(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
         """Handle widget move events."""
         try:
             # Update coordinate systems
@@ -723,9 +709,7 @@ class EventProcessor:
             self.logger.error(f"Error handling widget move: {e}")
             return False
 
-    def _handle_layout_change(
-        self, event: SnapEvent
-    ) -> bool:  # pylint: disable=unused-argument
+    def _handle_layout_change(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
         """Handle layout change events."""
         try:
             # Clear all caches when layout changes
@@ -763,9 +747,7 @@ class EventProcessor:
                 delta_x = snapped_global.x() - current_pos.x()
                 delta_y = snapped_global.y() - current_pos.y()
 
-                if (
-                    abs(delta_x) > 1 or abs(delta_y) > 1
-                ):  # Only move if significant change
+                if abs(delta_x) > 1 or abs(delta_y) > 1:  # Only move if significant change
                     widget.move(widget.x() + int(delta_x), widget.y() + int(delta_y))
 
             self.logger.debug(
@@ -809,9 +791,7 @@ class EventProcessor:
         # Update average processing time
         total_events = self._performance_stats["processed_events"]
         if total_events > 0:
-            total_time = self._performance_stats["avg_processing_time_ms"] * (
-                total_events - 1
-            )
+            total_time = self._performance_stats["avg_processing_time_ms"] * (total_events - 1)
             self._performance_stats["avg_processing_time_ms"] = (
                 total_time + processing_time_ms
             ) / total_events
@@ -833,9 +813,7 @@ class EventProcessor:
         except Exception as e:
             self.logger.error(f"Failed to register event handler: {e}")
 
-    def unregister_event_handler(
-        self, event_type: EventType, handler: Callable
-    ) -> None:
+    def unregister_event_handler(self, event_type: EventType, handler: Callable) -> None:
         """
         Unregister an event handler for a specific event type.
 
@@ -881,8 +859,7 @@ class EventProcessor:
                 },
                 "active_widgets": len(self._active_widgets),
                 "registered_handlers": {
-                    et.name: len(handlers)
-                    for et, handlers in self._event_handlers.items()
+                    et.name: len(handlers) for et, handlers in self._event_handlers.items()
                 },
                 "processing_enabled": self._processing_enabled,
             }

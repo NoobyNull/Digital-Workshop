@@ -57,13 +57,9 @@ class LibraryEventHandler:
         )
 
         self.library_widget.list_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.list_view.doubleClicked.connect(
-            self.on_model_double_clicked
-        )
+        self.library_widget.list_view.doubleClicked.connect(self.on_model_double_clicked)
         self.library_widget.grid_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.grid_view.doubleClicked.connect(
-            self.on_model_double_clicked
-        )
+        self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
 
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
 
@@ -72,13 +68,9 @@ class LibraryEventHandler:
         self.library_widget.grid_view.setAcceptDrops(True)
 
         self.library_widget.list_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.list_view.customContextMenuRequested.connect(
-            self.show_context_menu
-        )
+        self.library_widget.list_view.customContextMenuRequested.connect(self.show_context_menu)
         self.library_widget.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.grid_view.customContextMenuRequested.connect(
-            self.show_context_menu
-        )
+        self.library_widget.grid_view.customContextMenuRequested.connect(self.show_context_menu)
 
         # Set up file tree context menu
         self.logger.info(
@@ -112,9 +104,7 @@ class LibraryEventHandler:
 
     def apply_filters(self) -> None:
         """Apply search and category filters."""
-        if self.library_widget._disposed or not hasattr(
-            self.library_widget, "proxy_model"
-        ):
+        if self.library_widget._disposed or not hasattr(self.library_widget, "proxy_model"):
             return
         text = (
             self.library_widget.search_box.text()
@@ -208,9 +198,7 @@ class LibraryEventHandler:
                     open_action = menu.addAction("Open in Explorer")
 
                     # Execute menu
-                    action = menu.exec(
-                        self.library_widget.file_tree.mapToGlobal(position)
-                    )
+                    action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
 
                     if action == add_root_action:
                         self._add_root_folder()
@@ -226,9 +214,7 @@ class LibraryEventHandler:
                 self._add_root_folder()
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to show file tree context menu: {e}", exc_info=True
-            )
+            self.logger.error(f"Failed to show file tree context menu: {e}", exc_info=True)
 
     def _add_root_folder(self) -> None:
         """Add a new root folder via dialog."""
@@ -275,9 +261,7 @@ class LibraryEventHandler:
                 )
         except Exception as e:
             self.logger.error(f"Failed to add root folder: {e}")
-            QMessageBox.critical(
-                self.library_widget, "Error", f"Failed to add root folder: {e}"
-            )
+            QMessageBox.critical(self.library_widget, "Error", f"Failed to add root folder: {e}")
 
     def drag_enter_event(self, event: QDragEnterEvent) -> None:
         """Handle drag enter event."""
@@ -317,16 +301,12 @@ class LibraryEventHandler:
             model = db_manager.get_model(model_id)
 
             if not model:
-                QMessageBox.warning(
-                    self.library_widget, "Error", "Model not found in database"
-                )
+                QMessageBox.warning(self.library_widget, "Error", "Model not found in database")
                 return
 
             model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
-                QMessageBox.warning(
-                    self.library_widget, "Error", "Model file not found on disk"
-                )
+                QMessageBox.warning(self.library_widget, "Error", "Model file not found on disk")
                 return
 
             # Get file hash
@@ -335,9 +315,7 @@ class LibraryEventHandler:
             file_hash = hash_result.hash_value if hash_result.success else None
 
             if not file_hash:
-                QMessageBox.warning(
-                    self.library_widget, "Error", "Failed to compute file hash"
-                )
+                QMessageBox.warning(self.library_widget, "Error", "Failed to compute file hash")
                 return
 
             # Load thumbnail settings from preferences
@@ -351,9 +329,7 @@ class LibraryEventHandler:
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value(
-                "thumbnail/material", config.thumbnail_material, type=str
-            )
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -377,9 +353,7 @@ class LibraryEventHandler:
                     "Success",
                     f"Preview generated successfully!\nSaved to: {result.thumbnail_path}",
                 )
-                self.logger.info(
-                    f"Preview generated for model {model_id}: {result.thumbnail_path}"
-                )
+                self.logger.info(f"Preview generated for model {model_id}: {result.thumbnail_path}")
 
                 # Refresh the library view to show updated thumbnail
                 if hasattr(self.library_widget, "_refresh_model_display"):
@@ -391,9 +365,7 @@ class LibraryEventHandler:
                     "Error",
                     f"Failed to generate preview: {error_msg}",
                 )
-                self.logger.error(
-                    f"Preview generation failed for model {model_id}: {error_msg}"
-                )
+                self.logger.error(f"Preview generation failed for model {model_id}: {error_msg}")
 
         except Exception as e:
             error_msg = f"Exception during preview generation: {str(e)}"

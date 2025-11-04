@@ -104,13 +104,9 @@ class ToolMigrationUtility:
                 # Report progress
                 if progress_callback:
                     progress = (idx + 1) / len(tools)
-                    progress_callback(
-                        progress, f"Migrated {success_count}/{len(tools)}"
-                    )
+                    progress_callback(progress, f"Migrated {success_count}/{len(tools)}")
 
-            self.logger.info(
-                f"Migration complete: {success_count} successful, {fail_count} failed"
-            )
+            self.logger.info(f"Migration complete: {success_count} successful, {fail_count} failed")
             return success_count, fail_count, errors
 
         except Exception as e:
@@ -180,9 +176,7 @@ class ToolMigrationUtility:
                 "start_values",
                 "speeds_feeds",
             }
-            custom_properties = {
-                k: v for k, v in item.items() if k not in reserved_fields
-            }
+            custom_properties = {k: v for k, v in item.items() if k not in reserved_fields}
 
             return ToolData(
                 guid=guid,
@@ -228,17 +222,14 @@ class ToolMigrationUtility:
                 break
 
         if not json_path:
-            error_msg = (
-                "Could not find existing tool library JSON file. "
-                "Checked: " + ", ".join(str(p) for p in possible_paths)
+            error_msg = "Could not find existing tool library JSON file. " "Checked: " + ", ".join(
+                str(p) for p in possible_paths
             )
             self.logger.error(error_msg)
             raise FileNotFoundError(error_msg)
 
         self.logger.info(f"Found tool library at {json_path}")
-        return self.migrate_from_json(
-            str(json_path), progress_callback=progress_callback
-        )
+        return self.migrate_from_json(str(json_path), progress_callback=progress_callback)
 
     def get_migration_status(self) -> Dict[str, any]:
         """Get status of migration (number of providers and tools in database)."""

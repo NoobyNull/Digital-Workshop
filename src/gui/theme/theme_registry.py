@@ -155,9 +155,7 @@ class WidgetRegistry:
                 widget.update_theme(theme_data)
             elif hasattr(widget, "set_theme") and callable(widget.set_theme):
                 widget.set_theme(theme_data)
-            elif hasattr(widget, "on_theme_change") and callable(
-                widget.on_theme_change
-            ):
+            elif hasattr(widget, "on_theme_change") and callable(widget.on_theme_change):
                 widget.on_theme_change(theme_data)
             else:
                 # Fallback: update stylesheet if available
@@ -170,9 +168,7 @@ class WidgetRegistry:
             logger.warning(f"Failed to update theme for widget {self.widget_name}: {e}")
             return False
 
-    def _update_stylesheet_fallback(
-        self, widget: QWidget, theme_data: Dict[str, Any]
-    ) -> None:
+    def _update_stylesheet_fallback(self, widget: QWidget, theme_data: Dict[str, Any]) -> None:
         """
         Fallback theme update using stylesheet.
 
@@ -462,18 +458,14 @@ class ThemeRegistry(QObject):
             # Clean up dead widgets during stats collection
             if dead_count > 0:
                 dead_widget_names = [
-                    name
-                    for name, entry in self._widgets.items()
-                    if not entry.is_alive()
+                    name for name, entry in self._widgets.items() if not entry.is_alive()
                 ]
                 for name in dead_widget_names:
                     del self._widgets[name]
                     self._cleanup_count += 1
 
             total_requests = self._successful_updates + self._failed_updates
-            success_rate = (
-                self._successful_updates / total_requests if total_requests > 0 else 0
-            )
+            success_rate = self._successful_updates / total_requests if total_requests > 0 else 0
 
             return {
                 "total_registered": len(self._widgets),
@@ -556,16 +548,12 @@ class ThemeRegistry(QObject):
                     registered_count += 1
 
             if registered_count > 0:
-                logger.debug(
-                    f"Auto-discovered and registered {registered_count} widgets"
-                )
+                logger.debug(f"Auto-discovered and registered {registered_count} widgets")
 
         except Exception as e:
             logger.error(f"Widget discovery failed: {e}")
 
-    def _register_widget_recursive(
-        self, widget: QWidget, visited: Set[int] = None
-    ) -> bool:
+    def _register_widget_recursive(self, widget: QWidget, visited: Set[int] = None) -> bool:
         """
         Recursively register widget and its children.
 

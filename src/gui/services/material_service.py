@@ -60,9 +60,7 @@ class MaterialInfo:
 class MaterialValidationWorker(QThread):
     """Worker thread for validating materials asynchronously."""
 
-    validation_completed = Signal(
-        str, object
-    )  # material_name, MaterialValidationResult
+    validation_completed = Signal(str, object)  # material_name, MaterialValidationResult
     validation_progress = Signal(str, float)  # material_name, progress_percentage
 
     def __init__(self, material_data: Dict[str, Any], material_name: str):
@@ -107,9 +105,7 @@ class MaterialValidationWorker(QThread):
             self.validation_completed.emit(self.material_name, result)
 
             if result.is_valid:
-                self.logger.info(
-                    f"Material validation successful: {self.material_name}"
-                )
+                self.logger.info(f"Material validation successful: {self.material_name}")
             else:
                 self.logger.warning(
                     f"Material validation failed: {self.material_name} - {result.error_message}"
@@ -149,9 +145,7 @@ class MaterialValidationWorker(QThread):
                 )
 
             if len(name) > 100:
-                warnings.append(
-                    "Material name is quite long and may be truncated in UI"
-                )
+                warnings.append("Material name is quite long and may be truncated in UI")
 
             # Validate category
             category_str = self.material_data.get("category", "").lower()
@@ -194,12 +188,8 @@ class MaterialValidationWorker(QThread):
                     color_val = properties[prop]
                     if isinstance(color_val, str):
                         # Basic hex color validation
-                        if not (
-                            color_val.startswith("#") and len(color_val) in [4, 7, 9]
-                        ):
-                            warnings.append(
-                                f"Color property '{prop}' should be in hex format"
-                            )
+                        if not (color_val.startswith("#") and len(color_val) in [4, 7, 9]):
+                            warnings.append(f"Color property '{prop}' should be in hex format")
 
             # Check preview image
             preview_path = self.material_data.get("preview_image_path")
@@ -217,9 +207,7 @@ class MaterialValidationWorker(QThread):
                 suggestions.append("Consider adding a base_color property")
 
             if "roughness" not in properties:
-                suggestions.append(
-                    "Consider adding a roughness property for PBR materials"
-                )
+                suggestions.append("Consider adding a roughness property for PBR materials")
 
             return MaterialValidationResult(True, "", warnings, suggestions)
 
@@ -329,9 +317,7 @@ class MaterialService(IMaterialService):
             self.logger.error(f"Error validating material: {e}")
             return False, f"Validation error: {e}"
 
-    def _validate_material_basic(
-        self, material_data: Dict[str, Any]
-    ) -> Tuple[bool, str]:
+    def _validate_material_basic(self, material_data: Dict[str, Any]) -> Tuple[bool, str]:
         """Perform basic material validation."""
         try:
             # Check required fields
@@ -375,9 +361,7 @@ class MaterialService(IMaterialService):
             self.logger.error(f"Error getting material preview: {e}")
             return None
 
-    def _generate_material_preview(
-        self, material_info: MaterialInfo
-    ) -> Optional[bytes]:
+    def _generate_material_preview(self, material_info: MaterialInfo) -> Optional[bytes]:
         """Generate preview image for a material."""
         try:
             # Create a simple preview based on material properties
@@ -401,9 +385,7 @@ class MaterialService(IMaterialService):
                     from src.gui.theme import vtk_rgb
 
                     theme_color = vtk_rgb("material")
-                    base_color = (
-                        f"#{theme_color[0]:02x}{theme_color[1]:02x}{theme_color[2]:02x}"
-                    )
+                    base_color = f"#{theme_color[0]:02x}{theme_color[1]:02x}{theme_color[2]:02x}"
                 except (ImportError, AttributeError):
                     base_color = "#CCCCCC"  # Keep minimal fallback only
 
@@ -484,9 +466,7 @@ class MaterialService(IMaterialService):
             # Validate created material
             is_valid, error_message = self.validate_material(material_data)
             if not is_valid:
-                self.logger.error(
-                    f"Template material validation failed: {error_message}"
-                )
+                self.logger.error(f"Template material validation failed: {error_message}")
                 return None
 
             return material_data
@@ -531,10 +511,7 @@ class MaterialService(IMaterialService):
                 # Check properties match
                 properties_match = False
                 for prop_name, prop_value in material_info.properties.items():
-                    if (
-                        isinstance(prop_value, str)
-                        and query_lower in prop_value.lower()
-                    ):
+                    if isinstance(prop_value, str) and query_lower in prop_value.lower():
                         properties_match = True
                         break
 
@@ -591,16 +568,12 @@ class MaterialService(IMaterialService):
             self.logger.error(f"Error saving material: {e}")
             return False
 
-    def _create_material_info(
-        self, material_data: Dict[str, Any]
-    ) -> Optional[MaterialInfo]:
+    def _create_material_info(self, material_data: Dict[str, Any]) -> Optional[MaterialInfo]:
         """Create MaterialInfo from material data."""
         try:
             return MaterialInfo(
                 name=material_data.get("name", ""),
-                category=MaterialCategory(
-                    material_data.get("category", "synthetic").lower()
-                ),
+                category=MaterialCategory(material_data.get("category", "synthetic").lower()),
                 description=material_data.get("description", ""),
                 properties=material_data.get("properties", {}),
                 preview_image_path=material_data.get("preview_image_path"),
@@ -644,8 +617,6 @@ class MaterialService(IMaterialService):
     def _on_validation_progress(self, material_name: str, progress: float) -> None:
         """Handle validation progress updates."""
         try:
-            self.logger.debug(
-                f"Material validation progress: {material_name} - {progress:.1f}%"
-            )
+            self.logger.debug(f"Material validation progress: {material_name} - {progress:.1f}%")
         except Exception as e:
             self.logger.error(f"Error handling validation progress: {e}")

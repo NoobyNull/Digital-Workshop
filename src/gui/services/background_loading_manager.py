@@ -129,9 +129,7 @@ class BackgroundLoadingManager:
                 ]
             ]
             if len(active_jobs) >= self.max_concurrent_jobs:
-                raise RuntimeError(
-                    f"Maximum concurrent jobs ({self.max_concurrent_jobs}) exceeded"
-                )
+                raise RuntimeError(f"Maximum concurrent jobs ({self.max_concurrent_jobs}) exceeded")
 
             # Create job
             job_id = str(uuid.uuid4())
@@ -202,9 +200,7 @@ class BackgroundLoadingManager:
                 LoadingState.CANCELLED,
                 LoadingState.FAILED,
             ]:
-                self.logger.info(
-                    f"Job {job_id} already in terminal state: {job.state.value}"
-                )
+                self.logger.info(f"Job {job_id} already in terminal state: {job.state.value}")
                 return False
 
             # Initiate cancellation
@@ -221,9 +217,7 @@ class BackgroundLoadingManager:
             # Ensure cancellation response time is under 500ms
             elapsed = time.time() - start_time
             if elapsed > 0.5:
-                self.logger.warning(
-                    f"Cancellation response time exceeded 500ms: {elapsed:.3f}s"
-                )
+                self.logger.warning(f"Cancellation response time exceeded 500ms: {elapsed:.3f}s")
 
             return True
 
@@ -324,13 +318,9 @@ class BackgroundLoadingManager:
                 file_size_gb = job.file_path.stat().st_size / (1024**3)
                 if file_size_gb > 0.5:  # Use adaptive chunking for files > 500MB
                     chunks = self.adaptive_chunker.create_adaptive_chunks(job.file_path)
-                    self.logger.info(
-                        f"Using adaptive chunking: created {len(chunks)} chunks"
-                    )
+                    self.logger.info(f"Using adaptive chunking: created {len(chunks)} chunks")
                 else:
-                    chunks = self.chunker.create_chunks(
-                        job.file_path, target_chunk_size_mb=50
-                    )
+                    chunks = self.chunker.create_chunks(job.file_path, target_chunk_size_mb=50)
 
                 if job.cancellation_token.is_cancelled():
                     raise Exception("Loading was cancelled")
@@ -340,12 +330,8 @@ class BackgroundLoadingManager:
                 job.status_message = f"Processing {len(chunks)} chunks..."
 
                 # Check memory limits before proceeding
-                total_chunk_memory = sum(
-                    chunk.get_memory_estimate() for chunk in chunks
-                )
-                if not self.memory_manager.check_memory_limits(
-                    total_chunk_memory / (1024**3)
-                ):
+                total_chunk_memory = sum(chunk.get_memory_estimate() for chunk in chunks)
+                if not self.memory_manager.check_memory_limits(total_chunk_memory / (1024**3)):
                     raise Exception("Insufficient memory for loading operation")
 
                 # Coordinate parsing with enhanced progress tracking

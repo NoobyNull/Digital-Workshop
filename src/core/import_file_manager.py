@@ -192,9 +192,7 @@ class ImportFileManager:
                 return False, error
 
             # Check if it's a configured root folder
-            configured_roots = self.root_folder_manager.get_folder_paths(
-                enabled_only=True
-            )
+            configured_roots = self.root_folder_manager.get_folder_paths(enabled_only=True)
             is_configured_root = str(root_path) in [
                 str(Path(p).resolve()) for p in configured_roots
             ]
@@ -350,9 +348,7 @@ class ImportFileManager:
                     )
                     session.files.append(file_info)
                 else:
-                    self.logger.warning(
-                        f"File not found or not accessible: {file_path}"
-                    )
+                    self.logger.warning(f"File not found or not accessible: {file_path}")
             except Exception as e:
                 self.logger.error(f"Error accessing file {file_path}: {e}")
 
@@ -440,9 +436,7 @@ class ImportFileManager:
                 # Copy file
                 def copy_progress(percent):
                     if progress_callback:
-                        progress_callback(
-                            f"Copying {source_path.name}", 50 + (percent // 2)
-                        )
+                        progress_callback(f"Copying {source_path.name}", 50 + (percent // 2))
 
                 self._copy_file_with_progress(source_path, target_path, copy_progress)
 
@@ -512,9 +506,7 @@ class ImportFileManager:
                         path.unlink()
                         self.logger.info(f"Rolled back copied file: {file_path}")
                 except Exception as e:
-                    self.logger.error(
-                        f"Failed to remove file during rollback: {file_path}: {e}"
-                    )
+                    self.logger.error(f"Failed to remove file during rollback: {file_path}: {e}")
                     rollback_success = False
 
             # Remove created directories (if empty)
@@ -525,9 +517,7 @@ class ImportFileManager:
                         # Only remove if empty
                         if not list(path.iterdir()):
                             path.rmdir()
-                            self.logger.info(
-                                f"Rolled back created directory: {dir_path}"
-                            )
+                            self.logger.info(f"Rolled back created directory: {dir_path}")
                 except Exception as e:
                     self.logger.error(
                         f"Failed to remove directory during rollback: {dir_path}: {e}"
@@ -545,9 +535,7 @@ class ImportFileManager:
             self.logger.error(f"Error during rollback: {e}", exc_info=True)
             return False
 
-    def complete_import_session(
-        self, session: ImportSession, success: bool = True
-    ) -> ImportResult:
+    def complete_import_session(self, session: ImportSession, success: bool = True) -> ImportResult:
         """
         Complete an import session and generate result.
 
@@ -563,9 +551,7 @@ class ImportFileManager:
 
         # Calculate statistics
         total_files = len(session.files)
-        processed_files = sum(
-            1 for f in session.files if f.import_status == "completed"
-        )
+        processed_files = sum(1 for f in session.files if f.import_status == "completed")
         failed_files = sum(1 for f in session.files if f.import_status == "failed")
         skipped_files = sum(1 for f in session.files if f.import_status == "skipped")
         total_size = sum(f.file_size for f in session.files)

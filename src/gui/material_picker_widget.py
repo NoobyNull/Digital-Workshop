@@ -90,9 +90,7 @@ class MaterialPickerWidget(QDialog):
 
         self.species_label = QLabel("Species:")
         self.species_combo = QComboBox()
-        self.species_combo.currentIndexChanged.connect(
-            self._update_preview_and_properties
-        )
+        self.species_combo.currentIndexChanged.connect(self._update_preview_and_properties)
 
         self.add_custom_button = QPushButton("Add Custom Species")
         self._style_button(self.add_custom_button)
@@ -120,16 +118,12 @@ class MaterialPickerWidget(QDialog):
         info_layout.setContentsMargins(10, 10, 10, 10)
         info_layout.setSpacing(8)
 
-        self.material_info_label = QLabel(
-            "Select a material to view texture information."
-        )
+        self.material_info_label = QLabel("Select a material to view texture information.")
         self.material_info_label.setWordWrap(True)
         info_layout.addWidget(self.material_info_label)
 
         # Buttons
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self
-        )
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         ok_btn = self.buttons.button(QDialogButtonBox.Ok)
         cancel_btn = self.buttons.button(QDialogButtonBox.Cancel)
         self._style_button(ok_btn)
@@ -153,9 +147,7 @@ class MaterialPickerWidget(QDialog):
 
         try:
             # Get MTL file-based materials only (not database wood species)
-            mtl_materials = (
-                self.material_manager.material_provider.get_available_materials()
-            )
+            mtl_materials = self.material_manager.material_provider.get_available_materials()
 
             if not mtl_materials:
                 self.species_combo.addItem("No MTL materials found", userData=None)
@@ -169,12 +161,7 @@ class MaterialPickerWidget(QDialog):
                 mtl_path = material.get("mtl_path")
 
                 # Only show materials that have both MTL file and texture
-                if (
-                    mtl_path
-                    and texture_path
-                    and mtl_path.exists()
-                    and texture_path.exists()
-                ):
+                if mtl_path and texture_path and mtl_path.exists() and texture_path.exists():
                     # Store material info for later use
                     self.species_combo.addItem(name, userData=name)
                     self._species_records[name] = material
@@ -183,18 +170,14 @@ class MaterialPickerWidget(QDialog):
                         f"Added MTL material '{name}' with texture {texture_path.name}"
                     )
                 else:
-                    self.logger.debug(
-                        f"Skipping material '{name}' - missing MTL or texture file"
-                    )
+                    self.logger.debug(f"Skipping material '{name}' - missing MTL or texture file")
 
             self.logger.info(
                 f"Loaded {valid_materials} valid MTL materials (from {len(mtl_materials)} total)"
             )
 
             if valid_materials == 0:
-                self.species_combo.addItem(
-                    "No valid MTL materials found", userData=None
-                )
+                self.species_combo.addItem("No valid MTL materials found", userData=None)
 
         except Exception as e:
             self.logger.error(f"Failed to load MTL materials: {e}")
@@ -216,9 +199,7 @@ class MaterialPickerWidget(QDialog):
         name = self._current_species_name()
         if not name:
             self.preview_label.clear()
-            self.material_info_label.setText(
-                "Select a material to view texture information."
-            )
+            self.material_info_label.setText("Select a material to view texture information.")
             return
 
         # Update material info for MTL files
@@ -339,9 +320,7 @@ class MaterialPickerWidget(QDialog):
     def _on_apply(self) -> None:
         name = self._current_species_name()
         if not name:
-            QMessageBox.information(
-                self, "No Selection", "Please select a material species."
-            )
+            QMessageBox.information(self, "No Selection", "Please select a material species.")
             return
         self.material_selected.emit(name)
         self.accept()
@@ -403,9 +382,7 @@ class MaterialPickerWidget(QDialog):
 
         v.addLayout(form)
 
-        btns = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Cancel, parent=dlg
-        )
+        btns = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, parent=dlg)
         save_btn = btns.button(QDialogButtonBox.Save)
         cancel_btn = btns.button(QDialogButtonBox.Cancel)
         self._style_button(save_btn)

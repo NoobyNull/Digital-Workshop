@@ -131,9 +131,7 @@ class DryRunAnalyzer:
                 if os.path.exists(file_result.file_path):
                     total += os.path.getsize(file_result.file_path)
             except Exception as e:
-                logger.warning(
-                    f"Failed to get size of {file_result.file_path}: {str(e)}"
-                )
+                logger.warning(f"Failed to get size of {file_result.file_path}: {str(e)}")
 
         return total
 
@@ -187,9 +185,7 @@ class DryRunAnalyzer:
             return recommendations
 
         if blocked_count > 0:
-            recommendations.append(
-                f"⚠️ {blocked_count} files will be blocked during import."
-            )
+            recommendations.append(f"⚠️ {blocked_count} files will be blocked during import.")
 
         total_mb = total_size / (1024 * 1024)
         if total_mb > 1000:

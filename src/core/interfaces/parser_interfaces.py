@@ -25,10 +25,8 @@ class ParseError(Exception):
     """Raised when model file parsing fails."""
 
 
-
 class FileNotSupportedError(ParseError):
     """Raised when file format is not supported."""
-
 
 
 class IParser(ABC):

@@ -62,9 +62,7 @@ class ToolDatabasePreferencesDialog(QDialog):
 
         # Path list
         self.paths_list = QListWidget()
-        self.paths_list.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
+        self.paths_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         ext_db_layout.addWidget(QLabel("Registered External Databases:"))
         ext_db_layout.addWidget(self.paths_list)
 
@@ -134,9 +132,7 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.default_provider.setText(default_provider)
 
             # Load auto-import setting
-            auto_import = self.preferences_repo.get_preference(
-                "auto_import_enabled", False
-            )
+            auto_import = self.preferences_repo.get_preference("auto_import_enabled", False)
             self.auto_import_cb.setChecked(auto_import)
 
             self.logger.info("Preferences loaded successfully")
@@ -147,14 +143,11 @@ class ToolDatabasePreferencesDialog(QDialog):
 
     def _add_external_path(self):
         """Add external database path."""
-        file_path = QFileDialog.getExistingDirectory(
-            self, "Select External Database Directory"
-        )
+        file_path = QFileDialog.getExistingDirectory(self, "Select External Database Directory")
 
         if file_path:
             if not any(
-                self.paths_list.item(i).text() == file_path
-                for i in range(self.paths_list.count())
+                self.paths_list.item(i).text() == file_path for i in range(self.paths_list.count())
             ):
                 self.paths_list.addItem(QListWidgetItem(file_path))
                 self.logger.info(f"Added external database path: {file_path}")
@@ -173,9 +166,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         """Save preferences and close dialog."""
         try:
             # Collect paths
-            paths = [
-                self.paths_list.item(i).text() for i in range(self.paths_list.count())
-            ]
+            paths = [self.paths_list.item(i).text() for i in range(self.paths_list.count())]
 
             # Save preferences
             prefs: Dict[str, Any] = {

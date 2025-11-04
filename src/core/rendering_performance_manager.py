@@ -378,9 +378,7 @@ class LevelOfDetailManager:
             logger.warning(f"Mesh decimation failed: {str(e)}")
             return mesh  # Return original mesh
 
-    def get_optimal_lod(
-        self, model_id: str, camera_distance: float, screen_size: float
-    ) -> int:
+    def get_optimal_lod(self, model_id: str, camera_distance: float, screen_size: float) -> int:
         """
         Get optimal LOD level based on distance and screen size.
 
@@ -470,9 +468,7 @@ class VSyncManager:
         current_time = time.time()
 
         # Record performance
-        self._performance_history.append(
-            {"fps": current_fps, "timestamp": current_time}
-        )
+        self._performance_history.append({"fps": current_fps, "timestamp": current_time})
 
         # Only adjust every few seconds
         if current_time - self._last_adjustment_time < self._adjustment_cooldown:
@@ -551,8 +547,7 @@ class FrameRateMonitor:
             recent_fps = [
                 fps
                 for fps, timestamp in [
-                    (fps, time.time() - i / 60)
-                    for i, fps in enumerate(reversed(self._fps_history))
+                    (fps, time.time() - i / 60) for i, fps in enumerate(reversed(self._fps_history))
                 ]
                 if time.time() - timestamp <= seconds
             ]
@@ -646,9 +641,7 @@ class RenderingPerformanceManager:
         """Register callback for quality level changes."""
         self._quality_change_callbacks.append(callback)
 
-    def register_performance_alert_callback(
-        self, callback: Callable[[str], None]
-    ) -> None:
+    def register_performance_alert_callback(self, callback: Callable[[str], None]) -> None:
         """Register callback for performance alerts."""
         self._performance_alert_callbacks.append(callback)
 
@@ -691,9 +684,7 @@ class RenderingPerformanceManager:
         cpu_usage = psutil.cpu_percent(interval=0.1)
 
         # Determine VSync state
-        vsync_enabled = self.vsync_manager.should_enable_vsync(
-            current_fps, self.config.target_fps
-        )
+        vsync_enabled = self.vsync_manager.should_enable_vsync(current_fps, self.config.target_fps)
 
         # Get current LOD level (simplified)
         current_lod = 0  # This would be calculated based on active models
@@ -777,9 +768,7 @@ class RenderingPerformanceManager:
             # Alert callbacks
             for callback in self._performance_alert_callbacks:
                 try:
-                    callback(
-                        f"Rendering quality reduced to {new_quality.value} due to performance"
-                    )
+                    callback(f"Rendering quality reduced to {new_quality.value} due to performance")
                 except Exception as e:
                     logger.error(f"Performance alert callback failed: {str(e)}")
 
@@ -825,9 +814,7 @@ class RenderingPerformanceManager:
         # Alert callbacks
         for callback in self._performance_alert_callbacks:
             try:
-                callback(
-                    "GPU memory pressure - reduced texture quality and disabled shadows"
-                )
+                callback("GPU memory pressure - reduced texture quality and disabled shadows")
             except Exception as e:
                 logger.error(f"Performance alert callback failed: {str(e)}")
 
@@ -849,9 +836,7 @@ class RenderingPerformanceManager:
             "current_metrics": (
                 {
                     "fps": current_metrics.fps if current_metrics else 0,
-                    "frame_time_ms": (
-                        current_metrics.frame_time_ms if current_metrics else 0
-                    ),
+                    "frame_time_ms": (current_metrics.frame_time_ms if current_metrics else 0),
                     "triangles_rendered": (
                         current_metrics.triangles_rendered if current_metrics else 0
                     ),
@@ -865,13 +850,9 @@ class RenderingPerformanceManager:
                         current_metrics.cpu_usage_percent if current_metrics else 0
                     ),
                     "quality_level": (
-                        current_metrics.quality_level.value
-                        if current_metrics
-                        else "unknown"
+                        current_metrics.quality_level.value if current_metrics else "unknown"
                     ),
-                    "vsync_enabled": (
-                        current_metrics.vsync_enabled if current_metrics else False
-                    ),
+                    "vsync_enabled": (current_metrics.vsync_enabled if current_metrics else False),
                 }
                 if current_metrics
                 else {}
@@ -900,9 +881,7 @@ class RenderingPerformanceManager:
         # Create LOD levels if needed
         if triangle_count > self.config.max_triangles // 2:
             # This would typically be called with the actual mesh object
-            logger.info(
-                f"Creating LOD levels for model {model_id} with {triangle_count} triangles"
-            )
+            logger.info(f"Creating LOD levels for model {model_id} with {triangle_count} triangles")
 
     def shutdown(self) -> None:
         """Shutdown the rendering performance manager."""

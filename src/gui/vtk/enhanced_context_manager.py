@@ -90,9 +90,7 @@ class EnhancedVTKContextManager:
         self.context_failures = 0
         self.early_detections = 0
 
-        self.logger.info(
-            "Enhanced VTK Context Manager initialized with early detection"
-        )
+        self.logger.info("Enhanced VTK Context Manager initialized with early detection")
 
     def _setup_platform_handlers(self) -> Dict[str, Callable]:
         """Set up platform-specific context handlers."""
@@ -106,9 +104,7 @@ class EnhancedVTKContextManager:
 
         return handlers
 
-    def _windows_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _windows_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Windows-specific context validation with early detection."""
         try:
             if not render_window:
@@ -141,9 +137,7 @@ class EnhancedVTKContextManager:
             self.logger.debug(f"Windows context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _linux_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _linux_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Linux-specific context validation with early detection."""
         try:
             if not render_window:
@@ -161,9 +155,7 @@ class EnhancedVTKContextManager:
             self.logger.debug(f"Linux context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _darwin_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _darwin_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """macOS-specific context validation with early detection."""
         try:
             if not render_window:
@@ -214,9 +206,7 @@ class EnhancedVTKContextManager:
                     )
 
             # Perform fresh context validation
-            context_state = self._validate_context_internal(
-                render_window, "early_detection"
-            )
+            context_state = self._validate_context_internal(render_window, "early_detection")
 
             # Cache the result
             with self._lock:
@@ -268,9 +258,7 @@ class EnhancedVTKContextManager:
             self.logger.debug(f"Context validation exception: {e}")
             return ContextState.UNKNOWN
 
-    def _generic_context_handler(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> ContextState:
+    def _generic_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
         """Generic context validation fallback."""
         try:
             if not render_window:
@@ -298,9 +286,7 @@ class EnhancedVTKContextManager:
             old_scenario = self.current_scenario
             self.current_scenario = scenario
 
-            self.logger.info(
-                f"Shutdown scenario changed: {old_scenario.value} -> {scenario.value}"
-            )
+            self.logger.info(f"Shutdown scenario changed: {old_scenario.value} -> {scenario.value}")
 
             # Trigger scenario-specific cleanup preparation
             self._prepare_scenario_cleanup(scenario)
@@ -369,14 +355,10 @@ class EnhancedVTKContextManager:
             self.shutdown_initiated = True
 
             # Early context loss detection
-            early_detection, context_state = self.detect_context_loss_early(
-                render_window
-            )
+            early_detection, context_state = self.detect_context_loss_early(render_window)
 
             if early_detection:
-                self.logger.warning(
-                    f"Context loss detected early: {context_state.value}"
-                )
+                self.logger.warning(f"Context loss detected early: {context_state.value}")
                 self.current_scenario = ShutdownScenario.CONTEXT_LOSS
 
             # Execute cleanup callbacks in order
@@ -400,9 +382,7 @@ class EnhancedVTKContextManager:
             if cleanup_success:
                 self.logger.info("Coordinated cleanup sequence completed successfully")
             else:
-                self.logger.warning(
-                    "Coordinated cleanup sequence completed with errors"
-                )
+                self.logger.warning("Coordinated cleanup sequence completed with errors")
 
             return cleanup_success
 
@@ -580,13 +560,9 @@ class EnhancedVTKContextManager:
         try:
             with self._lock:
                 vtk_status = "completed" if self.vtk_cleanup_completed else "pending"
-                opengl_status = (
-                    "completed" if self.opengl_cleanup_completed else "pending"
-                )
+                opengl_status = "completed" if self.opengl_cleanup_completed else "pending"
 
-                self.logger.info(
-                    f"Cleanup verification: VTK={vtk_status}, OpenGL={opengl_status}"
-                )
+                self.logger.info(f"Cleanup verification: VTK={vtk_status}, OpenGL={opengl_status}")
 
                 # Reset flags for next cleanup cycle
                 self.vtk_cleanup_completed = False
@@ -619,9 +595,7 @@ class EnhancedVTKContextManager:
         """Enable or disable early context loss detection."""
         with self._lock:
             self.early_detection_enabled = enabled
-            self.logger.info(
-                f"Early context loss detection {'enabled' if enabled else 'disabled'}"
-            )
+            self.logger.info(f"Early context loss detection {'enabled' if enabled else 'disabled'}")
 
     def set_detection_interval(self, interval: float) -> None:
         """Set the detection interval for early context loss detection."""

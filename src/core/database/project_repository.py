@@ -131,9 +131,7 @@ class ProjectRepository:
             with self.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM projects WHERE LOWER(name) = LOWER(?)", (name,)
-                )
+                cursor.execute("SELECT * FROM projects WHERE LOWER(name) = LOWER(?)", (name,))
                 row = cursor.fetchone()
                 return dict(row) if row else None
 
@@ -142,9 +140,7 @@ class ProjectRepository:
             return None
 
     @log_function_call(logger)
-    def list_projects(
-        self, limit: Optional[int] = None, offset: int = 0
-    ) -> List[Dict[str, Any]]:
+    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
         """
         List all projects.
 

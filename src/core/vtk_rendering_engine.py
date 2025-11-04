@@ -64,9 +64,7 @@ class VTKRenderingEngine:
             self.logger.error(f"Failed to setup render window: {e}")
             return False
 
-    def set_background_color(
-        self, color: Union[str, Tuple[float, float, float]]
-    ) -> None:
+    def set_background_color(self, color: Union[str, Tuple[float, float, float]]) -> None:
         """
         Set solid background color.
 
@@ -77,9 +75,7 @@ class VTKRenderingEngine:
             if isinstance(color, str) and color.startswith("#"):
                 # Convert hex to RGB
                 hex_color = color.lstrip("#")
-                r, g, b = tuple(
-                    int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4)
-                )
+                r, g, b = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
                 self.renderer.SetBackground(r, g, b)
             elif isinstance(color, (tuple, list)) and len(color) == 3:
                 self.renderer.SetBackground(*color)

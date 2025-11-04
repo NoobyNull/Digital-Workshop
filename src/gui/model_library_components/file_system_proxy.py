@@ -29,9 +29,7 @@ class FileSystemProxyModel(QSortFilterProxyModel):
             parent: Parent widget
         """
         super().__init__(parent)
-        self.home_drive = (
-            str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
-        )
+        self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
 
     def filterAcceptsRow(self, source_row, source_parent):
         """

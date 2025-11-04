@@ -237,9 +237,7 @@ class DatabaseErrorHandler:
             suggested_action=suggested_action,
             context=context or {},
             traceback_info=(
-                traceback.format_exc()
-                if error_type != DatabaseErrorType.UNKNOWN_ERROR
-                else None
+                traceback.format_exc() if error_type != DatabaseErrorType.UNKNOWN_ERROR else None
             ),
         )
 
@@ -280,7 +278,9 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.CONNECTION_ERROR
             user_message = "Database is currently locked. Please try again in a moment."
             recoverable = True
-            suggested_action = "Wait and retry the operation, or close other applications using the database."
+            suggested_action = (
+                "Wait and retry the operation, or close other applications using the database."
+            )
         elif "no such table" in error_message.lower():
             error_type = DatabaseErrorType.SCHEMA_ERROR
             user_message = "Database schema is missing or outdated."
@@ -290,9 +290,7 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.CONSTRAINT_ERROR
             user_message = "Data constraint violation occurred."
             recoverable = True
-            suggested_action = (
-                "Check data integrity and ensure unique constraints are satisfied."
-            )
+            suggested_action = "Check data integrity and ensure unique constraints are satisfied."
         elif "database disk image is malformed" in error_message.lower():
             error_type = DatabaseErrorType.CORRUPTION_ERROR
             user_message = "Database file appears to be corrupted."
@@ -307,9 +305,7 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.UNKNOWN_ERROR
             user_message = "An unexpected database error occurred."
             recoverable = True
-            suggested_action = (
-                "Please try again or contact support if the problem persists."
-            )
+            suggested_action = "Please try again or contact support if the problem persists."
 
         return self._log_error(
             error_type=error_type,
@@ -559,9 +555,7 @@ class DatabaseErrorHandler:
                     ]
                 ),
                 "most_common_error": (
-                    max(error_counts.items(), key=lambda x: x[1])
-                    if error_counts
-                    else None
+                    max(error_counts.items(), key=lambda x: x[1]) if error_counts else None
                 ),
             }
 
@@ -736,17 +730,13 @@ class ConnectionManager:
         with self._lock:
             return {
                 "total_connections": len(self._connections),
-                "active_connections": len(
-                    [c for c in self._connections.values() if c is not None]
-                ),
+                "active_connections": len([c for c in self._connections.values() if c is not None]),
                 "connection_metrics": {
                     conn_id: {
                         "state": metrics.state.value,
                         "query_count": metrics.query_count,
                         "error_count": metrics.error_count,
-                        "uptime_seconds": (
-                            datetime.now() - metrics.created_at
-                        ).total_seconds(),
+                        "uptime_seconds": (datetime.now() - metrics.created_at).total_seconds(),
                     }
                     for conn_id, metrics in self.error_handler.connection_metrics.items()
                 },
@@ -771,9 +761,7 @@ class GracefulDegradationManager:
 
     def __init__(self):
         """Initialize graceful degradation manager."""
-        self.degradation_level = (
-            0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
-        )
+        self.degradation_level = 0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
         self.available_features = set()
         self.fallback_data = {}
 

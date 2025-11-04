@@ -55,9 +55,7 @@ class VTDBToolParser(BaseToolParser):
         except Exception as e:
             return False, f"Validation error: {str(e)}"
 
-    def parse(
-        self, file_path: str, progress_callback: ProgressCallback = None
-    ) -> List[ToolData]:
+    def parse(self, file_path: str, progress_callback: ProgressCallback = None) -> List[ToolData]:
         """Parse VTDB tool database."""
         tools = []
 
@@ -120,9 +118,7 @@ class VTDBToolParser(BaseToolParser):
                     # Report progress
                     if progress_callback and total_tools > 0:
                         progress = min((i + 1) / total_tools, 1.0)
-                        progress_callback.report(
-                            progress, f"Parsing tool {i + 1}/{total_tools}"
-                        )
+                        progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
 
             self.logger.info(f"Parsed {len(tools)} tools from VTDB file")
             return tools

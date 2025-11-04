@@ -38,9 +38,7 @@ class GcodeLoaderThread(QThread):
                 lines = f.readlines()
 
             total_lines = len(lines)
-            self.logger.info(
-                f"Starting to load {total_lines:,} lines from {self.filepath}"
-            )
+            self.logger.info(f"Starting to load {total_lines:,} lines from {self.filepath}")
 
             # Parse lines and emit batches
             batch = []

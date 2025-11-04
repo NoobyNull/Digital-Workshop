@@ -49,9 +49,7 @@ class GcodeSyntaxHighlighter(QSyntaxHighlighter):
         # Highlight comments
         comment_pattern = r";.*$"
         for match in re.finditer(comment_pattern, text):
-            self.setFormat(
-                match.start(), match.end() - match.start(), self.comment_format
-            )
+            self.setFormat(match.start(), match.end() - match.start(), self.comment_format)
 
         # Remove comments from processing
         text_without_comments = re.sub(comment_pattern, "", text)
@@ -59,34 +57,24 @@ class GcodeSyntaxHighlighter(QSyntaxHighlighter):
         # Highlight G-codes
         g_pattern = r"\bG\d+\b"
         for match in re.finditer(g_pattern, text_without_comments, re.IGNORECASE):
-            self.setFormat(
-                match.start(), match.end() - match.start(), self.g_code_format
-            )
+            self.setFormat(match.start(), match.end() - match.start(), self.g_code_format)
 
         # Highlight M-codes
         m_pattern = r"\bM\d+\b"
         for match in re.finditer(m_pattern, text_without_comments, re.IGNORECASE):
-            self.setFormat(
-                match.start(), match.end() - match.start(), self.m_code_format
-            )
+            self.setFormat(match.start(), match.end() - match.start(), self.m_code_format)
 
         # Highlight parameters (X, Y, Z, F, S, etc.)
         param_pattern = r"\b[XYZFSTIJ]\s*[-+]?\d*\.?\d+"
         for match in re.finditer(param_pattern, text_without_comments, re.IGNORECASE):
-            self.setFormat(
-                match.start(), match.end() - match.start(), self.parameter_format
-            )
+            self.setFormat(match.start(), match.end() - match.start(), self.parameter_format)
 
         # Highlight numbers
         number_pattern = r"[-+]?\d+\.?\d*"
         for match in re.finditer(number_pattern, text_without_comments):
             # Skip if already highlighted as parameter
-            if not re.match(
-                r"[XYZFSTIJ]", text_without_comments[max(0, match.start() - 1)]
-            ):
-                self.setFormat(
-                    match.start(), match.end() - match.start(), self.number_format
-                )
+            if not re.match(r"[XYZFSTIJ]", text_without_comments[max(0, match.start() - 1)]):
+                self.setFormat(match.start(), match.end() - match.start(), self.number_format)
 
 
 class GcodeEditorWidget(QWidget):

@@ -114,9 +114,7 @@ class StarRatingWidget(QWidget):
 
         painter.end()
 
-    def _draw_star(
-        self, painter: QPainter, x: int, y: int, size: int, color: QColor
-    ) -> None:
+    def _draw_star(self, painter: QPainter, x: int, y: int, size: int, color: QColor) -> None:
         """
         Draw a proper 5-pointed star shape.
 

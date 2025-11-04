@@ -138,9 +138,7 @@ class HardwareAccelerationManager:
                         available = True
                         notes.append("Detected NVIDIA GPUs via nvidia-smi")
                 else:
-                    notes.append(
-                        f"nvidia-smi returned non-zero exit code {res.returncode}"
-                    )
+                    notes.append(f"nvidia-smi returned non-zero exit code {res.returncode}")
             except Exception as e:
                 notes.append(f"nvidia-smi check failed: {e}")
         # Fallback to numba CUDA probe
@@ -218,15 +216,11 @@ class HardwareAccelerationManager:
             try:
                 rw = vtk.vtkRenderWindow()
                 # On some systems this may not initialize a context until shown; guard.
-                version = (
-                    rw.GetOpenGLVersion() if hasattr(rw, "GetOpenGLVersion") else ""
-                )
+                version = rw.GetOpenGLVersion() if hasattr(rw, "GetOpenGLVersion") else ""
                 if not version and hasattr(rw, "ReportCapabilities"):
                     # Fallback: parse ReportCapabilities
                     cap = rw.ReportCapabilities()  # type: ignore
-                    m = re.search(
-                        r"OpenGL version string:\s*([0-9]+\.[0-9]+)", cap or ""
-                    )
+                    m = re.search(r"OpenGL version string:\s*([0-9]+\.[0-9]+)", cap or "")
                     version = m.group(1) if m else ""
             except Exception:
                 version = ""
@@ -257,9 +251,7 @@ class HardwareAccelerationManager:
             score = 85
             # scale with memory if known
             mems = [
-                d.memory_mb
-                for d in caps.devices
-                if d.backend == AccelBackend.CUDA and d.memory_mb
+                d.memory_mb for d in caps.devices if d.backend == AccelBackend.CUDA and d.memory_mb
             ]
             if mems:
                 score = min(100, score + min(10, sum(mems) // (8 * 1024)))
@@ -286,9 +278,7 @@ class HardwareAccelerationManager:
             "recommended_backend": caps.recommended_backend.value,
             "performance_score": caps.performance_score,
             "available_backends": [b.value for b in caps.available_backends],
-            "devices": [
-                f"{d.vendor} {d.name} ({d.memory_mb or '?'} MB)" for d in caps.devices
-            ],
+            "devices": [f"{d.vendor} {d.name} ({d.memory_mb or '?'} MB)" for d in caps.devices],
             "notes": caps.notes,
         }
         return info
@@ -298,9 +288,7 @@ class HardwareAccelerationManager:
         if caps.recommended_backend == AccelBackend.CPU:
             self.logger.warning("No GPU acceleration detected; using CPU path")
         else:
-            self.logger.info(
-                f"GPU acceleration enabled: {caps.recommended_backend.value}"
-            )
+            self.logger.info(f"GPU acceleration enabled: {caps.recommended_backend.value}")
 
 
 # Singleton helpers

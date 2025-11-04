@@ -46,9 +46,7 @@ class ApplicationBootstrap:
             if self.config.enable_hardware_acceleration:
                 if not self._initialize_hardware_acceleration():
                     # Hardware acceleration failure is not critical
-                    self.logger.warning(
-                        "Hardware acceleration failed, continuing without it"
-                    )
+                    self.logger.warning("Hardware acceleration failed, continuing without it")
 
             self.logger.info("Application service bootstrap completed successfully")
             return True
@@ -94,9 +92,7 @@ class ApplicationBootstrap:
                     if result:
                         self.logger.debug("Theme applied successfully")
                     else:
-                        self.logger.debug(
-                            "Theme application returned False, but continuing"
-                        )
+                        self.logger.debug("Theme application returned False, but continuing")
                 except Exception as theme_error:
                     self.logger.debug("Failed to apply theme: %s", theme_error)
 
@@ -157,8 +153,7 @@ class ApplicationBootstrap:
             Dictionary containing system information
         """
         info = {
-            "hardware_acceleration_enabled": self._hardware_acceleration_manager
-            is not None,
+            "hardware_acceleration_enabled": self._hardware_acceleration_manager is not None,
             "theme_loaded": True,  # We would track this more precisely in a real implementation
             "settings_migrated": True,  # Same as above
         }

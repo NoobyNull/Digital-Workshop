@@ -29,11 +29,7 @@ class GcodeMove:
     def get_move_type_name(self) -> str:
         """Get human-readable move type name."""
         if self.is_tool_change:
-            return (
-                f"Tool Change (T{self.tool_number})"
-                if self.tool_number
-                else "Tool Change"
-            )
+            return f"Tool Change (T{self.tool_number})" if self.tool_number else "Tool Change"
         elif self.is_spindle_on:
             return "Spindle On"
         elif self.is_spindle_off:
@@ -142,9 +138,7 @@ class GcodeParser:
                 if total_lines <= sample_size * 4:
                     # File is small enough, parse all lines
                     mmapped_file.seek(0)
-                    lines = [
-                        line.decode("utf-8", errors="ignore") for line in mmapped_file
-                    ]
+                    lines = [line.decode("utf-8", errors="ignore") for line in mmapped_file]
                     return self.parse_lines(lines)
 
                 # Sample first N lines

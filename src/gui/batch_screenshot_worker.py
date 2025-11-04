@@ -92,15 +92,11 @@ class BatchScreenshotWorker(QThread):
 
                     if screenshot_path:
                         # Update database with thumbnail path
-                        self.db_manager.update_model_thumbnail(
-                            model_id, screenshot_path
-                        )
+                        self.db_manager.update_model_thumbnail(model_id, screenshot_path)
                         self.screenshot_generated.emit(model_id, screenshot_path)
                         self.logger.info(f"Generated screenshot for model {model_id}")
                     else:
-                        self.logger.warning(
-                            f"Failed to generate screenshot for model {model_id}"
-                        )
+                        self.logger.warning(f"Failed to generate screenshot for model {model_id}")
 
                     # Emit progress
                     self.progress_updated.emit(idx + 1, total)
@@ -154,9 +150,7 @@ class BatchScreenshotWorker(QThread):
             return screenshot_path
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to generate screenshot for model {model_id}: {e}"
-            )
+            self.logger.error(f"Failed to generate screenshot for model {model_id}: {e}")
             return None
 
     def stop(self) -> None:

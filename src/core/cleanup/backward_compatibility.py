@@ -37,9 +37,7 @@ class LegacyVTKCleanupCoordinator:
             )
             self._deprecation_warned = True
 
-    def coordinate_cleanup(
-        self, render_window=None, renderer=None, interactor=None
-    ) -> bool:
+    def coordinate_cleanup(self, render_window=None, renderer=None, interactor=None) -> bool:
         """
         Coordinate VTK cleanup (legacy interface).
 
@@ -228,9 +226,7 @@ def get_legacy_vtk_scene_manager() -> LegacyVTKSceneManager:
     return _legacy_vtk_scene_manager
 
 
-def coordinate_vtk_cleanup_legacy(
-    render_window=None, renderer=None, interactor=None
-) -> bool:
+def coordinate_vtk_cleanup_legacy(render_window=None, renderer=None, interactor=None) -> bool:
     """
     Legacy function for VTK cleanup coordination.
 

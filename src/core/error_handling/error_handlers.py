@@ -82,9 +82,7 @@ class SpecificErrorHandler:
 
         return wrapper
 
-    def _handle_error(
-        self, exc_type: Type[Exception], exc_val: Exception, exc_tb
-    ) -> bool:
+    def _handle_error(self, exc_type: Type[Exception], exc_val: Exception, exc_tb) -> bool:
         """
         Handle the specific error with proper categorization and reporting.
 
@@ -116,17 +114,13 @@ class SpecificErrorHandler:
 
         except Exception as reporting_error:
             # If error reporting itself fails, log and continue
-            self.logger.error(
-                "Error reporting failed: %s", reporting_error, exc_info=True
-            )
+            self.logger.error("Error reporting failed: %s", reporting_error, exc_info=True)
 
             # In case of reporting failure, still attempt recovery
             try:
                 self._attempt_recovery(exc_val)
             except Exception as recovery_error:
-                self.logger.error(
-                    "Recovery attempt failed: %s", recovery_error, exc_info=True
-                )
+                self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
 
             # Reraise original error if requested
             if self.reraise:
@@ -156,9 +150,7 @@ class SpecificErrorHandler:
             return False
 
         except Exception as recovery_error:
-            self.logger.error(
-                "Recovery strategy failed: %s", recovery_error, exc_info=True
-            )
+            self.logger.error("Recovery strategy failed: %s", recovery_error, exc_info=True)
             return False
 
 
@@ -166,9 +158,7 @@ class SpecificErrorHandler:
 class ShutdownErrorHandler(SpecificErrorHandler):
     """Specialized handler for shutdown operations."""
 
-    def __init__(
-        self, operation_name: str, context_info: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, operation_name: str, context_info: Optional[Dict[str, Any]] = None):
         super().__init__(
             context=ErrorContext.SHUTDOWN,
             expected_errors=(RuntimeError, OSError, IOError),
@@ -240,9 +230,7 @@ class MemoryErrorHandler(SpecificErrorHandler):
 
 # Context managers for specific operations
 @contextmanager
-def handle_shutdown_errors(
-    operation_name: str, context_info: Optional[Dict[str, Any]] = None
-):
+def handle_shutdown_errors(operation_name: str, context_info: Optional[Dict[str, Any]] = None):
     """
     Context manager for shutdown operations with specific error handling.
 
@@ -410,9 +398,7 @@ def file_io_safe(operation: str, file_path: Optional[Path] = None):
 
 
 # Performance monitoring wrapper
-def monitor_operation(
-    operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION
-):
+def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION):
     """
     Decorator to monitor operation performance and handle errors.
 

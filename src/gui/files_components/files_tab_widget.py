@@ -105,9 +105,7 @@ class FilesTab(QWidget):
         validation_layout = QVBoxLayout(validation_group)
 
         self.validate_button = QPushButton("Validate All Folders")
-        self.validate_button.setToolTip(
-            "Check if all configured folders are accessible"
-        )
+        self.validate_button.setToolTip("Check if all configured folders are accessible")
         validation_layout.addWidget(self.validate_button)
 
         self.validation_status = QLabel("Ready")
@@ -152,9 +150,7 @@ class FilesTab(QWidget):
         # Buttons
         maintenance_buttons = QHBoxLayout()
         self.start_maintenance_button = QPushButton("Start Maintenance")
-        self.start_maintenance_button.setToolTip(
-            "Start the selected maintenance operation"
-        )
+        self.start_maintenance_button.setToolTip("Start the selected maintenance operation")
         maintenance_buttons.addWidget(self.start_maintenance_button)
 
         self.cancel_maintenance_button = QPushButton("Cancel")
@@ -271,9 +267,7 @@ class FilesTab(QWidget):
         # Add to manager
         if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
             self._load_folders()  # Refresh the list
-            show_auto_close_message(
-                self, "Success", f"Added folder '{display_name}'", 5000
-            )
+            show_auto_close_message(self, "Success", f"Added folder '{display_name}'", 5000)
         else:
             QMessageBox.warning(
                 self,
@@ -330,9 +324,7 @@ class FilesTab(QWidget):
         )
 
         if ok and new_name.strip() and new_name.strip() != folder.display_name:
-            if self.root_folder_manager.update_folder(
-                folder_id, display_name=new_name.strip()
-            ):
+            if self.root_folder_manager.update_folder(folder_id, display_name=new_name.strip()):
                 self._load_folders()  # Refresh the list
                 show_auto_close_message(self, "Success", "Folder name updated.", 5000)
             else:
@@ -387,9 +379,7 @@ class FilesTab(QWidget):
         invalid_count = len(results["invalid"])
 
         if invalid_count == 0:
-            self.validation_status.setText(
-                f"✓ All {valid_count} folders are accessible."
-            )
+            self.validation_status.setText(f"✓ All {valid_count} folders are accessible.")
             QMessageBox.information(
                 self,
                 "Validation Complete",

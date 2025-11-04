@@ -412,9 +412,7 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                             f"Completed {func.__name__}",
                             extra={
                                 "custom_function": func.__name__,
-                                "custom_result": str(result)[
-                                    :100
-                                ],  # Limit result length
+                                "custom_result": str(result)[:100],  # Limit result length
                             },
                         )
                     except:

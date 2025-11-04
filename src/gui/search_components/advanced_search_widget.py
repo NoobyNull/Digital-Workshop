@@ -197,9 +197,7 @@ class AdvancedSearchWidget(QWidget):
     def on_category_toggled(self):
         """Handle individual category checkbox toggle."""
         # Check if any individual categories are selected
-        any_selected = any(
-            checkbox.isChecked() for checkbox in self.category_checkboxes.values()
-        )
+        any_selected = any(checkbox.isChecked() for checkbox in self.category_checkboxes.values())
 
         # Update "All Categories" checkbox
         self.category_all_checkbox.blockSignals(True)
@@ -232,9 +230,7 @@ class AdvancedSearchWidget(QWidget):
 
         # Category filter
         selected_categories = [
-            name
-            for name, checkbox in self.category_checkboxes.items()
-            if checkbox.isChecked()
+            name for name, checkbox in self.category_checkboxes.items() if checkbox.isChecked()
         ]
         if selected_categories:
             filters["category"] = selected_categories
@@ -255,14 +251,10 @@ class AdvancedSearchWidget(QWidget):
 
         # Date range filter
         if self.date_added_start.date().isValid():
-            filters["date_added_start"] = self.date_added_start.date().toString(
-                "yyyy-MM-dd"
-            )
+            filters["date_added_start"] = self.date_added_start.date().toString("yyyy-MM-dd")
 
         if self.date_added_end.date().isValid():
-            filters["date_added_end"] = self.date_added_end.date().toString(
-                "yyyy-MM-dd"
-            )
+            filters["date_added_end"] = self.date_added_end.date().toString("yyyy-MM-dd")
 
         # File size filter
         min_size = self.min_size_spin.value()

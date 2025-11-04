@@ -37,9 +37,7 @@ class ThemeValidationError(Exception):
     and suggested remediation steps.
     """
 
-    def __init__(
-        self, message: str, errors: List[str] = None, warnings: List[str] = None
-    ):
+    def __init__(self, message: str, errors: List[str] = None, warnings: List[str] = None):
         """
         Initialize theme validation error.
 
@@ -76,9 +74,7 @@ class ThemeValidator:
         # Color validation patterns
         self._hex_color_pattern = re.compile(r"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
         self._rgb_color_pattern = re.compile(r"^rgb\((\d+),\s*(\d+),\s*(\d+)\)$")
-        self._rgba_color_pattern = re.compile(
-            r"^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$"
-        )
+        self._rgba_color_pattern = re.compile(r"^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$")
 
         # Accessibility requirements
         self._min_contrast_ratio = 4.5  # WCAG AA standard
@@ -134,9 +130,7 @@ class ThemeValidator:
 
         logger.info("ThemeValidator initialized with comprehensive validation rules")
 
-    def validate_theme(
-        self, theme_data: Dict[str, Any]
-    ) -> Tuple[bool, List[str], List[str]]:
+    def validate_theme(self, theme_data: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
         """
         Perform comprehensive theme validation.
 
@@ -157,9 +151,7 @@ class ThemeValidator:
 
             # Level 2: Color validation (if structure is valid)
             if structure_valid:
-                color_valid, color_errors, color_warnings = self._validate_colors(
-                    theme_data
-                )
+                color_valid, color_errors, color_warnings = self._validate_colors(theme_data)
                 errors.extend(color_errors)
                 warnings.extend(color_warnings)
 
@@ -195,9 +187,7 @@ class ThemeValidator:
             logger.error(f"Theme validation exception: {e}", exc_info=True)
             return False, [f"Validation exception: {str(e)}"], []
 
-    def validate_color_scheme(
-        self, colors: Dict[str, str]
-    ) -> Tuple[bool, List[str], List[str]]:
+    def validate_color_scheme(self, colors: Dict[str, str]) -> Tuple[bool, List[str], List[str]]:
         """
         Validate color scheme for accessibility and consistency.
 
@@ -214,9 +204,7 @@ class ThemeValidator:
             # Validate color formats
             for color_name, color_value in colors.items():
                 if not self._is_valid_color_format(color_value):
-                    errors.append(
-                        f"Invalid color format for '{color_name}': {color_value}"
-                    )
+                    errors.append(f"Invalid color format for '{color_name}': {color_value}")
                     continue
 
                 # Check for accessibility issues
@@ -347,9 +335,7 @@ class ThemeValidator:
                 theme_name in self._valid_themes
                 and theme_variant not in self._valid_themes[theme_name]
             ):
-                errors.append(
-                    f"Invalid variant '{theme_variant}' for theme '{theme_name}'"
-                )
+                errors.append(f"Invalid variant '{theme_variant}' for theme '{theme_name}'")
 
         # Validate custom colors structure
         if "custom_colors" in theme_data:
@@ -364,9 +350,7 @@ class ThemeValidator:
 
         return len(errors) == 0, errors
 
-    def _validate_colors(
-        self, theme_data: Dict[str, Any]
-    ) -> Tuple[bool, List[str], List[str]]:
+    def _validate_colors(self, theme_data: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
         """
         Validate color values and formats.
 
@@ -426,9 +410,7 @@ class ThemeValidator:
 
         return len(errors) == 0, errors, warnings
 
-    def _validate_performance(
-        self, theme_data: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+    def _validate_performance(self, theme_data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """
         Validate performance impact of theme.
 
@@ -452,9 +434,7 @@ class ThemeValidator:
         # Check for complex color patterns that might be slow
         for color_name, color_value in custom_colors.items():
             if self._is_complex_color(color_value):
-                warnings.append(
-                    f"Complex color '{color_name}' may impact rendering performance"
-                )
+                warnings.append(f"Complex color '{color_name}' may impact rendering performance")
 
         return len(warnings) == 0, warnings
 
@@ -534,9 +514,7 @@ class ThemeValidator:
                 warnings.append(f"Very dark {color_name} color may be hard to read")
 
         except Exception as e:
-            warnings.append(
-                f"Could not validate accessibility for color '{color_name}': {e}"
-            )
+            warnings.append(f"Could not validate accessibility for color '{color_name}': {e}")
 
         return warnings
 
@@ -558,9 +536,7 @@ class ThemeValidator:
 
         if text_primary and background:
             try:
-                contrast_ratio = self._calculate_contrast_ratio(
-                    text_primary, background
-                )
+                contrast_ratio = self._calculate_contrast_ratio(text_primary, background)
                 if contrast_ratio < self._min_contrast_ratio:
                     warnings.append(
                         f"Low contrast ratio ({contrast_ratio:.2f}) between text_primary and background. "
@@ -590,11 +566,7 @@ class ThemeValidator:
 
             # Apply gamma correction
             def gamma_correct(channel: float) -> float:
-                return (
-                    channel / 12.92
-                    if channel <= 0.03928
-                    else ((channel + 0.055) / 1.055) ** 2.4
-                )
+                return channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4
 
             r, g, b = gamma_correct(r), gamma_correct(g), gamma_correct(b)
             return 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -629,9 +601,7 @@ class ThemeValidator:
                 "text_primary",
                 "text_secondary",
             ]:
-                warnings.append(
-                    f"Low opacity text color '{color_name}' may be hard to read"
-                )
+                warnings.append(f"Low opacity text color '{color_name}' may be hard to read")
 
         except Exception as e:
             warnings.append(f"Could not check color issues for '{color_name}': {e}")

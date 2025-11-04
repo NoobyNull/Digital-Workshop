@@ -41,11 +41,7 @@ class MemoryStats:
     @property
     def available_ratio(self) -> float:
         """Get ratio of available to total memory."""
-        return (
-            self.available_memory_gb / self.total_memory_gb
-            if self.total_memory_gb > 0
-            else 0
-        )
+        return self.available_memory_gb / self.total_memory_gb if self.total_memory_gb > 0 else 0
 
     @property
     def is_memory_constrained(self) -> bool:
@@ -308,20 +304,14 @@ class MemoryManager:
             stats: Current memory statistics
         """
         if stats.pressure_level == MemoryPressure.CRITICAL:
-            self.logger.warning(
-                "Critical memory pressure detected - triggering cleanup"
-            )
+            self.logger.warning("Critical memory pressure detected - triggering cleanup")
             self.force_cleanup()
         elif stats.pressure_level == MemoryPressure.HIGH:
-            self.logger.info(
-                "High memory pressure detected - performing maintenance cleanup"
-            )
+            self.logger.info("High memory pressure detected - performing maintenance cleanup")
             self.maintenance_cleanup()
 
     @log_function_call
-    def allocate_memory(
-        self, size_bytes: int, owner: str = "unknown"
-    ) -> Optional[bytearray]:
+    def allocate_memory(self, size_bytes: int, owner: str = "unknown") -> Optional[bytearray]:
         """
         Allocate memory with tracking and limits.
 
@@ -358,9 +348,7 @@ class MemoryManager:
                 self.logger.debug(f"Direct allocated {len(block)} bytes for {owner}")
                 return block
             except MemoryError:
-                self.logger.error(
-                    f"Memory allocation failed for {owner}: {size_bytes} bytes"
-                )
+                self.logger.error(f"Memory allocation failed for {owner}: {size_bytes} bytes")
                 return None
 
     @log_function_call
@@ -396,16 +384,12 @@ class MemoryManager:
             Dictionary with allocation summary
         """
         with self._lock:
-            total_allocated = sum(
-                sum(sizes) for sizes in self.allocation_tracking.values()
-            )
+            total_allocated = sum(sum(sizes) for sizes in self.allocation_tracking.values())
 
             return {
                 "total_allocated_bytes": total_allocated,
                 "total_allocated_gb": total_allocated / (1024**3),
-                "allocation_count": sum(
-                    len(sizes) for sizes in self.allocation_tracking.values()
-                ),
+                "allocation_count": sum(len(sizes) for sizes in self.allocation_tracking.values()),
                 "owners": dict(self.allocation_tracking),
                 "memory_stats": self.monitor.get_memory_stats().__dict__,
             }

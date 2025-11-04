@@ -253,9 +253,7 @@ class ProfessionalCostCalculator:
         tool_total = tool_wear_cost + consumables_cost
 
         # Subtotal before overhead
-        subtotal_before_overhead = (
-            mat_total + mach_total + labor_total + shop_total + tool_total
-        )
+        subtotal_before_overhead = mat_total + mach_total + labor_total + shop_total + tool_total
 
         # Calculate overhead
         overhead = subtotal_before_overhead * (self.overhead_percentage / 100.0)

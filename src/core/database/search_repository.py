@@ -96,9 +96,7 @@ class SearchRepository:
                 rows = cursor.fetchall()
 
                 results = [dict(row) for row in rows]
-                logger.debug(
-                    f"Search returned {len(results)} results for query: '{query}'"
-                )
+                logger.debug(f"Search returned {len(results)} results for query: '{query}'")
                 return results
 
         except sqlite3.Error as e:
@@ -135,9 +133,7 @@ class SearchRepository:
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(
-                    f"Filename search returned {len(results)} results for: '{filename}'"
-                )
+                logger.debug(f"Filename search returned {len(results)} results for: '{filename}'")
                 return results
 
         except sqlite3.Error as e:

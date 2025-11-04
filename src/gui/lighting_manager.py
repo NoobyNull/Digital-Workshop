@@ -128,9 +128,7 @@ class LightingManager:
                 fill_pos = [-p * 0.5 for p in self.position]
                 fill_light.SetPosition(*fill_pos)
                 fill_light.SetColor(0.8, 0.8, 0.9)  # Slightly cool fill light
-                fill_light.SetIntensity(
-                    float(self.fill_light_intensity)
-                )  # Use config intensity
+                fill_light.SetIntensity(float(self.fill_light_intensity))  # Use config intensity
 
                 # Add lights to renderer
                 if self.renderer:
@@ -143,9 +141,7 @@ class LightingManager:
                 # Add only key light if fill light is disabled
                 if self.renderer:
                     self.renderer.AddLight(self.light)
-                    self.logger.info(
-                        "LightingManager created key light only (fill light disabled)"
-                    )
+                    self.logger.info("LightingManager created key light only (fill light disabled)")
 
             # Immediate render for responsive UX
             self._render_now()

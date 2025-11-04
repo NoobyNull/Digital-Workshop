@@ -162,9 +162,7 @@ class ExternalDatabaseEditor(QDialog):
 
         params_layout.addWidget(QLabel("Tool Type:"))
         self.search_type = QComboBox()
-        self.search_type.addItems(
-            ["All", "End Mill", "Bit", "V-Bit", "Ball End Mill", "Drill"]
-        )
+        self.search_type.addItems(["All", "End Mill", "Bit", "V-Bit", "Ball End Mill", "Drill"])
         params_layout.addWidget(self.search_type)
 
         params_layout.addWidget(QLabel("Min Diameter:"))
@@ -211,24 +209,12 @@ class ExternalDatabaseEditor(QDialog):
             self.tools_table.setRowCount(len(tools))
 
             for row, tool in enumerate(tools):
-                self.tools_table.setItem(
-                    row, 0, QTableWidgetItem(tool.get("guid", "N/A"))
-                )
-                self.tools_table.setItem(
-                    row, 1, QTableWidgetItem(tool.get("description", "N/A"))
-                )
-                self.tools_table.setItem(
-                    row, 2, QTableWidgetItem(tool.get("type", "N/A"))
-                )
-                self.tools_table.setItem(
-                    row, 3, QTableWidgetItem(str(tool.get("diameter", "N/A")))
-                )
-                self.tools_table.setItem(
-                    row, 4, QTableWidgetItem(tool.get("vendor", "N/A"))
-                )
-                self.tools_table.setItem(
-                    row, 5, QTableWidgetItem(tool.get("provider", "N/A"))
-                )
+                self.tools_table.setItem(row, 0, QTableWidgetItem(tool.get("guid", "N/A")))
+                self.tools_table.setItem(row, 1, QTableWidgetItem(tool.get("description", "N/A")))
+                self.tools_table.setItem(row, 2, QTableWidgetItem(tool.get("type", "N/A")))
+                self.tools_table.setItem(row, 3, QTableWidgetItem(str(tool.get("diameter", "N/A"))))
+                self.tools_table.setItem(row, 4, QTableWidgetItem(tool.get("vendor", "N/A")))
+                self.tools_table.setItem(row, 5, QTableWidgetItem(tool.get("provider", "N/A")))
 
                 edit_btn = QPushButton("Edit")
                 edit_btn.clicked.connect(lambda checked, t=tool: self._edit_tool(t))
@@ -248,13 +234,9 @@ class ExternalDatabaseEditor(QDialog):
             self.providers_table.setRowCount(len(providers))
 
             for row, provider in enumerate(providers):
-                self.providers_table.setItem(
-                    row, 0, QTableWidgetItem(provider.get("name", "N/A"))
-                )
+                self.providers_table.setItem(row, 0, QTableWidgetItem(provider.get("name", "N/A")))
                 tool_count = self.tool_repo.get_tools_by_provider(provider.get("id", 0))
-                self.providers_table.setItem(
-                    row, 1, QTableWidgetItem(str(len(tool_count)))
-                )
+                self.providers_table.setItem(row, 1, QTableWidgetItem(str(len(tool_count))))
                 self.providers_table.setItem(
                     row, 2, QTableWidgetItem(provider.get("updated_at", "N/A"))
                 )
@@ -290,9 +272,7 @@ class ExternalDatabaseEditor(QDialog):
                 self.search_results_table.setItem(
                     row, 0, QTableWidgetItem(tool.get("description", "N/A"))
                 )
-                self.search_results_table.setItem(
-                    row, 1, QTableWidgetItem(tool.get("type", "N/A"))
-                )
+                self.search_results_table.setItem(row, 1, QTableWidgetItem(tool.get("type", "N/A")))
                 self.search_results_table.setItem(
                     row, 2, QTableWidgetItem(str(tool.get("diameter", "N/A")))
                 )
@@ -323,9 +303,7 @@ class ExternalDatabaseEditor(QDialog):
     def _use_tool(self, tool):
         """Use selected tool (typically for feeding back to Feeds and Speeds)."""
         self.logger.debug(f"Using tool: {tool.get('guid')}")
-        QMessageBox.information(
-            self, "Tool Selected", f"Selected: {tool.get('description')}"
-        )
+        QMessageBox.information(self, "Tool Selected", f"Selected: {tool.get('description')}")
         self.accept()
 
     def _export_database(self):
@@ -337,9 +315,7 @@ class ExternalDatabaseEditor(QDialog):
 
             if file_path:
                 self.logger.info(f"Exporting database to {file_path}")
-                QMessageBox.information(
-                    self, "Export", "Database exported successfully"
-                )
+                QMessageBox.information(self, "Export", "Database exported successfully")
 
         except Exception as e:
             self.logger.error(f"Export failed: {e}")
@@ -357,9 +333,7 @@ class ExternalDatabaseEditor(QDialog):
 
             if file_path:
                 self.logger.info(f"Importing database from {file_path}")
-                QMessageBox.information(
-                    self, "Import", "Database imported successfully"
-                )
+                QMessageBox.information(self, "Import", "Database imported successfully")
                 self._refresh_tools_table()
 
         except Exception as e:

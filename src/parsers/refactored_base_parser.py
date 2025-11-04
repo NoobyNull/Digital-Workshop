@@ -119,9 +119,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         self._cache_lock = threading.RLock()
 
         # Thread pool for async operations
-        self._executor = ThreadPoolExecutor(
-            max_workers=2, thread_name_prefix=f"{parser_name}_"
-        )
+        self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix=f"{parser_name}_")
 
         # Log parser initialization
         self.logging_service.log_info(
@@ -181,9 +179,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         """
         # Validate file format
         if not self.can_parse(file_path):
-            error = FileNotSupportedError(
-                f"File format not supported by {self.parser_name}"
-            )
+            error = FileNotSupportedError(f"File format not supported by {self.parser_name}")
             self.logging_service.log_error(
                 error,
                 {
@@ -258,9 +254,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             self.logging_service.log_error(e, error_context)
 
             # Convert to standardized parsing error
-            if not isinstance(
-                e, (ParseError, FileNotSupportedError, FileNotFoundError)
-            ):
+            if not isinstance(e, (ParseError, FileNotSupportedError, FileNotFoundError)):
                 raise ParsingError(f"Failed to parse {file_path}: {str(e)}") from e
             else:
                 raise
@@ -279,9 +273,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         """
         try:
             if not self.can_parse(file_path):
-                raise FileNotSupportedError(
-                    f"File format not supported by {self.parser_name}"
-                )
+                raise FileNotSupportedError(f"File format not supported by {self.parser_name}")
 
             # Get file stats
             file_size = file_path.stat().st_size
@@ -342,9 +334,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             "version": "2.0.0",  # Refactored version
             "author": "Candy-Cadence Parser Team",
             "description": f"Refactored {self.parser_name} parser with streaming and progressive loading support",
-            "supported_formats": ", ".join(
-                [fmt.value for fmt in self._supported_formats]
-            ),
+            "supported_formats": ", ".join([fmt.value for fmt in self._supported_formats]),
             "features": "streaming, progressive_loading, memory_optimized, error_recovery",
         }
 
@@ -389,9 +379,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         """
         try:
             if not self.can_parse(file_path):
-                raise FileNotSupportedError(
-                    f"File format not supported by {self.parser_name}"
-                )
+                raise FileNotSupportedError(f"File format not supported by {self.parser_name}")
 
             return self._validate_geometry_internal(file_path)
 
@@ -415,9 +403,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         """
         try:
             if not self.can_parse(file_path):
-                raise FileNotSupportedError(
-                    f"File format not supported by {self.parser_name}"
-                )
+                raise FileNotSupportedError(f"File format not supported by {self.parser_name}")
 
             return self._get_geometry_stats_internal(file_path)
 
@@ -544,9 +530,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         """
         if count % self._gc_interval == 0 and count > 0:
             gc.collect()
-            self.logging_service.log_debug(
-                f"Performed garbage collection at count {count}"
-            )
+            self.logging_service.log_debug(f"Performed garbage collection at count {count}")
 
     def _update_progress(
         self,

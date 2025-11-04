@@ -30,9 +30,7 @@ class BackgroundHasher(QThread):
 
     hash_progress = Signal(str)  # filename being hashed
     model_hashed = Signal(int, str)  # model_id, file_hash
-    duplicate_found = Signal(
-        int, int, str, str
-    )  # new_model_id, existing_id, new_path, old_path
+    duplicate_found = Signal(int, int, str, str)  # new_model_id, existing_id, new_path, old_path
     all_complete = Signal()
 
     def __init__(self, parent=None):
@@ -81,9 +79,7 @@ class BackgroundHasher(QThread):
             if not unhashed_models:
                 # No more models to hash
                 self.all_complete.emit()
-                self.logger.info(
-                    "Background hashing complete - no more unhashed models"
-                )
+                self.logger.info("Background hashing complete - no more unhashed models")
                 break
 
             model = unhashed_models[0]
@@ -107,9 +103,7 @@ class BackgroundHasher(QThread):
                 )
 
                 if not result.success:
-                    self.logger.error(
-                        f"Failed to calculate hash for {filename}: {result.error}"
-                    )
+                    self.logger.error(f"Failed to calculate hash for {filename}: {result.error}")
                     # Mark with empty hash so we don't try again
                     self.db_manager.update_file_hash(model_id, "")
                     continue
@@ -130,9 +124,7 @@ class BackgroundHasher(QThread):
                     # Check if file moved (hash match but path different)
                     if existing_path != file_path:
                         # Emit signal for UI to handle
-                        self.duplicate_found.emit(
-                            model_id, existing_id, file_path, existing_path
-                        )
+                        self.duplicate_found.emit(model_id, existing_id, file_path, existing_path)
                     else:
                         # Same file, same path - just update hash on current model
                         self.db_manager.update_file_hash(model_id, file_hash)

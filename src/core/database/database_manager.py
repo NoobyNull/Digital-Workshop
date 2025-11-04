@@ -61,9 +61,7 @@ class DatabaseManager:
         file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
-        return self._model_repo.add_model(
-            filename, format, file_path, file_size, file_hash
-        )
+        return self._model_repo.add_model(filename, format, file_path, file_size, file_hash)
 
     def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find a model by its file hash."""
@@ -110,9 +108,7 @@ class DatabaseManager:
         """Update model metadata."""
         return self._metadata_repo.update_model_metadata(model_id, **kwargs)
 
-    def save_camera_orientation(
-        self, model_id: int, camera_data: Dict[str, float]
-    ) -> bool:
+    def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
         """Save camera orientation for a model."""
         return self._metadata_repo.save_camera_orientation(model_id, camera_data)
 
@@ -128,9 +124,7 @@ class DatabaseManager:
         """Get all categories from the database."""
         return self._metadata_repo.get_categories()
 
-    def add_category(
-        self, name: str, color: str = "#CCCCCC", sort_order: int = 0
-    ) -> int:
+    def add_category(self, name: str, color: str = "#CCCCCC", sort_order: int = 0) -> int:
         """Add a new category."""
         return self._metadata_repo.add_category(name, color, sort_order)
 
@@ -331,9 +325,7 @@ class DatabaseManager:
         """Get project by name (case-insensitive)."""
         return self._project_repo.get_project_by_name(name)
 
-    def list_projects(
-        self, limit: Optional[int] = None, offset: int = 0
-    ) -> List[Dict[str, Any]]:
+    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
         """List all projects."""
         return self._project_repo.list_projects(limit, offset)
 
@@ -406,9 +398,7 @@ class DatabaseManager:
         """Get total number of files in a project."""
         return self._file_repo.get_file_count_by_project(project_id)
 
-    def find_duplicate_by_hash(
-        self, project_id: str, file_hash: str
-    ) -> Optional[Dict[str, Any]]:
+    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash in a project."""
         return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
 

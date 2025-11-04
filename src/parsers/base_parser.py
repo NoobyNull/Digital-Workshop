@@ -29,7 +29,6 @@ class ParseError(Exception):
     """Custom exception for parsing errors."""
 
 
-
 class ProgressCallback:
     """Callback interface for progress reporting during parsing."""
 
@@ -251,9 +250,7 @@ class BaseParser(ABC):
                 # Lazy import to avoid NameError during async geometry load
                 from src.core.model_cache import CacheLevel
 
-                full_model = self._parse_file_internal(
-                    metadata_model.file_path, progress_callback
-                )
+                full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
 
                 # Merge geometry into the metadata model
                 try:
@@ -295,9 +292,7 @@ class BaseParser(ABC):
                     metadata_model.loading_state = LoadingState.FULL_GEOMETRY
 
                 # Cache the full model (may be skipped if too large per cache limits)
-                self.model_cache.put(
-                    metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model
-                )
+                self.model_cache.put(metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model)
 
             except Exception as e:
                 self.logger.error(

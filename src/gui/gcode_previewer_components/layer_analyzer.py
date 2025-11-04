@@ -109,9 +109,7 @@ class LayerAnalyzer:
                 return layer
         return None
 
-    def get_moves_for_layer(
-        self, layer_number: int, moves: List[GcodeMove]
-    ) -> List[GcodeMove]:
+    def get_moves_for_layer(self, layer_number: int, moves: List[GcodeMove]) -> List[GcodeMove]:
         """Get all moves for a specific layer."""
         layer = self.get_layer_by_number(layer_number)
         if not layer:

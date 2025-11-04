@@ -314,9 +314,7 @@ class VTKDiagnosticTools:
         except Exception:
             return False
 
-    def diagnose_context_loss(
-        self, render_window: vtk.vtkRenderWindow
-    ) -> Dict[str, Any]:
+    def diagnose_context_loss(self, render_window: vtk.vtkRenderWindow) -> Dict[str, Any]:
         """
         Diagnose potential context loss issues.
 
@@ -374,9 +372,7 @@ class VTKDiagnosticTools:
                 )
 
             # Get additional context information
-            diagnosis["context_info"] = self.context_manager.get_context_info(
-                render_window
-            )
+            diagnosis["context_info"] = self.context_manager.get_context_info(render_window)
 
             return diagnosis
 
@@ -439,9 +435,7 @@ class VTKDiagnosticTools:
             if total_resources > 50:
                 diagnosis["high_resource_count"] = True
                 diagnosis["performance_issues_detected"] = True
-                diagnosis["recommendations"].append(
-                    "High resource count may impact performance"
-                )
+                diagnosis["recommendations"].append("High resource count may impact performance")
 
             # Check error rates
             error_stats = self.error_handler.get_error_stats()

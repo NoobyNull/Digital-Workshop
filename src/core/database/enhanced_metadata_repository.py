@@ -245,9 +245,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "DELETE FROM model_metadata WHERE model_id = ?", (model_id,)
-                )
+                cursor.execute("DELETE FROM model_metadata WHERE model_id = ?", (model_id,))
 
                 success = cursor.rowcount > 0
                 conn.commit()
@@ -388,9 +386,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return row[0] if row and row[0] is not None else None
 
         except sqlite3.Error as e:
-            logger.error(
-                f"Failed to get metadata value {key} for model {model_id}: {str(e)}"
-            )
+            logger.error(f"Failed to get metadata value {key} for model {model_id}: {str(e)}")
             return None
 
     @log_function_call(logger)
@@ -430,20 +426,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.debug(
-                        f"Set metadata value {key} = {value} for model {model_id}"
-                    )
+                    logger.debug(f"Set metadata value {key} = {value} for model {model_id}")
                 else:
-                    logger.warning(
-                        f"No metadata record found to update for model {model_id}"
-                    )
+                    logger.warning(f"No metadata record found to update for model {model_id}")
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(
-                f"Failed to set metadata value {key} for model {model_id}: {str(e)}"
-            )
+            logger.error(f"Failed to set metadata value {key} for model {model_id}: {str(e)}")
             return False
 
     # Additional enhanced methods for better functionality
@@ -484,9 +474,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return success
 
         except sqlite3.Error as e:
-            logger.error(
-                f"Failed to increment view count for model {model_id}: {str(e)}"
-            )
+            logger.error(f"Failed to increment view count for model {model_id}: {str(e)}")
             return False
 
     @log_function_call(logger)
@@ -520,9 +508,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
             return []
 
     @log_function_call(logger)
-    def add_category(
-        self, name: str, color: Optional[str] = None, sort_order: int = 0
-    ) -> str:
+    def add_category(self, name: str, color: Optional[str] = None, sort_order: int = 0) -> str:
         """
         Add a new category.
 

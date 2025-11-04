@@ -58,9 +58,7 @@ class ModelService(IModelService):
         self._loaded_models: Set[str] = set()
         self._progress_callbacks: Dict[str, Callable[[float], None]] = {}
 
-        self._logger.info(
-            "ModelService initialized with %d parsers", len(parser_registry)
-        )
+        self._logger.info("ModelService initialized with %d parsers", len(parser_registry))
 
     def load_model(
         self,
@@ -95,18 +93,14 @@ class ModelService(IModelService):
             # Detect file format
             format_detected = self._format_detector.detect_format(file_path)
             if format_detected is None:
-                raise ValueError(
-                    f"Unsupported or unrecognized file format: {file_path}"
-                )
+                raise ValueError(f"Unsupported or unrecognized file format: {file_path}")
 
             self._logger.debug("Detected format: %s", format_detected.value)
 
             # Get appropriate parser
             parser = self._parser_registry.get(format_detected.value)
             if parser is None:
-                raise ValueError(
-                    f"No parser available for format: {format_detected.value}"
-                )
+                raise ValueError(f"No parser available for format: {format_detected.value}")
 
             # Validate file before parsing
             if not parser.validate_file(file_path):
@@ -118,9 +112,7 @@ class ModelService(IModelService):
 
             # Parse the model
             self._logger.debug("Starting model parsing")
-            model_data = parser.parse(
-                file_path, self._create_progress_callback(model_id)
-            )
+            model_data = parser.parse(file_path, self._create_progress_callback(model_id))
 
             # Validate parsed data
             if not self._validate_model_data(model_data):
@@ -134,9 +126,7 @@ class ModelService(IModelService):
             # Store metadata
             metadata = self._extract_metadata(file_path, model_data, format_detected)
             if not self._metadata_repository.add_metadata(stored_model_id, metadata):
-                self._logger.warning(
-                    "Failed to store metadata for model: %s", stored_model_id
-                )
+                self._logger.warning("Failed to store metadata for model: %s", stored_model_id)
 
             # Mark as loaded
             self._loaded_models.add(stored_model_id)
@@ -190,9 +180,7 @@ class ModelService(IModelService):
             return True
 
         except Exception as error:
-            self._logger.error(
-                "Error unloading model %s: %s", model_id, error, exc_info=True
-            )
+            self._logger.error("Error unloading model %s: %s", model_id, error, exc_info=True)
             return False
 
     def get_model(self, model_id: str) -> Optional[Any]:
@@ -217,9 +205,7 @@ class ModelService(IModelService):
             return model_data
 
         except Exception as error:
-            self._logger.error(
-                "Error retrieving model %s: %s", model_id, error, exc_info=True
-            )
+            self._logger.error("Error retrieving model %s: %s", model_id, error, exc_info=True)
             return None
 
     def get_loaded_models(self) -> List[str]:

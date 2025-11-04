@@ -135,9 +135,7 @@ class CleanupVerificationReport:
                 lines.append(f"  {key}: {value}")
             lines.append("")
 
-        status = (
-            "VERIFICATION PASSED ✓" if self.is_successful() else "VERIFICATION FAILED ✗"
-        )
+        status = "VERIFICATION PASSED ✓" if self.is_successful() else "VERIFICATION FAILED ✗"
         lines.append(status)
 
         return "\n".join(lines)
@@ -417,9 +415,7 @@ class CleanupVerifier:
                 message = f"All {total_handlers} handler(s) executed successfully"
             else:
                 status = VerificationStatus.WARNING
-                message = (
-                    f"{successful_handlers}/{total_handlers} handler(s) successful"
-                )
+                message = f"{successful_handlers}/{total_handlers} handler(s) successful"
 
             result = VerificationResult(
                 check_name="Handler Execution",
