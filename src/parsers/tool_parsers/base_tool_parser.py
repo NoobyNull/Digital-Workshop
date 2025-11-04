@@ -5,7 +5,6 @@ Base class for all tool parsers.
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from src.core.logging_config import get_logger
 
@@ -72,7 +71,6 @@ class BaseToolParser(ABC):
         Returns:
             List of parsed tools
         """
-        pass
 
     @abstractmethod
     def validate_file(self, file_path: str) -> tuple:
@@ -85,12 +83,10 @@ class BaseToolParser(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def get_format_name(self) -> str:
         """Get the format name this parser handles."""
-        pass
 
     def cancel(self) -> None:
         """Cancel the parsing operation."""

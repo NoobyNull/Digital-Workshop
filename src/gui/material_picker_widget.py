@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPixmap
@@ -454,9 +454,7 @@ class MaterialPickerWidget(QDialog):
     def _style_button(self, button: QPushButton) -> None:
         """Apply qt-material styling to a button."""
         # Qt-material handles styling automatically, no custom stylesheet needed
-        pass
 
     def _apply_theme_styles(self) -> None:
         """Apply theme styles to the dialog."""
         # Qt-material handles all styling automatically
-        pass

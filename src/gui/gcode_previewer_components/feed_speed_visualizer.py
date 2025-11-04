@@ -1,6 +1,6 @@
 """Feed Rate & Spindle Speed Visualizer - Color-code toolpath by feed/speed."""
 
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple
 import vtk
 
 from .gcode_parser import GcodeMove

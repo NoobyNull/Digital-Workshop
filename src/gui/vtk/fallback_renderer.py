@@ -6,13 +6,13 @@ context is lost or invalid, ensuring the application remains functional.
 """
 
 import platform
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any
 from enum import Enum
 
 import vtk
 
-from src.core.logging_config import get_logger, log_function_call
-from .error_handler import get_vtk_error_handler, VTKErrorCode
+from src.core.logging_config import get_logger
+from .error_handler import get_vtk_error_handler
 from .context_manager import get_vtk_context_manager, ContextState
 
 
@@ -428,7 +428,6 @@ class VTKFallbackRenderer:
             # Suppress VTK warnings during rendering to avoid wglMakeCurrent errors
             # These are expected and handled gracefully by VTK
             import os
-            import sys
 
             vtk.vtkObject.GlobalWarningDisplayOff()
 

@@ -12,13 +12,13 @@ import traceback
 import psutil
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from contextlib import contextmanager
 import weakref
 
-from ..logging_config import get_logger, log_function_call
+from ..logging_config import get_logger
 
 logger = get_logger(__name__)
 

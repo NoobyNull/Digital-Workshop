@@ -16,24 +16,21 @@ Key Features:
 import time
 import threading
 from pathlib import Path
-from typing import Optional, List, Tuple, BinaryIO, Any, Dict
+from typing import Optional, List, Tuple, Any, Dict
 from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np  # type: ignore
 
 from src.core.logging_config import get_logger, log_function_call
-from src.core.gpu_acceleration import get_gpu_accelerator, GPUBackend
-from src.core.gpu_memory_manager import get_gpu_memory_manager, GPUMemoryManager
+from src.core.gpu_acceleration import get_gpu_accelerator
+from src.core.gpu_memory_manager import get_gpu_memory_manager
 from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 from src.parsers.base_parser import (
     BaseParser,
     Model,
     ModelFormat,
-    Triangle,
     Vector3D,
     ModelStats,
-    ParseError,
     ProgressCallback,
     LoadingState,
 )
@@ -56,7 +53,6 @@ class GPUParseConfig:
 class STLGPUParseError(STLParseError):
     """Exception raised for GPU-accelerated STL parsing errors."""
 
-    pass
 
 
 class STLGPUParser(BaseParser):

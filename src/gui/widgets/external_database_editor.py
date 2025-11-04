@@ -5,7 +5,6 @@ Provides UI for viewing, editing, and exporting tool data to external databases
 with real-time calculations and validation.
 """
 
-from typing import Optional, List
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -18,12 +17,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QFileDialog,
-    QSpinBox,
     QDoubleSpinBox,
-    QDialogButtonBox,
     QTabWidget,
 )
-from PySide6.QtCore import Qt
 from src.core.logging_config import get_logger
 from src.core.database.tool_database_repository import ToolDatabaseRepository
 from src.parsers.tool_database_manager import ToolDatabaseManager

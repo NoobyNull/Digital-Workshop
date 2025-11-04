@@ -17,12 +17,9 @@ import time
 import zipfile
 import xml.etree.ElementTree as ET
 import gc
-import io
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.parsers.refactored_base_parser import (
     RefactoredBaseParser,
@@ -31,7 +28,6 @@ from src.parsers.refactored_base_parser import (
 from src.core.interfaces.parser_interfaces import (
     ModelFormat,
     ParseError,
-    FileNotSupportedError,
 )
 from src.core.logging_config import get_logger
 
@@ -39,7 +35,6 @@ from src.core.logging_config import get_logger
 class ThreeMFParseError(ParseError):
     """Custom exception for 3MF parsing errors."""
 
-    pass
 
 
 @dataclass

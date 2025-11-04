@@ -23,4 +23,3 @@ class STLParser(_OriginalSTLParser):
     - Performance optimization for different file sizes
     """
 
-    pass

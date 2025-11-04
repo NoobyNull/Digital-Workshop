@@ -31,11 +31,10 @@ Example:
     ... )
 """
 
-import json
 import time
 import gc
 from pathlib import Path
-from typing import Optional, Callable, List, Dict, Tuple, Any
+from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -43,7 +42,6 @@ from PySide6.QtCore import QThread, Signal, QObject
 
 from src.core.logging_config import get_logger, get_activity_logger
 from src.core.cancellation_token import CancellationToken
-from src.core.fast_hasher import FastHasher, HashResult
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
@@ -54,15 +52,11 @@ from src.core.import_file_manager import (
 )
 from src.core.import_thumbnail_service import (
     ImportThumbnailService,
-    StorageLocation,
-    ThumbnailGenerationResult,
     ThumbnailBatchResult,
 )
 from src.core.import_analysis_service import (
     ImportAnalysisService,
-    GeometryAnalysisResult,
     BatchAnalysisResult,
-    AnalysisStatus,
 )
 from src.core.database_manager import get_database_manager
 

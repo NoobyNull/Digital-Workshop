@@ -24,7 +24,6 @@ from PySide6.QtCore import (
     QModelIndex,
     QSortFilterProxyModel,
     QPointF,
-    QDir,
 )
 from PySide6.QtGui import (
     QIcon,
@@ -35,7 +34,6 @@ from PySide6.QtGui import (
     QStandardItemModel,
     QStandardItem,
     QAction,
-    QKeySequence,
     QPen,
     QBrush,
     QColor,
@@ -44,14 +42,12 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QSplitter,
     QTreeView,
     QListView,
     QTableView,
     QPushButton,
     QLabel,
     QLineEdit,
-    QComboBox,
     QProgressBar,
     QGroupBox,
     QTabWidget,
@@ -59,10 +55,6 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QHeaderView,
-    QFileSystemModel,
-    QButtonGroup,
-    QToolButton,
-    QCheckBox,
     QDialog,
     QFileDialog,
     QInputDialog,
@@ -78,7 +70,7 @@ from src.parsers.obj_parser import OBJParser
 from src.parsers.threemf_parser import ThreeMFParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.format_detector import FormatDetector, ModelFormat
-from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_8, SPACING_12
 from src.gui.theme_core import get_theme_color
 from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 from src.gui.model_library_components.grid_icon_delegate import GridIconDelegate
@@ -516,7 +508,6 @@ class ModelLibraryWidget(QWidget):
 
     def _apply_styling(self) -> None:
         """Apply styling (no-op - qt-material handles all styling)."""
-        pass
 
     def _setup_connections(self) -> None:
         # View mode connections are handled by the tab widget directly

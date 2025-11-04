@@ -1,7 +1,7 @@
 """Personal toolbox management using QSettings."""
 
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from PySide6.QtCore import QSettings
 
 from src.core.logging_config import get_logger

@@ -8,17 +8,13 @@ exception handling patterns throughout the application.
 import functools
 import logging
 import time
-import traceback
 from typing import Any, Callable, Dict, Optional, Type, Union
 from contextlib import contextmanager
 from pathlib import Path
 
 from .error_categories import (
     ErrorContext,
-    ErrorSeverity,
-    ErrorCategory,
     ErrorRecoveryStrategy,
-    ErrorClassifier,
     ErrorReport,
 )
 from .error_reporter import get_global_error_reporter

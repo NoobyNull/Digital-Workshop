@@ -9,7 +9,6 @@ Supports:
 
 import struct
 from pathlib import Path
-from typing import Optional
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel

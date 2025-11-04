@@ -6,7 +6,6 @@ with improved performance, transaction management, and error handling.
 """
 
 import sqlite3
-import json
 from typing import Any, Dict, List, Optional
 from contextlib import contextmanager
 

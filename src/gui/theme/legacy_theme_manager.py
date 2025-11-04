@@ -19,13 +19,12 @@ Migration Strategy:
 3. Eventually phase out legacy usage once all components are migrated
 """
 
-import time
 import threading
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Tuple
 from PySide6.QtCore import QObject, Signal
 
 from src.core.logging_config import get_logger
-from .unified_theme_manager import UnifiedThemeManager, get_unified_theme_manager
+from .unified_theme_manager import get_unified_theme_manager
 
 logger = get_logger(__name__)
 

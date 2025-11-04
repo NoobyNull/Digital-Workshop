@@ -1189,7 +1189,7 @@ class ThemeApplication(QObject):
             True if QDarkStyleSheet is available
         """
         try:
-            import qdarkstyle
+            pass
 
             return True
         except ImportError:

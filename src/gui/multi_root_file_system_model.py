@@ -6,7 +6,7 @@ with filtering and navigation capabilities.
 """
 
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Any
 from dataclasses import dataclass
 
 from PySide6.QtCore import (
@@ -18,7 +18,6 @@ from PySide6.QtCore import (
     QThread,
     Signal,
 )
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStyle
 
 from src.core.logging_config import get_logger

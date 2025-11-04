@@ -6,10 +6,10 @@ when the theme changes.
 """
 
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from weakref import WeakSet
 
-from PySide6.QtWidgets import QMainWindow, QDialog, QWidget
+from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QObject, Signal
 
 from src.gui.window.custom_title_bar import CustomTitleBar

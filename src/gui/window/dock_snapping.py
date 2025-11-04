@@ -17,7 +17,6 @@ from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QFrame, QSizePolicy
 from PySide6.QtGui import QCursor
 
-from src.gui.theme import hex_to_rgb
 
 
 class SnapOverlayLayer(QWidget):

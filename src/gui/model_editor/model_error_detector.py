@@ -11,7 +11,7 @@ Detects various mesh errors:
 
 from dataclasses import dataclass
 from typing import List, Set, Tuple, Dict
-from src.core.data_structures import Triangle, Vector3D
+from src.core.data_structures import Vector3D
 from src.parsers.stl_parser import STLModel
 
 

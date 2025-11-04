@@ -12,7 +12,7 @@ import time
 import threading
 import os
 import sys
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -20,8 +20,7 @@ from contextlib import contextmanager
 import psutil
 import traceback
 
-from .error_categories import ErrorContext, ErrorSeverity
-from .error_reporter import get_global_error_reporter
+from .error_categories import ErrorSeverity
 
 
 @dataclass

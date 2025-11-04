@@ -204,7 +204,6 @@ def save_theme_to_settings() -> None:
     Backward compatibility function for preferences dialog.
     """
     # Theme settings are handled by ThemeService
-    pass
 
 
 def hex_to_rgb(hex_color: str) -> tuple:

@@ -7,16 +7,14 @@ with materials applied, suitable for use as thumbnails in the model library.
 
 import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import vtk
 from vtk.util import numpy_support as vtk_np
-import numpy as np
 
 from src.core.logging_config import get_logger
 from src.core.vtk_rendering_engine import VTKRenderingEngine
 from src.parsers.stl_parser import STLParser, STLModel
-from src.core.data_structures import ModelFormat, Model, LoadingState
 
 
 class ScreenshotGenerator:

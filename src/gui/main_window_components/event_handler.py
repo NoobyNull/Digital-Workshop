@@ -5,7 +5,7 @@ Handles user actions, model events, and view management.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox

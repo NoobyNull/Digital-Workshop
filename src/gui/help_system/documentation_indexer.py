@@ -5,10 +5,9 @@ Scans all markdown files in the project and builds a searchable index
 of documentation content with keywords and sections.
 """
 
-import os
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from dataclasses import dataclass
 
 from src.core.logging_config import get_logger

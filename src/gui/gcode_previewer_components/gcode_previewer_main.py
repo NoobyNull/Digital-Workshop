@@ -18,12 +18,10 @@ from PySide6.QtWidgets import (
     QSlider,
     QSpinBox,
     QComboBox,
-    QCheckBox,
     QTabWidget,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, Signal, QThread
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, Signal
 
 from src.core.logging_config import get_logger
 from .gcode_parser import GcodeParser

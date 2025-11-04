@@ -7,7 +7,7 @@ extending the core service interfaces with GUI-specific functionality.
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from PySide6.QtCore import QObject, Signal
 
 
@@ -61,7 +61,6 @@ class IViewerUIService(ABC):
             state: New UI state
             message: Optional state message
         """
-        pass
 
     @abstractmethod
     def get_ui_state(self) -> UIState:
@@ -70,7 +69,6 @@ class IViewerUIService(ABC):
         Returns:
             Current UI state
         """
-        pass
 
     @abstractmethod
     def show_progress(self, progress: ProgressInfo) -> None:
@@ -79,12 +77,10 @@ class IViewerUIService(ABC):
         Args:
             progress: Progress information to display
         """
-        pass
 
     @abstractmethod
     def hide_progress(self) -> None:
         """Hide progress indicator."""
-        pass
 
     @abstractmethod
     def enable_cancellation(self, cancellable: bool) -> None:
@@ -93,7 +89,6 @@ class IViewerUIService(ABC):
         Args:
             cancellable: Whether operations can be cancelled
         """
-        pass
 
     @abstractmethod
     def is_cancellation_requested(self) -> bool:
@@ -102,12 +97,10 @@ class IViewerUIService(ABC):
         Returns:
             True if cancellation was requested
         """
-        pass
 
     @abstractmethod
     def reset_cancellation(self) -> None:
         """Reset cancellation request flag."""
-        pass
 
     @abstractmethod
     def show_error(self, title: str, message: str, details: str = "") -> None:
@@ -118,7 +111,6 @@ class IViewerUIService(ABC):
             message: Error message
             details: Optional detailed error information
         """
-        pass
 
     @abstractmethod
     def show_warning(self, title: str, message: str) -> None:
@@ -128,7 +120,6 @@ class IViewerUIService(ABC):
             title: Warning dialog title
             message: Warning message
         """
-        pass
 
     @abstractmethod
     def show_info(self, title: str, message: str) -> None:
@@ -138,7 +129,6 @@ class IViewerUIService(ABC):
             title: Information dialog title
             message: Information message
         """
-        pass
 
 
 class IEnhancedViewerService(ABC):
@@ -161,12 +151,10 @@ class IEnhancedViewerService(ABC):
         Returns:
             True if model loading started successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def cancel_loading(self) -> None:
         """Cancel current model loading operation."""
-        pass
 
     @abstractmethod
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -175,7 +163,6 @@ class IEnhancedViewerService(ABC):
         Returns:
             Dictionary containing performance metrics
         """
-        pass
 
     @abstractmethod
     def set_performance_mode(self, mode: str) -> None:
@@ -184,7 +171,6 @@ class IEnhancedViewerService(ABC):
         Args:
             mode: Performance mode ('high', 'balanced', 'performance')
         """
-        pass
 
     @abstractmethod
     def enable_vsync(self, enabled: bool) -> None:
@@ -193,7 +179,6 @@ class IEnhancedViewerService(ABC):
         Args:
             enabled: Whether to enable VSync
         """
-        pass
 
     @abstractmethod
     def set_target_fps(self, fps: int) -> None:
@@ -202,7 +187,6 @@ class IEnhancedViewerService(ABC):
         Args:
             fps: Target FPS (30, 60, etc.)
         """
-        pass
 
     @abstractmethod
     def optimize_for_model_size(self, triangle_count: int) -> None:
@@ -211,7 +195,6 @@ class IEnhancedViewerService(ABC):
         Args:
             triangle_count: Number of triangles in the model
         """
-        pass
 
 
 class IEnhancedThemeService(ABC):
@@ -227,7 +210,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             True if theme application started successfully
         """
-        pass
 
     @abstractmethod
     def get_theme_preview(self, theme_name: str) -> Optional[str]:
@@ -239,7 +221,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             Preview information or None if not available
         """
-        pass
 
     @abstractmethod
     def validate_theme(self, theme_name: str) -> Tuple[bool, str]:
@@ -251,7 +232,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def preview_theme_temporarily(
@@ -266,7 +246,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             True if preview started successfully
         """
-        pass
 
     @abstractmethod
     def revert_to_previous_theme(self) -> bool:
@@ -275,7 +254,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             True if reversion was successful
         """
-        pass
 
     @abstractmethod
     def get_theme_categories(self) -> Dict[str, List[str]]:
@@ -284,7 +262,6 @@ class IEnhancedThemeService(ABC):
         Returns:
             Dictionary mapping categories to theme lists
         """
-        pass
 
 
 class IMaterialService(ABC):
@@ -300,7 +277,6 @@ class IMaterialService(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def get_material_preview(self, material_name: str) -> Optional[bytes]:
@@ -312,7 +288,6 @@ class IMaterialService(ABC):
         Returns:
             Preview image data or None if not available
         """
-        pass
 
     @abstractmethod
     def create_material_from_template(
@@ -327,7 +302,6 @@ class IMaterialService(ABC):
         Returns:
             Created material data or None if creation failed
         """
-        pass
 
     @abstractmethod
     def get_material_categories(self) -> List[str]:
@@ -336,7 +310,6 @@ class IMaterialService(ABC):
         Returns:
             List of material category names
         """
-        pass
 
     @abstractmethod
     def search_materials(self, query: str, category: Optional[str] = None) -> List[str]:
@@ -349,7 +322,6 @@ class IMaterialService(ABC):
         Returns:
             List of matching material names
         """
-        pass
 
 
 class ILayoutManager(ABC):
@@ -365,7 +337,6 @@ class ILayoutManager(ABC):
         Returns:
             True if layout was saved successfully
         """
-        pass
 
     @abstractmethod
     def load_layout(self, layout_name: str) -> bool:
@@ -377,7 +348,6 @@ class ILayoutManager(ABC):
         Returns:
             True if layout was loaded successfully
         """
-        pass
 
     @abstractmethod
     def get_saved_layouts(self) -> List[str]:
@@ -386,7 +356,6 @@ class ILayoutManager(ABC):
         Returns:
             List of saved layout names
         """
-        pass
 
     @abstractmethod
     def delete_layout(self, layout_name: str) -> bool:
@@ -398,7 +367,6 @@ class ILayoutManager(ABC):
         Returns:
             True if layout was deleted successfully
         """
-        pass
 
     @abstractmethod
     def reset_to_default_layout(self) -> bool:
@@ -407,7 +375,6 @@ class ILayoutManager(ABC):
         Returns:
             True if reset was successful
         """
-        pass
 
 
 class INotificationService(ABC):
@@ -432,7 +399,6 @@ class INotificationService(ABC):
         Returns:
             Notification ID for potential cancellation
         """
-        pass
 
     @abstractmethod
     def hide_notification(self, notification_id: str) -> bool:
@@ -444,12 +410,10 @@ class INotificationService(ABC):
         Returns:
             True if notification was hidden successfully
         """
-        pass
 
     @abstractmethod
     def clear_all_notifications(self) -> None:
         """Clear all active notifications."""
-        pass
 
     @abstractmethod
     def set_notification_enabled(self, enabled: bool) -> None:
@@ -458,7 +422,6 @@ class INotificationService(ABC):
         Args:
             enabled: Whether notifications should be enabled
         """
-        pass
 
 
 class IUIService(QObject):

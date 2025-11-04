@@ -5,9 +5,6 @@ Provides vendor-agnostic detection for NVIDIA CUDA, AMD/Intel OpenCL, and gracef
 
 from __future__ import annotations
 
-import logging
-import os
-import platform
 import re
 import shutil
 import subprocess

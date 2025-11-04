@@ -4,7 +4,7 @@ This module provides a standardized exception hierarchy for the Candy-Cadence ap
 ensuring consistent error handling across all modules.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from pathlib import Path
 
 

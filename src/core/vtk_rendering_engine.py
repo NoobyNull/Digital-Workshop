@@ -7,10 +7,9 @@ between ThumbnailGenerator and ScreenshotGenerator.
 
 import math
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import vtk
-from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger
 

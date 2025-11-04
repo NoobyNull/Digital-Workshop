@@ -7,8 +7,8 @@ metadata files, and naming conventions. Calculates confidence score for organiza
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List
+from dataclasses import dataclass
 from collections import defaultdict
 
 from ..logging_config import get_logger, log_function_call

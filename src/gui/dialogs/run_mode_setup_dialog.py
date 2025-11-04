@@ -4,7 +4,6 @@ Run Mode Setup Dialog for first-run configuration.
 Displays run mode explanation and allows storage location customization.
 """
 
-from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -16,7 +15,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QTextEdit,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 
 from ...core.services.run_mode_manager import RunModeManager
 from ...core.logging_config import get_logger

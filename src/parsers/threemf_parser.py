@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-import gc
 
 from .base_parser import (
     BaseParser,
@@ -22,7 +21,6 @@ from .base_parser import (
     ParseError,
     ProgressCallback,
 )
-from src.core.logging_config import get_logger
 
 
 @dataclass

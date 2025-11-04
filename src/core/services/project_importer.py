@@ -6,9 +6,8 @@ and import reporting.
 """
 
 import os
-import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
+from typing import List, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
 

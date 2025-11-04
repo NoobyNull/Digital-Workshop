@@ -10,7 +10,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-import gc
 
 from .base_parser import (
     BaseParser,
@@ -21,7 +20,6 @@ from .base_parser import (
     ParseError,
     ProgressCallback,
 )
-from src.core.logging_config import get_logger
 
 
 @dataclass
@@ -498,7 +496,6 @@ class STEPParser(BaseParser):
         """Process entity references to build complete geometry."""
         # This is a simplified implementation
         # A full STEP parser would need to handle many more entity types and relationships
-        pass
 
     def _process_geometry(self) -> List[Triangle]:
         """

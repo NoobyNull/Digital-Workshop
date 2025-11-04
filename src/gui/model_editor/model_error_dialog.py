@@ -17,8 +17,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QButtonGroup,
 )
-from PySide6.QtCore import Qt
-from typing import List, Optional
+from typing import List
 from .model_error_detector import MeshError
 
 

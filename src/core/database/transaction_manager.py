@@ -10,7 +10,7 @@ import threading
 import time
 import uuid
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 from functools import wraps
 from enum import Enum
 
@@ -32,13 +32,11 @@ class TransactionState(Enum):
 class DatabaseError(Exception):
     """Custom database exception for better error handling."""
 
-    pass
 
 
 class TransactionError(DatabaseError):
     """Transaction-specific exception."""
 
-    pass
 
 
 class ConnectionPool:

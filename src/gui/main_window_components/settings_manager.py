@@ -4,7 +4,6 @@ Settings management for main window.
 Handles lighting and metadata panel settings persistence.
 """
 
-from typing import Optional, Tuple
 
 from PySide6.QtCore import QSettings
 
@@ -100,7 +99,6 @@ class SettingsManager:
 
     def save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
-        pass
 
     def update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""

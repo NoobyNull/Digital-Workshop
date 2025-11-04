@@ -38,7 +38,6 @@ Usage:
     snapping_system.render(painter, target_rect)
 """
 
-import logging
 from typing import Optional, Dict, Any
 
 from PySide6.QtWidgets import QMainWindow

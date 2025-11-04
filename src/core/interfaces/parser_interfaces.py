@@ -7,7 +7,7 @@ used throughout the Candy-Cadence application.
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ModelFormat(Enum):
@@ -24,13 +24,11 @@ class ModelFormat(Enum):
 class ParseError(Exception):
     """Raised when model file parsing fails."""
 
-    pass
 
 
 class FileNotSupportedError(ParseError):
     """Raised when file format is not supported."""
 
-    pass
 
 
 class IParser(ABC):
@@ -44,7 +42,6 @@ class IParser(ABC):
         Returns:
             List of ModelFormat enums this parser supports
         """
-        pass
 
     @abstractmethod
     def can_parse(self, file_path: Path) -> bool:
@@ -56,7 +53,6 @@ class IParser(ABC):
         Returns:
             True if parser can handle the file format, False otherwise
         """
-        pass
 
     @abstractmethod
     def parse(
@@ -78,7 +74,6 @@ class IParser(ABC):
             ParseError: If parsing fails
             FileNotFoundError: If file does not exist
         """
-        pass
 
     @abstractmethod
     def get_model_info(self, file_path: Path) -> Dict[str, Any]:
@@ -101,7 +96,6 @@ class IParser(ABC):
             FileNotSupportedError: If file format is not supported
             ParseError: If analysis fails
         """
-        pass
 
     @abstractmethod
     def validate_file(self, file_path: Path) -> bool:
@@ -113,7 +107,6 @@ class IParser(ABC):
         Returns:
             True if file is valid and can be parsed, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_parser_info(self) -> Dict[str, str]:
@@ -126,7 +119,6 @@ class IParser(ABC):
             - author: Parser author
             - description: Parser description
         """
-        pass
 
 
 class IFormatDetector(ABC):
@@ -142,7 +134,6 @@ class IFormatDetector(ABC):
         Returns:
             ModelFormat enum if format is detected, None otherwise
         """
-        pass
 
     @abstractmethod
     def get_format_confidence(self, file_path: Path) -> float:
@@ -154,7 +145,6 @@ class IFormatDetector(ABC):
         Returns:
             Confidence level between 0.0 and 1.0
         """
-        pass
 
     @abstractmethod
     def get_all_possible_formats(self) -> List[ModelFormat]:
@@ -163,7 +153,6 @@ class IFormatDetector(ABC):
         Returns:
             List of all detectable ModelFormat enums
         """
-        pass
 
 
 class IStreamingParser(ABC):
@@ -180,7 +169,6 @@ class IStreamingParser(ABC):
         Returns:
             Iterator that yields parsed chunks/segments
         """
-        pass
 
     @abstractmethod
     def can_parse_incremental(self) -> bool:
@@ -189,7 +177,6 @@ class IStreamingParser(ABC):
         Returns:
             True if incremental parsing is supported, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_incremental_progress(self) -> float:
@@ -198,7 +185,6 @@ class IStreamingParser(ABC):
         Returns:
             Progress value between 0.0 and 1.0
         """
-        pass
 
 
 class IProgressiveParser(IParser, IStreamingParser):
@@ -210,7 +196,6 @@ class IProgressiveParser(IParser, IStreamingParser):
         Returns:
             True if incremental parsing is supported, False otherwise
         """
-        pass
 
     def get_incremental_progress(self) -> float:
         """Get current progress of incremental parsing.
@@ -218,7 +203,6 @@ class IProgressiveParser(IParser, IStreamingParser):
         Returns:
             Progress value between 0.0 and 1.0
         """
-        pass
 
 
 class IValidationParser(ABC):
@@ -241,7 +225,6 @@ class IValidationParser(ABC):
             FileNotSupportedError: If file format is not supported
             ParseError: If validation fails
         """
-        pass
 
     @abstractmethod
     def get_geometry_stats(self, file_path: Path) -> Dict[str, Any]:
@@ -263,4 +246,3 @@ class IValidationParser(ABC):
             FileNotSupportedError: If file format is not supported
             ParseError: If analysis fails
         """
-        pass

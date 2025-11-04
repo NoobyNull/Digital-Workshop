@@ -11,7 +11,6 @@ Usage:
     service.apply_theme("dark")  # or "light"
 """
 
-import logging
 from typing import Literal, Optional
 from PySide6.QtWidgets import QApplication
 from src.core.logging_config import get_logger
@@ -82,7 +81,6 @@ class QDarkStyleThemeService:
                 return False
 
             import qdarkstyle
-            from qdarkstyle.palette import Palette
 
             # Determine which palette to use
             if theme == "auto":

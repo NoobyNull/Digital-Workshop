@@ -5,10 +5,8 @@ Handles file browsing, importing, and file operations.
 """
 
 from pathlib import Path
-from typing import List
 
-from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QMenu, QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 from src.core.logging_config import get_logger
 

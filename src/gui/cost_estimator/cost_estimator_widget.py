@@ -22,7 +22,6 @@ from src.core.logging_config import get_logger
 from .cost_calculator import (
     ProfessionalCostCalculator,
     CostEstimate,
-    PricingStrategy,
 )
 from .material_cost_manager import MaterialCostManager
 from src.core.services.tab_data_manager import TabDataManager

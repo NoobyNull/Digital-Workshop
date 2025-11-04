@@ -6,7 +6,6 @@ Provides welcome messages, startup tips, and contextual help for new users.
 
 from dataclasses import dataclass
 from typing import List, Optional
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -14,11 +13,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QCheckBox,
-    QScrollArea,
-    QWidget,
-    QFrame,
 )
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QFont
 
 
 @dataclass

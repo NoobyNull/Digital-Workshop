@@ -6,7 +6,6 @@ Handles SQLite connection creation, configuration, and database schema setup.
 
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 from ..logging_config import get_logger, log_function_call
 

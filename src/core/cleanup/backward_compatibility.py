@@ -10,10 +10,6 @@ from typing import Optional, Any, Dict
 from src.core.logging_config import get_logger
 
 from .unified_cleanup_coordinator import (
-    UnifiedCleanupCoordinator,
-    CleanupPhase,
-    CleanupContext,
-    CleanupStats,
     get_unified_cleanup_coordinator,
 )
 

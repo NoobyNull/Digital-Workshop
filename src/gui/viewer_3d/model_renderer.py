@@ -137,7 +137,6 @@ class ModelRenderer:
             if not hasattr(model, "is_array_based") or not model.is_array_based():
                 return self.create_vtk_polydata(model)  # type: ignore[arg-type]
 
-            import numpy as _np
 
             vertex_array = model.vertex_array  # type: ignore[assignment]
             normal_array = model.normal_array  # type: ignore[assignment]

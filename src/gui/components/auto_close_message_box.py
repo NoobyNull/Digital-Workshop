@@ -1,6 +1,6 @@
 """Auto-closing message box with countdown timer."""
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox
 
 

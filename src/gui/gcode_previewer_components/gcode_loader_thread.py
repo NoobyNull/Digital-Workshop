@@ -1,6 +1,6 @@
 """Background G-code file loader with progressive rendering."""
 
-from typing import List, Optional
+from typing import List
 from PySide6.QtCore import QThread, Signal
 from src.core.logging_config import get_logger
 from .gcode_parser import GcodeParser, GcodeMove

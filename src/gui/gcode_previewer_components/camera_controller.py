@@ -1,11 +1,11 @@
 """Camera Controller - Advanced camera controls for VTK viewer."""
 
-from typing import Optional, Tuple, TYPE_CHECKING
-from PySide6.QtCore import Qt, QTimer
+from typing import Tuple, TYPE_CHECKING
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QMouseEvent, QWheelEvent
 
 if TYPE_CHECKING:
-    import vtk
+    pass
 
 
 class CameraController:

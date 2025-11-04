@@ -5,7 +5,7 @@ Provides the primary search interface with history and saved searches.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from PySide6.QtCore import Signal, Qt, QTimer, QStringListModel
 from PySide6.QtWidgets import (
@@ -165,7 +165,6 @@ class SearchWidget(QWidget):
         """Apply Material Design theme to the search widget."""
         # Material Design theme is applied globally via ThemeService
         # No need to apply hardcoded stylesheets here
-        pass
 
     def setup_search_history(self):
         """Set up search history."""

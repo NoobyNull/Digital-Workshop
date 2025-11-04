@@ -6,14 +6,13 @@ format characteristics, and system resources for optimal parallel processing.
 """
 
 import os
-import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from src.core.logging_config import get_logger, log_function_call
-from src.core.memory_manager import get_memory_manager, MemoryStats
+from src.core.memory_manager import get_memory_manager
 from src.core.performance_profiler import get_performance_profiler, PerformanceMetric
 from src.parsers.file_chunker import FileChunk, ChunkStrategy
 

@@ -8,7 +8,7 @@ and performance monitoring for the database layer.
 import sqlite3
 import time
 import threading
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from collections import defaultdict
 from dataclasses import dataclass
 from contextlib import contextmanager

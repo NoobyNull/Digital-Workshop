@@ -19,14 +19,13 @@ import gc
 import threading
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union, Iterator, Tuple
+from typing import Any, Callable, Dict, List, Optional, Iterator, Tuple
 from concurrent.futures import ThreadPoolExecutor
 import weakref
 
 from src.core.interfaces.parser_interfaces import (
     IParser,
     IStreamingParser,
-    IProgressiveParser,
     IValidationParser,
     ModelFormat,
     ParseError,
@@ -34,18 +33,11 @@ from src.core.interfaces.parser_interfaces import (
 )
 from src.core.centralized_logging_service import (
     get_logging_service,
-    log_operation,
-    LogLevel,
 )
 from src.core.exceptions import (
-    CandyCadenceException,
     ParsingError,
-    FileSystemError,
-    ValidationError,
-    get_user_friendly_message,
-    get_recovery_suggestions,
 )
-from src.core.performance_monitor import get_performance_monitor, monitor_operation
+from src.core.performance_monitor import get_performance_monitor
 
 
 class StreamingProgressCallback:
@@ -455,7 +447,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             Dictionary containing parsed model data
         """
-        pass
 
     @abstractmethod
     def _get_model_info_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -468,7 +459,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             Dictionary containing model information
         """
-        pass
 
     @abstractmethod
     def _validate_file_internal(self, file_path: Path) -> bool:
@@ -481,7 +471,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             True if file is valid, False otherwise
         """
-        pass
 
     @abstractmethod
     def _parse_stream_internal(self, file_path: Path) -> Iterator[Any]:
@@ -494,7 +483,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             Iterator yielding parsed chunks
         """
-        pass
 
     @abstractmethod
     def _validate_geometry_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -507,7 +495,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             Dictionary containing validation results
         """
-        pass
 
     @abstractmethod
     def _get_geometry_stats_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -520,7 +507,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
         Returns:
             Dictionary containing geometry statistics
         """
-        pass
 
     # Utility methods
 

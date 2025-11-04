@@ -15,7 +15,6 @@ from src.core.interfaces.parser_interfaces import (
     IParser,
     IFormatDetector,
     ParseError,
-    FileNotSupportedError,
 )
 
 

@@ -10,9 +10,9 @@ Classes:
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from src.core.database_manager import get_database_manager

@@ -4,7 +4,7 @@ Preferences repository for tool database settings.
 
 import sqlite3
 import json
-from typing import Any, Optional, Dict
+from typing import Any, Dict
 from pathlib import Path
 
 from src.core.logging_config import get_logger

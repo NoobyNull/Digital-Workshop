@@ -4,9 +4,8 @@ Custom title bar widget for themed window decorations.
 Single Responsibility: Provide a custom, themeable title bar for the main window.
 """
 
-from PySide6.QtCore import Qt, QSize, QRect, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QIcon
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QApplication
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
 
 class CustomTitleBar(QWidget):

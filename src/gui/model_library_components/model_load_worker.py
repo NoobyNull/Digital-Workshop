@@ -6,7 +6,7 @@ Loads models in a separate thread with progress reporting.
 
 import gc
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
 from PySide6.QtCore import QThread, Signal
 
@@ -16,7 +16,7 @@ from src.core.performance_monitor import get_performance_monitor
 from src.parsers.format_detector import FormatDetector, ModelFormat
 from src.parsers.obj_parser import OBJParser
 from src.parsers.step_parser import STEPParser
-from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.parsers.stl_parser import STLParser
 from src.parsers.threemf_parser import ThreeMFParser
 from src.gui.components.detailed_progress_tracker import (
     DetailedProgressTracker,

@@ -13,7 +13,7 @@ import hashlib
 import secrets
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 
 from src.core.logging_config import get_logger

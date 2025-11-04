@@ -12,7 +12,6 @@ Fixes various mesh errors:
 from typing import List, Set, Tuple, Dict
 from src.core.data_structures import Triangle, Vector3D, ModelStats
 from src.parsers.stl_parser import STLModel
-from .model_error_detector import ModelErrorDetector
 
 
 class ModelErrorFixer:

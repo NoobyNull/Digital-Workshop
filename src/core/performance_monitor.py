@@ -8,14 +8,12 @@ adaptive performance optimization based on system capabilities.
 
 import gc
 import logging
-import os
 import psutil
 import time
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Any
 import json
 
 from .logging_config import get_logger

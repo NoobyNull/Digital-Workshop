@@ -7,11 +7,11 @@ with adaptive allocation, memory monitoring, and automatic cleanup.
 
 import threading
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from enum import Enum
 
 from src.core.logging_config import get_logger, log_function_call
-from src.core.gpu_acceleration import get_gpu_accelerator, GPUAccelerator, GPUBuffer
+from src.core.gpu_acceleration import get_gpu_accelerator, GPUBuffer
 
 
 class MemoryStrategy(Enum):

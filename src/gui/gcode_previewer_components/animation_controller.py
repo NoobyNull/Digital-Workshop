@@ -1,6 +1,6 @@
 """Animation Controller - Manages playback of G-code toolpath animation."""
 
-from typing import List, Optional, Callable
+from typing import List, Optional
 from enum import Enum
 from PySide6.QtCore import QTimer, Signal, QObject
 

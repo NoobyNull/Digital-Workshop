@@ -5,7 +5,6 @@ Handles project operations including creation, opening, closing, and duplicate d
 """
 
 from typing import Optional, List, Dict, Any
-from pathlib import Path
 
 from ..database.database_manager import DatabaseManager
 from ..logging_config import get_logger, log_function_call

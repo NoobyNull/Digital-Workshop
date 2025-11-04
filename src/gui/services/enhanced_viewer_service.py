@@ -2,22 +2,16 @@
 Enhanced viewer service implementation with progress tracking, cancellation support, and performance optimization.
 """
 
-import asyncio
-import gc
-import logging
-import threading
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
-from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Dict, Optional
 
-from PySide6.QtCore import QObject, Signal, QTimer, QThread
+from PySide6.QtCore import Signal, QThread
 
 from src.core.logging_config import get_logger
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache
-from src.core.data_structures import Model, LoadingState
-from src.parsers.stl_parser import STLModel
+from src.core.data_structures import Model
 
 from .gui_service_interfaces import (
     IEnhancedViewerService,

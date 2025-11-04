@@ -4,11 +4,9 @@ Deduplication status widget for status bar.
 Shows hashing progress and duplicate count with clickable indicator.
 """
 
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
-from PySide6.QtGui import QFont, QColor
 
 # Import theme system for proper theming
 try:

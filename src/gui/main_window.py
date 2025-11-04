@@ -5,44 +5,23 @@ This module provides the main application window with menu bar, toolbar,
 status bar, and dockable widgets for 3D model management.
 """
 
-import logging
-import sys
-import json
-import base64
 from pathlib import Path
 from typing import List, Optional
 
 from PySide6.QtCore import (
     Qt,
-    QSize,
     QTimer,
     Signal,
-    QStandardPaths,
     QSettings,
-    QEvent,
-    QObject,
-    QPoint,
-    QRect,
 )
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QPalette, QCursor
 from PySide6.QtWidgets import (
     QMainWindow,
     QApplication,
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
-    QMenuBar,
-    QToolBar,
-    QStatusBar,
     QDockWidget,
     QLabel,
-    QTextEdit,
-    QPushButton,
-    QFrame,
-    QSplitter,
-    QFileDialog,
     QMessageBox,
-    QProgressBar,
     QTabWidget,
     QSizePolicy,
 )
@@ -51,13 +30,13 @@ from src.core.logging_config import get_logger, get_activity_logger
 from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
 from src.core.model_cache import get_model_cache, CacheLevel
-from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.parsers.stl_parser import STLParser
 from src.parsers.obj_parser import OBJParser
 from src.parsers.threemf_parser import ThreeMFParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
-from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
+from src.gui.window.dock_snapping import DockDragHandler
 from src.gui.project_details_widget import ProjectDetailsWidget
 
 
@@ -421,7 +400,6 @@ class MainWindow(QMainWindow):
             # Create project manager widget
             try:
                 from src.gui.project_manager import ProjectTreeWidget
-                from src.core.database.database_manager import DatabaseManager
 
                 db_manager = get_database_manager()
                 self.project_manager_widget = ProjectTreeWidget(db_manager, self)
@@ -994,7 +972,6 @@ class MainWindow(QMainWindow):
 
     def _save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
-        pass
 
     def _toggle_lighting_panel(self) -> None:
         """Toggle the lighting control panel visibility."""
@@ -1156,7 +1133,6 @@ class MainWindow(QMainWindow):
         This method is called during __init__ to ensure proper timing coordination
         between window creation and state restoration, eliminating race conditions.
         """
-        import time
 
         try:
             settings = QSettings()

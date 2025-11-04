@@ -6,21 +6,17 @@ while maintaining backward compatibility with the original API.
 """
 
 import gc
-import math
-import time
-from typing import Optional, Any
+from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QDialog
 
-import vtk
 
-from src.core.logging_config import get_logger, get_activity_logger, log_function_call
+from src.core.logging_config import get_logger, get_activity_logger
 from src.core.performance_monitor import get_performance_monitor
-from src.core.model_cache import get_model_cache, CacheLevel
+from src.core.model_cache import get_model_cache
 from src.parsers.stl_parser import STLModel
-from src.core.data_structures import Model, LoadingState, Triangle, Vector3D
-from src.gui.theme import vtk_rgb
+from src.core.data_structures import Model
 from src.gui.material_picker_widget import MaterialPickerWidget
 from src.gui.components.detailed_progress_tracker import (
     DetailedProgressTracker,
@@ -40,7 +36,6 @@ from src.gui.vtk import (
     get_vtk_cleanup_coordinator,
     get_vtk_resource_tracker,
     get_vtk_fallback_renderer,
-    register_vtk_resource,
     ResourceType,
 )
 
@@ -651,8 +646,6 @@ class Viewer3DWidget(QWidget):
         """Handle Z-up save workflow with dialog."""
         try:
             from .z_up_save_dialog import ZUpSaveDialog
-            from src.gui.model_editor.stl_writer import STLWriter
-            from src.gui.model_editor.model_editor_core import ModelEditor, RotationAxis
 
             if not self.current_model:
                 self.logger.warning("No model loaded for Z-up save")

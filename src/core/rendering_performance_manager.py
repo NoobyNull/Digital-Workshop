@@ -15,22 +15,20 @@ import threading
 import psutil
 import GPUtil
 from typing import Any, Dict, List, Optional, Callable, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime
 
 try:
     import vtk
-    from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderer, vtkCamera
-    from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLRenderWindow
+    from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
     VTK_AVAILABLE = True
 except ImportError:
     VTK_AVAILABLE = False
 
-from .logging_config import get_logger, log_function_call
-from .memory_manager import get_memory_manager, memory_operation
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 

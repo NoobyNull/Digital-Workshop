@@ -1,6 +1,6 @@
 """G-code Renderer - VTK-based 3D visualization of G-code toolpaths."""
 
-from typing import List, Optional, Dict, Tuple, TYPE_CHECKING
+from typing import List, Optional, Dict, TYPE_CHECKING
 from .gcode_parser import GcodeMove
 
 # Type hints only import

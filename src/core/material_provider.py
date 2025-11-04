@@ -7,7 +7,6 @@ Replaces procedural grain generation with actual texture files.
 
 from pathlib import Path
 from typing import List, Optional, Dict
-import re
 
 from src.core.logging_config import get_logger
 

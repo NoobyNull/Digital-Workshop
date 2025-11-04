@@ -4,7 +4,7 @@ Reusable widget for AI-powered description generation integrated with the main a
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, List
 from pathlib import Path
 
 from PySide6.QtWidgets import (
@@ -22,16 +22,11 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QCheckBox,
     QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QSplitter,
     QScrollArea,
-    QFrame,
-    QGridLayout,
-    QSizePolicy,
 )
-from PySide6.QtCore import Qt, Signal, QThread, QTimer
-from PySide6.QtGui import QPixmap, QIcon, QFont
+from PySide6.QtCore import Qt, Signal
 
 # Import the AI description service
 from ..services.ai_description_service import AIDescriptionService
@@ -588,7 +583,6 @@ class AIDescriptionWidget(QWidget):
 
     def _copy_results(self):
         """Copy results to clipboard."""
-        from PySide6.QtGui import QClipboard
 
         result_text = f"Title: {self.title_result.text()}\n\n"
         result_text += f"Description: {self.description_result.text()}\n\n"
@@ -619,7 +613,6 @@ class AIDescriptionWidget(QWidget):
         """Open the provider configuration dialog."""
         # This would open a modal dialog for provider configuration
         # Implementation depends on the main application's dialog system
-        pass
 
     def _on_description_generated(self, image_path: str, result: Dict[str, Any]):
         """Handle description generation completion."""

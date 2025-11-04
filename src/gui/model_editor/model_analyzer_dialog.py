@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QTextEdit,
 )
-from PySide6.QtCore import Qt
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel

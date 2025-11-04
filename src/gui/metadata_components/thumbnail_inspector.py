@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QScrollArea,
-    QWidget,
 )
 
 from src.core.logging_config import get_logger
@@ -191,7 +190,6 @@ class ThumbnailInspectorDialog(QDialog):
 
     def _setup_connections(self) -> None:
         """Setup signal connections."""
-        pass
 
     def _zoom_in(self) -> None:
         """Zoom in on the image."""

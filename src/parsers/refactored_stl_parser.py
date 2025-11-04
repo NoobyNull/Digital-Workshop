@@ -20,7 +20,7 @@ import gc
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # Optional accelerated path
@@ -36,7 +36,6 @@ from src.parsers.refactored_base_parser import (
 from src.core.interfaces.parser_interfaces import (
     ModelFormat,
     ParseError,
-    FileNotSupportedError,
 )
 
 
@@ -51,7 +50,6 @@ class STLFormat(Enum):
 class STLParseError(ParseError):
     """Custom exception for STL parsing errors."""
 
-    pass
 
 
 def _build_triangles_from_floats_chunk(chunk: "np.ndarray") -> List[Dict[str, Any]]:  # type: ignore

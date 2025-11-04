@@ -12,10 +12,9 @@ import json
 import hashlib
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
-from contextlib import contextmanager
 
 from ..logging_config import get_logger, log_function_call
 

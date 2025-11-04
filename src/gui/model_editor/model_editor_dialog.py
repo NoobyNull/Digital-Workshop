@@ -11,7 +11,7 @@ Provides:
 from typing import Optional
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -20,13 +20,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QSpinBox,
-    QComboBox,
     QMessageBox,
-    QProgressBar,
     QTextEdit,
-    QFrame,
 )
-from PySide6.QtGui import QIcon
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel

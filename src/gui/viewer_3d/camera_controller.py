@@ -5,7 +5,7 @@ Handles camera positioning, view management, and orientation preservation.
 """
 
 import math
-from typing import Optional, Tuple
+from typing import Optional
 
 import vtk
 

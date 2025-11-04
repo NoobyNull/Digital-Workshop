@@ -11,15 +11,14 @@ import sqlite3
 import threading
 import time
 import xxhash
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
-import weakref
+from typing import Dict, Optional, Any
 
 from .logging_config import get_logger
 from .performance_monitor import get_performance_monitor, PerformanceLevel
-from .data_structures import Model, ModelFormat
+from .data_structures import Model
 
 
 class CacheLevel(Enum):

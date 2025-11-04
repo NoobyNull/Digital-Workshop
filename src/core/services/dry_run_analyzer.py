@@ -8,7 +8,7 @@ structure analysis, blocked files, and storage estimates.
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from collections import defaultdict
 
 from .file_type_filter import FileTypeFilter

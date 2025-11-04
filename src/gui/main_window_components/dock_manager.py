@@ -4,13 +4,11 @@ Dock management for main window.
 Handles creation and management of dock widgets (metadata, library).
 """
 
-from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDockWidget, QTextEdit, QTabWidget
 
 from src.core.logging_config import get_logger, log_function_call
-from src.gui.theme import ThemeService
 
 
 logger = get_logger(__name__)

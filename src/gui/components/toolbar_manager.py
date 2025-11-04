@@ -9,11 +9,11 @@ Classes:
 """
 
 import logging
-from typing import Optional, Callable
+from typing import Optional
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QMainWindow, QToolBar
+from PySide6.QtWidgets import QMainWindow
 
 
 class ToolbarManager:

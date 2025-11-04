@@ -231,7 +231,6 @@ class ModelLoader:
             fps: Current frames per second
         """
         # Performance updates are no longer displayed in the status bar
-        pass
 
     def on_model_selected(self, model_id: int) -> None:
         """

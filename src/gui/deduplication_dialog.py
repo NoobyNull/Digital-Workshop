@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -29,7 +29,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from src.core.logging_config import get_logger
-from src.gui.theme_core import get_theme_color
 
 logger = get_logger(__name__)
 

@@ -8,7 +8,6 @@ Enhanced to use the new FastHasher for optimal performance.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import QThread, Signal
 

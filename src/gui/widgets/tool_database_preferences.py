@@ -5,7 +5,6 @@ Provides UI for setting and managing paths to external tool databases
 and other tool database system preferences.
 """
 
-from pathlib import Path
 from typing import Dict, Any
 from PySide6.QtWidgets import (
     QDialog,

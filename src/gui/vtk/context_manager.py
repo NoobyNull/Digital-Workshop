@@ -11,8 +11,8 @@ from contextlib import contextmanager
 
 import vtk
 
-from src.core.logging_config import get_logger, log_function_call
-from .error_handler import get_vtk_error_handler, VTKErrorCode
+from src.core.logging_config import get_logger
+from .error_handler import get_vtk_error_handler
 
 
 logger = get_logger(__name__)

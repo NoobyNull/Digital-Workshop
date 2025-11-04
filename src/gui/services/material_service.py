@@ -2,21 +2,19 @@
 Enhanced material management service with validation, preview, and search capabilities.
 """
 
-import hashlib
 import json
-import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, BinaryIO
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from PySide6.QtCore import QObject, Signal, QThread
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtCore import Signal, QThread
+from PySide6.QtGui import QImage
 
 from src.core.logging_config import get_logger
 from src.core.settings_manager import get_settings_manager
-from .gui_service_interfaces import IMaterialService, IViewerUIService, UIState
+from .gui_service_interfaces import IMaterialService, IViewerUIService
 
 
 class MaterialCategory(Enum):

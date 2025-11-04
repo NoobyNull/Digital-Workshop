@@ -5,11 +5,9 @@ This handler is responsible for cleaning up application services including
 background threads, cache cleanup, and database connections.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import threading
-import time
 
-from src.core.logging_config import get_logger
 from .unified_cleanup_coordinator import CleanupHandler, CleanupPhase, CleanupContext
 
 

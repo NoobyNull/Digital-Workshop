@@ -18,8 +18,6 @@ import numpy as np  # type: ignore
 from src.core.logging_config import get_logger, log_function_call
 from src.parsers.base_parser import (
     Model,
-    ModelFormat,
-    Vector3D,
     ModelStats,
     ProgressCallback,
     LoadingState,

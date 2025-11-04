@@ -5,32 +5,10 @@ Provides UI for managing root folders used by the file browser.
 """
 
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, QDir, QThread
-from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QListWidget,
-    QListWidgetItem,
-    QCheckBox,
-    QLineEdit,
-    QFileDialog,
-    QMessageBox,
-    QGroupBox,
-    QInputDialog,
-    QFrame,
-    QSizePolicy,
-    QProgressBar,
-    QComboBox,
-)
+from PySide6.QtCore import Signal, QThread
 
 from src.core.logging_config import get_logger
-from src.core.root_folder_manager import RootFolderManager, RootFolder
-from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
 
 
 class FileMaintenanceWorker(QThread):
@@ -51,8 +29,6 @@ class FileMaintenanceWorker(QThread):
         try:
             from src.core.database_manager import get_database_manager
             from src.utils.file_hash import calculate_file_hash
-            from src.gui.batch_screenshot_worker import BatchScreenshotWorker
-            from src.gui.material_manager import MaterialManager
 
             db_manager = get_database_manager()
             result = {"processed": 0, "updated": 0, "errors": 0}

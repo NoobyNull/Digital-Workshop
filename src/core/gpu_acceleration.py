@@ -10,7 +10,7 @@ import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from src.core.logging_config import get_logger, log_function_call
 
@@ -52,7 +52,6 @@ class GPUDevice:
 class GPUAccelerationError(Exception):
     """Exception raised for GPU acceleration errors."""
 
-    pass
 
 
 class GPUBuffer:
@@ -211,7 +210,6 @@ class GPUKernel(ABC):
         Returns:
             True if compilation successful
         """
-        pass
 
     @abstractmethod
     def execute(self, buffers: List[GPUBuffer], params: Dict[str, Any]) -> bool:
@@ -225,7 +223,6 @@ class GPUKernel(ABC):
         Returns:
             True if execution successful
         """
-        pass
 
 
 class TriangleProcessingKernel(GPUKernel):

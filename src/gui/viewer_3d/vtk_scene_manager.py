@@ -6,7 +6,6 @@ like grid, ground plane, and orientation widget.
 """
 
 import multiprocessing as _mp
-from typing import Optional
 
 import vtk
 

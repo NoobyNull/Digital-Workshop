@@ -7,10 +7,10 @@ star rating system, category management, and database integration.
 
 import gc
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -25,14 +25,13 @@ from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QMessageBox,
-    QSizePolicy,
 )
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.fast_hasher import FastHasher
-from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_8, SPACING_12, SPACING_16
 from .star_rating_widget import StarRatingWidget
 from .thumbnail_inspector import ThumbnailInspectorLabel
 
@@ -281,7 +280,6 @@ class MetadataEditorWidget(QWidget):
 
     def _apply_styling(self) -> None:
         """Apply styling (no-op - qt-material handles all styling)."""
-        pass
 
     def _setup_connections(self) -> None:
         """Set up signal connections."""
@@ -644,7 +642,6 @@ class MetadataEditorWidget(QWidget):
         """Reset the dirty state for form fields."""
         # This would be used to track if the form has been modified
         # For now, we'll just ensure the save button state is consistent
-        pass
 
     def has_unsaved_changes(self) -> bool:
         """

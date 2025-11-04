@@ -6,15 +6,10 @@ including JSON formatting, error handling, security logging, and performance mon
 
 import logging
 import logging.handlers
-import json
-import os
-import sys
 import time
-import traceback
 import threading
 import functools
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
@@ -28,15 +23,6 @@ from .logging_config import (
 )
 from .enhanced_error_handler import (
     EnhancedErrorHandler,
-    ErrorContext,
-    ErrorCategory,
-    ErrorSeverity,
-)
-from .exceptions import (
-    CandyCadenceException,
-    get_user_friendly_message,
-    get_recovery_suggestions,
-    is_retryable_exception,
 )
 
 

@@ -5,7 +5,6 @@ Comprehensive theme editor with left-side color controls, right-side live previe
 and bottom action buttons. Integrates with ThemeManager singleton.
 """
 
-import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, Optional

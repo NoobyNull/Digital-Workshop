@@ -8,7 +8,7 @@ to external databases in various formats (CSV, JSON, VTDB, TDB).
 import csv
 import json
 import sqlite3
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 
 from src.core.logging_config import get_logger

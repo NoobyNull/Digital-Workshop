@@ -9,15 +9,13 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QLineEdit,
-    QPushButton,
     QListWidget,
     QListWidgetItem,
     QTextEdit,
     QSplitter,
     QLabel,
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt
 
 from src.core.logging_config import get_logger
 from src.gui.help_system.documentation_indexer import DocumentationIndexer

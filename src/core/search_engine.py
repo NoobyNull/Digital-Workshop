@@ -11,8 +11,7 @@ import re
 import sqlite3
 import threading
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from .database_manager import get_database_manager
 from .logging_config import get_logger, log_function_call

@@ -7,9 +7,9 @@ Shows:
 """
 
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget,
@@ -21,7 +21,6 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
-    QSizePolicy,
 )
 
 from src.core.logging_config import get_logger

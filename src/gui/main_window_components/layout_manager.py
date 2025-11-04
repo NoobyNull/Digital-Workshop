@@ -7,7 +7,7 @@ Handles dock layout persistence, snapping, and restoration.
 import base64
 import json
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 from PySide6.QtCore import QTimer, QStandardPaths
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QSplitter, QTabWidget

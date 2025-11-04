@@ -7,22 +7,20 @@ invalidation and performance optimization.
 """
 
 import os
-import sqlite3
 import pickle
 import gzip
 import hashlib
 import threading
 import time
 import json
-import weakref
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from collections import OrderedDict, defaultdict
 from contextlib import contextmanager
 
-from ..logging_config import get_logger, log_function_call
+from ..logging_config import get_logger
 
 logger = get_logger(__name__)
 

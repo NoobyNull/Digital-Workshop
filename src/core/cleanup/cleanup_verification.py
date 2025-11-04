@@ -7,7 +7,7 @@ resource leak detection, and detailed statistics collection.
 
 import time
 import gc
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -355,7 +355,6 @@ class CleanupVerifier:
             gc.collect()
 
             # Get memory statistics
-            import sys
 
             memory_info = {
                 "gc_stats": gc.get_stats() if hasattr(gc, "get_stats") else "N/A",

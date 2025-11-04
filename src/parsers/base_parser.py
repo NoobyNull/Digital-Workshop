@@ -8,11 +8,11 @@ must implement. It ensures consistent behavior across different format parsers.
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from typing import List, Optional, Tuple, Union
 import gc
 
 from src.core.logging_config import get_logger
-from src.core.performance_monitor import get_performance_monitor, monitor_operation
+from src.core.performance_monitor import get_performance_monitor
 from src.core.data_structures import (
     Model,
     ModelFormat,
@@ -28,7 +28,6 @@ from src.core.data_structures import (
 class ParseError(Exception):
     """Custom exception for parsing errors."""
 
-    pass
 
 
 class ProgressCallback:
@@ -173,7 +172,6 @@ class BaseParser(ABC):
         Raises:
             ParseError: If parsing fails
         """
-        pass
 
     def parse_metadata_only(self, file_path: Union[str, Path]) -> Model:
         """
@@ -214,7 +212,6 @@ class BaseParser(ABC):
         Returns:
             Model with metadata only
         """
-        pass
 
     def _create_metadata_model(self, model: Model) -> Model:
         """
@@ -318,7 +315,6 @@ class BaseParser(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def get_supported_extensions(self) -> List[str]:
@@ -328,7 +324,6 @@ class BaseParser(ABC):
         Returns:
             List of supported file extensions (including the dot)
         """
-        pass
 
     def cancel_parsing(self) -> None:
         """Cancel the current parsing operation."""

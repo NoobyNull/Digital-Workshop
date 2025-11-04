@@ -14,21 +14,19 @@ Key improvements:
 
 import gc
 import time
-import threading
-from typing import List, Dict, Any, Optional, Callable, Tuple
+from typing import List, Dict, Any, Optional, Callable
 from enum import Enum
 
 import vtk
 
 from src.core.logging_config import get_logger, log_function_call
-from .error_handler import get_vtk_error_handler, VTKErrorCode
+from .error_handler import get_vtk_error_handler
 from .resource_tracker import get_vtk_resource_tracker
 from .enhanced_context_manager import (
     get_enhanced_vtk_context_manager,
     ContextState,
     ShutdownScenario,
     detect_context_loss_early,
-    coordinate_shutdown_cleanup,
 )
 
 

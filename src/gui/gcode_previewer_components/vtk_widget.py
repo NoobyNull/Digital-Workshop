@@ -2,7 +2,6 @@
 
 from typing import Optional
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame
-from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QMouseEvent, QWheelEvent
 
 from .gcode_renderer import GcodeRenderer

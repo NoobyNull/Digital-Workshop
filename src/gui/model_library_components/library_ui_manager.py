@@ -4,10 +4,9 @@ UI management for model library.
 Handles UI creation, layout, and styling.
 """
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSize
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QSize
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (
-    QComboBox,
     QFrame,
     QGroupBox,
     QHeaderView,
@@ -25,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.logging_config import get_logger
-from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
+from src.gui.theme import SPACING_8
 from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 from .file_system_proxy import FileSystemProxyModel
@@ -215,4 +214,3 @@ class LibraryUIManager:
 
     def apply_styling(self) -> None:
         """Apply CSS styling (no-op - qt-material handles this)."""
-        pass

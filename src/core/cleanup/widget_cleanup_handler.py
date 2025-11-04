@@ -5,11 +5,10 @@ This handler is responsible for Qt widget cleanup including signal disconnection
 timer cleanup, and child widget cleanup.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QWidget
 
-from src.core.logging_config import get_logger
 from .unified_cleanup_coordinator import CleanupHandler, CleanupPhase, CleanupContext
 
 

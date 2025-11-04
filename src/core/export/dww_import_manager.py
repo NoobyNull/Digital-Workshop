@@ -9,7 +9,6 @@ import hashlib
 import zipfile
 from pathlib import Path
 from typing import Dict, Optional, Tuple
-import shutil
 
 from src.core.logging_config import get_logger
 

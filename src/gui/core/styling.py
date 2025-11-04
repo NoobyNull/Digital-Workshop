@@ -28,19 +28,15 @@ class StylingManager:
 
     def init_ui(self) -> None:
         """Initialize basic UI properties (no-op - qt-material handles this)."""
-        pass
 
     def apply_theme_styles(self) -> None:
         """Apply theme (no-op - qt-material handles this)."""
-        pass
 
     def apply_bar_palettes(self) -> None:
         """Apply bar palettes (no-op - qt-material handles this)."""
-        pass
 
     def load_external_stylesheet(self) -> None:
         """Load external stylesheet (no-op - qt-material handles this)."""
-        pass
 
 
 # Convenience function for easy styling application

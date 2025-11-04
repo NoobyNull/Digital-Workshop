@@ -4,9 +4,8 @@ Main window facade for modular component integration.
 Integrates layout, settings, dock, and event management components.
 """
 
-from typing import Optional
 
-from PySide6.QtWidgets import QMainWindow, QWidget
+from PySide6.QtWidgets import QMainWindow
 
 from src.core.logging_config import get_logger
 

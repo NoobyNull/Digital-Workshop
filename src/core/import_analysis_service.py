@@ -28,15 +28,15 @@ import gc
 import math
 from pathlib import Path
 from typing import Optional, Callable, List, Dict, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 from collections import defaultdict
 
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import QThread, Signal
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
-from src.core.data_structures import Model, Vector3D, Triangle, ModelFormat
+from src.core.data_structures import Model, Vector3D, Triangle
 from src.parsers.stl_parser import STLParser
 from src.core.database_manager import get_database_manager
 

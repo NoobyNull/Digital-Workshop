@@ -7,7 +7,6 @@ xxHash provides excellent collision resistance and performance for file identifi
 This module now wraps the FastHasher class for backward compatibility.
 """
 
-from pathlib import Path
 from typing import Optional
 
 from src.core.logging_config import get_logger

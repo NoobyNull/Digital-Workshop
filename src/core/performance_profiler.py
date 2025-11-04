@@ -15,7 +15,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable, Union
+from typing import Dict, List, Optional, Any, Callable
 from enum import Enum
 
 from src.core.logging_config import get_logger, log_function_call

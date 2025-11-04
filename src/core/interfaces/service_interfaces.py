@@ -7,7 +7,7 @@ in the Candy-Cadence application architecture.
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class RenderMode(Enum):
@@ -31,7 +31,6 @@ class IThemeService(ABC):
         Returns:
             True if theme was applied successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_current_theme(self) -> str:
@@ -40,7 +39,6 @@ class IThemeService(ABC):
         Returns:
             Name of the current theme
         """
-        pass
 
     @abstractmethod
     def get_available_themes(self) -> List[str]:
@@ -49,7 +47,6 @@ class IThemeService(ABC):
         Returns:
             List of available theme names
         """
-        pass
 
     @abstractmethod
     def get_color(self, color_name: str, default: Optional[str] = None) -> str:
@@ -62,7 +59,6 @@ class IThemeService(ABC):
         Returns:
             Color value as hex string
         """
-        pass
 
     @abstractmethod
     def set_color(self, color_name: str, value: str) -> None:
@@ -72,7 +68,6 @@ class IThemeService(ABC):
             color_name: Name of the color to set
             value: Color value as hex string
         """
-        pass
 
     @abstractmethod
     def export_theme(self, file_path: Path) -> bool:
@@ -84,7 +79,6 @@ class IThemeService(ABC):
         Returns:
             True if export was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def import_theme(self, file_path: Path) -> bool:
@@ -96,7 +90,6 @@ class IThemeService(ABC):
         Returns:
             True if import was successful, False otherwise
         """
-        pass
 
 
 class IModelService(ABC):
@@ -117,7 +110,6 @@ class IModelService(ABC):
         Returns:
             True if model was loaded successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def unload_model(self, model_id: str) -> bool:
@@ -129,7 +121,6 @@ class IModelService(ABC):
         Returns:
             True if model was unloaded successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_model(self, model_id: str) -> Optional[Any]:
@@ -141,7 +132,6 @@ class IModelService(ABC):
         Returns:
             Model object if found, None otherwise
         """
-        pass
 
     @abstractmethod
     def get_loaded_models(self) -> List[str]:
@@ -150,7 +140,6 @@ class IModelService(ABC):
         Returns:
             List of currently loaded model IDs
         """
-        pass
 
     @abstractmethod
     def get_model_metadata(self, model_id: str) -> Optional[Dict[str, Any]]:
@@ -162,7 +151,6 @@ class IModelService(ABC):
         Returns:
             Dictionary containing model metadata, None if not found
         """
-        pass
 
     @abstractmethod
     def update_model_metadata(self, model_id: str, metadata: Dict[str, Any]) -> bool:
@@ -175,7 +163,6 @@ class IModelService(ABC):
         Returns:
             True if metadata was updated successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def search_models(self, query: str) -> List[str]:
@@ -187,7 +174,6 @@ class IModelService(ABC):
         Returns:
             List of model IDs matching the search criteria
         """
-        pass
 
 
 class IDatabaseService(ABC):
@@ -203,7 +189,6 @@ class IDatabaseService(ABC):
         Returns:
             Unique model ID if successful, None otherwise
         """
-        pass
 
     @abstractmethod
     def get_model(self, model_id: str) -> Optional[Dict[str, Any]]:
@@ -215,7 +200,6 @@ class IDatabaseService(ABC):
         Returns:
             Dictionary containing model data, None if not found
         """
-        pass
 
     @abstractmethod
     def update_model(self, model_id: str, model_data: Dict[str, Any]) -> bool:
@@ -228,7 +212,6 @@ class IDatabaseService(ABC):
         Returns:
             True if update was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def delete_model(self, model_id: str) -> bool:
@@ -240,7 +223,6 @@ class IDatabaseService(ABC):
         Returns:
             True if deletion was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def search_models(self, criteria: Dict[str, Any]) -> List[str]:
@@ -252,7 +234,6 @@ class IDatabaseService(ABC):
         Returns:
             List of model IDs matching the criteria
         """
-        pass
 
     @abstractmethod
     def get_all_models(self) -> List[Dict[str, Any]]:
@@ -261,7 +242,6 @@ class IDatabaseService(ABC):
         Returns:
             List of dictionaries containing all model data
         """
-        pass
 
     @abstractmethod
     def add_metadata(self, model_id: str, metadata: Dict[str, Any]) -> bool:
@@ -274,7 +254,6 @@ class IDatabaseService(ABC):
         Returns:
             True if metadata was added successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_metadata(self, model_id: str) -> Optional[Dict[str, Any]]:
@@ -286,7 +265,6 @@ class IDatabaseService(ABC):
         Returns:
             Dictionary containing metadata, None if not found
         """
-        pass
 
     @abstractmethod
     def backup_database(self, backup_path: Path) -> bool:
@@ -298,7 +276,6 @@ class IDatabaseService(ABC):
         Returns:
             True if backup was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def restore_database(self, backup_path: Path) -> bool:
@@ -310,7 +287,6 @@ class IDatabaseService(ABC):
         Returns:
             True if restore was successful, False otherwise
         """
-        pass
 
 
 class IViewerService(ABC):
@@ -326,12 +302,10 @@ class IViewerService(ABC):
         Returns:
             True if model was set successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def clear_model(self) -> None:
         """Clear the current model from viewer."""
-        pass
 
     @abstractmethod
     def set_render_mode(self, mode: RenderMode) -> None:
@@ -340,7 +314,6 @@ class IViewerService(ABC):
         Args:
             mode: Render mode to apply
         """
-        pass
 
     @abstractmethod
     def get_render_mode(self) -> RenderMode:
@@ -349,12 +322,10 @@ class IViewerService(ABC):
         Returns:
             Current render mode
         """
-        pass
 
     @abstractmethod
     def reset_camera(self) -> None:
         """Reset camera to default position."""
-        pass
 
     @abstractmethod
     def take_screenshot(
@@ -370,7 +341,6 @@ class IViewerService(ABC):
         Returns:
             True if screenshot was taken successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def set_camera_position(self, x: float, y: float, z: float) -> None:
@@ -381,7 +351,6 @@ class IViewerService(ABC):
             y: Y coordinate
             z: Z coordinate
         """
-        pass
 
     @abstractmethod
     def get_camera_position(self) -> Tuple[float, float, float]:
@@ -390,7 +359,6 @@ class IViewerService(ABC):
         Returns:
             Tuple of (x, y, z) coordinates
         """
-        pass
 
 
 class IConfigurationService(ABC):
@@ -407,7 +375,6 @@ class IConfigurationService(ABC):
         Returns:
             Configuration value
         """
-        pass
 
     @abstractmethod
     def set(self, key: str, value: Any) -> None:
@@ -417,7 +384,6 @@ class IConfigurationService(ABC):
             key: Configuration key
             value: Configuration value
         """
-        pass
 
     @abstractmethod
     def get_section(self, section: str) -> Dict[str, Any]:
@@ -429,7 +395,6 @@ class IConfigurationService(ABC):
         Returns:
             Dictionary containing all values in the section
         """
-        pass
 
     @abstractmethod
     def save(self) -> bool:
@@ -438,7 +403,6 @@ class IConfigurationService(ABC):
         Returns:
             True if save was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def load(self) -> bool:
@@ -447,7 +411,6 @@ class IConfigurationService(ABC):
         Returns:
             True if load was successful, False otherwise
         """
-        pass
 
 
 class IErrorHandler(ABC):
@@ -466,7 +429,6 @@ class IErrorHandler(ABC):
         Returns:
             True if error was handled successfully, False otherwise
         """
-        pass
 
     @abstractmethod
     def log_error(self, error: Exception, level: str = "ERROR") -> None:
@@ -476,7 +438,6 @@ class IErrorHandler(ABC):
             error: Exception to log
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         """
-        pass
 
     @abstractmethod
     def should_retry(self, error: Exception) -> bool:
@@ -488,7 +449,6 @@ class IErrorHandler(ABC):
         Returns:
             True if operation should be retried, False otherwise
         """
-        pass
 
 
 class IEventPublisher(ABC):
@@ -505,7 +465,6 @@ class IEventPublisher(ABC):
         Returns:
             Subscription ID for unsubscribing
         """
-        pass
 
     @abstractmethod
     def unsubscribe(self, subscription_id: str) -> bool:
@@ -517,7 +476,6 @@ class IEventPublisher(ABC):
         Returns:
             True if unsubscription was successful, False otherwise
         """
-        pass
 
     @abstractmethod
     def publish(self, event_type: str, data: Dict[str, Any]) -> None:
@@ -527,7 +485,6 @@ class IEventPublisher(ABC):
             event_type: Type of event to publish
             data: Event data
         """
-        pass
 
 
 class IEventSubscriber(ABC):
@@ -541,4 +498,3 @@ class IEventSubscriber(ABC):
             event_type: Type of event
             data: Event data
         """
-        pass

@@ -6,10 +6,9 @@ OpenGL context management, VTK resource tracker coordination, and
 graphics resource cleanup.
 """
 
-from typing import Optional, Any, Dict
+from typing import Any, Dict
 import vtk
 
-from src.core.logging_config import get_logger
 from .unified_cleanup_coordinator import CleanupHandler, CleanupPhase, CleanupContext
 
 
@@ -254,7 +253,7 @@ class VTKCleanupHandler(CleanupHandler):
         """
         try:
             if self._resource_tracker:
-                from src.gui.vtk.resource_tracker import ResourceType
+                pass
 
                 # Determine resource type
                 resource_type = self._determine_resource_type(resource)

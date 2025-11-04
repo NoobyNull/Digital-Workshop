@@ -1,6 +1,6 @@
 """Unit conversion utilities for Feeds & Speeds calculator."""
 
-from typing import Dict, Tuple
+from typing import Dict
 
 
 class UnitConverter:

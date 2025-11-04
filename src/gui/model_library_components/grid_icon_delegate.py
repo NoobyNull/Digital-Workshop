@@ -5,8 +5,8 @@ This delegate is used for the grid view in the model library to show
 only thumbnail images without filenames below them.
 """
 
-from PySide6.QtCore import Qt, QSize, QRect
-from PySide6.QtGui import QPainter, QIcon
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QStyledItemDelegate, QStyle
 
 

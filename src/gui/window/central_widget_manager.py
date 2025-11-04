@@ -21,7 +21,6 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 
-from src.gui.theme import qss_tabs_lists_labels, SPACING_8, SPACING_16
 from src.gui.material_manager import MaterialManager
 from src.gui.lighting_manager import LightingManager
 from src.core.database_manager import get_database_manager

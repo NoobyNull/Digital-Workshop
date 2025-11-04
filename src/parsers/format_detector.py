@@ -7,7 +7,7 @@ file extension and content analysis.
 
 import zipfile
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 import struct
 
 from .base_parser import ModelFormat

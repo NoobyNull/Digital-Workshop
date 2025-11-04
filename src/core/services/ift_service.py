@@ -5,7 +5,7 @@ Loads, validates, and manages IFT configuration from QSettings.
 Provides access to IFT definitions and validation.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from PySide6.QtCore import QSettings
 

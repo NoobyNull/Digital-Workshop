@@ -8,7 +8,7 @@ By centralizing these structures, we avoid circular import dependencies.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple, Union, Any
+from typing import List, Optional, Tuple, Any
 
 
 class ModelFormat(Enum):

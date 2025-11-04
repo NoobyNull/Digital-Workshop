@@ -17,10 +17,9 @@ Example:
     ...     print(f"Imported {dialog.get_import_result().processed_files} files")
 """
 
-import json
 import time
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List
 from enum import Enum
 
 from PySide6.QtWidgets import (
@@ -37,25 +36,20 @@ from PySide6.QtWidgets import (
     QTextEdit,
     QFileDialog,
     QMessageBox,
-    QWidget,
     QSplitter,
-    QScrollArea,
-    QFrame,
 )
 from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
-from src.core.fast_hasher import FastHasher
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
     DuplicateAction,
-    ImportSession,
     ImportResult,
 )
-from src.core.import_thumbnail_service import ImportThumbnailService, StorageLocation
+from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
 
 

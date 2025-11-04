@@ -1,6 +1,6 @@
 """Layer Analyzer - Detect and manage layers in G-code based on Z-height."""
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 from .gcode_parser import GcodeMove

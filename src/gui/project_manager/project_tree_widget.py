@@ -6,7 +6,7 @@ and auto-switches to appropriate tabs when files are clicked.
 """
 
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict, List
 import tempfile
 from PySide6.QtWidgets import (
     QWidget,
@@ -18,11 +18,9 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QFileDialog,
     QInputDialog,
-    QHeaderView,
     QMenu,
 )
-from PySide6.QtCore import Qt, Signal, QMimeData
-from PySide6.QtGui import QIcon, QDrag
+from PySide6.QtCore import Qt, Signal
 
 from ...core.services.project_manager import ProjectManager
 from ...core.services.project_importer import ProjectImporter

@@ -5,13 +5,12 @@ This handler is responsible for cleaning up system resources including
 memory management, file handles, and temporary files.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import gc
 import os
 import tempfile
 import weakref
 
-from src.core.logging_config import get_logger
 from .unified_cleanup_coordinator import CleanupHandler, CleanupPhase, CleanupContext
 
 

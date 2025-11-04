@@ -5,7 +5,6 @@ This module provides comprehensive error handling for VTK operations,
 including graceful handling of OpenGL context loss and proper error logging.
 """
 
-import json
 import logging
 import traceback
 from typing import Dict, Any, Optional, Callable

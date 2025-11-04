@@ -16,12 +16,9 @@ Key Features:
 import re
 import time
 import gc
-import os
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from src.parsers.refactored_base_parser import (
     RefactoredBaseParser,
@@ -30,7 +27,6 @@ from src.parsers.refactored_base_parser import (
 from src.core.interfaces.parser_interfaces import (
     ModelFormat,
     ParseError,
-    FileNotSupportedError,
 )
 from src.core.logging_config import get_logger
 
@@ -38,7 +34,6 @@ from src.core.logging_config import get_logger
 class STEPParseError(ParseError):
     """Custom exception for STEP parsing errors."""
 
-    pass
 
 
 @dataclass

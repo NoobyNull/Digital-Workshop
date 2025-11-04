@@ -5,12 +5,10 @@ This module provides parsing functionality for Wavefront OBJ files with MTL mate
 It includes memory-efficient processing, progress reporting, and comprehensive error handling.
 """
 
-import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, TextIO
-import gc
+from typing import Dict, List, Optional, Tuple, Union
 
 from .base_parser import (
     BaseParser,
@@ -21,7 +19,6 @@ from .base_parser import (
     ParseError,
     ProgressCallback,
 )
-from src.core.logging_config import get_logger
 
 
 @dataclass

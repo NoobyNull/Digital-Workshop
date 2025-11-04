@@ -14,7 +14,7 @@ from PySide6.QtGui import (
     QFont,
     QColor,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 import re
 
 

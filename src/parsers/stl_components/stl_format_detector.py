@@ -6,7 +6,6 @@ Detects whether an STL file is binary or ASCII format.
 
 import struct
 from pathlib import Path
-from typing import Optional
 
 from src.core.logging_config import get_logger
 from .stl_models import STLFormat, STLParseError

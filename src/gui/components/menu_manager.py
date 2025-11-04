@@ -9,11 +9,11 @@ Classes:
 """
 
 import logging
-from typing import Optional, Callable
+from typing import Optional
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import QMainWindow, QMenuBar
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtWidgets import QMainWindow
 
 
 class MenuManager:
@@ -222,7 +222,6 @@ class MenuManager:
 
     def _apply_bar_palettes(self) -> None:
         """Apply palette colors (no-op - qt-material handles this)."""
-        pass
 
     # Action handler methods (these would need to be connected to actual implementations)
     def _open_model(self) -> None:

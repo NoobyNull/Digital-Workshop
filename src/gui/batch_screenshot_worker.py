@@ -6,7 +6,7 @@ for all models in the library with applied materials.
 """
 
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Optional
 
 from PySide6.QtCore import QThread, Signal
 

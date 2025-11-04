@@ -4,7 +4,6 @@ Project Manager Widget for managing projects in the GUI.
 Provides UI for creating, opening, and managing projects.
 """
 
-from typing import Optional
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,

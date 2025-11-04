@@ -390,7 +390,6 @@ class LightingControlPanel(QDialog):
     def _apply_theme_styles(self, widget) -> None:
         """Apply theme styles to the widget."""
         # Let qt-material handle the styling
-        pass
 
     def _update_color_button_bg(self, color_norm: Tuple[float, float, float]) -> None:
         # Convert normalized to hex

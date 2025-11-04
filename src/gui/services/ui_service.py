@@ -2,13 +2,12 @@
 UI service implementation for managing user interface state, progress, and notifications.
 """
 
-import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from PySide6.QtCore import QObject, Signal, QTimer, Qt
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QMessageBox,
@@ -18,7 +17,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QWidget,
-    QFrame,
     QGraphicsDropShadowEffect,
 )
 

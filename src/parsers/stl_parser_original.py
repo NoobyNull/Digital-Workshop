@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, BinaryIO, Iterator
+from typing import List, Optional, Tuple, Union
 import gc
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -51,7 +51,6 @@ from .base_parser import (
     ProgressCallback,
     LoadingState,
 )
-from src.core.logging_config import get_logger, log_function_call
 from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 
 # GPU acceleration imports (optional)
@@ -103,13 +102,11 @@ class STLModel:
 class STLParseError(ParseError):
     """Custom exception for STL parsing errors."""
 
-    pass
 
 
 class STLProgressCallback(ProgressCallback):
     """Callback interface for progress reporting during parsing."""
 
-    pass
 
 
 class STLParser(BaseParser):

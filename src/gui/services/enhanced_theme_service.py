@@ -3,10 +3,9 @@ Enhanced theme service implementation with dynamic switching, validation, and pr
 """
 
 import json
-import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, Signal, QThread
@@ -17,14 +16,12 @@ from .gui_service_interfaces import (
     IEnhancedThemeService,
     IViewerUIService,
     UIState,
-    ProgressInfo,
 )
 
 
 class ThemeValidationError(Exception):
     """Exception raised when theme validation fails."""
 
-    pass
 
 
 class ThemePreviewWidget(QObject):

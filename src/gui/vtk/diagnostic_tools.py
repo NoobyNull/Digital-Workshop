@@ -6,13 +6,12 @@ context problems, and performance bottlenecks.
 """
 
 import platform
-import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 import vtk
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger
 from .error_handler import get_vtk_error_handler
 from .context_manager import get_vtk_context_manager
 from .resource_tracker import get_vtk_resource_tracker

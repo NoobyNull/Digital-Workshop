@@ -4,7 +4,7 @@ Startup tips and welcome system for first-time users.
 Displays helpful tips and hints when the application starts.
 """
 
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -14,8 +14,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
 )
-from PySide6.QtGui import QFont, QColor
-from src.gui.walkthrough import WalkthroughManager, TutorialTip
+from PySide6.QtGui import QFont
+from src.gui.walkthrough import WalkthroughManager
 
 
 class StartupTipsDialog(QDialog):

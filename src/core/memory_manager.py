@@ -6,7 +6,6 @@ and cleanup mechanisms to ensure stable memory usage during large file processin
 """
 
 import gc
-import os
 import psutil
 import threading
 import time

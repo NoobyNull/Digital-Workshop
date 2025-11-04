@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Any, Set
 from enum import Enum
 from dataclasses import dataclass
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger
 
 
 class CleanupPhase(Enum):

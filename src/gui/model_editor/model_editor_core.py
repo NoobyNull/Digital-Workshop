@@ -9,16 +9,14 @@ Provides functionality for:
 """
 
 from enum import Enum
-from typing import Optional, Tuple
-from pathlib import Path
+from typing import Tuple
 import math
 
 import vtk
-from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger
 from src.core.data_structures import Triangle, Vector3D
-from src.parsers.stl_parser import STLModel, STLParser
+from src.parsers.stl_parser import STLModel
 from .model_geometry_analyzer import ModelGeometryAnalyzer
 
 

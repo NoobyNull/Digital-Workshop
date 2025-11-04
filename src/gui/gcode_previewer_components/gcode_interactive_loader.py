@@ -1,8 +1,8 @@
 """Interactive G-code Loader - Progressive loading with real-time visualization."""
 
 import os
-from typing import List, Optional, Callable
-from PySide6.QtCore import QThread, Signal, QTimer
+from typing import List, Optional
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -176,7 +176,6 @@ class InteractiveGcodeLoader(QWidget):
 
     def _setup_connections(self) -> None:
         """Setup signal/slot connections."""
-        pass
 
     def load_file(self, filepath: str) -> None:
         """Start loading a G-code file.

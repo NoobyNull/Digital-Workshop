@@ -12,8 +12,6 @@ Performance targets:
 - 512x512 texture generation < 100ms on typical desktop
 """
 
-import os
-import time
 from pathlib import Path
 from typing import Tuple, Dict, Optional, Any, List
 
@@ -796,7 +794,6 @@ class MaterialManager:
             # This function remains best-effort: no exception should propagate.
             # If a global/current renderer is accessible through the mapper input's producer, it could be used,
             # but generally the viewer will re-render on the UI thread.
-            pass
         except Exception:
             pass
 
