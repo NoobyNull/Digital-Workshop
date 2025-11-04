@@ -87,12 +87,35 @@ jobs:
         # List the archive
         Get-ChildItem -Path $SourceZip | ForEach-Object { Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB" }
 
+    - name: Create Windows installer
+      run: |
+        # Create Windows installer using Inno Setup
+        $InnoSetupPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        $InstallerScript = "config/installer.iss"
+
+        if (Test-Path $InnoSetupPath) {
+          Write-Host "Creating Windows installer..."
+          & $InnoSetupPath $InstallerScript
+
+          # Move installer to dist directory with proper naming
+          if (Test-Path "config/Output/mysetup.exe") {
+            Copy-Item -Path "config/Output/mysetup.exe" -Destination "dist/Digital-Workshop-v0.1.5-Setup.exe" -Force
+            Write-Host "✓ Windows installer created: dist/Digital-Workshop-v0.1.5-Setup.exe"
+            Get-ChildItem -Path "dist/Digital-Workshop-v0.1.5-Setup.exe" | ForEach-Object { Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB" }
+          } else {
+            Write-Warning "Installer creation failed - installer file not found"
+          }
+        } else {
+          Write-Warning "Inno Setup not found at $InnoSetupPath"
+        }
+
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       if: github.event_name == 'release'
       with:
         files: |
           dist/Digital Workshop.exe
+          dist/Digital-Workshop-v0.1.5-Setup.exe
           dist/Digital-Workshop-v0.1.5-Portable.zip
           dist/Digital-Workshop-v0.1.5-Source.zip
       env:
@@ -105,6 +128,7 @@ jobs:
         name: Digital-Workshop-Build
         path: |
           dist/Digital Workshop.exe
+          dist/Digital-Workshop-v0.1.5-Setup.exe
           dist/Digital-Workshop-v0.1.5-Portable.zip
           dist/Digital-Workshop-v0.1.5-Source.zip
         retention-days: 30
