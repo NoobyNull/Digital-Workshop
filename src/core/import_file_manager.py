@@ -20,6 +20,7 @@ from src.core.logging_config import get_logger
 from src.core.fast_hasher import FastHasher
 from src.core.root_folder_manager import RootFolderManager
 from src.core.cancellation_token import CancellationToken
+from src.core.security import PathValidator, SecurityEventLogger
 
 
 class FileManagementMode(Enum):
@@ -337,8 +338,25 @@ class ImportFileManager:
         )
 
         # Create file info for each file
+        path_validator = PathValidator()
+        security_logger = SecurityEventLogger()
+
         for file_path in file_paths:
             try:
+                # Validate path to prevent directory traversal
+                if not path_validator.validate_path(file_path):
+                    security_logger.log_path_validation_failure(
+                        file_path, "Path validation failed"
+                    )
+                    self.logger.warning("Path validation failed: %s", file_path)
+                    continue
+
+                # Check for system files
+                if PathValidator.is_system_file(file_path):
+                    security_logger.log_system_file_blocked(file_path)
+                    self.logger.warning("System file blocked: %s", file_path)
+                    continue
+
                 path = Path(file_path)
                 if path.exists() and path.is_file():
                     file_info = ImportFileInfo(
@@ -348,9 +366,9 @@ class ImportFileManager:
                     )
                     session.files.append(file_info)
                 else:
-                    self.logger.warning(f"File not found or not accessible: {file_path}")
-            except Exception as e:
-                self.logger.error(f"Error accessing file {file_path}: {e}")
+                    self.logger.warning("File not found or not accessible: %s", file_path)
+            except (OSError, IOError) as e:
+                self.logger.error("Error accessing file %s: %s", file_path, e)
 
         if not session.files:
             return False, "No valid files to import", None
