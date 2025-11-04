@@ -111,13 +111,13 @@ jobs:
 
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
-      if: github.event_name == 'release'
       with:
         files: |
           dist/Digital Workshop.exe
           dist/Digital-Workshop-v0.1.5-Setup.exe
           dist/Digital-Workshop-v0.1.5-Portable.zip
           dist/Digital-Workshop-v0.1.5-Source.zip
+        tag_name: v0.1.5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
