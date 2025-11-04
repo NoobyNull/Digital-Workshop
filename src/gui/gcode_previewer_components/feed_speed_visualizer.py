@@ -159,6 +159,7 @@ class FeedSpeedVisualizer:
         return (r, g, b)
 
     def _create_colored_actor(
+        """TODO: Add docstring."""
         self,
         points: vtk.vtkPoints,
         lines: vtk.vtkCellArray,

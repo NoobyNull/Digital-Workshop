@@ -121,6 +121,7 @@ def hex_to_vtk_rgb(hex_code: str) -> Tuple[float, float, float]:
 
 @dataclass(frozen=True)
 class ThemeDefaults:
+    """TODO: Add docstring."""
     # Window & UI Elements
     window_bg: str = "#ffffff"
     text: str = "#000000"
@@ -621,6 +622,7 @@ class ThemeManager:
     VARIABLE_PATTERN = re.compile(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}")
 
     def __init__(self) -> None:
+        """TODO: Add docstring."""
         self._logger = logging.getLogger("gui.theme")
         self._colors: Dict[str, str] = {
             k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()
@@ -638,6 +640,7 @@ class ThemeManager:
 
     @classmethod
     def instance(cls) -> "ThemeManager":
+        """TODO: Add docstring."""
         if cls._instance is None:
             cls._instance = ThemeManager()
         return cls._instance
@@ -708,6 +711,7 @@ class ThemeManager:
         return getattr(self, "_preset_name", "custom")
 
     def apply_preset(
+        """TODO: Add docstring."""
         self,
         preset_name: str,
         *,
@@ -757,9 +761,11 @@ class ThemeManager:
     # ------------- QColor / VTK helpers -------------
 
     def qcolor(self, name: str) -> QColor:
+        """TODO: Add docstring."""
         return hex_to_qcolor(self.get_color(name, context="qcolor"))
 
     def vtk_rgb(self, name: str) -> Tuple[float, float, float]:
+        """TODO: Add docstring."""
         return hex_to_vtk_rgb(self.get_color(name, context="vtk_rgb"))
 
     # ------------- CSS template processing -------------
@@ -786,6 +792,7 @@ class ThemeManager:
             return cached[1]
 
         def replace(match: re.Match[str]) -> str:
+            """TODO: Add docstring."""
             var = match.group(1)
             value = self.get_color(var, context="css_template")
             if not value:
@@ -835,6 +842,7 @@ class ThemeManager:
     # ------------- Widget registry -------------
 
     def register_widget(
+        """TODO: Add docstring."""
         self,
         widget: Any,
         *,
@@ -968,6 +976,7 @@ class _ColorsProxy:
     """
 
     def __getattr__(self, name: str) -> str:
+        """TODO: Add docstring."""
         return ThemeManager.instance().get_color(name, context="COLORS_proxy")
 
 
@@ -1016,6 +1025,7 @@ def list_theme_presets() -> list[str]:
 
 
 def apply_theme_preset(
+    """TODO: Add docstring."""
     preset_name: str,
     custom_mode: Optional[str] = None,
     base_primary: Optional[str] = None,
@@ -1045,6 +1055,7 @@ def save_theme_to_settings() -> None:
 
 
 def qss_button_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QPushButton {{"
         f"  background-color: {COLORS.surface};"
@@ -1078,6 +1089,7 @@ def qss_button_base() -> str:
 
 
 def qss_progress_bar() -> str:
+    """TODO: Add docstring."""
     return (
         f"QProgressBar {{"
         f"  border: 1px solid {COLORS.border};"
@@ -1094,6 +1106,7 @@ def qss_progress_bar() -> str:
 
 
 def qss_inputs_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QLineEdit, QTextEdit, QComboBox, QSpinBox, QDateEdit {{"
         f"  border: 1px solid {COLORS.border};"
@@ -1115,6 +1128,7 @@ def qss_inputs_base() -> str:
 
 
 def qss_tabs_lists_labels() -> str:
+    """TODO: Add docstring."""
     return (
         f"QTabWidget::pane {{"
         f"  border: 1px solid {COLORS.border};"
@@ -1159,6 +1173,7 @@ def qss_tabs_lists_labels() -> str:
 
 
 def qss_groupbox_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QGroupBox {{"
         f"  font-weight: bold;"

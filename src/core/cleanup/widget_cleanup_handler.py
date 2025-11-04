@@ -254,6 +254,7 @@ class WidgetCleanupHandler(CleanupHandler):
             timers_cleaned = 0
 
             def cleanup_timer_recursive(obj) -> None:
+                """TODO: Add docstring."""
                 nonlocal timers_cleaned
                 if isinstance(obj, QObject):
                     # Get all children
@@ -283,6 +284,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             # Disconnect signals from the widget and its children
             def disconnect_signals_recursive(obj) -> None:
+                """TODO: Add docstring."""
                 if isinstance(obj, QObject):
                     try:
                         # Disconnect all signals

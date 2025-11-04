@@ -42,6 +42,7 @@ class ThemeManager:
     VARIABLE_PATTERN = re.compile(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}")
 
     def __init__(self) -> None:
+        """TODO: Add docstring."""
         self._logger = logging.getLogger("gui.theme")
         self._colors: Dict[str, str] = {
             k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()
@@ -59,6 +60,7 @@ class ThemeManager:
 
     @classmethod
     def instance(cls) -> "ThemeManager":
+        """TODO: Add docstring."""
         if cls._instance is None:
             cls._instance = ThemeManager()
         return cls._instance
@@ -112,6 +114,7 @@ class ThemeManager:
         return getattr(self, "_preset_name", "custom")
 
     def apply_preset(
+        """TODO: Add docstring."""
         self,
         preset_name: str,
         *,
@@ -147,9 +150,11 @@ class ThemeManager:
         self._log_json(logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed)
 
     def qcolor(self, name: str) -> QColor:
+        """TODO: Add docstring."""
         return hex_to_qcolor(self.get_color(name, context="qcolor"))
 
     def vtk_rgb(self, name: str) -> Tuple[float, float, float]:
+        """TODO: Add docstring."""
         return hex_to_vtk_rgb(self.get_color(name, context="vtk_rgb"))
 
     def _strip_css_comments(self, text: str) -> str:
@@ -167,6 +172,7 @@ class ThemeManager:
             return cached[1]
 
         def replace(match: re.Match[str]) -> str:
+            """TODO: Add docstring."""
             var = match.group(1)
             value = self.get_color(var, context="css_template")
             return value if value else FALLBACK_COLOR
@@ -208,6 +214,7 @@ class ThemeManager:
             return ""
 
     def register_widget(
+        """TODO: Add docstring."""
         self,
         widget: Any,
         *,

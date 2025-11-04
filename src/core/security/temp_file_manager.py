@@ -28,6 +28,7 @@ class TempFileManager:
 
     @contextmanager
     def temporary_file(
+        """TODO: Add docstring."""
         self, suffix: str = "", prefix: str = "dw_"
     ) -> Generator[str, None, None]:
         """Context manager for temporary file creation.

@@ -331,6 +331,7 @@ class CoordinateManager:
             self.logger.error("Failed to update main window geometry: %s", e)
 
     def transform_point(
+        """TODO: Add docstring."""
         self,
         point: QPointF,
         source_system: CoordinateSystem,
@@ -401,6 +402,7 @@ class CoordinateManager:
             )
 
     def _transform_point_impl(
+        """TODO: Add docstring."""
         self,
         point: QPointF,
         source_system: CoordinateSystem,
@@ -586,6 +588,7 @@ class CoordinateManager:
             return None
 
     def _calculate_confidence(
+        """TODO: Add docstring."""
         self,
         source_system: CoordinateSystem,
         target_system: CoordinateSystem,
@@ -633,6 +636,7 @@ class CoordinateManager:
         return 0.7
 
     def transform_rect(
+        """TODO: Add docstring."""
         self,
         rect: QRectF,
         source_system: CoordinateSystem,

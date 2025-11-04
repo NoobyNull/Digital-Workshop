@@ -44,6 +44,7 @@ class StreamingProgressCallback:
     """Enhanced progress callback for streaming operations."""
 
     def __init__(self, callback_func: Optional[Callable[[float, str], None]] = None) -> None:
+        """TODO: Add docstring."""
         self.callback_func = callback_func
         self.last_report_time = 0
         self.report_interval = 0.05  # Report more frequently for streaming
@@ -158,6 +159,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             return False
 
     def parse(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[float], None]] = None,
@@ -419,6 +421,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
     @abstractmethod
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -533,6 +536,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             self.logging_service.log_debug(f"Performed garbage collection at count {count}")
 
     def _update_progress(
+        """TODO: Add docstring."""
         self,
         progress: float,
         message: str = "",

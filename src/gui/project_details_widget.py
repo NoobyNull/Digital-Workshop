@@ -39,6 +39,7 @@ class ProjectDetailsWidget(QWidget):
     """
 
     def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.current_model_id: Optional[int] = None

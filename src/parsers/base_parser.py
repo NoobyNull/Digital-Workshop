@@ -84,6 +84,7 @@ class BaseParser(ABC):
         return self._model_cache
 
     def parse_file(
+        """TODO: Add docstring."""
         self,
         file_path: Union[str, Path],
         progress_callback: Optional[ProgressCallback] = None,
@@ -156,6 +157,7 @@ class BaseParser(ABC):
 
     @abstractmethod
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
@@ -232,6 +234,7 @@ class BaseParser(ABC):
         )
 
     def _load_geometry_async(
+        """TODO: Add docstring."""
         self,
         metadata_model: Model,
         progress_callback: Optional[ProgressCallback] = None,
@@ -392,6 +395,7 @@ class BaseParser(ABC):
         return file_path
 
     def _create_model_stats(
+        """TODO: Add docstring."""
         self,
         triangles: List[Triangle],
         file_size: int,

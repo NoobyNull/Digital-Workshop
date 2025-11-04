@@ -403,6 +403,7 @@ class ViewerUIService(IViewerUIService):
             self.logger.error("Error showing info dialog: %s", e)
 
     def _show_notification(
+        """TODO: Add docstring."""
         self, title: str, message: str, notification_type: NotificationType
     ) -> None:
         """Show a notification widget."""
@@ -472,6 +473,7 @@ class NotificationService(INotificationService):
         self.logger.info("Notification service initialized")
 
     def show_notification(
+        """TODO: Add docstring."""
         self,
         title: str,
         message: str,

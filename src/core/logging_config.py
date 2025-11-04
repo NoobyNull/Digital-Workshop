@@ -145,6 +145,7 @@ class TimestampRotatingFileHandler(logging.Handler):
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         log_dir: str = "logs",
         max_bytes: int = 10 * 1024 * 1024,
@@ -266,6 +267,7 @@ class TimestampRotatingFileHandler(logging.Handler):
 
 
 def setup_logging(
+    """TODO: Add docstring."""
     log_level: str = "INFO",
     log_dir: str = "logs",
     enable_console: bool = False,
@@ -388,7 +390,9 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> N
     """
 
     def decorator(func) -> None:
+        """TODO: Add docstring."""
         def wrapper(*args, **kwargs) -> None:
+            """TODO: Add docstring."""
             # Only log if explicitly enabled
             if enable_logging:
                 try:

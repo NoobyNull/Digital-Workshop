@@ -122,6 +122,7 @@ class CSVToolParser(BaseToolParser):
         return normalized
 
     def parse(
+        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> List[ToolData]:
         """Parse CSV tool database."""

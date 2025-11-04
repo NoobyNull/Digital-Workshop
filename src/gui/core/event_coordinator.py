@@ -133,6 +133,7 @@ class EventCoordinator:
 
 # Convenience function for easy event coordination setup
 def setup_event_coordination(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> EventCoordinator:
     """

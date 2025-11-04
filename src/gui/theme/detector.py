@@ -52,6 +52,7 @@ class SystemThemeDetector:
         return "light"  # Default fallback
 
     def _detect_windows(self) -> Literal["light", "dark"]:
+        """TODO: Add docstring."""
         r"""
         Detect Windows dark mode via registry.
 

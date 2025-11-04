@@ -316,6 +316,7 @@ class QueryOptimizer:
 
     @log_function_call(logger)
     def execute_optimal_query(
+        """TODO: Add docstring."""
         self, query: str, params: tuple = None, use_cache: bool = True
     ) -> List[tuple]:
         """

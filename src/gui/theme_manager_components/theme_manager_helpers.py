@@ -66,6 +66,7 @@ def build_category_map() -> Dict[str, List[str]]:
     }
 
     def add(cat: str, name: str) -> bool:
+        """TODO: Add docstring."""
         categories[cat].append(name)
         return True
 

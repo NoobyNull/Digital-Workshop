@@ -149,6 +149,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise STLParseError(f"Failed to detect STL format: {str(e)}")
 
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -210,6 +211,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise
 
     def _parse_binary_stl(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -290,6 +292,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
 
     def _parse_binary_stl_vectorized(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         triangle_count: int,
@@ -450,6 +453,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise STLParseError(f"Failed to parse binary STL (vectorized): {str(e)}")
 
     def _parse_binary_stl_pure_python(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         triangle_count: int,
@@ -553,6 +557,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise STLParseError(f"Failed to parse binary STL (pure Python): {str(e)}")
 
     def _parse_binary_stl_arrays(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -693,6 +698,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
     def _parse_ascii_stl(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,

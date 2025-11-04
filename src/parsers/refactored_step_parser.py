@@ -163,6 +163,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         self.vertex_points: Dict[int, STEPVertexPoint] = {}
 
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -224,6 +225,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             raise
 
     def _parse_step_file(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -250,6 +252,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             raise STEPParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_step_file_standard(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -278,6 +281,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             self._process_entity_references()
 
     def _parse_step_file_streaming(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -688,6 +692,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         return triangles
 
     def _calculate_face_normal(
+        """TODO: Add docstring."""
         self,
         v1: Tuple[float, float, float],
         v2: Tuple[float, float, float],

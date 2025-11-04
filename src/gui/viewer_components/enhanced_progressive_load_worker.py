@@ -93,6 +93,7 @@ class EnhancedProgressiveLoadWorker(QThread):
 
             # Set callback to emit progress updates
             def emit_progress(progress: float, message: str) -> None:
+                """TODO: Add docstring."""
                 self.progress_updated.emit(progress, message)
 
             tracker.set_progress_callback(emit_progress)
@@ -119,10 +120,13 @@ class EnhancedProgressiveLoadWorker(QThread):
 
             # Create progress callback for the parser
             class ParserProgressCallback:
+                """TODO: Add docstring."""
                 def __init__(self, tracker) -> None:
+                    """TODO: Add docstring."""
                     self.tracker = tracker
 
                 def report(self, progress: float, message: str) -> None:
+                    """TODO: Add docstring."""
                     # Map parser progress to our tracking system
                     if self.tracker.progress_callback:
                         self.tracker.progress_callback(progress, message)

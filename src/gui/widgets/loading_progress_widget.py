@@ -125,6 +125,7 @@ class LoadingProgressWidget(QWidget):
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
 
     def start_loading(
+        """TODO: Add docstring."""
         self, job_id: str, file_path: str, initial_message: str = "Initializing..."
     ) -> None:
         """
@@ -221,6 +222,7 @@ class LoadingProgressWidget(QWidget):
             step_size = (to_value - from_value) / steps
 
             def animate_step(current_step: int = 0) -> None:
+                """TODO: Add docstring."""
                 if current_step >= steps:
                     self.progress_bar.setValue(to_value)
                     return

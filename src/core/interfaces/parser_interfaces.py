@@ -54,6 +54,7 @@ class IParser(ABC):
 
     @abstractmethod
     def parse(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[float], None]] = None,

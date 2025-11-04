@@ -168,6 +168,7 @@ class ModelEditor:
             return self.current_model
 
     def _create_plane_triangles(
+        """TODO: Add docstring."""
         self, min_x: float, max_x: float, min_y: float, max_y: float
     ) -> list:
         """Create triangles for a plane at Z=0."""

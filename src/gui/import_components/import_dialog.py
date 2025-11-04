@@ -84,6 +84,7 @@ class ImportWorker(QThread):
     import_failed = Signal(str)  # error_message
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         mode: FileManagementMode,
@@ -147,6 +148,7 @@ class ImportWorker(QThread):
                 self.stage_changed.emit("hashing", f"Processing {file_name}...")
 
                 def file_progress_callback(message, percent) -> None:
+                    """TODO: Add docstring."""
                     self.file_progress.emit(file_name, percent, message)
 
                 success, error = self.file_manager.process_file(

@@ -39,6 +39,7 @@ class StylingManager:
 
 # Convenience function for easy styling application
 def apply_main_window_styling(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> StylingManager:
     """

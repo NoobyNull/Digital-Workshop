@@ -136,6 +136,7 @@ class MemoryCache:
             return None
 
     def put(
+        """TODO: Add docstring."""
         self,
         key: str,
         value: Any,
@@ -380,6 +381,7 @@ class DiskCache:
             return None
 
     def put(
+        """TODO: Add docstring."""
         self,
         key: str,
         value: Any,
@@ -596,6 +598,7 @@ class DatabaseCacheManager:
         """Start background cache cleanup thread."""
 
         def cleanup_worker() -> None:
+            """TODO: Add docstring."""
             while True:
                 try:
                     self._cleanup_expired_entries()
@@ -726,6 +729,7 @@ class DatabaseCacheManager:
         return None
 
     def cache_search_results(
+        """TODO: Add docstring."""
         self, query: str, results: List[str], filters: Dict[str, Any] = None
     ) -> None:
         """

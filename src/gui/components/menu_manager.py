@@ -302,6 +302,7 @@ class MenuManager:
 
 # Convenience function for easy menu setup
 def setup_main_window_menus(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> MenuManager:
     """

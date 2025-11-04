@@ -288,6 +288,7 @@ class EnhancedErrorHandler(IErrorHandler):
             self.logger.info("Error history cleared")
 
     def _create_error_context(
+        """TODO: Add docstring."""
         self, error: Exception, context: Optional[Dict[str, Any]] = None
     ) -> ErrorContext:
         """Create error context from exception and optional context."""
@@ -442,6 +443,7 @@ class EnhancedErrorHandler(IErrorHandler):
         return ErrorSeverity.LOW
 
     def _determine_recovery_strategy(
+        """TODO: Add docstring."""
         self, error: Exception, category: ErrorCategory
     ) -> RecoveryStrategy:
         """Determine appropriate recovery strategy."""
@@ -500,6 +502,7 @@ class EnhancedErrorHandler(IErrorHandler):
         )
 
     def _generate_recovery_suggestions(
+        """TODO: Add docstring."""
         self, error: Exception, category: ErrorCategory
     ) -> List[str]:
         """Generate recovery suggestions for the error."""
@@ -583,6 +586,7 @@ class EnhancedErrorHandler(IErrorHandler):
         return suggestions
 
     def _analyze_retry_properties(
+        """TODO: Add docstring."""
         self, error: Exception, category: ErrorCategory
     ) -> tuple[bool, bool]:
         """Analyze if error should be retried and if it's transient."""
@@ -793,8 +797,10 @@ def handle_errors(operation_name: str = None, reraise: bool = True) -> None:
     """
 
     def decorator(func: Callable) -> Callable:
+        """TODO: Add docstring."""
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
+            """TODO: Add docstring."""
             error_handler = EnhancedErrorHandler()
             operation = operation_name or f"{func.__module__}.{func.__name__}"
 

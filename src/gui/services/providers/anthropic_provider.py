@@ -14,6 +14,7 @@ class AnthropicProvider(BaseProvider):
     """Anthropic Claude vision provider."""
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         api_key: Optional[str] = None,
         model: str = "claude-3-5-sonnet-20241022",

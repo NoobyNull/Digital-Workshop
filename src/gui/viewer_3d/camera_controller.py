@@ -50,6 +50,7 @@ class CameraController:
 
     @log_function_call(logger)
     def fit_camera_to_model(
+        """TODO: Add docstring."""
         self,
         model: STLModel,
         actor: Optional[vtk.vtkActor],
@@ -148,6 +149,7 @@ class CameraController:
 
     @log_function_call(logger)
     def fit_camera_preserving_orientation(
+        """TODO: Add docstring."""
         self, model: STLModel, actor: Optional[vtk.vtkActor]
     ) -> None:
         """

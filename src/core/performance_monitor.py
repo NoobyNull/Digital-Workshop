@@ -433,6 +433,7 @@ class PerformanceMonitor:
             return MemoryStats(0, 0, 0, 0, 0)
 
     def start_operation(
+        """TODO: Add docstring."""
         self, operation_name: str, metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         """
@@ -462,6 +463,7 @@ class PerformanceMonitor:
         return operation_id
 
     def end_operation(
+        """TODO: Add docstring."""
         self,
         operation_id: str,
         success: bool = True,
@@ -635,6 +637,7 @@ class PerformanceMonitor:
             }
 
     def get_operation_metrics(
+        """TODO: Add docstring."""
         self, operation_name: Optional[str] = None, limit: int = 100
     ) -> List[OperationMetrics]:
         """
@@ -822,7 +825,9 @@ def monitor_operation(operation_name: str) -> None:
     """
 
     def decorator(func) -> None:
+        """TODO: Add docstring."""
         def wrapper(*args, **kwargs) -> None:
+            """TODO: Add docstring."""
             monitor = get_performance_monitor()
             operation_id = monitor.start_operation(operation_name)
 

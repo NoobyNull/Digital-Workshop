@@ -43,6 +43,7 @@ class PreviewWindow(QMainWindow):
     """
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Preview")
         self.resize(700, 520)

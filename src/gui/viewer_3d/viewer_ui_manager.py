@@ -51,6 +51,7 @@ class ViewerUIManager:
 
     @log_function_call(logger)
     def setup_ui(
+        """TODO: Add docstring."""
         self,
         on_solid_clicked: Callable,
         on_material_clicked: Callable,

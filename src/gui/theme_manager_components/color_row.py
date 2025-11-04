@@ -23,6 +23,7 @@ class ColorRow(QWidget):
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         var_name: str,
         default_hex: str,

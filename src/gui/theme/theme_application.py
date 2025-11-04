@@ -38,6 +38,7 @@ class ThemeApplicationError(Exception):
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         message: str,
         failed_components: List[str] = None,

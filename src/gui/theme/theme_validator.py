@@ -380,6 +380,7 @@ class ThemeValidator:
         return len(errors) == 0, errors, warnings
 
     def _validate_qt_material(
+        """TODO: Add docstring."""
         self, theme_data: Dict[str, Any]
     ) -> Tuple[bool, List[str], List[str]]:
         """
@@ -483,6 +484,7 @@ class ThemeValidator:
         return False
 
     def _check_color_accessibility(
+        """TODO: Add docstring."""
         self, color_name: str, color_value: str, _all_colors: Dict[str, str]
     ) -> List[str]:
         """
@@ -566,6 +568,7 @@ class ThemeValidator:
 
             # Apply gamma correction
             def gamma_correct(channel: float) -> float:
+                """TODO: Add docstring."""
                 return channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4
 
             r, g, b = gamma_correct(r), gamma_correct(g), gamma_correct(b)

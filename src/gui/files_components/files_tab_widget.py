@@ -41,6 +41,7 @@ class FilesTab(QWidget):
     """
 
     def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()

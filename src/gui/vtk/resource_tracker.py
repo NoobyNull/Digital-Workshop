@@ -92,6 +92,7 @@ class VTKResourceTracker:
         try:
             # Actor cleanup
             def cleanup_actor(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "SetMapper"):
                         resource.SetMapper(None)
@@ -102,6 +103,7 @@ class VTKResourceTracker:
 
             # Mapper cleanup
             def cleanup_mapper(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "SetInput"):
                         resource.SetInput(None)
@@ -112,6 +114,7 @@ class VTKResourceTracker:
 
             # Polydata cleanup
             def cleanup_polydata(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "Reset"):
                         resource.Reset()
@@ -122,6 +125,7 @@ class VTKResourceTracker:
 
             # Renderer cleanup
             def cleanup_renderer(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "RemoveAllViewProps"):
                         resource.RemoveAllViewProps()
@@ -132,6 +136,7 @@ class VTKResourceTracker:
 
             # Render window cleanup
             def cleanup_render_window(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "Finalize"):
                         resource.Finalize()
@@ -142,6 +147,7 @@ class VTKResourceTracker:
 
             # Interactor cleanup
             def cleanup_interactor(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "TerminateApp"):
                         resource.TerminateApp()
@@ -164,6 +170,7 @@ class VTKResourceTracker:
             self.logger.warning("Error registering default cleanup callbacks: %s", e)
 
     def register_resource(
+        """TODO: Add docstring."""
         self,
         resource: Any,
         resource_type: ResourceType,
@@ -591,6 +598,7 @@ def get_vtk_resource_tracker() -> VTKResourceTracker:
 
 
 def register_vtk_resource(
+    """TODO: Add docstring."""
     resource: Any,
     resource_type: ResourceType,
     name: Optional[str] = None,

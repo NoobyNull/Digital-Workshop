@@ -180,6 +180,7 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to detect STL format: {str(e)}")
 
     def _parse_binary_stl(
+        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> STLModel:
         """
@@ -522,6 +523,7 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
 
     def _parse_binary_stl_arrays(
+        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> Model:
         """
@@ -673,6 +675,7 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
     def _parse_ascii_stl(
+        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> STLModel:
         """
@@ -841,6 +844,7 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
@@ -993,6 +997,7 @@ class STLParser(BaseParser):
         return triangle_count
 
     def _load_low_res_geometry(
+        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """

@@ -27,6 +27,7 @@ class HelpTopic:
     category: str = "General"
 
     def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.keywords is None:
             self.keywords = []
 

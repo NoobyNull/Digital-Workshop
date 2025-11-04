@@ -60,6 +60,7 @@ class ThreadPoolCoordinator:
 
     @log_function_call
     def coordinate_parsing(
+        """TODO: Add docstring."""
         self,
         chunks: List[FileChunk],
         cancellation_token: CancellationToken,
@@ -148,6 +149,7 @@ class ThreadPoolCoordinator:
 
     @staticmethod
     def _process_chunk_worker(
+        """TODO: Add docstring."""
         chunk: FileChunk, cancellation_token: CancellationToken
     ) -> WorkerResult:
         """
@@ -188,6 +190,7 @@ class ThreadPoolCoordinator:
 
     @staticmethod
     def _parse_chunk_data_static(
+        """TODO: Add docstring."""
         chunk: FileChunk, cancellation_token: CancellationToken
     ) -> List[Triangle]:
         """
@@ -227,6 +230,7 @@ class ThreadPoolCoordinator:
 
     @staticmethod
     def _parse_triangle_data_static(
+        """TODO: Add docstring."""
         data: bytes, expected_count: int, cancellation_token: CancellationToken
     ) -> List[Triangle]:
         """
@@ -280,6 +284,7 @@ class ThreadPoolCoordinator:
         return triangles
 
     def _aggregate_results(
+        """TODO: Add docstring."""
         self, file_path: Path, results: List[WorkerResult], start_time: float
     ) -> Model:
         """

@@ -50,6 +50,7 @@ class FileManager:
 
     @log_function_call(logger)
     def add_file(
+        """TODO: Add docstring."""
         self,
         project_id: str,
         file_path: str,

@@ -34,6 +34,7 @@ class MaterialPickerWidget(QDialog):
     material_selected = Signal(str)  # species name
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         db_manager=None,
         material_manager: Optional[MaterialManager] = None,
@@ -78,6 +79,7 @@ class MaterialPickerWidget(QDialog):
 
     # ---- UI construction ----
     def _build_ui(self) -> None:
+        """TODO: Add docstring."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
@@ -186,6 +188,7 @@ class MaterialPickerWidget(QDialog):
         self.species_combo.blockSignals(False)
 
     def _current_species_name(self) -> Optional[str]:
+        """TODO: Add docstring."""
         idx = self.species_combo.currentIndex()
         if idx < 0:
             return None
@@ -196,6 +199,7 @@ class MaterialPickerWidget(QDialog):
         return self._current_species_name()
 
     def _update_preview_and_properties(self) -> None:
+        """TODO: Add docstring."""
         name = self._current_species_name()
         if not name:
             self.preview_label.clear()
@@ -318,6 +322,7 @@ class MaterialPickerWidget(QDialog):
 
     # ---- Actions ----
     def _on_apply(self) -> None:
+        """TODO: Add docstring."""
         name = self._current_species_name()
         if not name:
             QMessageBox.information(self, "No Selection", "Please select a material species.")
@@ -326,6 +331,7 @@ class MaterialPickerWidget(QDialog):
         self.accept()
 
     def _open_add_custom_dialog(self) -> None:
+        """TODO: Add docstring."""
         dlg = QDialog(self)
         dlg.setWindowTitle("Add Custom Species")
         v = QVBoxLayout(dlg)
@@ -340,12 +346,14 @@ class MaterialPickerWidget(QDialog):
         grain_color = QColor(139, 115, 85)
 
         def _pick_base() -> None:
+            """TODO: Add docstring."""
             nonlocal base_color
             c = QColorDialog.getColor(base_color, self, "Pick Base Color")
             if c.isValid():
                 base_color = c
 
         def _pick_grain() -> None:
+            """TODO: Add docstring."""
             nonlocal grain_color
             c = QColorDialog.getColor(grain_color, self, "Pick Grain Color")
             if c.isValid():
@@ -390,6 +398,7 @@ class MaterialPickerWidget(QDialog):
         v.addWidget(btns)
 
         def _save() -> None:
+            """TODO: Add docstring."""
             name = name_edit.text().strip()
             if not name:
                 QMessageBox.warning(dlg, "Validation", "Species name is required.")

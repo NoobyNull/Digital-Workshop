@@ -210,6 +210,7 @@ class ErrorClassifier:
 
     @classmethod
     def classify_error(
+        """TODO: Add docstring."""
         cls, error: Exception, context: ErrorContext = ErrorContext.NORMAL_OPERATION
     ) -> ErrorClassification:
         """
@@ -260,6 +261,7 @@ class ErrorClassifier:
 
     @classmethod
     def register_classification_rule(
+        """TODO: Add docstring."""
         cls, error_type: type, classification: ErrorClassification
     ) -> None:
         """
@@ -309,6 +311,7 @@ class ErrorReport:
 
     @classmethod
     def create_error_report(
+        """TODO: Add docstring."""
         cls,
         error: Exception,
         context: ErrorContext,

@@ -56,6 +56,7 @@ class ThemeManagerWidget(QDialog):
     themeApplied = Signal(dict)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Theme Manager")
         self.resize(1100, 730)

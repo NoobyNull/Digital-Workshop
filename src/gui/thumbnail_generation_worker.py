@@ -24,6 +24,7 @@ class ThumbnailGenerationWorker(QThread):
     finished_batch = Signal()  # All thumbnails generated
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         file_info_list: List[Tuple[str, str]],
         background: Optional[str] = None,

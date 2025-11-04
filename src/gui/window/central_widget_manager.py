@@ -180,6 +180,7 @@ class CentralWidgetManager:
         self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model Previewer")
 
         def _placeholder(title: str, body: str) -> QWidget:
+            """TODO: Add docstring."""
             w = QWidget()
             v = QVBoxLayout(w)
             v.setContentsMargins(12, 12, 12, 12)
@@ -384,6 +385,7 @@ class CentralWidgetManager:
 
 # Convenience function for easy central widget setup
 def setup_central_widget(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> CentralWidgetManager:
     """

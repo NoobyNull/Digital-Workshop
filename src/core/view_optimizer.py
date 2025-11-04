@@ -38,6 +38,7 @@ class ViewOptimizer:
         self.logger = get_logger(__name__)
 
     def find_best_orthogonal_view(
+        """TODO: Add docstring."""
         self,
         bounds: Tuple[float, float, float, float, float, float],
         prefer_front: bool = True,
@@ -107,6 +108,7 @@ class ViewOptimizer:
             return self._get_default_view(bounds)
 
     def _get_orthogonal_views(
+        """TODO: Add docstring."""
         self, center: Tuple[float, float, float], radius: float
     ) -> Dict[str, CameraParameters]:
         """
@@ -225,6 +227,7 @@ class ViewOptimizer:
         return score
 
     def _get_default_view(
+        """TODO: Add docstring."""
         self, bounds: Tuple[float, float, float, float, float, float]
     ) -> CameraParameters:
         """

@@ -83,6 +83,7 @@ class ComprehensiveLogger:
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         log_dir: Path,
         max_log_size: int = 50 * 1024 * 1024,  # 50MB
@@ -200,6 +201,7 @@ class ComprehensiveLogger:
             return {}
 
     def _create_log_entry(
+        """TODO: Add docstring."""
         self,
         level: str,
         message: str,
@@ -242,6 +244,7 @@ class ComprehensiveLogger:
         return entry
 
     def _log_structured(
+        """TODO: Add docstring."""
         self,
         logger: logging.Logger,
         level: str,
@@ -273,6 +276,7 @@ class ComprehensiveLogger:
             logger.error("Original message: %s", message)
 
     def log_info(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -283,6 +287,7 @@ class ComprehensiveLogger:
             self._log_structured(self.app_logger, "INFO", message, context, extra_data)
 
     def log_warning(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -293,6 +298,7 @@ class ComprehensiveLogger:
             self._log_structured(self.app_logger, "WARNING", message, context, extra_data)
 
     def log_error(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -306,6 +312,7 @@ class ComprehensiveLogger:
             )
 
     def log_critical(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -324,6 +331,7 @@ class ComprehensiveLogger:
             )
 
     def log_debug(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -334,6 +342,7 @@ class ComprehensiveLogger:
             self._log_structured(self.app_logger, "DEBUG", message, context, extra_data)
 
     def log_security(
+        """TODO: Add docstring."""
         self,
         message: str,
         context: Optional[LogContext] = None,
@@ -344,6 +353,7 @@ class ComprehensiveLogger:
             self._log_structured(self.security_logger, "WARNING", message, context, extra_data)
 
     def start_operation(
+        """TODO: Add docstring."""
         self,
         operation_id: str,
         operation_name: str,
@@ -363,6 +373,7 @@ class ComprehensiveLogger:
             self.log_info(f"Operation started: {operation_name}", log_context, extra_data)
 
     def end_operation(
+        """TODO: Add docstring."""
         self,
         operation_id: str,
         success: bool = True,
@@ -477,6 +488,7 @@ class ComprehensiveLogger:
 
     @contextmanager
     def operation_context(
+        """TODO: Add docstring."""
         self,
         operation_name: str,
         context: Optional[LogContext] = None,
@@ -521,6 +533,7 @@ def set_global_logger(logger: ComprehensiveLogger) -> None:
 
 # Convenience functions
 def log_info(
+    """TODO: Add docstring."""
     message: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,
@@ -530,6 +543,7 @@ def log_info(
 
 
 def log_warning(
+    """TODO: Add docstring."""
     message: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,
@@ -539,6 +553,7 @@ def log_warning(
 
 
 def log_error(
+    """TODO: Add docstring."""
     message: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,
@@ -549,6 +564,7 @@ def log_error(
 
 
 def log_critical(
+    """TODO: Add docstring."""
     message: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,
@@ -559,6 +575,7 @@ def log_critical(
 
 
 def log_debug(
+    """TODO: Add docstring."""
     message: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,
@@ -569,6 +586,7 @@ def log_debug(
 
 @contextmanager
 def operation_context(
+    """TODO: Add docstring."""
     operation_name: str,
     context: Optional[LogContext] = None,
     extra_data: Optional[Dict[str, Any]] = None,

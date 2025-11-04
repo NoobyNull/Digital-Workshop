@@ -173,6 +173,7 @@ class EnhancedVTKContextManager:
 
     @log_function_call(logger)
     def detect_context_loss_early(
+        """TODO: Add docstring."""
         self, render_window: vtk.vtkRenderWindow
     ) -> Tuple[bool, ContextState]:
         """
@@ -230,6 +231,7 @@ class EnhancedVTKContextManager:
             return False, ContextState.UNKNOWN
 
     def _validate_context_internal(
+        """TODO: Add docstring."""
         self, render_window: vtk.vtkRenderWindow, operation: str
     ) -> ContextState:
         """Internal context validation with platform-specific handling."""
@@ -617,6 +619,7 @@ def get_enhanced_vtk_context_manager() -> EnhancedVTKContextManager:
 
 
 def detect_context_loss_early(
+    """TODO: Add docstring."""
     render_window: vtk.vtkRenderWindow,
 ) -> Tuple[bool, ContextState]:
     """
@@ -632,6 +635,7 @@ def detect_context_loss_early(
 
 
 def coordinate_shutdown_cleanup(
+    """TODO: Add docstring."""
     render_window: vtk.vtkRenderWindow,
     scenario: ShutdownScenario = ShutdownScenario.NORMAL_SHUTDOWN,
 ) -> bool:

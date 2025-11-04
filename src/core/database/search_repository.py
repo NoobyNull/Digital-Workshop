@@ -27,6 +27,7 @@ class SearchRepository:
 
     @log_function_call(logger)
     def search_models(
+        """TODO: Add docstring."""
         self,
         query: str = "",
         category: Optional[str] = None,
@@ -142,6 +143,7 @@ class SearchRepository:
 
     @log_function_call(logger)
     def search_by_metadata(
+        """TODO: Add docstring."""
         self,
         title: Optional[str] = None,
         description: Optional[str] = None,

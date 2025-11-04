@@ -265,6 +265,7 @@ class SnappingSystem:
         return self.event_processor.process_event(event)
 
     def calculate_snap(
+        """TODO: Add docstring."""
         self,
         position: QPointF,
         source_system: CoordinateSystem = CoordinateSystem.CLIENT,
@@ -451,6 +452,7 @@ class SnappingSystem:
 
 # Convenience function for easy system setup
 def create_snapping_system(
+    """TODO: Add docstring."""
     main_window: QMainWindow, config_file: Optional[str] = None
 ) -> SnappingSystem:
     """

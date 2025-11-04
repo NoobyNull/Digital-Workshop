@@ -28,6 +28,7 @@ class ProjectManager:
 
     @log_function_call(logger)
     def create_project(
+        """TODO: Add docstring."""
         self,
         name: str,
         base_path: Optional[str] = None,

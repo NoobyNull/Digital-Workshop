@@ -279,6 +279,7 @@ class FileTypeFilter:
 
     @log_function_call(logger)
     def filter_files(
+        """TODO: Add docstring."""
         self, file_paths: List[str]
     ) -> Tuple[List[FileTypeFilterResult], List[FileTypeFilterResult]]:
         """

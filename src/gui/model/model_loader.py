@@ -65,6 +65,7 @@ class ModelLoader:
         #     self._load_stl_model(file_path)
 
     def finish_model_loading(
+        """TODO: Add docstring."""
         self, file_path: str, success: bool = True, error_message: str = ""
     ) -> None:
         """Finish model loading process."""
@@ -401,6 +402,7 @@ class ModelLoader:
 
 # Convenience function for easy model loading setup
 def setup_model_loading(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> ModelLoader:
     """

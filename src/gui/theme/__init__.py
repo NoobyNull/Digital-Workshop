@@ -43,7 +43,9 @@ try:
 except ImportError:
     # Fallback: create a simple COLORS proxy
     class _SimpleColorsProxy:
+        """TODO: Add docstring."""
         def __getattr__(self, name) -> None:
+            """TODO: Add docstring."""
             return "#E31C79"  # Fallback color
 
     COLORS = _SimpleColorsProxy()

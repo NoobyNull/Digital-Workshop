@@ -88,6 +88,7 @@ class ToolbarManager:
             self.logger.info("Toolbar in text-only mode (qtawesome unavailable)")
 
         def _icon(name: str) -> None:
+            """TODO: Add docstring."""
             if not icons_ok or qta is None:
                 return QIcon()
             try:
@@ -97,6 +98,7 @@ class ToolbarManager:
                 return QIcon()
 
         def _add_action(text: str, icon_name: str, slot, tooltip: str) -> QAction:
+            """TODO: Add docstring."""
             if icons_ok:
                 action = QAction(_icon(icon_name), text, self.main_window)
             else:
@@ -190,6 +192,7 @@ class ToolbarManager:
 
 # Convenience function for easy toolbar setup
 def setup_main_window_toolbar(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> ToolbarManager:
     """

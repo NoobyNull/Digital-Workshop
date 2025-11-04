@@ -82,6 +82,7 @@ class FileSystemProxyModel(QSortFilterProxyModel):
     """
 
     def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
 
@@ -125,17 +126,20 @@ class FileSystemProxyModel(QSortFilterProxyModel):
 
 
 class ViewMode(Enum):
+    """TODO: Add docstring."""
     LIST = "list"
     GRID = "grid"
 
 
 class ModelLoadWorker(QThread):
+    """TODO: Add docstring."""
     model_loaded = Signal(dict)
     progress_updated = Signal(float, str)
     error_occurred = Signal(str)
     finished = Signal()
 
     def __init__(self, file_paths: List[str]) -> None:
+        """TODO: Add docstring."""
         super().__init__()
         self.file_paths = file_paths
         self._is_cancelled = False
@@ -144,9 +148,11 @@ class ModelLoadWorker(QThread):
         self.model_cache = get_model_cache()
 
     def cancel(self) -> None:
+        """TODO: Add docstring."""
         self._is_cancelled = True
 
     def run(self) -> None:
+        """TODO: Add docstring."""
         self.logger.info("Starting to load %s models", len(self.file_paths))
         for i, file_path in enumerate(self.file_paths):
             if self._is_cancelled:
@@ -220,11 +226,14 @@ class ModelLoadWorker(QThread):
 
 
 class ThumbnailGenerator:
+    """TODO: Add docstring."""
     def __init__(self, size: QSize = QSize(128, 128)):
+        """TODO: Add docstring."""
         self.size = size
         self.logger = get_logger(__name__)
 
     def generate_thumbnail(self, model_info: Dict[str, Any]) -> QPixmap:
+        """TODO: Add docstring."""
         try:
             pixmap = QPixmap(self.size)
             pixmap.fill(QColor(0, 0, 0, 0))  # Use QColor for transparent
@@ -297,11 +306,13 @@ class ThumbnailGenerator:
 
 
 class ModelLibraryWidget(QWidget):
+    """TODO: Add docstring."""
     model_selected = Signal(int)
     model_double_clicked = Signal(int)
     models_added = Signal(list)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
 
         self.logger = get_logger(__name__)
@@ -328,6 +339,7 @@ class ModelLibraryWidget(QWidget):
         self._load_models_from_database()
 
     def _init_ui(self) -> None:
+        """TODO: Add docstring."""
         # Top-level layout for the combined widget
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(SPACING_8, SPACING_8, SPACING_8, SPACING_8)
@@ -376,6 +388,7 @@ class ModelLibraryWidget(QWidget):
         self.view_mode = ViewMode.LIST
 
     def _create_search_bar(self, parent_layout: QVBoxLayout) -> None:
+        """TODO: Add docstring."""
         controls_frame = QFrame()
         controls_layout = QHBoxLayout(controls_frame)
         controls_layout.setContentsMargins(0, 0, 0, 0)
@@ -389,6 +402,7 @@ class ModelLibraryWidget(QWidget):
         parent_layout.addWidget(controls_frame)
 
     def _create_file_browser(self, parent_layout: QVBoxLayout) -> None:
+        """TODO: Add docstring."""
         group = QGroupBox("File Browser")
         layout = QVBoxLayout(group)
 
@@ -439,6 +453,7 @@ class ModelLibraryWidget(QWidget):
         parent_layout.addWidget(group)
 
     def _create_model_view_area(self, parent_layout: QVBoxLayout) -> None:
+        """TODO: Add docstring."""
         group = QGroupBox("Models")
         layout = QVBoxLayout(group)
 
@@ -483,6 +498,7 @@ class ModelLibraryWidget(QWidget):
         parent_layout.addWidget(group)
 
     def _create_status_bar(self, parent_layout: QVBoxLayout) -> None:
+        """TODO: Add docstring."""
         status_frame = QFrame()
         status_layout = QHBoxLayout(status_frame)
         status_layout.setContentsMargins(0, 0, 0, 0)
@@ -504,6 +520,7 @@ class ModelLibraryWidget(QWidget):
         """Apply styling (no-op - qt-material handles all styling)."""
 
     def _setup_connections(self) -> None:
+        """TODO: Add docstring."""
         # View mode connections are handled by the tab widget directly
         # Connect tab changes to update view mode
         self.view_tabs.currentChanged.connect(self._on_tab_changed)
@@ -547,6 +564,7 @@ class ModelLibraryWidget(QWidget):
             self.view_mode = ViewMode.GRID
 
     def _on_file_tree_clicked(self, index: QModelIndex) -> None:
+        """TODO: Add docstring."""
         # Update the path display when a file is clicked
         try:
             # Map from proxy to source model
@@ -559,6 +577,7 @@ class ModelLibraryWidget(QWidget):
             pass
 
     def _apply_filters(self) -> None:
+        """TODO: Add docstring."""
         if self._disposed or not hasattr(self, "proxy_model"):
             return
         text = self.search_box.text() if hasattr(self, "search_box") and self.search_box else ""
@@ -634,6 +653,7 @@ class ModelLibraryWidget(QWidget):
         self._apply_filters()
 
     def get_selected_model_id(self) -> Optional[int]:
+        """TODO: Add docstring."""
         view = self.list_view if self.view_mode == ViewMode.LIST else self.grid_view
         indexes = view.selectedIndexes()
         if not indexes:
@@ -644,6 +664,7 @@ class ModelLibraryWidget(QWidget):
         return model_id
 
     def get_selected_models(self) -> List[int]:
+        """TODO: Add docstring."""
         view = self.list_view if self.view_mode == ViewMode.LIST else self.grid_view
         model_ids: List[int] = []
         for idx in view.selectedIndexes():
@@ -656,6 +677,7 @@ class ModelLibraryWidget(QWidget):
         return model_ids
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """TODO: Add docstring."""
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():
                 if url.isLocalFile():
@@ -665,6 +687,7 @@ class ModelLibraryWidget(QWidget):
                         return
 
     def dropEvent(self, event: QDropEvent) -> None:
+        """TODO: Add docstring."""
         if event.mimeData().hasUrls():
             files: List[str] = []
             for url in event.mimeData().urls():
@@ -683,6 +706,7 @@ class ModelLibraryWidget(QWidget):
 
     @monitor_operation("load_models_to_library")
     def _load_models(self, file_paths: List[str]) -> None:
+        """TODO: Add docstring."""
         if self.loading_in_progress or self._disposed:
             QMessageBox.information(
                 self, "Loading", "Models are currently being loaded. Please wait."
@@ -707,6 +731,7 @@ class ModelLibraryWidget(QWidget):
         self._load_operation_id = op_id
 
     def _on_model_loaded(self, model_info: Dict[str, Any]) -> None:
+        """TODO: Add docstring."""
         if self._disposed or self.model_loader is None:
             return
         try:
@@ -729,6 +754,7 @@ class ModelLibraryWidget(QWidget):
             self.logger.error("Failed to save model to database: %s", e)
 
     def _on_load_progress(self, progress_percent: float, message: str) -> None:
+        """TODO: Add docstring."""
         if self._disposed or self.model_loader is None:
             return
         self.progress_bar.setRange(0, 100)
@@ -748,12 +774,14 @@ class ModelLibraryWidget(QWidget):
         self.status_label.setText(status_text)
 
     def _on_load_error(self, error_message: str) -> None:
+        """TODO: Add docstring."""
         if self._disposed or self.model_loader is None:
             return
         self.logger.error(error_message)
         QMessageBox.warning(self, "Loading Error", error_message)
 
     def _on_load_finished(self) -> None:
+        """TODO: Add docstring."""
         if self._disposed:
             if self.model_loader:
                 try:
@@ -1138,6 +1166,7 @@ class ModelLibraryWidget(QWidget):
             QMessageBox.warning(self, "Error", f"Failed to remove model: {str(e)}")
 
     def _refresh_models(self) -> None:
+        """TODO: Add docstring."""
         self._load_models_from_database()
 
     def _update_model_metadata(self, model_id: int) -> None:
@@ -1258,6 +1287,7 @@ class ModelLibraryWidget(QWidget):
             QMessageBox.critical(dialog, "Error", f"Failed to save metadata: {str(e)}")
 
     def _simple_metadata_edit(
+        """TODO: Add docstring."""
         self, model_id: int, model_info: Optional[Dict[str, Any]] = None
     ) -> None:
         """
@@ -1617,6 +1647,7 @@ class ModelLibraryWidget(QWidget):
             # Don't show error dialog for validation failures to avoid startup blocking
 
     def _import_models(self) -> None:
+        """TODO: Add docstring."""
         # Tests trigger import via _load_models or DnD, so this can be a stub
         self.status_label.setText("Use drag-and-drop to import models.")
 
@@ -1719,6 +1750,7 @@ class ModelLibraryWidget(QWidget):
             QMessageBox.critical(self, "Import Error", f"Failed to import folder: {e}")
 
     def cleanup(self) -> None:
+        """TODO: Add docstring."""
         self._disposed = True
         if self.model_loader:
             try:
@@ -1939,5 +1971,6 @@ class ModelLibraryWidget(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to regenerate thumbnail: {str(e)}")
 
     def closeEvent(self, event) -> None:
+        """TODO: Add docstring."""
         self.cleanup()
         super().closeEvent(event)

@@ -93,6 +93,7 @@ class BackgroundLoadingManager:
 
     @log_function_call
     def load_file_async(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         progress_callback: Optional[ProgressCallback] = None,
@@ -153,6 +154,7 @@ class BackgroundLoadingManager:
 
         # Add completion callback
         def on_completion(fut: Future) -> None:
+            """TODO: Add docstring."""
             try:
                 result = fut.result()
                 with self._lock:
@@ -291,6 +293,7 @@ class BackgroundLoadingManager:
         return len(to_remove)
 
     def _execute_loading_job(
+        """TODO: Add docstring."""
         self, job: LoadingJob, progress_callback: Optional[ProgressCallback]
     ) -> Model:
         """
@@ -336,6 +339,7 @@ class BackgroundLoadingManager:
 
                 # Coordinate parsing with enhanced progress tracking
                 def enhanced_progress_callback(progress: float, message: str) -> None:
+                    """TODO: Add docstring."""
                     self._update_job_progress(job, progress, message, progress_callback)
 
                     # Record performance metrics
@@ -388,6 +392,7 @@ class BackgroundLoadingManager:
                 raise
 
     def _update_job_progress(
+        """TODO: Add docstring."""
         self,
         job: LoadingJob,
         progress: float,

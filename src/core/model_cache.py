@@ -383,6 +383,7 @@ class ModelCache:
             self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
+        """TODO: Add docstring."""
         self, file_path: str, cache_level: CacheLevel
     ) -> Optional[CacheEntry]:
         """
@@ -510,6 +511,7 @@ class ModelCache:
             return None
 
     def put(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         cache_level: CacheLevel,

@@ -131,6 +131,7 @@ class UnitConverter:
 
     @staticmethod
     def format_value(
+        """TODO: Add docstring."""
         value: float, is_metric: bool, unit_type: str = "length", decimals: int = 3
     ) -> str:
         """

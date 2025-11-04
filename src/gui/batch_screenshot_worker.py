@@ -25,6 +25,7 @@ class BatchScreenshotWorker(QThread):
     finished_batch = Signal()  # All screenshots generated
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         material_manager=None,
         screenshot_size: int = 256,
@@ -113,6 +114,7 @@ class BatchScreenshotWorker(QThread):
             self.error_occurred.emit(f"Batch generation failed: {e}")
 
     def _generate_screenshot_for_model(
+        """TODO: Add docstring."""
         self, model_id: int, file_path: str, file_hash: Optional[str] = None
     ) -> Optional[str]:
         """

@@ -464,6 +464,7 @@ class GPUAccelerator:
 
     @log_function_call
     def execute_kernel(
+        """TODO: Add docstring."""
         self, kernel_type: str, buffers: List[GPUBuffer], params: Dict[str, Any]
     ) -> bool:
         """

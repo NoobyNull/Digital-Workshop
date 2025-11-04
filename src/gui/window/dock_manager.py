@@ -912,6 +912,7 @@ class DockManager:
 
 # Convenience function for easy dock management setup
 def setup_dock_management(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> DockManager:
     """

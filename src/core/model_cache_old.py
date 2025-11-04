@@ -300,6 +300,7 @@ class ModelCache:
             self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
+        """TODO: Add docstring."""
         self, file_path: str, cache_level: CacheLevel
     ) -> Optional[CacheEntry]:
         """
@@ -428,6 +429,7 @@ class ModelCache:
             return None
 
     def put(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         cache_level: CacheLevel,
@@ -480,6 +482,7 @@ class ModelCache:
             return True
 
     def _create_cache_entry(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         file_hash: str,
@@ -503,6 +506,7 @@ class ModelCache:
         )
 
     def _store_entry(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         cache_level: CacheLevel,
@@ -722,6 +726,7 @@ class ModelCache:
             self.logger.info("Model cache cleaned up")
 
     def get_or_load_progressive(
+        """TODO: Add docstring."""
         self, file_path: str, parser, progress_callback=None
     ) -> Optional[Model]:
         """
@@ -784,6 +789,7 @@ class ModelCache:
             return None
 
     def _load_full_geometry(
+        """TODO: Add docstring."""
         self, file_path: str, parser, progress_callback=None
     ) -> Optional[Model]:
         """Load full geometry with caching."""
@@ -820,6 +826,7 @@ class ModelCache:
         return self._load_low_res_geometry(file_path, parser, progress_callback)
 
     def _load_low_res_geometry(
+        """TODO: Add docstring."""
         self, file_path: str, parser, progress_callback=None
     ) -> Optional[Model]:
         """Load low-resolution geometry with caching."""
@@ -859,6 +866,7 @@ class ModelCache:
         return metadata_model
 
     def _load_metadata_only(
+        """TODO: Add docstring."""
         self, file_path: str, parser, progress_callback=None
     ) -> Optional[Model]:
         """Load metadata only with caching."""

@@ -52,6 +52,7 @@ class ChunkProgress:
     sub_operations: Dict[str, SubOperationProgress] = None
 
     def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.sub_operations is None:
             self.sub_operations = {}
 
@@ -113,6 +114,7 @@ class ProgressAggregator:
 
     @log_function_call
     def update_chunk_progress(
+        """TODO: Add docstring."""
         self,
         chunk_id: str,
         progress: float,
@@ -153,6 +155,7 @@ class ProgressAggregator:
 
     @log_function_call
     def update_sub_operation_progress(
+        """TODO: Add docstring."""
         self,
         chunk_id: str,
         operation_id: str,

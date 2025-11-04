@@ -50,6 +50,7 @@ class ToolDatabaseManager:
         }
 
     def import_tools_from_file(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         provider_name: str = "",
@@ -146,6 +147,7 @@ class ToolDatabaseManager:
         return self.provider_repo.get_all_providers()
 
     def export_tools_to_external_db(
+        """TODO: Add docstring."""
         self, provider_id: int, external_db_path: str, format_type: str
     ) -> tuple:
         """

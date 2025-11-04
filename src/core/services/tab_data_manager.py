@@ -30,6 +30,7 @@ class TabDataManager:
         self.logger = logger
 
     def save_tab_data_to_project(
+        """TODO: Add docstring."""
         self,
         project_id: str,
         tab_name: str,
@@ -100,6 +101,7 @@ class TabDataManager:
             return False, error_msg
 
     def load_tab_data_from_project(
+        """TODO: Add docstring."""
         self, project_id: str, filename: str
     ) -> Tuple[bool, Optional[Dict[str, Any]], str]:
         """

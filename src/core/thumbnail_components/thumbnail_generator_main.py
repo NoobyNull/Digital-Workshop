@@ -66,6 +66,7 @@ class ThumbnailGenerator:
         self.logger.info("ThumbnailGenerator initialized with MaterialProvider")
 
     def generate_thumbnail(
+        """TODO: Add docstring."""
         self,
         model_path: str,
         file_hash: str,
@@ -188,6 +189,7 @@ class ThumbnailGenerator:
             return None
 
     def _render_thumbnail(
+        """TODO: Add docstring."""
         self,
         model: Model,
         output_path: Path,
@@ -414,6 +416,7 @@ class ThumbnailGenerator:
             return None
 
     def _set_background(
+        """TODO: Add docstring."""
         self,
         renderer: vtk.vtkRenderer,
         background: Optional[Union[str, Tuple[float, float, float]]],

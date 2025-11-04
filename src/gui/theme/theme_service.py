@@ -97,6 +97,7 @@ class SystemThemeDetector:
         return "light"  # Default fallback
 
     def _detect_windows(self) -> Literal["light", "dark"]:
+        """TODO: Add docstring."""
         r"""
         Detect Windows dark mode via registry.
 
@@ -286,6 +287,7 @@ class ThemeService:
     # ============================================================
 
     def apply_theme(
+        """TODO: Add docstring."""
         self,
         theme: ThemeType = "dark",
         library: ThemeLibrary = "qt-material",  # noqa: ARG002 - kept for compatibility
@@ -484,6 +486,7 @@ class ThemeService:
         return self.get_available_presets()
 
     def apply_theme_preset(
+        """TODO: Add docstring."""
         self,
         preset_name: str,
         custom_mode: Optional[str] = None,
@@ -651,6 +654,7 @@ class _ColorsProxy:
     """
 
     def __getattr__(self, name: str) -> str:
+        """TODO: Add docstring."""
         service = ThemeService.instance()
         return service.get_color(name)
 
@@ -703,6 +707,7 @@ def list_theme_presets() -> list[str]:
 
 
 def apply_theme_preset(
+    """TODO: Add docstring."""
     preset_name: str,
     custom_mode: Optional[str] = None,
     base_primary: Optional[str] = None,

@@ -19,6 +19,7 @@ class FileMaintenanceWorker(QThread):
     error = Signal(str)  # error message
 
     def __init__(self, operation: str) -> None:
+        """TODO: Add docstring."""
         super().__init__()
         self.operation = operation
         self.logger = get_logger(__name__)

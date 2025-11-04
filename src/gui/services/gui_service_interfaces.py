@@ -136,6 +136,7 @@ class IEnhancedViewerService(ABC):
 
     @abstractmethod
     def load_model_async(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[ProgressInfo], None]] = None,
@@ -289,6 +290,7 @@ class IMaterialService(ABC):
 
     @abstractmethod
     def create_material_from_template(
+        """TODO: Add docstring."""
         self, template_name: str, custom_params: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """Create a new material from a template.
@@ -380,6 +382,7 @@ class INotificationService(ABC):
 
     @abstractmethod
     def show_notification(
+        """TODO: Add docstring."""
         self,
         title: str,
         message: str,
@@ -449,6 +452,7 @@ class IUIService(QObject):
         self.error_occurred.emit(title, message, details)
 
     def show_notification(
+        """TODO: Add docstring."""
         self,
         title: str,
         message: str,

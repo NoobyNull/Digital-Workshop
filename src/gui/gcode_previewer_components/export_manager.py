@@ -62,6 +62,7 @@ class ExportManager:
             return False
 
     def export_video(
+        """TODO: Add docstring."""
         self,
         filepath: str,
         frames: list,

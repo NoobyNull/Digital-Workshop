@@ -360,6 +360,7 @@ class VTKSceneManager:
         self.renderer.AddActor(self.grid_actor)
 
     def create_ground_plane(
+        """TODO: Add docstring."""
         self,
         radius: float,
         center_x: float = 0.0,
@@ -567,6 +568,7 @@ class VTKSceneManager:
             logger.error("Failed to reload settings from QSettings: %s", e, exc_info=True)
 
     def update_gradient_colors(
+        """TODO: Add docstring."""
         self,
         top_color: str = None,
         bottom_color: str = None,

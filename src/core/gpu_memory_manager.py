@@ -189,6 +189,7 @@ class GPUMemoryManager:
 
     @log_function_call
     def stream_file_to_gpu(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         triangle_count: int,

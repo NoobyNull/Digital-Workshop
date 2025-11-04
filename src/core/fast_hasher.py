@@ -100,6 +100,7 @@ class FastHasher:
             return self.CHUNK_SIZE_LARGE
 
     def hash_file(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         progress_callback: Optional[Callable[[float, str], None]] = None,
@@ -282,6 +283,7 @@ class FastHasher:
         return hasher
 
     def hash_files_batch(
+        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
@@ -354,6 +356,7 @@ class FastHasher:
         return results
 
     def verify_hash(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         expected_hash: str,

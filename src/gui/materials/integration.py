@@ -316,6 +316,7 @@ class MaterialLightingIntegrator:
 
 # Convenience function for easy material and lighting integration setup
 def setup_material_lighting_integration(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> MaterialLightingIntegrator:
     """

@@ -34,7 +34,9 @@ from PySide6.QtWidgets import (
 
 
 class Ui_MainWindow(object):
+    """TODO: Add docstring."""
     def setupUi(self, MainWindow) -> None:
+        """TODO: Add docstring."""
         if not MainWindow.objectName():
             MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1600, 1000)
@@ -204,6 +206,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow) -> None:
+        """TODO: Add docstring."""
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", "3D-MM - 3D Model Manager", None)
         )

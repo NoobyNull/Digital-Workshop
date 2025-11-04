@@ -36,6 +36,7 @@ class ModelService(IModelService):
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         model_repository: IModelRepository,
         metadata_repository: IMetadataRepository,
@@ -61,6 +62,7 @@ class ModelService(IModelService):
         self._logger.info("ModelService initialized with %d parsers", len(parser_registry))
 
     def load_model(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[float], None]] = None,
@@ -288,6 +290,7 @@ class ModelService(IModelService):
         """
 
         def progress_callback(progress: float) -> None:
+            """TODO: Add docstring."""
             if model_id in self._progress_callbacks:
                 try:
                     self._progress_callbacks[model_id](progress)
@@ -318,6 +321,7 @@ class ModelService(IModelService):
         return True
 
     def _extract_metadata(
+        """TODO: Add docstring."""
         self, file_path: Path, model_data: Dict[str, Any], file_format: Any
     ) -> Dict[str, Any]:
         """Extract metadata from file and model data.

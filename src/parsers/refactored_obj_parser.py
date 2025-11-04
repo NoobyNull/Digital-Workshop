@@ -95,6 +95,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
         self.materials: Dict[str, OBJMaterial] = {}
 
     def _parse_file_internal(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -158,6 +159,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             raise
 
     def _parse_obj_file(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -200,6 +202,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             raise OBJParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_obj_file_standard(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -298,6 +301,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             return vertices, normals, texture_coords, faces, self.materials
 
     def _parse_obj_file_streaming(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -448,6 +452,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
         )
 
     def _convert_faces_to_triangles(
+        """TODO: Add docstring."""
         self,
         vertices: List[OBJVertex],
         normals: List[Tuple[float, float, float]],
@@ -524,6 +529,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
         return triangles
 
     def _calculate_face_normal(
+        """TODO: Add docstring."""
         self,
         v1: Tuple[float, float, float],
         v2: Tuple[float, float, float],

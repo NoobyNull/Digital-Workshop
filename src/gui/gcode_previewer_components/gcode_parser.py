@@ -63,6 +63,7 @@ class GcodeParser:
         }
 
     def parse_file(
+        """TODO: Add docstring."""
         self, filepath: str, sample_mode: bool = True, sample_size: int = 100
     ) -> List[GcodeMove]:
         """

@@ -29,6 +29,7 @@ class LightingControlPanel(QDockWidget):
     intensity_changed = Signal(float)  # 0-2.0
 
     def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__("Lighting", parent)
         self.setObjectName("LightingControlPanel")
         self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
@@ -158,12 +159,14 @@ class LightingControlPanel(QDockWidget):
 
     # ---- Public API ----
     def values(
+        """TODO: Add docstring."""
         self,
     ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity)"""
         return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity
 
     def set_values(
+        """TODO: Add docstring."""
         self,
         position: Tuple[float, float, float] | None = None,
         color: Tuple[float, float, float] | None = None,
@@ -209,6 +212,7 @@ class LightingControlPanel(QDockWidget):
 
     # ---- Internals ----
     def _make_pos_slider(
+        """TODO: Add docstring."""
         self, name: str, min_val: float, max_val: float, initial: float
     ) -> QSlider:
         """Create a position slider with proper range and styling."""
@@ -230,21 +234,25 @@ class LightingControlPanel(QDockWidget):
         return slider
 
     def _on_x_position_changed(self, value: int) -> None:
+        """TODO: Add docstring."""
         self._pos_x = float(value)
         self.x_value.setText(f"{self._pos_x:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_y_position_changed(self, value: int) -> None:
+        """TODO: Add docstring."""
         self._pos_y = float(value)
         self.y_value.setText(f"{self._pos_y:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_z_position_changed(self, value: int) -> None:
+        """TODO: Add docstring."""
         self._pos_z = float(value)
         self.z_value.setText(f"{self._pos_z:.0f}")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _pick_color(self) -> None:
+        """TODO: Add docstring."""
         # Convert current normalized RGB to QColor
         r, g, b = self._color
         qr, qg, qb = int(r * 255.0), int(g * 255.0), int(b * 255.0)
@@ -258,11 +266,13 @@ class LightingControlPanel(QDockWidget):
         self.color_changed.emit(*self._color)
 
     def _on_intensity_changed(self, value: int) -> None:
+        """TODO: Add docstring."""
         self._intensity = float(value) / 100.0  # 0.0 .. 2.0
         self.intensity_value.setText(f"{self._intensity:.1f}")
         self.intensity_changed.emit(self._intensity)
 
     def _reset_defaults(self) -> None:
+        """TODO: Add docstring."""
         # Defaults: (100,100,100), white, 0.8
         self.set_values(
             position=(100.0, 100.0, 100.0),
@@ -272,6 +282,7 @@ class LightingControlPanel(QDockWidget):
         )
 
     def _update_color_button_bg(self, color_norm: Tuple[float, float, float]) -> None:
+        """TODO: Add docstring."""
         # Convert normalized to hex
         r = max(0, min(255, int(round(color_norm[0] * 255.0))))
         g = max(0, min(255, int(round(color_norm[1] * 255.0))))

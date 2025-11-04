@@ -30,6 +30,7 @@ class ErrorReporter:
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         log_file_path: Optional[Path] = None,
         max_reports: int = 1000,
@@ -132,6 +133,7 @@ class ErrorReporter:
         self.recovery_strategies[ErrorRecoveryStrategy.DEFER_PROCESSING] = self._defer_processing
 
     def report_error(
+        """TODO: Add docstring."""
         self,
         error: Exception,
         context: ErrorContext,
@@ -399,6 +401,7 @@ class ErrorReporter:
             return False
 
     def _request_user_intervention(
+        """TODO: Add docstring."""
         self, error_report: ErrorReport, recovery_callback: Callable
     ) -> bool:
         """Request user intervention."""
@@ -506,6 +509,7 @@ def set_global_error_reporter(reporter: ErrorReporter) -> None:
 
 
 def report_error(
+    """TODO: Add docstring."""
     error: Exception,
     context: ErrorContext,
     context_info: Dict[str, Any] = None,

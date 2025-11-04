@@ -365,6 +365,7 @@ class LayoutPersistenceManager:
 
 # Convenience function for easy layout persistence setup
 def setup_layout_persistence(
+    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> LayoutPersistenceManager:
     """

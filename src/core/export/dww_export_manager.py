@@ -41,6 +41,7 @@ class DWWExportManager:
         self.logger = logger
 
     def export_project(
+        """TODO: Add docstring."""
         self,
         project_id: str,
         output_path: str,
@@ -142,6 +143,7 @@ class DWWExportManager:
             return False, error_msg
 
     def _add_metadata_to_archive(
+        """TODO: Add docstring."""
         self, dww_archive: zipfile.ZipFile, project_id: str, files: List[Dict]
     ) -> None:
         """Add metadata files to the archive."""

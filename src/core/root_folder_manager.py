@@ -25,6 +25,7 @@ class RootFolder:
     id: Optional[int] = None
 
     def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.id is None:
             # Generate a simple ID based on path hash for uniqueness
             self.id = hash(self.path) & 0xFFFFFFFF
@@ -45,6 +46,7 @@ class RootFolderManager(QObject):
     _instance = None
 
     def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.settings = QSettings()
@@ -194,6 +196,7 @@ class RootFolderManager(QObject):
             return False
 
     def update_folder(
+        """TODO: Add docstring."""
         self,
         folder_id: int,
         path: Optional[str] = None,
