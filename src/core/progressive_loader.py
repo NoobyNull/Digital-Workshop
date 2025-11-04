@@ -134,7 +134,7 @@ class HardwareDetector:
             else:
                 return HardwareCapability.MINIMAL
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Hardware detection failed: %s", str(e))
             return HardwareCapability.STANDARD
 
@@ -234,7 +234,7 @@ class FileChunker:
             else:
                 # Use regular file reading
                 return self._read_chunk_regular(file_path, chunk)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to read chunk %s: {str(e)}", chunk.chunk_id)
             raise
 
@@ -323,7 +323,7 @@ class ProgressTracker:
         for callback in self._progress_callbacks:
             try:
                 callback(progress)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Progress callback failed: %s", str(e))
 
     def get_current_progress(self) -> Optional[LoadingProgress]:
@@ -404,7 +404,7 @@ class LoadingWorker(QObject):
                     bytes_loaded += chunk.size_bytes
                     progress_tracker.update_progress(bytes_loaded, i + 1, total_chunks)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Failed to process chunk %s: {str(e)}", chunk.chunk_id)
                     chunk.error = str(e)
                     # Continue with other chunks
@@ -415,7 +415,7 @@ class LoadingWorker(QObject):
             progress_tracker.set_state(LoadingState.COMPLETED)
             return final_result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to load file {file_path}: {str(e)}"
             logger.error(error_msg)
             progress_tracker.set_state(LoadingState.FAILED, error_msg)
@@ -529,7 +529,7 @@ class ProgressiveLoader(QObject):
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("File loading failed for %s: {str(e)}", file_path)
             raise
         finally:
@@ -579,7 +579,7 @@ class ProgressiveLoader(QObject):
             # Clean old cache entries
             self._clean_cache()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to cache result for %s: {str(e)}", file_path)
 
     def _get_cached_result(self, file_path: str) -> Optional[Any]:
@@ -598,7 +598,7 @@ class ProgressiveLoader(QObject):
             logger.debug("Using cached result for %s", file_path)
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to get cached result for %s: {str(e)}", file_path)
             return None
 
@@ -618,7 +618,7 @@ class ProgressiveLoader(QObject):
             if expired_keys:
                 logger.debug("Cleaned %s expired cache entries", len(expired_keys))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to clean cache: %s", str(e))
 
     def clear_cache(self) -> None:
@@ -656,7 +656,7 @@ class ProgressiveLoader(QObject):
 
             logger.info("Progressive loader shutdown completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error during progressive loader shutdown: %s", str(e))
 
 

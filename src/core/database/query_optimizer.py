@@ -527,7 +527,7 @@ class QueryOptimizer:
                 self._create_index(idx)
                 created_indexes.append(idx.name)
                 logger.info("Created index: %s", idx.name)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Failed to create index %s: {str(e)}", idx.name)
 
         return created_indexes
@@ -601,7 +601,7 @@ class QueryOptimizer:
 
             logger.info("Query optimization analysis completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Optimization analysis failed: %s", str(e))
 
         return results

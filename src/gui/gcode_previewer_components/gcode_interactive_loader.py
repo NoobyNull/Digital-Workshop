@@ -105,7 +105,7 @@ class GcodeLoaderWorker(QThread):
             self.progress_updated.emit(100, "Loading complete")
             self.loading_complete.emit(all_moves)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.error_occurred.emit(f"Failed to load G-code: {str(e)}")
 
 

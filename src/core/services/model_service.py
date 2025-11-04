@@ -143,7 +143,7 @@ class ModelService(IModelService):
             self._logger.error("Failed to load model %s: %s", file_path, error)
             return False
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error(
                 "Unexpected error loading model %s: %s", file_path, error, exc_info=True
             )
@@ -179,7 +179,7 @@ class ModelService(IModelService):
             self._logger.info("Successfully unloaded model: %s", model_id)
             return True
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error("Error unloading model %s: %s", model_id, error, exc_info=True)
             return False
 
@@ -204,7 +204,7 @@ class ModelService(IModelService):
 
             return model_data
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error("Error retrieving model %s: %s", model_id, error, exc_info=True)
             return None
 
@@ -228,7 +228,7 @@ class ModelService(IModelService):
         try:
             return self._metadata_repository.get_metadata(model_id)
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error(
                 "Error retrieving metadata for model %s: %s",
                 model_id,
@@ -250,7 +250,7 @@ class ModelService(IModelService):
         try:
             return self._metadata_repository.update_metadata(model_id, metadata)
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error(
                 "Error updating metadata for model %s: %s",
                 model_id,
@@ -273,7 +273,7 @@ class ModelService(IModelService):
             search_criteria = {"query": query}
             return self._model_repository.search(search_criteria)
 
-        except Exception as error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
             self._logger.error("Error searching models: %s", error, exc_info=True)
             return []
 
@@ -291,7 +291,7 @@ class ModelService(IModelService):
             if model_id in self._progress_callbacks:
                 try:
                     self._progress_callbacks[model_id](progress)
-                except Exception as error:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
                     self._logger.warning(
                         "Error in progress callback for model %s: %s", model_id, error
                     )

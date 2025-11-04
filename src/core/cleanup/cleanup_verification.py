@@ -193,7 +193,7 @@ class CleanupVerifier:
 
             return self.report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Verification failed: %s", e, exc_info=True)
             result = VerificationResult(
                 check_name="Verification Process",
@@ -245,7 +245,7 @@ class CleanupVerifier:
             )
             self.report.add_result(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             result = VerificationResult(
                 check_name="Phase Completion",
                 status=VerificationStatus.FAILED,
@@ -287,7 +287,7 @@ class CleanupVerifier:
             )
             self.report.add_result(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             result = VerificationResult(
                 check_name="Error Handling",
                 status=VerificationStatus.FAILED,
@@ -337,7 +337,7 @@ class CleanupVerifier:
             )
             self.report.add_result(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             result = VerificationResult(
                 check_name="Resource Cleanup",
                 status=VerificationStatus.FAILED,
@@ -371,7 +371,7 @@ class CleanupVerifier:
             )
             self.report.add_result(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             result = VerificationResult(
                 check_name="Memory State",
                 status=VerificationStatus.WARNING,
@@ -430,7 +430,7 @@ class CleanupVerifier:
             )
             self.report.add_result(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             result = VerificationResult(
                 check_name="Handler Execution",
                 status=VerificationStatus.FAILED,

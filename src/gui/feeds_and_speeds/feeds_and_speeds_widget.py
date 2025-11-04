@@ -96,7 +96,7 @@ class FeedsAndSpeedsWidget(QWidget):
             else:
                 self.logger.info("Found %s providers in database", len(providers))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load default library: %s", e)
 
     def _setup_ui(self) -> None:
@@ -303,7 +303,7 @@ class FeedsAndSpeedsWidget(QWidget):
                 self.library_combo.addItem(provider["name"])
 
             self.logger.info("Loaded %s providers", len(providers))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load providers: %s", e)
 
     def _on_import_tools(self) -> None:
@@ -326,7 +326,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     self._populate_tools_table()
                 else:
                     QMessageBox.warning(self, "Import Failed", message)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to import: {str(e)}")
                 self.logger.error("Import error: %s", e)
 
@@ -407,7 +407,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     tools = self.tool_database_manager.get_tools_by_provider(provider["id"])
                 else:
                     tools = []
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to load tools: %s", e)
                 tools = []
 
@@ -463,7 +463,7 @@ class FeedsAndSpeedsWidget(QWidget):
                         )
                     else:
                         tools = []
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Search failed: %s", e)
                 tools = []
 
@@ -505,7 +505,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     )
                 else:
                     tools = []
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to load tools: %s", e)
                 tools = []
 
@@ -698,5 +698,5 @@ Calculated:
             self._refresh_tool_list()
 
             QMessageBox.information(self, "Success", message)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to restore data: {str(e)}")

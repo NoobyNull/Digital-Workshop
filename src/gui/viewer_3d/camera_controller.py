@@ -40,7 +40,7 @@ class CameraController:
             self.zoom_speed = config.zoom_speed
             self.pan_speed = config.pan_speed
             self.auto_fit_on_load = config.auto_fit_on_load
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load camera settings from config: %s", e)
             self.mouse_sensitivity = 1.0
             self.fps_limit = 0
@@ -137,7 +137,7 @@ class CameraController:
                 f"radius={radius:.3f} distance={distance:.3f}"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Fallback camera reset due to error: %s", e)
             try:
                 self.renderer.ResetCamera()
@@ -241,7 +241,7 @@ class CameraController:
                 f"radius={radius:.3f} distance={required_distance:.3f}"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to fit camera preserving orientation: %s", e)
             try:
                 self.renderer.ResetCamera()
@@ -256,7 +256,7 @@ class CameraController:
             self.renderer.ResetCamera()
             self.render_window.Render()
             logger.debug("Camera view reset")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to reset view: %s", e)
 
     def rotate_around_view_axis(self, degrees: float) -> None:
@@ -318,5 +318,5 @@ class CameraController:
 
             logger.debug("View rotated by %s degrees", degrees)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to rotate view: %s", e)

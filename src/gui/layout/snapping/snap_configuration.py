@@ -203,7 +203,7 @@ class SnapConfiguration:
             try:
                 self.load_from_file()
                 self.logger.info("Loaded snap configuration from %s", self.config_file)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Failed to load configuration file, using defaults: %s", e)
         else:
             self.logger.info("Using default snap configuration")
@@ -237,7 +237,7 @@ class SnapConfiguration:
                 self.snap_zones[zone.name] = zone
 
             self.logger.debug("Initialized %s default snap zones", len(default_zones))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize default snap zones: %s", e)
             raise
 
@@ -262,7 +262,7 @@ class SnapConfiguration:
             self.logger.info(
                 f"Added snap zone '{zone.name}' with threshold {zone.snap_threshold}px"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to add snap zone '{zone.name}': {e}")
             raise
 
@@ -284,7 +284,7 @@ class SnapConfiguration:
             del self.snap_zones[zone_name]
             self.logger.info(f"Removed snap zone '{zone_name}'")
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to remove snap zone '{zone_name}': {e}")
             return False
 
@@ -330,7 +330,7 @@ class SnapConfiguration:
 
             self.logger.debug(f"Updated snap zone '{zone_name}': {kwargs}")
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to update snap zone '{zone_name}': {e}")
             return False
 
@@ -345,7 +345,7 @@ class SnapConfiguration:
             active_zones = [zone for zone in self.snap_zones.values() if zone.enabled]
             active_zones.sort(key=lambda z: z.priority, reverse=True)
             return active_zones
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get active snap zones: %s", e)
             return []
 
@@ -360,7 +360,7 @@ class SnapConfiguration:
             old_state = self.enabled
             self.enabled = enabled
             self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set snapping enabled state: %s", e)
             self.enabled = old_state  # Restore previous state
 
@@ -412,7 +412,7 @@ class SnapConfiguration:
                 },
                 "snap_zones": zones_data,
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to convert configuration to dictionary: %s", e)
             return {}
 
@@ -483,7 +483,7 @@ class SnapConfiguration:
                             enabled=zone_data.get("enabled", True),
                         )
                         self.snap_zones[name] = zone
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.warning(f"Failed to load snap zone '{name}': {e}")
                         continue
 
@@ -491,7 +491,7 @@ class SnapConfiguration:
                 f"Loaded configuration from dictionary with {len(self.snap_zones)} snap zones"
             )
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load configuration from dictionary: %s", e)
             return False
 
@@ -521,7 +521,7 @@ class SnapConfiguration:
 
             self.logger.info("Saved snap configuration to %s", save_path)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save configuration to file: %s", e)
             return False
 
@@ -551,7 +551,7 @@ class SnapConfiguration:
             if success:
                 self.logger.info("Loaded snap configuration from %s", load_path)
             return success
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load configuration from file: %s", e)
             return False
 
@@ -569,7 +569,7 @@ class SnapConfiguration:
             self._initialize_default_zones()
 
             self.logger.info("Reset snap configuration to defaults")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reset configuration to defaults: %s", e)
             raise
 
@@ -616,7 +616,7 @@ class SnapConfiguration:
                     errors.append(f"Snap zone '{name}' validation error: {e}")
 
             return errors
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Configuration validation failed: %s", e)
             return [f"Validation error: {e}"]
 
@@ -642,6 +642,6 @@ class SnapConfiguration:
             memory += 64
 
             return memory
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to calculate memory usage: %s", e)
             return 0

@@ -62,7 +62,7 @@ class CancellationToken:
         for callback in callbacks_to_run:
             try:
                 callback()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Cleanup callback failed: %s", e)
 
         self.logger.debug("Cancellation completed")
@@ -95,7 +95,7 @@ class CancellationToken:
                 # If already cancelled, run callback immediately
                 try:
                     callback()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Immediate cleanup callback failed: %s", e)
             else:
                 self._cleanup_callbacks.append(callback)

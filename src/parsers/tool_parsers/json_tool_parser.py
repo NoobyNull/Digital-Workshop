@@ -52,7 +52,7 @@ class JSONToolParser(BaseToolParser):
 
         except json.JSONDecodeError as e:
             return False, f"Invalid JSON: {str(e)}"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def parse(
@@ -109,6 +109,6 @@ class JSONToolParser(BaseToolParser):
         except json.JSONDecodeError as e:
             self.logger.error("Invalid JSON format: %s", e)
             return []
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse JSON file: %s", e)
             return []

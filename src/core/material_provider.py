@@ -75,7 +75,7 @@ class MaterialProvider:
             self.logger.debug("Found %s material textures", len(materials))
             return sorted(materials, key=lambda m: m["name"])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error discovering materials: %s", e, exc_info=True)
             return []
 
@@ -107,7 +107,7 @@ class MaterialProvider:
             )
             return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"[STL_TEXTURE_DEBUG] Error getting material '{name}': {e}",
                 exc_info=True,
@@ -238,7 +238,7 @@ class MaterialProvider:
             self.logger.info("Parsed MTL file: %s with {len(properties)} properties", mtl_path.name)
             self.logger.debug("Final properties: %s", properties)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing MTL file %s: {e}", mtl_path, exc_info=True)
 
         return properties
@@ -270,6 +270,6 @@ class MaterialProvider:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating texture: %s", e, exc_info=True)
             return False

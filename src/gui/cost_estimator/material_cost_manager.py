@@ -54,7 +54,7 @@ class MaterialCostManager:
                 # Create default materials
                 self._create_default_materials()
                 self._save_materials()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error loading materials: {e}")
             self._create_default_materials()
 
@@ -127,7 +127,7 @@ class MaterialCostManager:
             with open(self.db_path, "w") as f:
                 data = {name: material.to_dict() for name, material in self.materials.items()}
                 json.dump(data, f, indent=2)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error saving materials: {e}")
 
     def add_material(self, material: Material) -> bool:
@@ -144,7 +144,7 @@ class MaterialCostManager:
             self.materials[material.name] = material
             self._save_materials()
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error adding material: {e}")
             return False
 
@@ -164,7 +164,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error removing material: {e}")
             return False
 
@@ -215,7 +215,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error updating material cost: {e}")
             return False
 
@@ -236,7 +236,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error updating material waste: {e}")
             return False
 

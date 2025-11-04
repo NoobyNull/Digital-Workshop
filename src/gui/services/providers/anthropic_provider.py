@@ -119,6 +119,6 @@ class AnthropicProvider(BaseProvider):
             response_text = response.content[0].text
             return self.parse_response(response_text)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error analyzing image with Anthropic: %s", str(e))
             raise

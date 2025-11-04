@@ -44,7 +44,7 @@ class LightingManager:
             self.cone_angle = config.default_light_cone_angle
             self.enable_fill_light = config.enable_fill_light
             self.fill_light_intensity = config.fill_light_intensity
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to load lighting settings from config: %s", e)
             # Default light properties
             self.position = [90.0, 90.0, 180.0]  # X, Y, Z
@@ -149,7 +149,7 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             self.logger.debug("create_light completed in %s ms", dt_ms:.2f)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create/add light: %s", e)
             return False
 
@@ -164,7 +164,7 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_position took {dt_ms:.2f} ms")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("update_position error: %s", e)
 
     def update_color(self, r: float, g: float, b: float) -> None:
@@ -181,7 +181,7 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_color took {dt_ms:.2f} ms")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("update_color error: %s", e)
 
     def update_intensity(self, value: float) -> None:
@@ -196,7 +196,7 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_intensity took {dt_ms:.2f} ms")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("update_intensity error: %s", e)
 
     def update_cone_angle(self, angle: float) -> None:
@@ -211,7 +211,7 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_cone_angle took {dt_ms:.2f} ms")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("update_cone_angle error: %s", e)
 
     def get_properties(self) -> Dict[str, Any]:
@@ -242,7 +242,7 @@ class LightingManager:
             }
             self.logger.debug("get_properties -> %s", props)
             return props
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("get_properties error: %s", e)
             return {
                 "position": list(self.position),
@@ -267,5 +267,5 @@ class LightingManager:
                 self.update_intensity(props["intensity"])
             if "cone_angle" in props and props["cone_angle"] is not None:
                 self.update_cone_angle(props["cone_angle"])
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("apply_properties error: %s", e)

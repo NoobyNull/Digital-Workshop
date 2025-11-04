@@ -192,7 +192,7 @@ class DatabaseManager:
 
                 return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update model %s: {e}", model_id)
             return False
 
@@ -250,7 +250,7 @@ class DatabaseManager:
 
                 return [dict(row) for row in rows]
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to search models: %s", e)
             return []
 
@@ -298,7 +298,7 @@ class DatabaseManager:
 
                 return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update category %s: {e}", category_id)
             return False
 

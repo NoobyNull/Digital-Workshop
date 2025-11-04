@@ -139,7 +139,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse 3MF file %s: {str(e)}", file_path)
             raise
 
@@ -165,7 +165,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             else:
                 self._parse_3mf_file_standard(file_path, progress_callback)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing 3MF file: %s", str(e))
             raise ThreeMFParseError(f"Failed to parse 3MF file: {str(e)}")
 
@@ -701,7 +701,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating 3MF geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -759,7 +759,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting 3MF geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 

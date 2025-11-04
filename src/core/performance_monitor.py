@@ -246,7 +246,7 @@ class PerformanceMonitor:
                 "gpu_name": gpu_type,
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Failed to detect GPU info: %s", e)
             # Absolute fallback
@@ -336,7 +336,7 @@ class PerformanceMonitor:
 
             return profile
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to detect system capabilities: %s", str(e))
             # Return conservative default profile
             return PerformanceProfile(
@@ -401,7 +401,7 @@ class PerformanceMonitor:
                 # Sleep until next iteration
                 time.sleep(self.monitoring_interval)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error in monitoring loop: %s", str(e))
                 time.sleep(self.monitoring_interval)
 
@@ -428,7 +428,7 @@ class PerformanceMonitor:
                 process_mb=process_memory,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get memory stats: %s", str(e))
             return MemoryStats(0, 0, 0, 0, 0)
 
@@ -605,7 +605,7 @@ class PerformanceMonitor:
 
             return report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate performance report: %s", str(e))
             # Return fallback report
             return {
@@ -770,7 +770,7 @@ class PerformanceMonitor:
 
             self.logger.info("Performance report exported to %s", file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to export performance report: %s", str(e))
 
     def cleanup(self) -> None:
@@ -830,7 +830,7 @@ def monitor_operation(operation_name: str):
                 result = func(*args, **kwargs)
                 monitor.end_operation(operation_id, success=True)
                 return result
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 monitor.end_operation(operation_id, success=False, error_message=str(e))
                 raise
 

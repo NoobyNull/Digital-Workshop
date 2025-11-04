@@ -59,7 +59,7 @@ class EventHandler:
             else:
                 logger.warning("Model with ID %s not found in database", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to handle model double-click: %s", str(e))
 
     def on_models_added(self, model_ids: List[int]) -> None:
@@ -83,7 +83,7 @@ class EventHandler:
 
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to handle metadata saved event: %s", str(e))
 
     def on_metadata_changed(self, model_id: int) -> None:
@@ -92,7 +92,7 @@ class EventHandler:
             logger.debug("Metadata changed for model ID: %s", model_id)
             self.main_window.status_label.setText("Metadata modified (unsaved changes)")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to handle metadata changed event: %s", str(e))
 
     def show_preferences(self) -> None:
@@ -126,7 +126,7 @@ class EventHandler:
                 self.main_window.viewer_widget.scene_manager.reload_viewer_settings()
                 logger.info("Viewer settings reloaded to scene manager")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to sync viewer settings: %s", e)
 
     def show_theme_manager(self) -> None:
@@ -137,7 +137,7 @@ class EventHandler:
             dlg = ThemeDialog(self.main_window)
             dlg.theme_applied.connect(self.on_theme_applied)
             dlg.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to open Theme Manager: %s", e)
             QMessageBox.warning(
                 self.main_window, "Theme Manager", f"Failed to open Theme Manager:\n{e}"
@@ -177,7 +177,7 @@ class EventHandler:
             try:
                 if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                     self.main_window.viewer_widget.reset_save_view_button()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.warning("Failed to reset save view button: %s", e)
         else:
             QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
@@ -243,7 +243,7 @@ class EventHandler:
                         try:
                             if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                                 self.main_window.viewer_widget.reset_save_view_button()
-                        except Exception as e:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                             logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(
                             3000, lambda: self.main_window.status_label.setText("Ready")
@@ -259,7 +259,7 @@ class EventHandler:
             else:
                 QMessageBox.warning(self.main_window, "Save View", "Viewer not initialized.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save current view: %s", e)
             QMessageBox.warning(self.main_window, "Save View", f"Failed to save view: {str(e)}")
 
@@ -298,7 +298,7 @@ class EventHandler:
             else:
                 logger.debug("No saved camera view for model ID %s", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to restore saved camera: %s", e)
 
     def show_about(self) -> None:
@@ -361,7 +361,7 @@ class EventHandler:
             self.main_window.screenshot_worker.start()
             logger.info("Started batch screenshot generation")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to start screenshot generation: %s", e)
             QMessageBox.critical(
                 self.main_window,
@@ -376,14 +376,14 @@ class EventHandler:
                 progress = int((current / total) * 100)
                 self.main_window.progress_bar.setValue(progress)
                 self.main_window.status_label.setText(f"Generating screenshots: {current}/{total}")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to update progress: %s", e)
 
     def on_screenshot_generated(self, model_id: int, screenshot_path: str) -> None:
         """Handle screenshot generated event."""
         try:
             logger.debug("Screenshot generated for model %s: {screenshot_path}", model_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to handle screenshot generated event: %s", e)
 
     def on_screenshot_error(self, error_message: str) -> None:
@@ -391,7 +391,7 @@ class EventHandler:
         try:
             logger.error("Screenshot generation error: %s", error_message)
             self.main_window.status_label.setText(f"Error: {error_message}")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to handle screenshot error: %s", e)
 
     def on_screenshots_finished(self) -> None:
@@ -401,5 +401,5 @@ class EventHandler:
             self.main_window.status_label.setText("Screenshots generated successfully")
             logger.info("Batch screenshot generation finished")
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to handle screenshots finished: %s", e)

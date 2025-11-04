@@ -162,7 +162,7 @@ class LoadingProgressWidget(QWidget):
 
             self.logger.debug("Started loading display for job %s: {file_path}", job_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start loading display: %s", e)
 
     def update_progress(self, progress: float, message: str) -> None:
@@ -204,7 +204,7 @@ class LoadingProgressWidget(QWidget):
 
             self.last_progress_update = current_time
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update progress: %s", e)
 
     def _animate_progress(self, from_value: int, to_value: int) -> None:
@@ -233,7 +233,7 @@ class LoadingProgressWidget(QWidget):
 
             animate_step()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Fallback to direct update if animation fails
             self.logger.debug("Progress animation failed, using direct update: %s", e)
             self.progress_bar.setValue(to_value)
@@ -266,7 +266,7 @@ class LoadingProgressWidget(QWidget):
 
             self.logger.debug("Finished loading display for job %s", self.current_job_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to finish loading display: %s", e)
 
     def cancel_loading(self) -> None:
@@ -286,7 +286,7 @@ class LoadingProgressWidget(QWidget):
 
             self.logger.debug("Cancelled loading for job %s", self.current_job_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to cancel loading: %s", e)
 
     def _update_time_estimate(self, current_time: float, progress: float) -> None:
@@ -325,7 +325,7 @@ class LoadingProgressWidget(QWidget):
             else:
                 self.time_label.setText("")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Failed to update time estimate: %s", e)
             self.time_label.setText("")
 
@@ -339,7 +339,7 @@ class LoadingProgressWidget(QWidget):
         try:
             self.setVisible(False)
             self.current_job_id = None
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to hide widget: %s", e)
 
     def _get_current_time(self) -> float:

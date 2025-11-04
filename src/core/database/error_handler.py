@@ -120,7 +120,7 @@ class DatabaseErrorHandler:
                 self._check_connection_leaks()
                 self._cleanup_old_errors()
                 time.sleep(30)  # Check every 30 seconds
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Health monitoring error: %s", str(e))
 
     def _check_database_health(self) -> None:
@@ -173,7 +173,7 @@ class DatabaseErrorHandler:
             if active_count > 50:  # Arbitrary threshold
                 logger.warning("High connection count: %s", active_count)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Health check failed: %s", str(e))
 
     def _check_connection_leaks(self) -> None:
@@ -426,7 +426,7 @@ class DatabaseErrorHandler:
             for callback in self._recovery_callbacks:
                 try:
                     callback(error)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Recovery callback failed: %s", str(e))
 
             if recovery_successful:
@@ -434,7 +434,7 @@ class DatabaseErrorHandler:
             else:
                 logger.warning("Recovery failed for %s", error.error_type.value)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Recovery attempt failed: %s", str(e))
 
         return recovery_successful
@@ -661,7 +661,7 @@ class ConnectionManager:
 
             yield conn
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Handle connection error
             if conn:
                 try:
@@ -681,7 +681,7 @@ class ConnectionManager:
                 if conn:
                     try:
                         conn.close()
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         logger.error("Error closing connection: %s", str(e))
 
     def _create_healthy_connection(self, timeout: float) -> sqlite3.Connection:
@@ -750,7 +750,7 @@ class ConnectionManager:
                     if conn:
                         conn.close()
                         logger.debug("Closed connection %s", conn_id)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Error closing connection %s: {str(e)}", conn_id)
 
             self._connections.clear()

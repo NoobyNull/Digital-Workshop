@@ -105,7 +105,7 @@ class ToolDatabaseSchema:
                 self.logger.info("Database schema initialized successfully")
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize database schema: %s", e)
             return False
 
@@ -126,5 +126,5 @@ class ToolDatabaseSchema:
                 cursor = conn.cursor()
                 cursor.execute(f"PRAGMA user_version = {version}")
                 conn.commit()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set database version: %s", e)

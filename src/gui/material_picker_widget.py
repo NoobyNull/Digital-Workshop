@@ -179,7 +179,7 @@ class MaterialPickerWidget(QDialog):
             if valid_materials == 0:
                 self.species_combo.addItem("No valid MTL materials found", userData=None)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load MTL materials: %s", e)
             self.species_combo.addItem("Error loading materials", userData=None)
 
@@ -269,7 +269,7 @@ class MaterialPickerWidget(QDialog):
             pix = QPixmap.fromImage(qimg)
             self.preview_label.setPixmap(pix)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.preview_label.clear()
             error_text = f"""
             <b>Material:</b> {name}<br>
@@ -311,7 +311,7 @@ class MaterialPickerWidget(QDialog):
                         if len(parts) >= 2:
                             material["d"] = float(parts[1])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to parse MTL file for display %s: {e}", mtl_path)
 
         return material
@@ -420,7 +420,7 @@ class MaterialPickerWidget(QDialog):
                         break
                 self._update_preview_and_properties()
                 dlg.accept()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.warning(dlg, "Save Failed", f"Could not save species:\n{e}")
 
         btns.accepted.connect(_save)

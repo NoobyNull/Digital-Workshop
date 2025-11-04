@@ -42,7 +42,7 @@ class ToolPreferencesRepository:
                 self.logger.debug("Set preference: %s", key)
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set preference %s: {e}", key)
             return False
 
@@ -65,7 +65,7 @@ class ToolPreferencesRepository:
 
                 return default
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get preference %s: {e}", key)
             return default
 
@@ -88,7 +88,7 @@ class ToolPreferencesRepository:
                     format_type = row[0].split("_")[-1].upper()
                     paths[format_type] = row[1]
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get external DB paths: %s", e)
 
         return paths
@@ -107,6 +107,6 @@ class ToolPreferencesRepository:
                     self.logger.debug("Deleted preference: %s", key)
                 return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to delete preference %s: {e}", key)
             return False

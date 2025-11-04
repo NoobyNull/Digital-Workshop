@@ -92,7 +92,7 @@ class ThemeService:
             self._apply_fallback_theme(app, theme)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
@@ -191,7 +191,7 @@ class ThemeService:
             logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply fallback theme: %s", e, exc_info=True)
             return False
 

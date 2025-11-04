@@ -101,7 +101,7 @@ class ViewOptimizer:
 
             return best_view
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error finding optimal view: %s", e, exc_info=True)
             # Return safe default view
             return self._get_default_view(bounds)

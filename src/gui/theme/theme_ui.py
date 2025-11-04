@@ -220,7 +220,7 @@ class SimpleThemeSwitcher(QWidget):
         try:
             dialog = QtMaterialColorPicker(self)
             dialog.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error opening color picker: %s", e)
 
 
@@ -362,7 +362,7 @@ class QtMaterialColorPicker(QDialog):
             index = self.variant_combo.findData(current_variant)
             if index >= 0:
                 self.variant_combo.setCurrentIndex(index)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error populating variants: %s", e)
 
     def _load_colors(self) -> None:
@@ -403,7 +403,7 @@ class QtMaterialColorPicker(QDialog):
 
                     # Set button text to hex value
                     swatch.setText(hex_color.upper())
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error loading colors: %s", e)
 
     def _get_text_color(self, bg_hex: str) -> str:
@@ -447,7 +447,7 @@ class QtMaterialColorPicker(QDialog):
             # Reload colors
             self._load_colors()
             self.theme_changed.emit(full_variant)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error changing variant: %s", e)
 
 
@@ -489,7 +489,7 @@ class ThemeDialog(QDialog):
         try:
             self._setup_ui()
             self._load_current_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to initialize ThemeDialog: %s", e, exc_info=True)
             raise
 
@@ -701,7 +701,7 @@ class ThemeDialog(QDialog):
                 from PySide6.QtWidgets import QMessageBox
 
                 QMessageBox.information(self, "Success", "Theme exported successfully")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 from PySide6.QtWidgets import QMessageBox
 
                 QMessageBox.critical(self, "Error", f"Failed to export theme: {e}")
@@ -717,7 +717,7 @@ class ThemeDialog(QDialog):
 
                 QMessageBox.information(self, "Success", "Theme imported successfully")
                 self.theme_applied.emit("custom")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 from PySide6.QtWidgets import QMessageBox
 
                 QMessageBox.critical(self, "Error", f"Failed to import theme: {e}")

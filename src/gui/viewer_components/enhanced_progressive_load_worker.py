@@ -74,7 +74,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             self.logger.info("Model not in cache - parsing with detailed progress tracking")
             self._parse_model_with_progress(file_path_obj, model_cache)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Enhanced progressive loading failed: %s", str(e))
             self.error_occurred.emit(str(e))
 
@@ -149,7 +149,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             # Signal completion
             self.loading_complete.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Model parsing failed: %s", str(e))
             raise
 

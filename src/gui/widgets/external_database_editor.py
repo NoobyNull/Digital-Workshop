@@ -222,7 +222,7 @@ class ExternalDatabaseEditor(QDialog):
 
             self.logger.info("Loaded %s tools into table", len(tools))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to refresh tools table: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load tools: {str(e)}")
 
@@ -246,7 +246,7 @@ class ExternalDatabaseEditor(QDialog):
 
             self.logger.info("Loaded %s providers", len(providers))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to refresh providers: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load providers: {str(e)}")
 
@@ -289,7 +289,7 @@ class ExternalDatabaseEditor(QDialog):
 
             self.logger.info("Search found %s tools", len(filtered))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Search failed: %s", e)
             QMessageBox.critical(self, "Error", f"Search failed: {str(e)}")
 
@@ -317,7 +317,7 @@ class ExternalDatabaseEditor(QDialog):
                 self.logger.info("Exporting database to %s", file_path)
                 QMessageBox.information(self, "Export", "Database exported successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Export failed: %s", e)
             QMessageBox.critical(self, "Error", f"Export failed: {str(e)}")
 
@@ -336,6 +336,6 @@ class ExternalDatabaseEditor(QDialog):
                 QMessageBox.information(self, "Import", "Database imported successfully")
                 self._refresh_tools_table()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Import failed: %s", e)
             QMessageBox.critical(self, "Error", f"Import failed: {str(e)}")

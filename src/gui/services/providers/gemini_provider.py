@@ -89,6 +89,6 @@ class GeminiProvider(BaseProvider):
             response_text = response.text
             return self.parse_response(response_text)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error analyzing image with Gemini: %s", str(e))
             raise

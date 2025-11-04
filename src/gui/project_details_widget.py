@@ -151,7 +151,7 @@ class ProjectDetailsWidget(QWidget):
             self._update_model_info(model_data)
             self._update_resources(model_data)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set model: %s", e)
             self.clear()
 
@@ -183,7 +183,7 @@ class ProjectDetailsWidget(QWidget):
             self.info_labels["vertices"].setText(f"{model_data.get('vertex_count', 0):,}")
             self.info_labels["date_added"].setText(str(model_data.get("date_added", "-")))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update model info: %s", e)
 
     def _update_resources(self, model_data: Dict[str, Any]) -> None:
@@ -205,7 +205,7 @@ class ProjectDetailsWidget(QWidget):
             # TODO: Add support for related files (textures, materials, etc.)
             # This would require additional database schema to track related files
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update resources: %s", e)
 
     def _add_resource_row(self, file_path: Path) -> None:
@@ -239,7 +239,7 @@ class ProjectDetailsWidget(QWidget):
             type_item = QTableWidgetItem(file_path.suffix.upper() or "FILE")
             self.resources_table.setItem(row, 2, type_item)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add resource row: %s", e)
 
     def _get_file_icon(self, file_path: Path) -> QIcon:

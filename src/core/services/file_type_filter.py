@@ -273,7 +273,7 @@ class FileTypeFilter:
                 category="Other",
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to filter file: %s", str(e))
             raise
 

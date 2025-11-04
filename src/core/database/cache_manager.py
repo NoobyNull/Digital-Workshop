@@ -313,7 +313,7 @@ class DiskCache:
                 with open(info_path, "r") as f:
                     info = json.load(f)
                     self._current_size = info.get("total_size", 0)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.warning("Failed to load cache info: %s", str(e))
 
     def _save_cache_info(self) -> None:
@@ -326,7 +326,7 @@ class DiskCache:
             }
             with open(info_path, "w") as f:
                 json.dump(info, f)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save cache info: %s", str(e))
 
     def get(self, key: str) -> Optional[Any]:
@@ -370,7 +370,7 @@ class DiskCache:
 
                 return pickle.loads(data)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to read cache file %s: {str(e)}", cache_path)
             # Remove corrupted file
             try:
@@ -445,7 +445,7 @@ class DiskCache:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to write cache file %s: {str(e)}", cache_path)
             return False
 
@@ -457,7 +457,7 @@ class DiskCache:
             with self._lock:
                 self._current_size -= file_size
                 self._save_cache_info()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to remove cache file %s: {str(e)}", cache_path)
 
     def _evict_cache_files(self, needed_size: int) -> None:
@@ -512,7 +512,7 @@ class DiskCache:
                             self._remove_cache_file(filepath)
                             invalidated += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("Failed to check cache file %s: {str(e)}", filepath)
                     # Remove corrupted file
                     try:
@@ -537,7 +537,7 @@ class DiskCache:
                 self._current_size = 0
                 self._save_cache_info()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to clear disk cache: %s", str(e))
 
     def get_stats(self) -> CacheStats:
@@ -600,7 +600,7 @@ class DatabaseCacheManager:
                 try:
                     self._cleanup_expired_entries()
                     time.sleep(300)  # Run every 5 minutes
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Cache cleanup error: %s", str(e))
 
         cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
@@ -955,7 +955,7 @@ class DatabaseCacheManager:
 
             logger.info("Cache warm-up completed for %s models", len(popular_models))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Cache warm-up failed: %s", str(e))
 
     def optimize_cache_performance(self) -> Dict[str, Any]:

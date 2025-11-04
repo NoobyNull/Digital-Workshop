@@ -84,7 +84,7 @@ class ThumbnailGenerationWorker(QThread):
                     # Emit progress
                     self.progress_updated.emit(idx + 1, total, file_name)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error(
                         f"Error generating thumbnail for {model_path}: {e}",
                         exc_info=True,
@@ -95,7 +95,7 @@ class ThumbnailGenerationWorker(QThread):
             self.logger.info("Thumbnail generation batch completed")
             self.finished_batch.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Fatal error in thumbnail generation worker: %s", e, exc_info=True)
             self.error_occurred.emit("", str(e))
 

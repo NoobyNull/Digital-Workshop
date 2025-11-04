@@ -120,7 +120,7 @@ class AIDescriptionService(QObject):
                 "settings": settings_dict,
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning(
                 "Failed to load AI description config from QSettings, using defaults: %s",
                 e,
@@ -154,7 +154,7 @@ class AIDescriptionService(QObject):
             settings.sync()
             self.logger.debug("AI description configuration saved to QSettings")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save AI description config: %s", e)
 
     def _get_default_config(self) -> Dict[str, Any]:
@@ -251,7 +251,7 @@ Return ONLY valid JSON, no additional text.""",
                     base_url=openai_config.get("base_url") or None,
                 )
                 self.logger.info("OpenAI provider initialized")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize OpenAI provider: %s", e)
 
         # Initialize OpenRouter provider
@@ -264,7 +264,7 @@ Return ONLY valid JSON, no additional text.""",
                     base_url=openrouter_config.get("base_url") or None,
                 )
                 self.logger.info("OpenRouter provider initialized")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize OpenRouter provider: %s", e)
 
         # Initialize Gemini provider
@@ -278,7 +278,7 @@ Return ONLY valid JSON, no additional text.""",
                     model=gemini_config.get("model", "gemini-2.5-flash"),
                 )
                 self.logger.info("Gemini provider initialized")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize Gemini provider: %s", e)
 
         # Initialize Anthropic provider
@@ -292,7 +292,7 @@ Return ONLY valid JSON, no additional text.""",
                     model=anthropic_config.get("model", "claude-3-5-sonnet-20241022"),
                 )
                 self.logger.info("Anthropic provider initialized")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
         # Set current provider
@@ -392,10 +392,10 @@ Return ONLY valid JSON, no additional text.""",
                     )
                 else:
                     return False, "No models available"
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 return False, f"Connection test failed: {str(e)}"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to initialize provider: {str(e)}"
 
     def get_provider_info(self, provider_name: str) -> Dict[str, Any]:
@@ -462,7 +462,7 @@ Return ONLY valid JSON, no additional text.""",
             self.logger.info("Provider %s configured successfully", provider_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to configure provider %s: %s", provider_name, e)
             return False
 
@@ -475,7 +475,7 @@ Return ONLY valid JSON, no additional text.""",
             provider = self.providers[provider_name]
             models = provider.list_available_models()
             return len(models) > 0
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Provider connection test failed for %s: %s", provider_name, e)
             return False
 
@@ -552,7 +552,7 @@ Return ONLY valid JSON, no additional text.""",
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Analysis failed: {str(e)}"
             self.logger.error(error_msg)
             self.analysis_failed.emit(error_msg)

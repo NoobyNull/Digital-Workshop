@@ -133,7 +133,7 @@ class EnhancedVTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Windows context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -151,7 +151,7 @@ class EnhancedVTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Linux context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -167,7 +167,7 @@ class EnhancedVTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("macOS context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -225,7 +225,7 @@ class EnhancedVTKContextManager:
 
             return False, context_state
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Early context detection error: %s", e)
             return False, ContextState.UNKNOWN
 
@@ -254,7 +254,7 @@ class EnhancedVTKContextManager:
 
             return context_state
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Context validation exception: %s", e)
             return ContextState.UNKNOWN
 
@@ -333,7 +333,7 @@ class EnhancedVTKContextManager:
                     ]
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error preparing scenario cleanup: %s", e)
 
     @log_function_call(logger)
@@ -372,7 +372,7 @@ class EnhancedVTKContextManager:
                     if not result:
                         self.logger.warning("Cleanup callback %s returned False", i+1)
                         cleanup_success = False
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Cleanup callback %s failed: {e}", i+1)
                     cleanup_success = False
 
@@ -386,7 +386,7 @@ class EnhancedVTKContextManager:
 
             return cleanup_success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during coordinated cleanup: %s", e)
             return False
 
@@ -401,7 +401,7 @@ class EnhancedVTKContextManager:
             gc.collect()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Emergency VTK cleanup failed: %s", e)
             return False
 
@@ -411,7 +411,7 @@ class EnhancedVTKContextManager:
             self.logger.info("Performing immediate VTK cleanup")
             self.vtk_cleanup_completed = True
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Immediate VTK cleanup failed: %s", e)
             return False
 
@@ -425,7 +425,7 @@ class EnhancedVTKContextManager:
             time.sleep(0.01)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Graceful VTK cleanup failed: %s", e)
             return False
 
@@ -439,7 +439,7 @@ class EnhancedVTKContextManager:
             self.error_handler.suppress_errors_temporarily(1000)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Standard VTK cleanup failed: %s", e)
             return False
 
@@ -449,7 +449,7 @@ class EnhancedVTKContextManager:
             self.logger.info("Performing force OpenGL cleanup")
             self.opengl_cleanup_completed = True
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Force OpenGL cleanup failed: %s", e)
             return False
 
@@ -459,7 +459,7 @@ class EnhancedVTKContextManager:
             self.logger.info("Skipping OpenGL cleanup for force close")
             self.opengl_cleanup_completed = True
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Skip OpenGL cleanup failed: %s", e)
             return False
 
@@ -473,7 +473,7 @@ class EnhancedVTKContextManager:
             time.sleep(0.05)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Coordinated OpenGL cleanup failed: %s", e)
             return False
 
@@ -487,7 +487,7 @@ class EnhancedVTKContextManager:
             time.sleep(0.1)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Delayed OpenGL cleanup failed: %s", e)
             return False
 
@@ -503,7 +503,7 @@ class EnhancedVTKContextManager:
                 self.cleanup_callbacks.clear()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Final resource cleanup failed: %s", e)
             return False
 
@@ -517,7 +517,7 @@ class EnhancedVTKContextManager:
                 self.context_cache.clear()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Basic resource cleanup failed: %s", e)
             return False
 
@@ -532,7 +532,7 @@ class EnhancedVTKContextManager:
                 self.context_timestamps.clear()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Standard resource cleanup failed: %s", e)
             return False
 
@@ -551,7 +551,7 @@ class EnhancedVTKContextManager:
             self.logger.info("Cleaned up %s cached context entries", cache_size)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Comprehensive resource cleanup failed: %s", e)
             return False
 
@@ -569,7 +569,7 @@ class EnhancedVTKContextManager:
                 self.opengl_cleanup_completed = False
                 self.shutdown_initiated = False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Cleanup verification failed: %s", e)
 
     def get_diagnostic_info(self) -> Dict[str, Any]:

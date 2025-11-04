@@ -171,7 +171,7 @@ class ProjectTreeWidget(QWidget):
 
             logger.info("Refreshed project tree: %s projects", len(projects))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to refresh project tree: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to refresh projects: {str(e)}")
 
@@ -216,7 +216,7 @@ class ProjectTreeWidget(QWidget):
                     file_item.setData(0, Qt.UserRole + 1, "file")
                     category_item.addChild(file_item)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load files for project %s: {str(e)}", project_id)
 
     def _on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
@@ -283,7 +283,7 @@ class ProjectTreeWidget(QWidget):
             if menu.actions():
                 menu.exec(self.tree_widget.mapToGlobal(position))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error showing context menu: %s", str(e))
 
     def _handle_file_selection(self, file_path: str, open_file: bool = False) -> None:
@@ -304,7 +304,7 @@ class ProjectTreeWidget(QWidget):
             else:
                 logger.debug("No tab mapping for file type: %s", file_ext)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error handling file selection: %s", str(e))
 
     def _create_new_project(self) -> None:
@@ -324,7 +324,7 @@ class ProjectTreeWidget(QWidget):
                 self._refresh_project_tree()
                 logger.info("Created project: %s", name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to create project: {str(e)}")
 
@@ -382,7 +382,7 @@ class ProjectTreeWidget(QWidget):
                     )
                     added_count += 1
                     logger.info("Added file to project: %s", file_name)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("Failed to add file %s: {str(e)}", file_path)
 
             if added_count > 0:
@@ -395,7 +395,7 @@ class ProjectTreeWidget(QWidget):
             else:
                 QMessageBox.warning(self, "No Files Added", "Failed to add files to project.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to add files to project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to add files: {str(e)}")
 
@@ -461,7 +461,7 @@ class ProjectTreeWidget(QWidget):
                         f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}",
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import library: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import library: {str(e)}")
 
@@ -474,7 +474,7 @@ class ProjectTreeWidget(QWidget):
             else:
                 QMessageBox.critical(self, "Error", "Failed to open project.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to open project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to open project: {str(e)}")
 
@@ -509,7 +509,7 @@ class ProjectTreeWidget(QWidget):
                 else:
                     QMessageBox.critical(self, "Error", "Failed to delete project.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to delete project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to delete project: {str(e)}")
 
@@ -551,7 +551,7 @@ class ProjectTreeWidget(QWidget):
                 QMessageBox.critical(self, "Export Failed", message)
                 logger.error("Failed to export project: %s", message)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to export project: {str(e)}")
 
@@ -651,6 +651,6 @@ class ProjectTreeWidget(QWidget):
                     )
                     logger.error("Failed to import project files: %s", import_report.error)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import DWW project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import DWW project: {str(e)}")

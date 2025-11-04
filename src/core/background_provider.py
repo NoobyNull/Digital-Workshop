@@ -64,7 +64,7 @@ class BackgroundProvider:
             self.logger.debug("Using default background color: %s", self.DEFAULT_COLOR)
             return self._parse_color(self.DEFAULT_COLOR)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting background: %s", e, exc_info=True)
             return self._parse_color(self.DEFAULT_COLOR)
 
@@ -94,7 +94,7 @@ class BackgroundProvider:
             self.logger.debug("Found %s default background images", len(backgrounds))
             return sorted(backgrounds)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error listing default backgrounds: %s", e, exc_info=True)
             return []
 
@@ -127,7 +127,7 @@ class BackgroundProvider:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating image path: %s", e, exc_info=True)
             return False
 
@@ -159,7 +159,7 @@ class BackgroundProvider:
             else:
                 raise ValueError(f"Unsupported color format: {color}")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing color %s: {e}", color, exc_info=True)
             # Return default gray
             return (0.96, 0.96, 0.96)
@@ -216,7 +216,7 @@ class BackgroundProvider:
             self.logger.info("Background color set to: %s", hex_color)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting background color: %s", e, exc_info=True)
             return False
 
@@ -245,7 +245,7 @@ class BackgroundProvider:
             self.logger.info("Background image set to: %s", image_path)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting background image: %s", e, exc_info=True)
             return False
 
@@ -265,7 +265,7 @@ class BackgroundProvider:
             self.logger.info("Background image preference cleared")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error clearing background image: %s", e, exc_info=True)
             return False
 

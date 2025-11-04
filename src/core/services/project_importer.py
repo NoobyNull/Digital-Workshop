@@ -137,7 +137,7 @@ class ProjectImporter:
                     files_imported += 1
                     logger.debug("Imported file: %s", file_name)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     files_failed += 1
                     error_msg = f"Failed to import {file_path}: {str(e)}"
                     errors.append(error_msg)
@@ -166,7 +166,7 @@ class ProjectImporter:
             )
             return report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Import failed: %s", str(e))
             error_msg = f"Import failed: {str(e)}"
             errors.append(error_msg)

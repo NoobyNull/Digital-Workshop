@@ -55,7 +55,7 @@ class ModelGeometryAnalyzer:
             self.logger.info(
                 f"Analyzed model: {len(self.faces)} faces, {len(self.triangles)} triangles"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to analyze model: %s", e)
 
     def _group_triangles_into_faces(self) -> None:

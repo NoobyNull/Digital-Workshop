@@ -80,7 +80,7 @@ class GcodeLoaderThread(QThread):
             self.finished_loading.emit(self.all_moves)
             self.logger.info("Finished loading %s moves", len(self.all_moves):,)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading G-code file: %s", e)
             self.error_occurred.emit(str(e))
 

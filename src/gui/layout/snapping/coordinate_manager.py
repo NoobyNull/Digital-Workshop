@@ -280,7 +280,7 @@ class CoordinateManager:
             self._system_bounds[CoordinateSystem.UNIFIED] = QRect(0, 0, 1920, 1080)
 
             self.logger.debug("Initialized coordinate systems")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize coordinate systems: %s", e)
             raise
 
@@ -299,7 +299,7 @@ class CoordinateManager:
             self.cache.clear()
 
             self.logger.debug("Updated screen geometry to %s", geometry)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update screen geometry: %s", e)
 
     def update_main_window_geometry(self) -> None:
@@ -327,7 +327,7 @@ class CoordinateManager:
             self.cache.clear()
 
             self.logger.debug("Updated main window coordinate systems")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update main window geometry: %s", e)
 
     def transform_point(
@@ -386,7 +386,7 @@ class CoordinateManager:
             self._transform_count += 1
 
             return result
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"Failed to transform point {point} from {source_system} to {target_system}: {e}"
             )
@@ -673,7 +673,7 @@ class CoordinateManager:
             max_y = max(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
 
             return QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"Failed to transform rectangle {rect} from {source_system} to {target_system}: {e}"
             )
@@ -717,7 +717,7 @@ class CoordinateManager:
         try:
             bounds = self.get_system_bounds(system)
             return bounds.contains(point.toPoint())
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to check if point %s is in system {system}: {e}", point)
             return False
 
@@ -743,7 +743,7 @@ class CoordinateManager:
                 "memory_usage_mb": cache_stats["memory_usage_mb"],
                 "coordinate_systems": len(self._system_origins),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get performance stats: %s", e)
             return {
                 "error": str(e),
@@ -763,7 +763,7 @@ class CoordinateManager:
             self._cache_hits = 0
             self._cache_misses = 0
             self.logger.debug("Coordinate transformation cache cleared")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to clear cache: %s", e)
 
     def reset(self) -> None:
@@ -779,6 +779,6 @@ class CoordinateManager:
             self._cache_misses = 0
             self._initialize_coordinate_systems()
             self.logger.info("Coordinate manager reset to initial state")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reset coordinate manager: %s", e)
             raise

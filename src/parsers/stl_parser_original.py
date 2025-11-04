@@ -175,7 +175,7 @@ class STLParser(BaseParser):
 
                 return STLFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error detecting STL format: %s", str(e))
             raise STLParseError(f"Failed to detect STL format: {str(e)}")
 
@@ -234,7 +234,7 @@ class STLParser(BaseParser):
                         [b.value for b in caps.available_backends],
                         [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
                     )
-                except Exception as accel_err:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as accel_err:
                     self.logger.warning("Hardware acceleration probe failed: %s", accel_err)
                     backend = None
 
@@ -274,7 +274,7 @@ class STLParser(BaseParser):
                                 parsing_time_seconds=time.time() - start_time,
                             ),
                         )
-                    except Exception as gpu_error:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as gpu_error:
                         self.logger.warning("GPU parsing failed, falling back to CPU: %s", gpu_error)
                         # Continue to CPU fallback below
 
@@ -517,7 +517,7 @@ class STLParser(BaseParser):
                     format_type=ModelFormat.STL,
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing binary STL: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
 
@@ -668,7 +668,7 @@ class STLParser(BaseParser):
                     normal_array=normal_array,
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in array-based binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
@@ -836,7 +836,7 @@ class STLParser(BaseParser):
                     format_type=ModelFormat.STL,
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing ASCII STL: %s", str(e))
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
@@ -885,7 +885,7 @@ class STLParser(BaseParser):
             else:
                 raise STLParseError(f"Unsupported STL format: {format_type}")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse STL file %s: {str(e)}", file_path)
             raise
 
@@ -947,7 +947,7 @@ class STLParser(BaseParser):
             self.logger.info("Parsed STL metadata: %s ({triangle_count} triangles)", file_path)
             return model
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse STL metadata: %s", str(e))
             raise STLParseError(f"Failed to parse STL metadata: {str(e)}")
 
@@ -1016,7 +1016,7 @@ class STLParser(BaseParser):
                 loader = ProgressiveSTLLoader()
                 lod_model = loader.load_progressive(file_path, progress_callback)
                 return lod_model.active_model
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("GPU progressive loading failed, falling back to CPU: %s", e)
 
         # Fallback to CPU-based progressive loading
@@ -1148,7 +1148,7 @@ class STLParser(BaseParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def get_supported_extensions(self) -> List[str]:

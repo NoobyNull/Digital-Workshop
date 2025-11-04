@@ -86,12 +86,12 @@ class ThumbnailResizer:
                     output_paths[size_name] = output_path
                     self.logger.debug("Saved %s thumbnail: {output_path}", size_name)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to resize to %s ({width}x{height}): {e}", size_name)
 
             return output_paths
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to resize thumbnails: %s", e, exc_info=True)
             return output_paths
 
@@ -167,5 +167,5 @@ class ThumbnailResizer:
                     file_path.unlink()
                     self.logger.debug("Cleaned up old thumbnail: %s", file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to cleanup old thumbnails: %s", e)

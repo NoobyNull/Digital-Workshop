@@ -84,13 +84,13 @@ class BackgroundHasher(QThread):
                         db_manager.update_file_hash(model["id"], file_hash)
                         self.model_hashed.emit(model["id"], file_hash)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.main_window.logger.warning("Failed to hash model %s: {e}", model['id'])
 
             # Signal completion
             self.all_complete.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.main_window.logger.error("Background hasher error: %s", e)
 
     def _calculate_file_hash(self, file_path: str) -> str:
@@ -156,7 +156,7 @@ class BackgroundProcessor:
             self.background_hasher.start()
 
             self.logger.info("Background hasher started")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start background hasher: %s", e)
 
     def toggle_background_hasher(self) -> None:
@@ -175,7 +175,7 @@ class BackgroundProcessor:
                 # Pause
                 self.background_hasher.pause()
                 self.main_window.statusBar().showMessage("Background hashing paused", 2000)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to toggle background hasher: %s", e)
 
     def _on_hash_progress(self, filename: str) -> None:
@@ -227,7 +227,7 @@ class BackgroundProcessor:
                 if existing and existing.get("file_hash"):
                     db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle duplicate: %s", e)
 
     def _on_hashing_complete(self) -> None:

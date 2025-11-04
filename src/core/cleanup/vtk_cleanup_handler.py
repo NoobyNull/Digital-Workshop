@@ -55,7 +55,7 @@ class VTKCleanupHandler(CleanupHandler):
 
         except ImportError as e:
             self.logger.warning("Could not import VTK components: %s", e)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error initializing VTK components: %s", e)
 
     def can_handle(self, phase: CleanupPhase) -> bool:
@@ -84,7 +84,7 @@ class VTKCleanupHandler(CleanupHandler):
             else:
                 return self._cleanup_with_unknown_context()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("VTK cleanup error: %s", e, exc_info=True)
             return False
 
@@ -107,7 +107,7 @@ class VTKCleanupHandler(CleanupHandler):
             self.logger.info("VTK cleanup with valid context completed")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("VTK cleanup with valid context failed: %s", e)
             return False
 
@@ -129,7 +129,7 @@ class VTKCleanupHandler(CleanupHandler):
             self.logger.info("VTK cleanup with lost context completed")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("VTK cleanup with lost context failed: %s", e)
             return False
 
@@ -151,7 +151,7 @@ class VTKCleanupHandler(CleanupHandler):
                 # No context manager available, assume safe cleanup
                 return self._cleanup_with_valid_context()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("VTK cleanup with unknown context failed: %s", e)
             return False
 
@@ -179,7 +179,7 @@ class VTKCleanupHandler(CleanupHandler):
                         for resource_info in failed_resources:
                             self.logger.warning("  - %s", resource_info)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Resource tracker cleanup failed: %s", e, exc_info=True)
 
     def _cleanup_resource_tracker_basic(self) -> None:
@@ -195,7 +195,7 @@ class VTKCleanupHandler(CleanupHandler):
                 # Clear references for garbage collection
                 self._resource_tracker.clear_all_resources()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Basic resource tracker cleanup failed: %s", e)
 
     def _cleanup_vtk_objects(self) -> None:
@@ -216,7 +216,7 @@ class VTKCleanupHandler(CleanupHandler):
 
             self.logger.debug("VTK objects cleanup completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("VTK objects cleanup failed: %s", e)
 
     def _clear_vtk_references(self) -> None:
@@ -233,7 +233,7 @@ class VTKCleanupHandler(CleanupHandler):
 
             self.logger.debug("VTK references cleared")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to clear VTK references: %s", e)
 
     def register_vtk_resource(self, name: str, resource: Any, priority: str = "normal") -> None:
@@ -259,7 +259,7 @@ class VTKCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Resource tracker not available for registration")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register VTK resource %s: {e}", name)
 
     def _determine_resource_type(self, resource: Any):
@@ -306,6 +306,6 @@ class VTKCleanupHandler(CleanupHandler):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to get VTK cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

@@ -148,7 +148,7 @@ class BaseParser(ABC):
             self.performance_monitor.end_operation(operation_id, success=True)
             return model
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.performance_monitor.end_operation(
                 operation_id, success=False, error_message=str(e)
             )
@@ -283,7 +283,7 @@ class BaseParser(ABC):
                     # Always copy stats and format (in case improved precision)
                     metadata_model.stats = full_model.stats
                     metadata_model.format_type = full_model.format_type
-                except Exception as merge_err:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as merge_err:
                     # Fallback to legacy triangles only to avoid blank view
                     self.logger.warning(
                         f"Geometry merge fallback (triangles only) due to: {merge_err}"
@@ -294,7 +294,7 @@ class BaseParser(ABC):
                 # Cache the full model (may be skipped if too large per cache limits)
                 self.model_cache.put(metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error(
                     f"Failed to load geometry for {metadata_model.file_path}: {str(e)}"
                 )

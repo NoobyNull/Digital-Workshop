@@ -129,7 +129,7 @@ class DWWImportManager:
             self.logger.info("Successfully imported project from DWW: %s", dww_path)
             return True, "Project imported successfully", manifest
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to import project from DWW: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg, None
@@ -150,7 +150,7 @@ class DWWImportManager:
                 manifest = json.loads(manifest_json)
                 return True, manifest
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to read DWW info: %s", str(e))
             return False, None
 
@@ -193,7 +193,7 @@ class DWWImportManager:
                 else:
                     return False, "Integrity check failed - file may be corrupted"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to verify DWW file: {str(e)}"
 
     def list_dww_files(self, dww_path: str) -> Tuple[bool, Optional[list]]:
@@ -211,6 +211,6 @@ class DWWImportManager:
                 files = [f for f in dww_archive.namelist() if f.startswith("files/")]
                 return True, files
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to list DWW files: %s", str(e))
             return False, None

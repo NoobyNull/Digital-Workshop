@@ -41,7 +41,7 @@ class LibraryModelManager:
                 f"Models: {len(self.library_widget.current_models)}"
             )
             self.library_widget.status_label.setText("Ready")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load models from database: %s", e)
             self.library_widget.status_label.setText("Error loading models")
 
@@ -61,7 +61,7 @@ class LibraryModelManager:
                 try:
                     icon = QIcon(thumbnail_path)
                     name_item.setIcon(icon)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to load thumbnail icon: %s", e)
 
             fmt = (model.get("format") or "Unknown").upper()
@@ -178,7 +178,7 @@ class LibraryModelManager:
             model_info["id"] = model_id
             model_info["thumbnail"] = thumb
             self.library_widget.current_models.append(model_info)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save model to database: %s", e)
 
     def on_load_progress(self, progress_percent: float, message: str) -> None:
@@ -281,5 +281,5 @@ class LibraryModelManager:
                     main_window.dedup_service.pending_duplicates = duplicates
                     main_window.dedup_service.duplicates_found.emit(duplicate_count)
                     self.logger.info("Found %s duplicate models after import", duplicate_count)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to trigger post-import deduplication: %s", e)

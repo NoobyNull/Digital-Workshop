@@ -29,7 +29,7 @@ class ProviderRepository:
         if conn:
             try:
                 conn.close()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Error closing connection: %s", e)
 
     def add_provider(
@@ -63,7 +63,7 @@ class ProviderRepository:
             self.logger.warning("Provider already exists: %s", name)
             existing = self.get_provider_by_name(name)
             return existing.get("id") if existing else None
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add provider: %s", e)
             return None
         finally:
@@ -82,7 +82,7 @@ class ProviderRepository:
 
             return dict(row) if row else None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get provider %s: {e}", name)
             return None
         finally:
@@ -101,7 +101,7 @@ class ProviderRepository:
 
             return dict(row) if row else None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get provider %s: {e}", provider_id)
             return None
         finally:
@@ -123,7 +123,7 @@ class ProviderRepository:
 
             return [dict(row) for row in cursor.fetchall()]
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get providers: %s", e)
             return []
         finally:
@@ -152,7 +152,7 @@ class ProviderRepository:
             conn.commit()
             self.logger.info("Updated provider %s", provider_id)
             return cursor.rowcount > 0
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update provider %s: {e}", provider_id)
             return False
         finally:
@@ -172,7 +172,7 @@ class ProviderRepository:
                 self.logger.info("Deleted provider ID: %s", provider_id)
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to delete provider %s: {e}", provider_id)
             return False
         finally:

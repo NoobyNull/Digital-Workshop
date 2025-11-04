@@ -89,5 +89,5 @@ class PerformanceTracker:
                 except (TypeError, RuntimeError):
                     # Signal may already be disconnected or timer deleted
                     pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Error during performance tracker cleanup: %s", e)

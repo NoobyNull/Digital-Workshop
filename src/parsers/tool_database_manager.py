@@ -128,7 +128,7 @@ class ToolDatabaseManager:
             self.logger.info(message)
             return True, message
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to import tools: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg
@@ -177,7 +177,7 @@ class ToolDatabaseManager:
             else:
                 return False, f"Unsupported export format: {format_type}"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg
@@ -221,7 +221,7 @@ class ToolDatabaseManager:
 
             return True, f"Exported {len(tools)} tools to CSV"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to export to CSV: {str(e)}"
 
     def _export_to_json(self, tools: List[Dict[str, Any]], file_path: str) -> tuple:
@@ -248,7 +248,7 @@ class ToolDatabaseManager:
 
             return True, f"Exported {len(tools)} tools to JSON"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to export to JSON: {str(e)}"
 
     def _export_to_vtdb(self, tools: List[Dict[str, Any]], file_path: str) -> tuple:
@@ -304,7 +304,7 @@ class ToolDatabaseManager:
 
             return True, f"Exported {len(tools)} tools to VTDB"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to export to VTDB: {str(e)}"
 
     def _export_to_tdb(self, tools: List[Dict[str, Any]], file_path: str) -> tuple:
@@ -325,7 +325,7 @@ class ToolDatabaseManager:
 
             return True, f"Exported {len(tools)} tools to TDB"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to export to TDB: {str(e)}"
 
     def _format_tool_for_tdb(self, tool: Dict[str, Any]) -> str:

@@ -163,7 +163,7 @@ class WidgetRegistry:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.update_errors += 1
             logger.warning("Failed to update theme for widget %s: {e}", self.widget_name)
             return False
@@ -193,7 +193,7 @@ class WidgetRegistry:
             if hasattr(widget, "setStyleSheet"):
                 widget.setStyleSheet(stylesheet)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Stylesheet fallback failed for %s: {e}", self.widget_name)
 
 
@@ -292,7 +292,7 @@ class ThemeRegistry(QObject):
                 self.widget_registered.emit(widget_name)
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Failed to register widget %s: {e}", widget_name)
                 return False
 
@@ -550,7 +550,7 @@ class ThemeRegistry(QObject):
             if registered_count > 0:
                 logger.debug("Auto-discovered and registered %s widgets", registered_count)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Widget discovery failed: %s", e)
 
     def _register_widget_recursive(self, widget: QWidget, visited: Set[int] = None) -> bool:
@@ -585,7 +585,7 @@ class ThemeRegistry(QObject):
                 if isinstance(child, QWidget):
                     if self._register_widget_recursive(child, visited):
                         registered_any = True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Error registering child widgets: %s", e)
 
         return registered_any

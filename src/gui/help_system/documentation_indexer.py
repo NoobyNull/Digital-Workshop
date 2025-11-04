@@ -93,7 +93,7 @@ class DocumentationIndexer:
         try:
             for md_file in directory.rglob("*.md"):
                 self._index_file(md_file)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Error scanning directory %s: {e}", directory)
 
     def _index_file(self, file_path: Path) -> None:
@@ -106,7 +106,7 @@ class DocumentationIndexer:
             sections = self._extract_sections(content, file_path)
             self.topics.extend(sections)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Error indexing file %s: {e}", file_path)
 
     def _extract_sections(self, content: str, file_path: Path) -> List[HelpTopic]:

@@ -53,7 +53,7 @@ class SearchWorker(QThread):
         try:
             results = self.search_engine.search(self.query, self.filters, self.limit, self.offset)
             self.search_completed.emit(results)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Search failed: {str(e)}"
             logger.error(error_msg)
             self.search_failed.emit(error_msg)
@@ -86,6 +86,6 @@ class SearchSuggestionWorker(QThread):
         try:
             suggestions = self.search_engine.get_search_suggestions(self.query, self.limit)
             self.suggestions_ready.emit(suggestions)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get suggestions: %s", str(e))
             self.suggestions_ready.emit([])

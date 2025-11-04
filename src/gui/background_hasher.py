@@ -135,7 +135,7 @@ class BackgroundHasher(QThread):
                     self.model_hashed.emit(model_id, file_hash)
                     self.logger.info("Hashed model %s: {filename}", model_id)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error hashing model %s ({filename}): {e}", model_id)
                 # Mark with empty hash so we don't try again
                 self.db_manager.update_file_hash(model_id, "")

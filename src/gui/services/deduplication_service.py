@@ -123,7 +123,7 @@ class DeduplicationService(QObject):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to deduplicate group: %s", e)
             return False
 

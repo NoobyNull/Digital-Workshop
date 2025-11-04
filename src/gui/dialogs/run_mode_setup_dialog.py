@@ -140,7 +140,7 @@ class RunModeSetupDialog(QDialog):
                 else:
                     logger.error("Failed to set storage location: %s", folder)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to browse storage location: %s", str(e))
 
     def _finish_setup(self) -> None:
@@ -152,7 +152,7 @@ class RunModeSetupDialog(QDialog):
             self.setup_complete.emit()
             self.accept()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to finish setup: %s", str(e))
             self.reject()
 

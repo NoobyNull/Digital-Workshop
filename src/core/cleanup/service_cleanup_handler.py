@@ -62,7 +62,7 @@ class ServiceCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Service cleanup error: %s", e, exc_info=True)
             return False
 
@@ -113,7 +113,7 @@ class ServiceCleanupHandler(CleanupHandler):
 
             return overall_success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Service cleanup failed: %s", e, exc_info=True)
             return False
 
@@ -135,13 +135,13 @@ class ServiceCleanupHandler(CleanupHandler):
                         self.logger.debug("Bootstrap cleanup called")
                     else:
                         self.logger.warning("Bootstrap has no cleanup method")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Bootstrap cleanup failed: %s", e)
                     success = False
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Bootstrap services cleanup failed: %s", e)
             return False
 
@@ -171,7 +171,7 @@ class ServiceCleanupHandler(CleanupHandler):
                         threads_cleaned += 1
                         self.logger.debug("Cleaned up background thread: %s", thread.name)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning(
                         f"Failed to cleanup thread {getattr(thread, 'name', 'unknown')}: {e}"
                     )
@@ -179,7 +179,7 @@ class ServiceCleanupHandler(CleanupHandler):
             self.logger.debug("Cleaned up %s background threads", threads_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Background threads cleanup failed: %s", e)
             return False
 
@@ -201,7 +201,7 @@ class ServiceCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Caches cleanup failed: %s", e)
             return False
 
@@ -221,12 +221,12 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Model cache has no cleanup method")
             except ImportError:
                 self.logger.debug("Model cache not available")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Model cache cleanup failed: %s", e)
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Model cache cleanup failed: %s", e)
             return False
 
@@ -246,12 +246,12 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Thumbnail service has no cleanup method")
             except ImportError:
                 self.logger.debug("Thumbnail service not available")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Thumbnail service cleanup failed: %s", e)
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Thumbnail cache cleanup failed: %s", e)
             return False
 
@@ -271,12 +271,12 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Fast hasher has no cleanup method")
             except ImportError:
                 self.logger.debug("Fast hasher not available")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Fast hasher cleanup failed: %s", e)
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("File hash cache cleanup failed: %s", e)
             return False
 
@@ -291,7 +291,7 @@ class ServiceCleanupHandler(CleanupHandler):
             self.logger.debug("Database connections cleanup completed")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Database connections cleanup failed: %s", e)
             return False
 
@@ -311,12 +311,12 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Memory manager has no cleanup method")
             except ImportError:
                 self.logger.debug("Memory manager not available")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Memory manager cleanup failed: %s", e)
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Memory manager cleanup failed: %s", e)
             return False
 
@@ -335,7 +335,7 @@ class ServiceCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid service registration: %s", name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register service %s: {e}", name)
 
     def unregister_service(self, name: str) -> bool:
@@ -355,7 +355,7 @@ class ServiceCleanupHandler(CleanupHandler):
                 return True
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to unregister service %s: {e}", name)
             return False
 
@@ -370,6 +370,6 @@ class ServiceCleanupHandler(CleanupHandler):
                 "services_count": len(self._services),
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to get service cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

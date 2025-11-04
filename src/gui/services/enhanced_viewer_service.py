@@ -111,7 +111,7 @@ class ModelLoadingWorker(QThread):
             else:
                 self.error_occurred.emit("PARSING_ERROR", "Failed to parse model file")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during model loading: %s", e, exc_info=True)
             self.error_occurred.emit("GENERIC_ERROR", str(e))
 
@@ -144,7 +144,7 @@ class ModelLoadingWorker(QThread):
 
             model = DummyModel()
             return model
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create dummy model: %s", e)
             return None
 
@@ -252,7 +252,7 @@ class EnhancedViewerService(IEnhancedViewerService):
             self.logger.info("Started async model loading: %s", file_path)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start model loading: %s", e, exc_info=True)
             self.ui_service.show_error("Loading Error", f"Failed to start loading: {e}")
             return False
@@ -266,7 +266,7 @@ class EnhancedViewerService(IEnhancedViewerService):
             if progress.message:
                 self.ui_service.set_ui_state(UIState.LOADING, progress.message)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling loading progress: %s", e)
 
     def _on_loading_completed(self, success: bool, model_info: str) -> None:
@@ -282,7 +282,7 @@ class EnhancedViewerService(IEnhancedViewerService):
             else:
                 self.ui_service.set_ui_state(UIState.ERROR, "Failed to load model")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling loading completion: %s", e)
         finally:
             self.current_loading_worker = None
@@ -300,7 +300,7 @@ class EnhancedViewerService(IEnhancedViewerService):
 
             self.logger.error("Model loading failed (%s): {message}", error_type)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling loading error: %s", e)
         finally:
             self.current_loading_worker = None
@@ -338,7 +338,7 @@ class EnhancedViewerService(IEnhancedViewerService):
 
                 self.logger.info("Model loading cancelled by user")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error cancelling loading: %s", e)
         finally:
             self.current_loading_worker = None
@@ -365,7 +365,7 @@ class EnhancedViewerService(IEnhancedViewerService):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting performance stats: %s", e)
             return {"error": str(e)}
 
@@ -403,7 +403,7 @@ class EnhancedViewerService(IEnhancedViewerService):
                     self.logger.debug("VSync enabled")
                 else:
                     self.logger.debug("VSync disabled")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error applying VSync setting: %s", e)
 
     def set_target_fps(self, fps: int) -> None:
@@ -431,5 +431,5 @@ class EnhancedViewerService(IEnhancedViewerService):
                 self.target_fps = 60
                 self.logger.info("Optimized for low-poly model")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error optimizing for model size: %s", e)

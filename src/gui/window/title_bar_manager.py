@@ -73,7 +73,7 @@ class WindowTitleBarManager(QObject):
             if title_bar:
                 self._title_bars[id(window)] = title_bar
             self.logger.debug("Registered window: %s", window.__class__.__name__)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register window: %s", e)
 
     def unregister_window(self, window: QWidget) -> None:
@@ -88,7 +88,7 @@ class WindowTitleBarManager(QObject):
             if window_id in self._title_bars:
                 del self._title_bars[window_id]
             self.logger.debug("Unregistered window: %s", window.__class__.__name__)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to unregister window: %s", e)
 
     def update_all_title_bars(self, theme: str) -> None:
@@ -105,12 +105,12 @@ class WindowTitleBarManager(QObject):
                     if title_bar and hasattr(title_bar, "update_theme"):
                         title_bar.update_theme()
                         updated_count += 1
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.debug("Failed to update title bar: %s", e)
 
             self.logger.debug("Updated %s title bars for theme: {theme}", updated_count)
             self.theme_changed.emit(theme)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update all title bars: %s", e)
 
     def get_registered_windows_count(self) -> int:
@@ -135,5 +135,5 @@ class WindowTitleBarManager(QObject):
                 del self._title_bars[wid]
             if dead_ids:
                 self.logger.debug("Cleaned up %s dead references", len(dead_ids))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to clean dead references: %s", e)

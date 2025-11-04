@@ -65,7 +65,7 @@ class CSVToolParser(BaseToolParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def _normalize_headers(self, row: dict) -> dict:
@@ -175,7 +175,7 @@ class CSVToolParser(BaseToolParser):
         except FileNotFoundError:
             self.logger.warning("File not found: %s", file_path)
             return []
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse CSV file: %s", e)
             return []
 

@@ -129,7 +129,7 @@ class LayoutPersistenceManager:
                 # Mark that default has been saved
                 settings.setValue("layout/default_saved", True)
                 self.logger.info("Saved current layout as default for fresh installations")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to save current layout as default: %s", e)
 
     def reset_dock_layout(self) -> None:
@@ -202,7 +202,7 @@ class LayoutPersistenceManager:
                 self.main_window.addDockWidget(
                     Qt.RightDockWidgetArea, self.main_window.metadata_dock
                 )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to re-dock widgets: %s", str(e))
 
     def settings_json_path(self) -> Path:
@@ -309,7 +309,7 @@ class LayoutPersistenceManager:
             settings.update(payload)
             self.write_settings_json(settings)
             self.logger.debug("Layout autosaved")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to save current layout: %s", e)
 
     def load_saved_layout(self) -> bool:
@@ -347,7 +347,7 @@ class LayoutPersistenceManager:
             if ok_any:
                 self.logger.info("Restored window layout from saved settings")
             return ok_any
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to load saved layout: %s", e)
             return False
 

@@ -254,7 +254,7 @@ class ProgressiveSTLLoader:
 
             return lod_model
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Progressive loading failed: %s", e)
             raise
 

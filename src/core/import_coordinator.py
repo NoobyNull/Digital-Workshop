@@ -233,7 +233,7 @@ class ImportCoordinatorWorker(QThread):
             # Cleanup
             gc.collect()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Import coordinator failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
@@ -251,7 +251,7 @@ class ImportCoordinatorWorker(QThread):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Settings validation failed: %s", e, exc_info=True)
             self.import_failed.emit(f"Validation error: {e}")
             return False
@@ -269,7 +269,7 @@ class ImportCoordinatorWorker(QThread):
 
             return session
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start import session: %s", e, exc_info=True)
             self.import_failed.emit(f"Session start error: {e}")
             return None
@@ -376,7 +376,7 @@ class ImportCoordinatorWorker(QThread):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Thumbnail generation failed: %s", e, exc_info=True)
             return None
 
@@ -404,7 +404,7 @@ class ImportCoordinatorWorker(QThread):
 
             self.logger.info("Prepared %s models for database storage", len(stored_models))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Database storage failed: %s", e, exc_info=True)
 
         return stored_models
@@ -432,7 +432,7 @@ class ImportCoordinatorWorker(QThread):
             self.logger.info("Queued %s models for background analysis", len(file_model_pairs))
             return None  # Analysis result will come later via signals
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to queue analysis: %s", e, exc_info=True)
             return None
 
@@ -460,7 +460,7 @@ class ImportCoordinatorWorker(QThread):
             self._update_stage(ImportWorkflowStage.CANCELLED, "Import cancelled")
             self.import_completed.emit(final_result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Cancellation handling failed: %s", e, exc_info=True)
 
     def _update_stage(self, stage: ImportWorkflowStage, message: str):
@@ -592,7 +592,7 @@ class ImportCoordinator(QObject):
             self.logger.info("Started coordinated import of %s files", len(file_paths))
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start import: %s", e, exc_info=True)
             return False
 

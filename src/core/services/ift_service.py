@@ -98,7 +98,7 @@ class IFTService:
             self.settings.endGroup()
             logger.info("Loaded %s IFT definitions", len(self.ifts))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load IFTs: %s", str(e))
             self.ifts = self.DEFAULT_IFTS.copy()
 
@@ -123,7 +123,7 @@ class IFTService:
             self.settings.endGroup()
             logger.info("Saved %s IFT definitions", len(self.ifts))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save IFTs: %s", str(e))
 
     def get_ift(self, key: str) -> Optional[IFTDefinition]:
@@ -152,7 +152,7 @@ class IFTService:
             self._save_ifts()
             logger.info("Added IFT: %s", key)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to add IFT: %s", str(e))
             return False
 
@@ -165,7 +165,7 @@ class IFTService:
                 logger.info("Removed IFT: %s", key)
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to remove IFT: %s", str(e))
             return False
 
@@ -177,7 +177,7 @@ class IFTService:
                 self._save_ifts()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to enable IFT: %s", str(e))
             return False
 
@@ -189,7 +189,7 @@ class IFTService:
                 self._save_ifts()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to disable IFT: %s", str(e))
             return False
 
@@ -200,7 +200,7 @@ class IFTService:
             self._save_ifts()
             logger.info("Reset IFTs to defaults")
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to reset IFTs: %s", str(e))
             return False
 

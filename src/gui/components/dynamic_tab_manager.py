@@ -138,10 +138,10 @@ class DynamicTabManager:
                         self.tab_widget.setTabText(index, new_name)
                         config.current_name = new_name
                         self.logger.debug(f"Tab {index}: '{config.current_name}'")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.debug("Error updating tab %s: {e}", index)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error updating tab names: %s", e)
 
     def force_update(self) -> None:

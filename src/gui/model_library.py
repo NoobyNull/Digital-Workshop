@@ -210,7 +210,7 @@ class ModelLoadWorker(QThread):
                 if i % 10 == 0:
                     gc.collect()
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 msg = f"Failed to load {file_path}: {e}"
                 self.logger.error(msg)
                 self.error_occurred.emit(msg)
@@ -284,7 +284,7 @@ class ThumbnailGenerator:
 
             painter.end()
             return pixmap
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate thumbnail: %s", e)
             px = QPixmap(self.size)
             px.fill(Qt.lightGray)
@@ -580,7 +580,7 @@ class ModelLibraryWidget(QWidget):
             self._update_model_view()
             self.model_count_label.setText(f"Models: {len(self.current_models)}")
             self.status_label.setText("Ready")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load models from database: %s", e)
             self.status_label.setText("Error loading models")
 
@@ -600,7 +600,7 @@ class ModelLibraryWidget(QWidget):
                 try:
                     icon = QIcon(thumbnail_path)
                     name_item.setIcon(icon)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to load thumbnail icon: %s", e)
 
             fmt = (model.get("format") or "Unknown").upper()
@@ -725,7 +725,7 @@ class ModelLibraryWidget(QWidget):
             model_info["id"] = model_id
             model_info["thumbnail"] = thumb
             self.current_models.append(model_info)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save model to database: %s", e)
 
     def _on_load_progress(self, progress_percent: float, message: str) -> None:
@@ -930,7 +930,7 @@ class ModelLibraryWidget(QWidget):
                 menu.addAction(bulk_remove_action)
 
             menu.exec_(view.mapToGlobal(position))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing context menu: %s", e)
 
     def _show_file_tree_context_menu(self, position) -> None:
@@ -981,7 +981,7 @@ class ModelLibraryWidget(QWidget):
 
             menu.exec_(self.file_tree.mapToGlobal(position))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing file tree context menu: %s", e)
 
     def _add_root_folder_from_context(self) -> None:
@@ -1018,7 +1018,7 @@ class ModelLibraryWidget(QWidget):
                     "Error",
                     "Failed to add folder. It may already exist or be inaccessible.",
                 )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add root folder: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to add root folder: {e}")
 
@@ -1044,7 +1044,7 @@ class ModelLibraryWidget(QWidget):
                     self._refresh_file_browser()
                 else:
                     QMessageBox.warning(self, "Error", "Failed to remove folder.")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to remove root folder: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to remove root folder: {e}")
 
@@ -1073,7 +1073,7 @@ class ModelLibraryWidget(QWidget):
                         self, "Import", f"No supported model files found in {p.name}"
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing from context menu: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import: {e}")
 
@@ -1087,7 +1087,7 @@ class ModelLibraryWidget(QWidget):
             if not QDesktopServices.openUrl(url):
                 QMessageBox.warning(self, "Open File", f"Could not open file: {file_path}")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error opening file in native app: %s", e)
             QMessageBox.critical(self, "Open File", f"Failed to open file: {e}")
 
@@ -1133,7 +1133,7 @@ class ModelLibraryWidget(QWidget):
                     self.status_label.setText(f"Failed to remove '{model_name}'")
                     self.logger.error("Failed to remove model with ID %s", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error removing model: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to remove model: {str(e)}")
 
@@ -1203,7 +1203,7 @@ class ModelLibraryWidget(QWidget):
 
             self.logger.info("Metadata editor closed for model ID: %s", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to open metadata editor: %s", e)
             # Fallback to simple metadata edit if dialog fails
             self._simple_metadata_edit(model_id, model_info if "model_info" in locals() else None)
@@ -1253,7 +1253,7 @@ class ModelLibraryWidget(QWidget):
             else:
                 QMessageBox.warning(dialog, "Error", "Failed to save metadata")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save metadata: %s", e)
             QMessageBox.critical(dialog, "Error", f"Failed to save metadata: {str(e)}")
 
@@ -1294,7 +1294,7 @@ class ModelLibraryWidget(QWidget):
                 # Reload models
                 self._load_models_from_database()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to edit metadata: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to edit metadata: {str(e)}")
 
@@ -1348,7 +1348,7 @@ class ModelLibraryWidget(QWidget):
 
             self.logger.info("Opened file explorer for: %s", file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show file in explorer: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to open file explorer: {str(e)}")
 
@@ -1453,7 +1453,7 @@ class ModelLibraryWidget(QWidget):
                     self.progress_bar.setValue(i + 1)
                     self.status_label.setText(f"Updating metadata... ({i + 1}/{count})")
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to update model %s: {e}", model_id)
 
             # Hide progress
@@ -1480,7 +1480,7 @@ class ModelLibraryWidget(QWidget):
 
             self.logger.info("Bulk update completed: %s/{count} models updated", success_count)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Bulk metadata update failed: %s", e)
             self.progress_bar.setVisible(False)
             self.status_label.setText("Ready")
@@ -1536,7 +1536,7 @@ class ModelLibraryWidget(QWidget):
                     self.progress_bar.setValue(i + 1)
                     self.status_label.setText(f"Removing models... ({i + 1}/{count})")
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to remove model %s: {e}", model_id)
 
             # Hide progress
@@ -1563,7 +1563,7 @@ class ModelLibraryWidget(QWidget):
 
             self.logger.info("Bulk removal completed: %s/{count} models removed", success_count)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Bulk removal failed: %s", e)
             self.progress_bar.setVisible(False)
             self.status_label.setText("Ready")
@@ -1575,7 +1575,7 @@ class ModelLibraryWidget(QWidget):
             self.file_model.refresh_index()
             self.status_label.setText("Indexing directories...")
             self.logger.info("Manual file browser refresh initiated")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error refreshing file browser: %s", e)
             self.status_label.setText("Error refreshing directories")
 
@@ -1612,7 +1612,7 @@ class ModelLibraryWidget(QWidget):
             else:
                 self.logger.debug("All %s root folders are accessible", len(enabled_folders))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating root folders: %s", e)
             # Don't show error dialog for validation failures to avoid startup blocking
 
@@ -1651,7 +1651,7 @@ class ModelLibraryWidget(QWidget):
 
             self._load_models(files_to_import)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing selected files: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import files: {e}")
 
@@ -1714,7 +1714,7 @@ class ModelLibraryWidget(QWidget):
 
             self._load_models(files_to_import)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing selected folder: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import folder: {e}")
 
@@ -1847,10 +1847,10 @@ class ModelLibraryWidget(QWidget):
 
                     # Reload the model in viewer
                     self.model_double_clicked.emit(model_id)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to update database after fix: %s", e)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to analyze model: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
 
@@ -1934,7 +1934,7 @@ class ModelLibraryWidget(QWidget):
                     f"Thumbnail regeneration failed for model {model_id}: {error_msg}"
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error regenerating thumbnail: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to regenerate thumbnail: {str(e)}")
 

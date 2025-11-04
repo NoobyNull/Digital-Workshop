@@ -101,5 +101,5 @@ class SimpleThemeSwitcher(QWidget):
 
             dialog = QtMaterialColorPicker(self)
             dialog.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error opening color picker: {e}")

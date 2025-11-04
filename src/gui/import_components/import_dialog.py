@@ -227,7 +227,7 @@ class ImportWorker(QThread):
                     thumbnail_worker.wait()  # Block until thumbnails are done
 
                     self.logger.info("Thumbnail generation completed")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to generate thumbnails: %s", e)
 
             # Complete import session
@@ -251,7 +251,7 @@ class ImportWorker(QThread):
 
             self.import_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Import worker failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
@@ -625,7 +625,7 @@ class ImportDialog(QDialog):
                     self.file_list.addItem(item)
 
                     added_count += 1
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     # Collect failed files instead of showing dialog
                     failed_files.append((Path(file_path).name, str(e)))
                     self.logger.warning("Failed to add file %s: {e}", file_path)

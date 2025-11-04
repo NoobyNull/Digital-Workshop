@@ -58,7 +58,7 @@ class DeduplicationManager:
                 if len(models) > 1
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to find duplicates: %s", e)
             return {}
 
@@ -83,7 +83,7 @@ class DeduplicationManager:
                 "modified": datetime.fromtimestamp(stat.st_mtime),
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get file stats for %s: {e}", file_path)
             return None
 
@@ -153,7 +153,7 @@ class DeduplicationManager:
 
             return keep_id, delete_ids
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to deduplicate group: %s", e)
             return None, []
 
@@ -171,6 +171,6 @@ class DeduplicationManager:
                 # Count all but the first (kept) model
                 total += len(models) - 1
             return total
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get duplicate count: %s", e)
             return 0

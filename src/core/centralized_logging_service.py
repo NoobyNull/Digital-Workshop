@@ -204,7 +204,7 @@ class CentralizedLoggingService:
                 # Log as regular error message
                 self._log_with_context(logging.ERROR, str(error), **kwargs)
                 return True
-        except Exception as handling_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
             self.logger.error("Error logging failed: %s", str(handling_error), exc_info=True)
             return False
 
@@ -255,7 +255,7 @@ class CentralizedLoggingService:
                 },
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Security event logging failed: %s", str(e), exc_info=True)
 
     def log_performance_metric(self, metric: PerformanceMetric) -> None:
@@ -288,7 +288,7 @@ class CentralizedLoggingService:
                 },
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Performance metric logging failed: %s", str(e), exc_info=True)
 
     def set_correlation_id(self, correlation_id: str) -> None:
@@ -325,7 +325,7 @@ class CentralizedLoggingService:
             # Log with structured data
             self.logger.log(level, message, extra=kwargs)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Fallback to basic logging if structured logging fails
             self.logger.log(level, f"{message}: {str(e)}")
 
@@ -451,7 +451,7 @@ class CentralizedLoggingService:
 
             self.logger.info("Cleaned up logs older than %s days", days_to_keep)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Log cleanup failed: %s", str(e), exc_info=True)
 
 
@@ -513,7 +513,7 @@ def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INF
 
                 return result
 
-            except Exception as error:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
                 # Calculate duration
                 duration = time.time() - start_time
 

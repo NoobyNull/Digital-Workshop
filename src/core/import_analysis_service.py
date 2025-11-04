@@ -158,7 +158,7 @@ class AnalysisWorker(QThread):
                         self.model_id, result.error_message or "Unknown error"
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Worker thread error: %s", e, exc_info=True)
             self.analysis_failed.emit(self.model_id, str(e))
 
@@ -202,7 +202,7 @@ class BatchAnalysisWorker(QThread):
             )
             self.batch_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Batch worker error: %s", e, exc_info=True)
 
 
@@ -411,7 +411,7 @@ class ImportAnalysisService:
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             analysis_time = time.time() - start_time
             error_msg = f"Analysis failed: {e}"
 
@@ -907,7 +907,7 @@ class ImportAnalysisService:
 
             self.logger.info("Stored analysis result for model %s", result.model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to store analysis result: %s", e, exc_info=True)
 
     def get_analysis_result(self, model_id: int) -> Optional[GeometryAnalysisResult]:

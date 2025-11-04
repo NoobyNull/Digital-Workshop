@@ -212,7 +212,7 @@ class EventFilter(QObject):
             # Don't block the original event
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in event filter: %s", e)
             return False
 
@@ -246,7 +246,7 @@ class EventFilter(QObject):
 
             return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to convert Qt event: %s", e)
             return None
 
@@ -281,7 +281,7 @@ class EventFilter(QObject):
                     ),
                 },
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create mouse event: %s", e)
             return None
 
@@ -309,7 +309,7 @@ class EventFilter(QObject):
                     "resize_handles": 0,  # Could be enhanced to track which handles were used
                 },
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create resize event: %s", e)
             return None
 
@@ -336,7 +336,7 @@ class EventFilter(QObject):
                     "new_position": widget.pos(),
                 },
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create move event: %s", e)
             return None
 
@@ -450,7 +450,7 @@ class EventProcessor:
             self._cleanup_timer.setInterval(5000)  # Clean up every 5 seconds
             self._cleanup_timer.timeout.connect(self._periodic_cleanup)
             self._cleanup_timer.start()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to setup cleanup timer: %s", e)
 
     def _periodic_cleanup(self) -> None:
@@ -473,7 +473,7 @@ class EventProcessor:
             if self.main_window:
                 self.coordinate_manager.update_main_window_geometry()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in periodic cleanup: %s", e)
 
     def install_event_filter(self, widget: QWidget) -> bool:
@@ -508,7 +508,7 @@ class EventProcessor:
                 )
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error installing event filter on widget: %s", e)
             return False
 
@@ -544,7 +544,7 @@ class EventProcessor:
                 )
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error removing event filter from widget: %s", e)
             return False
 
@@ -590,7 +590,7 @@ class EventProcessor:
 
             return processed
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error processing event %s: {e}", event.event_type)
             return False
 
@@ -610,7 +610,7 @@ class EventProcessor:
                 for handler in self._event_handlers[event.event_type]:
                     try:
                         handler(event)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.error("Error in event handler for %s: {e}", event.event_type)
 
             # Handle specific event types
@@ -629,7 +629,7 @@ class EventProcessor:
 
             return True  # Event was processed by handlers
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in immediate event processing: %s", e)
             return False
 
@@ -653,7 +653,7 @@ class EventProcessor:
                 self._apply_snap_to_widget(event.target_widget, snap_result)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling mouse move: %s", e)
             return False
 
@@ -668,7 +668,7 @@ class EventProcessor:
                 self._start_drag_tracking(event.target_widget)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling mouse press: %s", e)
             return False
 
@@ -680,7 +680,7 @@ class EventProcessor:
                 self._end_drag_tracking(event.target_widget)
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling mouse release: %s", e)
             return False
 
@@ -694,7 +694,7 @@ class EventProcessor:
             self.snap_engine.update_configuration()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling widget resize: %s", e)
             return False
 
@@ -705,7 +705,7 @@ class EventProcessor:
             self.coordinate_manager.update_main_window_geometry()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling widget move: %s", e)
             return False
 
@@ -717,7 +717,7 @@ class EventProcessor:
             self.coordinate_manager.clear_cache()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling layout change: %s", e)
             return False
 
@@ -753,7 +753,7 @@ class EventProcessor:
             self.logger.debug(
                 f"Applied snap to widget {widget.objectName() or type(widget).__name__}"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to apply snap to widget: %s", e)
 
     def _start_drag_tracking(self, widget: QWidget) -> None:
@@ -765,7 +765,7 @@ class EventProcessor:
             self.logger.debug(
                 f"Started drag tracking for widget {widget.objectName() or type(widget).__name__}"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start drag tracking: %s", e)
 
     def _end_drag_tracking(self, widget: QWidget) -> None:
@@ -779,7 +779,7 @@ class EventProcessor:
             self.logger.debug(
                 f"Ended drag tracking for widget {widget.objectName() or type(widget).__name__}"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to end drag tracking: %s", e)
 
     def _update_performance_timing(self, processing_time_ms: float) -> None:
@@ -810,7 +810,7 @@ class EventProcessor:
 
             self._event_handlers[event_type].append(handler)
             self.logger.debug("Registered event handler for %s", event_type)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to register event handler: %s", e)
 
     def unregister_event_handler(self, event_type: EventType, handler: Callable) -> None:
@@ -826,7 +826,7 @@ class EventProcessor:
                 if handler in self._event_handlers[event_type]:
                     self._event_handlers[event_type].remove(handler)
                     self.logger.debug("Unregistered event handler for %s", event_type)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to unregister event handler: %s", e)
 
     def set_processing_enabled(self, enabled: bool) -> None:
@@ -839,7 +839,7 @@ class EventProcessor:
         try:
             self._processing_enabled = enabled
             self.logger.info("Event processing %s", 'enabled' if enabled else 'disabled')
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set processing enabled: %s", e)
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -863,7 +863,7 @@ class EventProcessor:
                 },
                 "processing_enabled": self._processing_enabled,
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
@@ -886,7 +886,7 @@ class EventProcessor:
             }
 
             self.logger.info("Event processor reset to initial state")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reset event processor: %s", e)
             raise
 
@@ -909,5 +909,5 @@ class EventProcessor:
             self.reset()
 
             self.logger.info("Event processor cleanup completed")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during event processor cleanup: %s", e)

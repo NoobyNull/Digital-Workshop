@@ -48,7 +48,7 @@ class MaterialLightingIntegrator:
                     self.main_window.lighting_panel.show()
                     self.main_window.lighting_panel.raise_()
                     self.main_window.lighting_panel.activateWindow()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to toggle lighting panel: %s", e)
 
     def update_light_position(self, x: float, y: float, z: float) -> None:
@@ -57,7 +57,7 @@ class MaterialLightingIntegrator:
             try:
                 self.main_window.lighting_manager.update_position(x, y, z)
                 self._save_lighting_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("update_position failed: %s", e)
 
     def update_light_color(self, r: float, g: float, b: float) -> None:
@@ -66,7 +66,7 @@ class MaterialLightingIntegrator:
             try:
                 self.main_window.lighting_manager.update_color(r, g, b)
                 self._save_lighting_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("update_color failed: %s", e)
 
     def update_light_intensity(self, value: float) -> None:
@@ -75,7 +75,7 @@ class MaterialLightingIntegrator:
             try:
                 self.main_window.lighting_manager.update_intensity(value)
                 self._save_lighting_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("update_intensity failed: %s", e)
 
     def update_light_cone_angle(self, angle: float) -> None:
@@ -84,7 +84,7 @@ class MaterialLightingIntegrator:
             try:
                 self.main_window.lighting_manager.update_cone_angle(angle)
                 self._save_lighting_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("update_cone_angle failed: %s", e)
 
     def apply_material_species(self, species_name: str) -> None:
@@ -184,7 +184,7 @@ class MaterialLightingIntegrator:
                 settings = QSettings()
                 settings.setValue("material/last_species", species_name)
                 self.logger.info("Saved last material species: %s", species_name)
-            except Exception as se:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as se:
                 self.logger.warning("Failed to persist last material species: %s", se)
 
             # Track the currently applied material to prevent duplicates
@@ -193,10 +193,10 @@ class MaterialLightingIntegrator:
             # Re-render
             try:
                 self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Failed to render after material application: %s", e)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to apply material '{species_name}': {e}")
             if hasattr(self.main_window, "statusBar"):
                 self.main_window.statusBar().showMessage(
@@ -243,7 +243,7 @@ class MaterialLightingIntegrator:
                 f"Applied MTL properties to STL for '{species_name}': Kd={kd_color}, Ks={ks_color}, Ns={ns_value}, d={d_value}"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to apply MTL properties to STL for '{species_name}': {e}")
             # Fallback to default material
             try:
@@ -290,7 +290,7 @@ class MaterialLightingIntegrator:
                         if len(parts) >= 2:
                             material["d"] = float(parts[1])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to parse MTL file %s: {e}", mtl_path)
 
         return material
@@ -310,7 +310,7 @@ class MaterialLightingIntegrator:
                 settings.setValue("lighting/intensity", float(props["intensity"]))
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 self.logger.debug("Lighting settings saved to QSettings")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to save lighting settings: %s", e)
 
 

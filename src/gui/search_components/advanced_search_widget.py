@@ -176,7 +176,7 @@ class AdvancedSearchWidget(QWidget):
                 self.category_checkboxes[category["name"]] = checkbox
                 category_layout.addWidget(checkbox)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load categories: %s", str(e))
 
     def on_category_all_toggled(self, checked: bool):

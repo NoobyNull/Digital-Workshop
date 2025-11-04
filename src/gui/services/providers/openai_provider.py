@@ -127,6 +127,6 @@ class OpenAIProvider(BaseProvider):
             response_text = response.choices[0].message.content
             return self.parse_response(response_text)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error analyzing image with OpenAI: %s", str(e))
             raise

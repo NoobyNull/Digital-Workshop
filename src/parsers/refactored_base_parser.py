@@ -148,7 +148,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             file_extension = file_path.suffix.lower()
             supported_extensions = [fmt.value for fmt in self._supported_formats]
             return file_extension in supported_extensions
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logging_service.log_warning(
                 f"Error checking file format for {file_path}: {str(e)}",
                 file_path=str(file_path),
@@ -241,7 +241,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Use standardized error handling
             error_context = {
                 "file_path": str(file_path),
@@ -292,7 +292,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
             return info
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {"file_path": str(file_path), "operation": "get_model_info"}
             self.logging_service.log_error(e, error_context)
             raise ParseError(f"Failed to get model info: {str(e)}")
@@ -314,7 +314,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             # Use lightweight validation
             return self._validate_file_internal(file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logging_service.log_warning(
                 f"Validation failed for {file_path}: {str(e)}",
                 file_path=str(file_path),
@@ -383,7 +383,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
             return self._validate_geometry_internal(file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "validate_geometry",
@@ -407,7 +407,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
             return self._get_geometry_stats_internal(file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "get_geometry_stats",
@@ -561,7 +561,7 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
             self.logging_service.log_debug("Resources cleaned up after parsing")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logging_service.log_warning(
                 f"Error during resource cleanup: {str(e)}",
                 operation="cleanup_resources",

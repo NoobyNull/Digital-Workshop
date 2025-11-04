@@ -128,7 +128,7 @@ class ModelCache:
                 else:
                     # Use adaptive cache size from performance profile
                     self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Failed to check config override, using adaptive: %s", e)
                 self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
         else:
@@ -192,7 +192,7 @@ class ModelCache:
 
                 conn.commit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize disk cache: %s", str(e))
             raise
 
@@ -220,7 +220,7 @@ class ModelCache:
             hasher.update(hash_input.encode())
             return hasher.hexdigest()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate file hash: %s", str(e))
             hasher = xxhash.xxh128()
             hasher.update(file_path.encode())
@@ -282,7 +282,7 @@ class ModelCache:
             else:
                 return pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to serialize data: %s", str(e))
             raise
 
@@ -299,7 +299,7 @@ class ModelCache:
         try:
             return pickle.loads(data)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to deserialize data: %s", str(e))
             raise
 
@@ -379,7 +379,7 @@ class ModelCache:
                 )
                 conn.commit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
@@ -434,7 +434,7 @@ class ModelCache:
 
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load from disk cache: %s", str(e))
             return None
 
@@ -619,7 +619,7 @@ class ModelCache:
                             removed = True
                         conn.commit()
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to remove from disk cache: %s", str(e))
 
             if removed:
@@ -648,7 +648,7 @@ class ModelCache:
                         conn.execute("DELETE FROM cache_entries")
                         conn.commit()
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to clear disk cache: %s", str(e))
 
             # Reset statistics
@@ -675,7 +675,7 @@ class ModelCache:
 
                 self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update statistics: %s", str(e))
 
     def get_stats(self) -> CacheStats:
@@ -739,7 +739,7 @@ class ModelCache:
                         self.logger.info("Cleaned up %s old disk cache entries", deleted_count)
                     conn.commit()
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to optimize disk cache: %s", str(e))
 
     def cleanup(self) -> None:

@@ -55,7 +55,7 @@ class ThemeLoader:
         except json.JSONDecodeError as e:
             logger.error("Invalid JSON in theme configuration file: %s", e)
             self._themes_data = {"themes": {"light": {}, "dark": {}}}
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error loading theme configuration: %s", e)
             self._themes_data = {"themes": {"light": {}, "dark": {}}}
 
@@ -206,7 +206,7 @@ class ThemeLoader:
             logger.info("Added new theme: %s/{variant}", theme_type)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error adding theme %s/{variant}: {e}", theme_type)
             return False
 
@@ -234,7 +234,7 @@ class ThemeLoader:
                 logger.warning("Theme type not found: %s", theme_type)
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error removing theme %s/{variant}: {e}", theme_type)
             return False
 

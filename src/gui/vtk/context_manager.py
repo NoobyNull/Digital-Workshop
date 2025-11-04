@@ -86,7 +86,7 @@ class VTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Windows context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -104,7 +104,7 @@ class VTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Linux context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -121,7 +121,7 @@ class VTKContextManager:
 
             return ContextState.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("macOS context validation error: %s", e)
             return ContextState.UNKNOWN
 
@@ -172,7 +172,7 @@ class VTKContextManager:
 
             return is_valid, context_state
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Context validation exception: %s", e)
             return False, ContextState.UNKNOWN
 
@@ -218,7 +218,7 @@ class VTKContextManager:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error checking cleanup safety: %s", e)
             return False
 
@@ -240,7 +240,7 @@ class VTKContextManager:
 
         try:
             yield True  # Operation can proceed
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Handle errors during the operation
             handled = self.error_handler.handle_error(e, operation)
             if not handled and self.strict_mode:
@@ -304,7 +304,7 @@ class VTKContextManager:
                 if cache_key in self.context_cache:
                     info["cached_state"] = self.context_cache[cache_key]
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             info["error"] = str(e)
 
         return info
@@ -349,7 +349,7 @@ class VTKContextManager:
             try:
                 render_window.Render()
                 return True
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 handled = self.error_handler.handle_error(e, "render")
                 return handled
 
@@ -380,13 +380,13 @@ class VTKContextManager:
                 if render_window:
                     # These operations are safe even with lost context
                     render_window.Finalize()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # This is expected during shutdown
                 self.logger.debug("Expected cleanup error: %s", e)
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Cleanup error: %s", e)
             return False
 

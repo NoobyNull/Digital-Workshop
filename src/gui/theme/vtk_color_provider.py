@@ -189,7 +189,7 @@ class VTKColorProvider(QObject):
                 self._cached_vtk_colors[vtk_color_name] = vtk_color
 
                 return vtk_color
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning(f"Failed to get VTK color '{vtk_color_name}': {e}")
             # Return default color
             return (0.2, 0.4, 0.8)  # Default blue
@@ -241,7 +241,7 @@ class VTKColorProvider(QObject):
                         vtk_manager.update_theme_colors()
                     elif hasattr(vtk_manager, "render"):
                         vtk_manager.render()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning(
                         f"Failed to update VTK manager {vtk_manager.__class__.__name__}: {e}"
                     )
@@ -252,7 +252,7 @@ class VTKColorProvider(QObject):
 
             logger.debug("Updated %s VTK managers", len(self._vtk_managers))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update VTK colors: %s", e, exc_info=True)
 
     def _update_vtk_color_cache(self) -> None:

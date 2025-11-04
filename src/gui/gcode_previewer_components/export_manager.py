@@ -57,7 +57,7 @@ class ExportManager:
             writer.Write()
 
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Failed to export screenshot: {e}")
             return False
 
@@ -117,7 +117,7 @@ class ExportManager:
 
             out.release()
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Failed to export video: {e}")
             return False
 
@@ -152,7 +152,7 @@ class ExportManager:
             numpy_array = numpy_array.reshape((height, width, 3))
 
             return numpy_array
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Failed to capture frame: {e}")
             return None
 

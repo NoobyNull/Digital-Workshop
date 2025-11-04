@@ -183,7 +183,7 @@ class DatabaseHealthMonitor:
                 self._check_thresholds()
                 self._cleanup_old_data()
                 time.sleep(self.monitoring_interval)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Health monitoring error: %s", str(e))
                 time.sleep(5)  # Brief pause on error
 
@@ -238,7 +238,7 @@ class DatabaseHealthMonitor:
                 db_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
                 self._record_metric("database.file.size", db_size_mb, MetricType.GAUGE, "MB")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to collect system metrics: %s", str(e))
 
     def _collect_database_metrics(self) -> None:
@@ -292,7 +292,7 @@ class DatabaseHealthMonitor:
                     "boolean",
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to collect database metrics: %s", str(e))
 
     def _record_metric(
@@ -398,7 +398,7 @@ class DatabaseHealthMonitor:
         for callback in self._alert_callbacks:
             try:
                 callback(alert)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Alert callback failed: %s", str(e))
 
     def _cleanup_old_data(self) -> None:

@@ -127,7 +127,7 @@ class LibraryEventHandler:
                 model_id = item.data(Qt.UserRole)
                 if model_id:
                     self.library_widget.model_selected.emit(model_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to handle model click: %s", e)
 
     def on_model_double_clicked(self, index: QModelIndex) -> None:
@@ -139,7 +139,7 @@ class LibraryEventHandler:
                 model_id = item.data(Qt.UserRole)
                 if model_id:
                     self.library_widget.model_double_clicked.emit(model_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to handle model double-click: %s", e)
 
     def show_context_menu(self, position) -> None:
@@ -168,7 +168,7 @@ class LibraryEventHandler:
                 self._generate_preview(model_id)
             elif action == remove_action:
                 self.library_widget._remove_model(model_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to show context menu: %s", e)
 
     def show_file_tree_context_menu(self, position) -> None:
@@ -213,7 +213,7 @@ class LibraryEventHandler:
             if action == add_root_action:
                 self._add_root_folder()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show file tree context menu: %s", e, exc_info=True)
 
     def _add_root_folder(self) -> None:
@@ -259,7 +259,7 @@ class LibraryEventHandler:
                     "Error",
                     "Failed to add folder. It may already exist or be inaccessible.",
                 )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add root folder: %s", e)
             QMessageBox.critical(self.library_widget, "Error", f"Failed to add root folder: {e}")
 
@@ -367,7 +367,7 @@ class LibraryEventHandler:
                 )
                 self.logger.error("Preview generation failed for model %s: {error_msg}", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self.library_widget, "Error", error_msg)

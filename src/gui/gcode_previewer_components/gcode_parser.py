@@ -102,7 +102,7 @@ class GcodeParser:
             else:
                 return self._parse_file_streaming(filepath)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise ValueError(f"Failed to parse G-code file: {e}")
 
     def _parse_file_streaming(self, filepath: str) -> List[GcodeMove]:
@@ -205,7 +205,7 @@ class GcodeParser:
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def parse_lines(self, lines: List[str]) -> List[GcodeMove]:

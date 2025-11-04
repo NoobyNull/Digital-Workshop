@@ -109,7 +109,7 @@ class DryRunAnalyzer:
             )
             return report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to perform dry run analysis: %s", str(e))
             raise
 
@@ -130,7 +130,7 @@ class DryRunAnalyzer:
             try:
                 if os.path.exists(file_result.file_path):
                     total += os.path.getsize(file_result.file_path)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.warning("Failed to get size of %s: {str(e)}", file_result.file_path)
 
         return total
@@ -166,7 +166,7 @@ class DryRunAnalyzer:
                 "naming_patterns": analysis.naming_patterns,
                 "total_folders": analysis.total_folders,
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to analyze structure: %s", str(e))
             return {}
 

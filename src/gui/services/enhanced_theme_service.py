@@ -62,7 +62,7 @@ class ThemePreviewWidget(QObject):
             self.logger.info("Started theme preview: %s", self.theme_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error starting theme preview: %s", e)
             return False
 
@@ -80,7 +80,7 @@ class ThemePreviewWidget(QObject):
 
             self.logger.info("Cancelled theme preview: %s", self.theme_name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error cancelling theme preview: %s", e)
 
     def _on_preview_timeout(self) -> None:
@@ -89,7 +89,7 @@ class ThemePreviewWidget(QObject):
             self._revert_to_original_theme()
             self.preview_completed.emit(self.theme_name)
             self.logger.info("Theme preview completed: %s", self.theme_name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling preview timeout: %s", e)
         finally:
             self.preview_timer = None
@@ -160,7 +160,7 @@ class ThemeValidationWorker(QThread):
             else:
                 self.logger.warning("Theme validation failed: %s - {error_message}", self.theme_name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during theme validation: %s", e, exc_info=True)
             self.validation_completed.emit(self.theme_name, False, str(e))
 
@@ -199,7 +199,7 @@ class ThemeValidationWorker(QThread):
 
         except json.JSONDecodeError as e:
             return False, f"Invalid JSON format: {e}"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {e}"
 
 
@@ -243,7 +243,7 @@ class EnhancedThemeService(IEnhancedThemeService):
             saved_theme = self.settings_manager.get("ui.current_theme", "default")
             self.current_theme = saved_theme
             self.logger.info("Loaded current theme: %s", self.current_theme)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading current theme: %s", e)
             self.current_theme = "default"
 
@@ -267,7 +267,7 @@ class EnhancedThemeService(IEnhancedThemeService):
             self.logger.info("Started async theme application: %s", theme_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error starting async theme application: %s", e)
             self.ui_service.show_error("Theme Error", f"Failed to start theme application: {e}")
             return False
@@ -304,7 +304,7 @@ class EnhancedThemeService(IEnhancedThemeService):
                 self.ui_service.set_ui_state(UIState.ERROR, "Failed to apply theme")
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error applying theme: %s", e, exc_info=True)
             self.ui_service.set_ui_state(UIState.ERROR, "Theme application failed")
             return False
@@ -348,7 +348,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return preview_text
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting theme preview: %s", e)
             return None
 
@@ -390,7 +390,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return is_valid, error_message
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating theme: %s", e)
             return False, f"Validation error: {e}"
 
@@ -419,7 +419,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {e}"
 
     def preview_theme_temporarily(self, theme_name: str, duration_ms: int = 3000) -> bool:
@@ -455,7 +455,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error starting theme preview: %s", e)
             return False
 
@@ -474,7 +474,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error reverting to previous theme: %s", e)
             return False
 
@@ -513,7 +513,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return categories
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting theme categories: %s", e)
             return {}
 
@@ -536,7 +536,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             else:
                 self.logger.warning("Theme validation failed: %s - {error_message}", theme_name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation completion: %s", e)
 
     def _on_validation_progress(self, theme_name: str, progress: float) -> None:
@@ -544,7 +544,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
         try:
             # Could emit progress signal here if UI wants to show validation progress
             self.logger.debug("Theme validation progress: %s - {progress:.1f}%", theme_name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation progress: %s", e)
 
     def _on_preview_completed(self, theme_name: str) -> None:
@@ -554,7 +554,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
                 del self.preview_widgets[theme_name]
 
             self.logger.info("Theme preview completed: %s", theme_name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling preview completion: %s", e)
 
     def _on_preview_cancelled(self, theme_name: str) -> None:
@@ -564,7 +564,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
                 del self.preview_widgets[theme_name]
 
             self.logger.info("Theme preview cancelled: %s", theme_name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling preview cancellation: %s", e)
 
     def _get_theme_path(self, theme_name: str) -> Optional[Path]:
@@ -591,7 +591,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
 
             return theme_data
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading theme data: %s", e)
             return None
 
@@ -614,6 +614,6 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             self.logger.debug("Theme data applied successfully")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error applying theme data: %s", e)
             return False

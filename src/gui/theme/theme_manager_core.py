@@ -176,7 +176,7 @@ class ThemeManager:
             processed = re.sub(self.VARIABLE_PATTERN, replace, text)
             self._css_text_cache[key] = (self._version, processed)
             return processed
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "css_template_processing_error", error=str(exc))
             return css_text
 
@@ -185,12 +185,12 @@ class ThemeManager:
         p = str(path)
         try:
             mtime = Path(p).stat().st_mtime
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "css_file_stat_error", path=p, error=str(exc))
             try:
                 text = Path(p).read_text(encoding="utf-8")
                 return self.process_css_template(text)
-            except Exception as exc2:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc2:
                 self._log_json(logging.ERROR, "css_file_read_error", path=p, error=str(exc2))
                 return ""
 
@@ -203,7 +203,7 @@ class ThemeManager:
             processed = self.process_css_template(text)
             self._css_file_cache[p] = (mtime, self._version, processed)
             return processed
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "css_file_processing_error", path=p, error=str(exc))
             return ""
 
@@ -222,7 +222,7 @@ class ThemeManager:
                 str(css_path) if css_path is not None else None,
                 css_text,
             )
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "widget_register_error", error=str(exc))
 
     def apply_stylesheet(self, widget: Any) -> None:
@@ -248,7 +248,7 @@ class ThemeManager:
                     css_path=css_path or "",
                     css_text_len=len(css_text or ""),
                 )
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "stylesheet_apply_error", error=str(exc))
 
     def apply_to_registered(self) -> None:
@@ -279,7 +279,7 @@ class ThemeManager:
             path = self._settings_path()
             path.write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
             self._log_json(logging.INFO, "theme_saved", path=str(path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_save_error", error=str(exc))
 
     def load_from_settings(self) -> None:
@@ -292,7 +292,7 @@ class ThemeManager:
             if isinstance(data, dict):
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_loaded", path=str(path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_load_error", error=str(exc))
 
     def export_theme(self, file_path: Union[str, Path]) -> None:
@@ -300,7 +300,7 @@ class ThemeManager:
         try:
             Path(file_path).write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
             self._log_json(logging.INFO, "theme_exported", path=str(file_path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc))
 
     def import_theme(self, file_path: Union[str, Path]) -> None:
@@ -310,5 +310,5 @@ class ThemeManager:
             if isinstance(data, dict):
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_imported", path=str(file_path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc))

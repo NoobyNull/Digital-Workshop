@@ -50,7 +50,7 @@ class MaterialManager:
             # Combine and deduplicate
             all_species = list(set(db_species + texture_names))
             return sorted(all_species)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("get_species_list failed: %s", e)
             return []
 
@@ -89,7 +89,7 @@ class MaterialManager:
                         )
                         self.texture_cache[key] = img
                         return img
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         error_msg = (
                             f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
                         )
@@ -110,7 +110,7 @@ class MaterialManager:
             raise RuntimeError(
                 f"MTL texture loading is mandatory - no procedural fallback available for '{species_name}'"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("generate_wood_texture error: %s", e, exc_info=True)
             # No fallback - MTL texture loading is mandatory
             raise RuntimeError(f"MTL texture loading failed: {e}")
@@ -248,19 +248,19 @@ class MaterialManager:
                         try:
                             texture.InterpolateOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
-                        except Exception as e:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                             self.logger.warning("Failed to enable texture interpolation: %s", e)
 
                         try:
                             texture.MipmapOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
-                        except Exception as e:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                             self.logger.warning("Failed to enable texture mipmaps: %s", e)
 
                         try:
                             texture.RepeatOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
-                        except Exception as e:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                             self.logger.warning("Failed to enable texture repeat: %s", e)
 
                         # NEW DIAGNOSTIC: Check texture before assignment
@@ -331,7 +331,7 @@ class MaterialManager:
                             "[STL_TEXTURE_DEBUG] ===== MTL TEXTURE APPLICATION COMPLETE ====="
                         )
                         return True
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error(
                         f"[STL_TEXTURE_DEBUG] Failed to apply MTL texture: {e}",
                         exc_info=True,
@@ -378,13 +378,13 @@ class MaterialManager:
                 )
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error(
                     f"[STL_TEXTURE_DEBUG] Failed to apply solid color: {e}",
                     exc_info=True,
                 )
                 return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"apply_material_to_actor error for species '{species_name}': {e}",
                 exc_info=True,
@@ -406,7 +406,7 @@ class MaterialManager:
             if not name:
                 return None
             return self.db.get_wood_material_by_name(name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"_get_species('{name}') failed: {e}")
             return None
 
@@ -625,7 +625,7 @@ class MaterialManager:
                     self._apply_classic_shading(prop, roughness, specular)
             else:
                 self._apply_classic_shading(prop, roughness, specular)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("_apply_material_properties failed: %s", e)
 
     def _apply_material_properties_for_texture(
@@ -677,7 +677,7 @@ class MaterialManager:
                 f"[STL_TEXTURE_DEBUG] Actor colors after texture-safe application: diffuse={prop.GetDiffuseColor()}, ambient={prop.GetAmbientColor()}"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("_apply_material_properties_for_texture failed: %s", e)
 
     def _apply_classic_shading(
@@ -851,7 +851,7 @@ class MaterialManager:
             self.logger.info("[STL_TEXTURE_DEBUG] Successfully generated UV coordinates")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"[STL_TEXTURE_DEBUG] Failed to generate UV coordinates: {e}",
                 exc_info=True,

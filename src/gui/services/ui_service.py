@@ -206,7 +206,7 @@ class ProgressWidget(QWidget):
 
             self.setVisible(True)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing progress: %s", e)
 
     def hide_progress(self) -> None:
@@ -267,7 +267,7 @@ class ViewerUIService(IViewerUIService):
             if hasattr(self.parent_widget, "layout"):
                 self.parent_widget.layout().addWidget(self.progress_widget)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting up UI components: %s", e)
 
     def set_ui_state(self, state: UIState, message: str = "") -> None:
@@ -281,7 +281,7 @@ class ViewerUIService(IViewerUIService):
 
             self.logger.debug("UI state changed: %s -> {state.value}", old_state.value)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting UI state: %s", e)
 
     def _update_ui_for_state(self, state: UIState, message: str) -> None:
@@ -305,7 +305,7 @@ class ViewerUIService(IViewerUIService):
                 if self.progress_widget:
                     self.progress_widget.hide_progress()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error updating UI for state: %s", e)
 
     def get_ui_state(self) -> UIState:
@@ -317,7 +317,7 @@ class ViewerUIService(IViewerUIService):
         try:
             if self.progress_widget:
                 self.progress_widget.show_progress(progress)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing progress: %s", e)
 
     def hide_progress(self) -> None:
@@ -325,7 +325,7 @@ class ViewerUIService(IViewerUIService):
         try:
             if self.progress_widget:
                 self.progress_widget.hide_progress()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error hiding progress: %s", e)
 
     def enable_cancellation(self, cancellable: bool) -> None:
@@ -334,7 +334,7 @@ class ViewerUIService(IViewerUIService):
         try:
             if self.progress_widget:
                 self.progress_widget.enable_cancellation(cancellable)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error enabling cancellation: %s", e)
 
     def is_cancellation_requested(self) -> bool:
@@ -363,7 +363,7 @@ class ViewerUIService(IViewerUIService):
 
             self.logger.error("Error shown to user: %s - {message}", title)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing error dialog: %s", e)
 
     def show_warning(self, title: str, message: str) -> None:
@@ -381,7 +381,7 @@ class ViewerUIService(IViewerUIService):
 
             self.logger.warning("Warning shown to user: %s - {message}", title)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing warning dialog: %s", e)
 
     def show_info(self, title: str, message: str) -> None:
@@ -399,7 +399,7 @@ class ViewerUIService(IViewerUIService):
 
             self.logger.info("Info shown to user: %s - {message}", title)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing info dialog: %s", e)
 
     def _show_notification(
@@ -438,7 +438,7 @@ class ViewerUIService(IViewerUIService):
                     lambda: self._remove_notification(notification.id),
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing notification: %s", e)
 
     def _remove_notification(self, notification_id: str) -> None:
@@ -449,7 +449,7 @@ class ViewerUIService(IViewerUIService):
                 widget.hide()
                 widget.deleteLater()
                 del self.notification_widgets[notification_id]
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error removing notification: %s", e)
 
 
@@ -508,7 +508,7 @@ class NotificationService(INotificationService):
             self.logger.debug("Notification shown: %s", title)
             return notification.id
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error showing notification: %s", e)
             return ""
 
@@ -527,7 +527,7 @@ class NotificationService(INotificationService):
 
                 y = parent_rect.top() + y_offset
                 widget.move(x, y)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error positioning notification: %s", e)
 
     def hide_notification(self, notification_id: str) -> bool:
@@ -540,7 +540,7 @@ class NotificationService(INotificationService):
                 del self.active_notifications[notification_id]
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error hiding notification: %s", e)
             return False
 
@@ -550,7 +550,7 @@ class NotificationService(INotificationService):
             for notification_id in list(self.active_notifications.keys()):
                 self.hide_notification(notification_id)
             self.logger.info("All notifications cleared")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error clearing notifications: %s", e)
 
     def set_notification_enabled(self, enabled: bool) -> None:

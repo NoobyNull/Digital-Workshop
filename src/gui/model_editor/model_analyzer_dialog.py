@@ -129,7 +129,7 @@ class ModelAnalyzerDialog(QDialog):
             # Display all information in single text
             self._display_analysis_results(errors)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to analyze model: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {e}")
 
@@ -195,7 +195,7 @@ class ModelAnalyzerDialog(QDialog):
             self.save_btn.setVisible(True)
             self.replace_btn.setVisible(True)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to fix errors: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to fix errors: {e}")
 
@@ -249,7 +249,7 @@ class ModelAnalyzerDialog(QDialog):
                 else:
                     QMessageBox.critical(self, "Error", "Failed to save model")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save model: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save model: {e}")
 
@@ -303,6 +303,6 @@ class ModelAnalyzerDialog(QDialog):
                 Path(temp_path).unlink(missing_ok=True)
                 raise
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to replace file: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to replace file: {e}")

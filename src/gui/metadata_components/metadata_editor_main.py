@@ -310,7 +310,7 @@ class MetadataEditorWidget(QWidget):
 
             self.logger.debug("Loaded %s categories", len(self.categories))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load categories: %s", str(e))
 
     def load_model_metadata(self, model_id: int) -> None:
@@ -358,7 +358,7 @@ class MetadataEditorWidget(QWidget):
 
             self.logger.info("Metadata loaded for model: %s", model['filename'])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
             self.logger.warning("Failed to load metadata for model %s: {str(e)}", model_id)
             try:
@@ -518,7 +518,7 @@ class MetadataEditorWidget(QWidget):
             else:
                 QMessageBox.warning(self, "Warning", "Failed to save metadata")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save metadata: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to save metadata: {str(e)}")
 
@@ -546,7 +546,7 @@ class MetadataEditorWidget(QWidget):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Database save failed: %s", str(e))
             return False
 
@@ -700,7 +700,7 @@ class MetadataEditorWidget(QWidget):
             else:
                 self._clear_preview_image()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load preview image for model %s: {str(e)}", model_id)
             self._clear_preview_image()
 
@@ -799,7 +799,7 @@ class MetadataEditorWidget(QWidget):
                     f"Preview generation failed for model {self.current_model_id}: {error_msg}"
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self, "Error", error_msg)
@@ -883,7 +883,7 @@ class MetadataEditorWidget(QWidget):
         except ValueError as e:
             QMessageBox.warning(self, "Configuration Error", str(e))
             self.logger.warning("AI analysis configuration error: %s", e)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"AI analysis failed: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self, "Error", error_msg)
@@ -906,7 +906,7 @@ class MetadataEditorWidget(QWidget):
             from src.gui.services.ai_description_service import AIDescriptionService
 
             return AIDescriptionService()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get AI service: %s", e)
             return None
 
@@ -933,7 +933,7 @@ class MetadataEditorWidget(QWidget):
             self.metadata_changed.emit(self.current_model_id)
             self.logger.info("Applied AI analysis results to model %s", self.current_model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to apply AI results: %s", e)
             raise
 

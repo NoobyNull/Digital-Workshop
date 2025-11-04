@@ -87,7 +87,7 @@ class SettingsMigrator:
                 version = cursor.fetchone()[0]
                 conn.close()
                 return f"1.0.{version}"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to get old version: %s", e)
 
         return None
@@ -121,7 +121,7 @@ class SettingsMigrator:
             logger.info("Settings migration completed successfully")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Settings migration failed: %s", e)
             return False
 
@@ -148,7 +148,7 @@ class SettingsMigrator:
 
             logger.info("Settings file migrated successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to migrate settings file: %s", e)
             raise
 
@@ -205,7 +205,7 @@ class SettingsMigrator:
                 # Upgrade existing database
                 self._upgrade_database()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to migrate database: %s", e)
             raise
 
@@ -255,7 +255,7 @@ class SettingsMigrator:
             conn.commit()
             conn.close()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to upgrade database: %s", e)
             raise
 
@@ -304,7 +304,7 @@ class SettingsMigrator:
 
             logger.info("User data migrated successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to migrate user data: %s", e)
             raise
 
@@ -328,7 +328,7 @@ class SettingsMigrator:
 
             logger.info("Version information updated")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update version info: %s", e)
             raise
 
@@ -351,7 +351,7 @@ class SettingsMigrator:
                 # For now, we'll keep it for safety
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to cleanup old data: %s", e)
             return False
 
@@ -372,7 +372,7 @@ class SettingsMigrator:
                 logger.info("Backup created at: %s", backup_path)
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create backup: %s", e)
             return False
 
@@ -406,6 +406,6 @@ def migrate_on_startup() -> bool:
             logger.info("No migration needed")
             return True
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error("Migration process failed: %s", e)
         return False

@@ -102,7 +102,7 @@ class GcodePreviewerWidget(QWidget):
             # 3D VTK viewer
             self.vtk_widget = VTKWidget(self.renderer)
             splitter.addWidget(self.vtk_widget)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize VTK viewer: %s", e)
             # Create a placeholder label
             placeholder = QLabel("VTK Viewer unavailable")
@@ -367,7 +367,7 @@ class GcodePreviewerWidget(QWidget):
 
             return str(file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Path validation failed: %s", e)
             QMessageBox.critical(
                 self, "Validation Error", f"Failed to validate file path: {str(e)}"
@@ -411,7 +411,7 @@ class GcodePreviewerWidget(QWidget):
             if self.interactive_loader:
                 self.interactive_loader.load_file(validated_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start loading: %s", e)
             self.file_label.setText(f"Error: {str(e)}")
             self.file_label.setStyleSheet("color: red;")
@@ -608,7 +608,7 @@ class GcodePreviewerWidget(QWidget):
             editor_widget.reload_requested.connect(self._on_gcode_reload)
             editor_widget.show()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to open editor: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to open editor: {str(e)}")
 
@@ -637,7 +637,7 @@ class GcodePreviewerWidget(QWidget):
             self.frame_slider.setMaximum(len(self.moves) - 1)
 
             self.logger.info("G-code reloaded and re-rendered")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reload G-code: %s", e)
 
     def _update_layer_combo(self) -> None:

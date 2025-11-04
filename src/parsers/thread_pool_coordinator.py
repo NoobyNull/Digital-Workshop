@@ -124,7 +124,7 @@ class ThreadPoolCoordinator:
                             f"Completed chunk {chunk.id}: {result.processing_time:.2f}s"
                         )
 
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.error("Failed to process chunk %s: {e}", chunk.id)
                         # Continue with other chunks but mark this as failed
                         error_result = WorkerResult(
@@ -135,7 +135,7 @@ class ThreadPoolCoordinator:
                         )
                         results.append(error_result)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error during result collection: %s", e)
                 raise
 
@@ -176,7 +176,7 @@ class ThreadPoolCoordinator:
                 chunk_id=chunk.id, triangles=triangles, processing_time=processing_time
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             processing_time = time.time() - start_time
             # Note: Can't log here as logger is not serializable
             return WorkerResult(
@@ -219,7 +219,7 @@ class ThreadPoolCoordinator:
                     data, chunk.triangle_count, cancellation_token
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Can't log here as logger is not serializable
             raise
 

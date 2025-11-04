@@ -129,7 +129,7 @@ class ModelLoader:
             else:
                 self.finish_model_loading(file_path, False, "3D viewer not available")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.finish_model_loading(file_path, False, str(e))
 
     def update_loading_progress(self, progress_percent: float, message: str) -> None:
@@ -160,13 +160,13 @@ class ModelLoader:
                 self.main_window.viewer_widget, "reset_save_view_button"
             ):
                 self.main_window.viewer_widget.reset_save_view_button()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to reset save view button: %s", e)
 
         # Apply default material from preferences for imported models
         try:
             self._apply_default_material_from_preferences()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to apply default material from preferences: %s", e)
 
         # Attempt to apply last-used material species (for library models)
@@ -186,7 +186,7 @@ class ModelLoader:
                         self.logger.warning(
                             f"Last material '{last_species}' not found; skipping reapply"
                         )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to reapply last material species: %s", e)
 
         # Update model properties dock if it exists
@@ -248,7 +248,7 @@ class ModelLoader:
             else:
                 self.logger.warning("Model with ID %s not found in database", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle model selection: %s", str(e))
 
     def on_model_double_clicked(self, model_id: int) -> None:
@@ -286,7 +286,7 @@ class ModelLoader:
             else:
                 self.logger.warning("Model with ID %s not found in database", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle model double-click: %s", str(e))
 
     def on_models_added(self, model_ids: List[int]) -> None:
@@ -337,7 +337,7 @@ class ModelLoader:
                     )
             else:
                 self.logger.debug("No default material configured in preferences")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to apply default material from preferences: %s", e)
 
     def _apply_material_species(self, species_name: str) -> None:
@@ -389,7 +389,7 @@ class ModelLoader:
             else:
                 self.logger.debug("No saved camera view for model ID %s", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to restore saved camera: %s", e)
 
     def _start_background_hasher(self) -> None:

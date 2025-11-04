@@ -129,7 +129,7 @@ class VTKErrorHandler:
                         # Extract error information from VTK
                         error_text = calldata if calldata else "Unknown VTK error"
                         self.handler._handle_vtk_error(error_text)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.handler.logger.debug("Error in VTK error callback: %s", e)
 
             # Set up the observer using the custom class
@@ -141,7 +141,7 @@ class VTKErrorHandler:
             vtk.vtkObject.GlobalWarningDisplayOff()
             vtk.vtkObject.SetGlobalWarningDisplay(0)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to set up VTK error observer: %s", e)
 
     def _handle_vtk_error(self, error_text: str) -> None:
@@ -176,17 +176,17 @@ class VTKErrorHandler:
                         self.logger.debug("Recovery strategy succeeded for %s", error_code.value)
                     else:
                         self.logger.warning("Recovery strategy failed for %s", error_code.value)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Recovery strategy failed with exception: %s", e)
 
             # Execute callback if registered
             if error_code in self.error_callbacks:
                 try:
                     self.error_callbacks[error_code](error_info)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error callback failed: %s", e)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in VTK error handler: %s", e)
 
     def _classify_error(self, error_text: str) -> VTKErrorCode:
@@ -305,13 +305,13 @@ class VTKErrorHandler:
                 try:
                     recovery_success = self.recovery_strategies[error_code](error_info)
                     return recovery_success
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Recovery strategy failed: %s", e)
 
             # Default: return True for low/medium severity, False for high/critical
             return severity in [VTKErrorSeverity.LOW, VTKErrorSeverity.MEDIUM]
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in error handler: %s", e)
             return False
 
@@ -386,7 +386,7 @@ class VTKErrorHandler:
         """
         try:
             return operation()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             handled = self.handle_error(e, context)
             if not handled:
                 raise  # Re-raise if not handled gracefully

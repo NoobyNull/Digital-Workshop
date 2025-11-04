@@ -95,7 +95,7 @@ class ToolMigrationUtility:
                     )
                     success_count += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     fail_count += 1
                     error_msg = f"Failed to migrate tool {idx}: {str(e)}"
                     errors.append(error_msg)
@@ -109,7 +109,7 @@ class ToolMigrationUtility:
             self.logger.info("Migration complete: %s successful, {fail_count} failed", success_count)
             return success_count, fail_count, errors
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Migration failed: %s", e)
             raise
 
@@ -189,7 +189,7 @@ class ToolMigrationUtility:
                 custom_properties=custom_properties,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to parse JSON tool item: %s", e)
             return None
 
@@ -244,7 +244,7 @@ class ToolMigrationUtility:
                 "status": "ready" if tool_count > 0 else "empty",
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get migration status: %s", e)
             return {
                 "database_path": self.db_path,

@@ -308,12 +308,12 @@ class TransactionManager:
             # Commit transaction
             transaction.commit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Rollback transaction
             if transaction:
                 try:
                     transaction.rollback()
-                except Exception as rollback_error:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as rollback_error:
                     logger.error(
                         f"Failed to rollback transaction {transaction.transaction_id}: {str(rollback_error)}"
                     )
@@ -366,7 +366,7 @@ class TransactionManager:
                     result = func(*args, **kwargs)
                     results.append(result)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error(
                         f"Operation {op} failed in transaction {transaction.transaction_id}: {str(e)}"
                     )
@@ -442,7 +442,7 @@ class TransactionManager:
                         transaction.rollback()
                         cleaned_count += 1
                         logger.warning("Cleaned up stale transaction %s", tid)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         logger.error("Failed to cleanup stale transaction %s: {str(e)}", tid)
 
         return cleaned_count
@@ -454,7 +454,7 @@ class TransactionManager:
             for transaction in list(self.active_transactions.values()):
                 try:
                     transaction.rollback()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Failed to rollback transaction during cleanup: %s", str(e))
             self.active_transactions.clear()
 

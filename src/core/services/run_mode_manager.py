@@ -40,7 +40,7 @@ class RunModeManager:
             logger.info("Run mode: %s", run_mode)
             return run_mode
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get run mode: %s", str(e))
             return self.RUN_MODE_NORMAL
 
@@ -60,7 +60,7 @@ class RunModeManager:
             logger.info("Set run mode: %s", mode)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to set run mode: %s", str(e))
             return False
 
@@ -78,7 +78,7 @@ class RunModeManager:
             logger.info("Marked first run as complete")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to mark first run complete: %s", str(e))
             return False
 
@@ -96,7 +96,7 @@ class RunModeManager:
             logger.info("Storage location: %s", location)
             return location
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get storage location: %s", str(e))
             return str(self.path_manager.get_data_directory())
 
@@ -118,7 +118,7 @@ class RunModeManager:
             logger.info("Set storage location: %s", location)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to set storage location: %s", str(e))
             return False
 
@@ -131,7 +131,7 @@ class RunModeManager:
             logger.info("Database path: %s", db_path)
             return db_path
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get database path: %s", str(e))
             return str(self.path_manager.get_data_directory() / "3dmm.db")
 
@@ -144,7 +144,7 @@ class RunModeManager:
             Path(projects_dir).mkdir(parents=True, exist_ok=True)
             return projects_dir
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get projects directory: %s", str(e))
             return str(self.path_manager.get_data_dir() / "projects")
 
@@ -157,7 +157,7 @@ class RunModeManager:
             Path(imports_dir).mkdir(parents=True, exist_ok=True)
             return imports_dir
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get imports directory: %s", str(e))
             return str(self.path_manager.get_data_directory() / "imports")
 
@@ -165,7 +165,7 @@ class RunModeManager:
         """Get preference value."""
         try:
             return self.settings.value(f"preferences/{key}", default)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get preference: %s", str(e))
             return default
 
@@ -174,7 +174,7 @@ class RunModeManager:
         try:
             self.settings.setValue(f"preferences/{key}", value)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to set preference: %s", str(e))
             return False
 
@@ -185,6 +185,6 @@ class RunModeManager:
             prefs = {key: self.settings.value(key) for key in self.settings.childKeys()}
             self.settings.endGroup()
             return prefs
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get preferences: %s", str(e))
             return {}

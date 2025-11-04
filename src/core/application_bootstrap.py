@@ -93,17 +93,17 @@ class ApplicationBootstrap:
                         self.logger.debug("Theme applied successfully")
                     else:
                         self.logger.debug("Theme application returned False, but continuing")
-                except Exception as theme_error:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as theme_error:
                     self.logger.debug("Failed to apply theme: %s", theme_error)
 
                 return True
 
-            except Exception as error:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
                 self.logger.debug("Theme initialization: %s", error)
                 # Continue without theme system - not critical for startup
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Theme initialization: %s", e)
             # Continue without theme system - not critical for startup
             return True

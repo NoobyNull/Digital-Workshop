@@ -179,7 +179,7 @@ class EnhancedErrorHandler(IErrorHandler):
 
             return recovery_success
 
-        except Exception as handling_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
             self.logger.error("Error handler failed: %s", str(handling_error), exc_info=True)
             return False
 
@@ -214,7 +214,7 @@ class EnhancedErrorHandler(IErrorHandler):
                 exc_info=True,
             )
 
-        except Exception as log_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as log_error:
             self.logger.error("Failed to log error: %s", str(log_error), exc_info=True)
 
     def should_retry(self, error: Exception) -> bool:
@@ -699,7 +699,7 @@ class EnhancedErrorHandler(IErrorHandler):
 
             return False
 
-        except Exception as recovery_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
             self.logger.error("Recovery attempt failed: %s", str(recovery_error), exc_info=True)
             return False
 
@@ -800,7 +800,7 @@ def handle_errors(operation_name: str = None, reraise: bool = True):
 
             try:
                 return func(*args, **kwargs)
-            except Exception as error:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
                 context = {
                     "operation": operation,
                     "function": func.__name__,

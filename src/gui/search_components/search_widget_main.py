@@ -360,7 +360,7 @@ class SearchWidget(QWidget):
                 try:
                     self.search_engine.save_search(name, query, filters)
                     self.refresh_saved_searches()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Failed to save search: %s", str(e))
 
     def refresh_search_history(self):
@@ -389,7 +389,7 @@ class SearchWidget(QWidget):
                 list_item.setData(Qt.UserRole, item)
                 self.history_widget.addItem(list_item)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to refresh search history: %s", str(e))
 
     def refresh_saved_searches(self):
@@ -419,7 +419,7 @@ class SearchWidget(QWidget):
                 list_item.setData(Qt.UserRole, item)
                 self.saved_searches_widget.addItem(list_item)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to refresh saved searches: %s", str(e))
 
     def load_history_search(self, item: QListWidgetItem):

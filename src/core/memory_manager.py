@@ -172,10 +172,10 @@ class MemoryMonitor:
                 for callback in self._callbacks:
                     try:
                         callback(self._stats)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.warning("Memory monitor callback failed: %s", e)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Memory monitoring error: %s", e)
 
             time.sleep(self.update_interval)
@@ -201,7 +201,7 @@ class MemoryMonitor:
                 else:
                     self._stats.pressure_level = MemoryPressure.LOW
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update memory stats: %s", e)
 
     def _check_pressure_levels(self) -> None:
@@ -365,7 +365,7 @@ class MemoryManager:
                 # Try to return to pool
                 self.memory_pool.free(block)
                 self.logger.debug("Returned %s bytes to pool for {owner}", len(block))
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Failed to return block to pool: %s", e)
 
             # Remove from tracking

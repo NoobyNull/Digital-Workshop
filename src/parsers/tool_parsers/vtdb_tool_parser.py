@@ -52,7 +52,7 @@ class VTDBToolParser(BaseToolParser):
 
         except sqlite3.Error as e:
             return False, f"Database error: {str(e)}"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def parse(self, file_path: str, progress_callback: ProgressCallback = None) -> List[ToolData]:
@@ -123,6 +123,6 @@ class VTDBToolParser(BaseToolParser):
             self.logger.info("Parsed %s tools from VTDB file", len(tools))
             return tools
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse VTDB file: %s", e)
             raise

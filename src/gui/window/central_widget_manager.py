@@ -74,7 +74,7 @@ class CentralWidgetManager:
             # Managers
             try:
                 self.main_window.material_manager = MaterialManager(get_database_manager())
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.main_window.material_manager = None
                 self.logger.warning("MaterialManager unavailable: %s", e)
 
@@ -87,9 +87,9 @@ class CentralWidgetManager:
                     self.main_window.lighting_manager.create_light()
                     try:
                         self._load_lighting_settings()
-                    except Exception as le:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as le:
                         self.logger.warning("Failed to load lighting settings: %s", le)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.main_window.lighting_manager = None
                 self.logger.warning("LightingManager unavailable: %s", e)
 
@@ -101,7 +101,7 @@ class CentralWidgetManager:
                     self.main_window
                 )
                 self.logger.info("MaterialLightingIntegrator created successfully")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.main_window.material_lighting_integrator = None
                 self.logger.warning("MaterialLightingIntegrator unavailable: %s", e)
 
@@ -208,7 +208,7 @@ class CentralWidgetManager:
                 self.main_window.gcode_previewer_widget, "G Code Previewer"
             )
             self.logger.info("G-code Previewer widget created successfully")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
             self.main_window.hero_tabs.addTab(
                 _placeholder("GCP", "G-code Previewer\n\nComponent unavailable."),
@@ -222,7 +222,7 @@ class CentralWidgetManager:
             self.main_window.clo_widget = CutListOptimizerWidget()
             self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "Cut List Optimizer")
             self.logger.info("CLO widget created successfully")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create CLO widget: %s", e)
             self.main_window.hero_tabs.addTab(
                 _placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."),
@@ -238,7 +238,7 @@ class CentralWidgetManager:
                 self.main_window.feeds_and_speeds_widget, "Feed and Speed"
             )
             self.logger.info("Feeds & Speeds widget created successfully")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create Feeds & Speeds widget: %s", e)
             self.main_window.hero_tabs.addTab(
                 _placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."),
@@ -259,7 +259,7 @@ class CentralWidgetManager:
 
             self.main_window.dynamic_tab_manager = setup_dynamic_tabs(self.main_window.hero_tabs)
             self.logger.info("Dynamic tab manager initialized")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to initialize dynamic tab manager: %s", e)
 
         # Persist active hero tab on change
@@ -295,7 +295,7 @@ class CentralWidgetManager:
                 self.main_window._force_central_widget_layout()
 
             self.logger.info("Hero tabs set as central widget - dock system will manage layout")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to set central widget: %s", e)
 
         # 3) Ensure all docks are visible but don't force positioning
@@ -314,7 +314,7 @@ class CentralWidgetManager:
                 if not self.main_window.model_library_dock.isVisible():
                     self.main_window.model_library_dock.setVisible(True)
             self.logger.info("All docks made visible - user can arrange freely")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to ensure dock visibility: %s", e)
 
         self.logger.debug("Center Hero Tabs layout with right-column stacking completed")

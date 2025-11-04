@@ -106,7 +106,7 @@ def set_theme(theme_dict: dict) -> None:
         # Extract theme info from dict
         theme_name = theme_dict.get("name", "dark")
         service.apply_theme(theme_name)
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         try:
             from src.core.logging_config import get_logger
 

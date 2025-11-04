@@ -191,7 +191,7 @@ class UnifiedThemeManager(QObject):
 
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = (time.time() - start_time) * 1000
             self._track_operation(False, elapsed, operation_id)
 
@@ -252,7 +252,7 @@ class UnifiedThemeManager(QObject):
         try:
             theme_data = self._create_theme_data(self._current_theme, self._current_variant)
             return self._persistence.save_theme(theme_data)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save theme settings: %s", e)
             return False
 
@@ -279,7 +279,7 @@ class UnifiedThemeManager(QObject):
 
             return self.apply_theme(theme, variant)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load theme settings: %s", e)
             return False
 
@@ -304,7 +304,7 @@ class UnifiedThemeManager(QObject):
         """
         try:
             return self._persistence.export_theme(file_path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export theme: %s", e)
             return False
 
@@ -324,7 +324,7 @@ class UnifiedThemeManager(QObject):
                 # Reload settings after import
                 return self.load_settings()
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import theme: %s", e)
             return False
 
@@ -386,7 +386,7 @@ class UnifiedThemeManager(QObject):
         try:
             self._registry.cleanup_dead_widgets()
             logger.debug("Theme system resources cleaned up")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Resource cleanup failed: %s", e)
 
     def _connect_signals(self) -> None:
@@ -403,7 +403,7 @@ class UnifiedThemeManager(QObject):
 
             logger.debug("Theme manager signals connected")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to connect signals: %s", e)
 
     def _initialize_system(self) -> None:
@@ -426,7 +426,7 @@ class UnifiedThemeManager(QObject):
 
             logger.info("Unified theme system initialized successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Theme system initialization failed: %s", e, exc_info=True)
             self._initialized = False
             self._system_ready = False

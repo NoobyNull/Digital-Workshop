@@ -182,7 +182,7 @@ class DockDragHandler(QObject):
 
             # Perform snap
             self._mw._snap_dock_to_edge(self._dock, edge)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
                 self._logger.warning("Snap finalize failed: %s", e)
             except Exception:
@@ -204,7 +204,7 @@ class DockDragHandler(QObject):
                     central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
                 self._logger.debug("Central widget resize ensured for right dock movement")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
                 self._logger.debug("Failed to ensure central widget resize: %s", e)
             except Exception:

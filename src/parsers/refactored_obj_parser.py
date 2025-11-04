@@ -153,7 +153,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse OBJ file %s: {str(e)}", file_path)
             raise
 
@@ -195,7 +195,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             else:
                 return self._parse_obj_file_standard(file_path, progress_callback)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing OBJ file: %s", str(e))
             raise OBJParseError(f"Failed to parse OBJ file: {str(e)}")
 
@@ -691,7 +691,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
                 self.logger.info("Loaded %s materials from {mtl_path}", len(self.materials))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load MTL file %s: {str(e)}", mtl_path)
 
     def _validate_geometry_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -735,7 +735,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating OBJ geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -785,7 +785,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting OBJ geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
@@ -839,7 +839,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                 ),
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting OBJ model info: %s", str(e))
             return {
                 "vertex_count": 0,
@@ -875,7 +875,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                 # Additional validation could be added here
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error validating OBJ file %s: {str(e)}", file_path)
             return False
 
@@ -942,7 +942,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             material_data = {"type": "material", "name": parts[1]}
                             yield material_data
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in OBJ streaming parse: %s", str(e))
             raise ParseError(f"Streaming failed: {str(e)}")
 

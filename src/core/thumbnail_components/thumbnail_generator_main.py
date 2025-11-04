@@ -57,7 +57,7 @@ class ThumbnailGenerator:
 
             self.material_manager = MaterialManager(get_database_manager())
             self.logger.debug("MaterialManager initialized for thumbnail generation")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Could not initialize MaterialManager for thumbnails: %s", e)
 
         # Default thumbnail size (1280x1280 for high quality with auto-downscaling)
@@ -112,7 +112,7 @@ class ThumbnailGenerator:
                     self.logger.info(
                         f"Removed existing thumbnail for regeneration: {thumbnail_path}"
                     )
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to remove existing thumbnail: %s", e)
 
             self.logger.info("Generating thumbnail for: %s", model_path)
@@ -146,7 +146,7 @@ class ThumbnailGenerator:
                 self.logger.error("Thumbnail rendering failed")
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = time.time() - start_time
             self.logger.error(
                 f"Failed to generate thumbnail after {elapsed:.2f}s: {e}", exc_info=True
@@ -183,7 +183,7 @@ class ThumbnailGenerator:
 
             return model
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading model %s: {e}", model_path, exc_info=True)
             return None
 
@@ -306,7 +306,7 @@ class ThumbnailGenerator:
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error rendering thumbnail: %s", e, exc_info=True)
             return False
         finally:
@@ -409,7 +409,7 @@ class ThumbnailGenerator:
             self.logger.debug("Created polydata (slow path): %s triangles", len(model.triangles))
             return polydata
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error creating polydata: %s", e, exc_info=True)
             return None
 
@@ -450,7 +450,7 @@ class ThumbnailGenerator:
                 self.logger.warning("Unknown background type: %s, using default", type(background))
                 renderer.SetBackground(0.95, 0.95, 0.95)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting background: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
@@ -521,7 +521,7 @@ class ThumbnailGenerator:
             # Ensure the background is rendered behind all other actors
             actor.GetProperty().SetRepresentationToSurface()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting background image: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
@@ -570,7 +570,7 @@ class ThumbnailGenerator:
                 "Bright studio lighting setup: ambient headlight + 2 directional point lights"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting up lighting: %s", e, exc_info=True)
 
     def _hex_to_rgb(self, hex_color: str) -> Tuple[float, float, float]:
@@ -701,6 +701,6 @@ class ThumbnailGenerator:
             self.logger.info(f"Texture '{material_name}' applied with UV mapping")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Error applying texture '{material_name}': {e}", exc_info=True)
             return False

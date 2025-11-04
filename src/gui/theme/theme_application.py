@@ -169,7 +169,7 @@ class ThemeApplication(QObject):
                 logger.error(error_msg)
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = (time.time() - start_time) * 1000
             self._track_application(False, elapsed)
 
@@ -333,7 +333,7 @@ class ThemeApplication(QObject):
 
             return qt_success or fallback_success  # At least one method should succeed
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Staged theme application failed: %s", e)
             return False
 
@@ -363,7 +363,7 @@ class ThemeApplication(QObject):
             logger.debug("Theme application prepared: %s/{variant}", theme)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Theme application preparation failed: %s", e)
             return False
 
@@ -410,7 +410,7 @@ class ThemeApplication(QObject):
         except ImportError:
             logger.warning("QDarkStyleSheet library not available")
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("QDarkStyleSheet theme application failed: %s", e)
             return False
 
@@ -475,7 +475,7 @@ class ThemeApplication(QObject):
             logger.info("Fallback theme applied: %s/{variant}", theme)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Fallback theme application failed: %s", e)
             return False
 
@@ -957,7 +957,7 @@ class ThemeApplication(QObject):
             logger.info("Widget theme updates: %s successful, {failed} failed", successful)
             return True  # Return True even if some widgets failed
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Widget theme updates failed: %s", e)
             return False
 
@@ -994,7 +994,7 @@ class ThemeApplication(QObject):
             logger.debug("Theme application validated: %s/{variant}", theme)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Theme application validation failed: %s", e)
             return False
 
@@ -1216,7 +1216,7 @@ class ThemeApplication(QObject):
                     "variant": self._current_variant,
                 }
                 logger.debug("Rollback data stored")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to store rollback data: %s", e)
 
     def _attempt_rollback(self) -> None:
@@ -1230,7 +1230,7 @@ class ThemeApplication(QObject):
             if app and "stylesheet" in self._rollback_data:
                 app.setStyleSheet(self._rollback_data["stylesheet"])
                 logger.info("Theme application rolled back successfully")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Theme rollback failed: %s", e)
 
     def _track_application(self, success: bool, elapsed_ms: float) -> None:

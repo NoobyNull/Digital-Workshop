@@ -90,7 +90,7 @@ class RootFolderManager(QObject):
 
             self.logger.info("Loaded %s root folders", len(self._folders))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load root folders: %s", e)
             self._add_default_folders()
 
@@ -110,7 +110,7 @@ class RootFolderManager(QObject):
             folders_data_str = json.dumps(folders_data)
             self.settings.setValue("root_folders", folders_data_str)
             self.logger.debug("Saved %s root folders", len(self._folders))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save root folders: %s", e)
 
     def _validate_folder(self, folder: RootFolder) -> bool:
@@ -130,7 +130,7 @@ class RootFolderManager(QObject):
                 self.logger.warning("No permission to access root folder: %s", folder.path)
                 return False
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating root folder %s: {e}", folder.path)
             return False
 
@@ -171,7 +171,7 @@ class RootFolderManager(QObject):
             self.logger.info("Added root folder: %s ({path_str})", display_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add root folder %s: {e}", path)
             return False
 
@@ -189,7 +189,7 @@ class RootFolderManager(QObject):
             self.logger.warning("Root folder with ID %s not found", folder_id)
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to remove root folder %s: {e}", folder_id)
             return False
 
@@ -222,7 +222,7 @@ class RootFolderManager(QObject):
             self.logger.warning("Root folder with ID %s not found", folder_id)
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update root folder %s: {e}", folder_id)
             return False
 

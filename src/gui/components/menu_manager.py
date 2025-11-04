@@ -286,7 +286,7 @@ class MenuManager:
 
             dialog = WalkthroughDialog(self.main_window)
             dialog.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show tips dialog: %s", e)
 
     def _show_about(self) -> None:

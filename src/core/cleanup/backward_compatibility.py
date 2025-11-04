@@ -60,7 +60,7 @@ class LegacyVTKCleanupCoordinator:
             # Return success based on stats
             return stats.failed_phases == 0
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Legacy VTK cleanup failed: %s", e)
             return False
 
@@ -85,7 +85,7 @@ class LegacyVTKCleanupCoordinator:
                 "errors_list": stats.errors,
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Legacy cleanup_all_resources failed: %s", e)
             return {
                 "success": 0,
@@ -141,7 +141,7 @@ class LegacyViewerWidgetFacade:
 
             return stats.failed_phases == 0
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Legacy viewer widget cleanup failed: %s", e)
             return False
 
@@ -191,7 +191,7 @@ class LegacyVTKSceneManager:
 
             return stats.failed_phases == 0
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Legacy VTK scene manager cleanup failed: %s", e)
             return False
 
@@ -298,7 +298,7 @@ class CleanupErrorHandler:
 
             return True
 
-        except Exception as handling_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
             self.logger.error("Error in cleanup error handler: %s", handling_error)
             return False
 

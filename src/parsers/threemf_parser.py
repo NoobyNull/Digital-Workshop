@@ -122,7 +122,7 @@ class ThreeMFParser(BaseParser):
                 format_type=ModelFormat.THREE_MF,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse 3MF file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse 3MF file: {str(e)}")
 
@@ -181,7 +181,7 @@ class ThreeMFParser(BaseParser):
             raise ParseError("Invalid 3MF file: not a valid ZIP archive")
         except ET.ParseError as e:
             raise ParseError(f"Invalid 3MF file: XML parsing error - {str(e)}")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise ParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_objects(self, root: ET.Element) -> None:
@@ -625,5 +625,5 @@ class ThreeMFParser(BaseParser):
             except zipfile.BadZipFile:
                 return False, "Invalid 3MF file: not a valid ZIP archive"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"

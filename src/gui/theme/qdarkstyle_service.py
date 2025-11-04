@@ -111,7 +111,7 @@ class QDarkStyleThemeService:
             logger.info("QDarkStyleSheet theme applied: %s", palette_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
@@ -156,7 +156,7 @@ class QDarkStyleThemeService:
             else:  # Linux and others
                 return "dark"  # Default to dark
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Failed to detect system theme: %s", e)
             return "dark"  # Safe default
 

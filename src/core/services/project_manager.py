@@ -84,7 +84,7 @@ class ProjectManager:
             logger.info("Opened project: %s", project['name'])
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to open project: %s", str(e))
             return False
 
@@ -97,7 +97,7 @@ class ProjectManager:
                 self.current_project = None
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to close project: %s", str(e))
             return False
 
@@ -110,7 +110,7 @@ class ProjectManager:
         """Get project by ID."""
         try:
             return self.db_manager.get_project(project_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get project: %s", str(e))
             return None
 
@@ -119,7 +119,7 @@ class ProjectManager:
         """Get project by name (case-insensitive)."""
         try:
             return self.db_manager.get_project_by_name(name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get project by name: %s", str(e))
             return None
 
@@ -128,7 +128,7 @@ class ProjectManager:
         """List all projects."""
         try:
             return self.db_manager.list_projects(limit=limit, offset=offset)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to list projects: %s", str(e))
             return []
 
@@ -137,7 +137,7 @@ class ProjectManager:
         """List imported projects."""
         try:
             return self.db_manager.list_imported_projects()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to list imported projects: %s", str(e))
             return []
 
@@ -146,7 +146,7 @@ class ProjectManager:
         """Update project."""
         try:
             return self.db_manager.update_project(project_id, **kwargs)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update project: %s", str(e))
             return False
 
@@ -159,7 +159,7 @@ class ProjectManager:
 
             return self.db_manager.delete_project(project_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to delete project: %s", str(e))
             return False
 
@@ -169,7 +169,7 @@ class ProjectManager:
         try:
             project = self.db_manager.get_project_by_name(name)
             return project is not None
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to check duplicate: %s", str(e))
             return False
 
@@ -178,7 +178,7 @@ class ProjectManager:
         """Get total number of projects."""
         try:
             return self.db_manager.get_project_count()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get project count: %s", str(e))
             return 0
 
@@ -187,7 +187,7 @@ class ProjectManager:
         """Get all files in a project."""
         try:
             return self.db_manager.get_files_by_project(project_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get project files: %s", str(e))
             return []
 
@@ -196,6 +196,6 @@ class ProjectManager:
         """Get number of files in a project."""
         try:
             return self.db_manager.get_file_count_by_project(project_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get file count: %s", str(e))
             return 0

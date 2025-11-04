@@ -55,7 +55,7 @@ class FileMaintenanceWorker(QThread):
             if not self._stop_requested:
                 self.finished.emit(result)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Maintenance operation failed: %s", e, exc_info=True)
             self.error.emit(f"Maintenance operation failed: {str(e)}")
 
@@ -89,13 +89,13 @@ class FileMaintenanceWorker(QThread):
                     else:
                         result["errors"] += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error hashing model %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Recalculate hashes failed: %s", e)
             raise
 
@@ -130,13 +130,13 @@ class FileMaintenanceWorker(QThread):
                         db_manager.update_file_hash(model_id, file_hash)
                         result["updated"] += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error matching model %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Match files failed: %s", e)
             raise
 
@@ -202,13 +202,13 @@ class FileMaintenanceWorker(QThread):
                     else:
                         result["errors"] += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error generating thumbnail %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Regenerate thumbnails failed: %s", e)
             raise
 

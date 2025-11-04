@@ -60,7 +60,7 @@ class VTKRenderingEngine:
 
             self.logger.debug("Render window created: %sx{self.height}", self.width)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to setup render window: %s", e)
             return False
 
@@ -82,7 +82,7 @@ class VTKRenderingEngine:
             else:
                 # Professional studio background: dark teal-gray
                 self.renderer.SetBackground(0.25, 0.35, 0.40)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set background color: %s", e)
             # Professional studio background: dark teal-gray
             self.renderer.SetBackground(0.25, 0.35, 0.40)
@@ -146,7 +146,7 @@ class VTKRenderingEngine:
             self.renderer.AddActor(actor)
             self.logger.debug("Background image set: %s", image_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set background image: %s", e)
 
     def setup_lighting(self) -> None:
@@ -186,7 +186,7 @@ class VTKRenderingEngine:
             self.renderer.AddLight(ambient_light)
 
             self.logger.debug("Professional studio lighting setup complete")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to setup lighting: %s", e)
 
     def setup_camera(self, bounds: Tuple[float, ...], zoom_factor: float = 1.0) -> None:
@@ -205,7 +205,7 @@ class VTKRenderingEngine:
                 self.camera.Zoom(zoom_factor)
 
             self.logger.debug("Camera setup complete (zoom: %s)", zoom_factor)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to setup camera: %s", e)
 
     def render(self) -> None:
@@ -213,7 +213,7 @@ class VTKRenderingEngine:
         try:
             self.render_window.Render()
             self.logger.debug("Render complete")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to render: %s", e)
 
     def capture_screenshot(self, output_path: str) -> bool:
@@ -241,7 +241,7 @@ class VTKRenderingEngine:
 
             self.logger.debug("Screenshot saved: %s", output_path)
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to capture screenshot: %s", e)
             return False
 
@@ -254,5 +254,5 @@ class VTKRenderingEngine:
             self.renderer = None
             self.camera = None
             self.logger.debug("Cleanup complete")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Cleanup error: %s", e)

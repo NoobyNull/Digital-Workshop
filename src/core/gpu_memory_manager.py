@@ -123,7 +123,7 @@ class GPUMemoryManager:
                     self.logger.error("GPU buffer allocation failed for %s bytes", size_bytes)
                     return None
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error allocating STL buffer: %s", e)
                 return None
 
@@ -254,7 +254,7 @@ class GPUMemoryManager:
             self.logger.info("Successfully streamed %s triangles to GPU", triangle_count)
             return output_buffer
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error streaming file to GPU: %s", e)
             return None
 
@@ -287,7 +287,7 @@ class GPUMemoryManager:
 
                 self.logger.debug("Freed GPU buffer: %s ({buffer.size_bytes} bytes)", buffer_id)
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error freeing GPU buffer: %s", e)
 
     @log_function_call

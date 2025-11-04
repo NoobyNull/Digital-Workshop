@@ -92,7 +92,7 @@ class ToolExportManager:
             self.logger.info("Exported %s tools to CSV: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to CSV", len(tools)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to CSV: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
@@ -152,7 +152,7 @@ class ToolExportManager:
             self.logger.info("Exported %s tools to JSON: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to JSON", len(tools)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to JSON: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
@@ -237,7 +237,7 @@ class ToolExportManager:
                 len(tools),
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to external database: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
@@ -279,6 +279,6 @@ class ToolExportManager:
                 "vendors": sorted(list(vendors)),
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get export statistics: %s", e)
             return {"total_tools": 0, "error": str(e)}

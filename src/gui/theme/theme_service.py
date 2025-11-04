@@ -91,7 +91,7 @@ class SystemThemeDetector:
                 return self._detect_macos()
             elif system == "Linux":
                 return self._detect_linux()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to detect system theme: %s", e)
 
         return "light"  # Default fallback
@@ -113,7 +113,7 @@ class SystemThemeDetector:
 
             # value == 1 means light theme, value == 0 means dark theme
             return "light" if value == 1 else "dark"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Windows theme detection failed: %s", e)
             return "light"
 
@@ -139,7 +139,7 @@ class SystemThemeDetector:
             if result.returncode == 0 and "Dark" in result.stdout:
                 return "dark"
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("macOS theme detection failed: %s", e)
             return "light"
 
@@ -186,7 +186,7 @@ class SystemThemeDetector:
                 return "dark"
 
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Linux theme detection failed: %s", e)
             return "light"
 
@@ -307,7 +307,7 @@ class ThemeService:
 
             return self._apply_qt_material(app, theme)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
@@ -330,7 +330,7 @@ class ThemeService:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to apply fallback theme: %s", e)
             return False
 
@@ -380,7 +380,7 @@ class ThemeService:
 
                 if self._auto_save_enabled:
                     self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply preset %s: %s", name, e)
             raise
 
@@ -412,7 +412,7 @@ class ThemeService:
 
                 if self._auto_save_enabled:
                     self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to set color %s: %s", name, e)
             raise
 
@@ -518,7 +518,7 @@ class ThemeService:
             if self._manager:
                 self._persistence.save_theme(self._manager.colors)
             logger.info("Theme saved")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save theme: %s", e)
 
     def load_theme(self) -> bool:
@@ -536,7 +536,7 @@ class ThemeService:
                 logger.info("Theme loaded from AppData")
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load theme: %s", e)
             return False
 
@@ -551,7 +551,7 @@ class ThemeService:
             if self._manager:
                 self._persistence.export_theme(path, self._manager.colors)
             logger.info("Theme exported to %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export theme: %s", e)
             raise
 
@@ -568,7 +568,7 @@ class ThemeService:
                 self._manager.set_colors(colors)
                 self._current_preset = "custom"
             logger.info("Theme imported from %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import theme: %s", e)
             raise
 

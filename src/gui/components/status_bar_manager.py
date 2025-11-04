@@ -165,7 +165,7 @@ class StatusBarManager:
                 "Toolbar icons active",
             ]:
                 self.memory_label.setText("Memory: N/A (psutil not available)")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update memory status: %s", str(e))
             if self.status_label.text() not in [
                 "Applied main_window.css",
@@ -193,7 +193,7 @@ class StatusBarManager:
                 self.background_hasher.pause()
                 self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
                 self.main_window.statusBar().showMessage("Background hashing paused", 2000)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to toggle background hasher: %s", e)
 
     def _start_background_hasher(self) -> None:
@@ -218,7 +218,7 @@ class StatusBarManager:
             self.hash_indicator.setToolTip("Background hashing active - Click to pause")
 
             self.logger.info("Background hasher started")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start background hasher: %s", e)
 
     def _on_hash_progress(self, filename: str) -> None:
@@ -270,7 +270,7 @@ class StatusBarManager:
                 if existing and existing.get("file_hash"):
                     db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle duplicate: %s", e)
 
     def _on_hashing_complete(self) -> None:
@@ -294,7 +294,7 @@ class StatusBarManager:
                 self.layout_edit_indicator.setText("Layout Edit Mode: ON")
             else:
                 self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update layout edit mode indicator: %s", e)
 
     def _cycle_theme(self) -> None:
@@ -329,7 +329,7 @@ class StatusBarManager:
                 # Fallback to text
                 self.theme_button.setText(current_theme[0].upper())
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update theme icon: %s", e)
 
 

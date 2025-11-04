@@ -161,7 +161,7 @@ class BackgroundLoadingManager:
                     job.progress = 100.0
                     job.status_message = "Completed"
                 self.logger.info("Loading job %s completed successfully", job_id)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 with self._lock:
                     job.error = e
                     job.state = LoadingState.FAILED
@@ -372,7 +372,7 @@ class BackgroundLoadingManager:
 
                 return result
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 job.state = LoadingState.FAILED
                 job.status_message = f"Failed: {str(e)}"
 
@@ -441,7 +441,7 @@ class BackgroundLoadingManager:
 
             self.logger.debug("Cleaned up resources for failed job %s", job_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to cleanup job %s: {e}", job_id)
 
     def get_error_recovery_suggestions(self, error: Exception) -> List[str]:
@@ -499,7 +499,7 @@ class BackgroundLoadingManager:
                     ]
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to generate error recovery suggestions: %s", e)
             suggestions = ["Check application logs for more details"]
 

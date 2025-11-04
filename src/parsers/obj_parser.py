@@ -130,7 +130,7 @@ class OBJParser(BaseParser):
                 format_type=ModelFormat.OBJ,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse OBJ file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse OBJ file: {str(e)}")
 
@@ -246,7 +246,7 @@ class OBJParser(BaseParser):
 
                 return vertices, normals, texture_coords, faces, self.materials
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise ParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_face(self, face_parts: List[str], material_name: str) -> OBJFace:
@@ -528,7 +528,7 @@ class OBJParser(BaseParser):
 
                 self.logger.info("Loaded %s materials from {mtl_path}", len(self.materials))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load MTL file %s: {str(e)}", mtl_path)
 
     def validate_file(self, file_path: Union[str, Path]) -> Tuple[bool, str]:
@@ -564,5 +564,5 @@ class OBJParser(BaseParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"

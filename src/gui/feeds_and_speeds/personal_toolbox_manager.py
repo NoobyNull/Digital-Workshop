@@ -44,7 +44,7 @@ class PersonalToolboxManager:
             self.logger.info("Added tool to toolbox: %s", tool.description)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add tool to toolbox: %s", e)
             return False
 
@@ -65,7 +65,7 @@ class PersonalToolboxManager:
             self.logger.info("Removed tool from toolbox: %s", tool_guid)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to remove tool from toolbox: %s", e)
             return False
 
@@ -74,7 +74,7 @@ class PersonalToolboxManager:
         try:
             toolbox_data = self._load_toolbox()
             return [Tool.from_dict(t) for t in toolbox_data]
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load toolbox: %s", e)
             return []
 
@@ -102,7 +102,7 @@ class PersonalToolboxManager:
         try:
             toolbox_json = self.settings.value(self.SETTINGS_KEY, "[]", type=str)
             return json.loads(toolbox_json)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Failed to load toolbox from settings: %s", e)
             return []
 
@@ -112,5 +112,5 @@ class PersonalToolboxManager:
             toolbox_json = json.dumps(toolbox)
             self.settings.setValue(self.SETTINGS_KEY, toolbox_json)
             self.settings.sync()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save toolbox to settings: %s", e)

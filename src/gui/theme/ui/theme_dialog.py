@@ -70,7 +70,7 @@ class ThemeDialog(QDialog):
         try:
             self._setup_ui()
             self._load_current_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             from src.core.logging_config import get_logger
 
             logger = get_logger(__name__)
@@ -279,7 +279,7 @@ class ThemeDialog(QDialog):
             try:
                 self.service.export_theme(Path(path))
                 QMessageBox.information(self, "Success", "Theme exported successfully")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to export theme: {e}")
 
     def _on_import(self) -> None:
@@ -291,7 +291,7 @@ class ThemeDialog(QDialog):
                 self._load_current_theme()
                 QMessageBox.information(self, "Success", "Theme imported successfully")
                 self.theme_applied.emit("custom")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to import theme: {e}")
 
     def _on_reset(self) -> None:

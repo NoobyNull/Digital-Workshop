@@ -102,7 +102,7 @@ def create_import_tables(connection: sqlite3.Connection) -> Tuple[bool, Optional
 
         return True, None
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         error_msg = f"Failed to create import tables: {e}"
         logger.error(error_msg, exc_info=True)
         return False, error_msg
@@ -163,7 +163,7 @@ def extend_models_table(connection: sqlite3.Connection) -> Tuple[bool, Optional[
 
         return True, None
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         error_msg = f"Failed to extend models table: {e}"
         logger.error(error_msg, exc_info=True)
         return False, error_msg
@@ -190,7 +190,7 @@ def get_migration_version(connection: sqlite3.Connection) -> int:
         result = cursor.fetchone()
         return result[0] if result and result[0] else 0
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger.warning("Failed to get migration version: %s", e)
         return 0
 
@@ -234,7 +234,7 @@ def set_migration_version(connection: sqlite3.Connection, version: int) -> bool:
         connection.commit()
         return True
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error("Failed to set migration version: %s", e, exc_info=True)
         return False
 
@@ -288,7 +288,7 @@ def migrate_import_schema(db_manager) -> Tuple[bool, Optional[str]]:
         logger.info("Import schema migration completed successfully (v%s)", target_version)
         return True, None
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         connection.rollback()
         error_msg = f"Migration transaction failed: {e}"
         logger.error(error_msg, exc_info=True)
@@ -322,7 +322,7 @@ def verify_import_schema(db_manager) -> Tuple[bool, list]:
         logger.info("Import schema verification passed")
         return True, []
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error("Schema verification failed: %s", e, exc_info=True)
         return False, []
 

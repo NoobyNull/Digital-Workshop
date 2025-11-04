@@ -139,7 +139,7 @@ class HardwareAccelerationManager:
                         notes.append("Detected NVIDIA GPUs via nvidia-smi")
                 else:
                     notes.append(f"nvidia-smi returned non-zero exit code {res.returncode}")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 notes.append(f"nvidia-smi check failed: {e}")
         # Fallback to numba CUDA probe
         if not available and numba_cuda is not None:
@@ -160,7 +160,7 @@ class HardwareAccelerationManager:
                                 backend=AccelBackend.CUDA,
                             )
                         )
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 notes.append(f"numba.cuda probe failed: {e}")
         return {"available": available, "devices": devices, "notes": notes}
 
@@ -194,13 +194,13 @@ class HardwareAccelerationManager:
                                 )
                             )
                             available = True
-                        except Exception as e:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                             notes.append(f"OpenCL device parse error: {e}")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     notes.append(f"OpenCL platform error: {e}")
             if available:
                 notes.append("OpenCL platforms/devices detected")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             notes.append(f"OpenCL detection failed: {e}")
         return {"available": available, "devices": devices, "notes": notes}
 

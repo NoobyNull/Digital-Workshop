@@ -207,7 +207,7 @@ class Viewer3DWidget(QWidget):
 
             self.logger.debug("VTK resources registered for tracking")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error registering VTK resources: %s", e)
 
     def _setup_performance_monitoring(self) -> None:
@@ -234,7 +234,7 @@ class Viewer3DWidget(QWidget):
             else:
                 self.scene_manager.render()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error setting render mode %s: {e}", mode.value)
             # Continue with fallback rendering
             if self.render_window:
@@ -322,7 +322,7 @@ class Viewer3DWidget(QWidget):
             activity_logger.info("Model loaded successfully")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load model: %s", e, exc_info=True)
             return False
 
@@ -376,14 +376,14 @@ class Viewer3DWidget(QWidget):
             try:
                 self.model_renderer.remove_model()
                 self.logger.debug("Model renderer cleaned up")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Error removing model: %s", e)
 
             # Clean up performance tracker
             try:
                 self.perf_tracker.cleanup()
                 self.logger.debug("Performance tracker cleaned up")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Error cleaning up performance tracker: %s", e)
 
             # Clean up fallback renderer
@@ -391,14 +391,14 @@ class Viewer3DWidget(QWidget):
                 if self.fallback_renderer.is_fallback_active():
                     self.fallback_renderer.deactivate_fallback()
                     self.logger.debug("Fallback renderer deactivated")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Error deactivating fallback renderer: %s", e)
 
             # Clear resource tracking
             try:
                 cleanup_stats = self.resource_tracker.cleanup_all_resources()
                 self.logger.info("Resource cleanup stats: %s", cleanup_stats)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Error during resource cleanup: %s", e)
 
             # Force garbage collection
@@ -406,7 +406,7 @@ class Viewer3DWidget(QWidget):
 
             self.logger.info("Enhanced viewer cleanup completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during enhanced cleanup: %s", e)
             # Fallback to basic cleanup if enhanced cleanup fails
             self._basic_cleanup()
@@ -420,7 +420,7 @@ class Viewer3DWidget(QWidget):
             try:
                 if hasattr(self, "scene_manager") and self.scene_manager:
                     self.scene_manager.cleanup()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.debug("Basic scene manager cleanup error: %s", e)
 
             # Force garbage collection
@@ -428,7 +428,7 @@ class Viewer3DWidget(QWidget):
 
             self.logger.info("Basic cleanup completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during basic cleanup: %s", e)
 
     def closeEvent(self, event) -> None:
@@ -469,7 +469,7 @@ class Viewer3DWidget(QWidget):
             self.scene_manager.render()
             self.logger.info("Model reloaded in viewer with updated geometry")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reload model in viewer: %s", e, exc_info=True)
 
     def _calculate_z_up_rotation_from_model_bounds(self) -> tuple:
@@ -531,7 +531,7 @@ class Viewer3DWidget(QWidget):
                 self.logger.info("Unable to determine tallest dimension, no rotation")
                 return ("Z", 0)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(
                 f"Failed to calculate Z-up rotation from model bounds: {e}",
                 exc_info=True,
@@ -574,7 +574,7 @@ class Viewer3DWidget(QWidget):
                 # Update the Model object's triangles with rotated geometry
                 self.current_model.triangles = rotated_stl.triangles
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to rotate model: %s", e, exc_info=True)
                 return
 
@@ -591,7 +591,7 @@ class Viewer3DWidget(QWidget):
             # Emit signal to notify UI that Z-up was set
             self.z_up_orientation_set.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set Z-up: %s", e, exc_info=True)
 
     def _open_material_picker(self) -> None:
@@ -607,7 +607,7 @@ class Viewer3DWidget(QWidget):
                 selected = picker.get_selected_species()
                 if selected:
                     self.material_selected.emit(selected)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to open material picker: %s", e)
 
     def _open_lighting_panel(self) -> None:
@@ -664,7 +664,7 @@ class Viewer3DWidget(QWidget):
                 self._rotate_and_save_model(new_path, replace_original=False)
                 self.z_up_pending_save = False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle Z-up save: %s", e, exc_info=True)
 
     def _rotate_and_save_model(self, output_path: str, replace_original: bool = False) -> None:
@@ -716,7 +716,7 @@ class Viewer3DWidget(QWidget):
             else:
                 QMessageBox.critical(None, "Error", f"Failed to save model to {output_path}")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to rotate and save model: %s", e, exc_info=True)
             from PySide6.QtWidgets import QMessageBox
 
@@ -772,7 +772,7 @@ class Viewer3DWidget(QWidget):
 
             self.logger.info("Model geometry rotated %s° around {axis} axis", degrees)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to rotate model geometry: %s", e, exc_info=True)
 
     def rotate_x_positive(self) -> None:
@@ -834,7 +834,7 @@ class Viewer3DWidget(QWidget):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
             return False
 
@@ -868,7 +868,7 @@ class Viewer3DWidget(QWidget):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error applying default material: %s", e, exc_info=True)
             return False
 
@@ -915,13 +915,13 @@ class Viewer3DWidget(QWidget):
 
                 self.logger.warning("Material manager not found, creating fallback instance")
                 return MaterialManager(get_database_manager())
-            except Exception as fallback_error:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as fallback_error:
                 self.logger.debug("Could not create fallback material manager: %s", fallback_error)
 
             self.logger.debug("Material manager not found in any location")
             return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting material manager: %s", e, exc_info=True)
             return None
 
@@ -946,5 +946,5 @@ class Viewer3DWidget(QWidget):
             else:
                 self.logger.warning("Failed to apply selected material: %s", material_name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling material selection: %s", e, exc_info=True)

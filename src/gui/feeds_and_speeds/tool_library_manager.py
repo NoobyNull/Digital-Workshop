@@ -97,7 +97,7 @@ class ToolLibraryManager:
                         unit=tool_data.get("unit", "inches"),
                     )
                     tools.append(tool)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.debug("Failed to parse tool: %s", e)
                     continue
 
@@ -105,7 +105,7 @@ class ToolLibraryManager:
             self.logger.info("Loaded %s tools from {library_name}", len(tools))
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load library %s: {e}", library_name)
             return False
 

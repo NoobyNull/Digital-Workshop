@@ -168,7 +168,7 @@ class LibraryStructureDetector:
             )
             return analysis
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to analyze library structure: %s", str(e))
             raise
 

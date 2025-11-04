@@ -63,7 +63,7 @@ class ThemePersistence:
                 json.dump(colors, f, indent=2)
 
             logger.info("Theme saved to %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save theme: %s", e)
             raise
 
@@ -93,7 +93,7 @@ class ThemePersistence:
         except json.JSONDecodeError as e:
             logger.error("Failed to parse theme file: %s", e)
             return None
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load theme: %s", e)
             return None
 
@@ -121,7 +121,7 @@ class ThemePersistence:
                 json.dump(colors, f, indent=2)
 
             logger.info("Theme exported to %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export theme: %s", e)
             raise
 
@@ -154,7 +154,7 @@ class ThemePersistence:
         except json.JSONDecodeError as e:
             logger.error("Failed to parse theme file: %s", e)
             raise
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import theme: %s", e)
             raise
 

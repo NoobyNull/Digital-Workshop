@@ -245,7 +245,7 @@ class MigrationManager:
 
             logger.info("Discovered %s migrations", len(migrations))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to discover migrations: %s", str(e))
 
         return migrations
@@ -298,7 +298,7 @@ class MigrationManager:
             logger.debug("Loaded migration %s: {migration.name}", migration.version)
             return migration
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load migration %s: {str(e)}", filename)
             return None
 
@@ -382,7 +382,7 @@ class MigrationManager:
             logger.info("Database backup created: %s", backup_path)
             return backup_path
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create backup: %s", str(e))
             raise
 
@@ -464,7 +464,7 @@ class MigrationManager:
             else:
                 logger.error("%s to {target_version} failed", operation.capitalize())
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Migration process failed: %s", str(e))
             raise
 
@@ -660,7 +660,7 @@ class MigrationManager:
         # Validate version format
         try:
             DatabaseVersion.from_string(version)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise ValueError(f"Invalid version format: {version}")
 
         # Check if migration already exists
@@ -824,7 +824,7 @@ class MigrationManager:
                 f"{len(validation_results['warnings'])} warnings"
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             validation_results["valid"] = False
             validation_results["errors"].append(f"Validation failed: {str(e)}")
             logger.error("Migration validation failed: %s", str(e))
@@ -880,7 +880,7 @@ class MigrationManager:
             logger.info("Database restored from backup: %s", backup_path)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to restore from backup: %s", str(e))
             return False
 
@@ -911,13 +911,13 @@ class MigrationManager:
                     os.remove(filepath)
                     removed_count += 1
                     logger.debug("Removed old backup: %s", filepath)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("Failed to remove backup %s: {str(e)}", filepath)
 
             logger.info("Cleaned up %s old backups", removed_count)
             return removed_count
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to cleanup old backups: %s", str(e))
             return 0
 

@@ -343,7 +343,7 @@ class ImportThumbnailService:
                     error=error_msg,
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             generation_time = time.time() - start_time
             error_msg = f"Thumbnail generation failed: {e}"
 
@@ -502,7 +502,7 @@ class ImportThumbnailService:
                     else:
                         kept_count += 1
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Error processing %s: {e}", thumbnail_path)
                     error_count += 1
 
@@ -525,7 +525,7 @@ class ImportThumbnailService:
                 "time_seconds": cleanup_time,
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Cleanup failed: %s", e, exc_info=True)
             return {
                 "removed": removed_count,
@@ -638,7 +638,7 @@ class ImportThumbnailService:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error verifying thumbnail %s: {e}", thumbnail_path)
             return False
 

@@ -180,7 +180,7 @@ class ThemeValidator:
 
             return is_valid, errors, warnings
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = (time.time() - start_time) * 1000
             self._track_validation(False, elapsed)
 
@@ -219,7 +219,7 @@ class ThemeValidator:
 
             return len(errors) == 0, errors, warnings
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Color scheme validation failed: %s", e)
             return False, [f"Color validation exception: {str(e)}"], []
 
@@ -513,7 +513,7 @@ class ThemeValidator:
             if brightness < 0.05 and color_name in ["text_primary", "text_secondary"]:
                 warnings.append(f"Very dark {color_name} color may be hard to read")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             warnings.append(f"Could not validate accessibility for color '{color_name}': {e}")
 
         return warnings
@@ -542,7 +542,7 @@ class ThemeValidator:
                         f"Low contrast ratio ({contrast_ratio:.2f}) between text_primary and background. "
                         f"Minimum required: {self._min_contrast_ratio}"
                     )
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 warnings.append(f"Could not calculate contrast ratio: {e}")
 
         return warnings
@@ -603,7 +603,7 @@ class ThemeValidator:
             ]:
                 warnings.append(f"Low opacity text color '{color_name}' may be hard to read")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             warnings.append(f"Could not check color issues for '{color_name}': {e}")
 
         return warnings

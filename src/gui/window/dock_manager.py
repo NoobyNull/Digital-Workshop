@@ -161,7 +161,7 @@ class DockManager:
         try:
             self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
             self.logger.info("Properties dock added to right dock area")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to add properties dock: %s", e)
 
         try:
@@ -178,7 +178,7 @@ class DockManager:
         try:
             # Ensure the dock widget can resize properly
             self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to set properties dock size constraints: %s", e)
 
         # Lighting control dialog (floating, initially hidden)
@@ -218,9 +218,9 @@ class DockManager:
                         emit_signals=False,
                     )
                     self.logger.info("Lighting panel signals connected to main window handlers")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Failed to connect lighting panel signals: %s", e)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create LightingControlPanel: %s", e)
 
         # Metadata dock (flexible positioning)
@@ -323,7 +323,7 @@ class DockManager:
                     pass
             except Exception:
                 pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to add metadata dock: %s", e)
 
         try:
@@ -382,7 +382,7 @@ class DockManager:
                     self._update_metadata_action_state()
                 except Exception:
                     pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to load metadata panel visibility: %s", e)
 
         # Ensure metadata dock is visible but don't force positioning
@@ -392,7 +392,7 @@ class DockManager:
                 if not self.main_window.metadata_dock.isVisible():
                     self.main_window.metadata_dock.setVisible(True)
                 self.logger.info("Metadata dock made visible - user can position freely")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to ensure metadata dock visibility: %s", e)
 
         self.logger.debug("Dock widgets setup completed")
@@ -403,7 +403,7 @@ class DockManager:
             # When metadata tab is active, it can expand to fill the right side
             # This is handled by Qt's dock system automatically
             self.logger.debug("Right dock tab changed to index %s", index)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error handling dock tab change: %s", e)
 
     def iter_docks(self) -> List[QDockWidget]:
@@ -467,7 +467,7 @@ class DockManager:
                 )
             except Exception:
                 pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to toggle Layout Edit Mode: %s", e)
 
     def snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> bool:
@@ -572,7 +572,7 @@ class DockManager:
 
             # Let qt-material handle all dock styling
             self.logger.info("Metadata editor widget created successfully (restored)")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create MetadataEditorWidget during restore: %s", e)
 
             # Fallback to placeholder
@@ -654,7 +654,7 @@ class DockManager:
                 self.main_window.statusBar().showMessage("Metadata Manager restored", 2000)
             except Exception:
                 pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to restore Metadata Manager: %s", e)
 
     def create_model_library_dock(self) -> None:
@@ -698,7 +698,7 @@ class DockManager:
             self.main_window.model_library_dock.setWidget(self.main_window.model_library_widget)
 
             # Let qt-material handle all dock styling
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Fallback widget
             lib_placeholder = QTextEdit()
             lib_placeholder.setReadOnly(True)
@@ -777,7 +777,7 @@ class DockManager:
                 self.main_window.statusBar().showMessage("Model Library restored", 2000)
             except Exception:
                 pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to restore Model Library: %s", e)
 
     def update_library_action_state(self) -> None:
@@ -819,7 +819,7 @@ class DockManager:
                 vis = bool(self.main_window.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
                 self.logger.debug("Saved metadata panel visibility: %s", vis)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to save metadata panel visibility: %s", e)
 
     # Helper methods that need to be connected to actual implementations

@@ -419,7 +419,7 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                         # If logging fails, continue with the function
                         pass
                 return result
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # Always log errors regardless of enable_logging setting
                 try:
                     logger.error(

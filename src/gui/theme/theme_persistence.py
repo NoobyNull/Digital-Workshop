@@ -105,7 +105,7 @@ class ThemePersistence:
                 logger.debug("Theme saved successfully in %sms", elapsed:.2f)
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
                 logger.error("Failed to save theme: %s", e, exc_info=True)
                 self._track_operation("save_error", elapsed)
@@ -146,7 +146,7 @@ class ThemePersistence:
                 logger.debug("Theme loaded successfully in %sms", elapsed:.2f)
                 return complete_data
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
                 logger.error("Failed to load theme: %s", e, exc_info=True)
                 self._track_operation("load_error", elapsed)
@@ -191,20 +191,20 @@ class ThemePersistence:
                     logger.debug("Theme saved atomically in %sms", elapsed:.2f)
                     return True
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     # Rollback on any error
                     logger.error("Atomic save failed, rolling back: %s", e)
                     if backup_data:
                         try:
                             self._atomic_save(backup_data)
-                        except Exception as rollback_error:
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as rollback_error:
                             logger.error("Rollback failed: %s", rollback_error)
 
                     elapsed = (time.time() - start_time) * 1000
                     self._track_operation("atomic_save_error", elapsed)
                     return False
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
                 logger.error("Atomic save operation failed: %s", e, exc_info=True)
                 self._track_operation("atomic_save_error", elapsed)
@@ -242,7 +242,7 @@ class ThemePersistence:
                 logger.info("Theme settings cleared in %sms", elapsed:.2f)
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
                 logger.error("Failed to clear theme settings: %s", e, exc_info=True)
                 self._track_operation("clear_error", elapsed)
@@ -267,7 +267,7 @@ class ThemePersistence:
             logger.info("Theme exported to %s", file_path)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export theme: %s", e, exc_info=True)
             return False
 
@@ -293,7 +293,7 @@ class ThemePersistence:
             # Save imported theme
             return self.save_theme(theme_data)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import theme: %s", e, exc_info=True)
             return False
 
@@ -386,7 +386,7 @@ class ThemePersistence:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Atomic save operation failed: %s", e)
             return False
 
@@ -495,7 +495,7 @@ class ThemePersistence:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Theme data validation failed: %s", e)
             return False
 

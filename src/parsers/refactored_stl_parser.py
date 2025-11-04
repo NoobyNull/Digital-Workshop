@@ -140,7 +140,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 return STLFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "format_detection",
@@ -200,7 +200,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "parse_file",
@@ -281,7 +281,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                         file_path, triangle_count, progress_callback
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "parse_binary_stl",
@@ -441,7 +441,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_context = {
                 "operation": "parse_binary_stl_vectorized",
                 "file_path": str(file_path),
@@ -548,7 +548,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in pure Python binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (pure Python): {str(e)}")
 
@@ -688,7 +688,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in array-based binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
@@ -861,7 +861,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing ASCII STL: %s", str(e))
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
@@ -902,7 +902,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 "triangle_count": triangle_count,
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get STL model info: %s", str(e))
             raise ParseError(f"Failed to get model info: {str(e)}")
 
@@ -961,7 +961,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("STL validation error for %s: {str(e)}", file_path)
             return False
 
@@ -985,7 +985,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             else:
                 raise STLParseError("Unable to determine STL format for streaming")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in STL streaming: %s", str(e))
             raise ParseError(f"Streaming failed: {str(e)}")
 
@@ -1077,7 +1077,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     # Update progress
                     self._current_progress = triangles_processed / triangle_count
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error streaming binary STL: %s", str(e))
             raise ParseError(f"Binary STL streaming failed: {str(e)}")
 
@@ -1193,7 +1193,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                         "progress": 1.0,
                     }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error streaming ASCII STL: %s", str(e))
             raise ParseError(f"ASCII STL streaming failed: {str(e)}")
 
@@ -1274,7 +1274,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating STL geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -1315,7 +1315,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting STL geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 

@@ -160,7 +160,7 @@ class VTKResourceTracker:
 
             self.logger.debug("Default cleanup callbacks registered")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error registering default cleanup callbacks: %s", e)
 
     def register_resource(
@@ -217,7 +217,7 @@ class VTKResourceTracker:
 
                 return resource_id
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error registering resource: %s", e)
             return ""
 
@@ -241,7 +241,7 @@ class VTKResourceTracker:
                             resource_info["state"] = ResourceState.DESTROYED
                         break
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error in resource finalization callback: %s", e)
 
     def unregister_resource(self, resource_id: str) -> bool:
@@ -277,7 +277,7 @@ class VTKResourceTracker:
                 self.logger.debug("Unregistered VTK resource: %s", resource_id)
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error unregistering resource %s: {e}", resource_id)
             return False
 
@@ -308,7 +308,7 @@ class VTKResourceTracker:
 
                 return resource
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error getting resource %s: {e}", resource_id)
             return None
 
@@ -344,7 +344,7 @@ class VTKResourceTracker:
                 if resource_type.value in self.cleanup_callbacks:
                     try:
                         self.cleanup_callbacks[resource_type.value](resource)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.debug("Error in cleanup callback for %s: {e}", resource_id)
 
                 # Try generic cleanup
@@ -355,7 +355,7 @@ class VTKResourceTracker:
                         resource.Finalize()
                     elif hasattr(resource, "TerminateApp"):
                         resource.TerminateApp()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.debug("Error in generic cleanup for %s: {e}", resource_id)
 
                 # Mark as cleaned BEFORE unregistering to prevent false leak warnings
@@ -365,7 +365,7 @@ class VTKResourceTracker:
 
             return self.unregister_resource(resource_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error cleaning up resource %s: {e}", resource_id)
             return False
 
@@ -392,7 +392,7 @@ class VTKResourceTracker:
                             success_count += 1
                         else:
                             error_count += 1
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.debug("Error cleaning up %s: {e}", resource_id)
                         error_count += 1
 
@@ -405,7 +405,7 @@ class VTKResourceTracker:
                     "errors": error_count,
                 }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in cleanup_all_resources: %s", e)
             return {"total": 0, "success": 0, "errors": 1}
 
@@ -427,7 +427,7 @@ class VTKResourceTracker:
 
             return cleanup_order
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error getting cleanup order: %s", e)
             # Fallback: just return all resource IDs
             return list(self.resources.keys())
@@ -464,7 +464,7 @@ class VTKResourceTracker:
 
                 return resource_info
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error getting resource info for %s: {e}", resource_id)
             return None
 
@@ -484,7 +484,7 @@ class VTKResourceTracker:
                         result[resource_id] = info
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting all resources: %s", e)
             return {}
 
@@ -513,7 +513,7 @@ class VTKResourceTracker:
 
                 return leaked
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error finding leaked resources: %s", e)
             return []
 
@@ -545,7 +545,7 @@ class VTKResourceTracker:
                     "cleanup_callbacks_registered": len(self.cleanup_callbacks),
                 }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting statistics: %s", e)
             return {}
 
@@ -574,7 +574,7 @@ class VTKResourceTracker:
 
                 self.logger.info("Resource tracking data cleared")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error clearing tracking data: %s", e)
 
 

@@ -62,7 +62,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Widget cleanup error: %s", e, exc_info=True)
             return False
 
@@ -101,7 +101,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return overall_success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Widget cleanup failed: %s", e, exc_info=True)
             return False
 
@@ -129,7 +129,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Main window cleanup failed: %s", e)
             return False
 
@@ -146,7 +146,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("3D viewer widget cleanup failed: %s", e)
             return False
 
@@ -163,7 +163,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Metadata editor cleanup failed: %s", e)
             return False
 
@@ -180,7 +180,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Model library cleanup failed: %s", e)
             return False
 
@@ -207,7 +207,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Window components cleanup failed: %s", e)
             return False
 
@@ -224,7 +224,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Snapping system cleanup failed: %s", e)
             return False
 
@@ -241,7 +241,7 @@ class WidgetCleanupHandler(CleanupHandler):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Event coordinator cleanup failed: %s", e)
             return False
 
@@ -272,7 +272,7 @@ class WidgetCleanupHandler(CleanupHandler):
             self.logger.debug("Cleaned up %s timers", timers_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Timer cleanup failed: %s", e)
             return False
 
@@ -299,7 +299,7 @@ class WidgetCleanupHandler(CleanupHandler):
             self.logger.debug("Signals disconnected")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Signal disconnection failed: %s", e)
             return False
 
@@ -314,13 +314,13 @@ class WidgetCleanupHandler(CleanupHandler):
                     if hasattr(widget, "cleanup"):
                         widget.cleanup()
                     self._tracked_widgets.discard(widget)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to cleanup tracked widget: %s", e)
                     success = False
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Tracked widgets cleanup failed: %s", e)
             return False
 
@@ -339,7 +339,7 @@ class WidgetCleanupHandler(CleanupHandler):
             self.logger.debug("Global widget references cleaned")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Global widget cleanup failed: %s", e)
             return False
 
@@ -357,7 +357,7 @@ class WidgetCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid widget registration: %s", type(widget))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register widget: %s", e)
 
     def unregister_widget(self, widget) -> bool:
@@ -377,7 +377,7 @@ class WidgetCleanupHandler(CleanupHandler):
                 return True
             return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to unregister widget: %s", e)
             return False
 
@@ -392,6 +392,6 @@ class WidgetCleanupHandler(CleanupHandler):
                 "tracked_widgets": [type(w).__name__ for w in self._tracked_widgets],
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to get widget cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

@@ -39,7 +39,7 @@ class TDBToolParser(BaseToolParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def parse(
@@ -84,7 +84,7 @@ class TDBToolParser(BaseToolParser):
             self.logger.info("Parsed %s tools from TDB file", len(tools))
             return tools
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse TDB file: %s", e)
             raise
 

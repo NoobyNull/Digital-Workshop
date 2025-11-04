@@ -127,7 +127,7 @@ class SnappingSystem:
             self._initialized = True
             self.logger.info("Widget snapping system initialized successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize snapping system: %s", e)
             raise
 
@@ -143,7 +143,7 @@ class SnappingSystem:
             )
 
             self.logger.debug("Component integration setup completed")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to setup component integration: %s", e)
             raise
 
@@ -164,7 +164,7 @@ class SnappingSystem:
             if snap_result.snap_applied:
                 self.guide_renderer.render_snap_result(snap_result, event.source_widget)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to handle snap request: %s", e)
 
     def add_snap_zone(self, zone: SnapZone) -> bool:
@@ -183,7 +183,7 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.info(f"Added snap zone '{zone.name}'")
             return success
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add snap zone: %s", e)
             return False
 
@@ -203,7 +203,7 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.info(f"Removed snap zone '{zone_name}'")
             return success
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to remove snap zone: %s", e)
             return False
 
@@ -224,7 +224,7 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.debug(f"Updated snap zone '{zone_name}': {kwargs}")
             return success
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update snap zone: %s", e)
             return False
 
@@ -308,7 +308,7 @@ class SnappingSystem:
                 self.guide_renderer.clear_guides()
 
             self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set snapping enabled: %s", e)
 
     def is_enabled(self) -> bool:
@@ -367,7 +367,7 @@ class SnappingSystem:
                 self.guide_renderer.update_configuration()
                 self.logger.info("Configuration loaded and applied")
             return success
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load configuration: %s", e)
             return False
 
@@ -381,7 +381,7 @@ class SnappingSystem:
             self.coordinate_manager.reset()
 
             self.logger.info("Snapping system reset to defaults")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reset to defaults: %s", e)
             raise
 
@@ -403,7 +403,7 @@ class SnappingSystem:
                 "guide_renderer_stats": self.guide_renderer.get_performance_stats(),
                 "configuration_memory_usage": self.config.get_memory_usage(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
@@ -437,7 +437,7 @@ class SnappingSystem:
             self.config.snap_zones.clear()
 
             self.logger.info("Snapping system cleanup completed")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during system cleanup: %s", e)
 
     def __enter__(self):
@@ -476,7 +476,7 @@ def create_snapping_system(
             logger.warning("Configuration validation issues: %s", errors)
 
         return system
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger = get_logger(__name__)
         logger.error("Failed to create snapping system: %s", e)
         raise RuntimeError(f"Snapping system initialization failed: {e}") from e

@@ -72,7 +72,7 @@ class ProgressiveLoadWorker(QThread):
 
             self.loading_complete.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Progressive loading failed: %s", str(e))
             self.error_occurred.emit(str(e))
 

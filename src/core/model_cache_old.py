@@ -109,7 +109,7 @@ class ModelCache:
 
                 conn.commit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize disk cache: %s", str(e))
             raise
 
@@ -137,7 +137,7 @@ class ModelCache:
             hasher.update(hash_input.encode())
             return hasher.hexdigest()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate file hash: %s", str(e))
             hasher = xxhash.xxh128()
             hasher.update(file_path.encode())
@@ -199,7 +199,7 @@ class ModelCache:
             else:
                 return pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to serialize data: %s", str(e))
             raise
 
@@ -216,7 +216,7 @@ class ModelCache:
         try:
             return pickle.loads(data)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to deserialize data: %s", str(e))
             raise
 
@@ -296,7 +296,7 @@ class ModelCache:
                 )
                 conn.commit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
@@ -351,7 +351,7 @@ class ModelCache:
 
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load from disk cache: %s", str(e))
             return None
 
@@ -581,7 +581,7 @@ class ModelCache:
                                 removed = True
                             conn.commit()
 
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.error("Failed to remove from disk cache: %s", str(e))
 
             if removed:
@@ -610,7 +610,7 @@ class ModelCache:
                         conn.execute("DELETE FROM cache_entries")
                         conn.commit()
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to clear disk cache: %s", str(e))
 
             # Reset statistics
@@ -638,7 +638,7 @@ class ModelCache:
 
                     self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to update statistics: %s", str(e))
         else:
             # Disk cache disabled, only memory entries count
@@ -708,7 +708,7 @@ class ModelCache:
                             self.logger.info("Cleaned up %s old disk cache entries", deleted_count)
                         conn.commit()
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to optimize disk cache: %s", str(e))
 
     def cleanup(self) -> None:
@@ -762,7 +762,7 @@ class ModelCache:
                 if full_model:
                     self.put(file_path, CacheLevel.GEOMETRY_FULL, full_model)
                     return full_model
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to load full geometry: %s", e)
 
             # Fallback to metadata only
@@ -774,12 +774,12 @@ class ModelCache:
                 if metadata_model:
                     self.put(file_path, CacheLevel.METADATA, metadata_model)
                     return metadata_model
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to load metadata: %s", e)
 
             return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Progressive loading failed for %s: {e}", file_path)
             return None
 
@@ -813,7 +813,7 @@ class ModelCache:
             if full_model:
                 self.put(file_path, CacheLevel.GEOMETRY_FULL, full_model)
                 return full_model
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load full geometry: %s", e)
 
         # Fallback to low-res
@@ -840,7 +840,7 @@ class ModelCache:
             metadata_model = parser._parse_metadata_only_internal(file_path)
             if metadata_model:
                 self.put(file_path, CacheLevel.METADATA, metadata_model)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load metadata: %s", e)
 
         # Load low-res geometry
@@ -852,7 +852,7 @@ class ModelCache:
             if low_res_model:
                 self.put(file_path, CacheLevel.GEOMETRY_LOW, low_res_model)
                 return low_res_model
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load low-res geometry: %s", e)
 
         # Fallback to metadata
@@ -876,7 +876,7 @@ class ModelCache:
             if metadata_model:
                 self.put(file_path, CacheLevel.METADATA, metadata_model)
                 return metadata_model
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load metadata: %s", e)
 
         return None

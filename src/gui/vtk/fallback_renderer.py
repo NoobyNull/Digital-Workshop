@@ -114,7 +114,7 @@ class VTKFallbackRenderer:
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error activating fallback: %s", e)
             return False
 
@@ -139,7 +139,7 @@ class VTKFallbackRenderer:
             # Last resort: bounding box
             return FallbackMode.BOUNDING_BOX
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error selecting fallback mode: %s", e)
             return FallbackMode.WIREFRAME_ONLY
 
@@ -158,7 +158,7 @@ class VTKFallbackRenderer:
                 self.logger.warning("Unknown fallback mode: %s", self.fallback_mode)
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error applying fallback mode %s: {e}", self.fallback_mode)
             return False
 
@@ -191,13 +191,13 @@ class VTKFallbackRenderer:
                         self.logger.info("Mesa software rendering configured")
                         return True
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.debug("Software rendering setup error: %s", e)
 
             # If specific setup fails, try generic offscreen rendering
             return self._setup_generic_offscreen()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Software rendering setup failed: %s", e)
             return False
 
@@ -223,7 +223,7 @@ class VTKFallbackRenderer:
             self.logger.info("Generic offscreen rendering configured")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Generic offscreen setup failed: %s", e)
             return False
 
@@ -237,7 +237,7 @@ class VTKFallbackRenderer:
             self.logger.info("Image cache fallback configured")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Image cache setup failed: %s", e)
             return False
 
@@ -262,7 +262,7 @@ class VTKFallbackRenderer:
             self.logger.info("Wireframe fallback configured")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Wireframe fallback setup failed: %s", e)
             return False
 
@@ -283,7 +283,7 @@ class VTKFallbackRenderer:
             self.logger.info("Bounding box fallback configured")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Bounding box fallback setup failed: %s", e)
             return False
 
@@ -292,7 +292,7 @@ class VTKFallbackRenderer:
         try:
             if self.original_renderer:
                 self.original_renderer.RemoveAllViewProps()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error clearing actors: %s", e)
 
     def deactivate_fallback(self) -> bool:
@@ -321,7 +321,7 @@ class VTKFallbackRenderer:
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error deactivating fallback: %s", e)
             return False
 
@@ -334,7 +334,7 @@ class VTKFallbackRenderer:
             self.logger.info("Original rendering restored")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error restoring original rendering: %s", e)
             return False
 
@@ -368,7 +368,7 @@ class VTKFallbackRenderer:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Error checking fallback capability: %s", e)
             return False
 
@@ -404,7 +404,7 @@ class VTKFallbackRenderer:
             # Render with fallback
             return self._fallback_render(render_window)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in fallback render: %s", e)
             return False
 
@@ -444,7 +444,7 @@ class VTKFallbackRenderer:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             handled = self.error_handler.handle_error(e, "normal_render")
             return handled
 
@@ -463,7 +463,7 @@ class VTKFallbackRenderer:
                 self.logger.warning("Unknown fallback mode for rendering: %s", self.fallback_mode)
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error in fallback render mode %s: {e}", self.fallback_mode)
             return False
 
@@ -474,7 +474,7 @@ class VTKFallbackRenderer:
             render_window.Render()
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Software render error: %s", e)
             return False
 
@@ -486,7 +486,7 @@ class VTKFallbackRenderer:
             self.logger.debug("Using cached image rendering")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Cached render error: %s", e)
             return False
 
@@ -496,7 +496,7 @@ class VTKFallbackRenderer:
             render_window.Render()
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Wireframe render error: %s", e)
             return False
 
@@ -506,7 +506,7 @@ class VTKFallbackRenderer:
             render_window.Render()
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Bounding box render error: %s", e)
             return False
 

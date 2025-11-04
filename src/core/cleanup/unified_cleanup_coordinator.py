@@ -330,7 +330,7 @@ class UnifiedCleanupCoordinator:
 
             return self._stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during unified cleanup: %s", e, exc_info=True)
             self._stats.errors.append(str(e))
             self._stats.total_duration = time.time() - start_time
@@ -350,7 +350,7 @@ class UnifiedCleanupCoordinator:
 
             self.logger.debug("Cleanup context initialized: %s", self._context_state.value)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Context validation failed: %s", e)
             self._context_state = CleanupContext.UNKNOWN
 
@@ -375,7 +375,7 @@ class UnifiedCleanupCoordinator:
             else:
                 self._context_state = CleanupContext.VALID
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("VTK context validation error: %s", e)
             self._context_state = CleanupContext.UNKNOWN
 
@@ -422,7 +422,7 @@ class UnifiedCleanupCoordinator:
                         f"Phase {phase.value} skipped (context lost or other reason) ({phase_duration:.3f}s)"
                     )
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 phase_duration = time.time() - phase_start_time
                 self._stats.failed_phases += 1
 
@@ -521,7 +521,7 @@ class UnifiedCleanupCoordinator:
                     )
                     phase_success = False
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 handler_duration = time.time() - handler_start_time
 
                 # Create detailed error record
@@ -633,7 +633,7 @@ class UnifiedCleanupCoordinator:
 
             return report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Verification failed: %s", e, exc_info=True)
             return None
 

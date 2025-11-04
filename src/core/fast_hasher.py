@@ -244,7 +244,7 @@ class FastHasher:
                 error=error_msg,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to hash file: {e}"
             self.logger.error("Error hashing %s: {e}", file_path, exc_info=True)
             return HashResult(

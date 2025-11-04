@@ -100,7 +100,7 @@ class AddToolDialog(QDialog):
 
             self.logger.info("Loaded %s providers", len(providers))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load providers: %s", e)
 
     def _on_provider_selected(self):
@@ -130,7 +130,7 @@ class AddToolDialog(QDialog):
 
             self.logger.info("Loaded %s tools for provider {provider_id}", len(tools))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load tools: %s", e)
 
     def _on_tool_selected(self):
@@ -154,7 +154,7 @@ class AddToolDialog(QDialog):
             try:
                 tool_data = self.tool_repo.get_tool_by_id(self.selected_tool)
                 return tool_data
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to get selected tool: %s", e)
 
         return None

@@ -345,7 +345,7 @@ class CostEstimatorWidget(QWidget):
 
             self.logger.info("Cost estimate calculated successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error calculating estimate: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to calculate estimate: {e}")
 
@@ -457,5 +457,5 @@ class CostEstimatorWidget(QWidget):
             self._on_calculate()
 
             QMessageBox.information(self, "Success", message)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to restore data: {str(e)}")

@@ -151,7 +151,7 @@ class HardwareDetector:
                     gpu_name = gpu.name
                     gpu_driver_version = gpu.driver
                     gpu_usage_percent = gpu.load * 100
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.warning("GPU detection failed: %s", str(e))
 
             # OpenGL detection (if VTK available)
@@ -162,7 +162,7 @@ class HardwareDetector:
                     if hasattr(ren_win, "GetOpenGLVersion"):
                         opengl_version = ren_win.GetOpenGLVersion()
                     ren_win.Finalize()
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("OpenGL detection failed: %s", str(e))
 
             # Determine hardware tier
@@ -196,7 +196,7 @@ class HardwareDetector:
                 max_vertices=max_vertices,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Hardware detection failed: %s", str(e))
             # Return default capabilities
             return HardwareCapabilities(
@@ -374,7 +374,7 @@ class LevelOfDetailManager:
             decimator.SetTargetReduction(1.0 - reduction_factor)
             decimator.Update()
             return decimator.GetOutput()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Mesh decimation failed: %s", str(e))
             return mesh  # Return original mesh
 
@@ -677,7 +677,7 @@ class RenderingPerformanceManager:
                 gpu_memory_used = gpu.memoryUsed
                 gpu_memory_total = gpu.memoryTotal
                 gpu_usage = gpu.load * 100
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("GPU metrics unavailable: %s", str(e))
 
         # Get CPU usage
@@ -762,14 +762,14 @@ class RenderingPerformanceManager:
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Quality change callback failed: %s", str(e))
 
             # Alert callbacks
             for callback in self._performance_alert_callbacks:
                 try:
                     callback(f"Rendering quality reduced to {new_quality.value} due to performance")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Performance alert callback failed: %s", str(e))
 
     def _increase_rendering_quality(self) -> None:
@@ -794,7 +794,7 @@ class RenderingPerformanceManager:
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Quality change callback failed: %s", str(e))
 
     def _handle_gpu_memory_pressure(self) -> None:
@@ -815,7 +815,7 @@ class RenderingPerformanceManager:
         for callback in self._performance_alert_callbacks:
             try:
                 callback("GPU memory pressure - reduced texture quality and disabled shadows")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Performance alert callback failed: %s", str(e))
 
     def get_performance_report(self) -> Dict[str, Any]:

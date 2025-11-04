@@ -136,7 +136,7 @@ class ModelLoadWorker(QThread):
                 if i % 10 == 0:
                     gc.collect()
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 msg = f"Failed to load {file_path}: {e}"
                 self.logger.error(msg)
                 self.error_occurred.emit(msg)

@@ -207,7 +207,7 @@ class ImportFileManager:
 
             return True, None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error = f"Error validating root directory: {e}"
             self.logger.error(error, exc_info=True)
             return False, error
@@ -486,7 +486,7 @@ class ImportFileManager:
 
             return True, None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Error processing file: {e}"
             self.logger.error(error_msg, exc_info=True)
             file_info.import_status = "failed"
@@ -523,7 +523,7 @@ class ImportFileManager:
                     if path.exists():
                         path.unlink()
                         self.logger.info("Rolled back copied file: %s", file_path)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Failed to remove file during rollback: %s: {e}", file_path)
                     rollback_success = False
 
@@ -536,7 +536,7 @@ class ImportFileManager:
                         if not list(path.iterdir()):
                             path.rmdir()
                             self.logger.info("Rolled back created directory: %s", dir_path)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error(
                         f"Failed to remove directory during rollback: {dir_path}: {e}"
                     )
@@ -549,7 +549,7 @@ class ImportFileManager:
 
             return rollback_success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during rollback: %s", e, exc_info=True)
             return False
 

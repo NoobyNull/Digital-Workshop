@@ -345,7 +345,7 @@ class SnapEngine:
                 self.spatial_index.add_zone(zone)
 
             self.logger.debug("Rebuilt spatial index with %s zones", len(active_zones))
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to rebuild spatial index: %s", e)
 
     def calculate_snap(
@@ -433,7 +433,7 @@ class SnapEngine:
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to calculate snap for position %s: {e}", position)
             return SnapResult(
                 snapped_position=original_position,
@@ -502,7 +502,7 @@ class SnapEngine:
             # Sort by distance (closest first)
             candidates.sort(key=lambda c: c.distance)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate snap candidates: %s", e)
 
         return candidates
@@ -557,7 +557,7 @@ class SnapEngine:
                 confidence=self._calculate_candidate_confidence(distance, zone),
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create snap candidate for zone %s: {e}", zone.name)
             return None
 
@@ -720,7 +720,7 @@ class SnapEngine:
 
             return QPointF(position.x() + pull_x, position.y() + pull_y)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to apply snap magnetism: %s", e)
             return position
 
@@ -758,7 +758,7 @@ class SnapEngine:
             self._last_snap_position = None
 
             self.logger.info("Snap engine configuration updated")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update configuration: %s", e)
 
     def get_snap_zones_near_position(self, position: QPointF, radius: float) -> List[SnapZone]:
@@ -814,6 +814,6 @@ class SnapEngine:
             self.coordinate_manager.clear_cache()
 
             self.logger.info("Snap engine reset to initial state")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reset snap engine: %s", e)
             raise

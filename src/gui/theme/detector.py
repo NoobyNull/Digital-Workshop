@@ -46,7 +46,7 @@ class SystemThemeDetector:
                 return self._detect_macos()
             elif system == "Linux":
                 return self._detect_linux()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to detect system theme: %s", e)
 
         return "light"  # Default fallback
@@ -68,7 +68,7 @@ class SystemThemeDetector:
 
             # value == 1 means light theme, value == 0 means dark theme
             return "light" if value == 1 else "dark"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Windows theme detection failed: %s", e)
             return "light"
 
@@ -93,7 +93,7 @@ class SystemThemeDetector:
             if result.returncode == 0 and "Dark" in result.stdout:
                 return "dark"
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("macOS theme detection failed: %s", e)
             return "light"
 
@@ -139,7 +139,7 @@ class SystemThemeDetector:
                 return "dark"
 
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Linux theme detection failed: %s", e)
             return "light"
 

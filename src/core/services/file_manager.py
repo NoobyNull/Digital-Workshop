@@ -88,7 +88,7 @@ class FileManager:
                 original_path=original_path,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to add file: %s", str(e))
             raise
 
@@ -97,7 +97,7 @@ class FileManager:
         """Get file by ID."""
         try:
             return self.db_manager.get_file(file_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get file: %s", str(e))
             return None
 
@@ -106,7 +106,7 @@ class FileManager:
         """Get all files in project."""
         try:
             return self.db_manager.get_files_by_project(project_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get files: %s", str(e))
             return []
 
@@ -115,7 +115,7 @@ class FileManager:
         """Get files by status."""
         try:
             return self.db_manager.get_files_by_status(project_id, status)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get files by status: %s", str(e))
             return []
 
@@ -124,7 +124,7 @@ class FileManager:
         """Update file status."""
         try:
             return self.db_manager.update_file_status(file_id, status)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update file status: %s", str(e))
             return False
 
@@ -133,7 +133,7 @@ class FileManager:
         """Update file."""
         try:
             return self.db_manager.update_file(file_id, **kwargs)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update file: %s", str(e))
             return False
 
@@ -142,7 +142,7 @@ class FileManager:
         """Delete file record."""
         try:
             return self.db_manager.delete_file(file_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to delete file: %s", str(e))
             return False
 
@@ -168,7 +168,7 @@ class FileManager:
                     os.link(source_path, dest_path)
                     logger.info("Hard linked: %s -> {dest_path}", source_path)
                     return True
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("Hard link failed: %s, trying symbolic link", str(e))
                     link_type = "symbolic"
 
@@ -177,7 +177,7 @@ class FileManager:
                     os.symlink(source_path, dest_path)
                     logger.info("Symbolic linked: %s -> {dest_path}", source_path)
                     return True
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.warning("Symbolic link failed: %s, trying copy", str(e))
                     link_type = "copy"
 
@@ -186,11 +186,11 @@ class FileManager:
                     shutil.copy2(source_path, dest_path)
                     logger.info("Copied: %s -> {dest_path}", source_path)
                     return True
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     logger.error("Copy failed: %s", str(e))
                     return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to link file: %s", str(e))
             return False
 
@@ -199,7 +199,7 @@ class FileManager:
         """Find duplicate file by hash."""
         try:
             return self.db_manager.find_duplicate_by_hash(project_id, file_hash)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to find duplicate: %s", str(e))
             return None
 
@@ -208,6 +208,6 @@ class FileManager:
         """Get file count for project."""
         try:
             return self.db_manager.get_file_count_by_project(project_id)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get file count: %s", str(e))
             return 0

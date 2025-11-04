@@ -210,7 +210,7 @@ class STEPParser(BaseParser):
                 format_type=ModelFormat.STEP,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse STEP file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse STEP file: {str(e)}")
 
@@ -250,7 +250,7 @@ class STEPParser(BaseParser):
                 # Process entity references
                 self._process_entity_references()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise ParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_entities(self, data_section: str) -> None:
@@ -620,5 +620,5 @@ class STEPParser(BaseParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"

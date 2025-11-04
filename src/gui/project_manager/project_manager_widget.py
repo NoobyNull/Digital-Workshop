@@ -101,7 +101,7 @@ class ProjectManagerWidget(QWidget):
 
             logger.info("Refreshed project list: %s projects", len(projects))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to refresh project list: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to refresh projects: {str(e)}")
 
@@ -123,7 +123,7 @@ class ProjectManagerWidget(QWidget):
                 self._refresh_project_list()
                 logger.info("Created project: %s", name)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to create project: {str(e)}")
 
@@ -194,7 +194,7 @@ class ProjectManagerWidget(QWidget):
                         f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}",
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import library: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import library: {str(e)}")
 
@@ -213,7 +213,7 @@ class ProjectManagerWidget(QWidget):
             else:
                 QMessageBox.critical(self, "Error", "Failed to open project.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to open project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to open project: {str(e)}")
 
@@ -243,7 +243,7 @@ class ProjectManagerWidget(QWidget):
                 else:
                     QMessageBox.critical(self, "Error", "Failed to delete project.")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to delete project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to delete project: {str(e)}")
 

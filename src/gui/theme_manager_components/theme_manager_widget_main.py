@@ -274,7 +274,7 @@ class ThemeManagerWidget(QDialog):
             self._pending_overrides[var_name] = hex_val
             self.tm.set_colors({var_name: hex_val})
             self.refresh_preview()
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(
                 self,
                 "Theme Update Error",
@@ -286,7 +286,7 @@ class ThemeManagerWidget(QDialog):
         try:
             self.tm.save_to_settings()
             QMessageBox.information(self, "Theme", "Theme saved to AppData.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Save Failed", f"Failed to save theme:\n{exc}")
 
     def _on_load(self) -> None:
@@ -296,7 +296,7 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Theme loaded from AppData.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Load Failed", f"Failed to load theme:\n{exc}")
 
     def _on_export(self) -> None:
@@ -312,7 +312,7 @@ class ThemeManagerWidget(QDialog):
                 p = p.with_suffix(".json")
             self.tm.export_theme(p)
             QMessageBox.information(self, "Theme", f"Theme exported to:\n{p}")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Export Failed", f"Failed to export theme:\n{exc}")
 
     def _on_import(self) -> None:
@@ -327,7 +327,7 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Theme imported successfully.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Import Failed", f"Failed to import theme:\n{exc}")
 
     def _on_apply(self) -> None:
@@ -336,7 +336,7 @@ class ThemeManagerWidget(QDialog):
             self.tm.apply_to_registered()
             self.themeApplied.emit(self.tm.colors)
             QMessageBox.information(self, "Theme", "Theme applied to application.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Apply Failed", f"Failed to apply theme:\n{exc}")
 
     def _on_reset_defaults(self) -> None:
@@ -346,7 +346,7 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Reset to default theme.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset theme:\n{exc}")
 
     def refresh_preview(self) -> None:

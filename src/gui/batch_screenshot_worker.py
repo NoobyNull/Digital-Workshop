@@ -101,14 +101,14 @@ class BatchScreenshotWorker(QThread):
                     # Emit progress
                     self.progress_updated.emit(idx + 1, total)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error processing model %s: {e}", model.get('id'))
                     self.error_occurred.emit(f"Error processing model: {e}")
 
             self.logger.info("Batch screenshot generation completed")
             self.finished_batch.emit()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Batch screenshot generation failed: %s", e, exc_info=True)
             self.error_occurred.emit(f"Batch generation failed: {e}")
 
@@ -149,7 +149,7 @@ class BatchScreenshotWorker(QThread):
 
             return screenshot_path
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to generate screenshot for model %s: {e}", model_id)
             return None
 

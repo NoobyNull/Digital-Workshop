@@ -218,7 +218,7 @@ class Application:
                     f"{stats.failed_phases} failures, {stats.total_duration:.3f}s"
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.warning(
                     f"Unified cleanup failed, continuing with standard cleanup: {e}"
@@ -297,7 +297,7 @@ class Application:
             if self.logger:
                 self.logger.info("Exception handler installed")
             return True
-        except Exception as e:  # Catch all exceptions, not just RuntimeError
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:  # Catch all exceptions, not just RuntimeError
             if self.logger:
                 self.logger.error("Failed to install exception handler: %s", str(e))
             return False
@@ -346,7 +346,7 @@ class Application:
             service.apply_theme(theme)
             if self.logger:
                 self.logger.debug("Theme applied: %s", theme)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.debug("Theme application: %s", e)
 
@@ -381,7 +381,7 @@ class Application:
         try:
             if hasattr(self, "_original_close_event") and self._original_close_event:
                 self._original_close_event(event)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.warning("Failed to call original closeEvent: %s", e)
 

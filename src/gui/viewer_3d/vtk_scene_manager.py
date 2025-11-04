@@ -69,7 +69,7 @@ class VTKSceneManager:
             self.enable_gradient = settings.value(
                 "viewer/enable_gradient", config.enable_gradient, type=bool
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load grid/ground/gradient settings from QSettings: %s", e)
             self.grid_visible = True
             self.grid_color = vtk_rgb("grid")
@@ -115,7 +115,7 @@ class VTKSceneManager:
                 # If GetInstance fails, just continue - the warnings are already suppressed
                 pass
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Could not fully suppress vtkOutputWindow: %s", e)
 
     def _setup_renderer(self) -> None:
@@ -172,7 +172,7 @@ class VTKSceneManager:
                     vtk.vtkSMPTools.SetNumberOfThreads(threads)
                 except Exception:
                     pass
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to configure VTK thread count: %s", e)
             # Fallback to conservative default
             try:
@@ -297,7 +297,7 @@ class VTKSceneManager:
             if self.ground_actor:
                 self.ground_actor.SetVisibility(self.ground_visible)
                 logger.info("Ground actor visibility set to %s", self.ground_visible)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create initial grid/ground: %s", e, exc_info=True)
 
     def _setup_camera(self) -> None:
@@ -422,7 +422,7 @@ class VTKSceneManager:
                 if not success:
                     logger.debug("Fallback render failed, continuing anyway")
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.debug("Render error: %s", e)
                 # Continue silently - errors are handled by the fallback renderer
 
@@ -464,7 +464,7 @@ class VTKSceneManager:
             self.render_window = None
             self.renderer = None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Error during enhanced VTK cleanup: %s", e)
             # Fallback to basic cleanup
             self._basic_cleanup()
@@ -478,19 +478,19 @@ class VTKSceneManager:
             try:
                 if self.render_window:
                     self.render_window.Finalize()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.debug("Basic render window cleanup error: %s", e)
 
             try:
                 if self.interactor:
                     self.interactor.TerminateApp()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.debug("Basic interactor cleanup error: %s", e)
 
             try:
                 if self.renderer:
                     self.renderer.RemoveAllViewProps()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.debug("Basic renderer cleanup error: %s", e)
 
             # Clear references
@@ -504,7 +504,7 @@ class VTKSceneManager:
 
             logger.info("Basic VTK cleanup completed")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error during basic cleanup: %s", e)
 
     def reload_settings_from_qsettings(self) -> None:
@@ -563,7 +563,7 @@ class VTKSceneManager:
             self.render()
             logger.info("Viewer settings reloaded from QSettings and applied")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to reload settings from QSettings: %s", e, exc_info=True)
 
     def update_gradient_colors(
@@ -613,5 +613,5 @@ class VTKSceneManager:
             # Trigger re-render
             self.render()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update gradient colors: %s", e, exc_info=True)

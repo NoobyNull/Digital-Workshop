@@ -76,7 +76,7 @@ class SpecificErrorHandler:
                 return func(*args, **kwargs)
             except self.expected_errors as e:
                 return self._handle_error(type(e), e, None)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # Re-raise unexpected exceptions
                 raise
 
@@ -112,14 +112,14 @@ class SpecificErrorHandler:
 
             return True
 
-        except Exception as reporting_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as reporting_error:
             # If error reporting itself fails, log and continue
             self.logger.error("Error reporting failed: %s", reporting_error, exc_info=True)
 
             # In case of reporting failure, still attempt recovery
             try:
                 self._attempt_recovery(exc_val)
-            except Exception as recovery_error:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
                 self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
 
             # Reraise original error if requested
@@ -149,7 +149,7 @@ class SpecificErrorHandler:
 
             return False
 
-        except Exception as recovery_error:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
             self.logger.error("Recovery strategy failed: %s", recovery_error, exc_info=True)
             return False
 
@@ -443,7 +443,7 @@ def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.
 
                 return result
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # Log failure with timing
                 duration = time.time() - start_time
                 logging.getLogger("operation_monitor").error(

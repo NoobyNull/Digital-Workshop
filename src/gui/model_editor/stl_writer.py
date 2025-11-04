@@ -69,7 +69,7 @@ class STLWriter:
             logger.info("Wrote binary STL with %s triangles to {output_path}", triangle_count)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to write binary STL: %s", e)
             return False
 
@@ -116,7 +116,7 @@ class STLWriter:
             logger.info("Wrote ASCII STL with %s triangles to {output_path}", len(model.triangles))
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to write ASCII STL: %s", e)
             return False
 

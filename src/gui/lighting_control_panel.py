@@ -367,7 +367,7 @@ class LightingControlPanel(QDialog):
                 f"Intensity={self._intensity:.1f}, "
                 f"Cone Angle={self._cone_angle:.0f}°"
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save lighting defaults: %s", e)
 
     def _apply_button_style(self, button: QPushButton) -> None:

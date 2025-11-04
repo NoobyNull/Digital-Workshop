@@ -142,7 +142,7 @@ class FormatDetector:
 
                 return ModelFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error verifying STL format: %s", str(e))
             return ModelFormat.UNKNOWN
 
@@ -186,7 +186,7 @@ class FormatDetector:
 
                 return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error verifying OBJ format: %s", str(e))
             return False
 
@@ -212,7 +212,7 @@ class FormatDetector:
                     content = model_file.read(1000).decode("utf-8")
                     return "<?xml" in content.lower() and "model" in content.lower()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error verifying 3MF format: %s", str(e))
             return False
 
@@ -232,7 +232,7 @@ class FormatDetector:
                 content = file.read(2000).upper()
                 return "ISO-10303-21" in content and "DATA;" in content
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Error verifying STEP format: %s", str(e))
             return False
 
@@ -266,7 +266,7 @@ class FormatDetector:
 
             return ModelFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error detecting format by content: %s", str(e))
             return ModelFormat.UNKNOWN
 
@@ -319,5 +319,5 @@ class FormatDetector:
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"

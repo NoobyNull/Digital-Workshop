@@ -88,13 +88,13 @@ class TabDataManager:
                     category=category or tab_name,
                 )
                 self.logger.info("Linked %s to project {project_id}", filename)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Could not link file to project: %s", e)
                 # File was saved successfully, so don't fail
 
             return True, f"Data saved to {filename}"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to save tab data: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return False, error_msg
@@ -144,7 +144,7 @@ class TabDataManager:
             error_msg = f"Invalid JSON in {filename}: {str(e)}"
             self.logger.error(error_msg)
             return False, None, error_msg
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to load tab data: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return False, None, error_msg
@@ -177,7 +177,7 @@ class TabDataManager:
 
             return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting file path: %s", e)
             return None
 
@@ -227,7 +227,7 @@ class TabDataManager:
 
             return True, files, f"Found {len(files)} tab data files"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to list tab data files: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return False, [], error_msg
@@ -252,7 +252,7 @@ class TabDataManager:
             self.logger.info("Deleted %s", filename)
             return True, f"Deleted {filename}"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to delete tab data file: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return False, error_msg

@@ -137,7 +137,7 @@ class ToolDatabasePreferencesDialog(QDialog):
 
             self.logger.info("Preferences loaded successfully")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load preferences: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load preferences: {str(e)}")
 
@@ -182,6 +182,6 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.preferences_changed.emit()
             self.accept()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to save preferences: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save preferences: {str(e)}")

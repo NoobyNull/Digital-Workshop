@@ -267,7 +267,7 @@ class ComprehensiveLogger:
             else:  # DEBUG
                 logger.debug(log_line)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Fallback to basic logging if structured logging fails
             logger.error("Structured logging failed: %s", e)
             logger.error("Original message: %s", message)
@@ -488,7 +488,7 @@ class ComprehensiveLogger:
         try:
             self.start_operation(operation_id, operation_name, context, extra_data)
             yield operation_id
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.end_operation(
                 operation_id,
                 success=False,

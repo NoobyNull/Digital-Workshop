@@ -111,7 +111,7 @@ class MaterialValidationWorker(QThread):
                     f"Material validation failed: {self.material_name} - {result.error_message}"
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during material validation: %s", e, exc_info=True)
             error_result = MaterialValidationResult(False, str(e), [], [])
             self.validation_completed.emit(self.material_name, error_result)
@@ -211,7 +211,7 @@ class MaterialValidationWorker(QThread):
 
             return MaterialValidationResult(True, "", warnings, suggestions)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return MaterialValidationResult(False, f"Validation error: {e}", [], [])
 
 
@@ -257,7 +257,7 @@ class MaterialService(IMaterialService):
             self.materials_directory.mkdir(exist_ok=True)
             self.previews_directory.mkdir(exist_ok=True)
             self.templates_directory.mkdir(exist_ok=True)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error creating material directories: %s", e)
 
     def _load_materials(self) -> None:
@@ -277,7 +277,7 @@ class MaterialService(IMaterialService):
 
             self.logger.info("Loaded %s materials", len(self.materials))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading materials: %s", e)
 
     def _build_category_index(self) -> None:
@@ -313,7 +313,7 @@ class MaterialService(IMaterialService):
             basic_valid, basic_error = self._validate_material_basic(material_data)
             return basic_valid, basic_error
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating material: %s", e)
             return False, f"Validation error: {e}"
 
@@ -338,7 +338,7 @@ class MaterialService(IMaterialService):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Basic validation error: {e}"
 
     def get_material_preview(self, material_name: str) -> Optional[bytes]:
@@ -357,7 +357,7 @@ class MaterialService(IMaterialService):
             with open(preview_path, "rb") as f:
                 return f.read()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting material preview: %s", e)
             return None
 
@@ -436,7 +436,7 @@ class MaterialService(IMaterialService):
 
             return bytes(byte_array)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error generating material preview: %s", e)
             return None
 
@@ -471,7 +471,7 @@ class MaterialService(IMaterialService):
 
             return material_data
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error creating material from template: %s", e)
             return None
 
@@ -520,7 +520,7 @@ class MaterialService(IMaterialService):
 
             return sorted(results)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error searching materials: %s", e)
             return []
 
@@ -532,7 +532,7 @@ class MaterialService(IMaterialService):
                 for template_file in self.templates_directory.glob("*.json"):
                     templates.append(template_file.stem)
             return sorted(templates)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting material templates: %s", e)
             return []
 
@@ -564,7 +564,7 @@ class MaterialService(IMaterialService):
             self.logger.info("Material saved: %s", material_name)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error saving material: %s", e)
             return False
 
@@ -581,7 +581,7 @@ class MaterialService(IMaterialService):
                 modified_date=material_data.get("modified_date"),
                 version=material_data.get("version", "1.0"),
             )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error creating material info: %s", e)
             return None
 
@@ -590,7 +590,7 @@ class MaterialService(IMaterialService):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading material file %s: {e}", file_path)
             return None
 
@@ -611,12 +611,12 @@ class MaterialService(IMaterialService):
                     f"Material validation warnings: {material_name} - {result.warnings}"
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation completion: %s", e)
 
     def _on_validation_progress(self, material_name: str, progress: float) -> None:
         """Handle validation progress updates."""
         try:
             self.logger.debug("Material validation progress: %s - {progress:.1f}%", material_name)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation progress: %s", e)

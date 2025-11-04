@@ -118,7 +118,7 @@ class STLGPUParser(BaseParser):
 
                 return STLFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error detecting STL format: %s", e)
             raise STLParseError(f"Failed to detect STL format: {e}")
 
@@ -263,12 +263,12 @@ class STLGPUParser(BaseParser):
                 normal_array=normal_array,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("GPU STL parsing failed: %s", e)
             # Attempt CPU fallback
             try:
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
-            except Exception as fallback_e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as fallback_e:
                 raise STLParseError(
                     f"GPU parsing failed and CPU fallback also failed: {e}, {fallback_e}"
                 )
@@ -329,7 +329,7 @@ class STLGPUParser(BaseParser):
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("GPU kernel execution error: %s", e)
             return False
 
@@ -373,7 +373,7 @@ class STLGPUParser(BaseParser):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Triangle processing kernel error: %s", e)
             return False
 
@@ -402,7 +402,7 @@ class STLGPUParser(BaseParser):
 
             return vertex_array, normal_array
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             raise STLParseError(f"GPU result transfer failed: {e}")
 
     def _compute_bounds_from_arrays(self, vertex_array: np.ndarray) -> Tuple[Vector3D, Vector3D]:
@@ -423,7 +423,7 @@ class STLGPUParser(BaseParser):
             if buffer:
                 try:
                     self.memory_manager.free_buffer(buffer)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Buffer cleanup error: %s", e)
 
     def _parse_binary_stl_cpu_fallback(
@@ -522,7 +522,7 @@ class STLGPUParser(BaseParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def get_supported_extensions(self) -> List[str]:

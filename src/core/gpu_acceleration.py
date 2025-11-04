@@ -361,7 +361,7 @@ class GPUAccelerator:
                         capability_level=GPUCapability.HIGH_END,
                     )
                 )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("CUDA detection failed: %s", e)
 
         return devices
@@ -386,7 +386,7 @@ class GPUAccelerator:
                         capability_level=GPUCapability.ADVANCED,
                     )
                 )
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("OpenCL detection failed: %s", e)
 
         return devices

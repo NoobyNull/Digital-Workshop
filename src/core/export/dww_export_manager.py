@@ -113,14 +113,14 @@ class DWWExportManager:
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
                                     dww_archive.write(thumbnail_path, arcname=thumb_arcname)
-                                except Exception as e:
+                                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                                     self.logger.debug("Failed to add thumbnail: %s", e)
 
                         if progress_callback:
                             progress = (i + 1) / total_items
                             progress_callback(progress, f"Exported {i + 1}/{total_items} files")
 
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.error("Failed to add file to archive: %s: {e}", file_path)
                         continue
 
@@ -136,7 +136,7 @@ class DWWExportManager:
             self.logger.info("Successfully exported project to DWW: %s", output_path)
             return True, f"Project exported successfully to {output_file.name}"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export project to DWW: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg
@@ -170,7 +170,7 @@ class DWWExportManager:
             metadata_json = json.dumps(metadata, indent=2)
             dww_archive.writestr("metadata/files_metadata.json", metadata_json)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to add metadata to archive: %s", e)
 
     def _create_manifest(self, project: Dict, files: List[Dict]) -> Dict:
@@ -282,5 +282,5 @@ class DWWExportManager:
                         "DWW file integrity check failed - file may be corrupted",
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Failed to verify DWW file: {str(e)}"

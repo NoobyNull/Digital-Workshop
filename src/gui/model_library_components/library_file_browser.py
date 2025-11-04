@@ -55,7 +55,7 @@ class LibraryFileBrowser:
                         f"No supported model files found in {p.name}",
                     )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing from context menu: %s", e)
             QMessageBox.critical(self.library_widget, "Import Error", f"Failed to import: {e}")
 
@@ -73,7 +73,7 @@ class LibraryFileBrowser:
                     f"Could not open file: {file_path}",
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error opening file in native app: %s", e)
             QMessageBox.critical(self.library_widget, "Open File", f"Failed to open file: {e}")
 
@@ -113,7 +113,7 @@ class LibraryFileBrowser:
                     self.library_widget.status_label.setText(f"Failed to remove '{model_name}'")
                     self.logger.error("Failed to remove model with ID %s", model_id)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error removing model: %s", e)
             QMessageBox.warning(self.library_widget, "Error", f"Failed to remove model: {str(e)}")
 
@@ -127,7 +127,7 @@ class LibraryFileBrowser:
             self.library_widget.file_model.refresh_index()
             self.library_widget.status_label.setText("Indexing directories...")
             self.logger.info("Manual file browser refresh initiated")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error refreshing file browser: %s", e)
             self.library_widget.status_label.setText("Error refreshing directories")
 
@@ -164,7 +164,7 @@ class LibraryFileBrowser:
             else:
                 self.logger.debug("All %s root folders are accessible", len(enabled_folders))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating root folders: %s", e)
 
     def import_models(self) -> None:
@@ -202,7 +202,7 @@ class LibraryFileBrowser:
                     self.library_widget, "Import", "No supported model files selected."
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing selected files: %s", e)
             QMessageBox.critical(
                 self.library_widget, "Import Error", f"Failed to import files: {e}"
@@ -242,7 +242,7 @@ class LibraryFileBrowser:
                     f"No supported model files found in folder.",
                 )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing folder: %s", e)
             QMessageBox.critical(
                 self.library_widget, "Import Error", f"Failed to import folder: {e}"

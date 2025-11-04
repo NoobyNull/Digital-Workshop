@@ -114,7 +114,7 @@ class ScreenshotGenerator:
                                 self.logger.debug("Mapper updated with latest data")
                     else:
                         self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to apply material: %s", e)
 
             # Setup lighting and camera
@@ -155,7 +155,7 @@ class ScreenshotGenerator:
                 self.logger.error("Failed to save screenshot to %s", screenshot_path)
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error capturing screenshot: %s", e, exc_info=True)
             return None
         finally:
@@ -169,7 +169,7 @@ class ScreenshotGenerator:
             # Force full geometry loading for screenshots (disable lazy loading)
             model = parser.parse_file(model_path, lazy_loading=False)
             return model
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load model %s: {e}", model_path)
             return None
 
@@ -186,7 +186,7 @@ class ScreenshotGenerator:
                 self.logger.info("Using triangle-based model creation")
                 return self._create_actor_from_triangles(model)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create actor: %s", e, exc_info=True)
             return None
 
@@ -234,7 +234,7 @@ class ScreenshotGenerator:
                     normals.InsertNextTuple(normal)
                     normals.InsertNextTuple(normal)
 
-                except Exception as tri_error:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as tri_error:
                     self.logger.warning("Error processing triangle %s: {tri_error}", i)
                     continue
 
@@ -273,7 +273,7 @@ class ScreenshotGenerator:
 
             self.logger.info("Actor created successfully with bounds: %s", actor.GetBounds())
             return actor
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create actor from triangles: %s", e, exc_info=True)
             return None
 
@@ -351,7 +351,7 @@ class ScreenshotGenerator:
                 f"Array-based actor created successfully with bounds: {actor.GetBounds()}"
             )
             return actor
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create actor from arrays: %s", e, exc_info=True)
             return None
 

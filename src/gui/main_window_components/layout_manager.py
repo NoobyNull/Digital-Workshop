@@ -138,7 +138,7 @@ class LayoutManager:
             self._write_settings_json(settings)
             logger.debug("Layout autosaved")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save current layout: %s", e)
 
     @log_function_call(logger)
@@ -199,7 +199,7 @@ class LayoutManager:
             logger.debug("Layout restored from settings")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load saved layout: %s", e)
             return False
 
@@ -208,7 +208,7 @@ class LayoutManager:
         try:
             dock.topLevelChanged.connect(self.schedule_layout_save)
             dock.visibilityChanged.connect(self.schedule_layout_save)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to connect layout autosave: %s", e)
 
     def iter_docks(self) -> List[QDockWidget]:
@@ -227,5 +227,5 @@ class LayoutManager:
             self.save_current_layout()
             logger.debug("Dock layout reset to default")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to reset dock layout: %s", e)

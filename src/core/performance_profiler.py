@@ -352,7 +352,7 @@ class PerformanceProfiler:
         for i in range(warmup_iterations):
             try:
                 operation_func()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 return {"error": f"Warmup failed: {e}"}
 
         # Benchmark
@@ -374,7 +374,7 @@ class PerformanceProfiler:
                     {"iteration": i + 1},
                 )
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Benchmark iteration %s failed: {e}", i + 1)
                 continue
 
@@ -498,7 +498,7 @@ class PerformanceProfiler:
             self.logger.info("Exported %s samples to {output_file}", len(self.samples))
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to export samples to CSV: %s", e)
             return False
 

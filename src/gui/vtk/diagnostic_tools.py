@@ -61,7 +61,7 @@ class VTKDiagnosticTools:
 
             return diagnostics
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting comprehensive diagnostics: %s", e)
             return {"error": str(e)}
 
@@ -77,7 +77,7 @@ class VTKDiagnosticTools:
                 "python_version": platform.python_version(),
                 "python_implementation": platform.python_implementation(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_vtk_version_info(self) -> Dict[str, Any]:
@@ -90,35 +90,35 @@ class VTKDiagnosticTools:
                 "vtk_build": vtk.vtkVersion.GetVTKBuildVersion(),
                 "vtk_source": vtk.vtkVersion.GetVTKSourceVersion(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_context_diagnostics(self) -> Dict[str, Any]:
         """Get context-related diagnostics."""
         try:
             return self.context_manager.get_diagnostic_info()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_resource_diagnostics(self) -> Dict[str, Any]:
         """Get resource tracking diagnostics."""
         try:
             return self.resource_tracker.get_statistics()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_error_diagnostics(self) -> Dict[str, Any]:
         """Get error handling diagnostics."""
         try:
             return self.error_handler.get_error_stats()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_fallback_diagnostics(self) -> Dict[str, Any]:
         """Get fallback renderer diagnostics."""
         try:
             return self.fallback_renderer.get_fallback_info()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_performance_diagnostics(self) -> Dict[str, Any]:
@@ -131,7 +131,7 @@ class VTKDiagnosticTools:
                 "frame_rate_monitoring": "available",
                 "memory_monitoring": "available",
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_opengl_diagnostics(self) -> Dict[str, Any]:
@@ -155,7 +155,7 @@ class VTKDiagnosticTools:
 
             return diagnostics
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _check_opengl_availability(self) -> bool:
@@ -172,7 +172,7 @@ class VTKDiagnosticTools:
 
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("OpenGL availability check failed: %s", e)
             return False
 
@@ -182,7 +182,7 @@ class VTKDiagnosticTools:
             # This is a simplified approach - in practice, you'd need to
             # query the actual OpenGL context for version information
             return "OpenGL version detection not implemented"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return f"Error: {e}"
 
     def _get_opengl_extensions(self) -> List[str]:
@@ -190,7 +190,7 @@ class VTKDiagnosticTools:
         try:
             # This would require querying the actual OpenGL context
             return ["Extension detection not implemented"]
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return [f"Error: {e}"]
 
     def _get_rendering_backend(self) -> str:
@@ -215,7 +215,7 @@ class VTKDiagnosticTools:
             else:
                 return "Unknown rendering backend"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return f"Error detecting backend: {e}"
 
     def _get_windows_opengl_diagnostics(self) -> Dict[str, Any]:
@@ -226,7 +226,7 @@ class VTKDiagnosticTools:
                 "directx_version": self._get_directx_version(),
                 "wgl_extensions": self._get_wgl_extensions(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_linux_opengl_diagnostics(self) -> Dict[str, Any]:
@@ -237,7 +237,7 @@ class VTKDiagnosticTools:
                 "glx_extensions": self._get_glx_extensions(),
                 "dri_available": self._check_dri_availability(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _get_darwin_opengl_diagnostics(self) -> Dict[str, Any]:
@@ -247,7 +247,7 @@ class VTKDiagnosticTools:
                 "cgl_available": self._check_cgl_availability(),
                 "metal_compatibility": self._check_metal_compatibility(),
             }
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return {"error": str(e)}
 
     def _check_angle_availability(self) -> bool:
@@ -263,7 +263,7 @@ class VTKDiagnosticTools:
         try:
             # This would query DirectX version
             return "DirectX version detection not implemented"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return f"Error: {e}"
 
     def _get_wgl_extensions(self) -> List[str]:
@@ -271,7 +271,7 @@ class VTKDiagnosticTools:
         try:
             # This would query WGL extensions
             return ["WGL extension detection not implemented"]
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return [f"Error: {e}"]
 
     def _check_mesa_availability(self) -> bool:
@@ -287,7 +287,7 @@ class VTKDiagnosticTools:
         try:
             # This would query GLX extensions
             return ["GLX extension detection not implemented"]
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return [f"Error: {e}"]
 
     def _check_dri_availability(self) -> bool:
@@ -376,7 +376,7 @@ class VTKDiagnosticTools:
 
             return diagnosis
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error diagnosing context loss: %s", e)
             return {"error": str(e)}
 
@@ -413,7 +413,7 @@ class VTKDiagnosticTools:
 
             return diagnosis
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error diagnosing memory issues: %s", e)
             return {"error": str(e)}
 
@@ -458,7 +458,7 @@ class VTKDiagnosticTools:
 
             return diagnosis
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error diagnosing performance issues: %s", e)
             return {"error": str(e)}
 
@@ -492,12 +492,12 @@ class VTKDiagnosticTools:
                     with open(output_file, "w") as f:
                         f.write(report)
                     self.logger.info("Diagnostic report saved to: %s", output_file)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.error("Error saving diagnostic report: %s", e)
 
             return report
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_report = f"Error generating diagnostic report: {e}"
             self.logger.error(error_report)
             return error_report
@@ -610,7 +610,7 @@ class VTKDiagnosticTools:
 
             return "\n".join(report_lines)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return f"Error formatting diagnostic report: {e}"
 
     def run_health_check(self) -> Dict[str, Any]:
@@ -664,7 +664,7 @@ class VTKDiagnosticTools:
 
             return health
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error running health check: %s", e)
             return {
                 "overall_status": "error",

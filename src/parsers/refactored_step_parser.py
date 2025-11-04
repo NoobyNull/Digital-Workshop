@@ -219,7 +219,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
             return result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to parse STEP file %s: {str(e)}", file_path)
             raise
 
@@ -245,7 +245,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             else:
                 self._parse_step_file_standard(file_path, progress_callback)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error parsing STEP file: %s", str(e))
             raise STEPParseError(f"Failed to parse STEP file: {str(e)}")
 
@@ -760,7 +760,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error validating STEP geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -806,7 +806,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
             return stats
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error getting STEP geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 

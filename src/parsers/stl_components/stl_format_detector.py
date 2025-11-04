@@ -70,6 +70,6 @@ class STLFormatDetector:
 
                 return STLFormat.UNKNOWN
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error detecting STL format: %s", str(e))
             raise STLParseError(f"Failed to detect STL format: {str(e)}")

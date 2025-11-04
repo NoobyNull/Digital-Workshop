@@ -79,7 +79,7 @@ class ThumbnailInspectorLabel(QLabel):
 
             dialog = ThumbnailInspectorDialog(full_res_pixmap, self.thumbnail_path, parent=self)
             dialog.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show thumbnail inspector: %s", e)
 
 

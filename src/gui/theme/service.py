@@ -76,7 +76,7 @@ class ThemeService:
 
             if self._auto_save_enabled:
                 self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to apply preset %s: {e}", name)
             raise
 
@@ -107,7 +107,7 @@ class ThemeService:
 
             if self._auto_save_enabled:
                 self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to set color %s: {e}", name)
             raise
 
@@ -136,7 +136,7 @@ class ThemeService:
         try:
             self._persistence.save_theme(self._manager.colors)
             self._logger.info("Theme saved")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to save theme: %s", e)
 
     def load_theme(self) -> bool:
@@ -154,7 +154,7 @@ class ThemeService:
                 self._logger.info("Theme loaded from AppData")
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to load theme: %s", e)
             return False
 
@@ -168,7 +168,7 @@ class ThemeService:
         try:
             self._persistence.export_theme(path, self._manager.colors)
             self._logger.info("Theme exported to %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to export theme: %s", e)
             raise
 
@@ -185,7 +185,7 @@ class ThemeService:
                 self._manager.set_colors(colors)
                 self._current_preset = "custom"
                 self._logger.info("Theme imported from %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self._logger.error("Failed to import theme: %s", e)
             raise
 

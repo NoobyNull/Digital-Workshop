@@ -143,7 +143,7 @@ def main():
         exception_handler.handle_startup_error(e)
         return 1
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         # Catch all other exceptions
         logger.error("Application startup failed: %s", str(e), exc_info=True)
         exception_handler.handle_startup_error(e)
@@ -154,7 +154,7 @@ def main():
         if app:
             try:
                 app.cleanup()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Cleanup failed: %s", str(e))
 
 

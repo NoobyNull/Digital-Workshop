@@ -115,7 +115,7 @@ class DirectoryIndexer(QThread):
                     children.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
                     indexed_data[dir_path] = children
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Error indexing directory %s: {e}", dir_path)
 
         if not self._is_cancelled:
@@ -224,7 +224,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                     child_node = TreeNode(name=item.name, path=str(item), is_dir=item.is_dir())
                     node.add_child(child_node)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading children for %s: {e}", node.path)
 
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:

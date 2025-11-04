@@ -109,7 +109,7 @@ class LegacyThemeManager(QObject):
 
                 return success
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy apply_theme failed: %s", e)
                 self.error_occurred.emit(str(e))
                 return False
@@ -131,7 +131,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.get_color(color_name)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy get_color failed for %s: {e}", color_name)
                 return "#1976D2"  # Fallback color
 
@@ -149,7 +149,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.get_theme_colors()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy get_theme_colors failed: %s", e)
                 return {}
 
@@ -167,7 +167,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.save_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy save_settings failed: %s", e)
                 return False
 
@@ -185,7 +185,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.load_settings()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy load_settings failed: %s", e)
                 return False
 
@@ -205,7 +205,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.get_current_theme()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy get_current_theme failed: %s", e)
                 return "dark", "blue"
 
@@ -223,7 +223,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.reset_to_default()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy reset_to_default failed: %s", e)
                 return False
 
@@ -244,7 +244,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.export_theme(file_path)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy export_theme failed: %s", e)
                 return False
 
@@ -265,7 +265,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.import_theme(file_path)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy import_theme failed: %s", e)
                 return False
 
@@ -287,7 +287,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.register_widget(widget, widget_name)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy register_widget failed: %s", e)
                 return False
 
@@ -310,7 +310,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.unregister_widget(widget_name)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy unregister_widget failed: %s", e)
                 return False
 
@@ -341,7 +341,7 @@ class LegacyThemeManager(QObject):
 
                 return status
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy get_system_status failed: %s", e)
                 return {
                     "error": str(e),
@@ -365,7 +365,7 @@ class LegacyThemeManager(QObject):
 
             try:
                 self._unified_manager.cleanup_resources()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Legacy cleanup_resources failed: %s", e)
 
     def _connect_signals(self) -> None:
@@ -382,7 +382,7 @@ class LegacyThemeManager(QObject):
 
             logger.debug("Legacy theme manager signals connected")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to connect legacy signals: %s", e)
 
     def _log_migration_warning(self, method_name: str, new_method: str) -> None:

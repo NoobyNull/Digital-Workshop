@@ -183,7 +183,7 @@ class ModelRenderer:
 
             return polydata
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to create polydata from arrays: %s", e, exc_info=True)
             raise
 
@@ -234,7 +234,7 @@ class ModelRenderer:
             polydata.GetPointData().SetTCoords(uv_vtk)
             logger.debug("Generated %s UV coordinates", num_points)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to generate UV coordinates: %s", e, exc_info=True)
 
     def set_render_mode(self, mode: RenderMode) -> None:
@@ -351,7 +351,7 @@ class ModelRenderer:
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
             return False
 
@@ -374,6 +374,6 @@ class ModelRenderer:
             logger.info("Applying default material: %s", default_material)
             return self.apply_material(default_material, material_manager)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply default material: %s", e, exc_info=True)
             return False

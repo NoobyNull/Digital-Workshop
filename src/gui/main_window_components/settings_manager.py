@@ -40,7 +40,7 @@ class SettingsManager:
                 settings.setValue("lighting/intensity", float(props["intensity"]))
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 logger.debug("Lighting settings saved to QSettings")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save lighting settings: %s", e)
 
     @log_function_call(logger)
@@ -88,7 +88,7 @@ class SettingsManager:
                     pass
 
                 logger.info("Lighting settings loaded from QSettings")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load lighting settings: %s", e)
 
     def save_lighting_panel_visibility(self) -> None:
@@ -117,7 +117,7 @@ class SettingsManager:
                 vis = bool(self.main_window.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
                 logger.debug("Saved metadata panel visibility: %s", vis)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save metadata panel visibility: %s", e)
 
     @log_function_call(logger)
@@ -131,7 +131,7 @@ class SettingsManager:
                     self.main_window.metadata_dock.setVisible(vis)
                     logger.debug("Restored metadata panel visibility: %s", vis)
                     return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load metadata panel visibility: %s", e)
         return False
 
@@ -143,7 +143,7 @@ class SettingsManager:
                 vis = bool(self.main_window.library_dock.isVisible())
                 settings.setValue("library_panel/visible", vis)
                 logger.debug("Saved library panel visibility: %s", vis)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save library panel visibility: %s", e)
 
     def load_library_panel_visibility(self) -> bool:
@@ -156,7 +156,7 @@ class SettingsManager:
                     self.main_window.library_dock.setVisible(vis)
                     logger.debug("Restored library panel visibility: %s", vis)
                     return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load library panel visibility: %s", e)
         return False
 
@@ -187,7 +187,7 @@ class SettingsManager:
             settings.setValue("viewer/auto_fit_on_load", config.auto_fit_on_load)
 
             logger.debug("Viewer settings saved to QSettings")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save viewer settings: %s", e)
 
     @log_function_call(logger)
@@ -216,5 +216,5 @@ class SettingsManager:
             settings.setValue("window/remember_window_size", config.remember_window_size)
 
             logger.debug("Window settings saved to QSettings")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to save window settings: %s", e)

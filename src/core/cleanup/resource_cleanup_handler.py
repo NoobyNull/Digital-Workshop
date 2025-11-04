@@ -61,7 +61,7 @@ class ResourceCleanupHandler(CleanupHandler):
 
             return success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Resource cleanup error: %s", e, exc_info=True)
             return False
 
@@ -92,7 +92,7 @@ class ResourceCleanupHandler(CleanupHandler):
 
             return overall_success
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Resource cleanup failed: %s", e)
             return False
 
@@ -109,13 +109,13 @@ class ResourceCleanupHandler(CleanupHandler):
                         files_cleaned += 1
                         self.logger.debug("Removed temporary file: %s", temp_file)
                     self._temp_files.remove(temp_file)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to remove temporary file %s: {e}", temp_file)
 
             self.logger.debug("Cleaned up %s temporary files", files_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Temporary files cleanup failed: %s", e)
             return False
 
@@ -132,13 +132,13 @@ class ResourceCleanupHandler(CleanupHandler):
                         handles_cleaned += 1
                         self.logger.debug("Closed file handle")
                     self._file_handles.remove(handle)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to close file handle: %s", e)
 
             self.logger.debug("Cleaned up %s file handles", handles_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("File handles cleanup failed: %s", e)
             return False
 
@@ -155,13 +155,13 @@ class ResourceCleanupHandler(CleanupHandler):
                         connections_cleaned += 1
                         self.logger.debug("Closed network connection")
                     self._network_connections.remove(connection)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning("Failed to close network connection: %s", e)
 
             self.logger.debug("Cleaned up %s network connections", connections_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Network connections cleanup failed: %s", e)
             return False
 
@@ -177,7 +177,7 @@ class ResourceCleanupHandler(CleanupHandler):
                         resource.cleanup()
                         resources_cleaned += 1
                         self.logger.debug("Cleaned up tracked resource: %s", type(resource).__name__)
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning(
                         f"Failed to cleanup tracked resource {type(resource).__name__}: {e}"
                     )
@@ -188,7 +188,7 @@ class ResourceCleanupHandler(CleanupHandler):
             self.logger.debug("Cleaned up %s tracked resources", resources_cleaned)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Tracked resources cleanup failed: %s", e)
             return False
 
@@ -205,7 +205,7 @@ class ResourceCleanupHandler(CleanupHandler):
             self.logger.debug("Garbage collection freed %s objects", collected)
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Garbage collection failed: %s", e)
             return False
 
@@ -223,7 +223,7 @@ class ResourceCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid temporary file registration: %s", file_path)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register temporary file %s: {e}", file_path)
 
     def register_file_handle(self, handle) -> None:
@@ -240,7 +240,7 @@ class ResourceCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid file handle registration: %s", type(handle))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register file handle: %s", e)
 
     def register_network_connection(self, connection) -> None:
@@ -259,7 +259,7 @@ class ResourceCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid network connection registration: %s", type(connection))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register network connection: %s", e)
 
     def register_resource(self, resource: Any) -> None:
@@ -276,7 +276,7 @@ class ResourceCleanupHandler(CleanupHandler):
             else:
                 self.logger.warning("Invalid resource registration: %s", type(resource))
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register resource: %s", e)
 
     def create_temp_file(self, suffix: str = "", prefix: str = "cleanup_") -> str:
@@ -299,7 +299,7 @@ class ResourceCleanupHandler(CleanupHandler):
 
             return temp_path
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create temporary file: %s", e)
             return ""
 
@@ -316,6 +316,6 @@ class ResourceCleanupHandler(CleanupHandler):
                 "temp_files": self._temp_files.copy(),
             }
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to get resource cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}
