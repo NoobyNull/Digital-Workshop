@@ -109,6 +109,16 @@ jobs:
           Write-Warning "Inno Setup not found at $InnoSetupPath"
         }
 
+    - name: Get git tag
+      id: git_tag
+      run: |
+        $tag = git describe --tags --exact-match 2>$null
+        if ($LASTEXITCODE -eq 0) {
+          Write-Output "tag=$tag" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Output "tag=v0.1.5-update-1" >> $env:GITHUB_OUTPUT
+        }
+
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       with:
@@ -117,7 +127,7 @@ jobs:
           dist/Digital-Workshop-v0.1.5-Setup.exe
           dist/Digital-Workshop-v0.1.5-Portable.zip
           dist/Digital-Workshop-v0.1.5-Source.zip
-        tag_name: v0.1.5
+        tag_name: ${{ steps.git_tag.outputs.tag }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
