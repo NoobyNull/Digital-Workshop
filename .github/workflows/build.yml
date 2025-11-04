@@ -54,12 +54,47 @@ jobs:
         Write-Host "`nBuild artifacts:"
         Get-ChildItem -Path "dist" -File | ForEach-Object { Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" }
 
+    - name: Create portable archive
+      run: |
+        # Create portable ZIP archive
+        $SourceDir = "dist"
+        $DestZip = "dist/Digital-Workshop-v0.1.5-Portable.zip"
+
+        # Create ZIP with portable executable
+        Compress-Archive -Path "$SourceDir/Digital Workshop.exe" -DestinationPath $DestZip -Force
+        Write-Host "✓ Portable archive created: $DestZip"
+
+        # List the archive
+        Get-ChildItem -Path $DestZip | ForEach-Object { Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB" }
+
+    - name: Create source archive
+      run: |
+        # Create source code archive (excluding build artifacts and cache)
+        $SourceZip = "dist/Digital-Workshop-v0.1.5-Source.zip"
+
+        # Create ZIP with source code
+        $ExcludePatterns = @('dist', 'build', '.git', '__pycache__', '*.pyc', '.pytest_cache', 'node_modules', '.venv', 'venv')
+
+        # Use PowerShell to create archive excluding patterns
+        $files = Get-ChildItem -Path "." -Recurse -File | Where-Object {
+          $path = $_.FullName
+          -not ($ExcludePatterns | Where-Object { $path -like "*\$_\*" -or $path -like "*\$_" })
+        }
+
+        Compress-Archive -Path ($files | Select-Object -ExpandProperty FullName) -DestinationPath $SourceZip -Force
+        Write-Host "✓ Source archive created: $SourceZip"
+
+        # List the archive
+        Get-ChildItem -Path $SourceZip | ForEach-Object { Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB" }
+
     - name: Upload artifacts to release
       uses: softprops/action-gh-release@v1
       if: github.event_name == 'release'
       with:
         files: |
           dist/Digital Workshop.exe
+          dist/Digital-Workshop-v0.1.5-Portable.zip
+          dist/Digital-Workshop-v0.1.5-Source.zip
           dist/build_report.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
