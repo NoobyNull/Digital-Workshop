@@ -95,7 +95,6 @@ jobs:
           dist/Digital Workshop.exe
           dist/Digital-Workshop-v0.1.5-Portable.zip
           dist/Digital-Workshop-v0.1.5-Source.zip
-          dist/build_report.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -106,5 +105,6 @@ jobs:
         name: Digital-Workshop-Build
         path: |
           dist/Digital Workshop.exe
-          dist/build_report.json
+          dist/Digital-Workshop-v0.1.5-Portable.zip
+          dist/Digital-Workshop-v0.1.5-Source.zip
         retention-days: 30
