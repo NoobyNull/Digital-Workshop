@@ -104,7 +104,9 @@ class ToolMigrationUtility:
                 # Report progress
                 if progress_callback:
                     progress = (idx + 1) / len(tools)
-                    progress_callback(progress, f"Migrated {success_count}/{len(tools)}")
+                    progress_callback(
+                        progress, f"Migrated {success_count}/{len(tools)}"
+                    )
 
             self.logger.info(
                 f"Migration complete: {success_count} successful, {fail_count} failed"
@@ -234,7 +236,9 @@ class ToolMigrationUtility:
             raise FileNotFoundError(error_msg)
 
         self.logger.info(f"Found tool library at {json_path}")
-        return self.migrate_from_json(str(json_path), progress_callback=progress_callback)
+        return self.migrate_from_json(
+            str(json_path), progress_callback=progress_callback
+        )
 
     def get_migration_status(self) -> Dict[str, any]:
         """Get status of migration (number of providers and tools in database)."""

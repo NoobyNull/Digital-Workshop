@@ -9,8 +9,17 @@ from pathlib import Path
 from typing import Optional, Dict, List
 import tempfile
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTreeWidget, QTreeWidgetItem,
-    QMessageBox, QFileDialog, QInputDialog, QHeaderView, QMenu
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QMessageBox,
+    QFileDialog,
+    QInputDialog,
+    QHeaderView,
+    QMenu,
 )
 from PySide6.QtCore import Qt, Signal, QMimeData
 from PySide6.QtGui import QIcon, QDrag
@@ -27,43 +36,39 @@ logger = get_logger(__name__)
 
 # File type to tab mapping - must match actual tab names in main_window.py
 FILE_TYPE_TAB_MAP = {
-    '.nc': 'G Code Previewer',
-    '.gcode': 'G Code Previewer',
-    '.stl': 'Model Previewer',
-    '.obj': 'Model Previewer',
-    '.step': 'Model Previewer',
-    '.stp': 'Model Previewer',
-    '.3mf': 'Model Previewer',
-    '.ply': 'Model Previewer',
+    ".nc": "G Code Previewer",
+    ".gcode": "G Code Previewer",
+    ".stl": "Model Previewer",
+    ".obj": "Model Previewer",
+    ".step": "Model Previewer",
+    ".stp": "Model Previewer",
+    ".3mf": "Model Previewer",
+    ".ply": "Model Previewer",
 }
 
 # File type to category mapping for tree organization
 FILE_TYPE_CATEGORY_MAP = {
     # Models
-    '.stl': 'Models',
-    '.obj': 'Models',
-    '.step': 'Models',
-    '.stp': 'Models',
-    '.3mf': 'Models',
-    '.ply': 'Models',
-
+    ".stl": "Models",
+    ".obj": "Models",
+    ".step": "Models",
+    ".stp": "Models",
+    ".3mf": "Models",
+    ".ply": "Models",
     # G-Code
-    '.nc': 'Gcode',
-    '.gcode': 'Gcode',
-
+    ".nc": "Gcode",
+    ".gcode": "Gcode",
     # Cut Lists
-    '.csv': 'Cut Lists',
-    '.xlsx': 'Cut Lists',
-    '.xls': 'Cut Lists',
-
+    ".csv": "Cut Lists",
+    ".xlsx": "Cut Lists",
+    ".xls": "Cut Lists",
     # Cost Sheets
-    '.pdf': 'Cost Sheets',
-    '.docx': 'Cost Sheets',
-    '.doc': 'Cost Sheets',
-
+    ".pdf": "Cost Sheets",
+    ".docx": "Cost Sheets",
+    ".doc": "Cost Sheets",
     # Other documents
-    '.txt': 'Documents',
-    '.md': 'Documents',
+    ".txt": "Documents",
+    ".md": "Documents",
 }
 
 
@@ -148,16 +153,16 @@ class ProjectTreeWidget(QWidget):
             projects = self.project_manager.list_projects()
 
             for project in projects:
-                project_id = project['id']
-                project_name = project['name']
+                project_id = project["id"]
+                project_name = project["name"]
 
                 # Create project item
                 project_item = QTreeWidgetItem()
                 project_item.setText(0, project_name)
                 project_item.setData(0, Qt.UserRole, project_id)
-                project_item.setData(0, Qt.UserRole + 1, 'project')
+                project_item.setData(0, Qt.UserRole + 1, "project")
 
-                if project.get('import_tag') == 'imported_project':
+                if project.get("import_tag") == "imported_project":
                     project_item.setText(0, f"{project_name} [Imported]")
 
                 self.tree_widget.addTopLevelItem(project_item)
@@ -172,7 +177,9 @@ class ProjectTreeWidget(QWidget):
             logger.error(f"Failed to refresh project tree: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to refresh projects: {str(e)}")
 
-    def _load_project_files(self, project_id: str, project_item: QTreeWidgetItem) -> None:
+    def _load_project_files(
+        self, project_id: str, project_item: QTreeWidgetItem
+    ) -> None:
         """Load files for a project into the tree, organized by category."""
         try:
             # Get files from database
@@ -182,7 +189,7 @@ class ProjectTreeWidget(QWidget):
             categories: Dict[str, List] = {}
 
             for file_info in files:
-                file_path = file_info.get('file_path')
+                file_path = file_info.get("file_path")
                 if not file_path:
                     continue
 
@@ -190,31 +197,29 @@ class ProjectTreeWidget(QWidget):
                 file_ext = Path(file_path).suffix.lower()
 
                 # Determine category
-                category = FILE_TYPE_CATEGORY_MAP.get(file_ext, 'Other')
+                category = FILE_TYPE_CATEGORY_MAP.get(file_ext, "Other")
 
                 if category not in categories:
                     categories[category] = []
 
-                categories[category].append({
-                    'name': file_name,
-                    'path': file_path,
-                    'ext': file_ext
-                })
+                categories[category].append(
+                    {"name": file_name, "path": file_path, "ext": file_ext}
+                )
 
             # Create category items and add files
             for category in sorted(categories.keys()):
                 category_item = QTreeWidgetItem()
                 category_item.setText(0, category)
                 category_item.setData(0, Qt.UserRole, category)
-                category_item.setData(0, Qt.UserRole + 1, 'category')
+                category_item.setData(0, Qt.UserRole + 1, "category")
                 project_item.addChild(category_item)
 
                 # Add files to category
-                for file_info in sorted(categories[category], key=lambda x: x['name']):
+                for file_info in sorted(categories[category], key=lambda x: x["name"]):
                     file_item = QTreeWidgetItem()
-                    file_item.setText(0, file_info['name'])
-                    file_item.setData(0, Qt.UserRole, file_info['path'])
-                    file_item.setData(0, Qt.UserRole + 1, 'file')
+                    file_item.setText(0, file_info["name"])
+                    file_item.setData(0, Qt.UserRole, file_info["path"])
+                    file_item.setData(0, Qt.UserRole + 1, "file")
                     category_item.addChild(file_item)
 
         except Exception as e:
@@ -223,23 +228,23 @@ class ProjectTreeWidget(QWidget):
     def _on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item click - single click on file to preview and switch tab."""
         item_type = item.data(0, Qt.UserRole + 1)
-        if item_type == 'file':
+        if item_type == "file":
             file_path = item.data(0, Qt.UserRole)
             self._handle_file_selection(file_path)
 
     def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item double-click - expand/collapse categories or open projects."""
         item_type = item.data(0, Qt.UserRole + 1)
-        if item_type == 'project':
+        if item_type == "project":
             project_id = item.data(0, Qt.UserRole)
             self._open_project(project_id)
-        elif item_type == 'category':
+        elif item_type == "category":
             # Toggle category expansion
             if item.isExpanded():
                 item.setExpanded(False)
             else:
                 item.setExpanded(True)
-        elif item_type == 'file':
+        elif item_type == "file":
             file_path = item.data(0, Qt.UserRole)
             self._handle_file_selection(file_path, open_file=True)
 
@@ -255,7 +260,7 @@ class ProjectTreeWidget(QWidget):
             # Create context menu
             menu = QMenu(self)
 
-            if item_type == 'project':
+            if item_type == "project":
                 # Project context menu
                 add_files_action = menu.addAction("Add Files")
                 add_files_action.triggered.connect(self._add_files_to_project)
@@ -263,7 +268,9 @@ class ProjectTreeWidget(QWidget):
                 menu.addSeparator()
 
                 open_action = menu.addAction("Open Project")
-                open_action.triggered.connect(lambda: self._open_project(item.data(0, Qt.UserRole)))
+                open_action.triggered.connect(
+                    lambda: self._open_project(item.data(0, Qt.UserRole))
+                )
 
                 export_action = menu.addAction("Export as DWW")
                 export_action.triggered.connect(self._export_project_as_dww)
@@ -273,11 +280,13 @@ class ProjectTreeWidget(QWidget):
                 delete_action = menu.addAction("Delete Project")
                 delete_action.triggered.connect(self._delete_selected_project)
 
-            elif item_type == 'file':
+            elif item_type == "file":
                 # File context menu
                 open_action = menu.addAction("Open File")
                 open_action.triggered.connect(
-                    lambda: self._handle_file_selection(item.data(0, Qt.UserRole), open_file=True)
+                    lambda: self._handle_file_selection(
+                        item.data(0, Qt.UserRole), open_file=True
+                    )
                 )
 
             # Show menu at cursor position
@@ -311,18 +320,12 @@ class ProjectTreeWidget(QWidget):
     def _create_new_project(self) -> None:
         """Create new project."""
         try:
-            name, ok = QInputDialog.getText(
-                self,
-                "New Project",
-                "Project name:"
-            )
+            name, ok = QInputDialog.getText(self, "New Project", "Project name:")
 
             if ok and name:
                 if self.project_manager.check_duplicate(name):
                     QMessageBox.warning(
-                        self,
-                        "Duplicate Project",
-                        f"Project '{name}' already exists."
+                        self, "Duplicate Project", f"Project '{name}' already exists."
                     )
                     return
 
@@ -348,12 +351,16 @@ class ProjectTreeWidget(QWidget):
             project_item = current_item
 
             # If not a project, find the parent project
-            if item_type != 'project':
+            if item_type != "project":
                 parent = current_item.parent()
-                while parent and parent.data(0, Qt.UserRole + 1) != 'project':
+                while parent and parent.data(0, Qt.UserRole + 1) != "project":
                     parent = parent.parent()
                 if not parent:
-                    QMessageBox.warning(self, "Invalid Selection", "Please select a project or item within a project.")
+                    QMessageBox.warning(
+                        self,
+                        "Invalid Selection",
+                        "Please select a project or item within a project.",
+                    )
                     return
                 project_item = parent
 
@@ -361,10 +368,7 @@ class ProjectTreeWidget(QWidget):
 
             # Open file dialog to select files
             files, _ = QFileDialog.getOpenFileNames(
-                self,
-                "Add Files to Project",
-                "",
-                "All Files (*)"
+                self, "Add Files to Project", "", "All Files (*)"
             )
 
             if not files:
@@ -384,7 +388,7 @@ class ProjectTreeWidget(QWidget):
                         file_name=file_name,
                         file_size=file_size,
                         status="linked",
-                        link_type="original"
+                        link_type="original",
                     )
                     added_count += 1
                     logger.info(f"Added file to project: {file_name}")
@@ -396,10 +400,12 @@ class ProjectTreeWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Files Added",
-                    f"Successfully added {added_count} file(s) to project."
+                    f"Successfully added {added_count} file(s) to project.",
                 )
             else:
-                QMessageBox.warning(self, "No Files Added", "Failed to add files to project.")
+                QMessageBox.warning(
+                    self, "No Files Added", "Failed to add files to project."
+                )
 
         except Exception as e:
             logger.error(f"Failed to add files to project: {str(e)}")
@@ -409,20 +415,14 @@ class ProjectTreeWidget(QWidget):
         """Import existing library."""
         try:
             folder = QFileDialog.getExistingDirectory(
-                self,
-                "Select Library Folder",
-                "",
-                QFileDialog.ShowDirsOnly
+                self, "Select Library Folder", "", QFileDialog.ShowDirsOnly
             )
 
             if not folder:
                 return
 
             name, ok = QInputDialog.getText(
-                self,
-                "Import Library",
-                "Project name:",
-                text=folder.split('/')[-1]
+                self, "Import Library", "Project name:", text=folder.split("/")[-1]
             )
 
             if not ok or not name:
@@ -430,20 +430,14 @@ class ProjectTreeWidget(QWidget):
 
             if self.project_manager.check_duplicate(name):
                 QMessageBox.warning(
-                    self,
-                    "Duplicate Project",
-                    f"Project '{name}' already exists."
+                    self, "Duplicate Project", f"Project '{name}' already exists."
                 )
                 return
 
             dry_run = self.dry_run_analyzer.analyze(folder, name)
 
             if not dry_run.can_proceed:
-                QMessageBox.warning(
-                    self,
-                    "Import Failed",
-                    "No files to import."
-                )
+                QMessageBox.warning(self, "Import Failed", "No files to import.")
                 return
 
             report_text = (
@@ -455,17 +449,16 @@ class ProjectTreeWidget(QWidget):
             )
 
             reply = QMessageBox.question(
-                self,
-                "Import Library",
-                report_text,
-                QMessageBox.Yes | QMessageBox.No
+                self, "Import Library", report_text, QMessageBox.Yes | QMessageBox.No
             )
 
             if reply == QMessageBox.Yes:
                 import_report = self.project_importer.import_project(
                     folder,
                     name,
-                    structure_type=dry_run.structure_analysis.get('structure_type', 'nested')
+                    structure_type=dry_run.structure_analysis.get(
+                        "structure_type", "nested"
+                    ),
                 )
 
                 if import_report.success:
@@ -474,14 +467,14 @@ class ProjectTreeWidget(QWidget):
                     QMessageBox.information(
                         self,
                         "Import Complete",
-                        f"Imported {import_report.files_imported} files."
+                        f"Imported {import_report.files_imported} files.",
                     )
                     logger.info(f"Imported library: {name}")
                 else:
                     QMessageBox.critical(
                         self,
                         "Import Failed",
-                        f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}"
+                        f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}",
                     )
 
         except Exception as e:
@@ -510,8 +503,10 @@ class ProjectTreeWidget(QWidget):
                 return
 
             item_type = current_item.data(0, Qt.UserRole + 1)
-            if item_type != 'project':
-                QMessageBox.warning(self, "Invalid Selection", "Please select a project to delete.")
+            if item_type != "project":
+                QMessageBox.warning(
+                    self, "Invalid Selection", "Please select a project to delete."
+                )
                 return
 
             project_id = current_item.data(0, Qt.UserRole)
@@ -521,7 +516,7 @@ class ProjectTreeWidget(QWidget):
                 self,
                 "Delete Project",
                 f"Delete project '{project_name}'?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -545,8 +540,10 @@ class ProjectTreeWidget(QWidget):
                 return
 
             item_type = current_item.data(0, Qt.UserRole + 1)
-            if item_type != 'project':
-                QMessageBox.warning(self, "Invalid Selection", "Please select a project to export.")
+            if item_type != "project":
+                QMessageBox.warning(
+                    self, "Invalid Selection", "Please select a project to export."
+                )
                 return
 
             project_id = current_item.data(0, Qt.UserRole)
@@ -557,7 +554,7 @@ class ProjectTreeWidget(QWidget):
                 self,
                 "Export Project as DWW",
                 f"{project_name}.dww",
-                "Digital Wood Works (*.dww);;All Files (*)"
+                "Digital Wood Works (*.dww);;All Files (*)",
             )
 
             if not file_path:
@@ -586,7 +583,7 @@ class ProjectTreeWidget(QWidget):
                 self,
                 "Import DWW Project",
                 "",
-                "Digital Wood Works (*.dww);;All Files (*)"
+                "Digital Wood Works (*.dww);;All Files (*)",
             )
 
             if not file_path:
@@ -597,13 +594,15 @@ class ProjectTreeWidget(QWidget):
             success, manifest = import_manager.get_dww_info(file_path)
 
             if not success or not manifest:
-                QMessageBox.critical(self, "Import Failed", "Could not read DWW file information.")
+                QMessageBox.critical(
+                    self, "Import Failed", "Could not read DWW file information."
+                )
                 return
 
             # Show import preview
-            project_info = manifest.get('project', {})
-            project_name = project_info.get('name', 'Unknown')
-            file_count = manifest.get('file_count', 0)
+            project_info = manifest.get("project", {})
+            project_name = project_info.get("name", "Unknown")
+            file_count = manifest.get("file_count", 0)
 
             preview_text = (
                 f"Import DWW Project\n\n"
@@ -617,7 +616,7 @@ class ProjectTreeWidget(QWidget):
                 self,
                 "Import DWW Project",
                 preview_text,
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -625,10 +624,7 @@ class ProjectTreeWidget(QWidget):
 
             # Ask for project name
             import_name, ok = QInputDialog.getText(
-                self,
-                "Import DWW Project",
-                "Project name:",
-                text=project_name
+                self, "Import DWW Project", "Project name:", text=project_name
             )
 
             if not ok or not import_name:
@@ -639,7 +635,7 @@ class ProjectTreeWidget(QWidget):
                 QMessageBox.warning(
                     self,
                     "Duplicate Project",
-                    f"Project '{import_name}' already exists."
+                    f"Project '{import_name}' already exists.",
                 )
                 return
 
@@ -647,10 +643,7 @@ class ProjectTreeWidget(QWidget):
             with tempfile.TemporaryDirectory() as temp_dir:
                 # Import DWW file
                 success, message, _ = import_manager.import_project(
-                    file_path,
-                    temp_dir,
-                    verify_integrity=True,
-                    import_thumbnails=True
+                    file_path, temp_dir, verify_integrity=True, import_thumbnails=True
                 )
 
                 if not success:
@@ -660,9 +653,7 @@ class ProjectTreeWidget(QWidget):
 
                 # Import extracted files as a new project
                 import_report = self.project_importer.import_project(
-                    temp_dir,
-                    import_name,
-                    structure_type='flat'
+                    temp_dir, import_name, structure_type="flat"
                 )
 
                 if import_report.success:
@@ -671,18 +662,21 @@ class ProjectTreeWidget(QWidget):
                     QMessageBox.information(
                         self,
                         "Import Complete",
-                        f"Project '{import_name}' imported successfully with {file_count} files."
+                        f"Project '{import_name}' imported successfully with {file_count} files.",
                     )
                     logger.info(f"Imported DWW project: {import_name}")
                 else:
                     QMessageBox.critical(
                         self,
                         "Import Failed",
+                        f"Failed to import project files: {import_report.error}",
+                    )
+                    logger.error(
                         f"Failed to import project files: {import_report.error}"
                     )
-                    logger.error(f"Failed to import project files: {import_report.error}")
 
         except Exception as e:
             logger.error(f"Failed to import DWW project: {str(e)}")
-            QMessageBox.critical(self, "Error", f"Failed to import DWW project: {str(e)}")
-
+            QMessageBox.critical(
+                self, "Error", f"Failed to import DWW project: {str(e)}"
+            )

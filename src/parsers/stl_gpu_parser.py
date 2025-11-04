@@ -27,8 +27,15 @@ from src.core.gpu_acceleration import get_gpu_accelerator, GPUBackend
 from src.core.gpu_memory_manager import get_gpu_memory_manager, GPUMemoryManager
 from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 from src.parsers.base_parser import (
-    BaseParser, Model, ModelFormat, Triangle, Vector3D,
-    ModelStats, ParseError, ProgressCallback, LoadingState
+    BaseParser,
+    Model,
+    ModelFormat,
+    Triangle,
+    Vector3D,
+    ModelStats,
+    ParseError,
+    ProgressCallback,
+    LoadingState,
 )
 from src.parsers.stl_parser_original import STLFormat, STLParseError
 
@@ -36,6 +43,7 @@ from src.parsers.stl_parser_original import STLFormat, STLParseError
 @dataclass
 class GPUParseConfig:
     """Configuration for GPU-accelerated STL parsing."""
+
     use_memory_mapping: bool = True
     chunk_size_triangles: int = 100000
     max_concurrent_chunks: int = 4
@@ -47,6 +55,7 @@ class GPUParseConfig:
 
 class STLGPUParseError(STLParseError):
     """Exception raised for GPU-accelerated STL parsing errors."""
+
     pass
 
 
@@ -88,26 +97,28 @@ class STLGPUParser(BaseParser):
     def _detect_format(self, file_path: Path) -> STLFormat:
         """Detect STL format (same as original parser)."""
         try:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 header = file.read(self.BINARY_HEADER_SIZE)
-                header_text = header.decode('utf-8', errors='ignore').lower()
+                header_text = header.decode("utf-8", errors="ignore").lower()
 
-                if 'solid' in header_text and header_text.count('\x00') < 5:
+                if "solid" in header_text and header_text.count("\x00") < 5:
                     file.seek(0)
-                    first_line = file.readline().decode('utf-8', errors='ignore').strip()
-                    if first_line.lower().startswith('solid'):
+                    first_line = (
+                        file.readline().decode("utf-8", errors="ignore").strip()
+                    )
+                    if first_line.lower().startswith("solid"):
                         return STLFormat.ASCII
 
                 file.seek(self.BINARY_HEADER_SIZE)
                 count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) == self.BINARY_TRIANGLE_COUNT_SIZE:
-                    triangle_count = int.from_bytes(count_bytes, byteorder='little')
+                    triangle_count = int.from_bytes(count_bytes, byteorder="little")
                     file.seek(0, 2)
                     file_size = file.tell()
                     expected_size = (
-                        self.BINARY_HEADER_SIZE +
-                        self.BINARY_TRIANGLE_COUNT_SIZE +
-                        (triangle_count * self.BINARY_TRIANGLE_SIZE)
+                        self.BINARY_HEADER_SIZE
+                        + self.BINARY_TRIANGLE_COUNT_SIZE
+                        + (triangle_count * self.BINARY_TRIANGLE_SIZE)
                     )
                     if file_size == expected_size:
                         return STLFormat.BINARY
@@ -121,18 +132,16 @@ class STLGPUParser(BaseParser):
     @log_function_call
     def _get_triangle_count(self, file_path: Path) -> int:
         """Get triangle count from binary STL file."""
-        with open(file_path, 'rb') as file:
+        with open(file_path, "rb") as file:
             file.seek(self.BINARY_HEADER_SIZE)
             count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
             if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
                 raise STLParseError("Invalid binary STL: cannot read triangle count")
-            return int.from_bytes(count_bytes, byteorder='little')
+            return int.from_bytes(count_bytes, byteorder="little")
 
     @log_function_call
     def _parse_binary_stl_gpu(
-        self,
-        file_path: Path,
-        progress_callback: Optional[ProgressCallback] = None
+        self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
         Parse binary STL using GPU acceleration.
@@ -151,20 +160,30 @@ class STLGPUParser(BaseParser):
             triangle_count = self._get_triangle_count(file_path)
             file_size = file_path.stat().st_size
 
-            self.logger.info(f"GPU parsing binary STL: {triangle_count} triangles ({file_size} bytes)")
+            self.logger.info(
+                f"GPU parsing binary STL: {triangle_count} triangles ({file_size} bytes)"
+            )
 
             # Check if GPU acceleration is available
             caps = self.hardware_accel.get_capabilities()
             if caps.recommended_backend == AccelBackend.CPU:
-                self.logger.warning("No GPU acceleration available, falling back to CPU")
+                self.logger.warning(
+                    "No GPU acceleration available, falling back to CPU"
+                )
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
 
             # Configure chunking based on GPU memory
-            chunk_size = self.memory_manager.get_optimal_chunk_size(file_size, triangle_count)
-            self.config.chunk_size_triangles = min(chunk_size, self.config.chunk_size_triangles)
+            chunk_size = self.memory_manager.get_optimal_chunk_size(
+                file_size, triangle_count
+            )
+            self.config.chunk_size_triangles = min(
+                chunk_size, self.config.chunk_size_triangles
+            )
 
             if progress_callback:
-                progress_callback.report(5.0, f"GPU parsing {triangle_count:,} triangles")
+                progress_callback.report(
+                    5.0, f"GPU parsing {triangle_count:,} triangles"
+                )
 
             # Phase 1: Stream file to GPU memory
             gpu_start = time.time()
@@ -180,8 +199,12 @@ class STLGPUParser(BaseParser):
                 progress_callback.report(25.0, "File streamed to GPU")
 
             # Phase 2: Allocate output buffers
-            vertex_buffer = self.memory_manager.allocate_stl_buffer(triangle_count, "vertices")
-            normal_buffer = self.memory_manager.allocate_stl_buffer(triangle_count, "normals")
+            vertex_buffer = self.memory_manager.allocate_stl_buffer(
+                triangle_count, "vertices"
+            )
+            normal_buffer = self.memory_manager.allocate_stl_buffer(
+                triangle_count, "normals"
+            )
 
             if not vertex_buffer or not normal_buffer:
                 self._cleanup_buffers([raw_buffer, vertex_buffer, normal_buffer])
@@ -193,7 +216,11 @@ class STLGPUParser(BaseParser):
             # Phase 3: Execute GPU kernels
             kernel_start = time.time()
             success = self._execute_gpu_kernels(
-                raw_buffer, vertex_buffer, normal_buffer, triangle_count, progress_callback
+                raw_buffer,
+                vertex_buffer,
+                normal_buffer,
+                triangle_count,
+                progress_callback,
             )
             self.gpu_time += time.time() - kernel_start
 
@@ -228,13 +255,13 @@ class STLGPUParser(BaseParser):
                 max_bounds=max_bounds,
                 file_size_bytes=file_size,
                 format_type=STLFormat.BINARY,
-                parsing_time_seconds=parsing_time
+                parsing_time_seconds=parsing_time,
             )
 
             # Read header
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 header_bytes = file.read(self.BINARY_HEADER_SIZE)
-                header = header_bytes.decode('utf-8', errors='ignore').strip()
+                header = header_bytes.decode("utf-8", errors="ignore").strip()
 
             # Cleanup GPU buffers
             self._cleanup_buffers([raw_buffer, vertex_buffer, normal_buffer])
@@ -242,10 +269,7 @@ class STLGPUParser(BaseParser):
             if progress_callback:
                 progress_callback.report(100.0, "GPU parsing completed")
 
-            self.logger.info(
-                ".2f"
-                ".2f"
-            )
+            self.logger.info(".2f" ".2f")
 
             return Model(
                 header=header,
@@ -255,7 +279,7 @@ class STLGPUParser(BaseParser):
                 loading_state=LoadingState.ARRAY_GEOMETRY,
                 file_path=str(file_path),
                 vertex_array=vertex_array,
-                normal_array=normal_array
+                normal_array=normal_array,
             )
 
         except Exception as e:
@@ -264,7 +288,9 @@ class STLGPUParser(BaseParser):
             try:
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
             except Exception as fallback_e:
-                raise STLParseError(f"GPU parsing failed and CPU fallback also failed: {e}, {fallback_e}")
+                raise STLParseError(
+                    f"GPU parsing failed and CPU fallback also failed: {e}, {fallback_e}"
+                )
 
     def _execute_gpu_kernels(
         self,
@@ -272,14 +298,14 @@ class STLGPUParser(BaseParser):
         vertex_buffer: Any,
         normal_buffer: Any,
         triangle_count: int,
-        progress_callback: Optional[ProgressCallback]
+        progress_callback: Optional[ProgressCallback],
     ) -> bool:
         """Execute GPU kernels for triangle processing with granular progress tracking."""
         try:
             # Create kernel parameters
             params = {
-                'triangle_count': triangle_count,
-                'chunk_size': self.config.chunk_size_triangles
+                "triangle_count": triangle_count,
+                "chunk_size": self.config.chunk_size_triangles,
             }
 
             # Report start of GPU processing
@@ -303,13 +329,15 @@ class STLGPUParser(BaseParser):
                 if progress_callback:
                     progress_callback.report(70.0, "Running GPU validation")
 
-                validation_buffer = self.memory_manager.allocate_stl_buffer(triangle_count, "validation_flags")
+                validation_buffer = self.memory_manager.allocate_stl_buffer(
+                    triangle_count, "validation_flags"
+                )
                 if validation_buffer:
                     # Execute validation kernel
                     val_success = self.gpu_accelerator.execute_kernel(
                         "validate_triangles",
                         [vertex_buffer, validation_buffer],
-                        {'triangle_count': triangle_count}
+                        {"triangle_count": triangle_count},
                     )
                     if val_success:
                         # Check validation results (simplified)
@@ -330,18 +358,20 @@ class STLGPUParser(BaseParser):
         vertex_buffer: Any,
         normal_buffer: Any,
         params: Dict,
-        progress_callback: Optional[ProgressCallback]
+        progress_callback: Optional[ProgressCallback],
     ) -> bool:
         """Execute triangle processing kernel with granular progress updates."""
         try:
-            triangle_count = params['triangle_count']
-            chunk_size = params['chunk_size']
+            triangle_count = params["triangle_count"]
+            chunk_size = params["chunk_size"]
 
             # Calculate number of processing chunks for progress reporting
             num_chunks = max(1, (triangle_count + chunk_size - 1) // chunk_size)
 
             # For large models, provide more frequent progress updates
-            progress_interval = max(1, num_chunks // 20)  # Update every ~5% of processing
+            progress_interval = max(
+                1, num_chunks // 20
+            )  # Update every ~5% of processing
 
             # Execute kernel (assuming it supports chunked processing)
             # In a real implementation, this would be a kernel that processes in chunks
@@ -349,7 +379,7 @@ class STLGPUParser(BaseParser):
             success = self.gpu_accelerator.execute_kernel(
                 "triangle_processing",
                 [raw_buffer, vertex_buffer, normal_buffer],
-                params
+                params,
             )
 
             if success and progress_callback:
@@ -359,7 +389,7 @@ class STLGPUParser(BaseParser):
                     progress_pct = 25.0 + 35.0 * (chunk_idx / num_chunks)
                     progress_callback.report(
                         progress_pct,
-                        f"Processing triangles {chunk_idx * chunk_size:,}-{(chunk_idx + progress_interval) * chunk_size:,}"
+                        f"Processing triangles {chunk_idx * chunk_size:,}-{(chunk_idx + progress_interval) * chunk_size:,}",
                     )
 
             return success
@@ -369,37 +399,40 @@ class STLGPUParser(BaseParser):
             return False
 
     def _transfer_results_from_gpu(
-        self,
-        vertex_buffer: Any,
-        normal_buffer: Any,
-        triangle_count: int
+        self, vertex_buffer: Any, normal_buffer: Any, triangle_count: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Transfer processed results from GPU to CPU memory."""
         try:
             # Calculate buffer sizes
             vertex_size = triangle_count * 9 * 4  # 9 floats × 4 bytes
-            normal_size = triangle_count * 9 * 4   # 9 floats × 4 bytes
+            normal_size = triangle_count * 9 * 4  # 9 floats × 4 bytes
 
             # Transfer vertex data
             vertex_bytes = vertex_buffer.copy_from_device(vertex_size)
             if not vertex_bytes:
                 raise STLParseError("Failed to transfer vertex data from GPU")
 
-            vertex_array = np.frombuffer(vertex_bytes, dtype=np.float32).reshape(triangle_count, 9)
+            vertex_array = np.frombuffer(vertex_bytes, dtype=np.float32).reshape(
+                triangle_count, 9
+            )
 
             # Transfer normal data
             normal_bytes = normal_buffer.copy_from_device(normal_size)
             if not normal_bytes:
                 raise STLParseError("Failed to transfer normal data from GPU")
 
-            normal_array = np.frombuffer(normal_bytes, dtype=np.float32).reshape(triangle_count, 9)
+            normal_array = np.frombuffer(normal_bytes, dtype=np.float32).reshape(
+                triangle_count, 9
+            )
 
             return vertex_array, normal_array
 
         except Exception as e:
             raise STLParseError(f"GPU result transfer failed: {e}")
 
-    def _compute_bounds_from_arrays(self, vertex_array: np.ndarray) -> Tuple[Vector3D, Vector3D]:
+    def _compute_bounds_from_arrays(
+        self, vertex_array: np.ndarray
+    ) -> Tuple[Vector3D, Vector3D]:
         """Compute bounding box from vertex array."""
         # Flatten to get all vertex coordinates
         vertices = vertex_array.reshape(-1, 3)
@@ -408,7 +441,7 @@ class STLGPUParser(BaseParser):
 
         return (
             Vector3D(float(min_coords[0]), float(min_coords[1]), float(min_coords[2])),
-            Vector3D(float(max_coords[0]), float(max_coords[1]), float(max_coords[2]))
+            Vector3D(float(max_coords[0]), float(max_coords[1]), float(max_coords[2])),
         )
 
     def _cleanup_buffers(self, buffers: List[Optional[Any]]) -> None:
@@ -421,32 +454,31 @@ class STLGPUParser(BaseParser):
                     self.logger.warning(f"Buffer cleanup error: {e}")
 
     def _parse_binary_stl_cpu_fallback(
-        self,
-        file_path: Path,
-        progress_callback: Optional[ProgressCallback] = None
+        self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """CPU fallback parsing when GPU is unavailable."""
         self.logger.warning("Using CPU fallback for STL parsing")
 
         # Import and use original parser
         from src.parsers.stl_parser_original import STLParser
+
         original_parser = STLParser()
 
         # Convert progress callback if needed
         stl_callback = None
         if progress_callback:
+
             class STLCallbackAdapter:
                 def report(self, progress: float, message: str):
                     progress_callback.report(progress, message)
+
             stl_callback = STLCallbackAdapter()
 
         return original_parser._parse_binary_stl(file_path, stl_callback)
 
     @log_function_call
     def _parse_file_internal(
-        self,
-        file_path: str,
-        progress_callback: Optional[ProgressCallback] = None
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """Internal parsing method with GPU acceleration."""
         file_path_obj = Path(file_path)
@@ -470,6 +502,7 @@ class STLGPUParser(BaseParser):
             # ASCII fallback to original parser
             self.logger.info("ASCII STL detected, using CPU parser")
             from src.parsers.stl_parser_original import STLParser
+
             original_parser = STLParser()
             return original_parser._parse_ascii_stl(file_path_obj, progress_callback)
 
@@ -490,26 +523,29 @@ class STLGPUParser(BaseParser):
 
             # Basic validation for binary files
             if format_type == STLFormat.BINARY:
-                with open(file_path_obj, 'rb') as file:
+                with open(file_path_obj, "rb") as file:
                     file.seek(self.BINARY_HEADER_SIZE)
                     count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                     if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
                         return False, "Invalid binary STL format"
 
-                    triangle_count = int.from_bytes(count_bytes, byteorder='little')
+                    triangle_count = int.from_bytes(count_bytes, byteorder="little")
                     if triangle_count == 0:
                         return False, "No triangles in file"
 
                     file.seek(0, 2)
                     file_size = file.tell()
                     expected_size = (
-                        self.BINARY_HEADER_SIZE +
-                        self.BINARY_TRIANGLE_COUNT_SIZE +
-                        (triangle_count * self.BINARY_TRIANGLE_SIZE)
+                        self.BINARY_HEADER_SIZE
+                        + self.BINARY_TRIANGLE_COUNT_SIZE
+                        + (triangle_count * self.BINARY_TRIANGLE_SIZE)
                     )
 
                     if file_size != expected_size:
-                        return False, "File size doesn't match expected binary STL format"
+                        return (
+                            False,
+                            "File size doesn't match expected binary STL format",
+                        )
 
             return True, ""
 
@@ -518,7 +554,7 @@ class STLGPUParser(BaseParser):
 
     def get_supported_extensions(self) -> List[str]:
         """Get supported file extensions."""
-        return ['.stl']
+        return [".stl"]
 
     def cancel_parsing(self) -> None:
         """Cancel ongoing parsing operation."""
@@ -528,13 +564,15 @@ class STLGPUParser(BaseParser):
     @property
     def performance_stats(self) -> Dict[str, float]:
         """Get performance statistics for the last parse operation."""
-        total_time = time.time() - self.parse_start_time if self.parse_start_time > 0 else 0
+        total_time = (
+            time.time() - self.parse_start_time if self.parse_start_time > 0 else 0
+        )
         return {
-            'total_time': total_time,
-            'gpu_time': self.gpu_time,
-            'cpu_time': self.cpu_time,
-            'transfer_time': self.transfer_time,
-            'gpu_ratio': self.gpu_time / total_time if total_time > 0 else 0,
-            'cpu_ratio': self.cpu_time / total_time if total_time > 0 else 0,
-            'transfer_ratio': self.transfer_time / total_time if total_time > 0 else 0,
+            "total_time": total_time,
+            "gpu_time": self.gpu_time,
+            "cpu_time": self.cpu_time,
+            "transfer_time": self.transfer_time,
+            "gpu_ratio": self.gpu_time / total_time if total_time > 0 else 0,
+            "cpu_ratio": self.cpu_time / total_time if total_time > 0 else 0,
+            "transfer_ratio": self.transfer_time / total_time if total_time > 0 else 0,
         }

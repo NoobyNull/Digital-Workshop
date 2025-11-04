@@ -24,7 +24,9 @@ class ToolbarManager:
     and styling to provide a complete toolbar system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the toolbar manager.
 
@@ -51,6 +53,7 @@ class ToolbarManager:
         # Attempt to import QtAwesome for icon-based actions and determine icon availability
         try:
             import qtawesome as qta  # type: ignore
+
             has_qta = True
         except Exception:
             qta = None  # type: ignore
@@ -61,7 +64,12 @@ class ToolbarManager:
         if has_qta and qta is not None:
             try:
                 # Validate all icons we plan to use can be created
-                icon_names = ["fa5s.folder-open", "fa5s.search-plus", "fa5s.search-minus", "fa5s.sync"]
+                icon_names = [
+                    "fa5s.folder-open",
+                    "fa5s.search-plus",
+                    "fa5s.search-minus",
+                    "fa5s.sync",
+                ]
                 for _name in icon_names:
                     test_icon = qta.icon(_name)
                     if test_icon.isNull():
@@ -149,7 +157,9 @@ class ToolbarManager:
             if icons_ok:
                 self.main_window.statusBar().showMessage("Toolbar icons active", 2000)
             else:
-                self.main_window.statusBar().showMessage("Toolbar text-only (no qtawesome)", 2000)
+                self.main_window.statusBar().showMessage(
+                    "Toolbar text-only (no qtawesome)", 2000
+                )
         except Exception:
             pass
 
@@ -158,32 +168,34 @@ class ToolbarManager:
     # Action handler methods (these would need to be connected to actual implementations)
     def _open_model(self) -> None:
         """Handle open model action."""
-        if hasattr(self.main_window, '_open_model'):
+        if hasattr(self.main_window, "_open_model"):
             self.main_window._open_model()
 
     def _edit_model(self) -> None:
         """Handle edit model action."""
-        if hasattr(self.main_window, '_edit_model'):
+        if hasattr(self.main_window, "_edit_model"):
             self.main_window._edit_model()
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
-        if hasattr(self.main_window, '_zoom_in'):
+        if hasattr(self.main_window, "_zoom_in"):
             self.main_window._zoom_in()
 
     def _zoom_out(self) -> None:
         """Handle zoom out action."""
-        if hasattr(self.main_window, '_zoom_out'):
+        if hasattr(self.main_window, "_zoom_out"):
             self.main_window._zoom_out()
 
     def _reset_view(self) -> None:
         """Handle reset view action."""
-        if hasattr(self.main_window, '_reset_view'):
+        if hasattr(self.main_window, "_reset_view"):
             self.main_window._reset_view()
 
 
 # Convenience function for easy toolbar setup
-def setup_main_window_toolbar(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> ToolbarManager:
+def setup_main_window_toolbar(
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> ToolbarManager:
     """
     Convenience function to set up toolbar for a main window.
 

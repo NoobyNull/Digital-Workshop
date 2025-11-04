@@ -29,7 +29,9 @@ class BackgroundHasher(QThread):
     # Signals for communication with main thread
     hash_progress = Signal(str)  # filename
     model_hashed = Signal(int, str)  # model_id, file_hash
-    duplicate_found = Signal(int, int, str, str)  # new_id, existing_id, new_path, old_path
+    duplicate_found = Signal(
+        int, int, str, str
+    )  # new_id, existing_id, new_path, old_path
     all_complete = Signal()
 
     def __init__(self, main_window: QMainWindow):
@@ -63,10 +65,10 @@ class BackgroundHasher(QThread):
 
                 try:
                     # Emit progress signal
-                    self.hash_progress.emit(model['filename'])
+                    self.hash_progress.emit(model["filename"])
 
                     # Calculate file hash
-                    file_hash = self._calculate_file_hash(model['file_path'])
+                    file_hash = self._calculate_file_hash(model["file_path"])
 
                     # Check for duplicates
                     existing_model = db_manager.find_model_by_hash(file_hash)
@@ -74,16 +76,20 @@ class BackgroundHasher(QThread):
                     if existing_model:
                         # Duplicate found - emit signal for user decision
                         self.duplicate_found.emit(
-                            model['id'], existing_model['id'],
-                            model['file_path'], existing_model['file_path']
+                            model["id"],
+                            existing_model["id"],
+                            model["file_path"],
+                            existing_model["file_path"],
                         )
                     else:
                         # No duplicate - update hash
-                        db_manager.update_file_hash(model['id'], file_hash)
-                        self.model_hashed.emit(model['id'], file_hash)
+                        db_manager.update_file_hash(model["id"], file_hash)
+                        self.model_hashed.emit(model["id"], file_hash)
 
                 except Exception as e:
-                    self.main_window.logger.warning(f"Failed to hash model {model['id']}: {e}")
+                    self.main_window.logger.warning(
+                        f"Failed to hash model {model['id']}: {e}"
+                    )
 
             # Signal completion
             self.all_complete.emit()
@@ -126,7 +132,9 @@ class BackgroundProcessor:
     between background tasks and the main UI thread.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the background processor.
 
@@ -168,11 +176,15 @@ class BackgroundProcessor:
             if self.background_hasher.is_paused():
                 # Resume
                 self.background_hasher.resume()
-                self.main_window.statusBar().showMessage("Background hashing resumed", 2000)
+                self.main_window.statusBar().showMessage(
+                    "Background hashing resumed", 2000
+                )
             else:
                 # Pause
                 self.background_hasher.pause()
-                self.main_window.statusBar().showMessage("Background hashing paused", 2000)
+                self.main_window.statusBar().showMessage(
+                    "Background hashing paused", 2000
+                )
         except Exception as e:
             self.logger.error(f"Failed to toggle background hasher: {e}")
 
@@ -190,7 +202,9 @@ class BackgroundProcessor:
         except Exception:
             pass
 
-    def _on_duplicate_found(self, new_model_id: int, existing_id: int, new_path: str, old_path: str) -> None:
+    def _on_duplicate_found(
+        self, new_model_id: int, existing_id: int, new_path: str, old_path: str
+    ) -> None:
         """Handle duplicate file detected - prompt user for action."""
         try:
             reply = QMessageBox.question(
@@ -201,7 +215,7 @@ class BackgroundProcessor:
                 f"New: {new_path}\n\n"
                 "Update to new location?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
+                QMessageBox.Yes,
             )
 
             if reply == QMessageBox.Yes:
@@ -209,17 +223,19 @@ class BackgroundProcessor:
                 db_manager = get_database_manager()
                 db_manager.update_model_path(existing_id, new_path)
                 db_manager.delete_model(new_model_id)
-                self.logger.info(f"Updated file path for model {existing_id}, removed duplicate {new_model_id}")
+                self.logger.info(
+                    f"Updated file path for model {existing_id}, removed duplicate {new_model_id}"
+                )
 
                 # Refresh model library if available
-                if hasattr(self.main_window, 'model_library_widget'):
+                if hasattr(self.main_window, "model_library_widget"):
                     self.main_window.model_library_widget._load_models_from_database()
             else:
                 # Keep duplicate, just mark it as hashed with the same hash
                 db_manager = get_database_manager()
                 existing = db_manager.get_model(existing_id)
-                if existing and existing.get('file_hash'):
-                    db_manager.update_file_hash(new_model_id, existing['file_hash'])
+                if existing and existing.get("file_hash"):
+                    db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
         except Exception as e:
             self.logger.error(f"Failed to handle duplicate: {e}")
@@ -227,14 +243,18 @@ class BackgroundProcessor:
     def _on_hashing_complete(self) -> None:
         """Handle all hashing complete."""
         try:
-            self.main_window.statusBar().showMessage("Background hashing complete", 2000)
+            self.main_window.statusBar().showMessage(
+                "Background hashing complete", 2000
+            )
             self.logger.info("Background hashing completed")
         except Exception:
             pass
 
 
 # Convenience function for easy background processing setup
-def setup_background_processing(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> BackgroundProcessor:
+def setup_background_processing(
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> BackgroundProcessor:
     """
     Convenience function to set up background processing for a main window.
 

@@ -24,19 +24,28 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from src.parsers.refactored_base_parser import RefactoredBaseParser, StreamingProgressCallback
-from src.core.interfaces.parser_interfaces import ModelFormat, ParseError, FileNotSupportedError
+from src.parsers.refactored_base_parser import (
+    RefactoredBaseParser,
+    StreamingProgressCallback,
+)
+from src.core.interfaces.parser_interfaces import (
+    ModelFormat,
+    ParseError,
+    FileNotSupportedError,
+)
 from src.core.logging_config import get_logger
 
 
 class ThreeMFParseError(ParseError):
     """Custom exception for 3MF parsing errors."""
+
     pass
 
 
 @dataclass
 class ThreeMFComponent:
     """Component definition in 3MF."""
+
     object_id: int
     transform: List[float]  # 4x4 transformation matrix (row-major)
 
@@ -44,6 +53,7 @@ class ThreeMFComponent:
 @dataclass
 class ThreeMFObject:
     """Object definition in 3MF."""
+
     object_id: int
     type: str  # "model" or "other"
     vertices: List[Tuple[float, float, float]]  # Store as tuples for memory efficiency
@@ -55,6 +65,7 @@ class ThreeMFObject:
 @dataclass
 class ThreeMFBuildItem:
     """Build item in 3MF."""
+
     object_id: int
     transform: List[float]  # 4x4 transformation matrix (row-major)
 
@@ -62,7 +73,7 @@ class ThreeMFBuildItem:
 class RefactoredThreeMFParser(RefactoredBaseParser):
     """
     Refactored 3MF parser implementing IParser interface with enhanced features.
-    
+
     Features:
     - Supports 3D Manufacturing Format (3MF)
     - Streaming support for large files
@@ -73,15 +84,16 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
     def __init__(self):
         """Initialize the refactored 3MF parser."""
-        super().__init__(
-            parser_name="3MF",
-            supported_formats=[ModelFormat.THREE_MF]
-        )
+        super().__init__(parser_name="3MF", supported_formats=[ModelFormat.THREE_MF])
         self.logger = get_logger(self.__class__.__name__)
         self.objects: Dict[int, ThreeMFObject] = {}
         self.build_items: List[ThreeMFBuildItem] = []
 
-    def _parse_file_internal(self, file_path: Path, progress_callback: Optional[StreamingProgressCallback] = None) -> Dict[str, Any]:
+    def _parse_file_internal(
+        self,
+        file_path: Path,
+        progress_callback: Optional[StreamingProgressCallback] = None,
+    ) -> Dict[str, Any]:
         """
         Internal method to parse a 3MF file.
 
@@ -112,16 +124,16 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             file_size = file_path.stat().st_size
 
             result = {
-                'header': f"3MF model with {len(triangles)} triangles",
-                'triangles': triangles,
-                'format': ModelFormat.THREE_MF,
-                'stats': {
-                    'object_count': len(self.objects),
-                    'triangle_count': len(triangles),
-                    'build_item_count': len(self.build_items),
-                    'file_size_bytes': file_size,
-                    'parsing_time_seconds': parsing_time
-                }
+                "header": f"3MF model with {len(triangles)} triangles",
+                "triangles": triangles,
+                "format": ModelFormat.THREE_MF,
+                "stats": {
+                    "object_count": len(self.objects),
+                    "triangle_count": len(triangles),
+                    "build_item_count": len(self.build_items),
+                    "file_size_bytes": file_size,
+                    "parsing_time_seconds": parsing_time,
+                },
             }
 
             self._update_progress(100.0, "3MF parsing completed", progress_callback)
@@ -140,7 +152,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
     def _parse_3mf_file(
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """
         Parse 3MF file content with streaming support.
@@ -166,19 +178,19 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
     def _parse_3mf_file_standard(
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """Standard parsing for smaller 3MF files."""
-        with zipfile.ZipFile(file_path, 'r') as zip_file:
+        with zipfile.ZipFile(file_path, "r") as zip_file:
             # Check for required files
-            if '3D/3dmodel.model' not in zip_file.namelist():
+            if "3D/3dmodel.model" not in zip_file.namelist():
                 raise ThreeMFParseError("Invalid 3MF file: missing 3D/3dmodel.model")
 
             # Parse 3D model
             self._update_progress(20.0, "Parsing 3D model", progress_callback)
 
-            with zip_file.open('3D/3dmodel.model') as model_file:
-                content = model_file.read().decode('utf-8')
+            with zip_file.open("3D/3dmodel.model") as model_file:
+                content = model_file.read().decode("utf-8")
                 root = ET.fromstring(content)
 
                 # Parse objects
@@ -192,40 +204,44 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
     def _parse_3mf_file_streaming(
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """Streaming parsing for large 3MF files."""
-        with zipfile.ZipFile(file_path, 'r') as zip_file:
+        with zipfile.ZipFile(file_path, "r") as zip_file:
             # Check for required files
-            if '3D/3dmodel.model' not in zip_file.namelist():
+            if "3D/3dmodel.model" not in zip_file.namelist():
                 raise ThreeMFParseError("Invalid 3MF file: missing 3D/3dmodel.model")
 
             # Parse 3D model with streaming
             self._update_progress(20.0, "Parsing 3D model", progress_callback)
 
-            with zip_file.open('3D/3dmodel.model') as model_file:
+            with zip_file.open("3D/3dmodel.model") as model_file:
                 # Read in chunks to handle large files
                 chunk_size = 1024 * 1024  # 1MB chunks
                 content_parts = []
-                
+
                 while True:
                     self._check_cancellation()
                     chunk = model_file.read(chunk_size)
                     if not chunk:
                         break
-                    content_parts.append(chunk.decode('utf-8', errors='ignore'))
-                    
+                    content_parts.append(chunk.decode("utf-8", errors="ignore"))
+
                     # Update progress based on file position
                     current_pos = model_file.tell()
                     total_size = model_file.fp.filelike().seek(0, 2)  # Get total size
                     model_file.fp.filelike().seek(current_pos)  # Reset position
-                    
+
                     progress = 20.0 + (current_pos / total_size) * 40.0
-                    self._update_progress(progress, f"Reading XML content ({current_pos // 1024 // 1024}MB)", progress_callback)
+                    self._update_progress(
+                        progress,
+                        f"Reading XML content ({current_pos // 1024 // 1024}MB)",
+                        progress_callback,
+                    )
 
                 # Combine all chunks
-                content = ''.join(content_parts)
-                
+                content = "".join(content_parts)
+
                 # Parse XML
                 self._update_progress(60.0, "Parsing XML structure", progress_callback)
                 root = ET.fromstring(content)
@@ -246,45 +262,49 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             root: Root element of the 3MF model
         """
         # Define namespace
-        ns = {'3mf': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
+        ns = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 
         # Find all objects
-        for obj_elem in root.findall('.//3mf:object', ns):
+        for obj_elem in root.findall(".//3mf:object", ns):
             try:
                 self._check_cancellation()
-                
-                object_id = int(obj_elem.get('id', '0'))
-                obj_type = obj_elem.get('type', 'model')
-                name = obj_elem.get('name', '')
+
+                object_id = int(obj_elem.get("id", "0"))
+                obj_type = obj_elem.get("type", "model")
+                name = obj_elem.get("name", "")
 
                 vertices = []
                 triangles = []
                 components = []
 
                 # Parse vertices
-                vertices_elem = obj_elem.find('3mf:vertices', ns)
+                vertices_elem = obj_elem.find("3mf:vertices", ns)
                 if vertices_elem is not None:
-                    for vertex_elem in vertices_elem.findall('3mf:vertex', ns):
-                        x = float(vertex_elem.get('x', '0'))
-                        y = float(vertex_elem.get('y', '0'))
-                        z = float(vertex_elem.get('z', '0'))
-                        vertices.append((x, y, z))  # Store as tuple for memory efficiency
+                    for vertex_elem in vertices_elem.findall("3mf:vertex", ns):
+                        x = float(vertex_elem.get("x", "0"))
+                        y = float(vertex_elem.get("y", "0"))
+                        z = float(vertex_elem.get("z", "0"))
+                        vertices.append(
+                            (x, y, z)
+                        )  # Store as tuple for memory efficiency
 
                 # Parse triangles
-                triangles_elem = obj_elem.find('3mf:triangles', ns)
+                triangles_elem = obj_elem.find("3mf:triangles", ns)
                 if triangles_elem is not None:
-                    for triangle_elem in triangles_elem.findall('3mf:triangle', ns):
-                        v1 = int(triangle_elem.get('v1', '0'))
-                        v2 = int(triangle_elem.get('v2', '0'))
-                        v3 = int(triangle_elem.get('v3', '0'))
+                    for triangle_elem in triangles_elem.findall("3mf:triangle", ns):
+                        v1 = int(triangle_elem.get("v1", "0"))
+                        v2 = int(triangle_elem.get("v2", "0"))
+                        v3 = int(triangle_elem.get("v3", "0"))
                         triangles.append((v1, v2, v3))
 
                 # Parse components
-                components_elem = obj_elem.find('3mf:components', ns)
+                components_elem = obj_elem.find("3mf:components", ns)
                 if components_elem is not None:
-                    for component_elem in components_elem.findall('3mf:component', ns):
-                        comp_object_id = int(component_elem.get('objectid', '0'))
-                        transform = self._parse_transform(component_elem.get('transform', ''))
+                    for component_elem in components_elem.findall("3mf:component", ns):
+                        comp_object_id = int(component_elem.get("objectid", "0"))
+                        transform = self._parse_transform(
+                            component_elem.get("transform", "")
+                        )
                         components.append(ThreeMFComponent(comp_object_id, transform))
 
                 # Create object
@@ -294,7 +314,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                     vertices=vertices,
                     triangles=triangles,
                     components=components,
-                    name=name
+                    name=name,
                 )
 
                 self.objects[object_id] = obj
@@ -315,20 +335,20 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             root: Root element of the 3MF model
         """
         # Define namespace
-        ns = {'3mf': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
+        ns = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 
         # Find build element
-        build_elem = root.find('3mf:build', ns)
+        build_elem = root.find("3mf:build", ns)
         if build_elem is None:
             return
 
         # Find all build items
-        for item_elem in build_elem.findall('3mf:item', ns):
+        for item_elem in build_elem.findall("3mf:item", ns):
             try:
                 self._check_cancellation()
-                
-                object_id = int(item_elem.get('objectid', '0'))
-                transform = self._parse_transform(item_elem.get('transform', ''))
+
+                object_id = int(item_elem.get("objectid", "0"))
+                transform = self._parse_transform(item_elem.get("transform", ""))
 
                 build_item = ThreeMFBuildItem(object_id, transform)
                 self.build_items.append(build_item)
@@ -350,10 +370,22 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         if not transform_str:
             # Identity matrix
             return [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]
 
         try:
@@ -362,23 +394,51 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
+                self.logger.warning(
+                    f"Invalid transform: {transform_str}, using identity"
+                )
                 return [
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
                 ]
 
             return values
 
         except ValueError:
-            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
+            self.logger.warning(
+                f"Invalid transform values: {transform_str}, using identity"
+            )
             return [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]
 
     def _process_geometry(self) -> List[Dict[str, Any]]:
@@ -397,7 +457,9 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return triangles
 
-    def _generate_triangles_for_item(self, build_item: ThreeMFBuildItem) -> List[Dict[str, Any]]:
+    def _generate_triangles_for_item(
+        self, build_item: ThreeMFBuildItem
+    ) -> List[Dict[str, Any]]:
         """
         Generate triangles for a specific build item.
 
@@ -434,10 +496,22 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             # Apply transform if needed
             if build_item.transform != [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]:
                 vertices = self._apply_transform(vertices, build_item.transform)
 
@@ -445,10 +519,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             normal = self._calculate_face_normal(vertices[0], vertices[1], vertices[2])
 
             # Create triangle dictionary
-            triangle = {
-                'normal': normal,
-                'vertices': vertices
-            }
+            triangle = {"normal": normal, "vertices": vertices}
             triangles.append(triangle)
 
         # Process components
@@ -461,9 +532,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         return triangles
 
     def _generate_triangles_for_component(
-        self,
-        component: ThreeMFComponent,
-        parent_transform: List[float]
+        self, component: ThreeMFComponent, parent_transform: List[float]
     ) -> List[Dict[str, Any]]:
         """
         Generate triangles for a component.
@@ -484,7 +553,9 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return triangles
 
         # Combine transforms
-        combined_transform = self._multiply_matrices(parent_transform, component.transform)
+        combined_transform = self._multiply_matrices(
+            parent_transform, component.transform
+        )
 
         # Process triangles
         for triangle_indices in comp_obj.triangles:
@@ -510,10 +581,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             normal = self._calculate_face_normal(vertices[0], vertices[1], vertices[2])
 
             # Create triangle dictionary
-            triangle = {
-                'normal': normal,
-                'vertices': vertices
-            }
+            triangle = {"normal": normal, "vertices": vertices}
             triangles.append(triangle)
 
         # Process nested components
@@ -525,7 +593,9 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return triangles
 
-    def _multiply_matrices(self, matrix_a: List[float], matrix_b: List[float]) -> List[float]:
+    def _multiply_matrices(
+        self, matrix_a: List[float], matrix_b: List[float]
+    ) -> List[float]:
         """
         Multiply two 4x4 matrices.
 
@@ -545,7 +615,9 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return result
 
-    def _apply_transform(self, vertices: List[Tuple[float, float, float]], transform: List[float]) -> List[Tuple[float, float, float]]:
+    def _apply_transform(
+        self, vertices: List[Tuple[float, float, float]], transform: List[float]
+    ) -> List[Tuple[float, float, float]]:
         """
         Apply transformation matrix to vertices.
 
@@ -564,10 +636,30 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             w = 1.0
 
             # Apply transformation
-            new_x = transform[0] * x + transform[1] * y + transform[2] * z + transform[3] * w
-            new_y = transform[4] * x + transform[5] * y + transform[6] * z + transform[7] * w
-            new_z = transform[8] * x + transform[9] * y + transform[10] * z + transform[11] * w
-            new_w = transform[12] * x + transform[13] * y + transform[14] * z + transform[15] * w
+            new_x = (
+                transform[0] * x
+                + transform[1] * y
+                + transform[2] * z
+                + transform[3] * w
+            )
+            new_y = (
+                transform[4] * x
+                + transform[5] * y
+                + transform[6] * z
+                + transform[7] * w
+            )
+            new_z = (
+                transform[8] * x
+                + transform[9] * y
+                + transform[10] * z
+                + transform[11] * w
+            )
+            new_w = (
+                transform[12] * x
+                + transform[13] * y
+                + transform[14] * z
+                + transform[15] * w
+            )
 
             # Convert back to 3D coordinates
             if new_w != 0:
@@ -579,7 +671,12 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
         return transformed
 
-    def _calculate_face_normal(self, v1: Tuple[float, float, float], v2: Tuple[float, float, float], v3: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    def _calculate_face_normal(
+        self,
+        v1: Tuple[float, float, float],
+        v2: Tuple[float, float, float],
+        v3: Tuple[float, float, float],
+    ) -> Tuple[float, float, float]:
         """
         Calculate face normal from three vertices.
 
@@ -603,7 +700,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         # Normalize
         length = (normal_x**2 + normal_y**2 + normal_z**2) ** 0.5
         if length > 0:
-            return (normal_x/length, normal_y/length, normal_z/length)
+            return (normal_x / length, normal_y / length, normal_z / length)
 
         return (0, 0, 1)  # Default normal
 
@@ -621,39 +718,35 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             # Basic validation first
             if not self._validate_file_internal(file_path):
                 return {
-                    'is_valid': False,
-                    'issues': ['File format validation failed'],
-                    'statistics': {}
+                    "is_valid": False,
+                    "issues": ["File format validation failed"],
+                    "statistics": {},
                 }
 
             issues = []
             stats = {}
 
             # Check 3MF structure
-            with zipfile.ZipFile(file_path, 'r') as zip_file:
-                if '3D/3dmodel.model' not in zip_file.namelist():
-                    issues.append('Invalid 3MF file: missing 3D/3dmodel.model')
+            with zipfile.ZipFile(file_path, "r") as zip_file:
+                if "3D/3dmodel.model" not in zip_file.namelist():
+                    issues.append("Invalid 3MF file: missing 3D/3dmodel.model")
                 else:
                     # Check XML structure
-                    with zip_file.open('3D/3dmodel.model') as model_file:
-                        content = model_file.read(1000).decode('utf-8')
-                        if '<?xml' not in content.lower():
-                            issues.append('Invalid 3MF file: invalid XML format')
-                        if 'model' not in content.lower():
-                            issues.append('Invalid 3MF file: not a 3D model')
+                    with zip_file.open("3D/3dmodel.model") as model_file:
+                        content = model_file.read(1000).decode("utf-8")
+                        if "<?xml" not in content.lower():
+                            issues.append("Invalid 3MF file: invalid XML format")
+                        if "model" not in content.lower():
+                            issues.append("Invalid 3MF file: not a 3D model")
 
-            return {
-                'is_valid': len(issues) == 0,
-                'issues': issues,
-                'statistics': stats
-            }
+            return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
         except Exception as e:
             self.logger.error(f"Error validating 3MF geometry: {str(e)}")
             return {
-                'is_valid': False,
-                'issues': [f'Validation error: {str(e)}'],
-                'statistics': {}
+                "is_valid": False,
+                "issues": [f"Validation error: {str(e)}"],
+                "statistics": {},
             }
 
     def _get_geometry_stats_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -671,37 +764,43 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             vertex_count = 0
             triangle_count = 0
 
-            with zipfile.ZipFile(file_path, 'r') as zip_file:
-                if '3D/3dmodel.model' in zip_file.namelist():
-                    with zip_file.open('3D/3dmodel.model') as model_file:
-                        content = model_file.read().decode('utf-8')
+            with zipfile.ZipFile(file_path, "r") as zip_file:
+                if "3D/3dmodel.model" in zip_file.namelist():
+                    with zip_file.open("3D/3dmodel.model") as model_file:
+                        content = model_file.read().decode("utf-8")
                         root = ET.fromstring(content)
-                        
+
                         # Define namespace
-                        ns = {'3mf': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
-                        
+                        ns = {
+                            "3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+                        }
+
                         # Count objects
-                        object_count = len(root.findall('.//3mf:object', ns))
-                        
+                        object_count = len(root.findall(".//3mf:object", ns))
+
                         # Count vertices and triangles
-                        for obj_elem in root.findall('.//3mf:object', ns):
-                            vertices_elem = obj_elem.find('3mf:vertices', ns)
+                        for obj_elem in root.findall(".//3mf:object", ns):
+                            vertices_elem = obj_elem.find("3mf:vertices", ns)
                             if vertices_elem is not None:
-                                vertex_count += len(vertices_elem.findall('3mf:vertex', ns))
-                            
-                            triangles_elem = obj_elem.find('3mf:triangles', ns)
+                                vertex_count += len(
+                                    vertices_elem.findall("3mf:vertex", ns)
+                                )
+
+                            triangles_elem = obj_elem.find("3mf:triangles", ns)
                             if triangles_elem is not None:
-                                triangle_count += len(triangles_elem.findall('3mf:triangle', ns))
+                                triangle_count += len(
+                                    triangles_elem.findall("3mf:triangle", ns)
+                                )
 
             # Basic statistics
             stats = {
-                'vertex_count': vertex_count,
-                'face_count': triangle_count,
-                'edge_count': triangle_count * 3,  # Approximation
-                'component_count': object_count,
-                'degeneracy_count': 0,  # Would need full parse to determine
-                'manifold': True,  # Assume manifold for 3MF files
-                'object_count': object_count
+                "vertex_count": vertex_count,
+                "face_count": triangle_count,
+                "edge_count": triangle_count * 3,  # Approximation
+                "component_count": object_count,
+                "degeneracy_count": 0,  # Would need full parse to determine
+                "manifold": True,  # Assume manifold for 3MF files
+                "object_count": object_count,
             }
 
             return stats
@@ -718,10 +817,10 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             Dictionary containing parser information
         """
         return {
-            'name': 'Refactored 3MF Parser',
-            'version': '2.0.0',
-            'author': 'Candy-Cadence Development Team',
-            'description': 'Enhanced 3MF parser with streaming support and improved memory management'
+            "name": "Refactored 3MF Parser",
+            "version": "2.0.0",
+            "author": "Candy-Cadence Development Team",
+            "description": "Enhanced 3MF parser with streaming support and improved memory management",
         }
 
 

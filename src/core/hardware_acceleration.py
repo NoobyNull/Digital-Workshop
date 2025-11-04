@@ -92,7 +92,9 @@ class HardwareAccelerationManager:
         caps.performance_score = self._score(caps)
         caps.recommended_backend = self._select_backend(caps)
         self._caps = caps
-        self.logger.info(f"Hardware detection complete. Recommended backend: {caps.recommended_backend.value}")
+        self.logger.info(
+            f"Hardware detection complete. Recommended backend: {caps.recommended_backend.value}"
+        )
         return caps
 
     def get_capabilities(self) -> AccelCapabilities:
@@ -107,10 +109,16 @@ class HardwareAccelerationManager:
         if smi:
             try:
                 # Query concise CSV to avoid locale issues
-                cmd = [smi, "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits"]
+                cmd = [
+                    smi,
+                    "--query-gpu=name,memory.total,driver_version",
+                    "--format=csv,noheader,nounits",
+                ]
                 res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
                 if res.returncode == 0:
-                    for idx, line in enumerate([l.strip() for l in res.stdout.splitlines() if l.strip()]):
+                    for idx, line in enumerate(
+                        [l.strip() for l in res.stdout.splitlines() if l.strip()]
+                    ):
                         parts = [p.strip() for p in line.split(",")]
                         if len(parts) >= 3:
                             name, mem, drv = parts[0], parts[1], parts[2]
@@ -119,15 +127,23 @@ class HardwareAccelerationManager:
                                 mem_mb = int(mem)
                             except Exception:
                                 mem_mb = None
-                            devices.append(GPUDevice(
-                                name=name, vendor="NVIDIA", device_id=idx, memory_mb=mem_mb,
-                                driver_version=drv, backend=AccelBackend.CUDA
-                            ))
+                            devices.append(
+                                GPUDevice(
+                                    name=name,
+                                    vendor="NVIDIA",
+                                    device_id=idx,
+                                    memory_mb=mem_mb,
+                                    driver_version=drv,
+                                    backend=AccelBackend.CUDA,
+                                )
+                            )
                     if devices:
                         available = True
                         notes.append("Detected NVIDIA GPUs via nvidia-smi")
                 else:
-                    notes.append(f"nvidia-smi returned non-zero exit code {res.returncode}")
+                    notes.append(
+                        f"nvidia-smi returned non-zero exit code {res.returncode}"
+                    )
             except Exception as e:
                 notes.append(f"nvidia-smi check failed: {e}")
         # Fallback to numba CUDA probe
@@ -141,7 +157,14 @@ class HardwareAccelerationManager:
                     except Exception:
                         count = 1
                     for i in range(max(1, count)):
-                        devices.append(GPUDevice(name="CUDA Device", vendor="NVIDIA", device_id=i, backend=AccelBackend.CUDA))
+                        devices.append(
+                            GPUDevice(
+                                name="CUDA Device",
+                                vendor="NVIDIA",
+                                device_id=i,
+                                backend=AccelBackend.CUDA,
+                            )
+                        )
             except Exception as e:
                 notes.append(f"numba.cuda probe failed: {e}")
         return {"available": available, "devices": devices, "notes": notes}
@@ -165,11 +188,16 @@ class HardwareAccelerationManager:
                             name = getattr(d, "name", "OpenCL Device")
                             mem = getattr(d, "global_mem_size", 0)
                             mem_mb = int(mem // (1024 * 1024)) if mem else None
-                            devices.append(GPUDevice(
-                                name=name, vendor=vendor or p_name, device_id=idx,
-                                memory_mb=mem_mb, driver_version=getattr(d, "driver_version", None),
-                                backend=AccelBackend.OPENCL
-                            ))
+                            devices.append(
+                                GPUDevice(
+                                    name=name,
+                                    vendor=vendor or p_name,
+                                    device_id=idx,
+                                    memory_mb=mem_mb,
+                                    driver_version=getattr(d, "driver_version", None),
+                                    backend=AccelBackend.OPENCL,
+                                )
+                            )
                             available = True
                         except Exception as e:
                             notes.append(f"OpenCL device parse error: {e}")
@@ -193,18 +221,23 @@ class HardwareAccelerationManager:
             try:
                 rw = vtk.vtkRenderWindow()
                 # On some systems this may not initialize a context until shown; guard.
-                version = rw.GetOpenGLVersion() if hasattr(rw, "GetOpenGLVersion") else ""
+                version = (
+                    rw.GetOpenGLVersion() if hasattr(rw, "GetOpenGLVersion") else ""
+                )
                 if not version and hasattr(rw, "ReportCapabilities"):
                     # Fallback: parse ReportCapabilities
                     cap = rw.ReportCapabilities()  # type: ignore
-                    m = re.search(r"OpenGL version string:\s*([0-9]+\.[0-9]+)", cap or "")
+                    m = re.search(
+                        r"OpenGL version string:\s*([0-9]+\.[0-9]+)", cap or ""
+                    )
                     version = m.group(1) if m else ""
             except Exception:
                 version = ""
             try:
                 if version:
                     major_minor = version.split(".")
-                    maj = int(major_minor[0]); minr = int(major_minor[1])
+                    maj = int(major_minor[0])
+                    minr = int(major_minor[1])
                     return (maj > 4) or (maj == 4 and minr >= 3)
             except Exception:
                 return False
@@ -215,12 +248,22 @@ class HardwareAccelerationManager:
     def _score(self, caps: AccelCapabilities) -> int:
         score = 10
         has_cuda = any(d.backend == AccelBackend.CUDA for d in caps.devices)
-        has_ocl_amd = any(d.backend == AccelBackend.OPENCL and "AMD" in (d.vendor or "").upper() for d in caps.devices)
-        has_ocl_intel = any(d.backend == AccelBackend.OPENCL and "INTEL" in (d.vendor or "").upper() for d in caps.devices)
+        has_ocl_amd = any(
+            d.backend == AccelBackend.OPENCL and "AMD" in (d.vendor or "").upper()
+            for d in caps.devices
+        )
+        has_ocl_intel = any(
+            d.backend == AccelBackend.OPENCL and "INTEL" in (d.vendor or "").upper()
+            for d in caps.devices
+        )
         if has_cuda:
             score = 85
             # scale with memory if known
-            mems = [d.memory_mb for d in caps.devices if d.backend == AccelBackend.CUDA and d.memory_mb]
+            mems = [
+                d.memory_mb
+                for d in caps.devices
+                if d.backend == AccelBackend.CUDA and d.memory_mb
+            ]
             if mems:
                 score = min(100, score + min(10, sum(mems) // (8 * 1024)))
         elif has_ocl_amd:
@@ -246,7 +289,9 @@ class HardwareAccelerationManager:
             "recommended_backend": caps.recommended_backend.value,
             "performance_score": caps.performance_score,
             "available_backends": [b.value for b in caps.available_backends],
-            "devices": [f"{d.vendor} {d.name} ({d.memory_mb or '?'} MB)" for d in caps.devices],
+            "devices": [
+                f"{d.vendor} {d.name} ({d.memory_mb or '?'} MB)" for d in caps.devices
+            ],
             "notes": caps.notes,
         }
         return info
@@ -256,7 +301,9 @@ class HardwareAccelerationManager:
         if caps.recommended_backend == AccelBackend.CPU:
             self.logger.warning("No GPU acceleration detected; using CPU path")
         else:
-            self.logger.info(f"GPU acceleration enabled: {caps.recommended_backend.value}")
+            self.logger.info(
+                f"GPU acceleration enabled: {caps.recommended_backend.value}"
+            )
 
 
 # Singleton helpers
@@ -273,7 +320,10 @@ def get_acceleration_manager() -> HardwareAccelerationManager:
 def check_acceleration_support() -> (bool, str):
     mgr = get_acceleration_manager()
     caps = mgr.get_capabilities()
-    return (caps.recommended_backend != AccelBackend.CPU, caps.recommended_backend.value)
+    return (
+        caps.recommended_backend != AccelBackend.CPU,
+        caps.recommended_backend.value,
+    )
 
 
 def warn_if_no_acceleration() -> None:

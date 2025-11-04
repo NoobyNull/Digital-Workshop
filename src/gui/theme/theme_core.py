@@ -44,6 +44,7 @@ FALLBACK_COLOR = "#E31C79"  # Hot pink for undefined colors
 # Color Conversion Helpers
 # ============================================================
 
+
 def _normalize_hex(h: str) -> str:
     """
     Return a normalized #rrggbb hex string for inputs that look like hex codes.
@@ -62,7 +63,11 @@ def _normalize_hex(h: str) -> str:
         return lower
 
     # If already a valid #rrggbb, return normalized lowercase
-    if lower.startswith("#") and len(lower) == 7 and all(c in "0123456789abcdef" for c in lower[1:]):
+    if (
+        lower.startswith("#")
+        and len(lower) == 7
+        and all(c in "0123456789abcdef" for c in lower[1:])
+    ):
         return lower
 
     # Accept 3 or 6 hex digits with optional '#'
@@ -103,6 +108,7 @@ def hex_to_vtk_rgb(hex_code: str) -> Tuple[float, float, float]:
 # Default Theme Definitions
 # ============================================================
 
+
 @dataclass(frozen=True)
 class ThemeDefaults:
     """Default color definitions for light theme."""
@@ -122,8 +128,8 @@ class ThemeDefaults:
     menubar_item_pressed_bg: str = "#106ebe"
 
     # Surfaces
-    surface: str = "#f5f5f5"            # toolbars, panes
-    surface_alt: str = "#ffffff"        # cards/panels inner background
+    surface: str = "#f5f5f5"  # toolbars, panes
+    surface_alt: str = "#ffffff"  # cards/panels inner background
     card_bg: str = "#ffffff"
     surface_grad_start: str = "#fafafa"  # subtle gradient example
     surface_grad_end: str = "#f2f2f2"
@@ -317,6 +323,7 @@ class ThemeDefaults:
 # Palette Generation Functions
 # ============================================================
 
+
 def _srgb_to_linear(c: float) -> float:
     """Convert 0..1 sRGB channel to linear space."""
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
@@ -375,7 +382,7 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         # Brighter primaries work well with light UI by default
         dark = _relative_luminance_from_hex(p) < 0.35
     else:
-        dark = (mode == "dark")
+        dark = mode == "dark"
 
     if dark:
         window_bg = "#1e1f22"
@@ -421,7 +428,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "pressed": pressed,
         "selection_bg": selection_bg,
         "selection_text": selection_text,
-
         # Menubar
         "menubar_bg": surface,
         "menubar_text": text,
@@ -429,17 +435,14 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "menubar_item_hover_bg": p,
         "menubar_item_hover_text": primary_text,
         "menubar_item_pressed_bg": primary_hover,
-
         # Status bar
         "statusbar_bg": surface,
         "statusbar_text": text,
         "statusbar_border": border,
-
         # Toolbars
         "toolbar_bg": surface,
         "toolbar_border": border,
         "toolbar_handle_bg": border,
-
         "toolbutton_bg": "transparent",
         "toolbutton_border": "transparent",
         "toolbutton_hover_bg": hover,
@@ -448,14 +451,12 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "toolbutton_checked_bg": p,
         "toolbutton_checked_border": p,
         "toolbutton_checked_text": primary_text,
-
         # Dock
         "dock_bg": window_bg,
         "dock_text": text,
         "dock_border": border,
         "dock_title_bg": surface,
         "dock_title_border": border,
-
         # Buttons
         "button_bg": surface,
         "button_text": text,
@@ -473,7 +474,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "button_disabled_bg": _mix_hex(surface, border_light, 0.5),
         "button_disabled_text": "#9aa0a6",
         "button_disabled_border": _lighten(border, 0.2),
-
         # Inputs
         "input_bg": input_bg,
         "input_text": text,
@@ -481,24 +481,23 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "input_focus_border": p,
         "input_disabled_bg": _mix_hex(input_bg, border_light, 0.3),
         "input_disabled_text": "#9aa0a6",
-
         # Combo
         "combobox_bg": input_bg,
         "combobox_text": text,
         "combobox_border": border,
         "combobox_focus_border": p,
         "combobox_arrow_color": "#666666" if not dark else "#b7b7b7",
-
         # Progress
         "progress_bg": window_bg,
         "progress_text": text,
         "progress_border": border,
         "progress_chunk": p,
-        "progress_disabled_border": _lighten(border, 0.15) if not dark else _darken(border, 0.15),
+        "progress_disabled_border": (
+            _lighten(border, 0.15) if not dark else _darken(border, 0.15)
+        ),
         "progress_disabled_bg": _mix_hex(window_bg, surface, 0.5),
         "progress_disabled_text": "#a0a0a0",
         "progress_disabled_chunk": _mix_hex(p, surface, 0.65),
-
         # Tabs
         "tab_pane_border": border,
         "tab_pane_bg": window_bg,
@@ -508,7 +507,6 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "tab_selected_bg": window_bg,
         "tab_selected_border": p,
         "tab_hover_bg": hover,
-
         # Tables & Lists
         "table_bg": window_bg,
         "table_text": text,
@@ -518,42 +516,34 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "header_bg": header_bg,
         "header_text": text,
         "header_border": border,
-
         # Scrollbars
         "scrollbar_bg": surface,
         "scrollbar_border": border,
         "scrollbar_handle_bg": _mix_hex(border, p, 0.10),
         "scrollbar_handle_hover_bg": _mix_hex(border, p, 0.25),
-
         # Splitters
         "splitter_handle_bg": border,
-
         # Group Boxes
         "groupbox_border": border,
         "groupbox_bg": window_bg,
         "groupbox_text": text,
         "groupbox_title_text": text,
-
         # Slider & Spinbox
         "slider_groove_bg": surface,
         "slider_groove_border": border,
         "slider_handle": p,
         "slider_handle_border": p,
-
         "spinbox_bg": input_bg,
         "spinbox_text": text,
         "spinbox_border": border,
         "spinbox_focus_border": p,
-
         # Date edits
         "dateedit_bg": input_bg,
         "dateedit_text": text,
         "dateedit_border": border,
         "dateedit_focus_border": p,
-
         # Labels
         "label_text": text,
-
         # Focus
         "focus_border": _mix_hex(p, "#2684ff", 0.5),
     }
@@ -610,12 +600,10 @@ PRESET_LIGHT: Dict[str, str] = {
     "surface": "#f5f5f5",
     "surface_grad_start": "#f9f9f9",
     "surface_grad_end": "#f0f0f0",
-
     # Borders & Dividers
     "border": "#d0d0d0",
     "border_light": "#e8e8e8",
     "focus_border": "#0078d4",
-
     # Menu & Toolbar
     "menubar_bg": "#f5f5f5",
     "menubar_text": "#000000",
@@ -623,17 +611,14 @@ PRESET_LIGHT: Dict[str, str] = {
     "menubar_item_hover_text": "#000000",
     "toolbar_bg": "#f5f5f5",
     "toolbar_text": "#000000",
-
     # Status Bar
     "statusbar_bg": "#f5f5f5",
     "statusbar_text": "#000000",
     "statusbar_border": "#d0d0d0",
-
     # Dock Widgets
     "dock_title_bg": "#e8e8e8",
     "dock_title_text": "#000000",
     "dock_title_border": "#d0d0d0",
-
     # Buttons
     "button_default_bg": "#f0f0f0",
     "button_default_text": "#000000",
@@ -642,24 +627,20 @@ PRESET_LIGHT: Dict[str, str] = {
     "button_hover_text": "#000000",
     "button_pressed_bg": "#d0d0d0",
     "button_pressed_text": "#000000",
-
     # Inputs
     "input_bg": "#ffffff",
     "input_text": "#000000",
     "input_border": "#d0d0d0",
     "input_focus_border": "#0078d4",
-
     # Accent / Brand
     "primary": "#0078d4",
     "primary_hover": "#106ebe",
     "primary_text": "#ffffff",
-
     # Interactions
     "hover": "#e1e1e1",
     "pressed": "#d0d0d0",
     "selection_bg": "#0078d4",
     "selection_text": "#ffffff",
-
     # Viewer / 3D
     "canvas_bg": "#f0f0f0",
     "model_surface": "#6496c8",
@@ -667,7 +648,6 @@ PRESET_LIGHT: Dict[str, str] = {
     "model_specular": "#ffffff",
     "light_color": "#ffffff",
     "edge_color": "#000000",
-
     # Status Indicators
     "status_success_bg": "#d4edda",
     "status_success_text": "#155724",
@@ -688,12 +668,10 @@ PRESET_DARK: Dict[str, str] = {
     "surface": "#2d2d2d",
     "surface_grad_start": "#333333",
     "surface_grad_end": "#2a2a2a",
-
     # Borders & Dividers
     "border": "#404040",
     "border_light": "#555555",
     "focus_border": "#0078d4",
-
     # Menu & Toolbar
     "menubar_bg": "#2d2d2d",
     "menubar_text": "#e0e0e0",
@@ -701,17 +679,14 @@ PRESET_DARK: Dict[str, str] = {
     "menubar_item_hover_text": "#ffffff",
     "toolbar_bg": "#2d2d2d",
     "toolbar_text": "#e0e0e0",
-
     # Status Bar
     "statusbar_bg": "#2d2d2d",
     "statusbar_text": "#e0e0e0",
     "statusbar_border": "#404040",
-
     # Dock Widgets
     "dock_title_bg": "#333333",
     "dock_title_text": "#e0e0e0",
     "dock_title_border": "#404040",
-
     # Buttons
     "button_default_bg": "#333333",
     "button_default_text": "#e0e0e0",
@@ -720,24 +695,20 @@ PRESET_DARK: Dict[str, str] = {
     "button_hover_text": "#ffffff",
     "button_pressed_bg": "#555555",
     "button_pressed_text": "#ffffff",
-
     # Inputs
     "input_bg": "#2a2a2a",
     "input_text": "#e0e0e0",
     "input_border": "#404040",
     "input_focus_border": "#0078d4",
-
     # Accent / Brand
     "primary": "#0078d4",
     "primary_hover": "#1084d7",
     "primary_text": "#ffffff",
-
     # Interactions
     "hover": "#404040",
     "pressed": "#555555",
     "selection_bg": "#0078d4",
     "selection_text": "#ffffff",
-
     # Viewer / 3D
     "canvas_bg": "#1a1a1a",
     "model_surface": "#6496c8",
@@ -745,7 +716,6 @@ PRESET_DARK: Dict[str, str] = {
     "model_specular": "#ffffff",
     "light_color": "#ffffff",
     "edge_color": "#cccccc",
-
     # Status Indicators
     "status_success_bg": "#1e4620",
     "status_success_text": "#90ee90",
@@ -766,12 +736,10 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "surface": "#eee8d5",
     "surface_grad_start": "#f5f0e8",
     "surface_grad_end": "#ebe6d9",
-
     # Borders & Dividers
     "border": "#d6d0c8",
     "border_light": "#e8e3db",
     "focus_border": "#268bd2",
-
     # Menu & Toolbar
     "menubar_bg": "#eee8d5",
     "menubar_text": "#657b83",
@@ -779,17 +747,14 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "menubar_item_hover_text": "#073642",
     "toolbar_bg": "#eee8d5",
     "toolbar_text": "#657b83",
-
     # Status Bar
     "statusbar_bg": "#eee8d5",
     "statusbar_text": "#657b83",
     "statusbar_border": "#d6d0c8",
-
     # Dock Widgets
     "dock_title_bg": "#d6d0c8",
     "dock_title_text": "#657b83",
     "dock_title_border": "#c5bfb7",
-
     # Buttons
     "button_default_bg": "#eee8d5",
     "button_default_text": "#657b83",
@@ -798,24 +763,20 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "button_hover_text": "#073642",
     "button_pressed_bg": "#c5bfb7",
     "button_pressed_text": "#073642",
-
     # Inputs
     "input_bg": "#fdf6e3",
     "input_text": "#657b83",
     "input_border": "#d6d0c8",
     "input_focus_border": "#268bd2",
-
     # Accent / Brand
     "primary": "#268bd2",
     "primary_hover": "#2aa198",
     "primary_text": "#fdf6e3",
-
     # Interactions
     "hover": "#d6d0c8",
     "pressed": "#c5bfb7",
     "selection_bg": "#268bd2",
     "selection_text": "#fdf6e3",
-
     # Viewer / 3D
     "canvas_bg": "#eee8d5",
     "model_surface": "#268bd2",
@@ -823,7 +784,6 @@ PRESET_SOLARIZED_LIGHT: Dict[str, str] = {
     "model_specular": "#fdf6e3",
     "light_color": "#fdf6e3",
     "edge_color": "#073642",
-
     # Status Indicators
     "status_success_bg": "#d5f4e6",
     "status_success_text": "#27ae60",
@@ -844,12 +804,10 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "surface": "#073642",
     "surface_grad_start": "#0d3f47",
     "surface_grad_end": "#0a3840",
-
     # Borders & Dividers
     "border": "#1a4d56",
     "border_light": "#2a5f68",
     "focus_border": "#268bd2",
-
     # Menu & Toolbar
     "menubar_bg": "#073642",
     "menubar_text": "#839496",
@@ -857,17 +815,14 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "menubar_item_hover_text": "#93a1a1",
     "toolbar_bg": "#073642",
     "toolbar_text": "#839496",
-
     # Status Bar
     "statusbar_bg": "#073642",
     "statusbar_text": "#839496",
     "statusbar_border": "#1a4d56",
-
     # Dock Widgets
     "dock_title_bg": "#0d3f47",
     "dock_title_text": "#839496",
     "dock_title_border": "#1a4d56",
-
     # Buttons
     "button_default_bg": "#073642",
     "button_default_text": "#839496",
@@ -876,24 +831,20 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "button_hover_text": "#93a1a1",
     "button_pressed_bg": "#2a5f68",
     "button_pressed_text": "#93a1a1",
-
     # Inputs
     "input_bg": "#002b36",
     "input_text": "#839496",
     "input_border": "#1a4d56",
     "input_focus_border": "#268bd2",
-
     # Accent / Brand
     "primary": "#268bd2",
     "primary_hover": "#2aa198",
     "primary_text": "#002b36",
-
     # Interactions
     "hover": "#1a4d56",
     "pressed": "#2a5f68",
     "selection_bg": "#268bd2",
     "selection_text": "#002b36",
-
     # Viewer / 3D
     "canvas_bg": "#002b36",
     "model_surface": "#268bd2",
@@ -901,7 +852,6 @@ PRESET_SOLARIZED_DARK: Dict[str, str] = {
     "model_specular": "#93a1a1",
     "light_color": "#93a1a1",
     "edge_color": "#839496",
-
     # Status Indicators
     "status_success_bg": "#0d3f2d",
     "status_success_text": "#2ecc71",
@@ -944,6 +894,7 @@ def list_presets() -> list[str]:
 # ============================================================
 # Theme Persistence
 # ============================================================
+
 
 class ThemePersistence:
     """

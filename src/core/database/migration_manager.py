@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 
 class MigrationStatus(Enum):
     """Migration status enumeration."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -34,6 +35,7 @@ class MigrationStatus(Enum):
 @dataclass
 class Migration:
     """Database migration definition."""
+
     version: str
     name: str
     description: str
@@ -48,6 +50,7 @@ class Migration:
 @dataclass
 class MigrationResult:
     """Result of migration execution."""
+
     migration: Migration
     status: MigrationStatus
     start_time: float
@@ -81,13 +84,21 @@ class DatabaseVersion:
         """Compare versions."""
         if not isinstance(other, DatabaseVersion):
             return NotImplemented
-        return (self.major, self.minor, self.patch) < (other.major, other.minor, other.patch)
+        return (self.major, self.minor, self.patch) < (
+            other.major,
+            other.minor,
+            other.patch,
+        )
 
     def __eq__(self, other) -> bool:
         """Compare versions for equality."""
         if not isinstance(other, DatabaseVersion):
             return NotImplemented
-        return (self.major, self.minor, self.patch) == (other.major, other.minor, other.patch)
+        return (self.major, self.minor, self.patch) == (
+            other.major,
+            other.minor,
+            other.patch,
+        )
 
     def __le__(self, other) -> bool:
         """Compare versions for less than or equal."""
@@ -102,7 +113,7 @@ class DatabaseVersion:
         return not self < other
 
     @classmethod
-    def from_string(cls, version_str: str) -> 'DatabaseVersion':
+    def from_string(cls, version_str: str) -> "DatabaseVersion":
         """
         Create version from string.
 
@@ -112,7 +123,7 @@ class DatabaseVersion:
         Returns:
             DatabaseVersion instance
         """
-        parts = version_str.split('.')
+        parts = version_str.split(".")
         major = int(parts[0])
         minor = int(parts[1])
         patch = int(parts[2]) if len(parts) > 2 else 0
@@ -122,7 +133,9 @@ class DatabaseVersion:
 class MigrationManager:
     """Comprehensive database migration management system."""
 
-    def __init__(self, db_path: str, migrations_dir: str = None, backup_dir: str = None):
+    def __init__(
+        self, db_path: str, migrations_dir: str = None, backup_dir: str = None
+    ):
         """
         Initialize migration manager.
 
@@ -132,17 +145,21 @@ class MigrationManager:
             backup_dir: Directory for backup files
         """
         self.db_path = db_path
-        self.migrations_dir = migrations_dir or os.path.join(os.path.dirname(db_path), "migrations")
-        self.backup_dir = backup_dir or os.path.join(os.path.dirname(db_path), "backups")
-        
+        self.migrations_dir = migrations_dir or os.path.join(
+            os.path.dirname(db_path), "migrations"
+        )
+        self.backup_dir = backup_dir or os.path.join(
+            os.path.dirname(db_path), "backups"
+        )
+
         # Ensure directories exist
         os.makedirs(self.migrations_dir, exist_ok=True)
         os.makedirs(self.backup_dir, exist_ok=True)
-        
+
         # Migration registry
         self._migrations: Dict[str, Migration] = {}
         self._migration_results: List[MigrationResult] = []
-        
+
         # Initialize database version tracking
         self._initialize_version_tracking()
 
@@ -151,9 +168,10 @@ class MigrationManager:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Create schema_migrations table
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS schema_migrations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         version TEXT NOT NULL UNIQUE,
@@ -166,10 +184,12 @@ class MigrationManager:
                         error_message TEXT,
                         backup_path TEXT
                     )
-                """)
-                
+                """
+                )
+
                 # Create migration_history table for detailed tracking
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS migration_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         migration_version TEXT NOT NULL,
@@ -181,31 +201,28 @@ class MigrationManager:
                         rows_affected INTEGER DEFAULT 0,
                         FOREIGN KEY (migration_version) REFERENCES schema_migrations (version)
                     )
-                """)
-                
+                """
+                )
+
                 conn.commit()
                 logger.debug("Database version tracking initialized")
-                
+
         except sqlite3.Error as e:
             logger.error(f"Failed to initialize version tracking: {str(e)}")
             raise
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with migration-optimized settings."""
-        conn = sqlite3.connect(
-            self.db_path,
-            check_same_thread=False,
-            timeout=30.0
-        )
-        
+        conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
+
         # Disable foreign key constraints during migrations
         conn.execute("PRAGMA foreign_keys = OFF")
-        
+
         # Optimize for bulk operations
         conn.execute("PRAGMA synchronous = OFF")
         conn.execute("PRAGMA journal_mode = MEMORY")
         conn.execute("PRAGMA temp_store = MEMORY")
-        
+
         return conn
 
     @log_function_call(logger)
@@ -217,27 +234,29 @@ class MigrationManager:
             List of discovered migrations
         """
         migrations = []
-        
+
         try:
             if not os.path.exists(self.migrations_dir):
-                logger.info(f"Migrations directory {self.migrations_dir} does not exist")
+                logger.info(
+                    f"Migrations directory {self.migrations_dir} does not exist"
+                )
                 return migrations
-            
+
             for filename in os.listdir(self.migrations_dir):
-                if filename.endswith('.sql') and filename.startswith('migration_'):
+                if filename.endswith(".sql") and filename.startswith("migration_"):
                     migration = self._load_migration_file(filename)
                     if migration:
                         migrations.append(migration)
                         self._migrations[migration.version] = migration
-            
+
             # Sort migrations by version
             migrations.sort(key=lambda m: DatabaseVersion.from_string(m.version))
-            
+
             logger.info(f"Discovered {len(migrations)} migrations")
-            
+
         except Exception as e:
             logger.error(f"Failed to discover migrations: {str(e)}")
-        
+
         return migrations
 
     def _load_migration_file(self, filename: str) -> Optional[Migration]:
@@ -252,42 +271,42 @@ class MigrationManager:
         """
         try:
             filepath = os.path.join(self.migrations_dir, filename)
-            
-            with open(filepath, 'r', encoding='utf-8') as f:
+
+            with open(filepath, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             # Parse migration metadata and SQL
-            parts = content.split('---')
+            parts = content.split("---")
             if len(parts) < 3:
                 logger.error(f"Invalid migration format in {filename}")
                 return None
-            
+
             # Parse metadata
             metadata = json.loads(parts[1].strip())
-            
+
             # Extract SQL
-            sql_parts = parts[2].split('---')
+            sql_parts = parts[2].split("---")
             up_sql = sql_parts[0].strip()
             down_sql = sql_parts[1].strip() if len(sql_parts) > 1 else ""
-            
+
             # Calculate checksum
             checksum = hashlib.sha256(content.encode()).hexdigest()
-            
+
             migration = Migration(
-                version=metadata['version'],
-                name=metadata['name'],
-                description=metadata['description'],
+                version=metadata["version"],
+                name=metadata["name"],
+                description=metadata["description"],
                 up_sql=up_sql,
                 down_sql=down_sql,
                 checksum=checksum,
-                dependencies=metadata.get('dependencies', []),
-                created_at=metadata.get('created_at', datetime.now().isoformat()),
-                estimated_duration=metadata.get('estimated_duration', 0.0)
+                dependencies=metadata.get("dependencies", []),
+                created_at=metadata.get("created_at", datetime.now().isoformat()),
+                estimated_duration=metadata.get("estimated_duration", 0.0),
             )
-            
+
             logger.debug(f"Loaded migration {migration.version}: {migration.name}")
             return migration
-            
+
         except Exception as e:
             logger.error(f"Failed to load migration {filename}: {str(e)}")
             return None
@@ -303,20 +322,22 @@ class MigrationManager:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT version FROM schema_migrations
                     WHERE status = 'completed'
                     ORDER BY version DESC
                     LIMIT 1
-                """)
-                
+                """
+                )
+
                 row = cursor.fetchone()
                 if row:
                     return DatabaseVersion.from_string(row[0])
                 else:
                     # No migrations applied, return initial version
                     return DatabaseVersion(0, 0, 0)
-                    
+
         except sqlite3.Error as e:
             logger.error(f"Failed to get current version: {str(e)}")
             return DatabaseVersion(0, 0, 0)
@@ -333,15 +354,17 @@ class MigrationManager:
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT * FROM schema_migrations
                     ORDER BY version ASC
-                """)
-                
+                """
+                )
+
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
-                
+
         except sqlite3.Error as e:
             logger.error(f"Failed to get applied migrations: {str(e)}")
             return []
@@ -360,20 +383,22 @@ class MigrationManager:
         if not backup_name:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_name = f"backup_{timestamp}.db"
-        
+
         backup_path = os.path.join(self.backup_dir, backup_name)
-        
+
         try:
             shutil.copy2(self.db_path, backup_path)
             logger.info(f"Database backup created: {backup_path}")
             return backup_path
-            
+
         except Exception as e:
             logger.error(f"Failed to create backup: {str(e)}")
             raise
 
     @log_function_call(logger)
-    def migrate_to_version(self, target_version: str, create_backup: bool = True) -> List[MigrationResult]:
+    def migrate_to_version(
+        self, target_version: str, create_backup: bool = True
+    ) -> List[MigrationResult]:
         """
         Migrate database to target version.
 
@@ -386,19 +411,20 @@ class MigrationManager:
         """
         current_version = self.get_current_version()
         target_ver = DatabaseVersion.from_string(target_version)
-        
+
         if current_version == target_ver:
             logger.info(f"Database already at version {target_version}")
             return []
-        
+
         # Discover migrations
         migrations = self.discover_migrations()
-        
+
         # Determine migration direction and required migrations
         if target_ver > current_version:
             # Upgrade
             required_migrations = [
-                m for m in migrations
+                m
+                for m in migrations
                 if DatabaseVersion.from_string(m.version) > current_version
                 and DatabaseVersion.from_string(m.version) <= target_ver
             ]
@@ -406,50 +432,59 @@ class MigrationManager:
         else:
             # Downgrade
             required_migrations = [
-                m for m in migrations
+                m
+                for m in migrations
                 if DatabaseVersion.from_string(m.version) <= current_version
                 and DatabaseVersion.from_string(m.version) > target_ver
             ]
             required_migrations.reverse()  # Reverse order for downgrades
             operation = "downgrade"
-        
+
         if not required_migrations:
-            logger.warning(f"No migrations found for {operation} to version {target_version}")
+            logger.warning(
+                f"No migrations found for {operation} to version {target_version}"
+            )
             return []
-        
+
         # Create backup if requested
         backup_path = None
         if create_backup:
-            backup_path = self.create_backup(f"{operation}_{target_version}_{int(time.time())}")
-        
+            backup_path = self.create_backup(
+                f"{operation}_{target_version}_{int(time.time())}"
+            )
+
         results = []
-        
+
         try:
-            logger.info(f"Starting {operation} from {current_version} to {target_version}")
-            
+            logger.info(
+                f"Starting {operation} from {current_version} to {target_version}"
+            )
+
             for migration in required_migrations:
                 if operation == "upgrade":
                     result = self._execute_migration_up(migration)
                 else:
                     result = self._execute_migration_down(migration)
-                
+
                 results.append(result)
-                
+
                 if result.status == MigrationStatus.FAILED:
-                    logger.error(f"Migration {migration.version} failed: {result.error_message}")
+                    logger.error(
+                        f"Migration {migration.version} failed: {result.error_message}"
+                    )
                     break
                 else:
                     logger.info(f"Migration {migration.version} completed successfully")
-            
+
             if all(r.status == MigrationStatus.COMPLETED for r in results):
                 logger.info(f"Successfully {operation}d to version {target_version}")
             else:
                 logger.error(f"{operation.capitalize()} to {target_version} failed")
-            
+
         except Exception as e:
             logger.error(f"Migration process failed: {str(e)}")
             raise
-        
+
         return results
 
     def _execute_migration_up(self, migration: Migration) -> MigrationResult:
@@ -469,56 +504,69 @@ class MigrationManager:
             end_time=None,
             error_message=None,
             rows_affected=0,
-            backup_path=None
+            backup_path=None,
         )
-        
+
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Record migration start
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO migration_history 
                     (migration_version, operation, status)
                     VALUES (?, ?, ?)
-                """, (migration.version, "up", MigrationStatus.RUNNING.value))
-                
+                """,
+                    (migration.version, "up", MigrationStatus.RUNNING.value),
+                )
+
                 history_id = cursor.lastrowid
-                
+
                 # Execute migration SQL
                 cursor.executescript(migration.up_sql)
                 rows_affected = cursor.rowcount
-                
+
                 # Record successful migration
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE migration_history
                     SET end_time = CURRENT_TIMESTAMP, status = ?, rows_affected = ?
                     WHERE id = ?
-                """, (MigrationStatus.COMPLETED.value, rows_affected, history_id))
-                
+                """,
+                    (MigrationStatus.COMPLETED.value, rows_affected, history_id),
+                )
+
                 # Record in schema_migrations
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO schema_migrations 
                     (version, name, description, checksum, status, backup_path)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    migration.version, migration.name, migration.description,
-                    migration.checksum, MigrationStatus.COMPLETED.value, result.backup_path
-                ))
-                
+                """,
+                    (
+                        migration.version,
+                        migration.name,
+                        migration.description,
+                        migration.checksum,
+                        MigrationStatus.COMPLETED.value,
+                        result.backup_path,
+                    ),
+                )
+
                 conn.commit()
-                
+
                 result.status = MigrationStatus.COMPLETED
                 result.rows_affected = rows_affected
-                
+
         except sqlite3.Error as e:
             result.status = MigrationStatus.FAILED
             result.error_message = str(e)
             logger.error(f"Migration up failed for {migration.version}: {str(e)}")
-        
+
         result.end_time = time.time()
         self._migration_results.append(result)
-        
+
         return result
 
     def _execute_migration_down(self, migration: Migration) -> MigrationResult:
@@ -538,61 +586,77 @@ class MigrationManager:
             end_time=None,
             error_message=None,
             rows_affected=0,
-            backup_path=None
+            backup_path=None,
         )
-        
+
         if not migration.down_sql:
             result.status = MigrationStatus.FAILED
             result.error_message = "No rollback SQL defined for this migration"
             return result
-        
+
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Record migration start
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO migration_history 
                     (migration_version, operation, status)
                     VALUES (?, ?, ?)
-                """, (migration.version, "down", MigrationStatus.RUNNING.value))
-                
+                """,
+                    (migration.version, "down", MigrationStatus.RUNNING.value),
+                )
+
                 history_id = cursor.lastrowid
-                
+
                 # Execute rollback SQL
                 cursor.executescript(migration.down_sql)
                 rows_affected = cursor.rowcount
-                
+
                 # Record successful rollback
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE migration_history
                     SET end_time = CURRENT_TIMESTAMP, status = ?, rows_affected = ?
                     WHERE id = ?
-                """, (MigrationStatus.ROLLED_BACK.value, rows_affected, history_id))
-                
+                """,
+                    (MigrationStatus.ROLLED_BACK.value, rows_affected, history_id),
+                )
+
                 # Remove from schema_migrations
-                cursor.execute("""
+                cursor.execute(
+                    """
                     DELETE FROM schema_migrations WHERE version = ?
-                """, (migration.version,))
-                
+                """,
+                    (migration.version,),
+                )
+
                 conn.commit()
-                
+
                 result.status = MigrationStatus.ROLLED_BACK
                 result.rows_affected = rows_affected
-                
+
         except sqlite3.Error as e:
             result.status = MigrationStatus.FAILED
             result.error_message = str(e)
             logger.error(f"Migration down failed for {migration.version}: {str(e)}")
-        
+
         result.end_time = time.time()
         self._migration_results.append(result)
-        
+
         return result
 
     @log_function_call(logger)
-    def create_migration(self, version: str, name: str, description: str, 
-                        up_sql: str, down_sql: str = "", dependencies: List[str] = None) -> str:
+    def create_migration(
+        self,
+        version: str,
+        name: str,
+        description: str,
+        up_sql: str,
+        down_sql: str = "",
+        dependencies: List[str] = None,
+    ) -> str:
         """
         Create a new migration file.
 
@@ -609,17 +673,17 @@ class MigrationManager:
         """
         if dependencies is None:
             dependencies = []
-        
+
         # Validate version format
         try:
             DatabaseVersion.from_string(version)
         except Exception as e:
             raise ValueError(f"Invalid version format: {version}")
-        
+
         # Check if migration already exists
         if version in self._migrations:
             raise ValueError(f"Migration version {version} already exists")
-        
+
         # Create migration content
         metadata = {
             "version": version,
@@ -627,9 +691,9 @@ class MigrationManager:
             "description": description,
             "dependencies": dependencies,
             "created_at": datetime.now().isoformat(),
-            "estimated_duration": 0.0
+            "estimated_duration": 0.0,
         }
-        
+
         content = f"""-- Migration: {name}
 -- Version: {version}
 -- Description: {description}
@@ -647,11 +711,11 @@ class MigrationManager:
 {down_sql}
 ---END_DOWN---
 """
-        
+
         # Calculate checksum
         checksum = hashlib.sha256(content.encode()).hexdigest()
         metadata["checksum"] = checksum
-        
+
         # Update content with checksum
         content = f"""-- Migration: {name}
 -- Version: {version}
@@ -670,14 +734,14 @@ class MigrationManager:
 {down_sql}
 ---END_DOWN---
 """
-        
+
         # Write migration file
         filename = f"migration_{version}_{name.lower().replace(' ', '_')}.sql"
         filepath = os.path.join(self.migrations_dir, filename)
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
+
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
-        
+
         # Create Migration object
         migration = Migration(
             version=version,
@@ -687,11 +751,11 @@ class MigrationManager:
             down_sql=down_sql,
             checksum=checksum,
             dependencies=dependencies,
-            created_at=metadata['created_at']
+            created_at=metadata["created_at"],
         )
-        
+
         self._migrations[version] = migration
-        
+
         logger.info(f"Created migration {version}: {name}")
         return filepath
 
@@ -704,78 +768,88 @@ class MigrationManager:
             Validation results dictionary
         """
         validation_results = {
-            'valid': True,
-            'errors': [],
-            'warnings': [],
-            'migration_count': 0,
-            'applied_count': 0,
-            'pending_count': 0
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "migration_count": 0,
+            "applied_count": 0,
+            "pending_count": 0,
         }
-        
+
         try:
             # Discover migrations
             migrations = self.discover_migrations()
-            validation_results['migration_count'] = len(migrations)
-            
+            validation_results["migration_count"] = len(migrations)
+
             # Get applied migrations
             applied = self.get_applied_migrations()
-            applied_versions = {m['version'] for m in applied}
-            validation_results['applied_count'] = len(applied)
-            validation_results['pending_count'] = len(migrations) - len(applied_versions)
-            
+            applied_versions = {m["version"] for m in applied}
+            validation_results["applied_count"] = len(applied)
+            validation_results["pending_count"] = len(migrations) - len(
+                applied_versions
+            )
+
             # Validate each migration
             for migration in migrations:
                 # Check for duplicate versions
-                version_count = sum(1 for m in migrations if m.version == migration.version)
+                version_count = sum(
+                    1 for m in migrations if m.version == migration.version
+                )
                 if version_count > 1:
-                    validation_results['errors'].append(
+                    validation_results["errors"].append(
                         f"Duplicate migration version: {migration.version}"
                     )
-                    validation_results['valid'] = False
-                
+                    validation_results["valid"] = False
+
                 # Check dependencies
                 for dep in migration.dependencies:
                     if dep not in self._migrations:
-                        validation_results['errors'].append(
+                        validation_results["errors"].append(
                             f"Missing dependency {dep} for migration {migration.version}"
                         )
-                        validation_results['valid'] = False
-                
+                        validation_results["valid"] = False
+
                 # Check if applied migration has been modified
                 if migration.version in applied_versions:
-                    applied_migration = next(m for m in applied if m['version'] == migration.version)
-                    if applied_migration['checksum'] != migration.checksum:
-                        validation_results['errors'].append(
+                    applied_migration = next(
+                        m for m in applied if m["version"] == migration.version
+                    )
+                    if applied_migration["checksum"] != migration.checksum:
+                        validation_results["errors"].append(
                             f"Applied migration {migration.version} has been modified"
                         )
-                        validation_results['valid'] = False
-            
+                        validation_results["valid"] = False
+
             # Check for gaps in applied migrations
-            applied_versions_sorted = sorted(applied_versions, key=lambda v: DatabaseVersion.from_string(v))
+            applied_versions_sorted = sorted(
+                applied_versions, key=lambda v: DatabaseVersion.from_string(v)
+            )
             for i in range(len(applied_versions_sorted) - 1):
                 current = DatabaseVersion.from_string(applied_versions_sorted[i])
                 next_ver = DatabaseVersion.from_string(applied_versions_sorted[i + 1])
-                
+
                 # Check if there's a gap (more than patch increment)
                 if next_ver.major == current.major and next_ver.minor == current.minor:
                     if next_ver.patch > current.patch + 1:
-                        validation_results['warnings'].append(
+                        validation_results["warnings"].append(
                             f"Gap in applied migrations: {current} -> {next_ver}"
                         )
                 elif next_ver.major == current.major:
                     if next_ver.minor > current.minor + 1:
-                        validation_results['warnings'].append(
+                        validation_results["warnings"].append(
                             f"Gap in applied migrations: {current} -> {next_ver}"
                         )
-            
-            logger.info(f"Migration validation completed: {len(validation_results['errors'])} errors, "
-                       f"{len(validation_results['warnings'])} warnings")
-            
+
+            logger.info(
+                f"Migration validation completed: {len(validation_results['errors'])} errors, "
+                f"{len(validation_results['warnings'])} warnings"
+            )
+
         except Exception as e:
-            validation_results['valid'] = False
-            validation_results['errors'].append(f"Validation failed: {str(e)}")
+            validation_results["valid"] = False
+            validation_results["errors"].append(f"Validation failed: {str(e)}")
             logger.error(f"Migration validation failed: {str(e)}")
-        
+
         return validation_results
 
     @log_function_call(logger)
@@ -789,15 +863,15 @@ class MigrationManager:
         current_version = self.get_current_version()
         applied_migrations = self.get_applied_migrations()
         validation = self.validate_migrations()
-        
+
         return {
-            'current_version': str(current_version),
-            'total_migrations': len(self._migrations),
-            'applied_migrations': len(applied_migrations),
-            'pending_migrations': len(self._migrations) - len(applied_migrations),
-            'validation': validation,
-            'last_migration': applied_migrations[-1] if applied_migrations else None,
-            'migration_results': [asdict(result) for result in self._migration_results]
+            "current_version": str(current_version),
+            "total_migrations": len(self._migrations),
+            "applied_migrations": len(applied_migrations),
+            "pending_migrations": len(self._migrations) - len(applied_migrations),
+            "validation": validation,
+            "last_migration": applied_migrations[-1] if applied_migrations else None,
+            "migration_results": [asdict(result) for result in self._migration_results],
         }
 
     @log_function_call(logger)
@@ -814,19 +888,19 @@ class MigrationManager:
         try:
             if not os.path.exists(backup_path):
                 raise FileNotFoundError(f"Backup file not found: {backup_path}")
-            
+
             # Create backup of current state
             current_backup = self.create_backup(f"pre_restore_{int(time.time())}")
-            
+
             # Restore from backup
             shutil.copy2(backup_path, self.db_path)
-            
+
             # Reinitialize version tracking
             self._initialize_version_tracking()
-            
+
             logger.info(f"Database restored from backup: {backup_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to restore from backup: {str(e)}")
             return False
@@ -844,13 +918,13 @@ class MigrationManager:
         try:
             backup_files = []
             for filename in os.listdir(self.backup_dir):
-                if filename.endswith('.db'):
+                if filename.endswith(".db"):
                     filepath = os.path.join(self.backup_dir, filename)
                     backup_files.append((filepath, os.path.getctime(filepath)))
-            
+
             # Sort by creation time (newest first)
             backup_files.sort(key=lambda x: x[1], reverse=True)
-            
+
             # Remove old backups
             removed_count = 0
             for filepath, _ in backup_files[keep_count:]:
@@ -860,10 +934,10 @@ class MigrationManager:
                     logger.debug(f"Removed old backup: {filepath}")
                 except Exception as e:
                     logger.warning(f"Failed to remove backup {filepath}: {str(e)}")
-            
+
             logger.info(f"Cleaned up {removed_count} old backups")
             return removed_count
-            
+
         except Exception as e:
             logger.error(f"Failed to cleanup old backups: {str(e)}")
             return 0

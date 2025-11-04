@@ -10,7 +10,13 @@ from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
 from PySide6.QtCore import (
-    Qt, QAbstractItemModel, QModelIndex, QFileInfo, QMimeData, QThread, Signal
+    Qt,
+    QAbstractItemModel,
+    QModelIndex,
+    QFileInfo,
+    QMimeData,
+    QThread,
+    Signal,
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStyle
@@ -22,23 +28,24 @@ from src.core.root_folder_manager import RootFolderManager, RootFolder
 @dataclass
 class TreeNode:
     """Represents a node in the multi-root file tree."""
+
     name: str
     path: Optional[str] = None  # None for root nodes
     is_dir: bool = True
-    parent: Optional['TreeNode'] = None
-    children: List['TreeNode'] = None
+    parent: Optional["TreeNode"] = None
+    children: List["TreeNode"] = None
     root_folder: Optional[RootFolder] = None  # Reference to root folder for root nodes
 
     def __post_init__(self):
         if self.children is None:
             self.children = []
 
-    def add_child(self, child: 'TreeNode') -> None:
+    def add_child(self, child: "TreeNode") -> None:
         """Add a child node."""
         child.parent = self
         self.children.append(child)
 
-    def get_child(self, name: str) -> Optional['TreeNode']:
+    def get_child(self, name: str) -> Optional["TreeNode"]:
         """Get child by name."""
         for child in self.children:
             if child.name == name:
@@ -64,6 +71,7 @@ class DirectoryIndexer(QThread):
     """
     Background thread for indexing directory contents to prevent UI freezing.
     """
+
     indexing_complete = Signal(dict)  # {node_path: [child_nodes]}
 
     def __init__(self, directories_to_index: List[str]):
@@ -92,18 +100,20 @@ class DirectoryIndexer(QThread):
                             if self._is_cancelled:
                                 break
                             # Skip hidden files
-                            if not item.name.startswith('.'):
-                                children.append({
-                                    'name': item.name,
-                                    'path': str(item),
-                                    'is_dir': item.is_dir()
-                                })
+                            if not item.name.startswith("."):
+                                children.append(
+                                    {
+                                        "name": item.name,
+                                        "path": str(item),
+                                        "is_dir": item.is_dir(),
+                                    }
+                                )
                     except PermissionError:
                         self.logger.warning(f"Permission denied accessing: {path}")
                         continue
 
                     # Sort: directories first, then files
-                    children.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+                    children.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
                     indexed_data[dir_path] = children
 
             except Exception as e:
@@ -166,10 +176,12 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 name=folder.display_name,
                 path=folder.path,
                 is_dir=True,
-                root_folder=folder
+                root_folder=folder,
             )
             self.root_node.add_child(root_node)
-            self.logger.debug(f"Added root folder: {folder.display_name} ({folder.path})")
+            self.logger.debug(
+                f"Added root folder: {folder.display_name} ({folder.path})"
+            )
 
     def _get_node(self, index: QModelIndex) -> Optional[TreeNode]:
         """Get the TreeNode for a given model index."""
@@ -187,9 +199,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
             # Use pre-indexed data
             for child_data in self.indexed_data[node.path]:
                 child_node = TreeNode(
-                    name=child_data['name'],
-                    path=child_data['path'],
-                    is_dir=child_data['is_dir']
+                    name=child_data["name"],
+                    path=child_data["path"],
+                    is_dir=child_data["is_dir"],
                 )
                 node.add_child(child_node)
             return
@@ -202,7 +214,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 items = []
                 try:
                     for item in path.iterdir():
-                        if not item.name.startswith('.'):  # Skip hidden files
+                        if not item.name.startswith("."):  # Skip hidden files
                             items.append(item)
                 except PermissionError:
                     self.logger.warning(f"Permission denied accessing: {path}")
@@ -213,16 +225,16 @@ class MultiRootFileSystemModel(QAbstractItemModel):
 
                 for item in items:
                     child_node = TreeNode(
-                        name=item.name,
-                        path=str(item),
-                        is_dir=item.is_dir()
+                        name=item.name, path=str(item), is_dir=item.is_dir()
                     )
                     node.add_child(child_node)
 
         except Exception as e:
             self.logger.error(f"Error loading children for {node.path}: {e}")
 
-    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
+    def index(
+        self, row: int, column: int, parent: QModelIndex = QModelIndex()
+    ) -> QModelIndex:
         """Create a model index for the given row, column, and parent."""
         parent_node = self._get_node(parent)
         if not parent_node or row < 0 or row >= len(parent_node.children):
@@ -308,7 +320,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
 
         return None
 
-    def headerData(self, section: int, orientation: int, role: int = Qt.DisplayRole) -> Any:
+    def headerData(
+        self, section: int, orientation: int, role: int = Qt.DisplayRole
+    ) -> Any:
         """Get header data."""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             headers = ["Name", "Size", "Type", "Modified"]
@@ -381,6 +395,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 node = self._get_node(index)
                 if node and node.path and not node.is_dir:
                     from PySide6.QtCore import QUrl
+
                     urls.append(QUrl.fromLocalFile(node.path))
 
         if urls:
@@ -431,7 +446,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
         self.indexer = DirectoryIndexer(root_paths)
         self.indexer.indexing_complete.connect(self._on_indexing_complete)
         self.indexer.start()
-        self.logger.debug(f"Started background indexing for {len(root_paths)} root directories")
+        self.logger.debug(
+            f"Started background indexing for {len(root_paths)} root directories"
+        )
 
         # Emit signal for status update
         self.indexing_started.emit()
@@ -439,7 +456,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     def _on_indexing_complete(self, indexed_data: dict) -> None:
         """Handle completion of background indexing."""
         self.indexed_data.update(indexed_data)
-        self.logger.debug(f"Background indexing completed for {len(indexed_data)} directories")
+        self.logger.debug(
+            f"Background indexing completed for {len(indexed_data)} directories"
+        )
 
         # Clean up indexer
         if self.indexer:

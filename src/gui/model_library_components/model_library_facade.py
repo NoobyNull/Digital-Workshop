@@ -108,4 +108,3 @@ class ModelLibraryFacade:
     def apply_filters(self) -> None:
         """Apply filters."""
         self.event_handler.apply_filters()
-

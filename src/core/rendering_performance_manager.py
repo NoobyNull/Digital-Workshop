@@ -24,6 +24,7 @@ try:
     import vtk
     from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderer, vtkCamera
     from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLRenderWindow
+
     VTK_AVAILABLE = True
 except ImportError:
     VTK_AVAILABLE = False
@@ -36,16 +37,18 @@ logger = get_logger(__name__)
 
 class RenderingQuality(Enum):
     """Rendering quality levels."""
-    ULTRA = "ultra"      # Maximum quality, high-end hardware
-    HIGH = "high"        # High quality, good hardware
-    MEDIUM = "medium"    # Balanced quality/performance
-    LOW = "low"          # Performance focused
+
+    ULTRA = "ultra"  # Maximum quality, high-end hardware
+    HIGH = "high"  # High quality, good hardware
+    MEDIUM = "medium"  # Balanced quality/performance
+    LOW = "low"  # Performance focused
     MINIMAL = "minimal"  # Minimal quality, low-end hardware
 
 
 class HardwareTier(Enum):
     """Hardware performance tiers."""
-    ENTRY = "entry"      # Integrated graphics, 4GB RAM
+
+    ENTRY = "entry"  # Integrated graphics, 4GB RAM
     STANDARD = "standard"  # Dedicated GPU, 8GB RAM
     HIGH_END = "high_end"  # Good GPU, 16GB RAM
     WORKSTATION = "workstation"  # Professional GPU, 32GB+ RAM
@@ -53,14 +56,16 @@ class HardwareTier(Enum):
 
 class VSyncMode(Enum):
     """VSync modes."""
-    OFF = "off"          # No VSync, maximum FPS
-    ON = "on"            # VSync enabled, tear-free
+
+    OFF = "off"  # No VSync, maximum FPS
+    ON = "on"  # VSync enabled, tear-free
     ADAPTIVE = "adaptive"  # Adaptive VSync based on performance
 
 
 @dataclass
 class RenderingMetrics:
     """3D rendering performance metrics."""
+
     fps: float
     frame_time_ms: float
     triangles_rendered: int
@@ -78,6 +83,7 @@ class RenderingMetrics:
 @dataclass
 class HardwareCapabilities:
     """System hardware capabilities."""
+
     cpu_cores: int
     cpu_frequency_mhz: float
     total_memory_gb: float
@@ -96,6 +102,7 @@ class HardwareCapabilities:
 @dataclass
 class RenderingConfig:
     """Rendering configuration."""
+
     quality_level: RenderingQuality = RenderingQuality.MEDIUM
     vsync_mode: VSyncMode = VSyncMode.ADAPTIVE
     target_fps: int = 60
@@ -107,7 +114,7 @@ class RenderingConfig:
     anti_aliasing: bool = True
     shadows_enabled: bool = True
     texture_quality: int = 2  # 0=low, 1=medium, 2=high
-    shader_quality: int = 2   # 0=low, 1=medium, 2=high
+    shader_quality: int = 2  # 0=low, 1=medium, 2=high
 
 
 class HardwareDetector:
@@ -154,7 +161,7 @@ class HardwareDetector:
             if VTK_AVAILABLE:
                 try:
                     ren_win = vtkRenderWindow()
-                    if hasattr(ren_win, 'GetOpenGLVersion'):
+                    if hasattr(ren_win, "GetOpenGLVersion"):
                         opengl_version = ren_win.GetOpenGLVersion()
                     ren_win.Finalize()
                 except Exception as e:
@@ -188,7 +195,7 @@ class HardwareDetector:
                 hardware_tier=hardware_tier,
                 recommended_quality=recommended_quality,
                 max_triangles=max_triangles,
-                max_vertices=max_vertices
+                max_vertices=max_vertices,
             )
 
         except Exception as e:
@@ -207,12 +214,13 @@ class HardwareDetector:
                 hardware_tier=HardwareTier.STANDARD,
                 recommended_quality=RenderingQuality.MEDIUM,
                 max_triangles=500000,
-                max_vertices=250000
+                max_vertices=250000,
             )
 
     @staticmethod
-    def _determine_hardware_tier(cpu_cores: int, cpu_freq: float, 
-                                memory_gb: float, gpu_memory_gb: float) -> HardwareTier:
+    def _determine_hardware_tier(
+        cpu_cores: int, cpu_freq: float, memory_gb: float, gpu_memory_gb: float
+    ) -> HardwareTier:
         """Determine hardware tier based on specifications."""
         # Workstation tier
         if cpu_cores >= 16 and memory_gb >= 32 and gpu_memory_gb >= 8:
@@ -228,39 +236,44 @@ class HardwareDetector:
             return HardwareTier.ENTRY
 
     @staticmethod
-    def _determine_recommended_quality(hardware_tier: HardwareTier, 
-                                     gpu_memory_gb: float) -> RenderingQuality:
+    def _determine_recommended_quality(
+        hardware_tier: HardwareTier, gpu_memory_gb: float
+    ) -> RenderingQuality:
         """Determine recommended rendering quality."""
         quality_mapping = {
             HardwareTier.WORKSTATION: RenderingQuality.ULTRA,
             HardwareTier.HIGH_END: RenderingQuality.HIGH,
             HardwareTier.STANDARD: RenderingQuality.MEDIUM,
-            HardwareTier.ENTRY: RenderingQuality.LOW
+            HardwareTier.ENTRY: RenderingQuality.LOW,
         }
-        
+
         quality = quality_mapping.get(hardware_tier, RenderingQuality.MEDIUM)
-        
+
         # Adjust for low GPU memory
-        if gpu_memory_gb < 2 and quality in [RenderingQuality.HIGH, RenderingQuality.ULTRA]:
+        if gpu_memory_gb < 2 and quality in [
+            RenderingQuality.HIGH,
+            RenderingQuality.ULTRA,
+        ]:
             quality = RenderingQuality.MEDIUM
         elif gpu_memory_gb < 1 and quality == RenderingQuality.MEDIUM:
             quality = RenderingQuality.LOW
-            
+
         return quality
 
     @staticmethod
-    def _calculate_limits(hardware_tier: HardwareTier, gpu_memory_gb: float,
-                         system_memory_gb: float) -> Tuple[int, int]:
+    def _calculate_limits(
+        hardware_tier: HardwareTier, gpu_memory_gb: float, system_memory_gb: float
+    ) -> Tuple[int, int]:
         """Calculate rendering limits based on hardware."""
         base_limits = {
             HardwareTier.WORKSTATION: (5000000, 2500000),
             HardwareTier.HIGH_END: (2000000, 1000000),
             HardwareTier.STANDARD: (1000000, 500000),
-            HardwareTier.ENTRY: (500000, 250000)
+            HardwareTier.ENTRY: (500000, 250000),
         }
-        
+
         max_triangles, max_vertices = base_limits.get(hardware_tier, (500000, 250000))
-        
+
         # Adjust for GPU memory
         if gpu_memory_gb < 1:
             max_triangles //= 4
@@ -271,7 +284,7 @@ class HardwareDetector:
         elif gpu_memory_gb > 8:
             max_triangles *= 2
             max_vertices *= 2
-            
+
         # Adjust for system memory
         if system_memory_gb < 4:
             max_triangles //= 2
@@ -279,7 +292,7 @@ class HardwareDetector:
         elif system_memory_gb > 16:
             max_triangles *= 2
             max_vertices *= 2
-            
+
         return max_triangles, max_vertices
 
 
@@ -298,8 +311,9 @@ class LevelOfDetailManager:
         self._current_lod_cache: Dict[str, int] = {}  # model_id -> current LOD
         self._lock = threading.Lock()
 
-    def create_lod_levels(self, model_id: str, high_detail_mesh: Any, 
-                         triangle_count: int) -> List[Any]:
+    def create_lod_levels(
+        self, model_id: str, high_detail_mesh: Any, triangle_count: int
+    ) -> List[Any]:
         """
         Create LOD levels for a model.
 
@@ -312,44 +326,44 @@ class LevelOfDetailManager:
             List of LOD level meshes
         """
         lod_levels = []
-        
+
         # Calculate LOD reduction factors
         lod_factors = self._calculate_lod_factors(triangle_count)
-        
+
         for i, factor in enumerate(lod_factors):
-            if VTK_AVAILABLE and hasattr(high_detail_mesh, 'GetPoints'):
+            if VTK_AVAILABLE and hasattr(high_detail_mesh, "GetPoints"):
                 # Create simplified mesh using VTK decimation
                 lod_mesh = self._create_decimated_mesh(high_detail_mesh, factor)
             else:
                 # Fallback: use original mesh for all LODs
                 lod_mesh = high_detail_mesh
-                
+
             lod_levels.append(lod_mesh)
-            
+
         with self._lock:
             self._model_lods[model_id] = lod_levels
-            
+
         logger.debug(f"Created {len(lod_levels)} LOD levels for model {model_id}")
         return lod_levels
 
     def _calculate_lod_factors(self, triangle_count: int) -> List[float]:
         """Calculate LOD reduction factors."""
         lod_count = self.config.lod_levels
-        
+
         if triangle_count < 10000:
             # Small models: fewer LOD levels
             lod_count = min(2, lod_count)
         elif triangle_count > 1000000:
             # Large models: more LOD levels
             lod_count = max(4, lod_count)
-            
+
         # Generate reduction factors (1.0 = full detail, 0.1 = minimal detail)
         factors = []
         for i in range(lod_count):
             factor = 1.0 - (i * 0.3)  # 30% reduction per level
             factor = max(0.1, factor)  # Minimum 10% detail
             factors.append(factor)
-            
+
         return factors
 
     def _create_decimated_mesh(self, mesh: Any, reduction_factor: float) -> Any:
@@ -366,8 +380,9 @@ class LevelOfDetailManager:
             logger.warning(f"Mesh decimation failed: {str(e)}")
             return mesh  # Return original mesh
 
-    def get_optimal_lod(self, model_id: str, camera_distance: float,
-                       screen_size: float) -> int:
+    def get_optimal_lod(
+        self, model_id: str, camera_distance: float, screen_size: float
+    ) -> int:
         """
         Get optimal LOD level based on distance and screen size.
 
@@ -382,24 +397,24 @@ class LevelOfDetailManager:
         with self._lock:
             if model_id not in self._model_lods:
                 return 0  # Default to highest detail
-                
+
             lod_levels = self._model_lods[model_id]
             lod_count = len(lod_levels)
-            
+
             if lod_count <= 1:
                 return 0
-                
+
             # Calculate LOD based on distance and screen size
             distance_factor = min(1.0, camera_distance / 1000.0)  # Normalize distance
             size_factor = min(1.0, screen_size / 1920.0)  # Normalize screen size
-            
+
             # Combined factor (closer and larger = higher detail)
             detail_factor = (1.0 - distance_factor) * size_factor
-            
+
             # Map to LOD level
             lod_level = int(detail_factor * (lod_count - 1))
             lod_level = max(0, min(lod_level, lod_count - 1))
-            
+
             self._current_lod_cache[model_id] = lod_level
             return lod_level
 
@@ -449,30 +464,29 @@ class VSyncManager:
             return True
         elif self.config.vsync_mode == VSyncMode.ADAPTIVE:
             return self._should_adaptive_vsync(current_fps, target_fps)
-        
+
         return False
 
     def _should_adaptive_vsync(self, current_fps: float, target_fps: float) -> bool:
         """Determine adaptive VSync behavior."""
         current_time = time.time()
-        
+
         # Record performance
-        self._performance_history.append({
-            'fps': current_fps,
-            'timestamp': current_time
-        })
-        
+        self._performance_history.append(
+            {"fps": current_fps, "timestamp": current_time}
+        )
+
         # Only adjust every few seconds
         if current_time - self._last_adjustment_time < self._adjustment_cooldown:
             return self._vsync_enabled
-            
+
         # Calculate average FPS over recent history
         if len(self._performance_history) < 10:
             return self._vsync_enabled
-            
-        recent_fps = [p['fps'] for p in list(self._performance_history)[-10:]]
+
+        recent_fps = [p["fps"] for p in list(self._performance_history)[-10:]]
         avg_fps = sum(recent_fps) / len(recent_fps)
-        
+
         # Adjust VSync based on performance
         if avg_fps < self.config.min_fps * 0.9:  # Below minimum FPS
             if self._vsync_enabled:
@@ -482,7 +496,7 @@ class VSyncManager:
             if not self._vsync_enabled:
                 self._vsync_enabled = True
                 logger.info("Enabling VSync for tear-free rendering")
-                
+
         self._last_adjustment_time = current_time
         return self._vsync_enabled
 
@@ -508,7 +522,7 @@ class FrameRateMonitor:
         """
         self.config = config
         self._frame_times = deque(maxlen=120)  # Last 120 frames
-        self._fps_history = deque(maxlen=60)   # Last 60 seconds
+        self._fps_history = deque(maxlen=60)  # Last 60 seconds
         self._last_frame_time = time.time()
         self._frame_count = 0
         self._lock = threading.Lock()
@@ -517,11 +531,11 @@ class FrameRateMonitor:
         """Record frame timing information."""
         current_time = time.time()
         frame_time = current_time - self._last_frame_time
-        
+
         with self._lock:
             self._frame_times.append(frame_time)
             self._fps_history.append(1.0 / frame_time if frame_time > 0 else 0)
-            
+
         self._last_frame_time = current_time
         self._frame_count += 1
 
@@ -536,10 +550,15 @@ class FrameRateMonitor:
         """Get average FPS over specified time period."""
         with self._lock:
             cutoff_time = time.time() - seconds
-            recent_fps = [fps for fps, timestamp in 
-                         [(fps, time.time() - i/60) for i, fps in enumerate(reversed(self._fps_history))]
-                         if time.time() - timestamp <= seconds]
-            
+            recent_fps = [
+                fps
+                for fps, timestamp in [
+                    (fps, time.time() - i / 60)
+                    for i, fps in enumerate(reversed(self._fps_history))
+                ]
+                if time.time() - timestamp <= seconds
+            ]
+
             if not recent_fps:
                 return 0.0
             return sum(recent_fps) / len(recent_fps)
@@ -549,13 +568,13 @@ class FrameRateMonitor:
         with self._lock:
             if not self._frame_times:
                 return {}
-                
+
             frame_times = list(self._frame_times)
             return {
-                'min_frame_time_ms': min(frame_times) * 1000,
-                'max_frame_time_ms': max(frame_times) * 1000,
-                'avg_frame_time_ms': sum(frame_times) / len(frame_times) * 1000,
-                'frame_time_std_ms': self._calculate_std(frame_times) * 1000
+                "min_frame_time_ms": min(frame_times) * 1000,
+                "max_frame_time_ms": max(frame_times) * 1000,
+                "avg_frame_time_ms": sum(frame_times) / len(frame_times) * 1000,
+                "frame_time_std_ms": self._calculate_std(frame_times) * 1000,
             }
 
     def _calculate_std(self, values: List[float]) -> float:
@@ -564,7 +583,7 @@ class FrameRateMonitor:
             return 0.0
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / len(values)
-        return variance ** 0.5
+        return variance**0.5
 
     def is_performance_acceptable(self) -> bool:
         """Check if current performance meets requirements."""
@@ -594,43 +613,50 @@ class RenderingPerformanceManager:
         """
         # Detect hardware capabilities
         self.hardware_capabilities = HardwareDetector.detect_capabilities()
-        
+
         # Initialize configuration
         if config is None:
             config = RenderingConfig()
             config.quality_level = self.hardware_capabilities.recommended_quality
             config.max_triangles = self.hardware_capabilities.max_triangles
             config.max_vertices = self.hardware_capabilities.max_vertices
-            
+
         self.config = config
-        
+
         # Initialize components
         self.lod_manager = LevelOfDetailManager(config)
         self.vsync_manager = VSyncManager(config)
         self.frame_monitor = FrameRateMonitor(config)
-        
+
         # Performance callbacks
         self._quality_change_callbacks: List[Callable[[RenderingQuality], None]] = []
         self._performance_alert_callbacks: List[Callable[[str], None]] = []
-        
+
         # Performance state
         self._current_metrics: Optional[RenderingMetrics] = None
         self._last_optimization_time = time.time()
         self._optimization_interval = 5.0  # 5 seconds
-        
-        logger.info(f"Rendering performance manager initialized with {config.quality_level.value} quality "
-                   f"for {self.hardware_capabilities.hardware_tier.value} hardware")
 
-    def register_quality_change_callback(self, callback: Callable[[RenderingQuality], None]) -> None:
+        logger.info(
+            f"Rendering performance manager initialized with {config.quality_level.value} quality "
+            f"for {self.hardware_capabilities.hardware_tier.value} hardware"
+        )
+
+    def register_quality_change_callback(
+        self, callback: Callable[[RenderingQuality], None]
+    ) -> None:
         """Register callback for quality level changes."""
         self._quality_change_callbacks.append(callback)
 
-    def register_performance_alert_callback(self, callback: Callable[[str], None]) -> None:
+    def register_performance_alert_callback(
+        self, callback: Callable[[str], None]
+    ) -> None:
         """Register callback for performance alerts."""
         self._performance_alert_callbacks.append(callback)
 
-    def update_rendering_metrics(self, triangles_rendered: int = 0, 
-                               vertices_rendered: int = 0) -> RenderingMetrics:
+    def update_rendering_metrics(
+        self, triangles_rendered: int = 0, vertices_rendered: int = 0
+    ) -> RenderingMetrics:
         """
         Update rendering performance metrics.
 
@@ -643,16 +669,16 @@ class RenderingPerformanceManager:
         """
         # Record frame timing
         self.frame_monitor.record_frame()
-        
+
         # Get current performance data
         current_fps = self.frame_monitor.get_current_fps()
         frame_time_ms = 1000.0 / current_fps if current_fps > 0 else 0
-        
+
         # Get GPU memory usage
         gpu_memory_used = 0
         gpu_memory_total = 0
         gpu_usage = 0
-        
+
         try:
             gpus = GPUtil.getGPUs()
             if gpus:
@@ -662,18 +688,18 @@ class RenderingPerformanceManager:
                 gpu_usage = gpu.load * 100
         except Exception as e:
             logger.debug(f"GPU metrics unavailable: {str(e)}")
-        
+
         # Get CPU usage
         cpu_usage = psutil.cpu_percent(interval=0.1)
-        
+
         # Determine VSync state
         vsync_enabled = self.vsync_manager.should_enable_vsync(
             current_fps, self.config.target_fps
         )
-        
+
         # Get current LOD level (simplified)
         current_lod = 0  # This would be calculated based on active models
-        
+
         # Create metrics
         metrics = RenderingMetrics(
             fps=current_fps,
@@ -687,89 +713,96 @@ class RenderingPerformanceManager:
             quality_level=self.config.quality_level,
             lod_level=current_lod,
             vsync_enabled=vsync_enabled,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
-        
+
         self._current_metrics = metrics
-        
+
         # Check if optimization is needed
         self._check_optimization_needed()
-        
+
         return metrics
 
     def _check_optimization_needed(self) -> None:
         """Check if rendering optimization is needed."""
         current_time = time.time()
-        
+
         # Only optimize every few seconds
         if current_time - self._last_optimization_time < self._optimization_interval:
             return
-            
+
         self._last_optimization_time = current_time
-        
+
         if not self._current_metrics:
             return
-            
+
         # Check for performance issues
         if self.frame_monitor.should_reduce_quality():
             self._reduce_rendering_quality()
         elif self.frame_monitor.can_increase_quality():
             self._increase_rendering_quality()
-            
+
         # Check for memory pressure
-        if self._current_metrics.gpu_memory_used_mb > self._current_metrics.gpu_memory_total_mb * 0.9:
+        if (
+            self._current_metrics.gpu_memory_used_mb
+            > self._current_metrics.gpu_memory_total_mb * 0.9
+        ):
             self._handle_gpu_memory_pressure()
 
     def _reduce_rendering_quality(self) -> None:
         """Reduce rendering quality to improve performance."""
         current_quality = self.config.quality_level
-        
+
         quality_reduction_map = {
             RenderingQuality.ULTRA: RenderingQuality.HIGH,
             RenderingQuality.HIGH: RenderingQuality.MEDIUM,
             RenderingQuality.MEDIUM: RenderingQuality.LOW,
             RenderingQuality.LOW: RenderingQuality.MINIMAL,
-            RenderingQuality.MINIMAL: RenderingQuality.MINIMAL
+            RenderingQuality.MINIMAL: RenderingQuality.MINIMAL,
         }
-        
+
         new_quality = quality_reduction_map.get(current_quality, current_quality)
-        
+
         if new_quality != current_quality:
             self.config.quality_level = new_quality
-            logger.info(f"Reducing rendering quality from {current_quality.value} to {new_quality.value}")
-            
+            logger.info(
+                f"Reducing rendering quality from {current_quality.value} to {new_quality.value}"
+            )
+
             # Notify callbacks
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
                 except Exception as e:
                     logger.error(f"Quality change callback failed: {str(e)}")
-                    
+
             # Alert callbacks
             for callback in self._performance_alert_callbacks:
                 try:
-                    callback(f"Rendering quality reduced to {new_quality.value} due to performance")
+                    callback(
+                        f"Rendering quality reduced to {new_quality.value} due to performance"
+                    )
                 except Exception as e:
                     logger.error(f"Performance alert callback failed: {str(e)}")
 
     def _increase_rendering_quality(self) -> None:
         """Increase rendering quality if performance allows."""
         current_quality = self.config.quality_level
-        
+
         quality_increase_map = {
             RenderingQuality.MINIMAL: RenderingQuality.LOW,
             RenderingQuality.LOW: RenderingQuality.MEDIUM,
             RenderingQuality.MEDIUM: RenderingQuality.HIGH,
             RenderingQuality.HIGH: RenderingQuality.ULTRA,
-            RenderingQuality.ULTRA: RenderingQuality.ULTRA
+            RenderingQuality.ULTRA: RenderingQuality.ULTRA,
         }
-        
+
         new_quality = quality_increase_map.get(current_quality, current_quality)
-        
+
         if new_quality != current_quality:
             self.config.quality_level = new_quality
             logger.info(f"Increasing rendering quality to {new_quality.value}")
-            
+
             # Notify callbacks
             for callback in self._quality_change_callbacks:
                 try:
@@ -780,21 +813,23 @@ class RenderingPerformanceManager:
     def _handle_gpu_memory_pressure(self) -> None:
         """Handle GPU memory pressure situation."""
         logger.warning("GPU memory pressure detected")
-        
+
         # Reduce texture quality
         if self.config.texture_quality > 0:
             self.config.texture_quality -= 1
             logger.info("Reducing texture quality due to GPU memory pressure")
-            
+
         # Disable shadows if enabled
         if self.config.shadows_enabled:
             self.config.shadows_enabled = False
             logger.info("Disabling shadows due to GPU memory pressure")
-            
+
         # Alert callbacks
         for callback in self._performance_alert_callbacks:
             try:
-                callback("GPU memory pressure - reduced texture quality and disabled shadows")
+                callback(
+                    "GPU memory pressure - reduced texture quality and disabled shadows"
+                )
             except Exception as e:
                 logger.error(f"Performance alert callback failed: {str(e)}")
 
@@ -802,44 +837,64 @@ class RenderingPerformanceManager:
         """Get comprehensive performance report."""
         current_metrics = self._current_metrics
         frame_stats = self.frame_monitor.get_frame_time_stats()
-        
+
         return {
-            'hardware_capabilities': {
-                'cpu_cores': self.hardware_capabilities.cpu_cores,
-                'cpu_frequency_mhz': self.hardware_capabilities.cpu_frequency_mhz,
-                'total_memory_gb': self.hardware_capabilities.total_memory_gb,
-                'gpu_memory_gb': self.hardware_capabilities.gpu_memory_gb,
-                'gpu_name': self.hardware_capabilities.gpu_name,
-                'hardware_tier': self.hardware_capabilities.hardware_tier.value,
-                'recommended_quality': self.hardware_capabilities.recommended_quality.value
+            "hardware_capabilities": {
+                "cpu_cores": self.hardware_capabilities.cpu_cores,
+                "cpu_frequency_mhz": self.hardware_capabilities.cpu_frequency_mhz,
+                "total_memory_gb": self.hardware_capabilities.total_memory_gb,
+                "gpu_memory_gb": self.hardware_capabilities.gpu_memory_gb,
+                "gpu_name": self.hardware_capabilities.gpu_name,
+                "hardware_tier": self.hardware_capabilities.hardware_tier.value,
+                "recommended_quality": self.hardware_capabilities.recommended_quality.value,
             },
-            'current_metrics': {
-                'fps': current_metrics.fps if current_metrics else 0,
-                'frame_time_ms': current_metrics.frame_time_ms if current_metrics else 0,
-                'triangles_rendered': current_metrics.triangles_rendered if current_metrics else 0,
-                'gpu_memory_used_mb': current_metrics.gpu_memory_used_mb if current_metrics else 0,
-                'gpu_usage_percent': current_metrics.gpu_usage_percent if current_metrics else 0,
-                'cpu_usage_percent': current_metrics.cpu_usage_percent if current_metrics else 0,
-                'quality_level': current_metrics.quality_level.value if current_metrics else 'unknown',
-                'vsync_enabled': current_metrics.vsync_enabled if current_metrics else False
-            } if current_metrics else {},
-            'frame_statistics': frame_stats,
-            'configuration': {
-                'quality_level': self.config.quality_level.value,
-                'vsync_mode': self.config.vsync_mode.value,
-                'target_fps': self.config.target_fps,
-                'min_fps': self.config.min_fps,
-                'max_triangles': self.config.max_triangles,
-                'max_vertices': self.config.max_vertices,
-                'anti_aliasing': self.config.anti_aliasing,
-                'shadows_enabled': self.config.shadows_enabled,
-                'texture_quality': self.config.texture_quality
+            "current_metrics": (
+                {
+                    "fps": current_metrics.fps if current_metrics else 0,
+                    "frame_time_ms": (
+                        current_metrics.frame_time_ms if current_metrics else 0
+                    ),
+                    "triangles_rendered": (
+                        current_metrics.triangles_rendered if current_metrics else 0
+                    ),
+                    "gpu_memory_used_mb": (
+                        current_metrics.gpu_memory_used_mb if current_metrics else 0
+                    ),
+                    "gpu_usage_percent": (
+                        current_metrics.gpu_usage_percent if current_metrics else 0
+                    ),
+                    "cpu_usage_percent": (
+                        current_metrics.cpu_usage_percent if current_metrics else 0
+                    ),
+                    "quality_level": (
+                        current_metrics.quality_level.value
+                        if current_metrics
+                        else "unknown"
+                    ),
+                    "vsync_enabled": (
+                        current_metrics.vsync_enabled if current_metrics else False
+                    ),
+                }
+                if current_metrics
+                else {}
+            ),
+            "frame_statistics": frame_stats,
+            "configuration": {
+                "quality_level": self.config.quality_level.value,
+                "vsync_mode": self.config.vsync_mode.value,
+                "target_fps": self.config.target_fps,
+                "min_fps": self.config.min_fps,
+                "max_triangles": self.config.max_triangles,
+                "max_vertices": self.config.max_vertices,
+                "anti_aliasing": self.config.anti_aliasing,
+                "shadows_enabled": self.config.shadows_enabled,
+                "texture_quality": self.config.texture_quality,
             },
-            'performance_status': {
-                'is_acceptable': self.frame_monitor.is_performance_acceptable(),
-                'should_reduce_quality': self.frame_monitor.should_reduce_quality(),
-                'can_increase_quality': self.frame_monitor.can_increase_quality()
-            }
+            "performance_status": {
+                "is_acceptable": self.frame_monitor.is_performance_acceptable(),
+                "should_reduce_quality": self.frame_monitor.should_reduce_quality(),
+                "can_increase_quality": self.frame_monitor.can_increase_quality(),
+            },
         }
 
     def optimize_for_model(self, model_id: str, triangle_count: int) -> None:
@@ -847,7 +902,9 @@ class RenderingPerformanceManager:
         # Create LOD levels if needed
         if triangle_count > self.config.max_triangles // 2:
             # This would typically be called with the actual mesh object
-            logger.info(f"Creating LOD levels for model {model_id} with {triangle_count} triangles")
+            logger.info(
+                f"Creating LOD levels for model {model_id} with {triangle_count} triangles"
+            )
 
     def shutdown(self) -> None:
         """Shutdown the rendering performance manager."""

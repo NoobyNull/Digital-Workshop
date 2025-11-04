@@ -30,10 +30,13 @@ class ToolPreferencesRepository:
                 if not isinstance(value, str):
                     value = json.dumps(value)
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT OR REPLACE INTO preferences (key, value, updated_at)
                     VALUES (?, ?, CURRENT_TIMESTAMP)
-                """, (key, value))
+                """,
+                    (key, value),
+                )
 
                 conn.commit()
                 self.logger.debug(f"Set preference: {key}")
@@ -73,14 +76,16 @@ class ToolPreferencesRepository:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT key, value FROM preferences
                     WHERE key LIKE 'external_db_%'
-                """)
+                """
+                )
 
                 for row in cursor.fetchall():
                     # Extract format type from key (e.g., 'external_db_csv' -> 'CSV')
-                    format_type = row[0].split('_')[-1].upper()
+                    format_type = row[0].split("_")[-1].upper()
                     paths[format_type] = row[1]
 
         except Exception as e:

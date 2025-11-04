@@ -71,7 +71,7 @@ class ThemeService:
     def apply_theme(
         self,
         theme: ThemeType = "dark",
-        library: ThemeLibrary = "qdarkstyle"  # noqa: ARG002 - kept for compatibility
+        library: ThemeLibrary = "qdarkstyle",  # noqa: ARG002 - kept for compatibility
     ) -> bool:
         """
         Apply a professional theme using built-in PySide6 styling.
@@ -125,6 +125,7 @@ class ThemeService:
             if theme == "auto":
                 try:
                     import darkdetect
+
                     effective_theme = "dark" if darkdetect.isDark() else "light"
                 except ImportError:
                     effective_theme = "dark"  # Default to dark if detection fails
@@ -150,10 +151,18 @@ class ThemeService:
                 palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
 
                 # Additional dark theme colors for better UI consistency
-                palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.HighlightedText, QColor(128, 128, 128))
+                palette.setColor(
+                    QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Text, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.HighlightedText, QColor(128, 128, 128)
+                )
                 palette.setColor(QPalette.Disabled, QPalette.Base, QColor(32, 32, 32))
 
             else:
@@ -173,11 +182,21 @@ class ThemeService:
                 palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
 
                 # Additional light theme colors for better UI consistency
-                palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.HighlightedText, QColor(255, 255, 255))
-                palette.setColor(QPalette.Disabled, QPalette.Base, QColor(240, 240, 240))
+                palette.setColor(
+                    QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Text, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.HighlightedText, QColor(255, 255, 255)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Base, QColor(240, 240, 240)
+                )
 
             # Apply the palette to the application
             app.setPalette(palette)
@@ -187,7 +206,9 @@ class ThemeService:
             self._current_library = "builtin"
             self._save_theme()
 
-            logger.info(f"Applied fallback theme: {theme} (effective: {effective_theme})")
+            logger.info(
+                f"Applied fallback theme: {theme} (effective: {effective_theme})"
+            )
             return True
 
         except Exception as e:
@@ -332,4 +353,3 @@ class ThemeService:
         """Load saved theme from settings."""
         self._current_theme = self.settings.value("theme", "dark")
         self._current_library = self.settings.value("theme_library", "builtin")
-

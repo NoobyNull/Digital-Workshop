@@ -20,6 +20,7 @@ from src.core.logging_config import get_logger, log_function_call
 
 class MemoryPressure(Enum):
     """Memory pressure levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -29,6 +30,7 @@ class MemoryPressure(Enum):
 @dataclass
 class MemoryStats:
     """Memory usage statistics."""
+
     total_memory_gb: float
     available_memory_gb: float
     used_memory_gb: float
@@ -40,7 +42,11 @@ class MemoryStats:
     @property
     def available_ratio(self) -> float:
         """Get ratio of available to total memory."""
-        return self.available_memory_gb / self.total_memory_gb if self.total_memory_gb > 0 else 0
+        return (
+            self.available_memory_gb / self.total_memory_gb
+            if self.total_memory_gb > 0
+            else 0
+        )
 
     @property
     def is_memory_constrained(self) -> bool:
@@ -105,7 +111,7 @@ class MemoryPool:
         with self._lock:
             if block in self.allocated_blocks and block not in self.available_blocks:
                 # Clear the block for reuse
-                block[:] = b'\x00'
+                block[:] = b"\x00"
                 self.available_blocks.append(block)
 
     def cleanup(self) -> None:
@@ -146,9 +152,7 @@ class MemoryMonitor:
 
             self._monitoring = True
             self._monitor_thread = threading.Thread(
-                target=self._monitor_loop,
-                name="MemoryMonitor",
-                daemon=True
+                target=self._monitor_loop, name="MemoryMonitor", daemon=True
             )
             self._monitor_thread.start()
             self.logger.info("Memory monitoring started")
@@ -236,7 +240,7 @@ class MemoryMonitor:
                 memory_percent=self._stats.memory_percent,
                 gpu_memory_used_gb=self._stats.gpu_memory_used_gb,
                 gpu_memory_total_gb=self._stats.gpu_memory_total_gb,
-                pressure_level=self._stats.pressure_level
+                pressure_level=self._stats.pressure_level,
             )
 
     def add_pressure_callback(self, callback: Callable[[MemoryStats], None]) -> None:
@@ -305,14 +309,20 @@ class MemoryManager:
             stats: Current memory statistics
         """
         if stats.pressure_level == MemoryPressure.CRITICAL:
-            self.logger.warning("Critical memory pressure detected - triggering cleanup")
+            self.logger.warning(
+                "Critical memory pressure detected - triggering cleanup"
+            )
             self.force_cleanup()
         elif stats.pressure_level == MemoryPressure.HIGH:
-            self.logger.info("High memory pressure detected - performing maintenance cleanup")
+            self.logger.info(
+                "High memory pressure detected - performing maintenance cleanup"
+            )
             self.maintenance_cleanup()
 
     @log_function_call
-    def allocate_memory(self, size_bytes: int, owner: str = "unknown") -> Optional[bytearray]:
+    def allocate_memory(
+        self, size_bytes: int, owner: str = "unknown"
+    ) -> Optional[bytearray]:
         """
         Allocate memory with tracking and limits.
 
@@ -349,7 +359,9 @@ class MemoryManager:
                 self.logger.debug(f"Direct allocated {len(block)} bytes for {owner}")
                 return block
             except MemoryError:
-                self.logger.error(f"Memory allocation failed for {owner}: {size_bytes} bytes")
+                self.logger.error(
+                    f"Memory allocation failed for {owner}: {size_bytes} bytes"
+                )
                 return None
 
     @log_function_call
@@ -392,9 +404,11 @@ class MemoryManager:
             return {
                 "total_allocated_bytes": total_allocated,
                 "total_allocated_gb": total_allocated / (1024**3),
-                "allocation_count": sum(len(sizes) for sizes in self.allocation_tracking.values()),
+                "allocation_count": sum(
+                    len(sizes) for sizes in self.allocation_tracking.values()
+                ),
                 "owners": dict(self.allocation_tracking),
-                "memory_stats": self.monitor.get_memory_stats().__dict__
+                "memory_stats": self.monitor.get_memory_stats().__dict__,
             }
 
     @log_function_call

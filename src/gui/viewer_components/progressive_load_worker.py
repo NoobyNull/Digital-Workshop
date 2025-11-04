@@ -79,4 +79,3 @@ class ProgressiveLoadWorker(QThread):
     def cancel(self) -> None:
         """Cancel the loading process."""
         self.should_cancel = True
-

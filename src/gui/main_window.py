@@ -58,6 +58,7 @@ from src.parsers.step_parser import STEPParser
 from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
 from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
+from src.gui.project_details_widget import ProjectDetailsWidget
 
 
 class MainWindow(QMainWindow):
@@ -80,7 +81,7 @@ class MainWindow(QMainWindow):
             parent: Parent widget (typically None for main window)
         """
         import time
-        
+
         super().__init__(parent)
 
         # Initialize logger
@@ -91,6 +92,7 @@ class MainWindow(QMainWindow):
         # Initialize AI Description Service
         try:
             from src.gui.services.ai_description_service import AIDescriptionService
+
             self.ai_service = AIDescriptionService()
             self.logger.info("AI Description Service initialized")
         except Exception as e:
@@ -110,10 +112,19 @@ class MainWindow(QMainWindow):
             config = ApplicationConfig.get_default()
             min_width = config.minimum_window_width
             min_height = config.minimum_window_height
-            default_width = config.default_window_width
-            default_height = config.default_window_height
+
+            # Calculate default window size based on screen geometry
+            # (50% width, 100% height - snapped to middle wide, full height)
+            default_width, default_height = (
+                ApplicationConfig.calculate_default_window_size()
+            )
+
             self.maximize_on_startup = config.maximize_on_startup
             self.remember_window_size = config.remember_window_size
+
+            self.logger.info(
+                f"FIX: Calculated default window size: {default_width}x{default_height} (50% width, 100% height)"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to load window settings from config: {e}")
             min_width = 800
@@ -124,18 +135,22 @@ class MainWindow(QMainWindow):
             self.remember_window_size = True
 
         self.setMinimumSize(min_width, min_height)
-        
+
         # CRITICAL FIX: Restore window geometry during initialization, not in showEvent
         # This ensures proper timing coordination between window creation and state restoration
         restoration_start = time.time()
         self.logger.info("FIX: Restoring window geometry during initialization phase")
-        
+
         try:
             self._restore_window_geometry_early()
             restoration_time = time.time() - restoration_start
-            self.logger.info(f"FIX: Window geometry restoration completed in {restoration_time:.3f}s during init")
+            self.logger.info(
+                f"FIX: Window geometry restoration completed in {restoration_time:.3f}s during init"
+            )
         except Exception as e:
-            self.logger.warning(f"FIX: Failed to restore window geometry during init, using defaults: {e}")
+            self.logger.warning(
+                f"FIX: Failed to restore window geometry during init, using defaults: {e}"
+            )
             # Fallback to default size if restoration fails
             self.resize(default_width, default_height)
 
@@ -214,22 +229,16 @@ class MainWindow(QMainWindow):
 
         # Let PySide6 handle all window management naturally
         # Removed all custom layout management and snapping systems
-        # Default to locked layout mode
+        # CRITICAL: Always start with layout locked (edit mode OFF)
+        # This ensures the app always opens with layout locked, regardless of saved settings
         try:
-            settings = QSettings()
-            default_locked = not bool(
-                settings.value("ui/layout_edit_mode", False, type=bool)
-            )
-            # When saved value is True, enable edit mode; otherwise lock
-            # Don't show message during initialization to avoid overlay artifacts
-            self._set_layout_edit_mode(
-                bool(settings.value("ui/layout_edit_mode", False, type=bool)),
-                show_message=False
-            )
+            # Force layout edit mode OFF on startup
+            self._set_layout_edit_mode(False, show_message=False)
+            self.logger.info("FIX: Layout edit mode forced OFF on application startup")
+
+            # Update toggle action to reflect locked state
             if hasattr(self, "toggle_layout_edit_action"):
-                self.toggle_layout_edit_action.setChecked(
-                    bool(settings.value("ui/layout_edit_mode", False, type=bool))
-                )
+                self.toggle_layout_edit_action.setChecked(False)
         except Exception:
             # If settings fail, lock layout
             try:
@@ -239,6 +248,11 @@ class MainWindow(QMainWindow):
 
         # Set up status update timer
         self.status_bar_manager.setup_status_timer()
+
+        # Set up periodic window state save timer (every 5 seconds)
+        # This ensures window position/size is saved periodically, not just on close
+        # Protects against data loss if the app crashes
+        self._setup_periodic_window_state_save()
 
         # Let PySide6 handle all layout management naturally
         # Removed custom layout timers and forced layout updates
@@ -372,6 +386,12 @@ class MainWindow(QMainWindow):
             # Add to main window using native Qt dock system
             self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
 
+            # Register for snapping functionality
+            try:
+                self._register_dock_for_snapping(self.model_library_dock)
+            except Exception as e:
+                self.logger.debug(f"Failed to register dock for snapping: {e}")
+
             # Connect visibility signal for menu synchronization
             self.model_library_dock.visibilityChanged.connect(
                 lambda visible: self._update_library_action_state()
@@ -433,6 +453,15 @@ class MainWindow(QMainWindow):
             # Add to main window using native Qt dock system
             self.addDockWidget(Qt.LeftDockWidgetArea, self.project_manager_dock)
 
+            # Remove any minimum width constraint to allow free resizing
+            self.project_manager_dock.setMinimumWidth(0)
+
+            # Register for snapping functionality
+            try:
+                self._register_dock_for_snapping(self.project_manager_dock)
+            except Exception as e:
+                self.logger.debug(f"Failed to register dock for snapping: {e}")
+
             # Connect visibility signal for menu synchronization
             self.project_manager_dock.visibilityChanged.connect(
                 lambda visible: self._update_project_manager_action_state()
@@ -444,7 +473,7 @@ class MainWindow(QMainWindow):
     def _setup_properties_dock(self) -> None:
         """Set up properties dock using native Qt."""
         try:
-            self.properties_dock = QDockWidget("Model Properties", self)
+            self.properties_dock = QDockWidget("Project Details", self)
             self.properties_dock.setObjectName("PropertiesDock")
 
             # Configure with native Qt dock features
@@ -458,27 +487,21 @@ class MainWindow(QMainWindow):
                 QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
             )
 
-            # Create properties widget using native Qt
-            properties_widget = QLabel(
-                "Model Properties\n\n"
-                "This panel will display properties and metadata\n"
-                "for the selected 3D model.\n\n"
-                "Features will include:\n"
-                "- Model information\n"
-                "- Metadata editing\n"
-                "- Tag management\n"
-                "- Export settings"
-            )
-            properties_widget.setAlignment(Qt.AlignCenter)
-            properties_widget.setWordWrap(True)
-
-            self.properties_dock.setWidget(properties_widget)
+            # Create project details widget
+            self.project_details_widget = ProjectDetailsWidget(self)
+            self.properties_dock.setWidget(self.project_details_widget)
 
             # Add to main window using native Qt dock system
             self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
 
+            # Register for snapping functionality
+            try:
+                self._register_dock_for_snapping(self.properties_dock)
+            except Exception as e:
+                self.logger.debug(f"Failed to register dock for snapping: {e}")
+
             # Set minimum width for proper native layout
-            self.properties_dock.setMinimumWidth(200)
+            self.properties_dock.setMinimumWidth(250)
             self.properties_dock.setSizePolicy(
                 QSizePolicy.Preferred, QSizePolicy.Expanding
             )
@@ -549,6 +572,12 @@ class MainWindow(QMainWindow):
 
             # Add to main window using native Qt dock system
             self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+
+            # Register for snapping functionality
+            try:
+                self._register_dock_for_snapping(self.metadata_dock)
+            except Exception as e:
+                self.logger.debug(f"Failed to register dock for snapping: {e}")
 
             # Tabify with properties dock using native Qt
             try:
@@ -790,9 +819,7 @@ class MainWindow(QMainWindow):
             from src.gui.cost_estimator import CostEstimatorWidget
 
             self.cost_estimator_widget = CostEstimatorWidget(self)
-            self.hero_tabs.addTab(
-                self.cost_estimator_widget, "Project Cost Estimator"
-            )
+            self.hero_tabs.addTab(self.cost_estimator_widget, "Project Cost Estimator")
             self.logger.info("Cost Estimator widget created successfully")
         except Exception as e:
             self.logger.warning(f"Failed to create Cost Estimator widget: {e}")
@@ -889,7 +916,11 @@ class MainWindow(QMainWindow):
             if show_message:
                 try:
                     self.statusBar().showMessage(
-                        "Layout Edit Mode ON" if self.layout_edit_mode else "Layout locked",
+                        (
+                            "Layout Edit Mode ON"
+                            if self.layout_edit_mode
+                            else "Layout locked"
+                        ),
                         2000,
                     )
                 except Exception:
@@ -1041,16 +1072,45 @@ class MainWindow(QMainWindow):
             self.logger.info("Resetting dock layout to defaults")
 
             # Reset dock layout using native Qt methods
-            # Clear any saved layout state
+            # Clear ALL saved layout state
             from PySide6.QtCore import QSettings
 
             settings = QSettings()
 
-            # Remove saved geometry and state
-            if settings.contains("window_geometry"):
-                settings.remove("window_geometry")
-            if settings.contains("window_state"):
-                settings.remove("window_state")
+            # Remove ALL layout-related QSettings keys
+            layout_keys = [
+                "window_geometry",
+                "window_state",
+                "window/width",
+                "window/height",
+                "window/x",
+                "window/y",
+                "window/maximized",
+                "window/default_width",
+                "window/default_height",
+                "ui/layout_edit_mode",
+                "metadata_panel/visible",
+                "library_panel/visible",
+            ]
+            for key in layout_keys:
+                if settings.contains(key):
+                    settings.remove(key)
+                    self.logger.debug(f"Cleared QSettings key: {key}")
+
+            # Restore default window size: 50% width, 100% height (snapped to middle wide, full height)
+            try:
+                from src.core.application_config import ApplicationConfig
+
+                default_width, default_height = (
+                    ApplicationConfig.calculate_default_window_size()
+                )
+                self.resize(default_width, default_height)
+                self.logger.info(
+                    f"Reset window size to default: {default_width}x{default_height}"
+                )
+            except Exception as e:
+                self.logger.warning(f"Failed to calculate default window size: {e}")
+                self.resize(1200, 800)
 
             # Restore default dock positions
             # Model library to left
@@ -1092,56 +1152,114 @@ class MainWindow(QMainWindow):
 
     def _restore_window_geometry_early(self) -> None:
         """Restore saved window geometry and state during initialization phase.
-        
+
         This method is called during __init__ to ensure proper timing coordination
         between window creation and state restoration, eliminating race conditions.
         """
         import time
-        
+
         try:
             settings = QSettings()
-            self.logger.debug("FIX: Starting early window geometry restoration during init")
+            self.logger.debug(
+                "FIX: Starting early window geometry restoration during init"
+            )
 
             # Try to restore window geometry (size and position)
+            geometry_restored = False
             if settings.contains("window_geometry"):
                 geometry_data = settings.value("window_geometry")
+                self.logger.info(
+                    f"FIX: Found saved window_geometry key, size: {len(geometry_data) if geometry_data else 0} bytes"
+                )
                 if geometry_data:
                     if self.restoreGeometry(geometry_data):
-                        self.logger.info("FIX: Window geometry restored successfully during init")
+                        self.logger.info(
+                            "FIX: Window geometry restored successfully during init"
+                        )
+                        geometry_restored = True
                     else:
                         self.logger.debug(
-                            "FIX: Failed to restore window geometry during init, using defaults"
+                            "FIX: Failed to restore window geometry during init, trying explicit size"
                         )
             else:
+                self.logger.info("FIX: No window_geometry key found in QSettings")
+
+            # Fallback: Use explicit width/height if geometry restoration failed
+            if not geometry_restored and settings.contains("window/width"):
+                try:
+                    # Get default values from config
+                    from src.core.application_config import ApplicationConfig
+
+                    config = ApplicationConfig.get_default()
+                    default_width, default_height = (
+                        ApplicationConfig.calculate_default_window_size()
+                    )
+
+                    width = settings.value("window/width", default_width, type=int)
+                    height = settings.value("window/height", default_height, type=int)
+                    maximized = settings.value("window/maximized", False, type=bool)
+
+                    self.logger.info(
+                        f"FIX: Found explicit window size settings: {width}x{height}, maximized={maximized}"
+                    )
+
+                    # Ensure dimensions are within reasonable bounds
+                    width = max(800, min(width, 3840))  # Cap at 4K width, min 800
+                    height = max(600, min(height, 2160))  # Cap at 4K height, min 600
+
+                    self.resize(width, height)
+                    self.logger.info(
+                        f"FIX: Window resized to {width}x{height} from saved settings"
+                    )
+
+                    if maximized:
+                        self.showMaximized()
+                        self.logger.info("FIX: Window maximized from saved settings")
+
+                    geometry_restored = True
+                except Exception as e:
+                    self.logger.debug(f"FIX: Failed to restore explicit size: {e}")
+            else:
+                if not geometry_restored:
+                    self.logger.info(
+                        "FIX: No explicit window/width key found in QSettings"
+                    )
+
+            if not geometry_restored:
                 self.logger.debug("FIX: No saved window geometry found, using defaults")
 
             # Try to restore window state (maximized/normal, dock layout)
             if settings.contains("window_state"):
                 state_data = settings.value("window_state")
+                self.logger.info(
+                    f"FIX: Found saved window_state key, size: {len(state_data) if state_data else 0} bytes"
+                )
                 if state_data:
                     if self.restoreState(state_data):
-                        self.logger.info("FIX: Window state restored successfully during init")
+                        self.logger.info(
+                            "FIX: Window state restored successfully during init"
+                        )
                     else:
                         self.logger.debug(
                             "FIX: Failed to restore window state during init, using defaults"
                         )
             else:
-                self.logger.debug("FIX: No saved window state found, using defaults")
+                self.logger.info("FIX: No saved window_state key found in QSettings")
 
             # Handle maximize_on_startup setting if present
-            if hasattr(self, 'maximize_on_startup') and self.maximize_on_startup:
+            if hasattr(self, "maximize_on_startup") and self.maximize_on_startup:
                 self.showMaximized()
                 self.logger.info("FIX: Window maximized on startup as configured")
-            
+
             self.logger.debug("FIX: Early window geometry restoration completed")
-            
+
         except Exception as e:
             self.logger.warning(f"FAILED to restore window geometry during init: {e}")
             # Don't re-raise - we want initialization to continue even if restoration fails
 
     def _restore_window_state(self) -> None:
         """Restore saved window geometry and state from QSettings.
-        
+
         DEPRECATED: This method is kept for compatibility but window geometry
         restoration now happens during initialization via _restore_window_geometry_early().
         This method is only used for manual restoration requests.
@@ -1176,14 +1294,35 @@ class MainWindow(QMainWindow):
     def _save_window_settings(self) -> None:
         """Save current window geometry and dock state."""
         try:
+            import sys
+
             settings = QSettings()
 
             # Save window geometry and state
-            settings.setValue("window_geometry", self.saveGeometry())
-            settings.setValue("window_state", self.saveState())
+            geometry = self.saveGeometry()
+            state = self.saveState()
 
-            # CRITICAL FIX: Also save dock state separately for deferred restoration
-            settings.setValue("window/dock_state", self.saveState())
+            settings.setValue("window_geometry", geometry)
+            settings.setValue("window_state", state)
+
+            # Save window size and position explicitly for reliability
+            settings.setValue("window/width", self.width())
+            settings.setValue("window/height", self.height())
+            settings.setValue("window/x", self.x())
+            settings.setValue("window/y", self.y())
+            settings.setValue("window/maximized", self.isMaximized())
+
+            msg = f"FIX: Window settings saved: {self.width()}x{self.height()} at ({self.x()},{self.y()}), maximized={self.isMaximized()}"
+            self.logger.info(msg)
+            print(msg, file=sys.stdout, flush=True)
+
+            msg2 = f"FIX: Saved window_geometry: {len(geometry)} bytes"
+            self.logger.info(msg2)
+            print(msg2, file=sys.stdout, flush=True)
+
+            msg3 = f"FIX: Saved window_state (dock layout): {len(state)} bytes"
+            self.logger.info(msg3)
+            print(msg3, file=sys.stdout, flush=True)
 
             # Save current tab index
             if hasattr(self, "hero_tabs") and self.hero_tabs:
@@ -1191,9 +1330,74 @@ class MainWindow(QMainWindow):
                     "ui/active_hero_tab_index", self.hero_tabs.currentIndex()
                 )
 
-            self.logger.debug("Window settings saved")
+            # CRITICAL: Sync settings to disk immediately
+            settings.sync()
+            msg4 = "FIX: Window settings synced to disk"
+            self.logger.info(msg4)
+            print(msg4, file=sys.stdout, flush=True)
+
+            # CRITICAL: Flush logger handlers to ensure logs are written immediately
+            for handler in self.logger.handlers:
+                handler.flush()
         except Exception as e:
             self.logger.error(f"Failed to save window settings: {e}")
+
+    def _setup_periodic_window_state_save(self) -> None:
+        """Set up periodic window state saving (every 5 seconds).
+
+        This ensures window position/size is saved periodically, not just on close.
+        Protects against data loss if the app crashes.
+        """
+        try:
+            from PySide6.QtCore import QTimer
+
+            # Create timer for periodic saves
+            self._window_state_save_timer = QTimer()
+            self._window_state_save_timer.timeout.connect(
+                self._periodic_save_window_state
+            )
+
+            # Save every 5 seconds
+            self._window_state_save_timer.start(5000)
+
+            self.logger.debug(
+                "Periodic window state save timer started (5 second interval)"
+            )
+        except Exception as e:
+            self.logger.warning(f"Failed to set up periodic window state save: {e}")
+
+    def _periodic_save_window_state(self) -> None:
+        """Periodically save window state without verbose logging.
+
+        This is called every 5 seconds to ensure window position/size is saved.
+        Uses silent logging to avoid cluttering the logs.
+        """
+        try:
+            settings = QSettings()
+
+            # Save window geometry and state
+            geometry = self.saveGeometry()
+            state = self.saveState()
+
+            settings.setValue("window_geometry", geometry)
+            settings.setValue("window_state", state)
+
+            # Save window size and position explicitly for reliability
+            settings.setValue("window/width", self.width())
+            settings.setValue("window/height", self.height())
+            settings.setValue("window/x", self.x())
+            settings.setValue("window/y", self.y())
+            settings.setValue("window/maximized", self.isMaximized())
+
+            # Sync to disk
+            settings.sync()
+
+            # Silent logging - only log at debug level to avoid spam
+            self.logger.debug(
+                f"Periodic save: {self.width()}x{self.height()} at ({self.x()},{self.y()})"
+            )
+        except Exception as e:
+            self.logger.warning(f"Failed to periodically save window state: {e}")
 
     def _on_model_loaded(self, info: str) -> None:
         """Handle model loaded signal from viewer."""
@@ -1208,31 +1412,35 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to handle model loaded signal: {e}")
 
     def showEvent(self, event) -> None:
-        """Handle window show event - geometry restoration now happens during init.
+        """Handle window show event - restore geometry and dock layout after window is shown.
 
-        FIX: Window geometry restoration has been moved to __init__ phase for proper
-        timing coordination. This showEvent now only handles show-specific logic.
+        CRITICAL FIX: Window geometry and position restoration must happen AFTER the window
+        is shown, not during initialization. Qt's restoreGeometry() doesn't work properly
+        until the window is visible on screen.
 
         CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
         when multiple widgets are being repainted simultaneously during window show.
         """
         import time
+
         start_time = time.time()
 
         try:
-            # FIX: Window geometry restoration now happens during initialization
-            # Only log that we're showing the window
-            self.logger.debug("FIX: Window show event - geometry already restored during init")
-
             # Mark that we've been shown (for any show-specific logic)
             if not hasattr(self, "_window_shown"):
                 self._window_shown = True
-                self.logger.debug("FIX: First window show event completed")
+                self.logger.debug(
+                    "FIX: First window show event - deferring geometry and dock restoration"
+                )
 
-                # CRITICAL FIX: Defer dock layout restoration to prevent recursive repaint errors
-                # Use QTimer.singleShot to defer to the next event loop iteration
+                # CRITICAL FIX: Defer BOTH geometry and dock layout restoration to next event loop
+                # This ensures the window is fully visible before we try to restore its state
                 from PySide6.QtCore import QTimer
+
+                QTimer.singleShot(50, self._deferred_geometry_restoration)
                 QTimer.singleShot(100, self._deferred_dock_layout_restoration)
+            else:
+                self.logger.debug("FIX: Window show event (not first show)")
 
         except Exception as e:
             self.logger.warning(f"Failed to handle window show event: {e}")
@@ -1241,6 +1449,87 @@ class MainWindow(QMainWindow):
         self.logger.debug(f"showEvent completed in {total_time:.3f}s")
 
         super().showEvent(event)
+
+    def _deferred_geometry_restoration(self) -> None:
+        """
+        Deferred window geometry restoration after window is shown.
+
+        CRITICAL FIX: This method is called via QTimer.singleShot after the window
+        is fully visible. Qt's restoreGeometry() only works properly after the window
+        is shown on screen, not during initialization.
+        """
+        try:
+            self.logger.info(
+                "FIX: Starting deferred window geometry restoration (after window is shown)"
+            )
+            settings = QSettings()
+
+            # Try to restore window geometry (size and position)
+            geometry_restored = False
+            if settings.contains("window_geometry"):
+                geometry_data = settings.value("window_geometry")
+                self.logger.info(
+                    f"FIX: Found saved window_geometry, size: {len(geometry_data) if geometry_data else 0} bytes"
+                )
+                if geometry_data:
+                    if self.restoreGeometry(geometry_data):
+                        self.logger.info(
+                            "FIX: Window geometry restored successfully (position and size)"
+                        )
+                        geometry_restored = True
+                    else:
+                        self.logger.debug(
+                            "FIX: Failed to restore window geometry, trying explicit size"
+                        )
+
+            # Fallback: Use explicit width/height if geometry restoration failed
+            if not geometry_restored and settings.contains("window/width"):
+                try:
+                    # Get default values from config
+                    from src.core.application_config import ApplicationConfig
+
+                    default_width, default_height = (
+                        ApplicationConfig.calculate_default_window_size()
+                    )
+
+                    width = settings.value("window/width", default_width, type=int)
+                    height = settings.value("window/height", default_height, type=int)
+                    x_pos = settings.value("window/x", -1, type=int)
+                    y_pos = settings.value("window/y", -1, type=int)
+                    maximized = settings.value("window/maximized", False, type=bool)
+
+                    self.logger.info(
+                        f"FIX: Found explicit window settings: {width}x{height} at ({x_pos},{y_pos}), maximized={maximized}"
+                    )
+
+                    # Ensure dimensions are within reasonable bounds
+                    width = max(800, min(width, 3840))
+                    height = max(600, min(height, 2160))
+
+                    # Move window to saved position if valid
+                    if x_pos >= 0 and y_pos >= 0:
+                        self.move(x_pos, y_pos)
+                        self.logger.info(f"FIX: Window moved to ({x_pos},{y_pos})")
+
+                    # Resize window
+                    self.resize(width, height)
+                    self.logger.info(f"FIX: Window resized to {width}x{height}")
+
+                    if maximized:
+                        self.showMaximized()
+                        self.logger.info("FIX: Window maximized from saved settings")
+
+                    geometry_restored = True
+                except Exception as e:
+                    self.logger.debug(f"FIX: Failed to restore explicit size: {e}")
+
+            if not geometry_restored:
+                self.logger.info(
+                    "FIX: No saved window geometry found, using current size"
+                )
+
+        except Exception as e:
+            self.logger.warning(f"FIX: Failed to restore window geometry: {e}")
 
     def _deferred_dock_layout_restoration(self) -> None:
         """
@@ -1255,7 +1544,11 @@ class MainWindow(QMainWindow):
 
             # Restore dock layout from QSettings
             settings = QSettings()
-            dock_state = settings.value("window/dock_state", None)
+
+            # Try window_state first (the actual saved state), then window/dock_state as fallback
+            dock_state = settings.value("window_state", None)
+            if not dock_state:
+                dock_state = settings.value("window/dock_state", None)
 
             if dock_state:
                 # Restore the dock layout
@@ -1269,24 +1562,53 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing.
-        
+
         FIX: Enhanced to ensure comprehensive window state persistence
         with detailed logging for troubleshooting.
         """
         import time
+
         start_time = time.time()
-        self.logger.info("FIX: Starting enhanced window close sequence with comprehensive state saving")
-        
+        self.logger.info(
+            "FIX: Starting enhanced window close sequence with comprehensive state saving"
+        )
+
+        # CRITICAL: Stop periodic save timer FIRST
+        try:
+            if (
+                hasattr(self, "_window_state_save_timer")
+                and self._window_state_save_timer
+            ):
+                self._window_state_save_timer.stop()
+                self.logger.debug("Periodic window state save timer stopped")
+        except Exception as e:
+            self.logger.warning(f"Failed to stop periodic save timer: {e}")
+
+        # CRITICAL: Force layout edit mode OFF before closing
+        # This ensures the app always closes with layout locked
+        try:
+            if self.layout_edit_mode:
+                self._set_layout_edit_mode(False, show_message=False)
+                self.logger.info(
+                    "FIX: Layout edit mode forced OFF on application close"
+                )
+        except Exception as e:
+            self.logger.warning(f"Failed to force layout edit mode OFF on close: {e}")
+
         # CRITICAL: Clean up VTK resources FIRST (before any window destruction)
         # This prevents OpenGL context errors during shutdown
         try:
             vtk_cleanup_start = time.time()
-            self.logger.info("FIX: Cleaning up VTK resources early to prevent OpenGL context errors")
+            self.logger.info(
+                "FIX: Cleaning up VTK resources early to prevent OpenGL context errors"
+            )
             if hasattr(self, "viewer_widget") and self.viewer_widget:
                 if hasattr(self.viewer_widget, "cleanup"):
                     self.viewer_widget.cleanup()
                     vtk_cleanup_time = time.time() - vtk_cleanup_start
-                    self.logger.info(f"SUCCESS: VTK resources cleaned up early in {vtk_cleanup_time:.3f}s")
+                    self.logger.info(
+                        f"SUCCESS: VTK resources cleaned up early in {vtk_cleanup_time:.3f}s"
+                    )
                 else:
                     self.logger.debug("No cleanup method found on viewer widget")
             else:
@@ -1294,28 +1616,19 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to cleanup VTK resources early: {e}")
 
-        # CRITICAL: Save window geometry and state SECOND (most important)
-        try:
-            settings_start = time.time()
-            self.logger.info("FIX: Saving window geometry and state (size, position, maximized state, dock layout)")
-            self._save_window_settings()
-            settings_time = time.time() - settings_start
-            self.logger.info(f"SUCCESS: Window geometry/state saved in {settings_time:.3f}s")
-        except Exception as e:
-            self.logger.error(f"CRITICAL FAILURE: Failed to save window geometry/state on close: {e}")
-            # Don't let this prevent closing, but log it as critical
-
         # Save lighting settings
         try:
             lighting_start = time.time()
             self.logger.info("FIX: Saving lighting settings")
             self._save_lighting_settings()
             lighting_time = time.time() - lighting_start
-            self.logger.info(f"SUCCESS: Lighting settings saved in {lighting_time:.3f}s")
+            self.logger.info(
+                f"SUCCESS: Lighting settings saved in {lighting_time:.3f}s"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to save lighting settings on close: {e}")
 
-        # Save viewer and window settings
+        # Save viewer and window settings (config defaults, not current size)
         try:
             viewer_start = time.time()
             self.logger.info("FIX: Saving viewer and window settings")
@@ -1325,23 +1638,50 @@ class MainWindow(QMainWindow):
             settings_mgr.save_viewer_settings()
             settings_mgr.save_window_settings()
             viewer_time = time.time() - viewer_start
-            self.logger.info(f"SUCCESS: Viewer/window settings saved in {viewer_time:.3f}s")
+            self.logger.info(
+                f"SUCCESS: Viewer/window settings saved in {viewer_time:.3f}s"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
+
+        # CRITICAL: Save window geometry and state LAST (most important - must be after SettingsManager)
+        try:
+            settings_start = time.time()
+            self.logger.info(
+                "FIX: Saving window geometry and state (size, position, maximized state, dock layout)"
+            )
+            self._save_window_settings()
+            settings_time = time.time() - settings_start
+            self.logger.info(
+                f"SUCCESS: Window geometry/state saved in {settings_time:.3f}s"
+            )
+        except Exception as e:
+            self.logger.error(
+                f"CRITICAL FAILURE: Failed to save window geometry/state on close: {e}"
+            )
+            # Don't let this prevent closing, but log it as critical
 
         # Log final window state for debugging
         try:
             final_geometry = self.saveGeometry()
             final_state = self.saveState()
-            self.logger.info(f"FINAL STATE: Window geometry size: {len(final_geometry)} bytes, state size: {len(final_state)} bytes")
-            self.logger.info(f"FINAL STATE: Window size: {self.size().width()}x{self.size().height()}, position: {self.pos().x()},{self.pos().y()}")
-            self.logger.info(f"FINAL STATE: Window maximized: {self.isMaximized()}, minimized: {self.isMinimized()}")
+            self.logger.info(
+                f"FINAL STATE: Window geometry size: {len(final_geometry)} bytes, state size: {len(final_state)} bytes"
+            )
+            self.logger.info(
+                f"FINAL STATE: Window size: {self.size().width()}x{self.size().height()}, position: {self.pos().x()},{self.pos().y()}"
+            )
+            self.logger.info(
+                f"FINAL STATE: Window maximized: {self.isMaximized()}, minimized: {self.isMinimized()}"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to log final window state: {e}")
 
         total_time = time.time() - start_time
-        self.logger.info(f"COMPLETE: Window close sequence completed in {total_time:.3f}s - all state saved")
-        
+        self.logger.info(
+            f"COMPLETE: Window close sequence completed in {total_time:.3f}s - all state saved"
+        )
+
         super().closeEvent(event)
 
     def _update_metadata_action_state(self) -> None:
@@ -1531,6 +1871,7 @@ class MainWindow(QMainWindow):
         Handle model selection from the model library.
 
         Synchronizes the metadata tab to display the selected model's metadata.
+        Also updates the project details widget.
 
         Args:
             model_id: ID of the selected model
@@ -1544,6 +1885,13 @@ class MainWindow(QMainWindow):
                 self.menu_manager.edit_model_action.setEnabled(True)
             if hasattr(self.toolbar_manager, "edit_model_action"):
                 self.toolbar_manager.edit_model_action.setEnabled(True)
+
+            # Update project details widget
+            if hasattr(self, "project_details_widget"):
+                db_manager = get_database_manager()
+                model_data = db_manager.get_model(model_id)
+                if model_data:
+                    self.project_details_widget.set_model(model_data)
 
             # Synchronize metadata tab to selected model
             self._sync_metadata_to_selected_model(model_id)
@@ -1565,7 +1913,7 @@ class MainWindow(QMainWindow):
         """
         try:
             # Check if metadata editor exists
-            if not hasattr(self, 'metadata_editor') or self.metadata_editor is None:
+            if not hasattr(self, "metadata_editor") or self.metadata_editor is None:
                 self.logger.debug(f"Metadata editor not available for model {model_id}")
                 return
 
@@ -1574,12 +1922,14 @@ class MainWindow(QMainWindow):
             self.logger.debug(f"Metadata synchronized for model {model_id}")
 
             # Switch to metadata tab to show the loaded metadata
-            if hasattr(self, 'metadata_tabs') and self.metadata_tabs:
+            if hasattr(self, "metadata_tabs") and self.metadata_tabs:
                 self.metadata_tabs.setCurrentIndex(0)  # Switch to Metadata tab
                 self.logger.debug(f"Switched to Metadata tab for model {model_id}")
 
         except Exception as e:
-            self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
+            self.logger.warning(
+                f"Failed to synchronize metadata for model {model_id}: {e}"
+            )
 
     def _edit_model(self) -> None:
         """Analyze the currently selected model for errors."""
@@ -1795,26 +2145,41 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Project opened: {project_id}")
 
             # Set current project for all tabs that support tab data save/load
-            if hasattr(self, 'clo_widget') and self.clo_widget:
+            if hasattr(self, "clo_widget") and self.clo_widget:
                 try:
                     self.clo_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Cut List Optimizer: {project_id}")
+                    self.logger.debug(
+                        f"Set current project for Cut List Optimizer: {project_id}"
+                    )
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Cut List Optimizer: {e}")
+                    self.logger.warning(
+                        f"Failed to set project for Cut List Optimizer: {e}"
+                    )
 
-            if hasattr(self, 'feeds_and_speeds_widget') and self.feeds_and_speeds_widget:
+            if (
+                hasattr(self, "feeds_and_speeds_widget")
+                and self.feeds_and_speeds_widget
+            ):
                 try:
                     self.feeds_and_speeds_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Feed and Speed: {project_id}")
+                    self.logger.debug(
+                        f"Set current project for Feed and Speed: {project_id}"
+                    )
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Feed and Speed: {e}")
+                    self.logger.warning(
+                        f"Failed to set project for Feed and Speed: {e}"
+                    )
 
-            if hasattr(self, 'cost_estimator_widget') and self.cost_estimator_widget:
+            if hasattr(self, "cost_estimator_widget") and self.cost_estimator_widget:
                 try:
                     self.cost_estimator_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Cost Estimator: {project_id}")
+                    self.logger.debug(
+                        f"Set current project for Cost Estimator: {project_id}"
+                    )
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
+                    self.logger.warning(
+                        f"Failed to set project for Cost Estimator: {e}"
+                    )
 
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
@@ -1964,7 +2329,9 @@ class MainWindow(QMainWindow):
                 self.ai_service.config = self.ai_service._load_config()
                 # Re-initialize providers with new config
                 self.ai_service._initialize_providers()
-                self.logger.info(f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}")
+                self.logger.info(
+                    f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}"
+                )
             else:
                 self.logger.warning("AI service not available, skipping reload")
 
@@ -2342,15 +2709,15 @@ class MainWindow(QMainWindow):
         try:
             # Map tab names to indices - must match actual tab names added in _add_placeholder_tabs
             tab_map = {
-                'Model Previewer': 0,
-                'G Code Previewer': 1,
-                'Cut List Optimizer': 2,
-                'Feed and Speed': 3,  # Note: actual tab name is "Feed and Speed" not "Feeds & Speeds"
-                'Project Cost Estimator': 4,
+                "Model Previewer": 0,
+                "G Code Previewer": 1,
+                "Cut List Optimizer": 2,
+                "Feed and Speed": 3,  # Note: actual tab name is "Feed and Speed" not "Feeds & Speeds"
+                "Project Cost Estimator": 4,
             }
 
             tab_index = tab_map.get(tab_name)
-            if tab_index is not None and hasattr(self, 'hero_tabs'):
+            if tab_index is not None and hasattr(self, "hero_tabs"):
                 self.hero_tabs.setCurrentIndex(tab_index)
                 self.logger.info(f"Switched to tab: {tab_name}")
             else:
@@ -2358,6 +2725,79 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to switch tab: {e}")
+
+    def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> None:
+        """Snap a floating dock widget to the specified edge of the main window.
+
+        Args:
+            dock: The dock widget to snap
+            edge: The edge to snap to ('left', 'right', 'top', 'bottom')
+        """
+        try:
+            area_map = {
+                "left": Qt.LeftDockWidgetArea,
+                "right": Qt.RightDockWidgetArea,
+                "top": Qt.TopDockWidgetArea,
+                "bottom": Qt.BottomDockWidgetArea,
+            }
+            target_area = area_map.get(edge)
+            if target_area is None:
+                self.logger.warning(f"Invalid snap edge: {edge}")
+                return
+
+            # Check if this dock is allowed to dock to the target area
+            allowed = dock.allowedAreas()
+            if not (allowed & target_area):
+                self.logger.debug(
+                    f"Dock {dock.windowTitle()} not allowed in {edge} area"
+                )
+                return
+
+            # Perform the snap operation
+            dock.setFloating(False)
+            self.addDockWidget(target_area, dock)
+            dock.raise_()
+
+            self.logger.info(f"Snapped dock '{dock.windowTitle()}' to {edge} area")
+
+            # Save the new layout
+            self._save_window_settings()
+
+        except Exception as e:
+            self.logger.warning(f"Failed to snap dock to {edge}: {e}")
+
+    def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
+        """Register a dock widget for snapping functionality.
+
+        This sets up the visual feedback and snapping behavior when dragging
+        floating dock widgets near the main window edges.
+
+        Args:
+            dock: The dock widget to register for snapping
+        """
+        try:
+            # Initialize snap system if not already done
+            if not hasattr(self, "_snap_layer"):
+                self._snap_layer, self._snap_handlers = setup_dock_snapping(
+                    self, self.logger
+                )
+                self.logger.debug("Initialized dock snapping system")
+
+            # Create and register the drag handler for this dock
+            handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
+
+            # Store handler reference
+            if not hasattr(self, "_snap_handlers"):
+                self._snap_handlers = {}
+            self._snap_handlers[dock.objectName() or id(dock)] = handler
+
+            # Install the event filter on the dock widget
+            dock.installEventFilter(handler)
+
+            self.logger.debug(f"Registered dock '{dock.windowTitle()}' for snapping")
+
+        except Exception as e:
+            self.logger.warning(f"Failed to register dock for snapping: {e}")
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 

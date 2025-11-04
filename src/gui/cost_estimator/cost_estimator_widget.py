@@ -372,9 +372,7 @@ class CostEstimatorWidget(QWidget):
         self.shop_cost_display.setText(
             f"${self.current_estimate.total_shop_operations_cost:.2f}"
         )
-        self.tools_cost_display.setText(
-            f"${self.current_estimate.total_tool_cost:.2f}"
-        )
+        self.tools_cost_display.setText(f"${self.current_estimate.total_tool_cost:.2f}")
 
         # Update summary display
         breakdown = self.current_estimate.get_cost_breakdown()
@@ -382,7 +380,9 @@ class CostEstimatorWidget(QWidget):
         for category, amount in breakdown.items():
             summary_html += f"{category}: <b>${amount:.2f}</b><br>"
 
-        summary_html += f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
+        summary_html += (
+            f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
+        )
         if self.current_estimate.quantity > 1:
             summary_html += (
                 f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
@@ -405,17 +405,17 @@ class CostEstimatorWidget(QWidget):
 
         # Create data structure
         cost_estimate_data = {
-            'materials': materials_data,
-            'machine_setup_hours': self.machine_setup_hours.value(),
-            'machine_run_hours': self.machine_run_hours.value(),
-            'machine_hourly_rate': self.machine_hourly_rate.value(),
-            'labor_design_hours': self.labor_design_hours.value(),
-            'labor_setup_hours': self.labor_setup_hours.value(),
-            'labor_run_hours': self.labor_run_hours.value(),
-            'labor_hourly_rate': self.labor_hourly_rate.value(),
-            'quantity': self.quantity_spinbox.value(),
-            'pricing_strategy': self.pricing_strategy_combo.currentText(),
-            'profit_margin': self.profit_margin_spinbox.value()
+            "materials": materials_data,
+            "machine_setup_hours": self.machine_setup_hours.value(),
+            "machine_run_hours": self.machine_run_hours.value(),
+            "machine_hourly_rate": self.machine_hourly_rate.value(),
+            "labor_design_hours": self.labor_design_hours.value(),
+            "labor_setup_hours": self.labor_setup_hours.value(),
+            "labor_run_hours": self.labor_run_hours.value(),
+            "labor_hourly_rate": self.labor_hourly_rate.value(),
+            "quantity": self.quantity_spinbox.value(),
+            "pricing_strategy": self.pricing_strategy_combo.currentText(),
+            "profit_margin": self.profit_margin_spinbox.value(),
         }
 
         # Save to project
@@ -424,7 +424,7 @@ class CostEstimatorWidget(QWidget):
             tab_name="Project Cost Estimator",
             data=cost_estimate_data,
             filename="cost_estimate.json",
-            category="Cost Sheets"
+            category="Cost Sheets",
         )
 
         if success:
@@ -440,8 +440,7 @@ class CostEstimatorWidget(QWidget):
 
         # Load from project
         success, data, message = self.tab_data_manager.load_tab_data_from_project(
-            project_id=self.current_project_id,
-            filename="cost_estimate.json"
+            project_id=self.current_project_id, filename="cost_estimate.json"
         )
 
         if not success:
@@ -451,22 +450,22 @@ class CostEstimatorWidget(QWidget):
         # Restore data to UI
         try:
             # Restore machine time
-            self.machine_setup_hours.setValue(data.get('machine_setup_hours', 0.0))
-            self.machine_run_hours.setValue(data.get('machine_run_hours', 0.0))
-            self.machine_hourly_rate.setValue(data.get('machine_hourly_rate', 50.0))
+            self.machine_setup_hours.setValue(data.get("machine_setup_hours", 0.0))
+            self.machine_run_hours.setValue(data.get("machine_run_hours", 0.0))
+            self.machine_hourly_rate.setValue(data.get("machine_hourly_rate", 50.0))
 
             # Restore labor
-            self.labor_design_hours.setValue(data.get('labor_design_hours', 0.0))
-            self.labor_setup_hours.setValue(data.get('labor_setup_hours', 0.0))
-            self.labor_run_hours.setValue(data.get('labor_run_hours', 0.0))
-            self.labor_hourly_rate.setValue(data.get('labor_hourly_rate', 50.0))
+            self.labor_design_hours.setValue(data.get("labor_design_hours", 0.0))
+            self.labor_setup_hours.setValue(data.get("labor_setup_hours", 0.0))
+            self.labor_run_hours.setValue(data.get("labor_run_hours", 0.0))
+            self.labor_hourly_rate.setValue(data.get("labor_hourly_rate", 50.0))
 
             # Restore quantity and pricing
-            self.quantity_spinbox.setValue(data.get('quantity', 1))
-            self.profit_margin_spinbox.setValue(data.get('profit_margin', 30.0))
+            self.quantity_spinbox.setValue(data.get("quantity", 1))
+            self.profit_margin_spinbox.setValue(data.get("profit_margin", 30.0))
 
             # Restore pricing strategy
-            strategy = data.get('pricing_strategy', 'Markup')
+            strategy = data.get("pricing_strategy", "Markup")
             index = self.pricing_strategy_combo.findText(strategy)
             if index >= 0:
                 self.pricing_strategy_combo.setCurrentIndex(index)

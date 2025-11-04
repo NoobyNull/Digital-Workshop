@@ -42,7 +42,7 @@ from .error_handler import (
     VTKErrorSeverity,
     get_vtk_error_handler,
     handle_vtk_error,
-    suppress_vtk_errors_temporarily
+    suppress_vtk_errors_temporarily,
 )
 
 from .context_manager import (
@@ -50,7 +50,7 @@ from .context_manager import (
     ContextState,
     get_vtk_context_manager,
     validate_vtk_context,
-    is_context_safe_for_cleanup
+    is_context_safe_for_cleanup,
 )
 
 from .cleanup_coordinator import (
@@ -58,7 +58,7 @@ from .cleanup_coordinator import (
     CleanupPhase,
     CleanupPriority,
     get_vtk_cleanup_coordinator,
-    coordinate_vtk_cleanup
+    coordinate_vtk_cleanup,
 )
 
 from .resource_tracker import (
@@ -68,7 +68,7 @@ from .resource_tracker import (
     get_vtk_resource_tracker,
     register_vtk_resource,
     cleanup_vtk_resource,
-    cleanup_all_vtk_resources
+    cleanup_all_vtk_resources,
 )
 
 from .fallback_renderer import (
@@ -76,14 +76,14 @@ from .fallback_renderer import (
     FallbackMode,
     get_vtk_fallback_renderer,
     activate_vtk_fallback,
-    render_with_vtk_fallback
+    render_with_vtk_fallback,
 )
 
 from .diagnostic_tools import (
     VTKDiagnosticTools,
     get_vtk_diagnostic_tools,
     generate_vtk_diagnostic_report,
-    run_vtk_health_check
+    run_vtk_health_check,
 )
 
 __version__ = "1.0.0"
@@ -95,21 +95,18 @@ __all__ = [
     "get_vtk_error_handler",
     "handle_vtk_error",
     "suppress_vtk_errors_temporarily",
-
     # Context Manager
     "VTKContextManager",
     "ContextState",
     "get_vtk_context_manager",
     "validate_vtk_context",
     "is_context_safe_for_cleanup",
-
     # Cleanup Coordinator
     "VTKCleanupCoordinator",
     "CleanupPhase",
     "CleanupPriority",
     "get_vtk_cleanup_coordinator",
     "coordinate_vtk_cleanup",
-
     # Resource Tracker
     "VTKResourceTracker",
     "ResourceType",
@@ -118,14 +115,12 @@ __all__ = [
     "register_vtk_resource",
     "cleanup_vtk_resource",
     "cleanup_all_vtk_resources",
-
     # Fallback Renderer
     "VTKFallbackRenderer",
     "FallbackMode",
     "get_vtk_fallback_renderer",
     "activate_vtk_fallback",
     "render_with_vtk_fallback",
-
     # Diagnostic Tools
     "VTKDiagnosticTools",
     "get_vtk_diagnostic_tools",

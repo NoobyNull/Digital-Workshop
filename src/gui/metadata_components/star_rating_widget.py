@@ -47,14 +47,14 @@ class StarRatingWidget(QWidget):
         self.star_count = 5
 
         # Star colors (from theme)
-        self.filled_color = get_theme_color('star_filled')
-        self.empty_color = get_theme_color('star_empty')
-        self.hover_color = get_theme_color('star_hover')
+        self.filled_color = get_theme_color("star_filled")
+        self.empty_color = get_theme_color("star_empty")
+        self.hover_color = get_theme_color("star_hover")
 
         # Set widget size
         self.setFixedSize(
             self.star_count * (self.star_size + self.star_spacing) - self.star_spacing,
-            self.star_size
+            self.star_size,
         )
 
         # Enable mouse tracking for hover effects
@@ -114,7 +114,9 @@ class StarRatingWidget(QWidget):
 
         painter.end()
 
-    def _draw_star(self, painter: QPainter, x: int, y: int, size: int, color: QColor) -> None:
+    def _draw_star(
+        self, painter: QPainter, x: int, y: int, size: int, color: QColor
+    ) -> None:
         """
         Draw a proper 5-pointed star shape.
 
@@ -182,4 +184,3 @@ class StarRatingWidget(QWidget):
         """
         rating = (x // (self.star_size + self.star_spacing)) + 1
         return max(0, min(rating, self.star_count))
-

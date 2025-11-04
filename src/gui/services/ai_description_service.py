@@ -12,19 +12,20 @@ from PySide6.QtWidgets import QApplication
 
 from .providers import BaseProvider, OpenAIProvider, OpenRouterProvider
 
+
 class AIDescriptionService(QObject):
     """Service for AI-powered image description generation."""
-    
+
     # Signals for UI updates
     analysis_started = Signal()
     analysis_completed = Signal(dict)  # Analysis results
-    analysis_failed = Signal(str)      # Error message
-    progress_updated = Signal(int)     # Progress percentage
-    
+    analysis_failed = Signal(str)  # Error message
+    progress_updated = Signal(int)  # Progress percentage
+
     def __init__(self, config_manager=None):
         """
         Initialize the AI Description Service.
-        
+
         Args:
             config_manager: Configuration manager for loading/saving settings
         """
@@ -35,7 +36,7 @@ class AIDescriptionService(QObject):
         self.current_provider: Optional[BaseProvider] = None
         self.config = self._load_config()
         self._initialize_providers()
-    
+
     def _load_config(self) -> Dict[str, Any]:
         """Load AI description configuration."""
         try:
@@ -67,7 +68,7 @@ class AIDescriptionService(QObject):
                         "openai": "OPENAI_API_KEY",
                         "openrouter": "OPENROUTER_API_KEY",
                         "gemini": "GOOGLE_API_KEY",
-                        "anthropic": "ANTHROPIC_API_KEY"
+                        "anthropic": "ANTHROPIC_API_KEY",
                     }
                     api_key = os.getenv(env_var_map.get(provider_name, ""), "")
 
@@ -76,16 +77,20 @@ class AIDescriptionService(QObject):
                     "openai": "gpt-4-vision-preview",
                     "openrouter": "gpt-4-vision-preview",
                     "gemini": "gemini-2.5-flash",
-                    "anthropic": "claude-3-5-sonnet-20241022"
+                    "anthropic": "claude-3-5-sonnet-20241022",
                 }
 
                 providers[provider_name] = {
                     "api_key": api_key,
-                    "model": settings.value(f"{group}/model", default_models.get(provider_name, ""), type=str),
+                    "model": settings.value(
+                        f"{group}/model",
+                        default_models.get(provider_name, ""),
+                        type=str,
+                    ),
                     "base_url": settings.value(f"{group}/base_url", "", type=str),
-                    "enabled": settings.value(f"{group}/enabled", False, type=bool)
+                    "enabled": settings.value(f"{group}/enabled", False, type=bool),
                 }
-            
+
             # Load custom prompts from QSettings
             custom_prompts = {}
             prompt_types = ["default", "mechanical", "artistic", "architectural"]
@@ -93,53 +98,79 @@ class AIDescriptionService(QObject):
                 custom_prompts[prompt_type] = settings.value(
                     f"ai_description/custom_prompts/{prompt_type}",
                     self._get_default_prompt(prompt_type),
-                    type=str
+                    type=str,
                 )
-            
+
             # Load settings from QSettings
             settings_dict = {
-                "default_provider": settings.value("ai_description/settings/default_provider", "openai", type=str),
-                "auto_apply_results": settings.value("ai_description/settings/auto_apply_results", True, type=bool),
-                "batch_processing": settings.value("ai_description/settings/batch_processing", False, type=bool)
+                "default_provider": settings.value(
+                    "ai_description/settings/default_provider", "openai", type=str
+                ),
+                "auto_apply_results": settings.value(
+                    "ai_description/settings/auto_apply_results", True, type=bool
+                ),
+                "batch_processing": settings.value(
+                    "ai_description/settings/batch_processing", False, type=bool
+                ),
             }
-            
+
             return {
                 "providers": providers,
                 "custom_prompts": custom_prompts,
-                "settings": settings_dict
+                "settings": settings_dict,
             }
-            
+
         except Exception as e:
-            self.logger.warning("Failed to load AI description config from QSettings, using defaults: %s", e)
+            self.logger.warning(
+                "Failed to load AI description config from QSettings, using defaults: %s",
+                e,
+            )
             return self._get_default_config()
-    
+
     def _save_config(self):
         """Save AI description configuration."""
         try:
             settings = QSettings()
-            
+
             # Save provider configurations
-            for provider_name, provider_config in self.config.get("providers", {}).items():
+            for provider_name, provider_config in self.config.get(
+                "providers", {}
+            ).items():
                 group = f"ai_description/providers/{provider_name}"
-                settings.setValue(f"{group}/api_key", provider_config.get("api_key", ""))
-                settings.setValue(f"{group}/model", provider_config.get("model", "gpt-4-vision-preview"))
-                settings.setValue(f"{group}/base_url", provider_config.get("base_url", ""))
-                settings.setValue(f"{group}/enabled", provider_config.get("enabled", False))
-            
+                settings.setValue(
+                    f"{group}/api_key", provider_config.get("api_key", "")
+                )
+                settings.setValue(
+                    f"{group}/model",
+                    provider_config.get("model", "gpt-4-vision-preview"),
+                )
+                settings.setValue(
+                    f"{group}/base_url", provider_config.get("base_url", "")
+                )
+                settings.setValue(
+                    f"{group}/enabled", provider_config.get("enabled", False)
+                )
+
             # Save custom prompts
-            for prompt_type, prompt_text in self.config.get("custom_prompts", {}).items():
-                settings.setValue(f"ai_description/custom_prompts/{prompt_type}", prompt_text)
-            
+            for prompt_type, prompt_text in self.config.get(
+                "custom_prompts", {}
+            ).items():
+                settings.setValue(
+                    f"ai_description/custom_prompts/{prompt_type}", prompt_text
+                )
+
             # Save settings
             for setting_name, setting_value in self.config.get("settings", {}).items():
-                settings.setValue(f"ai_description/settings/{setting_name}", setting_value)
-            
+                settings.setValue(
+                    f"ai_description/settings/{setting_name}", setting_value
+                )
+
             settings.sync()
             self.logger.debug("AI description configuration saved to QSettings")
-            
+
         except Exception as e:
             self.logger.error("Failed to save AI description config: %s", e)
-    
+
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
@@ -148,14 +179,14 @@ class AIDescriptionService(QObject):
                     "api_key": "",
                     "model": "gpt-4-vision-preview",
                     "base_url": "",
-                    "enabled": False
+                    "enabled": False,
                 },
                 "openrouter": {
                     "api_key": "",
                     "model": "gpt-4-vision-preview",
                     "base_url": "https://openrouter.io/api/v1",
-                    "enabled": False
-                }
+                    "enabled": False,
+                },
             },
             "custom_prompts": {
                 "default": """Analyze this image and provide a structured response in JSON format with the following fields:
@@ -181,15 +212,15 @@ Return ONLY valid JSON, no additional text.""",
 - description: Describe the building style, materials, design elements, and spatial relationships (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
-Return ONLY valid JSON, no additional text."""
+Return ONLY valid JSON, no additional text.""",
             },
             "settings": {
                 "default_provider": "openai",
                 "auto_apply_results": True,
-                "batch_processing": False
-            }
+                "batch_processing": False,
+            },
         }
-    
+
     def _get_default_prompt(self, prompt_type: str) -> str:
         """Get default prompt for a specific type."""
         defaults = {
@@ -216,10 +247,10 @@ Return ONLY valid JSON, no additional text.""",
 - description: Describe the building style, materials, design elements, and spatial relationships (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
-Return ONLY valid JSON, no additional text."""
+Return ONLY valid JSON, no additional text.""",
         }
         return defaults.get(prompt_type, defaults["default"])
-    
+
     def _initialize_providers(self):
         """Initialize AI providers based on configuration."""
         providers_config = self.config.get("providers", {})
@@ -231,7 +262,7 @@ Return ONLY valid JSON, no additional text."""
                 self.providers["openai"] = OpenAIProvider(
                     api_key=openai_config["api_key"],
                     model=openai_config.get("model", "gpt-4-vision-preview"),
-                    base_url=openai_config.get("base_url") or None
+                    base_url=openai_config.get("base_url") or None,
                 )
                 self.logger.info("OpenAI provider initialized")
             except Exception as e:
@@ -244,7 +275,7 @@ Return ONLY valid JSON, no additional text."""
                 self.providers["openrouter"] = OpenRouterProvider(
                     api_key=openrouter_config["api_key"],
                     model=openrouter_config.get("model", "gpt-4-vision-preview"),
-                    base_url=openrouter_config.get("base_url") or None
+                    base_url=openrouter_config.get("base_url") or None,
                 )
                 self.logger.info("OpenRouter provider initialized")
             except Exception as e:
@@ -255,9 +286,10 @@ Return ONLY valid JSON, no additional text."""
         if gemini_config.get("api_key"):
             try:
                 from .providers.gemini_provider import GeminiProvider
+
                 self.providers["gemini"] = GeminiProvider(
                     api_key=gemini_config["api_key"],
-                    model=gemini_config.get("model", "gemini-2.5-flash")
+                    model=gemini_config.get("model", "gemini-2.5-flash"),
                 )
                 self.logger.info("Gemini provider initialized")
             except Exception as e:
@@ -268,23 +300,28 @@ Return ONLY valid JSON, no additional text."""
         if anthropic_config.get("api_key"):
             try:
                 from .providers.anthropic_provider import AnthropicProvider
+
                 self.providers["anthropic"] = AnthropicProvider(
                     api_key=anthropic_config["api_key"],
-                    model=anthropic_config.get("model", "claude-3-5-sonnet-20241022")
+                    model=anthropic_config.get("model", "claude-3-5-sonnet-20241022"),
                 )
                 self.logger.info("Anthropic provider initialized")
             except Exception as e:
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
         # Set current provider
-        default_provider = self.config.get("settings", {}).get("default_provider", "openai")
+        default_provider = self.config.get("settings", {}).get(
+            "default_provider", "openai"
+        )
         if default_provider in self.providers:
             self.current_provider = self.providers[default_provider]
         elif self.providers:
             # If default provider not available, use first available provider
             self.current_provider = next(iter(self.providers.values()))
-            self.logger.info("Default provider not available, using first available provider")
-    
+            self.logger.info(
+                "Default provider not available, using first available provider"
+            )
+
     @staticmethod
     def get_available_providers() -> List[str]:
         """Get list of available AI providers."""
@@ -297,9 +334,9 @@ Return ONLY valid JSON, no additional text."""
             "perplexity",
             "ollama",
             "ai_studio",
-            "openrouter"
+            "openrouter",
         ]
-    
+
     @staticmethod
     def get_provider_display_names() -> Dict[str, str]:
         """Get display names for AI providers."""
@@ -312,9 +349,9 @@ Return ONLY valid JSON, no additional text."""
             "perplexity": "Perplexity Vision",
             "ollama": "Ollama Local",
             "ai_studio": "Google AI Studio",
-            "openrouter": "OpenRouter"
+            "openrouter": "OpenRouter",
         }
-    
+
     @staticmethod
     def get_available_models(provider_id: str) -> Dict[str, str]:
         """Get available models for a specific provider."""
@@ -322,44 +359,36 @@ Return ONLY valid JSON, no additional text."""
             "openai": {
                 "gpt-4-vision-preview": "GPT-4 Vision (Preview)",
                 "gpt-4o": "GPT-4o",
-                "gpt-4o-mini": "GPT-4o Mini"
+                "gpt-4o-mini": "GPT-4o Mini",
             },
             "anthropic": {
                 "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet",
                 "claude-3-opus-20240229": "Claude 3 Opus",
-                "claude-3-sonnet-20240229": "Claude 3 Sonnet"
+                "claude-3-sonnet-20240229": "Claude 3 Sonnet",
             },
             "gemini": {
                 "gemini-2.5-flash": "Gemini 2.5 Flash",
                 "gemini-2.5-pro-preview-03-25": "Gemini 2.5 Pro Preview",
-                "gemini-2.5-flash-lite-preview-06-17": "Gemini 2.5 Flash Lite"
+                "gemini-2.5-flash-lite-preview-06-17": "Gemini 2.5 Flash Lite",
             },
-            "xai": {
-                "grok-vision-beta": "Grok Vision Beta"
-            },
-            "zai": {
-                "zai-vision-1": "ZAI Vision 1"
-            },
-            "perplexity": {
-                "llava-7b": "LLaVA 7B",
-                "llava-13b": "LLaVA 13B"
-            },
-            "ollama": {
-                "llava": "LLaVA (Local)",
-                "bakllava": "BakLLaVA (Local)"
-            },
+            "xai": {"grok-vision-beta": "Grok Vision Beta"},
+            "zai": {"zai-vision-1": "ZAI Vision 1"},
+            "perplexity": {"llava-7b": "LLaVA 7B", "llava-13b": "LLaVA 13B"},
+            "ollama": {"llava": "LLaVA (Local)", "bakllava": "BakLLaVA (Local)"},
             "ai_studio": {
                 "gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"
             },
             "openrouter": {
                 "openai/gpt-4o": "GPT-4o (via OpenRouter)",
-                "openai/gpt-4-vision-preview": "GPT-4 Vision (via OpenRouter)"
-            }
+                "openai/gpt-4-vision-preview": "GPT-4 Vision (via OpenRouter)",
+            },
         }
         return model_mappings.get(provider_id, {})
 
     @staticmethod
-    def test_provider_connection(provider_id: str, api_key: str, model_id: str) -> tuple[bool, str]:
+    def test_provider_connection(
+        provider_id: str, api_key: str, model_id: str
+    ) -> tuple[bool, str]:
         """Test provider connection with given credentials."""
         try:
             from .providers import get_provider_class
@@ -379,7 +408,10 @@ Return ONLY valid JSON, no additional text."""
                 # For now, just check if we can list models
                 models = provider.list_available_models()
                 if models:
-                    return True, f"Connected successfully. {len(models)} models available."
+                    return (
+                        True,
+                        f"Connected successfully. {len(models)} models available.",
+                    )
                 else:
                     return False, "No models available"
             except Exception as e:
@@ -387,95 +419,109 @@ Return ONLY valid JSON, no additional text."""
 
         except Exception as e:
             return False, f"Failed to initialize provider: {str(e)}"
-    
+
     def get_provider_info(self, provider_name: str) -> Dict[str, Any]:
         """Get information about a specific provider."""
         if provider_name not in self.providers:
             return {}
-        
+
         provider = self.providers[provider_name]
         return {
             "name": provider_name,
             "configured": provider.is_configured(),
             "available_models": provider.list_available_models(),
-            "has_custom_endpoint": bool(getattr(provider, 'base_url', None))
+            "has_custom_endpoint": bool(getattr(provider, "base_url", None)),
         }
-    
+
     def set_current_provider(self, provider_name: str) -> bool:
         """Set the current AI provider."""
-        if provider_name in self.providers and self.providers[provider_name].is_configured():
+        if (
+            provider_name in self.providers
+            and self.providers[provider_name].is_configured()
+        ):
             self.current_provider = self.providers[provider_name]
             # Update default provider in config
             self.config.setdefault("settings", {})["default_provider"] = provider_name
             self._save_config()
             return True
         return False
-    
-    def configure_provider(self, provider_name: str, api_key: str, model: str = "", base_url: str = "") -> bool:
+
+    def configure_provider(
+        self, provider_name: str, api_key: str, model: str = "", base_url: str = ""
+    ) -> bool:
         """Configure an AI provider."""
         try:
             if provider_name == "openai":
                 provider = OpenAIProvider(
                     api_key=api_key,
                     model=model or "gpt-4-vision-preview",
-                    base_url=base_url or None
+                    base_url=base_url or None,
                 )
             elif provider_name == "openrouter":
                 provider = OpenRouterProvider(
                     api_key=api_key,
                     model=model or "gpt-4-vision-preview",
-                    base_url=base_url or "https://openrouter.io/api/v1"
+                    base_url=base_url or "https://openrouter.io/api/v1",
                 )
             else:
                 self.logger.error("Unsupported provider: %s", provider_name)
                 return False
-            
+
             # Test provider configuration
             if not provider.is_configured():
-                self.logger.error("Provider %s failed configuration test", provider_name)
+                self.logger.error(
+                    "Provider %s failed configuration test", provider_name
+                )
                 return False
-            
+
             # Store provider
             self.providers[provider_name] = provider
-            
+
             # Update configuration
             self.config.setdefault("providers", {})[provider_name] = {
                 "api_key": api_key,
                 "model": model or "gpt-4-vision-preview",
                 "base_url": base_url,
-                "enabled": True
+                "enabled": True,
             }
-            
+
             self._save_config()
             self.logger.info("Provider %s configured successfully", provider_name)
             return True
-            
+
         except Exception as e:
             self.logger.error("Failed to configure provider %s: %s", provider_name, e)
             return False
-    
+
     def test_configured_provider_connection(self, provider_name: str) -> bool:
         """Test connection to a configured provider."""
         if provider_name not in self.providers:
             return False
-        
+
         try:
             provider = self.providers[provider_name]
             models = provider.list_available_models()
             return len(models) > 0
         except Exception as e:
-            self.logger.error("Provider connection test failed for %s: %s", provider_name, e)
+            self.logger.error(
+                "Provider connection test failed for %s: %s", provider_name, e
+            )
             return False
-    
-    def analyze_image(self, image_path: str, prompt: Optional[str] = None, provider_name: Optional[str] = None) -> Dict[str, Any]:
+
+    def analyze_image(
+        self,
+        image_path: str,
+        prompt: Optional[str] = None,
+        provider_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Analyze an image using AI.
-        
+
         Args:
             image_path: Path to the image file
             prompt: Optional custom prompt
             provider_name: Specific provider to use (uses current if not specified)
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -487,26 +533,28 @@ Return ONLY valid JSON, no additional text."""
             provider = self.current_provider
         else:
             raise ValueError("No AI provider configured")
-        
+
         if not provider.is_configured():
             raise ValueError(f"Provider {provider_name or 'current'} is not configured")
-        
+
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")
-        
+
         try:
             self.analysis_started.emit()
             self.progress_updated.emit(10)
-            
+
             # Use custom prompt or get default
             analysis_prompt = prompt
             if not analysis_prompt:
                 # Check for custom prompts in config
                 custom_prompts = self.config.get("custom_prompts", {})
-                analysis_prompt = custom_prompts.get("default", provider.get_default_prompt())
-            
+                analysis_prompt = custom_prompts.get(
+                    "default", provider.get_default_prompt()
+                )
+
             self.progress_updated.emit(30)
-            
+
             # Perform analysis
             result = provider.analyze_image(image_path, analysis_prompt)
 
@@ -523,44 +571,46 @@ Return ONLY valid JSON, no additional text."""
                     result["timestamp"] = str(app.property("current_time"))
                 else:
                     from datetime import datetime
+
                     result["timestamp"] = datetime.now().isoformat()
             except Exception:
                 from datetime import datetime
+
                 result["timestamp"] = datetime.now().isoformat()
 
             self.progress_updated.emit(100)
             self.analysis_completed.emit(result)
 
             return result
-            
+
         except Exception as e:
             error_msg = f"Analysis failed: {str(e)}"
             self.logger.error(error_msg)
             self.analysis_failed.emit(error_msg)
             raise
-    
+
     def get_custom_prompts(self) -> Dict[str, str]:
         """Get custom prompts configuration."""
         return self.config.get("custom_prompts", {})
-    
+
     def set_custom_prompt(self, prompt_type: str, prompt_text: str):
         """Set a custom prompt."""
         self.config.setdefault("custom_prompts", {})[prompt_type] = prompt_text
         self._save_config()
-    
+
     def get_settings(self) -> Dict[str, Any]:
         """Get service settings."""
         return self.config.get("settings", {})
-    
+
     def update_settings(self, settings: Dict[str, Any]):
         """Update service settings."""
         self.config.setdefault("settings", {}).update(settings)
         self._save_config()
-    
+
     def is_available(self) -> bool:
         """Check if AI description service is available."""
         return len(self.get_available_providers()) > 0
-    
+
     def get_provider_models(self, provider_name: str) -> List[str]:
         """Get available models for a provider."""
         if provider_name not in self.providers:

@@ -36,7 +36,11 @@ class LibraryFileBrowser:
                 if p.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
                     self.library_widget.model_manager.load_models([path])
                 else:
-                    QMessageBox.warning(self.library_widget, "Import", f"Unsupported file format: {p.suffix}")
+                    QMessageBox.warning(
+                        self.library_widget,
+                        "Import",
+                        f"Unsupported file format: {p.suffix}",
+                    )
             elif p.is_dir():
                 files_to_import = []
                 supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
@@ -47,11 +51,17 @@ class LibraryFileBrowser:
                     files_to_import = [str(f) for f in files_to_import]
                     self.library_widget.model_manager.load_models(files_to_import)
                 else:
-                    QMessageBox.information(self.library_widget, "Import", f"No supported model files found in {p.name}")
+                    QMessageBox.information(
+                        self.library_widget,
+                        "Import",
+                        f"No supported model files found in {p.name}",
+                    )
 
         except Exception as e:
             self.logger.error(f"Error importing from context menu: {e}")
-            QMessageBox.critical(self.library_widget, "Import Error", f"Failed to import: {e}")
+            QMessageBox.critical(
+                self.library_widget, "Import Error", f"Failed to import: {e}"
+            )
 
     def open_in_native_app(self, file_path: str) -> None:
         """Open file in its native application."""
@@ -61,11 +71,17 @@ class LibraryFileBrowser:
 
             url = QUrl.fromLocalFile(file_path)
             if not QDesktopServices.openUrl(url):
-                QMessageBox.warning(self.library_widget, "Open File", f"Could not open file: {file_path}")
+                QMessageBox.warning(
+                    self.library_widget,
+                    "Open File",
+                    f"Could not open file: {file_path}",
+                )
 
         except Exception as e:
             self.logger.error(f"Error opening file in native app: {e}")
-            QMessageBox.critical(self.library_widget, "Open File", f"Failed to open file: {e}")
+            QMessageBox.critical(
+                self.library_widget, "Open File", f"Failed to open file: {e}"
+            )
 
     def remove_model(self, model_id: int) -> None:
         """Remove a model from the library after confirmation."""
@@ -75,7 +91,9 @@ class LibraryFileBrowser:
                 self.logger.warning(f"Model with ID {model_id} not found")
                 return
 
-            model_name = model_info.get("title") or model_info.get("filename", "Unknown")
+            model_name = model_info.get("title") or model_info.get(
+                "filename", "Unknown"
+            )
 
             reply = QMessageBox.question(
                 self.library_widget,
@@ -91,21 +109,31 @@ class LibraryFileBrowser:
                 if success:
                     if model_info.get("file_path"):
                         try:
-                            self.library_widget.model_cache.remove(model_info["file_path"])
+                            self.library_widget.model_cache.remove(
+                                model_info["file_path"]
+                            )
                         except Exception:
                             pass
 
-                    self.library_widget.status_label.setText(f"Removed '{model_name}' from library")
+                    self.library_widget.status_label.setText(
+                        f"Removed '{model_name}' from library"
+                    )
                     self.library_widget.model_manager.load_models_from_database()
 
-                    self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
+                    self.logger.info(
+                        f"Successfully removed model '{model_name}' (ID: {model_id})"
+                    )
                 else:
-                    self.library_widget.status_label.setText(f"Failed to remove '{model_name}'")
+                    self.library_widget.status_label.setText(
+                        f"Failed to remove '{model_name}'"
+                    )
                     self.logger.error(f"Failed to remove model with ID {model_id}")
 
         except Exception as e:
             self.logger.error(f"Error removing model: {e}")
-            QMessageBox.warning(self.library_widget, "Error", f"Failed to remove model: {str(e)}")
+            QMessageBox.warning(
+                self.library_widget, "Error", f"Failed to remove model: {str(e)}"
+            )
 
     def refresh_models(self) -> None:
         """Refresh models from database."""
@@ -132,16 +160,24 @@ class LibraryFileBrowser:
     def validate_root_folders(self) -> None:
         """Validate that configured root folders are accessible."""
         try:
-            enabled_folders = self.library_widget.root_folder_manager.get_enabled_folders()
+            enabled_folders = (
+                self.library_widget.root_folder_manager.get_enabled_folders()
+            )
             inaccessible_folders = []
 
             for folder in enabled_folders:
                 if not Path(folder.path).exists():
-                    inaccessible_folders.append(f"{folder.display_name} ({folder.path})")
-                    self.logger.warning(f"Root folder not accessible: {folder.display_name} ({folder.path})")
+                    inaccessible_folders.append(
+                        f"{folder.display_name} ({folder.path})"
+                    )
+                    self.logger.warning(
+                        f"Root folder not accessible: {folder.display_name} ({folder.path})"
+                    )
 
             if inaccessible_folders:
-                folder_list = "\n".join(f"• {folder}" for folder in inaccessible_folders)
+                folder_list = "\n".join(
+                    f"• {folder}" for folder in inaccessible_folders
+                )
                 QMessageBox.warning(
                     self.library_widget,
                     "Inaccessible Root Folders",
@@ -150,7 +186,9 @@ class LibraryFileBrowser:
                     "You can update root folder settings in Preferences > Files.",
                 )
             else:
-                self.logger.debug(f"All {len(enabled_folders)} root folders are accessible")
+                self.logger.debug(
+                    f"All {len(enabled_folders)} root folders are accessible"
+                )
 
         except Exception as e:
             self.logger.error(f"Error validating root folders: {e}")
@@ -164,7 +202,9 @@ class LibraryFileBrowser:
         try:
             selected_indexes = self.library_widget.file_tree.selectedIndexes()
             if not selected_indexes:
-                QMessageBox.information(self.library_widget, "Import", "Please select files to import.")
+                QMessageBox.information(
+                    self.library_widget, "Import", "Please select files to import."
+                )
                 return
 
             files_to_import = []
@@ -172,45 +212,68 @@ class LibraryFileBrowser:
                 source_index = self.library_widget.file_proxy_model.mapToSource(index)
                 file_path = self.library_widget.file_model.get_file_path(source_index)
                 if file_path and Path(file_path).is_file():
-                    if Path(file_path).suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                    if Path(file_path).suffix.lower() in [
+                        ".stl",
+                        ".obj",
+                        ".3mf",
+                        ".step",
+                        ".stp",
+                    ]:
                         files_to_import.append(file_path)
 
             if files_to_import:
                 self.library_widget.model_manager.load_models(files_to_import)
             else:
-                QMessageBox.warning(self.library_widget, "Import", "No supported model files selected.")
+                QMessageBox.warning(
+                    self.library_widget, "Import", "No supported model files selected."
+                )
 
         except Exception as e:
             self.logger.error(f"Error importing selected files: {e}")
-            QMessageBox.critical(self.library_widget, "Import Error", f"Failed to import files: {e}")
+            QMessageBox.critical(
+                self.library_widget, "Import Error", f"Failed to import files: {e}"
+            )
 
     def import_selected_folder(self) -> None:
         """Import all models from selected folder."""
         try:
             selected_indexes = self.library_widget.file_tree.selectedIndexes()
             if not selected_indexes:
-                QMessageBox.information(self.library_widget, "Import", "Please select a folder to import.")
+                QMessageBox.information(
+                    self.library_widget, "Import", "Please select a folder to import."
+                )
                 return
 
-            source_index = self.library_widget.file_proxy_model.mapToSource(selected_indexes[0])
+            source_index = self.library_widget.file_proxy_model.mapToSource(
+                selected_indexes[0]
+            )
             folder_path = self.library_widget.file_model.get_file_path(source_index)
 
             if not folder_path or not Path(folder_path).is_dir():
-                QMessageBox.warning(self.library_widget, "Import", "Please select a folder.")
+                QMessageBox.warning(
+                    self.library_widget, "Import", "Please select a folder."
+                )
                 return
 
             files_to_import = []
             supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
             for ext in supported_extensions:
                 files_to_import.extend(Path(folder_path).rglob(f"*{ext}"))
+                files_to_import.extend(Path(folder_path).rglob(f"*{ext.upper()}"))
 
             if files_to_import:
-                files_to_import = [str(f) for f in files_to_import]
+                # Remove duplicates and convert to strings
+                files_to_import = list(set(str(f) for f in files_to_import))
                 self.library_widget.model_manager.load_models(files_to_import)
             else:
-                QMessageBox.information(self.library_widget, "Import", f"No supported model files found in folder.")
+                QMessageBox.information(
+                    self.library_widget,
+                    "Import",
+                    f"No supported model files found in folder.",
+                )
 
         except Exception as e:
             self.logger.error(f"Error importing folder: {e}")
-            QMessageBox.critical(self.library_widget, "Import Error", f"Failed to import folder: {e}")
-
+            QMessageBox.critical(
+                self.library_widget, "Import Error", f"Failed to import folder: {e}"
+            )

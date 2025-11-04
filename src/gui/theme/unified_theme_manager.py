@@ -99,14 +99,14 @@ class UnifiedThemeManager(QObject):
         logger.info("UnifiedThemeManager initialized as single theme coordinator")
 
     @classmethod
-    def instance(cls) -> 'UnifiedThemeManager':
+    def instance(cls) -> "UnifiedThemeManager":
         """
         Get singleton instance of unified theme manager.
 
         Returns:
             UnifiedThemeManager instance
         """
-        if not hasattr(cls, '_instance') or cls._instance is None:
+        if not hasattr(cls, "_instance") or cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
@@ -173,13 +173,17 @@ class UnifiedThemeManager(QObject):
 
                 # Emit success signal
                 self.theme_changed.emit(theme, variant)
-                self.theme_applied.emit(True, f"Theme {theme}/{variant} applied successfully")
+                self.theme_applied.emit(
+                    True, f"Theme {theme}/{variant} applied successfully"
+                )
 
                 # Track performance
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation(True, elapsed, operation_id)
 
-                logger.info(f"Theme {theme}/{variant} applied successfully in {elapsed:.2f}ms")
+                logger.info(
+                    f"Theme {theme}/{variant} applied successfully in {elapsed:.2f}ms"
+                )
                 return True
             else:
                 error_msg = f"Theme application failed: {theme}/{variant}"
@@ -217,11 +221,7 @@ class UnifiedThemeManager(QObject):
         """
         # Dynamic theme system - all variants available for all themes
         variants = ["blue", "amber", "cyan", "red", "green", "purple", "teal"]
-        return {
-            "dark": variants,
-            "light": variants,
-            "auto": variants
-        }
+        return {"dark": variants, "light": variants, "auto": variants}
 
     def get_theme_colors(self) -> Dict[str, str]:
         """
@@ -254,7 +254,9 @@ class UnifiedThemeManager(QObject):
             True if save was successful
         """
         try:
-            theme_data = self._create_theme_data(self._current_theme, self._current_variant)
+            theme_data = self._create_theme_data(
+                self._current_theme, self._current_variant
+            )
             return self._persistence.save_theme(theme_data)
         except Exception as e:
             logger.error(f"Failed to save theme settings: {e}")
@@ -352,8 +354,8 @@ class UnifiedThemeManager(QObject):
                 "validator": self._validator.get_performance_stats(),
                 "cache": self._cache.get_stats(),
                 "registry": self._registry.get_registry_stats(),
-                "application": self._application.get_application_stats()
-            }
+                "application": self._application.get_application_stats(),
+            },
         }
 
     def register_widget(self, widget, widget_name: str = None) -> bool:
@@ -398,7 +400,9 @@ class UnifiedThemeManager(QObject):
         try:
             # Connect application signals
             self._application.application_started.connect(self._on_application_started)
-            self._application.application_completed.connect(self._on_application_completed)
+            self._application.application_completed.connect(
+                self._on_application_completed
+            )
             self._application.application_failed.connect(self._on_application_failed)
 
             # Connect registry signals
@@ -480,7 +484,7 @@ class UnifiedThemeManager(QObject):
             "custom_colors": colors,
             "system_theme_detection": False,
             "auto_save_enabled": True,
-            "theme_version": "2.0.0"
+            "theme_version": "2.0.0",
         }
 
     def _generate_dynamic_colors(self, theme: str, variant: str) -> Dict[str, str]:
@@ -538,13 +542,13 @@ class UnifiedThemeManager(QObject):
         """
         # Map variants to hue ranges
         hue_map = {
-            "blue": 220,    # Blue range
-            "amber": 45,    # Yellow/Orange range
-            "cyan": 180,    # Cyan range
-            "red": 0,       # Red range
-            "green": 120,   # Green range
+            "blue": 220,  # Blue range
+            "amber": 45,  # Yellow/Orange range
+            "cyan": 180,  # Cyan range
+            "red": 0,  # Red range
+            "green": 120,  # Green range
             "purple": 270,  # Purple range
-            "teal": 180     # Teal range (same as cyan)
+            "teal": 180,  # Teal range (same as cyan)
         }
 
         base_hue = hue_map.get(variant, 220)  # Default to blue
@@ -612,8 +616,8 @@ class UnifiedThemeManager(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and lighten
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -626,8 +630,8 @@ class UnifiedThemeManager(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and darken
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -640,15 +644,13 @@ class UnifiedThemeManager(QObject):
         Check if Qt-material library is available.
 
         Returns:
-            True if Qt-material is available
+            False - qt-material has been removed
         """
-        try:
-            import qt_material
-            return True
-        except ImportError:
-            return False
+        return False
 
-    def _track_operation(self, success: bool, elapsed_ms: float, operation_id: str) -> None:
+    def _track_operation(
+        self, success: bool, elapsed_ms: float, operation_id: str
+    ) -> None:
         """Track operation performance and statistics."""
         self._operation_count += 1
         if not success:
@@ -657,7 +659,9 @@ class UnifiedThemeManager(QObject):
 
         # Log slow operations
         if elapsed_ms > 1000:  # More than 1 second
-            logger.warning(f"Slow theme operation: {operation_id} took {elapsed_ms:.2f}ms")
+            logger.warning(
+                f"Slow theme operation: {operation_id} took {elapsed_ms:.2f}ms"
+            )
 
     def _on_application_started(self, theme: str, variant: str) -> None:
         """Handle theme application started signal."""

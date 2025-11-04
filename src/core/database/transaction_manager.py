@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 
 class TransactionState(Enum):
     """Transaction state enumeration."""
+
     PENDING = "pending"
     ACTIVE = "active"
     COMMITTED = "committed"
@@ -30,11 +31,13 @@ class TransactionState(Enum):
 
 class DatabaseError(Exception):
     """Custom database exception for better error handling."""
+
     pass
 
 
 class TransactionError(DatabaseError):
     """Transaction-specific exception."""
+
     pass
 
 
@@ -69,7 +72,7 @@ class ConnectionPool:
             DatabaseError: If unable to get connection
         """
         start_time = time.time()
-        
+
         while time.time() - start_time < self.timeout:
             with self._lock:
                 # Try to reuse an existing connection
@@ -82,7 +85,7 @@ class ConnectionPool:
                     except sqlite3.Error:
                         # Connection is broken, discard it
                         continue
-                
+
                 # Create new connection if under limit
                 if self._active_connections < self.max_connections:
                     self._active_connections += 1
@@ -91,12 +94,16 @@ class ConnectionPool:
                         return conn
                     except sqlite3.Error:
                         self._active_connections -= 1
-                        raise DatabaseError(f"Failed to create database connection to {self.db_path}")
-            
+                        raise DatabaseError(
+                            f"Failed to create database connection to {self.db_path}"
+                        )
+
             # Wait a bit before retrying
             time.sleep(0.1)
-        
-        raise DatabaseError(f"Timeout waiting for database connection after {self.timeout}s")
+
+        raise DatabaseError(
+            f"Timeout waiting for database connection after {self.timeout}s"
+        )
 
     def return_connection(self, conn: sqlite3.Connection) -> None:
         """
@@ -109,7 +116,7 @@ class ConnectionPool:
             try:
                 # Test if connection is still valid
                 conn.execute("SELECT 1")
-                
+
                 # Return to pool if under limit
                 if len(self._pool) < self.max_connections:
                     self._pool.append(conn)
@@ -127,26 +134,22 @@ class ConnectionPool:
 
     def _create_connection(self) -> sqlite3.Connection:
         """Create a new database connection with optimized settings."""
-        conn = sqlite3.connect(
-            self.db_path,
-            check_same_thread=False,
-            timeout=30.0
-        )
-        
+        conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
+
         # Enable foreign key constraints
         conn.execute("PRAGMA foreign_keys = ON")
-        
+
         # Set WAL mode for better performance
         conn.execute("PRAGMA journal_mode = WAL")
-        
+
         # Optimize for performance
         conn.execute("PRAGMA synchronous = NORMAL")
         conn.execute("PRAGMA cache_size = 10000")
         conn.execute("PRAGMA temp_store = MEMORY")
-        
+
         # Enable auto-vacuum
         conn.execute("PRAGMA auto_vacuum = INCREMENTAL")
-        
+
         return conn
 
     def close_all(self) -> None:
@@ -195,7 +198,9 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.COMMITTED
             duration = time.time() - self.start_time
-            logger.info(f"Transaction {self.transaction_id} committed in {duration:.3f}s")
+            logger.info(
+                f"Transaction {self.transaction_id} committed in {duration:.3f}s"
+            )
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
             raise TransactionError(f"Failed to commit transaction: {str(e)}")
@@ -207,18 +212,20 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.ROLLED_BACK
             duration = time.time() - self.start_time
-            logger.info(f"Transaction {self.transaction_id} rolled back after {duration:.3f}s")
+            logger.info(
+                f"Transaction {self.transaction_id} rolled back after {duration:.3f}s"
+            )
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
-            logger.error(f"Failed to rollback transaction {self.transaction_id}: {str(e)}")
+            logger.error(
+                f"Failed to rollback transaction {self.transaction_id}: {str(e)}"
+            )
 
     def add_operation(self, operation: str, params: tuple = None) -> None:
         """Add an operation to the transaction log."""
-        self.operations.append({
-            'operation': operation,
-            'params': params,
-            'timestamp': time.time()
-        })
+        self.operations.append(
+            {"operation": operation, "params": params, "timestamp": time.time()}
+        )
 
     def get_duration(self) -> float:
         """Get transaction duration in seconds."""
@@ -261,19 +268,25 @@ class TransactionManager:
             TransactionError: If all retry attempts fail
         """
         last_exception = None
-        
+
         for attempt in range(self.max_retries + 1):
             try:
                 return operation(*args, **kwargs)
             except (sqlite3.Error, TransactionError) as e:
                 last_exception = e
                 if attempt < self.max_retries:
-                    logger.warning(f"Operation failed (attempt {attempt + 1}/{self.max_retries + 1}): {str(e)}")
-                    time.sleep(self.retry_delay * (2 ** attempt))  # Exponential backoff
+                    logger.warning(
+                        f"Operation failed (attempt {attempt + 1}/{self.max_retries + 1}): {str(e)}"
+                    )
+                    time.sleep(self.retry_delay * (2**attempt))  # Exponential backoff
                 else:
-                    logger.error(f"Operation failed after {self.max_retries + 1} attempts: {str(e)}")
-        
-        raise TransactionError(f"Operation failed after {self.max_retries + 1} attempts: {str(last_exception)}")
+                    logger.error(
+                        f"Operation failed after {self.max_retries + 1} attempts: {str(e)}"
+                    )
+
+        raise TransactionError(
+            f"Operation failed after {self.max_retries + 1} attempts: {str(last_exception)}"
+        )
 
     @contextmanager
     def transaction(self, transaction_id: str = None):
@@ -291,49 +304,55 @@ class TransactionManager:
         """
         transaction = None
         conn = None
-        
+
         try:
             # Get connection from pool
             conn = self.connection_pool.get_connection()
-            
+
             # Create transaction
             transaction = Transaction(conn, transaction_id)
             transaction.begin()
-            
+
             # Register active transaction
             with self._lock:
                 self.active_transactions[transaction.transaction_id] = transaction
-            
+
             yield transaction
-            
+
             # Commit transaction
             transaction.commit()
-            
+
         except Exception as e:
             # Rollback transaction
             if transaction:
                 try:
                     transaction.rollback()
                 except Exception as rollback_error:
-                    logger.error(f"Failed to rollback transaction {transaction.transaction_id}: {str(rollback_error)}")
-            
+                    logger.error(
+                        f"Failed to rollback transaction {transaction.transaction_id}: {str(rollback_error)}"
+                    )
+
             # Log transaction failure
             if transaction:
-                logger.error(f"Transaction {transaction.transaction_id} failed: {str(e)}")
-            
+                logger.error(
+                    f"Transaction {transaction.transaction_id} failed: {str(e)}"
+                )
+
             raise TransactionError(f"Transaction failed: {str(e)}")
-        
+
         finally:
             # Unregister transaction
             if transaction:
                 with self._lock:
                     self.active_transactions.pop(transaction.transaction_id, None)
-            
+
             # Return connection to pool
             if conn:
                 self.connection_pool.return_connection(conn)
 
-    def execute_transaction(self, operations: List[Dict[str, Any]], transaction_id: str = None) -> List[Any]:
+    def execute_transaction(
+        self, operations: List[Dict[str, Any]], transaction_id: str = None
+    ) -> List[Any]:
         """
         Execute multiple operations in a single transaction.
 
@@ -348,25 +367,27 @@ class TransactionManager:
             TransactionError: If transaction fails
         """
         results = []
-        
+
         with self.transaction(transaction_id) as transaction:
             for op in operations:
                 try:
-                    func = op['function']
-                    args = op.get('args', ())
-                    kwargs = op.get('kwargs', {})
-                    
+                    func = op["function"]
+                    args = op.get("args", ())
+                    kwargs = op.get("kwargs", {})
+
                     # Add operation to transaction log
                     transaction.add_operation(func.__name__, args)
-                    
+
                     # Execute operation
                     result = func(*args, **kwargs)
                     results.append(result)
-                    
+
                 except Exception as e:
-                    logger.error(f"Operation {op} failed in transaction {transaction.transaction_id}: {str(e)}")
+                    logger.error(
+                        f"Operation {op} failed in transaction {transaction.transaction_id}: {str(e)}"
+                    )
                     raise TransactionError(f"Operation failed: {str(e)}")
-        
+
         return results
 
     def get_transaction_status(self, transaction_id: str) -> Optional[Dict[str, Any]]:
@@ -383,11 +404,11 @@ class TransactionManager:
             transaction = self.active_transactions.get(transaction_id)
             if transaction:
                 return {
-                    'transaction_id': transaction.transaction_id,
-                    'state': transaction.state.value,
-                    'start_time': transaction.start_time,
-                    'duration': transaction.get_duration(),
-                    'operations_count': len(transaction.operations)
+                    "transaction_id": transaction.transaction_id,
+                    "state": transaction.state.value,
+                    "start_time": transaction.start_time,
+                    "duration": transaction.get_duration(),
+                    "operations_count": len(transaction.operations),
                 }
         return None
 
@@ -401,11 +422,11 @@ class TransactionManager:
         with self._lock:
             return [
                 {
-                    'transaction_id': tid,
-                    'state': tx.state.value,
-                    'start_time': tx.start_time,
-                    'duration': tx.get_duration(),
-                    'operations_count': len(tx.operations)
+                    "transaction_id": tid,
+                    "state": tx.state.value,
+                    "start_time": tx.start_time,
+                    "duration": tx.get_duration(),
+                    "operations_count": len(tx.operations),
                 }
                 for tid, tx in self.active_transactions.items()
             ]
@@ -422,14 +443,14 @@ class TransactionManager:
         """
         current_time = time.time()
         cleaned_count = 0
-        
+
         with self._lock:
             stale_transactions = []
-            
+
             for tid, transaction in self.active_transactions.items():
                 if current_time - transaction.start_time > max_age:
                     stale_transactions.append(tid)
-            
+
             for tid in stale_transactions:
                 transaction = self.active_transactions.pop(tid, None)
                 if transaction:
@@ -438,8 +459,10 @@ class TransactionManager:
                         cleaned_count += 1
                         logger.warning(f"Cleaned up stale transaction {tid}")
                     except Exception as e:
-                        logger.error(f"Failed to cleanup stale transaction {tid}: {str(e)}")
-        
+                        logger.error(
+                            f"Failed to cleanup stale transaction {tid}: {str(e)}"
+                        )
+
         return cleaned_count
 
     def close(self) -> None:
@@ -450,9 +473,11 @@ class TransactionManager:
                 try:
                     transaction.rollback()
                 except Exception as e:
-                    logger.error(f"Failed to rollback transaction during cleanup: {str(e)}")
+                    logger.error(
+                        f"Failed to rollback transaction during cleanup: {str(e)}"
+                    )
             self.active_transactions.clear()
-        
+
         # Close connection pool
         self.connection_pool.close_all()
         logger.info("Transaction manager closed")
@@ -469,6 +494,7 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1):
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -479,8 +505,9 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1):
             except sqlite3.Error as e:
                 logger.error(f"Database error in {func.__name__}: {str(e)}")
                 raise DatabaseError(f"Database operation failed: {str(e)}")
-        
+
         return wrapper
+
     return decorator
 
 
@@ -496,12 +523,12 @@ class DatabaseHealthMonitor:
         """
         self.connection_pool = connection_pool
         self._metrics = {
-            'total_operations': 0,
-            'successful_operations': 0,
-            'failed_operations': 0,
-            'average_response_time': 0.0,
-            'connection_pool_size': 0,
-            'active_connections': 0
+            "total_operations": 0,
+            "successful_operations": 0,
+            "failed_operations": 0,
+            "average_response_time": 0.0,
+            "connection_pool_size": 0,
+            "active_connections": 0,
         }
         self._lock = threading.Lock()
 
@@ -514,23 +541,25 @@ class DatabaseHealthMonitor:
             response_time: Operation response time in seconds
         """
         with self._lock:
-            self._metrics['total_operations'] += 1
-            
+            self._metrics["total_operations"] += 1
+
             if success:
-                self._metrics['successful_operations'] += 1
+                self._metrics["successful_operations"] += 1
             else:
-                self._metrics['failed_operations'] += 1
-            
+                self._metrics["failed_operations"] += 1
+
             # Update average response time
-            total_ops = self._metrics['total_operations']
-            current_avg = self._metrics['average_response_time']
-            self._metrics['average_response_time'] = (
-                (current_avg * (total_ops - 1) + response_time) / total_ops
-            )
-            
+            total_ops = self._metrics["total_operations"]
+            current_avg = self._metrics["average_response_time"]
+            self._metrics["average_response_time"] = (
+                current_avg * (total_ops - 1) + response_time
+            ) / total_ops
+
             # Update connection metrics
-            self._metrics['connection_pool_size'] = len(self.connection_pool._pool)
-            self._metrics['active_connections'] = self.connection_pool._active_connections
+            self._metrics["connection_pool_size"] = len(self.connection_pool._pool)
+            self._metrics["active_connections"] = (
+                self.connection_pool._active_connections
+            )
 
     def get_health_status(self) -> Dict[str, Any]:
         """
@@ -541,32 +570,37 @@ class DatabaseHealthMonitor:
         """
         with self._lock:
             metrics = self._metrics.copy()
-            
+
             # Calculate success rate
-            if metrics['total_operations'] > 0:
-                metrics['success_rate'] = metrics['successful_operations'] / metrics['total_operations']
+            if metrics["total_operations"] > 0:
+                metrics["success_rate"] = (
+                    metrics["successful_operations"] / metrics["total_operations"]
+                )
             else:
-                metrics['success_rate'] = 0.0
-            
+                metrics["success_rate"] = 0.0
+
             # Determine health status
-            if metrics['success_rate'] >= 0.95 and metrics['average_response_time'] < 1.0:
-                status = 'healthy'
-            elif metrics['success_rate'] >= 0.80:
-                status = 'degraded'
+            if (
+                metrics["success_rate"] >= 0.95
+                and metrics["average_response_time"] < 1.0
+            ):
+                status = "healthy"
+            elif metrics["success_rate"] >= 0.80:
+                status = "degraded"
             else:
-                status = 'unhealthy'
-            
-            metrics['status'] = status
+                status = "unhealthy"
+
+            metrics["status"] = status
             return metrics
 
     def reset_metrics(self) -> None:
         """Reset all metrics."""
         with self._lock:
             self._metrics = {
-                'total_operations': 0,
-                'successful_operations': 0,
-                'failed_operations': 0,
-                'average_response_time': 0.0,
-                'connection_pool_size': 0,
-                'active_connections': 0
+                "total_operations": 0,
+                "successful_operations": 0,
+                "failed_operations": 0,
+                "average_response_time": 0.0,
+                "connection_pool_size": 0,
+                "active_connections": 0,
             }

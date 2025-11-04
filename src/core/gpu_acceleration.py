@@ -17,6 +17,7 @@ from src.core.logging_config import get_logger, log_function_call
 
 class GPUBackend(Enum):
     """Supported GPU acceleration backends."""
+
     CUDA = "cuda"
     OPENCL = "opencl"
     CPU = "cpu"  # Fallback
@@ -24,6 +25,7 @@ class GPUBackend(Enum):
 
 class GPUCapability(Enum):
     """GPU capability levels."""
+
     NONE = 0
     BASIC = 1
     ADVANCED = 2
@@ -33,6 +35,7 @@ class GPUCapability(Enum):
 @dataclass
 class GPUDevice:
     """Information about a GPU device."""
+
     backend: GPUBackend
     device_id: int
     name: str
@@ -48,6 +51,7 @@ class GPUDevice:
 
 class GPUAccelerationError(Exception):
     """Exception raised for GPU acceleration errors."""
+
     pass
 
 
@@ -124,7 +128,7 @@ class GPUBuffer:
                 return self._copy_to_opencl(data, offset)
             else:
                 # CPU copy
-                self._buffer[offset:offset + len(data)] = data
+                self._buffer[offset : offset + len(data)] = data
                 return True
         except Exception:
             return False
@@ -160,7 +164,7 @@ class GPUBuffer:
                 return self._copy_from_opencl(size, offset)
             else:
                 # CPU copy
-                return bytes(self._buffer[offset:offset + size])
+                return bytes(self._buffer[offset : offset + size])
         except Exception:
             return None
 
@@ -257,7 +261,7 @@ class TriangleProcessingKernel(GPUKernel):
     def execute(self, buffers: List[GPUBuffer], params: Dict[str, Any]) -> bool:
         """Execute triangle processing kernel."""
         try:
-            triangle_count = params.get('triangle_count', 0)
+            triangle_count = params.get("triangle_count", 0)
             if triangle_count == 0:
                 return True
 
@@ -284,10 +288,11 @@ class TriangleProcessingKernel(GPUKernel):
     def _execute_cpu(self, buffers: List[GPUBuffer], params: Dict[str, Any]) -> bool:
         """Execute CPU fallback triangle processing."""
         # Simple CPU-based processing for fallback
-        triangle_count = params.get('triangle_count', 0)
+        triangle_count = params.get("triangle_count", 0)
 
         # Simulate processing time
         import time
+
         time.sleep(triangle_count / 1000000.0)  # Rough timing simulation
 
         return True
@@ -332,11 +337,13 @@ class GPUAccelerator:
             name="CPU Fallback",
             memory_gb=0.0,  # Unlimited for CPU
             compute_capability=0.0,
-            capability_level=GPUCapability.BASIC
+            capability_level=GPUCapability.BASIC,
         )
         self.devices.append(cpu_device)
 
-        self.logger.info(f"Detected {len(self.devices)} GPU devices: {[d.name for d in self.devices]}")
+        self.logger.info(
+            f"Detected {len(self.devices)} GPU devices: {[d.name for d in self.devices]}"
+        )
 
     def _detect_cuda_devices(self) -> List[GPUDevice]:
         """Detect CUDA-capable devices."""
@@ -348,14 +355,16 @@ class GPUAccelerator:
             if platform.system() == "Windows":
                 # Try to detect NVIDIA GPUs
                 # Placeholder - would use nvidia-ml-py or similar
-                devices.append(GPUDevice(
-                    backend=GPUBackend.CUDA,
-                    device_id=0,
-                    name="NVIDIA GeForce RTX 3090",
-                    memory_gb=24.0,
-                    compute_capability=8.6,
-                    capability_level=GPUCapability.HIGH_END
-                ))
+                devices.append(
+                    GPUDevice(
+                        backend=GPUBackend.CUDA,
+                        device_id=0,
+                        name="NVIDIA GeForce RTX 3090",
+                        memory_gb=24.0,
+                        compute_capability=8.6,
+                        capability_level=GPUCapability.HIGH_END,
+                    )
+                )
         except Exception as e:
             self.logger.debug(f"CUDA detection failed: {e}")
 
@@ -371,14 +380,16 @@ class GPUAccelerator:
             if platform.system() == "Windows":
                 # Try to detect AMD/Intel GPUs
                 # Placeholder - would enumerate OpenCL platforms/devices
-                devices.append(GPUDevice(
-                    backend=GPUBackend.OPENCL,
-                    device_id=0,
-                    name="AMD Radeon RX 6800",
-                    memory_gb=16.0,
-                    compute_capability=0.0,  # OpenCL doesn't have compute capability
-                    capability_level=GPUCapability.ADVANCED
-                ))
+                devices.append(
+                    GPUDevice(
+                        backend=GPUBackend.OPENCL,
+                        device_id=0,
+                        name="AMD Radeon RX 6800",
+                        memory_gb=16.0,
+                        compute_capability=0.0,  # OpenCL doesn't have compute capability
+                        capability_level=GPUCapability.ADVANCED,
+                    )
+                )
         except Exception as e:
             self.logger.debug(f"OpenCL detection failed: {e}")
 
@@ -394,11 +405,13 @@ class GPUAccelerator:
         sorted_devices = sorted(
             self.devices,
             key=lambda d: (d.capability_level.value, d.memory_gb),
-            reverse=True
+            reverse=True,
         )
 
         self.active_device = sorted_devices[0]
-        self.logger.info(f"Selected GPU device: {self.active_device.name} ({self.active_device.backend.value})")
+        self.logger.info(
+            f"Selected GPU device: {self.active_device.name} ({self.active_device.backend.value})"
+        )
 
     @log_function_call
     def allocate_buffer(self, size_bytes: int) -> Optional[GPUBuffer]:
@@ -455,10 +468,7 @@ class GPUAccelerator:
 
     @log_function_call
     def execute_kernel(
-        self,
-        kernel_type: str,
-        buffers: List[GPUBuffer],
-        params: Dict[str, Any]
+        self, kernel_type: str, buffers: List[GPUBuffer], params: Dict[str, Any]
     ) -> bool:
         """
         Execute a GPU kernel.
@@ -497,7 +507,7 @@ class GPUAccelerator:
             "name": self.active_device.name,
             "memory_gb": self.active_device.memory_gb,
             "capability_level": self.active_device.capability_level.name,
-            "compute_capability": self.active_device.compute_capability
+            "compute_capability": self.active_device.compute_capability,
         }
 
     @log_function_call

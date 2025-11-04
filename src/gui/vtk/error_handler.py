@@ -36,10 +36,10 @@ class VTKErrorCode(Enum):
 class VTKErrorSeverity(Enum):
     """Error severity levels for appropriate response."""
 
-    LOW = "low"           # Log and continue
-    MEDIUM = "medium"     # Log warning and attempt recovery
-    HIGH = "high"         # Log error and use fallback
-    CRITICAL = "critical" # Log critical and shutdown gracefully
+    LOW = "low"  # Log and continue
+    MEDIUM = "medium"  # Log warning and attempt recovery
+    HIGH = "high"  # Log error and use fallback
+    CRITICAL = "critical"  # Log critical and shutdown gracefully
 
 
 class VTKErrorHandler:
@@ -102,6 +102,7 @@ class VTKErrorHandler:
             self.logger.error("VTK memory error, attempting cleanup")
             # Force garbage collection and try to free resources
             import gc
+
             gc.collect()
             return False  # Memory errors are serious, don't continue
 
@@ -157,7 +158,11 @@ class VTKErrorHandler:
                 "error_code": error_code.value,
                 "severity": severity.value,
                 "timestamp": self._get_timestamp(),
-                "traceback": traceback.format_stack()[-3:-1] if severity != VTKErrorSeverity.LOW else []
+                "traceback": (
+                    traceback.format_stack()[-3:-1]
+                    if severity != VTKErrorSeverity.LOW
+                    else []
+                ),
             }
 
             # Log the error
@@ -171,9 +176,13 @@ class VTKErrorHandler:
                 try:
                     recovery_success = self.recovery_strategies[error_code](error_info)
                     if recovery_success:
-                        self.logger.debug(f"Recovery strategy succeeded for {error_code.value}")
+                        self.logger.debug(
+                            f"Recovery strategy succeeded for {error_code.value}"
+                        )
                     else:
-                        self.logger.warning(f"Recovery strategy failed for {error_code.value}")
+                        self.logger.warning(
+                            f"Recovery strategy failed for {error_code.value}"
+                        )
                 except Exception as e:
                     self.logger.error(f"Recovery strategy failed with exception: {e}")
 
@@ -196,7 +205,9 @@ class VTKErrorHandler:
             return VTKErrorCode.CLEANUP_ERROR
         elif "invalid handle" in error_lower or "error: 6" in error_lower:
             return VTKErrorCode.INVALID_HANDLE
-        elif "context" in error_lower and ("lost" in error_lower or "invalid" in error_lower):
+        elif "context" in error_lower and (
+            "lost" in error_lower or "invalid" in error_lower
+        ):
             return VTKErrorCode.CONTEXT_LOST
         elif "render" in error_lower or "opengl" in error_lower:
             return VTKErrorCode.RENDER_ERROR
@@ -209,7 +220,9 @@ class VTKErrorHandler:
         else:
             return VTKErrorCode.UNKNOWN_ERROR
 
-    def _determine_severity(self, error_code: VTKErrorCode, error_text: str) -> VTKErrorSeverity:
+    def _determine_severity(
+        self, error_code: VTKErrorCode, error_text: str
+    ) -> VTKErrorSeverity:
         """Determine error severity based on code and content."""
         # Critical errors that require immediate attention
         if error_code in [VTKErrorCode.MEMORY_ERROR, VTKErrorCode.THREAD_ERROR]:
@@ -229,14 +242,16 @@ class VTKErrorHandler:
 
         return VTKErrorSeverity.MEDIUM
 
-    def _log_error(self, error_info: Dict[str, Any], severity: VTKErrorSeverity) -> None:
+    def _log_error(
+        self, error_info: Dict[str, Any], severity: VTKErrorSeverity
+    ) -> None:
         """Log error with appropriate level and format."""
         log_data = {
             "vtk_error": True,
             "error_code": error_info["error_code"],
             "severity": error_info["severity"],
             "error_text": error_info["error_text"],
-            "timestamp": error_info["timestamp"]
+            "timestamp": error_info["timestamp"],
         }
 
         # Add traceback for non-low severity errors
@@ -245,17 +260,26 @@ class VTKErrorHandler:
 
         # Log with appropriate level
         if severity == VTKErrorSeverity.CRITICAL:
-            self.logger.critical(f"VTK Critical Error: {error_info['error_text']}", extra=log_data)
+            self.logger.critical(
+                f"VTK Critical Error: {error_info['error_text']}", extra=log_data
+            )
         elif severity == VTKErrorSeverity.HIGH:
-            self.logger.error(f"VTK High Severity Error: {error_info['error_text']}", extra=log_data)
+            self.logger.error(
+                f"VTK High Severity Error: {error_info['error_text']}", extra=log_data
+            )
         elif severity == VTKErrorSeverity.MEDIUM:
-            self.logger.warning(f"VTK Medium Severity Error: {error_info['error_text']}", extra=log_data)
+            self.logger.warning(
+                f"VTK Medium Severity Error: {error_info['error_text']}", extra=log_data
+            )
         else:  # LOW severity
-            self.logger.debug(f"VTK Low Severity Error: {error_info['error_text']}", extra=log_data)
+            self.logger.debug(
+                f"VTK Low Severity Error: {error_info['error_text']}", extra=log_data
+            )
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     @log_function_call(logger)
@@ -284,7 +308,9 @@ class VTKErrorHandler:
                 "context": context,
                 "exception_type": type(error).__name__,
                 "timestamp": self._get_timestamp(),
-                "traceback": traceback.format_exception(type(error), error, error.__traceback__)
+                "traceback": traceback.format_exception(
+                    type(error), error, error.__traceback__
+                ),
             }
 
             # Log the error
@@ -308,7 +334,9 @@ class VTKErrorHandler:
             self.logger.error(f"Error in error handler: {e}")
             return False
 
-    def register_error_callback(self, error_code: VTKErrorCode, callback: Callable) -> None:
+    def register_error_callback(
+        self, error_code: VTKErrorCode, callback: Callable
+    ) -> None:
         """
         Register a callback for specific error types.
 
@@ -335,14 +363,17 @@ class VTKErrorHandler:
 
         # Schedule re-enabling of errors
         from PySide6.QtCore import QTimer
+
         QTimer.singleShot(duration_ms, reenable_errors)
 
     def get_error_stats(self) -> Dict[str, Any]:
         """Get error statistics for debugging."""
         return {
-            "error_counts": {code.value: count for code, count in self.error_counts.items()},
+            "error_counts": {
+                code.value: count for code, count in self.error_counts.items()
+            },
             "total_errors": sum(self.error_counts.values()),
-            "suppressed_errors": self.suppress_errors
+            "suppressed_errors": self.suppress_errors,
         }
 
     def reset_error_counts(self) -> None:
@@ -361,10 +392,13 @@ class VTKErrorHandler:
         Returns:
             True if this appears to be a context loss error
         """
-        return (VTKErrorCode.CONTEXT_LOST == self._classify_error(error_text) or
-                VTKErrorCode.INVALID_HANDLE == self._classify_error(error_text))
+        return VTKErrorCode.CONTEXT_LOST == self._classify_error(
+            error_text
+        ) or VTKErrorCode.INVALID_HANDLE == self._classify_error(error_text)
 
-    def safe_vtk_operation(self, operation: Callable, context: str = "vtk_operation") -> Any:
+    def safe_vtk_operation(
+        self, operation: Callable, context: str = "vtk_operation"
+    ) -> Any:
         """
         Safely execute a VTK operation with error handling.
 

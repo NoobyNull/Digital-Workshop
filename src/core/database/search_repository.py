@@ -32,7 +32,7 @@ class SearchRepository:
         category: Optional[str] = None,
         file_format: Optional[str] = None,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for models by query and filters.
@@ -96,7 +96,9 @@ class SearchRepository:
                 rows = cursor.fetchall()
 
                 results = [dict(row) for row in rows]
-                logger.debug(f"Search returned {len(results)} results for query: '{query}'")
+                logger.debug(
+                    f"Search returned {len(results)} results for query: '{query}'"
+                )
                 return results
 
         except sqlite3.Error as e:
@@ -119,18 +121,23 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.filename LIKE ?
                     ORDER BY m.filename ASC
-                """, (f"%{filename}%",))
+                """,
+                    (f"%{filename}%",),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(f"Filename search returned {len(results)} results for: '{filename}'")
+                logger.debug(
+                    f"Filename search returned {len(results)} results for: '{filename}'"
+                )
                 return results
 
         except sqlite3.Error as e:
@@ -142,7 +149,7 @@ class SearchRepository:
         self,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        keywords: Optional[str] = None
+        keywords: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search models by metadata fields.
@@ -211,7 +218,8 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
@@ -219,7 +227,11 @@ class SearchRepository:
                     WHERE m.date_added >= datetime('now', '-{} days')
                     ORDER BY m.date_added DESC
                     LIMIT ?
-                """.format(days), (limit,))
+                """.format(
+                        days
+                    ),
+                    (limit,),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
@@ -246,7 +258,8 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
@@ -254,7 +267,9 @@ class SearchRepository:
                     WHERE mm.view_count > 0
                     ORDER BY mm.view_count DESC, mm.last_viewed DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]

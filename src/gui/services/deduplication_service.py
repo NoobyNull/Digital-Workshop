@@ -158,4 +158,3 @@ class DeduplicationService(QObject):
     def get_pending_duplicate_groups(self) -> Dict[str, List[Dict]]:
         """Get all pending duplicate groups."""
         return self.pending_duplicates.copy()
-

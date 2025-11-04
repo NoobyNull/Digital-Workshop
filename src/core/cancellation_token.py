@@ -29,8 +29,8 @@ class CancellationToken:
         """Support for pickling - exclude non-serializable objects."""
         state = self.__dict__.copy()
         # Remove the lock and logger as they can't be pickled
-        state.pop('_lock', None)
-        state.pop('logger', None)
+        state.pop("_lock", None)
+        state.pop("logger", None)
         return state
 
     def __setstate__(self, state):

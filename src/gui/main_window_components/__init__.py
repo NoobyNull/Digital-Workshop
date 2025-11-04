@@ -11,10 +11,9 @@ from .event_handler import EventHandler
 from .main_window_facade import MainWindowFacade
 
 __all__ = [
-    'LayoutManager',
-    'SettingsManager',
-    'DockManager',
-    'EventHandler',
-    'MainWindowFacade',
+    "LayoutManager",
+    "SettingsManager",
+    "DockManager",
+    "EventHandler",
+    "MainWindowFacade",
 ]
-

@@ -19,11 +19,17 @@ class SearchWorker(QThread):
     """
     Worker thread for performing search operations without blocking the UI.
     """
+
     search_completed = Signal(dict)
     search_failed = Signal(str)
 
-    def __init__(self, query: str, filters: Optional[Dict[str, Any]] = None,
-                 limit: int = 100, offset: int = 0):
+    def __init__(
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ):
         """
         Initialize the search worker.
 
@@ -59,6 +65,7 @@ class SearchSuggestionWorker(QThread):
     """
     Worker thread for getting search suggestions.
     """
+
     suggestions_ready = Signal(list)
 
     def __init__(self, query: str, limit: int = 10):
@@ -79,9 +86,10 @@ class SearchSuggestionWorker(QThread):
         Get search suggestions.
         """
         try:
-            suggestions = self.search_engine.get_search_suggestions(self.query, self.limit)
+            suggestions = self.search_engine.get_search_suggestions(
+                self.query, self.limit
+            )
             self.suggestions_ready.emit(suggestions)
         except Exception as e:
             logger.error(f"Failed to get suggestions: {str(e)}")
             self.suggestions_ready.emit([])
-

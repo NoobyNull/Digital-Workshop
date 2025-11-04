@@ -21,7 +21,7 @@ from .unified_cleanup_coordinator import (
     CleanupStats,
     CleanupHandler,
     get_unified_cleanup_coordinator,
-    coordinate_unified_cleanup
+    coordinate_unified_cleanup,
 )
 
 from .vtk_cleanup_handler import VTKCleanupHandler
@@ -30,21 +30,21 @@ from .service_cleanup_handler import ServiceCleanupHandler
 from .resource_cleanup_handler import ResourceCleanupHandler
 
 __all__ = [
-    'UnifiedCleanupCoordinator',
-    'CleanupPhase',
-    'CleanupContext',
-    'CleanupError',
-    'CleanupStats',
-    'CleanupHandler',
-    'VTKCleanupHandler',
-    'WidgetCleanupHandler',
-    'ServiceCleanupHandler',
-    'ResourceCleanupHandler',
-    'get_unified_cleanup_coordinator',
-    'coordinate_unified_cleanup'
+    "UnifiedCleanupCoordinator",
+    "CleanupPhase",
+    "CleanupContext",
+    "CleanupError",
+    "CleanupStats",
+    "CleanupHandler",
+    "VTKCleanupHandler",
+    "WidgetCleanupHandler",
+    "ServiceCleanupHandler",
+    "ResourceCleanupHandler",
+    "get_unified_cleanup_coordinator",
+    "coordinate_unified_cleanup",
 ]
 
 # Version information
-__version__ = '1.0.0'
-__author__ = 'Kilo Code'
-__description__ = 'Unified Cleanup System for Application Resource Management'
+__version__ = "1.0.0"
+__author__ = "Kilo Code"
+__description__ = "Unified Cleanup System for Application Resource Management"

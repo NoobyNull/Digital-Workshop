@@ -35,7 +35,7 @@ class RunModeManager:
             # Check if first run
             if not self.settings.contains("run_mode/initialized"):
                 return self.RUN_MODE_FIRST_TIME
-            
+
             run_mode = self.settings.value("run_mode/mode", self.RUN_MODE_NORMAL)
             logger.info(f"Run mode: {run_mode}")
             return run_mode
@@ -48,9 +48,13 @@ class RunModeManager:
     def set_run_mode(self, mode: str) -> bool:
         """Set run mode."""
         try:
-            if mode not in (self.RUN_MODE_FIRST_TIME, self.RUN_MODE_NORMAL, self.RUN_MODE_PORTABLE):
+            if mode not in (
+                self.RUN_MODE_FIRST_TIME,
+                self.RUN_MODE_NORMAL,
+                self.RUN_MODE_PORTABLE,
+            ):
                 raise ValueError(f"Invalid run mode: {mode}")
-            
+
             self.settings.setValue("run_mode/mode", mode)
             self.settings.setValue("run_mode/initialized", True)
             logger.info(f"Set run mode: {mode}")
@@ -101,15 +105,15 @@ class RunModeManager:
         """Set storage location."""
         try:
             path = Path(location)
-            
+
             # Create directory if it doesn't exist
             path.mkdir(parents=True, exist_ok=True)
-            
+
             # Verify it's writable
             test_file = path / ".write_test"
             test_file.touch()
             test_file.unlink()
-            
+
             self.settings.setValue("storage/location", str(path))
             logger.info(f"Set storage location: {location}")
             return True
@@ -184,4 +188,3 @@ class RunModeManager:
         except Exception as e:
             logger.error(f"Failed to get preferences: {str(e)}")
             return {}
-

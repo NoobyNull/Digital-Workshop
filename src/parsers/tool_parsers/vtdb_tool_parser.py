@@ -55,7 +55,9 @@ class VTDBToolParser(BaseToolParser):
         except Exception as e:
             return False, f"Validation error: {str(e)}"
 
-    def parse(self, file_path: str, progress_callback: ProgressCallback = None) -> List[ToolData]:
+    def parse(
+        self, file_path: str, progress_callback: ProgressCallback = None
+    ) -> List[ToolData]:
         """Parse VTDB tool database."""
         tools = []
 
@@ -68,10 +70,12 @@ class VTDBToolParser(BaseToolParser):
                 total_tools = cursor.fetchone()[0]
 
                 # Query tools
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM tools
                     ORDER BY description
-                """)
+                """
+                )
 
                 rows = cursor.fetchall()
                 columns = [description[0] for description in cursor.description]
@@ -89,11 +93,14 @@ class VTDBToolParser(BaseToolParser):
                     if "properties" in tool_dict and tool_dict["properties"]:
                         try:
                             import json
+
                             properties = json.loads(tool_dict["properties"])
                             geometry = properties.get("geometry", {})
                             start_values = properties.get("start_values", {})
                         except Exception:
-                            self.logger.warning(f"Failed to parse properties for tool {tool_dict.get('description', '')}")
+                            self.logger.warning(
+                                f"Failed to parse properties for tool {tool_dict.get('description', '')}"
+                            )
 
                     # Create tool
                     tool = ToolData(
@@ -105,7 +112,7 @@ class VTDBToolParser(BaseToolParser):
                         product_id=tool_dict.get("product_id", ""),
                         unit=tool_dict.get("unit", "inches"),
                         geometry=geometry,
-                        start_values=start_values
+                        start_values=start_values,
                     )
 
                     tools.append(tool)
@@ -113,7 +120,9 @@ class VTDBToolParser(BaseToolParser):
                     # Report progress
                     if progress_callback and total_tools > 0:
                         progress = min((i + 1) / total_tools, 1.0)
-                        progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
+                        progress_callback.report(
+                            progress, f"Parsing tool {i + 1}/{total_tools}"
+                        )
 
             self.logger.info(f"Parsed {len(tools)} tools from VTDB file")
             return tools

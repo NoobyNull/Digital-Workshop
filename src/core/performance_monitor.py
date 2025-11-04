@@ -23,15 +23,17 @@ from .logging_config import get_logger
 
 class PerformanceLevel(Enum):
     """Performance levels for adaptive optimization."""
-    MINIMAL = "minimal"      # Low-end systems
-    STANDARD = "standard"    # Mid-range systems
-    HIGH = "high"           # High-end systems
-    ULTRA = "ultra"         # High-end systems with plenty of resources
+
+    MINIMAL = "minimal"  # Low-end systems
+    STANDARD = "standard"  # Mid-range systems
+    HIGH = "high"  # High-end systems
+    ULTRA = "ultra"  # High-end systems with plenty of resources
 
 
 @dataclass
 class MemoryStats:
     """Memory usage statistics."""
+
     total_mb: float
     used_mb: float
     available_mb: float
@@ -43,6 +45,7 @@ class MemoryStats:
 @dataclass
 class OperationMetrics:
     """Metrics for a specific operation."""
+
     operation_name: str
     start_time: float
     end_time: float
@@ -58,6 +61,7 @@ class OperationMetrics:
 @dataclass
 class PerformanceProfile:
     """Performance profile for system capabilities."""
+
     performance_level: PerformanceLevel
     max_memory_mb: float
     recommended_cache_size_mb: float
@@ -109,7 +113,9 @@ class PerformanceMonitor:
         self.memory_critical_callback = None
         self.slow_operation_callback = None
 
-        self.logger.info(f"Performance monitor initialized with {self.performance_profile.performance_level.value} profile")
+        self.logger.info(
+            f"Performance monitor initialized with {self.performance_profile.performance_level.value} profile"
+        )
 
     def _detect_gpu_info(self) -> Dict[str, Any]:
         """
@@ -121,6 +127,7 @@ class PerformanceMonitor:
         try:
             # First try hardware acceleration manager
             from src.core.hardware_acceleration import get_acceleration_manager
+
             accelerator = get_acceleration_manager()
             caps = accelerator.get_capabilities()
 
@@ -129,21 +136,28 @@ class PerformanceMonitor:
                 # Use the first detected device
                 device = caps.devices[0]
                 return {
-                    'has_dedicated_gpu': device.backend.value != 'cpu',
-                    'vram_mb': device.memory_mb or 0,
-                    'gpu_name': f"{device.vendor} {device.name}" if device.vendor else device.name
+                    "has_dedicated_gpu": device.backend.value != "cpu",
+                    "vram_mb": device.memory_mb or 0,
+                    "gpu_name": (
+                        f"{device.vendor} {device.name}"
+                        if device.vendor
+                        else device.name
+                    ),
                 }
 
             # Check for CUDA with PyTorch as fallback
             try:
                 import torch
+
                 if torch.cuda.is_available():
-                    vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))
+                    vram_mb = int(
+                        torch.cuda.get_device_properties(0).total_memory / (1024**2)
+                    )
                     gpu_name = torch.cuda.get_device_name(0)
                     return {
-                        'has_dedicated_gpu': True,
-                        'vram_mb': vram_mb,
-                        'gpu_name': gpu_name
+                        "has_dedicated_gpu": True,
+                        "vram_mb": vram_mb,
+                        "gpu_name": gpu_name,
                     }
             except Exception:
                 pass
@@ -151,35 +165,50 @@ class PerformanceMonitor:
             # Try WMI for Windows GPU detection
             try:
                 import wmi
+
                 gpu_list = wmi.WMI().Win32_VideoController()
                 for gpu in gpu_list:
                     if gpu.Name and gpu.Name.strip():
                         # Check if it's a dedicated GPU
                         name_lower = gpu.Name.lower()
-                        is_dedicated = any(x in name_lower for x in [
-                            'nvidia', 'geforce', 'gtx', 'rtx', 'amd', 'radeon', 'rx ', 'vega'
-                        ])
-                        
+                        is_dedicated = any(
+                            x in name_lower
+                            for x in [
+                                "nvidia",
+                                "geforce",
+                                "gtx",
+                                "rtx",
+                                "amd",
+                                "radeon",
+                                "rx ",
+                                "vega",
+                            ]
+                        )
+
                         # Try to get video memory
                         vram_mb = None
-                        if hasattr(gpu, 'AdapterRAM') and gpu.AdapterRAM:
+                        if hasattr(gpu, "AdapterRAM") and gpu.AdapterRAM:
                             try:
                                 vram_mb = int(gpu.AdapterRAM) // (1024 * 1024)
                             except Exception:
                                 pass
-                        
+
                         # If no dedicated memory info, estimate based on system RAM
                         if vram_mb is None:
                             memory = psutil.virtual_memory()
                             if is_dedicated:
-                                vram_mb = int(memory.total / (1024 ** 2) * 0.1)  # 10% for dedicated
+                                vram_mb = int(
+                                    memory.total / (1024**2) * 0.1
+                                )  # 10% for dedicated
                             else:
-                                vram_mb = int(memory.total / (1024 ** 2) * 0.25)  # 25% for integrated
-                        
+                                vram_mb = int(
+                                    memory.total / (1024**2) * 0.25
+                                )  # 25% for integrated
+
                         return {
-                            'has_dedicated_gpu': is_dedicated,
-                            'vram_mb': vram_mb,
-                            'gpu_name': gpu.Name.strip()
+                            "has_dedicated_gpu": is_dedicated,
+                            "vram_mb": vram_mb,
+                            "gpu_name": gpu.Name.strip(),
                         }
             except Exception:
                 pass
@@ -188,10 +217,16 @@ class PerformanceMonitor:
             try:
                 if platform.system() == "Windows":
                     import winreg
+
                     try:
                         # Try to get GPU info from registry
-                        registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-                        key = winreg.OpenKey(registry, r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}")
+                        registry = winreg.ConnectRegistry(
+                            None, winreg.HKEY_LOCAL_MACHINE
+                        )
+                        key = winreg.OpenKey(
+                            registry,
+                            r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}",
+                        )
                         # This is complex, so we'll just fall through to the final fallback
                         winreg.CloseKey(key)
                     except Exception:
@@ -201,8 +236,8 @@ class PerformanceMonitor:
 
             # Final fallback: use system memory to estimate
             memory = psutil.virtual_memory()
-            total_gb = memory.total / (1024 ** 3)
-            
+            total_gb = memory.total / (1024**3)
+
             # Make educated guess based on system memory
             if total_gb >= 32:
                 # High-end system likely has dedicated GPU
@@ -214,24 +249,24 @@ class PerformanceMonitor:
                 gpu_type = "Dedicated GPU (Estimated)"
             else:
                 # Lower-end system, likely integrated
-                estimated_vram = int(memory.total / (1024 ** 2) * 0.25)
+                estimated_vram = int(memory.total / (1024**2) * 0.25)
                 gpu_type = "Integrated GPU (Estimated)"
-            
+
             return {
-                'has_dedicated_gpu': total_gb >= 16,
-                'vram_mb': estimated_vram,
-                'gpu_name': gpu_type
+                "has_dedicated_gpu": total_gb >= 16,
+                "vram_mb": estimated_vram,
+                "gpu_name": gpu_type,
             }
-            
+
         except Exception as e:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(f"Failed to detect GPU info: {e}")
             # Absolute fallback
             memory = psutil.virtual_memory()
             return {
-                'has_dedicated_gpu': False,
-                'vram_mb': int(memory.total / (1024 ** 2) * 0.25),
-                'gpu_name': 'Unknown GPU'
+                "has_dedicated_gpu": False,
+                "vram_mb": int(memory.total / (1024**2) * 0.25),
+                "gpu_name": "Unknown GPU",
             }
 
     def _detect_system_capabilities(self) -> PerformanceProfile:
@@ -244,9 +279,9 @@ class PerformanceMonitor:
         try:
             # Get system memory
             memory = psutil.virtual_memory()
-            total_memory_mb = int(memory.total / (1024 ** 2))
-            available_memory_mb = int(memory.available / (1024 ** 2))
-            total_memory_gb = memory.total / (1024 ** 3)
+            total_memory_mb = int(memory.total / (1024**2))
+            available_memory_mb = int(memory.available / (1024**2))
+            total_memory_gb = memory.total / (1024**3)
 
             # Get CPU info
             cpu_count = psutil.cpu_count()
@@ -256,13 +291,14 @@ class PerformanceMonitor:
 
             # Use smart memory calculation from ApplicationConfig
             from .application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             max_memory_mb = config.get_effective_memory_limit_mb(
                 available_memory_mb=available_memory_mb,
-                total_system_memory_mb=total_memory_mb
+                total_system_memory_mb=total_memory_mb,
             )
 
-            # Determine performance level
+            # Determine performance level based on system tier
             if total_memory_gb < 4 or cpu_count < 4:
                 performance_level = PerformanceLevel.MINIMAL
                 cache_size_mb = 100
@@ -288,6 +324,13 @@ class PerformanceMonitor:
                 thread_count = min(16, cpu_count)
                 chunk_size = 20000
 
+            # If manual override is enabled, use percentage of total system memory for cache
+            # but keep other settings based on system tier
+            if config.use_manual_memory_override:
+                cache_size_mb = int(
+                    total_memory_mb * (config.manual_cache_limit_percent / 100)
+                )
+
             profile = PerformanceProfile(
                 performance_level=performance_level,
                 max_memory_mb=max_memory_mb,
@@ -295,7 +338,7 @@ class PerformanceMonitor:
                 max_triangles_for_full_quality=max_triangles,
                 adaptive_quality_enabled=performance_level != PerformanceLevel.ULTRA,
                 background_thread_count=thread_count,
-                chunk_size=chunk_size
+                chunk_size=chunk_size,
             )
 
             self.logger.info(
@@ -317,7 +360,7 @@ class PerformanceMonitor:
                 max_triangles_for_full_quality=50000,
                 adaptive_quality_enabled=True,
                 background_thread_count=2,
-                chunk_size=1000
+                chunk_size=1000,
             )
 
     def start_monitoring(self) -> None:
@@ -327,7 +370,9 @@ class PerformanceMonitor:
             return
 
         self.is_monitoring = True
-        self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self.monitoring_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
+        )
         self.monitoring_thread.start()
         self.logger.info("Performance monitoring started")
 
@@ -351,7 +396,7 @@ class PerformanceMonitor:
 
                 # Trim history if needed
                 if len(self.memory_history) > self.max_history_size:
-                    self.memory_history = self.memory_history[-self.max_history_size:]
+                    self.memory_history = self.memory_history[-self.max_history_size :]
 
                 # Check memory thresholds
                 if memory_stats.percent_used >= self.memory_critical_threshold:
@@ -396,14 +441,16 @@ class PerformanceMonitor:
                 used_mb=memory.used / (1024 * 1024),
                 available_mb=memory.available / (1024 * 1024),
                 percent_used=memory.percent,
-                process_mb=process_memory
+                process_mb=process_memory,
             )
 
         except Exception as e:
             self.logger.error(f"Failed to get memory stats: {str(e)}")
             return MemoryStats(0, 0, 0, 0, 0)
 
-    def start_operation(self, operation_name: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def start_operation(
+        self, operation_name: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Start tracking an operation.
 
@@ -419,19 +466,25 @@ class PerformanceMonitor:
         memory_before = self._get_memory_stats().process_mb
 
         self.active_operations[operation_id] = {
-            'operation_name': operation_name,
-            'start_time': time.time(),
-            'memory_before_mb': memory_before,
-            'memory_peak_mb': memory_before,
-            'metadata': metadata or {}
+            "operation_name": operation_name,
+            "start_time": time.time(),
+            "memory_before_mb": memory_before,
+            "memory_peak_mb": memory_before,
+            "metadata": metadata or {},
         }
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
+            self.logger.debug(
+                f"Started tracking operation: {operation_name} (ID: {operation_id})"
+            )
         return operation_id
 
-    def end_operation(self, operation_id: str, success: bool = True,
-                     error_message: Optional[str] = None) -> Optional[OperationMetrics]:
+    def end_operation(
+        self,
+        operation_id: str,
+        success: bool = True,
+        error_message: Optional[str] = None,
+    ) -> Optional[OperationMetrics]:
         """
         End tracking an operation and record metrics.
 
@@ -452,26 +505,28 @@ class PerformanceMonitor:
         memory_after = self._get_memory_stats().process_mb
 
         # Calculate metrics
-        duration_ms = (end_time - operation['start_time']) * 1000
-        memory_peak = max(operation['memory_peak_mb'], memory_after)
+        duration_ms = (end_time - operation["start_time"]) * 1000
+        memory_peak = max(operation["memory_peak_mb"], memory_after)
 
         metrics = OperationMetrics(
-            operation_name=operation['operation_name'],
-            start_time=operation['start_time'],
+            operation_name=operation["operation_name"],
+            start_time=operation["start_time"],
             end_time=end_time,
             duration_ms=duration_ms,
-            memory_before_mb=operation['memory_before_mb'],
+            memory_before_mb=operation["memory_before_mb"],
             memory_after_mb=memory_after,
             memory_peak_mb=memory_peak,
             success=success,
             error_message=error_message,
-            metadata=operation['metadata']
+            metadata=operation["metadata"],
         )
 
         # Store in completed operations
         self.completed_operations.append(metrics)
         if len(self.completed_operations) > self.max_operations_history:
-            self.completed_operations = self.completed_operations[-self.max_operations_history:]
+            self.completed_operations = self.completed_operations[
+                -self.max_operations_history :
+            ]
 
         # Log operation completion
         if success:
@@ -505,9 +560,8 @@ class PerformanceMonitor:
         """
         if operation_id in self.active_operations:
             current_memory = self._get_memory_stats().process_mb
-            self.active_operations[operation_id]['memory_peak_mb'] = max(
-                self.active_operations[operation_id]['memory_peak_mb'],
-                current_memory
+            self.active_operations[operation_id]["memory_peak_mb"] = max(
+                self.active_operations[operation_id]["memory_peak_mb"], current_memory
             )
 
     def get_current_memory_stats(self) -> MemoryStats:
@@ -531,77 +585,78 @@ class PerformanceMonitor:
     def get_performance_report(self) -> Dict[str, Any]:
         """
         Get comprehensive performance report for viewer widget integration.
-        
+
         Returns:
             Dictionary containing system information and performance profile
         """
         try:
             # Get current memory stats
             memory_stats = self._get_memory_stats()
-            
+
             # Create system info dictionary
             system_info = {
-                'memory_total_gb': memory_stats.total_mb / 1024.0,
-                'memory_available_gb': memory_stats.available_mb / 1024.0,
-                'memory_used_percent': memory_stats.percent_used,
-                'process_memory_mb': memory_stats.process_mb,
-                'performance_level': self.performance_profile.performance_level.value,
-                'cpu_count': psutil.cpu_count(),
+                "memory_total_gb": memory_stats.total_mb / 1024.0,
+                "memory_available_gb": memory_stats.available_mb / 1024.0,
+                "memory_used_percent": memory_stats.percent_used,
+                "process_memory_mb": memory_stats.process_mb,
+                "performance_level": self.performance_profile.performance_level.value,
+                "cpu_count": psutil.cpu_count(),
             }
-            
+
             # Create performance report
             report = {
-                'system_info': system_info,
-                'performance_profile': {
-                    'performance_level': self.performance_profile.performance_level.value,
-                    'max_memory_mb': self.performance_profile.max_memory_mb,
-                    'recommended_cache_size_mb': self.performance_profile.recommended_cache_size_mb,
-                    'max_triangles_for_full_quality': self.performance_profile.max_triangles_for_full_quality,
-                    'adaptive_quality_enabled': self.performance_profile.adaptive_quality_enabled,
-                    'background_thread_count': self.performance_profile.background_thread_count,
-                    'chunk_size': self.performance_profile.chunk_size,
+                "system_info": system_info,
+                "performance_profile": {
+                    "performance_level": self.performance_profile.performance_level.value,
+                    "max_memory_mb": self.performance_profile.max_memory_mb,
+                    "recommended_cache_size_mb": self.performance_profile.recommended_cache_size_mb,
+                    "max_triangles_for_full_quality": self.performance_profile.max_triangles_for_full_quality,
+                    "adaptive_quality_enabled": self.performance_profile.adaptive_quality_enabled,
+                    "background_thread_count": self.performance_profile.background_thread_count,
+                    "chunk_size": self.performance_profile.chunk_size,
                 },
-                'current_stats': {
-                    'memory_percent': memory_stats.percent_used,
-                    'process_memory_mb': memory_stats.process_mb,
-                    'active_operations': len(self.active_operations),
-                    'completed_operations': len(self.completed_operations),
-                }
+                "current_stats": {
+                    "memory_percent": memory_stats.percent_used,
+                    "process_memory_mb": memory_stats.process_mb,
+                    "active_operations": len(self.active_operations),
+                    "completed_operations": len(self.completed_operations),
+                },
             }
-            
+
             return report
-            
+
         except Exception as e:
             self.logger.error(f"Failed to generate performance report: {str(e)}")
             # Return fallback report
             return {
-                'system_info': {
-                    'memory_total_gb': 8.0,
-                    'memory_available_gb': 4.0,
-                    'memory_used_percent': 50.0,
-                    'process_memory_mb': 100.0,
-                    'performance_level': 'standard',
-                    'cpu_count': 4,
+                "system_info": {
+                    "memory_total_gb": 8.0,
+                    "memory_available_gb": 4.0,
+                    "memory_used_percent": 50.0,
+                    "process_memory_mb": 100.0,
+                    "performance_level": "standard",
+                    "cpu_count": 4,
                 },
-                'performance_profile': {
-                    'performance_level': 'standard',
-                    'max_memory_mb': 2048,
-                    'recommended_cache_size_mb': 256,
-                    'max_triangles_for_full_quality': 100000,
-                    'adaptive_quality_enabled': True,
-                    'background_thread_count': 4,
-                    'chunk_size': 5000,
+                "performance_profile": {
+                    "performance_level": "standard",
+                    "max_memory_mb": 2048,
+                    "recommended_cache_size_mb": 256,
+                    "max_triangles_for_full_quality": 100000,
+                    "adaptive_quality_enabled": True,
+                    "background_thread_count": 4,
+                    "chunk_size": 5000,
                 },
-                'current_stats': {
-                    'memory_percent': 50.0,
-                    'process_memory_mb': 100.0,
-                    'active_operations': 0,
-                    'completed_operations': 0,
-                }
+                "current_stats": {
+                    "memory_percent": 50.0,
+                    "process_memory_mb": 100.0,
+                    "active_operations": 0,
+                    "completed_operations": 0,
+                },
             }
 
-    def get_operation_metrics(self, operation_name: Optional[str] = None,
-                            limit: int = 100) -> List[OperationMetrics]:
+    def get_operation_metrics(
+        self, operation_name: Optional[str] = None, limit: int = 100
+    ) -> List[OperationMetrics]:
         """
         Get metrics for completed operations.
 
@@ -640,7 +695,9 @@ class PerformanceMonitor:
 
         return sum(m.duration_ms for m in successful_metrics) / len(successful_metrics)
 
-    def detect_memory_leak(self, operation_name: str, threshold_mb: float = 50.0) -> bool:
+    def detect_memory_leak(
+        self, operation_name: str, threshold_mb: float = 50.0
+    ) -> bool:
         """
         Detect potential memory leaks for an operation type.
 
@@ -661,8 +718,7 @@ class PerformanceMonitor:
 
         # Calculate memory deltas
         memory_deltas = [
-            m.memory_after_mb - m.memory_before_mb
-            for m in successful_metrics
+            m.memory_after_mb - m.memory_before_mb for m in successful_metrics
         ]
 
         # Check if memory is consistently increasing
@@ -695,41 +751,48 @@ class PerformanceMonitor:
         """
         try:
             report = {
-                'timestamp': time.time(),
-                'performance_profile': {
-                    'performance_level': self.performance_profile.performance_level.value,
-                    'max_memory_mb': self.performance_profile.max_memory_mb,
-                    'recommended_cache_size_mb': self.performance_profile.recommended_cache_size_mb,
-                    'max_triangles_for_full_quality': self.performance_profile.max_triangles_for_full_quality,
-                    'adaptive_quality_enabled': self.performance_profile.adaptive_quality_enabled,
-                    'background_thread_count': self.performance_profile.background_thread_count,
-                    'chunk_size': self.performance_profile.chunk_size
+                "timestamp": time.time(),
+                "performance_profile": {
+                    "performance_level": self.performance_profile.performance_level.value,
+                    "max_memory_mb": self.performance_profile.max_memory_mb,
+                    "recommended_cache_size_mb": self.performance_profile.recommended_cache_size_mb,
+                    "max_triangles_for_full_quality": self.performance_profile.max_triangles_for_full_quality,
+                    "adaptive_quality_enabled": self.performance_profile.adaptive_quality_enabled,
+                    "background_thread_count": self.performance_profile.background_thread_count,
+                    "chunk_size": self.performance_profile.chunk_size,
                 },
-                'current_memory': self._get_memory_stats().__dict__,
-                'memory_history': [m.__dict__ for m in self.memory_history[-100:]],  # Last 100 entries
-                'operation_summary': {}
+                "current_memory": self._get_memory_stats().__dict__,
+                "memory_history": [
+                    m.__dict__ for m in self.memory_history[-100:]
+                ],  # Last 100 entries
+                "operation_summary": {},
             }
 
             # Add operation summaries
             operation_names = set(m.operation_name for m in self.completed_operations)
             for op_name in operation_names:
-                op_metrics = [m for m in self.completed_operations if m.operation_name == op_name]
+                op_metrics = [
+                    m for m in self.completed_operations if m.operation_name == op_name
+                ]
                 successful_ops = [m for m in op_metrics if m.success]
 
                 if successful_ops:
-                    report['operation_summary'][op_name] = {
-                        'total_operations': len(op_metrics),
-                        'successful_operations': len(successful_ops),
-                        'average_time_ms': sum(m.duration_ms for m in successful_ops) / len(successful_ops),
-                        'min_time_ms': min(m.duration_ms for m in successful_ops),
-                        'max_time_ms': max(m.duration_ms for m in successful_ops),
-                        'average_memory_delta_mb': sum(
-                            m.memory_after_mb - m.memory_before_mb for m in successful_ops
-                        ) / len(successful_ops)
+                    report["operation_summary"][op_name] = {
+                        "total_operations": len(op_metrics),
+                        "successful_operations": len(successful_ops),
+                        "average_time_ms": sum(m.duration_ms for m in successful_ops)
+                        / len(successful_ops),
+                        "min_time_ms": min(m.duration_ms for m in successful_ops),
+                        "max_time_ms": max(m.duration_ms for m in successful_ops),
+                        "average_memory_delta_mb": sum(
+                            m.memory_after_mb - m.memory_before_mb
+                            for m in successful_ops
+                        )
+                        / len(successful_ops),
                     }
 
             # Write report
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(report, f, indent=2)
 
             self.logger.info(f"Performance report exported to {file_path}")
@@ -784,6 +847,7 @@ def monitor_operation(operation_name: str):
     Returns:
         Decorator function
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             monitor = get_performance_monitor()
@@ -798,4 +862,5 @@ def monitor_operation(operation_name: str):
                 raise
 
         return wrapper
+
     return decorator

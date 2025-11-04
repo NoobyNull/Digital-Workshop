@@ -42,8 +42,8 @@ class DeduplicationManager:
             duplicates_by_hash = {}
 
             for model in all_models:
-                file_hash = model.get('file_hash')
-                if not file_hash or file_hash == '':
+                file_hash = model.get("file_hash")
+                if not file_hash or file_hash == "":
                     continue
 
                 if file_hash not in duplicates_by_hash:
@@ -79,8 +79,8 @@ class DeduplicationManager:
 
             stat = path.stat()
             return {
-                'size': stat.st_size,
-                'modified': datetime.fromtimestamp(stat.st_mtime)
+                "size": stat.st_size,
+                "modified": datetime.fromtimestamp(stat.st_mtime),
             }
 
         except Exception as e:
@@ -88,9 +88,7 @@ class DeduplicationManager:
             return None
 
     def deduplicate_group(
-        self,
-        models: List[Dict],
-        keep_strategy: str
+        self, models: List[Dict], keep_strategy: str
     ) -> Tuple[int, List[int]]:
         """
         Deduplicate a group of duplicate models.
@@ -107,36 +105,52 @@ class DeduplicationManager:
                 return None, []
 
             # Determine which model to keep
-            if keep_strategy == 'largest':
+            if keep_strategy == "largest":
                 keep_model = max(
                     models,
-                    key=lambda m: self.get_file_stats(m['file_path']).get('size', 0)
-                    if self.get_file_stats(m['file_path']) else 0
+                    key=lambda m: (
+                        self.get_file_stats(m["file_path"]).get("size", 0)
+                        if self.get_file_stats(m["file_path"])
+                        else 0
+                    ),
                 )
-            elif keep_strategy == 'smallest':
+            elif keep_strategy == "smallest":
                 keep_model = min(
                     models,
-                    key=lambda m: self.get_file_stats(m['file_path']).get('size', float('inf'))
-                    if self.get_file_stats(m['file_path']) else float('inf')
+                    key=lambda m: (
+                        self.get_file_stats(m["file_path"]).get("size", float("inf"))
+                        if self.get_file_stats(m["file_path"])
+                        else float("inf")
+                    ),
                 )
-            elif keep_strategy == 'newest':
+            elif keep_strategy == "newest":
                 keep_model = max(
                     models,
-                    key=lambda m: self.get_file_stats(m['file_path']).get('modified', datetime.min)
-                    if self.get_file_stats(m['file_path']) else datetime.min
+                    key=lambda m: (
+                        self.get_file_stats(m["file_path"]).get(
+                            "modified", datetime.min
+                        )
+                        if self.get_file_stats(m["file_path"])
+                        else datetime.min
+                    ),
                 )
-            elif keep_strategy == 'oldest':
+            elif keep_strategy == "oldest":
                 keep_model = min(
                     models,
-                    key=lambda m: self.get_file_stats(m['file_path']).get('modified', datetime.max)
-                    if self.get_file_stats(m['file_path']) else datetime.max
+                    key=lambda m: (
+                        self.get_file_stats(m["file_path"]).get(
+                            "modified", datetime.max
+                        )
+                        if self.get_file_stats(m["file_path"])
+                        else datetime.max
+                    ),
                 )
             else:
                 self.logger.error(f"Unknown keep strategy: {keep_strategy}")
                 return None, []
 
-            keep_id = keep_model['id']
-            delete_ids = [m['id'] for m in models if m['id'] != keep_id]
+            keep_id = keep_model["id"]
+            delete_ids = [m["id"] for m in models if m["id"] != keep_id]
 
             # Link deleted models to the kept model
             for delete_id in delete_ids:
@@ -166,4 +180,3 @@ class DeduplicationManager:
         except Exception as e:
             self.logger.error(f"Failed to get duplicate count: {e}")
             return 0
-

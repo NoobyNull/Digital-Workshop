@@ -237,7 +237,9 @@ class MaterialCostManager:
         """
         try:
             if name in self.materials:
-                self.materials[name].waste_percentage = max(0.0, min(100.0, waste_percentage))
+                self.materials[name].waste_percentage = max(
+                    0.0, min(100.0, waste_percentage)
+                )
                 self._save_materials()
                 return True
             return False

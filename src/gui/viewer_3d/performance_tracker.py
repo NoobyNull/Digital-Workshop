@@ -40,7 +40,7 @@ class PerformanceTracker:
     def stop(self) -> None:
         """Stop performance monitoring."""
         try:
-            if hasattr(self, 'performance_timer') and self.performance_timer:
+            if hasattr(self, "performance_timer") and self.performance_timer:
                 self.performance_timer.stop()
                 logger.debug("Performance monitoring stopped")
         except (RuntimeError, AttributeError) as e:
@@ -67,7 +67,9 @@ class PerformanceTracker:
                 except RuntimeError as e:
                     # Widget has been deleted, stop the timer
                     if "already deleted" in str(e):
-                        logger.debug("Performance tracker callback failed - widget deleted, stopping timer")
+                        logger.debug(
+                            "Performance tracker callback failed - widget deleted, stopping timer"
+                        )
                         self.stop()
                     else:
                         logger.warning(f"Performance tracker callback failed: {e}")
@@ -79,7 +81,7 @@ class PerformanceTracker:
     def cleanup(self) -> None:
         """Clean up resources."""
         try:
-            if hasattr(self, 'performance_timer') and self.performance_timer:
+            if hasattr(self, "performance_timer") and self.performance_timer:
                 self.stop()
                 # Disconnect the signal to prevent callbacks after cleanup
                 try:
@@ -89,4 +91,3 @@ class PerformanceTracker:
                     pass
         except Exception as e:
             logger.debug(f"Error during performance tracker cleanup: {e}")
-

@@ -13,6 +13,7 @@ from src.core.logging_config import get_logger
 @dataclass
 class ToolData:
     """Data structure for a parsed tool."""
+
     guid: str
     description: str
     tool_type: str
@@ -58,7 +59,9 @@ class BaseToolParser(ABC):
         self._cancelled = False
 
     @abstractmethod
-    def parse(self, file_path: str, progress_callback: Optional[ProgressCallback] = None) -> List[ToolData]:
+    def parse(
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
+    ) -> List[ToolData]:
         """
         Parse a tool database file.
 

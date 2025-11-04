@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 @dataclass
 class HelpTopic:
     """Represents a searchable help topic."""
+
     title: str
     content: str
     file_path: str
@@ -223,4 +224,3 @@ class DocumentationIndexer:
         # Sort by relevance score
         results.sort(key=lambda x: x[1], reverse=True)
         return results
-

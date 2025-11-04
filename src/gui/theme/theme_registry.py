@@ -86,8 +86,11 @@ class WidgetRegistry:
         """
         # Check for common theme-related methods
         theme_methods = [
-            'apply_theme', 'update_theme', 'set_theme',
-            'on_theme_change', 'theme_changed'
+            "apply_theme",
+            "update_theme",
+            "set_theme",
+            "on_theme_change",
+            "theme_changed",
         ]
 
         for method_name in theme_methods:
@@ -96,8 +99,11 @@ class WidgetRegistry:
 
         # Check for theme-related attributes
         theme_attributes = [
-            'theme', 'theme_data', 'color_scheme',
-            'style_sheet', 'theme_manager'
+            "theme",
+            "theme_data",
+            "color_scheme",
+            "style_sheet",
+            "theme_manager",
         ]
 
         for attr_name in theme_attributes:
@@ -143,13 +149,15 @@ class WidgetRegistry:
             self.update_count += 1
 
             # Try different theme update methods
-            if hasattr(widget, 'apply_theme') and callable(widget.apply_theme):
+            if hasattr(widget, "apply_theme") and callable(widget.apply_theme):
                 widget.apply_theme(theme_data)
-            elif hasattr(widget, 'update_theme') and callable(widget.update_theme):
+            elif hasattr(widget, "update_theme") and callable(widget.update_theme):
                 widget.update_theme(theme_data)
-            elif hasattr(widget, 'set_theme') and callable(widget.set_theme):
+            elif hasattr(widget, "set_theme") and callable(widget.set_theme):
                 widget.set_theme(theme_data)
-            elif hasattr(widget, 'on_theme_change') and callable(widget.on_theme_change):
+            elif hasattr(widget, "on_theme_change") and callable(
+                widget.on_theme_change
+            ):
                 widget.on_theme_change(theme_data)
             else:
                 # Fallback: update stylesheet if available
@@ -162,7 +170,9 @@ class WidgetRegistry:
             logger.warning(f"Failed to update theme for widget {self.widget_name}: {e}")
             return False
 
-    def _update_stylesheet_fallback(self, widget: QWidget, theme_data: Dict[str, Any]) -> None:
+    def _update_stylesheet_fallback(
+        self, widget: QWidget, theme_data: Dict[str, Any]
+    ) -> None:
         """
         Fallback theme update using stylesheet.
 
@@ -172,9 +182,9 @@ class WidgetRegistry:
         """
         try:
             # Generate basic stylesheet from theme data
-            custom_colors = theme_data.get('custom_colors', {})
-            primary_color = custom_colors.get('primary', '#1976D2')
-            background_color = custom_colors.get('background', '#121212')
+            custom_colors = theme_data.get("custom_colors", {})
+            primary_color = custom_colors.get("primary", "#1976D2")
+            background_color = custom_colors.get("background", "#121212")
 
             stylesheet = f"""
             QWidget#{self.widget_name} {{
@@ -184,7 +194,7 @@ class WidgetRegistry:
             """
 
             # Apply stylesheet if widget supports it
-            if hasattr(widget, 'setStyleSheet'):
+            if hasattr(widget, "setStyleSheet"):
                 widget.setStyleSheet(stylesheet)
 
         except Exception as e:
@@ -371,7 +381,7 @@ class ThemeRegistry(QObject):
 
         self._successful_updates += successful
         self._failed_updates += failed
-        self._total_updates += (successful + failed)
+        self._total_updates += successful + failed
 
         logger.info(f"Theme update completed: {successful} successful, {failed} failed")
         self.theme_update_completed.emit(successful, failed)
@@ -423,7 +433,7 @@ class ThemeRegistry(QObject):
                     "registered_time": entry.registered_time,
                     "last_update_time": entry.last_update_time,
                     "update_count": entry.update_count,
-                    "update_errors": entry.update_errors
+                    "update_errors": entry.update_errors,
                 }
 
             return None
@@ -452,7 +462,8 @@ class ThemeRegistry(QObject):
             # Clean up dead widgets during stats collection
             if dead_count > 0:
                 dead_widget_names = [
-                    name for name, entry in self._widgets.items()
+                    name
+                    for name, entry in self._widgets.items()
                     if not entry.is_alive()
                 ]
                 for name in dead_widget_names:
@@ -460,7 +471,9 @@ class ThemeRegistry(QObject):
                     self._cleanup_count += 1
 
             total_requests = self._successful_updates + self._failed_updates
-            success_rate = self._successful_updates / total_requests if total_requests > 0 else 0
+            success_rate = (
+                self._successful_updates / total_requests if total_requests > 0 else 0
+            )
 
             return {
                 "total_registered": len(self._widgets),
@@ -473,7 +486,7 @@ class ThemeRegistry(QObject):
                 "success_rate": success_rate,
                 "cleanup_count": self._cleanup_count,
                 "auto_discovery_enabled": self._auto_discovery_enabled,
-                "discovery_interval_ms": self._discovery_interval
+                "discovery_interval_ms": self._discovery_interval,
             }
 
     def enable_auto_discovery(self) -> None:
@@ -543,12 +556,16 @@ class ThemeRegistry(QObject):
                     registered_count += 1
 
             if registered_count > 0:
-                logger.debug(f"Auto-discovered and registered {registered_count} widgets")
+                logger.debug(
+                    f"Auto-discovered and registered {registered_count} widgets"
+                )
 
         except Exception as e:
             logger.error(f"Widget discovery failed: {e}")
 
-    def _register_widget_recursive(self, widget: QWidget, visited: Set[int] = None) -> bool:
+    def _register_widget_recursive(
+        self, widget: QWidget, visited: Set[int] = None
+    ) -> bool:
         """
         Recursively register widget and its children.
 

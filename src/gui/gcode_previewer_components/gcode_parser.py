@@ -10,6 +10,7 @@ from dataclasses import dataclass
 @dataclass
 class GcodeMove:
     """Represents a single G-code move command."""
+
     x: Optional[float] = None
     y: Optional[float] = None
     z: Optional[float] = None
@@ -28,7 +29,11 @@ class GcodeMove:
     def get_move_type_name(self) -> str:
         """Get human-readable move type name."""
         if self.is_tool_change:
-            return f"Tool Change (T{self.tool_number})" if self.tool_number else "Tool Change"
+            return (
+                f"Tool Change (T{self.tool_number})"
+                if self.tool_number
+                else "Tool Change"
+            )
         elif self.is_spindle_on:
             return "Spindle On"
         elif self.is_spindle_off:
@@ -53,12 +58,17 @@ class GcodeParser:
         self.current_spindle_speed = 0.0
         self.current_g_code = 1  # Default to G01 (cutting move)
         self.bounds = {
-            'min_x': float('inf'), 'max_x': float('-inf'),
-            'min_y': float('inf'), 'max_y': float('-inf'),
-            'min_z': float('inf'), 'max_z': float('-inf'),
+            "min_x": float("inf"),
+            "max_x": float("-inf"),
+            "min_y": float("inf"),
+            "max_y": float("-inf"),
+            "min_z": float("inf"),
+            "max_z": float("-inf"),
         }
 
-    def parse_file(self, filepath: str, sample_mode: bool = True, sample_size: int = 100) -> List[GcodeMove]:
+    def parse_file(
+        self, filepath: str, sample_mode: bool = True, sample_size: int = 100
+    ) -> List[GcodeMove]:
         """
         Parse a G-code file using true streaming.
 
@@ -74,28 +84,28 @@ class GcodeParser:
             # Validate file exists and is readable
             if not os.path.exists(filepath):
                 raise ValueError(f"File not found: {filepath}")
-            
+
             file_size = os.path.getsize(filepath)
             if file_size == 0:
                 raise ValueError("File is empty")
-            
+
             # Validate content first
             is_valid, error_msg = self.validate_file_content(filepath)
             if not is_valid:
                 raise ValueError(f"Invalid G-code file: {error_msg}")
-            
+
             # For small files, read normally
             if file_size < 1024 * 1024:  # < 1MB
-                with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                     lines = f.readlines()
                 return self.parse_lines(lines)
-            
+
             # For large files, use streaming
             if sample_mode:
                 return self._parse_file_sampled(filepath, sample_size)
             else:
                 return self._parse_file_streaming(filepath)
-                
+
         except Exception as e:
             raise ValueError(f"Failed to parse G-code file: {e}")
 
@@ -104,98 +114,103 @@ class GcodeParser:
         self.moves = []
         self.current_position = (0.0, 0.0, 0.0)
         self.current_g_code = 1
-        
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
-                
-                if not line or line.startswith(';') or line.startswith('%'):
+
+                if not line or line.startswith(";") or line.startswith("%"):
                     continue
-                
-                if ';' in line:
-                    line = line.split(';')[0].strip()
-                
+
+                if ";" in line:
+                    line = line.split(";")[0].strip()
+
                 move = self._parse_line(line, line_num)
                 if move:
                     self.moves.append(move)
                     self._update_bounds(move)
-        
+
         return self.moves
 
     def _parse_file_sampled(self, filepath: str, sample_size: int) -> List[GcodeMove]:
         """Parse file with intelligent sampling - first N and last N lines."""
-        with open(filepath, 'r+b') as f:
+        with open(filepath, "r+b") as f:
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
                 # Count total lines efficiently
                 total_lines = sum(1 for _ in iter(mmapped_file.readline, b""))
-                
+
                 if total_lines <= sample_size * 4:
                     # File is small enough, parse all lines
                     mmapped_file.seek(0)
-                    lines = [line.decode('utf-8', errors='ignore')
-                            for line in mmapped_file]
+                    lines = [
+                        line.decode("utf-8", errors="ignore") for line in mmapped_file
+                    ]
                     return self.parse_lines(lines)
-                
+
                 # Sample first N lines
                 mmapped_file.seek(0)
-                first_lines = [mmapped_file.readline().decode('utf-8', errors='ignore')
-                              for _ in range(sample_size)]
-                
+                first_lines = [
+                    mmapped_file.readline().decode("utf-8", errors="ignore")
+                    for _ in range(sample_size)
+                ]
+
                 # Find position of last N lines
                 mmapped_file.seek(0, 2)  # Seek to end
                 file_size = mmapped_file.tell()
-                
+
                 # Estimate line size and seek to approximate position
                 avg_line_size = file_size // total_lines
                 seek_pos = max(0, file_size - (sample_size * avg_line_size * 2))
                 mmapped_file.seek(seek_pos)
-                
+
                 # Skip partial line
                 mmapped_file.readline()
-                
+
                 # Read last N lines
-                last_lines = [mmapped_file.readline().decode('utf-8', errors='ignore')
-                             for _ in range(sample_size)]
-                
+                last_lines = [
+                    mmapped_file.readline().decode("utf-8", errors="ignore")
+                    for _ in range(sample_size)
+                ]
+
                 return self.parse_lines(first_lines + last_lines)
 
     def validate_file_content(self, filepath: str) -> Tuple[bool, str]:
         """
         Validate file contains G-code content before parsing.
-        
+
         Args:
             filepath: Path to file
-            
+
         Returns:
             Tuple of (is_valid, error_message)
         """
         try:
             # Read first 1KB to check content
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 header = f.read(1024)
-            
+
             # Check for binary content (likely not G-code)
-            if b'\x00' in header:
+            if b"\x00" in header:
                 return False, "File appears to be binary, not text G-code"
-            
+
             # Try to decode as text
             try:
-                text_header = header.decode('utf-8', errors='strict')
+                text_header = header.decode("utf-8", errors="strict")
             except UnicodeDecodeError:
                 try:
-                    text_header = header.decode('latin-1')
+                    text_header = header.decode("latin-1")
                 except:
                     return False, "File encoding not supported"
-            
+
             # Look for G-code markers in first 1KB
-            gcode_markers = ['G0', 'G1', 'G2', 'G3', 'M0', 'M3', 'M5', 'M6']
+            gcode_markers = ["G0", "G1", "G2", "G3", "M0", "M3", "M5", "M6"]
             has_gcode = any(marker in text_header.upper() for marker in gcode_markers)
-            
+
             if not has_gcode:
                 return False, "File does not appear to contain G-code"
-            
+
             return True, ""
-            
+
         except Exception as e:
             return False, f"Validation error: {str(e)}"
 
@@ -209,12 +224,12 @@ class GcodeParser:
             line = line.strip()
 
             # Skip empty lines and comments
-            if not line or line.startswith(';') or line.startswith('%'):
+            if not line or line.startswith(";") or line.startswith("%"):
                 continue
 
             # Remove inline comments
-            if ';' in line:
-                line = line.split(';')[0].strip()
+            if ";" in line:
+                line = line.split(";")[0].strip()
 
             move = self._parse_line(line, line_num)
             if move:
@@ -228,13 +243,13 @@ class GcodeParser:
         move = GcodeMove(line_number=line_num, raw_command=line)
 
         # Check for M-codes (tool changes, spindle control, etc.)
-        m_match = re.search(r'M(\d+)', line, re.IGNORECASE)
+        m_match = re.search(r"M(\d+)", line, re.IGNORECASE)
         if m_match:
             m_code = int(m_match.group(1))
             if m_code == 6:  # Tool change
                 move.is_tool_change = True
                 # Extract tool number if present
-                t_match = re.search(r'T(\d+)', line, re.IGNORECASE)
+                t_match = re.search(r"T(\d+)", line, re.IGNORECASE)
                 if t_match:
                     move.tool_number = int(t_match.group(1))
                 # Tool changes don't have coordinates, just return the move
@@ -242,7 +257,7 @@ class GcodeParser:
             if m_code in (3, 4):  # Spindle on (M03 CW, M04 CCW)
                 move.is_spindle_on = True
                 # Extract spindle speed if present
-                s_match = re.search(r'S([-+]?\d*\.?\d+)', line, re.IGNORECASE)
+                s_match = re.search(r"S([-+]?\d*\.?\d+)", line, re.IGNORECASE)
                 if s_match:
                     self.current_spindle_speed = float(s_match.group(1))
                 move.spindle_speed = self.current_spindle_speed
@@ -252,7 +267,7 @@ class GcodeParser:
                 return move
 
         # Extract G-code command
-        g_match = re.search(r'G(\d+)', line, re.IGNORECASE)
+        g_match = re.search(r"G(\d+)", line, re.IGNORECASE)
         if g_match:
             g_code = int(g_match.group(1))
             self.current_g_code = g_code  # Update current G-code
@@ -260,7 +275,7 @@ class GcodeParser:
             # No G-code in this line, use the current G-code (modal command)
             g_code = self.current_g_code
             # If line has no coordinates and no G-code, skip it
-            if not re.search(r'[XYZ]', line, re.IGNORECASE):
+            if not re.search(r"[XYZ]", line, re.IGNORECASE):
                 return None
 
         # Determine move type
@@ -274,9 +289,9 @@ class GcodeParser:
             return None
 
         # Extract coordinates
-        x_match = re.search(r'X([-+]?\d*\.?\d+)', line, re.IGNORECASE)
-        y_match = re.search(r'Y([-+]?\d*\.?\d+)', line, re.IGNORECASE)
-        z_match = re.search(r'Z([-+]?\d*\.?\d+)', line, re.IGNORECASE)
+        x_match = re.search(r"X([-+]?\d*\.?\d+)", line, re.IGNORECASE)
+        y_match = re.search(r"Y([-+]?\d*\.?\d+)", line, re.IGNORECASE)
+        z_match = re.search(r"Z([-+]?\d*\.?\d+)", line, re.IGNORECASE)
 
         if x_match:
             move.x = float(x_match.group(1))
@@ -294,12 +309,12 @@ class GcodeParser:
             move.z = self.current_position[2]
 
         # Extract feed rate and spindle speed
-        f_match = re.search(r'F([-+]?\d*\.?\d+)', line, re.IGNORECASE)
+        f_match = re.search(r"F([-+]?\d*\.?\d+)", line, re.IGNORECASE)
         if f_match:
             self.current_feed_rate = float(f_match.group(1))
         move.feed_rate = self.current_feed_rate
 
-        s_match = re.search(r'S([-+]?\d*\.?\d+)', line, re.IGNORECASE)
+        s_match = re.search(r"S([-+]?\d*\.?\d+)", line, re.IGNORECASE)
         if s_match:
             self.current_spindle_speed = float(s_match.group(1))
         move.spindle_speed = self.current_spindle_speed
@@ -312,16 +327,16 @@ class GcodeParser:
     def _update_bounds(self, move: GcodeMove) -> None:
         """Update bounding box with move coordinates."""
         if move.x is not None:
-            self.bounds['min_x'] = min(self.bounds['min_x'], move.x)
-            self.bounds['max_x'] = max(self.bounds['max_x'], move.x)
-        
+            self.bounds["min_x"] = min(self.bounds["min_x"], move.x)
+            self.bounds["max_x"] = max(self.bounds["max_x"], move.x)
+
         if move.y is not None:
-            self.bounds['min_y'] = min(self.bounds['min_y'], move.y)
-            self.bounds['max_y'] = max(self.bounds['max_y'], move.y)
-        
+            self.bounds["min_y"] = min(self.bounds["min_y"], move.y)
+            self.bounds["max_y"] = max(self.bounds["max_y"], move.y)
+
         if move.z is not None:
-            self.bounds['min_z'] = min(self.bounds['min_z'], move.z)
-            self.bounds['max_z'] = max(self.bounds['max_z'], move.z)
+            self.bounds["min_z"] = min(self.bounds["min_z"], move.z)
+            self.bounds["max_z"] = max(self.bounds["max_z"], move.z)
 
     def get_bounds(self) -> Dict[str, float]:
         """Get bounding box of the toolpath."""
@@ -337,21 +352,20 @@ class GcodeParser:
         spindle_off = sum(1 for m in self.moves if m.is_spindle_off)
 
         return {
-            'total_moves': len(self.moves),
-            'rapid_moves': rapid_moves,
-            'cutting_moves': cutting_moves,
-            'arc_moves': arc_moves,
-            'tool_changes': tool_changes,
-            'spindle_on': spindle_on,
-            'spindle_off': spindle_off,
-            'bounds': self.bounds,
+            "total_moves": len(self.moves),
+            "rapid_moves": rapid_moves,
+            "cutting_moves": cutting_moves,
+            "arc_moves": arc_moves,
+            "tool_changes": tool_changes,
+            "spindle_on": spindle_on,
+            "spindle_off": spindle_off,
+            "bounds": self.bounds,
         }
 
     def get_file_line_count(self, filepath: str) -> int:
         """Get total line count in G-code file without parsing."""
         try:
-            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 return sum(1 for _ in f)
         except Exception:
             return 0
-

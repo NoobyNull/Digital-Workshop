@@ -29,7 +29,9 @@ class FileSystemProxyModel(QSortFilterProxyModel):
             parent: Parent widget
         """
         super().__init__(parent)
-        self.home_drive = str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
+        self.home_drive = (
+            str(Path.home().drive) if hasattr(Path.home(), "drive") else ""
+        )
 
     def filterAcceptsRow(self, source_row, source_parent):
         """
@@ -69,8 +71,11 @@ class FileSystemProxyModel(QSortFilterProxyModel):
             return False
 
         # Skip R drives that are not in home directory
-        if self.home_drive and file_path.startswith("R:") and not file_path.startswith(self.home_drive + "\\"):
+        if (
+            self.home_drive
+            and file_path.startswith("R:")
+            and not file_path.startswith(self.home_drive + "\\")
+        ):
             return False
 
         return True
-

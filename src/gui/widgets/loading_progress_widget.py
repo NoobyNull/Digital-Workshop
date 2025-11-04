@@ -11,8 +11,13 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, QTimer, QSize
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QProgressBar,
-    QPushButton, QSizePolicy
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QSizePolicy,
 )
 
 from src.core.logging_config import get_logger
@@ -29,7 +34,9 @@ class LoadingProgressWidget(QWidget):
     # Signals
     cancel_requested = Signal()  # Emitted when user clicks cancel button
 
-    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the loading progress widget.
 
@@ -119,7 +126,9 @@ class LoadingProgressWidget(QWidget):
         """Connect widget signals."""
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
 
-    def start_loading(self, job_id: str, file_path: str, initial_message: str = "Initializing...") -> None:
+    def start_loading(
+        self, job_id: str, file_path: str, initial_message: str = "Initializing..."
+    ) -> None:
         """
         Start displaying loading progress for a job.
 
@@ -180,7 +189,9 @@ class LoadingProgressWidget(QWidget):
             time_since_last_update = current_time - self.last_progress_update
             progress_diff = abs(target_value - current_value)
 
-            if progress_diff >= 0.5 or time_since_last_update >= 0.1:  # Update every 100ms minimum
+            if (
+                progress_diff >= 0.5 or time_since_last_update >= 0.1
+            ):  # Update every 100ms minimum
                 # Smooth transition for small changes
                 if progress_diff <= 5.0 and time_since_last_update < 0.5:
                     # Animate small changes smoothly
@@ -210,7 +221,9 @@ class LoadingProgressWidget(QWidget):
         """
         try:
             # Use QTimer for smooth animation
-            steps = max(1, abs(to_value - from_value) // 2)  # 2-3 steps for small changes
+            steps = max(
+                1, abs(to_value - from_value) // 2
+            )  # 2-3 steps for small changes
             step_size = (to_value - from_value) / steps
 
             def animate_step(current_step: int = 0):
@@ -222,7 +235,9 @@ class LoadingProgressWidget(QWidget):
                 self.progress_bar.setValue(intermediate_value)
 
                 # Schedule next step
-                QTimer.singleShot(20, lambda: animate_step(current_step + 1))  # 20ms intervals
+                QTimer.singleShot(
+                    20, lambda: animate_step(current_step + 1)
+                )  # 20ms intervals
 
             animate_step()
 
@@ -231,7 +246,9 @@ class LoadingProgressWidget(QWidget):
             self.logger.debug(f"Progress animation failed, using direct update: {e}")
             self.progress_bar.setValue(to_value)
 
-    def finish_loading(self, success: bool = True, final_message: str = "Completed") -> None:
+    def finish_loading(
+        self, success: bool = True, final_message: str = "Completed"
+    ) -> None:
         """
         Finish loading operation.
 
@@ -338,6 +355,7 @@ class LoadingProgressWidget(QWidget):
     def _get_current_time(self) -> float:
         """Get current time in seconds."""
         import time
+
         return time.time()
 
     def sizeHint(self) -> QSize:

@@ -55,13 +55,15 @@ class JSONToolParser(BaseToolParser):
         except Exception as e:
             return False, f"Validation error: {str(e)}"
 
-    def parse(self, file_path: str, progress_callback: Optional[ProgressCallback] = None) -> List[ToolData]:
+    def parse(
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
+    ) -> List[ToolData]:
         """Parse JSON tool database."""
         tools = []
 
         try:
             path = Path(file_path)
-            
+
             # Check if file exists
             if not path.exists():
                 self.logger.warning(f"File does not exist: {file_path}")
@@ -96,7 +98,9 @@ class JSONToolParser(BaseToolParser):
                 # Report progress
                 if progress_callback and total_tools > 0:
                     progress = min((i + 1) / total_tools, 1.0)
-                    progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
+                    progress_callback.report(
+                        progress, f"Parsing tool {i + 1}/{total_tools}"
+                    )
 
             self.logger.info(f"Parsed {len(tools)} tools from JSON file")
             return tools

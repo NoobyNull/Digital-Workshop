@@ -25,7 +25,7 @@ class SettingsMigrator:
             app_name: The name of the application
         """
         from .path_manager import get_data_directory
-        
+
         self.app_name = app_name
         self.current_version = "1.0.0"
 
@@ -41,7 +41,9 @@ class SettingsMigrator:
         self.settings_path = self.app_data_path / "settings.json"
         self.old_settings_path = self.old_app_data_path / "settings.json"
 
-        logger.info(f"Settings migrator initialized for {app_name} v{self.current_version}")
+        logger.info(
+            f"Settings migrator initialized for {app_name} v{self.current_version}"
+        )
 
     def check_migration_needed(self) -> bool:
         """Check if migration is needed from a previous version.
@@ -62,7 +64,9 @@ class SettingsMigrator:
         # Check versions
         old_version = self._get_old_version()
         if old_version and old_version != self.current_version:
-            logger.info(f"Version change detected: {old_version} -> {self.current_version}")
+            logger.info(
+                f"Version change detected: {old_version} -> {self.current_version}"
+            )
             return True
 
         return False
@@ -75,7 +79,7 @@ class SettingsMigrator:
         """
         try:
             if self.old_settings_path.exists():
-                with open(self.old_settings_path, 'r') as f:
+                with open(self.old_settings_path, "r") as f:
                     settings = json.load(f)
                     return settings.get("version", "1.0.0")
 
@@ -130,20 +134,20 @@ class SettingsMigrator:
         logger.info("Migrating settings file...")
 
         try:
-            with open(self.old_settings_path, 'r') as f:
+            with open(self.old_settings_path, "r") as f:
                 old_settings = json.load(f)
 
             # Load current settings if they exist
             current_settings = {}
             if self.settings_path.exists():
-                with open(self.settings_path, 'r') as f:
+                with open(self.settings_path, "r") as f:
                     current_settings = json.load(f)
 
             # Merge settings, preferring new defaults but keeping user customizations
             merged_settings = self._merge_settings(old_settings, current_settings)
 
             # Write merged settings
-            with open(self.settings_path, 'w') as f:
+            with open(self.settings_path, "w") as f:
                 json.dump(merged_settings, f, indent=2)
 
             logger.info("Settings file migrated successfully")
@@ -173,7 +177,7 @@ class SettingsMigrator:
             "viewer_settings",
             "library_settings",
             "theme",
-            "language"
+            "language",
         ]
 
         for key in user_customizable_keys:
@@ -184,8 +188,12 @@ class SettingsMigrator:
         if "viewer_settings" in old_settings:
             # Migrate old viewer settings to new format if needed
             old_viewer = old_settings["viewer_settings"]
-            if "render_mode" in old_viewer and "render_mode" not in merged.get("viewer_settings", {}):
-                merged.setdefault("viewer_settings", {})["render_mode"] = old_viewer["render_mode"]
+            if "render_mode" in old_viewer and "render_mode" not in merged.get(
+                "viewer_settings", {}
+            ):
+                merged.setdefault("viewer_settings", {})["render_mode"] = old_viewer[
+                    "render_mode"
+                ]
 
         return merged
 
@@ -222,23 +230,31 @@ class SettingsMigrator:
             # Perform version-specific upgrades
             if current_db_version < 1:
                 # Upgrade to version 1: Add new columns
-                cursor.execute("""
+                cursor.execute(
+                    """
                     ALTER TABLE models ADD COLUMN created_date TEXT
-                """)
-                cursor.execute("""
+                """
+                )
+                cursor.execute(
+                    """
                     ALTER TABLE models ADD COLUMN modified_date TEXT
-                """)
+                """
+                )
                 cursor.execute("PRAGMA user_version = 1")
                 logger.info("Database upgraded to version 1")
 
             if current_db_version < 2:
                 # Upgrade to version 2: Add new indexes
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)
-                """)
-                cursor.execute("""
+                """
+                )
+                cursor.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_models_created_date ON models(created_date)
-                """)
+                """
+                )
                 cursor.execute("PRAGMA user_version = 2")
                 logger.info("Database upgraded to version 2")
 
@@ -304,7 +320,7 @@ class SettingsMigrator:
             # Load current settings
             settings = {}
             if self.settings_path.exists():
-                with open(self.settings_path, 'r') as f:
+                with open(self.settings_path, "r") as f:
                     settings = json.load(f)
 
             # Update version information
@@ -313,7 +329,7 @@ class SettingsMigrator:
             settings["migration_successful"] = True
 
             # Save updated settings
-            with open(self.settings_path, 'w') as f:
+            with open(self.settings_path, "w") as f:
                 json.dump(settings, f, indent=2)
 
             logger.info("Version information updated")
@@ -332,7 +348,10 @@ class SettingsMigrator:
             if self.old_app_data_path.exists():
                 # Rename old directory with timestamp for backup
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_path = self.old_app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+                backup_path = (
+                    self.old_app_data_path.parent
+                    / f"{self.app_name}_backup_{timestamp}"
+                )
 
                 shutil.move(str(self.old_app_data_path), str(backup_path))
                 logger.info(f"Old data backed up to: {backup_path}")
@@ -355,7 +374,9 @@ class SettingsMigrator:
         """
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = self.app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+            backup_path = (
+                self.app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+            )
 
             if self.app_data_path.exists():
                 shutil.copytree(self.app_data_path, backup_path)

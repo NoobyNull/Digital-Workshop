@@ -33,13 +33,14 @@ class GuideType(Enum):
 
     Defines different visual elements that can be rendered for snapping feedback.
     """
-    EDGE_HIGHLIGHT = "edge_highlight"     # Highlight snap zone edges
-    CENTER_INDICATOR = "center_indicator" # Show snap zone centers
-    CORNER_MARKER = "corner_marker"      # Mark snap zone corners
-    DISTANCE_LINE = "distance_line"      # Show distance to snap target
-    TARGET_CROSSHAIR = "target_crosshair" # Show exact snap target
-    ZONE_OUTLINE = "zone_outline"        # Outline entire snap zones
-    MAGNETIC_FIELD = "magnetic_field"    # Show magnetic attraction area
+
+    EDGE_HIGHLIGHT = "edge_highlight"  # Highlight snap zone edges
+    CENTER_INDICATOR = "center_indicator"  # Show snap zone centers
+    CORNER_MARKER = "corner_marker"  # Mark snap zone corners
+    DISTANCE_LINE = "distance_line"  # Show distance to snap target
+    TARGET_CROSSHAIR = "target_crosshair"  # Show exact snap target
+    ZONE_OUTLINE = "zone_outline"  # Outline entire snap zones
+    MAGNETIC_FIELD = "magnetic_field"  # Show magnetic attraction area
 
 
 class AnimationState(Enum):
@@ -48,10 +49,11 @@ class AnimationState(Enum):
 
     Defines the current animation state of visual elements.
     """
-    HIDDEN = "hidden"           # Not visible
-    FADING_IN = "fading_in"     # Appearing with fade-in effect
-    VISIBLE = "visible"        # Fully visible
-    FADING_OUT = "fading_out"   # Disappearing with fade-out effect
+
+    HIDDEN = "hidden"  # Not visible
+    FADING_IN = "fading_in"  # Appearing with fade-in effect
+    VISIBLE = "visible"  # Fully visible
+    FADING_OUT = "fading_out"  # Disappearing with fade-out effect
     EMPHASIZED = "emphasized"  # Highlighted/emphasized state
 
 
@@ -76,6 +78,7 @@ class SnapGuide:
         creation_time: When the guide was created
         last_update: When the guide was last updated
     """
+
     guide_type: GuideType
     position: QPointF
     bounds: QRectF
@@ -95,8 +98,10 @@ class SnapGuide:
             raise ValueError(f"Opacity must be between 0.0 and 1.0, got {self.opacity}")
         if self.width < 1:
             raise ValueError(f"Width must be at least 1, got {self.width}")
-        if self.style not in ['solid', 'dashed', 'dotted']:
-            raise ValueError(f"Invalid style '{self.style}', must be 'solid', 'dashed', or 'dotted'")
+        if self.style not in ["solid", "dashed", "dotted"]:
+            raise ValueError(
+                f"Invalid style '{self.style}', must be 'solid', 'dashed', or 'dotted'"
+            )
 
 
 class AnimationController:
@@ -308,7 +313,7 @@ class RenderCache:
         return {
             "cached_elements": len(self._cache),
             "max_size": self.max_size,
-            "memory_usage_mb": len(self._cache) * 0.01  # Rough estimate
+            "memory_usage_mb": len(self._cache) * 0.01,  # Rough estimate
         }
 
 
@@ -338,7 +343,7 @@ class SnapGuideRenderer:
         self,
         main_window: QMainWindow,
         config: SnapConfiguration,
-        coordinate_manager: CoordinateManager
+        coordinate_manager: CoordinateManager,
     ):
         """
         Initialize the snap guide renderer.
@@ -366,7 +371,7 @@ class SnapGuideRenderer:
             "avg_render_time_ms": 0.0,
             "max_render_time_ms": 0.0,
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
 
         # Setup rendering integration
@@ -383,7 +388,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to setup rendering integration: {e}")
 
-    def render_snap_result(self, snap_result: SnapResult, context_widget: Optional[QWidget] = None) -> None:
+    def render_snap_result(
+        self, snap_result: SnapResult, context_widget: Optional[QWidget] = None
+    ) -> None:
         """
         Render visual feedback for a snap calculation result.
 
@@ -414,7 +421,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to render snap result: {e}")
 
-    def _create_guides_from_snap_result(self, snap_result: SnapResult, context_widget: Optional[QWidget]) -> List[SnapGuide]:
+    def _create_guides_from_snap_result(
+        self, snap_result: SnapResult, context_widget: Optional[QWidget]
+    ) -> List[SnapGuide]:
         """
         Create visual guides from a snap calculation result.
 
@@ -449,7 +458,9 @@ class SnapGuideRenderer:
 
         return guides
 
-    def _create_edge_guides(self, candidate: SnapCandidate, context_widget: Optional[QWidget]) -> List[SnapGuide]:
+    def _create_edge_guides(
+        self, candidate: SnapCandidate, context_widget: Optional[QWidget]
+    ) -> List[SnapGuide]:
         """Create edge highlight guides."""
         guides = []
 
@@ -462,7 +473,7 @@ class SnapGuideRenderer:
                 (zone_rect.topLeft(), zone_rect.topRight(), "top"),
                 (zone_rect.bottomLeft(), zone_rect.bottomRight(), "bottom"),
                 (zone_rect.topLeft(), zone_rect.bottomLeft(), "left"),
-                (zone_rect.topRight(), zone_rect.bottomRight(), "right")
+                (zone_rect.topRight(), zone_rect.bottomRight(), "right"),
             ]
 
             for start_point, end_point, edge_name in edges:
@@ -471,16 +482,19 @@ class SnapGuideRenderer:
                     candidate.position, start_point, end_point
                 )
 
-                if distance_to_edge < candidate.zone.snap_threshold * 0.5:  # Within half snap threshold
+                if (
+                    distance_to_edge < candidate.zone.snap_threshold * 0.5
+                ):  # Within half snap threshold
                     guide = SnapGuide(
                         guide_type=GuideType.EDGE_HIGHLIGHT,
                         position=(start_point + end_point) / 2,
                         bounds=QRectF(start_point, end_point).normalized(),
                         color=self.config.visual.highlight_color,
-                        width=self.config.visual.guide_width + 2,  # Thicker for highlights
+                        width=self.config.visual.guide_width
+                        + 2,  # Thicker for highlights
                         style=self.config.visual.guide_style,
                         widget=context_widget,
-                        metadata={"edge_name": edge_name, "snap_type": "edge"}
+                        metadata={"edge_name": edge_name, "snap_type": "edge"},
                     )
                     guides.append(guide)
 
@@ -489,7 +503,9 @@ class SnapGuideRenderer:
 
         return guides
 
-    def _create_center_guides(self, candidate: SnapCandidate, context_widget: Optional[QWidget]) -> List[SnapGuide]:
+    def _create_center_guides(
+        self, candidate: SnapCandidate, context_widget: Optional[QWidget]
+    ) -> List[SnapGuide]:
         """Create center indicator guides."""
         guides = []
 
@@ -517,7 +533,7 @@ class SnapGuideRenderer:
                 width=self.config.visual.guide_width,
                 style="solid",
                 widget=context_widget,
-                metadata={"orientation": "horizontal", "snap_type": "center"}
+                metadata={"orientation": "horizontal", "snap_type": "center"},
             )
             guides.append(h_guide)
 
@@ -530,7 +546,7 @@ class SnapGuideRenderer:
                 width=self.config.visual.guide_width,
                 style="solid",
                 widget=context_widget,
-                metadata={"orientation": "vertical", "snap_type": "center"}
+                metadata={"orientation": "vertical", "snap_type": "center"},
             )
             guides.append(v_guide)
 
@@ -539,7 +555,9 @@ class SnapGuideRenderer:
 
         return guides
 
-    def _create_corner_guides(self, candidate: SnapCandidate, context_widget: Optional[QWidget]) -> List[SnapGuide]:
+    def _create_corner_guides(
+        self, candidate: SnapCandidate, context_widget: Optional[QWidget]
+    ) -> List[SnapGuide]:
         """Create corner marker guides."""
         guides = []
 
@@ -549,11 +567,14 @@ class SnapGuideRenderer:
                 zone_rect.topLeft(),
                 zone_rect.topRight(),
                 zone_rect.bottomLeft(),
-                zone_rect.bottomRight()
+                zone_rect.bottomRight(),
             ]
 
             # Find nearest corner
-            nearest_corner = min(corners, key=lambda corner: (candidate.position - corner).manhattanLength())
+            nearest_corner = min(
+                corners,
+                key=lambda corner: (candidate.position - corner).manhattanLength(),
+            )
 
             # Create corner marker
             marker_size = candidate.zone.snap_threshold * 0.3
@@ -561,7 +582,7 @@ class SnapGuideRenderer:
                 nearest_corner.x() - marker_size / 2,
                 nearest_corner.y() - marker_size / 2,
                 marker_size,
-                marker_size
+                marker_size,
             )
 
             guide = SnapGuide(
@@ -572,7 +593,7 @@ class SnapGuideRenderer:
                 width=self.config.visual.guide_width,
                 style="solid",
                 widget=context_widget,
-                metadata={"corner": "nearest", "snap_type": "corner"}
+                metadata={"corner": "nearest", "snap_type": "corner"},
             )
             guides.append(guide)
 
@@ -581,7 +602,9 @@ class SnapGuideRenderer:
 
         return guides
 
-    def _create_target_guide(self, candidate: SnapCandidate, context_widget: Optional[QWidget]) -> SnapGuide:
+    def _create_target_guide(
+        self, candidate: SnapCandidate, context_widget: Optional[QWidget]
+    ) -> SnapGuide:
         """Create target crosshair guide."""
         try:
             target_size = candidate.zone.snap_threshold * 0.2
@@ -593,13 +616,16 @@ class SnapGuideRenderer:
                     candidate.position.x() - target_size / 2,
                     candidate.position.y() - target_size / 2,
                     target_size,
-                    target_size
+                    target_size,
                 ),
                 color=self.config.visual.guide_color,
                 width=self.config.visual.guide_width + 1,
                 style="solid",
                 widget=context_widget,
-                metadata={"snap_type": candidate.snap_type.value, "confidence": candidate.confidence}
+                metadata={
+                    "snap_type": candidate.snap_type.value,
+                    "confidence": candidate.confidence,
+                },
             )
         except Exception as e:
             self.logger.error(f"Failed to create target guide: {e}")
@@ -608,10 +634,12 @@ class SnapGuideRenderer:
                 guide_type=GuideType.TARGET_CROSSHAIR,
                 position=candidate.position,
                 bounds=QRectF(candidate.position, QSizeF(10, 10)),
-                opacity=0.0  # Hidden
+                opacity=0.0,  # Hidden
             )
 
-    def _distance_to_line_segment(self, point: QPointF, line_start: QPointF, line_end: QPointF) -> float:
+    def _distance_to_line_segment(
+        self, point: QPointF, line_start: QPointF, line_end: QPointF
+    ) -> float:
         """
         Calculate distance from a point to a line segment.
 
@@ -632,7 +660,9 @@ class SnapGuideRenderer:
             return (point - line_start).manhattanLength()
 
         # Project point onto line
-        projection = max(0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length))
+        projection = max(
+            0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length)
+        )
         projection_point = line_start + (line_vec / line_length) * projection
 
         return (point - projection_point).manhattanLength()
@@ -651,7 +681,9 @@ class SnapGuideRenderer:
             # Add to active guides
             self._active_guides.append(guide)
 
-            self.logger.debug(f"Added guide {guide.guide_type.value} at {guide.position}")
+            self.logger.debug(
+                f"Added guide {guide.guide_type.value} at {guide.position}"
+            )
         except Exception as e:
             self.logger.error(f"Failed to add guide: {e}")
 
@@ -669,7 +701,7 @@ class SnapGuideRenderer:
             # Remove from active guides after animation completes
             QTimer.singleShot(
                 self.config.visual.fade_out_duration + 100,
-                lambda: self._remove_guide_immediate(guide)
+                lambda: self._remove_guide_immediate(guide),
             )
 
             self.logger.debug(f"Removing guide {guide.guide_type.value}")
@@ -689,7 +721,9 @@ class SnapGuideRenderer:
         """Clear all active guides."""
         try:
             # Start fade-out for all guides
-            for guide in self._active_guides[:]:  # Copy list to avoid modification during iteration
+            for guide in self._active_guides[
+                :
+            ]:  # Copy list to avoid modification during iteration
                 self.remove_guide(guide)
 
             self.logger.debug(f"Cleared {len(self._active_guides)} guides")
@@ -723,7 +757,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to render guides: {e}")
 
-    def _render_single_guide(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_single_guide(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """
         Render a single guide.
 
@@ -769,7 +805,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to render guide {guide.guide_type.value}: {e}")
 
-    def _render_edge_highlight(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_edge_highlight(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """Render edge highlight guide."""
         try:
             # Draw a highlighted line along the edge
@@ -779,7 +817,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to render edge highlight: {e}")
 
-    def _render_center_indicator(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_center_indicator(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """Render center indicator guide."""
         try:
             # Draw crosshair lines
@@ -791,7 +831,9 @@ class SnapGuideRenderer:
         except Exception as e:
             self.logger.error(f"Failed to render center indicator: {e}")
 
-    def _render_corner_marker(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_corner_marker(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """Render corner marker guide."""
         try:
             # Draw corner bracket or circle
@@ -799,18 +841,48 @@ class SnapGuideRenderer:
             if not bounds.isEmpty():
                 # Draw corner brackets
                 margin = bounds.width() * 0.2
-                painter.drawLine(bounds.left(), bounds.top(), bounds.left() + margin, bounds.top())
-                painter.drawLine(bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin)
-                painter.drawLine(bounds.right() - margin, bounds.top(), bounds.right(), bounds.top())
-                painter.drawLine(bounds.right(), bounds.top(), bounds.right(), bounds.top() + margin)
-                painter.drawLine(bounds.left(), bounds.bottom(), bounds.left() + margin, bounds.bottom())
-                painter.drawLine(bounds.left(), bounds.bottom() - margin, bounds.left(), bounds.bottom())
-                painter.drawLine(bounds.right() - margin, bounds.bottom(), bounds.right(), bounds.bottom())
-                painter.drawLine(bounds.right(), bounds.bottom() - margin, bounds.right(), bounds.bottom())
+                painter.drawLine(
+                    bounds.left(), bounds.top(), bounds.left() + margin, bounds.top()
+                )
+                painter.drawLine(
+                    bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin
+                )
+                painter.drawLine(
+                    bounds.right() - margin, bounds.top(), bounds.right(), bounds.top()
+                )
+                painter.drawLine(
+                    bounds.right(), bounds.top(), bounds.right(), bounds.top() + margin
+                )
+                painter.drawLine(
+                    bounds.left(),
+                    bounds.bottom(),
+                    bounds.left() + margin,
+                    bounds.bottom(),
+                )
+                painter.drawLine(
+                    bounds.left(),
+                    bounds.bottom() - margin,
+                    bounds.left(),
+                    bounds.bottom(),
+                )
+                painter.drawLine(
+                    bounds.right() - margin,
+                    bounds.bottom(),
+                    bounds.right(),
+                    bounds.bottom(),
+                )
+                painter.drawLine(
+                    bounds.right(),
+                    bounds.bottom() - margin,
+                    bounds.right(),
+                    bounds.bottom(),
+                )
         except Exception as e:
             self.logger.error(f"Failed to render corner marker: {e}")
 
-    def _render_target_crosshair(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_target_crosshair(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """Render target crosshair guide."""
         try:
             # Draw crosshair at target position
@@ -819,17 +891,23 @@ class SnapGuideRenderer:
                 center = bounds.center()
                 crosshair_size = bounds.width() * 0.8
                 painter.drawLine(
-                    center.x() - crosshair_size / 2, center.y(),
-                    center.x() + crosshair_size / 2, center.y()
+                    center.x() - crosshair_size / 2,
+                    center.y(),
+                    center.x() + crosshair_size / 2,
+                    center.y(),
                 )
                 painter.drawLine(
-                    center.x(), center.y() - crosshair_size / 2,
-                    center.x(), center.y() + crosshair_size / 2
+                    center.x(),
+                    center.y() - crosshair_size / 2,
+                    center.x(),
+                    center.y() + crosshair_size / 2,
                 )
         except Exception as e:
             self.logger.error(f"Failed to render target crosshair: {e}")
 
-    def _render_distance_line(self, painter: QPainter, guide: SnapGuide, target_rect: QRectF) -> None:
+    def _render_distance_line(
+        self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
+    ) -> None:
         """Render distance line guide."""
         try:
             # Draw line showing distance to snap target
@@ -843,14 +921,15 @@ class SnapGuideRenderer:
         """Update performance statistics."""
         self._performance_stats["total_renders"] += 1
         self._performance_stats["max_render_time_ms"] = max(
-            self._performance_stats["max_render_time_ms"],
-            render_time_ms
+            self._performance_stats["max_render_time_ms"], render_time_ms
         )
 
         # Update average render time
         total_renders = self._performance_stats["total_renders"]
         total_time = self._performance_stats["avg_render_time_ms"] * (total_renders - 1)
-        self._performance_stats["avg_render_time_ms"] = (total_time + render_time_ms) / total_renders
+        self._performance_stats["avg_render_time_ms"] = (
+            total_time + render_time_ms
+        ) / total_renders
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """
@@ -863,10 +942,8 @@ class SnapGuideRenderer:
             return {
                 "renderer_stats": self._performance_stats.copy(),
                 "cache_stats": self.render_cache.get_stats(),
-                "animation_stats": {
-                    "total_guides": len(self._active_guides)
-                },
-                "memory_usage_mb": len(self._active_guides) * 0.1  # Rough estimate
+                "animation_stats": {"total_guides": len(self._active_guides)},
+                "memory_usage_mb": len(self._active_guides) * 0.1,  # Rough estimate
             }
         except Exception as e:
             self.logger.error(f"Failed to get performance stats: {e}")
@@ -903,7 +980,7 @@ class SnapGuideRenderer:
                 "avg_render_time_ms": 0.0,
                 "max_render_time_ms": 0.0,
                 "cache_hits": 0,
-                "cache_misses": 0
+                "cache_misses": 0,
             }
 
             self.logger.info("Snap guide renderer reset to initial state")

@@ -11,8 +11,13 @@ Provides:
 import tempfile
 from pathlib import Path
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QMessageBox, QTextEdit
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QMessageBox,
+    QTextEdit,
 )
 from PySide6.QtCore import Qt
 
@@ -137,7 +142,7 @@ class ModelAnalyzerDialog(QDialog):
             "hole": "Holes",
             "overlap": "Overlapping Triangles",
             "self_intersect": "Self-Intersecting Triangles",
-            "hollow": "Hollow Areas"
+            "hollow": "Hollow Areas",
         }
 
         detected_map = {error.error_type: error for error in errors}
@@ -165,7 +170,11 @@ class ModelAnalyzerDialog(QDialog):
         for error_key, error_name in error_types.items():
             if error_key in detected_map:
                 error = detected_map[error_key]
-                icon = "🔴" if error.severity == "critical" else "🟡" if error.severity == "warning" else "🔵"
+                icon = (
+                    "🔴"
+                    if error.severity == "critical"
+                    else "🟡" if error.severity == "warning" else "🔵"
+                )
                 text += f"{icon} {error_name}: {error.count} found\n"
                 text += f"   {error.description}\n"
             else:
@@ -230,13 +239,15 @@ class ModelAnalyzerDialog(QDialog):
                 self,
                 "Save Fixed Model",
                 str(original_path.parent / default_name),
-                "STL Files (*.stl);;All Files (*)"
+                "STL Files (*.stl);;All Files (*)",
             )
 
             if file_path:
                 success = STLWriter.write(self.fixed_model, file_path, binary=True)
                 if success:
-                    QMessageBox.information(self, "Success", f"Model saved to:\n{file_path}")
+                    QMessageBox.information(
+                        self, "Success", f"Model saved to:\n{file_path}"
+                    )
                     self.accept()
                 else:
                     QMessageBox.critical(self, "Error", "Failed to save model")
@@ -253,7 +264,7 @@ class ModelAnalyzerDialog(QDialog):
                 "Replace Original",
                 f"Replace original file?\n{self.file_path}\n\n"
                 "This will unload the model, replace the file, and reload it.",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -263,9 +274,7 @@ class ModelAnalyzerDialog(QDialog):
 
             # Step 1: Write to temp file first
             with tempfile.NamedTemporaryFile(
-                suffix=original_path.suffix,
-                delete=False,
-                dir=original_path.parent
+                suffix=original_path.suffix, delete=False, dir=original_path.parent
             ) as temp_file:
                 temp_path = temp_file.name
 
@@ -273,7 +282,9 @@ class ModelAnalyzerDialog(QDialog):
                 # Write fixed model to temp file
                 success = STLWriter.write(self.fixed_model, temp_path, binary=True)
                 if not success:
-                    QMessageBox.critical(self, "Error", "Failed to write fixed model to temp file")
+                    QMessageBox.critical(
+                        self, "Error", "Failed to write fixed model to temp file"
+                    )
                     Path(temp_path).unlink(missing_ok=True)
                     return
 
@@ -288,7 +299,7 @@ class ModelAnalyzerDialog(QDialog):
                     f"Original file replaced successfully.\n\n"
                     f"File: {self.file_path}\n"
                     f"Triangles: {len(self.fixed_model.triangles):,}\n"
-                    f"Removed: {len(self.model.triangles) - len(self.fixed_model.triangles)}"
+                    f"Removed: {len(self.model.triangles) - len(self.fixed_model.triangles)}",
                 )
                 self.accept()
 

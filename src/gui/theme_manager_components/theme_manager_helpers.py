@@ -16,7 +16,7 @@ def contrasting_text_color(hex_color: str) -> str:
     """
     try:
         r, g, b = hex_to_rgb(hex_color)
-        brightness = (0.299 * r + 0.587 * g + 0.114 * b)
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
         return "#000000" if brightness >= 128 else "#ffffff"
     except Exception:
         return COLORS.text
@@ -70,7 +70,12 @@ def build_category_map() -> Dict[str, List[str]]:
         return True
 
     for k in keys:
-        if k.startswith("window_") or k.startswith("text_") or k.startswith("disabled_") or k.startswith("menubar_"):
+        if (
+            k.startswith("window_")
+            or k.startswith("text_")
+            or k.startswith("disabled_")
+            or k.startswith("menubar_")
+        ):
             add("Window & UI", k)
         elif k.startswith("surface_"):
             add("Surfaces", k)
@@ -108,7 +113,9 @@ def build_category_map() -> Dict[str, List[str]]:
             add("Labels", k)
         elif k.startswith("status_"):
             add("Status Indicators", k)
-        elif k.startswith("primary") or k.startswith("accent_") or k.startswith("brand_"):
+        elif (
+            k.startswith("primary") or k.startswith("accent_") or k.startswith("brand_")
+        ):
             add("Accent / Brand", k)
         elif k.startswith("interaction_"):
             add("Interactions", k)
@@ -124,4 +131,3 @@ def build_category_map() -> Dict[str, List[str]]:
             add("Other", k)
 
     return categories
-

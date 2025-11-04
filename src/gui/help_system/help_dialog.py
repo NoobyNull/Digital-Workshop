@@ -5,8 +5,16 @@ Provides keyword search across all documentation with results display.
 """
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QListWidget, QListWidgetItem, QTextEdit, QSplitter, QLabel
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QTextEdit,
+    QSplitter,
+    QLabel,
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
@@ -74,6 +82,7 @@ class HelpDialog(QDialog):
 
         # Create widgets for splitter
         from PySide6.QtWidgets import QWidget
+
         results_container = QWidget()
         results_container.setLayout(results_layout)
 
@@ -135,9 +144,7 @@ class HelpDialog(QDialog):
             item.setData(Qt.UserRole, topic)
             self.results_list.addItem(item)
 
-        self.status_label.setText(
-            f"Found {len(self.current_results)} results"
-        )
+        self.status_label.setText(f"Found {len(self.current_results)} results")
 
         # Auto-select first result
         if self.results_list.count() > 0:
@@ -159,4 +166,3 @@ class HelpDialog(QDialog):
 <p><b>Keywords:</b> {', '.join(topic.keywords)}</p>
 """
             self.content_display.setHtml(content)
-

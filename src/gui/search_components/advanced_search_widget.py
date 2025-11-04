@@ -8,8 +8,17 @@ from typing import Any, Dict
 
 from PySide6.QtCore import Signal, Qt, QDate
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QFormLayout, QScrollArea, QGroupBox,
-    QCheckBox, QSlider, QDateEdit, QSpinBox, QPushButton, QLabel
+    QWidget,
+    QVBoxLayout,
+    QFormLayout,
+    QScrollArea,
+    QGroupBox,
+    QCheckBox,
+    QSlider,
+    QDateEdit,
+    QSpinBox,
+    QPushButton,
+    QLabel,
 )
 
 from src.core.database_manager import get_database_manager
@@ -162,9 +171,9 @@ class AdvancedSearchWidget(QWidget):
             category_layout = self.category_all_checkbox.parent().layout()
 
             for category in categories:
-                checkbox = QCheckBox(category['name'])
+                checkbox = QCheckBox(category["name"])
                 checkbox.toggled.connect(self.on_category_toggled)
-                self.category_checkboxes[category['name']] = checkbox
+                self.category_checkboxes[category["name"]] = checkbox
                 category_layout.addWidget(checkbox)
 
         except Exception as e:
@@ -188,8 +197,9 @@ class AdvancedSearchWidget(QWidget):
     def on_category_toggled(self):
         """Handle individual category checkbox toggle."""
         # Check if any individual categories are selected
-        any_selected = any(checkbox.isChecked()
-                          for checkbox in self.category_checkboxes.values())
+        any_selected = any(
+            checkbox.isChecked() for checkbox in self.category_checkboxes.values()
+        )
 
         # Update "All Categories" checkbox
         self.category_all_checkbox.blockSignals(True)
@@ -221,37 +231,47 @@ class AdvancedSearchWidget(QWidget):
         filters = {}
 
         # Category filter
-        selected_categories = [name for name, checkbox in self.category_checkboxes.items()
-                              if checkbox.isChecked()]
+        selected_categories = [
+            name
+            for name, checkbox in self.category_checkboxes.items()
+            if checkbox.isChecked()
+        ]
         if selected_categories:
-            filters['category'] = selected_categories
+            filters["category"] = selected_categories
 
         # Format filter
-        selected_formats = [format_name for format_name, checkbox in self.format_checkboxes.items()
-                           if checkbox.isChecked()]
+        selected_formats = [
+            format_name
+            for format_name, checkbox in self.format_checkboxes.items()
+            if checkbox.isChecked()
+        ]
         if selected_formats:
-            filters['format'] = selected_formats
+            filters["format"] = selected_formats
 
         # Rating filter
         min_rating = self.min_rating_slider.value()
         if min_rating > 0:
-            filters['min_rating'] = min_rating
+            filters["min_rating"] = min_rating
 
         # Date range filter
         if self.date_added_start.date().isValid():
-            filters['date_added_start'] = self.date_added_start.date().toString("yyyy-MM-dd")
+            filters["date_added_start"] = self.date_added_start.date().toString(
+                "yyyy-MM-dd"
+            )
 
         if self.date_added_end.date().isValid():
-            filters['date_added_end'] = self.date_added_end.date().toString("yyyy-MM-dd")
+            filters["date_added_end"] = self.date_added_end.date().toString(
+                "yyyy-MM-dd"
+            )
 
         # File size filter
         min_size = self.min_size_spin.value()
         if min_size > 0:
-            filters['min_file_size'] = min_size * 1024 * 1024  # Convert to bytes
+            filters["min_file_size"] = min_size * 1024 * 1024  # Convert to bytes
 
         max_size = self.max_size_spin.value()
         if max_size > 0:
-            filters['max_file_size'] = max_size * 1024 * 1024  # Convert to bytes
+            filters["max_file_size"] = max_size * 1024 * 1024  # Convert to bytes
 
         return filters
 
@@ -286,8 +306,8 @@ class AdvancedSearchWidget(QWidget):
         self.reset_filters()
 
         # Category filter
-        if 'category' in filters:
-            categories = filters['category']
+        if "category" in filters:
+            categories = filters["category"]
             if isinstance(categories, list):
                 for category in categories:
                     if category in self.category_checkboxes:
@@ -296,8 +316,8 @@ class AdvancedSearchWidget(QWidget):
                 self.category_checkboxes[categories].setChecked(True)
 
         # Format filter
-        if 'format' in filters:
-            formats = filters['format']
+        if "format" in filters:
+            formats = filters["format"]
             if isinstance(formats, list):
                 for format_name in formats:
                     format_key = format_name.lower()
@@ -307,30 +327,29 @@ class AdvancedSearchWidget(QWidget):
                 self.format_checkboxes[formats.lower()].setChecked(True)
 
         # Rating filter
-        if 'min_rating' in filters:
-            self.min_rating_slider.setValue(filters['min_rating'])
+        if "min_rating" in filters:
+            self.min_rating_slider.setValue(filters["min_rating"])
 
         # Date range filter
-        if 'date_added_start' in filters:
-            date_str = filters['date_added_start']
+        if "date_added_start" in filters:
+            date_str = filters["date_added_start"]
             date = QDate.fromString(date_str, "yyyy-MM-dd")
             if date.isValid():
                 self.date_added_start.setDate(date)
 
-        if 'date_added_end' in filters:
-            date_str = filters['date_added_end']
+        if "date_added_end" in filters:
+            date_str = filters["date_added_end"]
             date = QDate.fromString(date_str, "yyyy-MM-dd")
             if date.isValid():
                 self.date_added_end.setDate(date)
 
         # File size filter
-        if 'min_file_size' in filters:
-            size_bytes = filters['min_file_size']
+        if "min_file_size" in filters:
+            size_bytes = filters["min_file_size"]
             size_mb = size_bytes // (1024 * 1024)
             self.min_size_spin.setValue(size_mb)
 
-        if 'max_file_size' in filters:
-            size_bytes = filters['max_file_size']
+        if "max_file_size" in filters:
+            size_bytes = filters["max_file_size"]
             size_mb = size_bytes // (1024 * 1024)
             self.max_size_spin.setValue(size_mb)
-

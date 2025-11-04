@@ -56,12 +56,14 @@ class VTKContextManager:
         handlers = {
             "Windows": self._windows_context_handler,
             "Linux": self._linux_context_handler,
-            "Darwin": self._darwin_context_handler
+            "Darwin": self._darwin_context_handler,
         }
 
         return handlers
 
-    def _windows_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
+    def _windows_context_handler(
+        self, render_window: vtk.vtkRenderWindow
+    ) -> ContextState:
         """Windows-specific context validation."""
         try:
             # On Windows, check if the render window handle is valid
@@ -77,7 +79,7 @@ class VTKContextManager:
             try:
                 # This is a safe way to check if the context is still valid
                 # without triggering the wglMakeCurrent error
-                if hasattr(render_window, 'GetGenericDisplayId'):
+                if hasattr(render_window, "GetGenericDisplayId"):
                     display_id = render_window.GetGenericDisplayId()
                     if display_id == 0:
                         return ContextState.LOST
@@ -90,14 +92,16 @@ class VTKContextManager:
             self.logger.debug(f"Windows context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _linux_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
+    def _linux_context_handler(
+        self, render_window: vtk.vtkRenderWindow
+    ) -> ContextState:
         """Linux-specific context validation."""
         try:
             if not render_window:
                 return ContextState.INVALID
 
             # On Linux, check display connection
-            if hasattr(render_window, 'GetGenericDisplayId'):
+            if hasattr(render_window, "GetGenericDisplayId"):
                 display_id = render_window.GetGenericDisplayId()
                 if display_id == 0:
                     return ContextState.LOST
@@ -108,7 +112,9 @@ class VTKContextManager:
             self.logger.debug(f"Linux context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def _darwin_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
+    def _darwin_context_handler(
+        self, render_window: vtk.vtkRenderWindow
+    ) -> ContextState:
         """macOS-specific context validation."""
         try:
             if not render_window:
@@ -125,8 +131,9 @@ class VTKContextManager:
             self.logger.debug(f"macOS context validation error: {e}")
             return ContextState.UNKNOWN
 
-    def validate_context(self, render_window: vtk.vtkRenderWindow,
-                        operation: str = "unknown") -> Tuple[bool, ContextState]:
+    def validate_context(
+        self, render_window: vtk.vtkRenderWindow, operation: str = "unknown"
+    ) -> Tuple[bool, ContextState]:
         """
         Validate OpenGL context before VTK operations.
 
@@ -143,7 +150,9 @@ class VTKContextManager:
         try:
             # Check if render window exists
             if not render_window:
-                self.logger.debug(f"Context validation failed: render window is None for {operation}")
+                self.logger.debug(
+                    f"Context validation failed: render window is None for {operation}"
+                )
                 return False, ContextState.INVALID
 
             # Get platform-specific handler
@@ -160,11 +169,15 @@ class VTKContextManager:
             is_valid = context_state == ContextState.VALID
 
             if not is_valid:
-                self.logger.debug(f"Context validation failed for {operation}: {context_state}")
+                self.logger.debug(
+                    f"Context validation failed for {operation}: {context_state}"
+                )
                 if self.strict_mode:
                     self.error_handler.handle_error(
-                        RuntimeError(f"Invalid context for {operation}: {context_state}"),
-                        f"context_validation_{operation}"
+                        RuntimeError(
+                            f"Invalid context for {operation}: {context_state}"
+                        ),
+                        f"context_validation_{operation}",
                     )
 
             return is_valid, context_state
@@ -173,7 +186,9 @@ class VTKContextManager:
             self.logger.debug(f"Context validation exception: {e}")
             return False, ContextState.UNKNOWN
 
-    def _generic_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
+    def _generic_context_handler(
+        self, render_window: vtk.vtkRenderWindow
+    ) -> ContextState:
         """Generic context validation fallback."""
         try:
             if not render_window:
@@ -208,7 +223,9 @@ class VTKContextManager:
             if not is_valid:
                 # Check if this is a context loss scenario (common during shutdown)
                 if context_state in [ContextState.LOST, ContextState.INVALID]:
-                    self.logger.debug("Context lost during cleanup, skipping VTK cleanup operations")
+                    self.logger.debug(
+                        "Context lost during cleanup, skipping VTK cleanup operations"
+                    )
                     return False
 
             return True
@@ -229,7 +246,9 @@ class VTKContextManager:
         is_valid, context_state = self.validate_context(render_window, operation)
 
         if not is_valid:
-            self.logger.debug(f"Skipping {operation} due to invalid context: {context_state}")
+            self.logger.debug(
+                f"Skipping {operation} due to invalid context: {context_state}"
+            )
             yield False  # Operation should be skipped
             return
 
@@ -272,22 +291,24 @@ class VTKContextManager:
             "platform": platform.system(),
             "validation_enabled": self.validation_enabled,
             "strict_mode": self.strict_mode,
-            "cache_size": len(self.context_cache)
+            "cache_size": len(self.context_cache),
         }
 
         try:
             if render_window:
-                info.update({
-                    "window_id": render_window.GetWindowId(),
-                    "size": render_window.GetSize(),
-                    "position": render_window.GetPosition(),
-                    "is_current": False,  # Would need platform-specific check
-                    "is_mapped": False   # Would need platform-specific check
-                })
+                info.update(
+                    {
+                        "window_id": render_window.GetWindowId(),
+                        "size": render_window.GetSize(),
+                        "position": render_window.GetPosition(),
+                        "is_current": False,  # Would need platform-specific check
+                        "is_mapped": False,  # Would need platform-specific check
+                    }
+                )
 
                 # Try to get more detailed info
                 try:
-                    if hasattr(render_window, 'GetGenericDisplayId'):
+                    if hasattr(render_window, "GetGenericDisplayId"):
                         info["display_id"] = render_window.GetGenericDisplayId()
                 except Exception:
                     pass
@@ -391,9 +412,9 @@ class VTKContextManager:
                 "strict_mode": self.strict_mode,
                 "platform": platform.system(),
                 "cache_size": len(self.context_cache),
-                "cached_states": dict(self.context_cache)
+                "cached_states": dict(self.context_cache),
             },
-            "error_handler": self.error_handler.get_error_stats()
+            "error_handler": self.error_handler.get_error_stats(),
         }
 
 
@@ -409,8 +430,9 @@ def get_vtk_context_manager() -> VTKContextManager:
     return _vtk_context_manager
 
 
-def validate_vtk_context(render_window: vtk.vtkRenderWindow,
-                        operation: str = "unknown") -> Tuple[bool, ContextState]:
+def validate_vtk_context(
+    render_window: vtk.vtkRenderWindow, operation: str = "unknown"
+) -> Tuple[bool, ContextState]:
     """
     Convenience function to validate VTK context.
 

@@ -57,7 +57,7 @@ class VTKDiagnosticTools:
                 "error_diagnostics": self._get_error_diagnostics(),
                 "fallback_diagnostics": self._get_fallback_diagnostics(),
                 "performance_diagnostics": self._get_performance_diagnostics(),
-                "opengl_diagnostics": self._get_opengl_diagnostics()
+                "opengl_diagnostics": self._get_opengl_diagnostics(),
             }
 
             return diagnostics
@@ -76,7 +76,7 @@ class VTKDiagnosticTools:
                 "machine": platform.machine(),
                 "processor": platform.processor(),
                 "python_version": platform.python_version(),
-                "python_implementation": platform.python_implementation()
+                "python_implementation": platform.python_implementation(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -89,7 +89,7 @@ class VTKDiagnosticTools:
                 "vtk_major": vtk.vtkVersion.GetVTKMajorVersion(),
                 "vtk_minor": vtk.vtkVersion.GetVTKMinorVersion(),
                 "vtk_build": vtk.vtkVersion.GetVTKBuildVersion(),
-                "vtk_source": vtk.vtkVersion.GetVTKSourceVersion()
+                "vtk_source": vtk.vtkVersion.GetVTKSourceVersion(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -130,7 +130,7 @@ class VTKDiagnosticTools:
             return {
                 "performance_monitoring": "available",
                 "frame_rate_monitoring": "available",
-                "memory_monitoring": "available"
+                "memory_monitoring": "available",
             }
         except Exception as e:
             return {"error": str(e)}
@@ -142,7 +142,7 @@ class VTKDiagnosticTools:
                 "opengl_available": self._check_opengl_availability(),
                 "opengl_version": self._get_opengl_version(),
                 "opengl_extensions": self._get_opengl_extensions(),
-                "rendering_backend": self._get_rendering_backend()
+                "rendering_backend": self._get_rendering_backend(),
             }
 
             # Platform-specific diagnostics
@@ -225,7 +225,7 @@ class VTKDiagnosticTools:
             return {
                 "angle_available": self._check_angle_availability(),
                 "directx_version": self._get_directx_version(),
-                "wgl_extensions": self._get_wgl_extensions()
+                "wgl_extensions": self._get_wgl_extensions(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -236,7 +236,7 @@ class VTKDiagnosticTools:
             return {
                 "mesa_available": self._check_mesa_availability(),
                 "glx_extensions": self._get_glx_extensions(),
-                "dri_available": self._check_dri_availability()
+                "dri_available": self._check_dri_availability(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -246,7 +246,7 @@ class VTKDiagnosticTools:
         try:
             return {
                 "cgl_available": self._check_cgl_availability(),
-                "metal_compatibility": self._check_metal_compatibility()
+                "metal_compatibility": self._check_metal_compatibility(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -315,7 +315,9 @@ class VTKDiagnosticTools:
         except Exception:
             return False
 
-    def diagnose_context_loss(self, render_window: vtk.vtkRenderWindow) -> Dict[str, Any]:
+    def diagnose_context_loss(
+        self, render_window: vtk.vtkRenderWindow
+    ) -> Dict[str, Any]:
         """
         Diagnose potential context loss issues.
 
@@ -330,11 +332,13 @@ class VTKDiagnosticTools:
                 "context_loss_detected": False,
                 "context_state": "unknown",
                 "potential_causes": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Check context state
-            is_valid, context_state = self.context_manager.validate_context(render_window, "diagnosis")
+            is_valid, context_state = self.context_manager.validate_context(
+                render_window, "diagnosis"
+            )
             diagnosis["context_state"] = context_state.value
 
             if not is_valid:
@@ -342,30 +346,38 @@ class VTKDiagnosticTools:
 
                 # Analyze potential causes
                 if context_state.name == "LOST":
-                    diagnosis["potential_causes"].extend([
-                        "OpenGL context was destroyed by the system",
-                        "Application lost focus for extended period",
-                        "Graphics driver reset occurred",
-                        "System entered sleep/hibernation mode"
-                    ])
+                    diagnosis["potential_causes"].extend(
+                        [
+                            "OpenGL context was destroyed by the system",
+                            "Application lost focus for extended period",
+                            "Graphics driver reset occurred",
+                            "System entered sleep/hibernation mode",
+                        ]
+                    )
 
                 elif context_state.name == "INVALID":
-                    diagnosis["potential_causes"].extend([
-                        "Render window handle is invalid",
-                        "Window was destroyed or unmapped",
-                        "Graphics context was not properly initialized"
-                    ])
+                    diagnosis["potential_causes"].extend(
+                        [
+                            "Render window handle is invalid",
+                            "Window was destroyed or unmapped",
+                            "Graphics context was not properly initialized",
+                        ]
+                    )
 
                 # Provide recommendations
-                diagnosis["recommendations"].extend([
-                    "Consider using fallback rendering mode",
-                    "Check if application window is properly mapped",
-                    "Verify graphics driver stability",
-                    "Monitor system resource usage"
-                ])
+                diagnosis["recommendations"].extend(
+                    [
+                        "Consider using fallback rendering mode",
+                        "Check if application window is properly mapped",
+                        "Verify graphics driver stability",
+                        "Monitor system resource usage",
+                    ]
+                )
 
             # Get additional context information
-            diagnosis["context_info"] = self.context_manager.get_context_info(render_window)
+            diagnosis["context_info"] = self.context_manager.get_context_info(
+                render_window
+            )
 
             return diagnosis
 
@@ -380,7 +392,7 @@ class VTKDiagnosticTools:
                 "memory_issues_detected": False,
                 "resource_leaks": [],
                 "memory_usage": {},
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Check for leaked resources
@@ -418,7 +430,7 @@ class VTKDiagnosticTools:
                 "high_resource_count": False,
                 "context_switching": False,
                 "rendering_inefficiency": False,
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Check resource counts
@@ -484,7 +496,7 @@ class VTKDiagnosticTools:
             # Save to file if requested
             if output_file:
                 try:
-                    with open(output_file, 'w') as f:
+                    with open(output_file, "w") as f:
                         f.write(report)
                     self.logger.info(f"Diagnostic report saved to: {output_file}")
                 except Exception as e:
@@ -507,7 +519,7 @@ class VTKDiagnosticTools:
                 f"Generated: {diagnostics.get('timestamp', 'Unknown')}",
                 "",
                 "PLATFORM INFORMATION:",
-                "-" * 30
+                "-" * 30,
             ]
 
             # Platform info
@@ -569,11 +581,13 @@ class VTKDiagnosticTools:
 
             context_loss = diagnostics.get("context_loss_diagnosis", {})
             if context_loss.get("context_loss_detected"):
-                report_lines.extend([
-                    "  CONTEXT LOSS DETECTED!",
-                    f"  State: {context_loss.get('context_state', 'unknown')}",
-                    "  Potential causes:"
-                ])
+                report_lines.extend(
+                    [
+                        "  CONTEXT LOSS DETECTED!",
+                        f"  State: {context_loss.get('context_state', 'unknown')}",
+                        "  Potential causes:",
+                    ]
+                )
                 for cause in context_loss.get("potential_causes", []):
                     report_lines.append(f"    - {cause}")
                 report_lines.extend(["  Recommendations:"])
@@ -584,7 +598,9 @@ class VTKDiagnosticTools:
             if memory_issues.get("memory_issues_detected"):
                 report_lines.extend(["", "  MEMORY ISSUES DETECTED!"])
                 if memory_issues.get("resource_leaks"):
-                    report_lines.append(f"  Leaked resources: {len(memory_issues['resource_leaks'])}")
+                    report_lines.append(
+                        f"  Leaked resources: {len(memory_issues['resource_leaks'])}"
+                    )
                 report_lines.extend(["  Recommendations:"])
                 for rec in memory_issues.get("recommendations", []):
                     report_lines.append(f"    - {rec}")
@@ -618,7 +634,7 @@ class VTKDiagnosticTools:
                 "overall_status": "healthy",
                 "issues": [],
                 "warnings": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Check context health
@@ -661,7 +677,7 @@ class VTKDiagnosticTools:
                 "overall_status": "error",
                 "issues": [str(e)],
                 "warnings": [],
-                "recommendations": ["Check diagnostic logs"]
+                "recommendations": ["Check diagnostic logs"],
             }
 
 

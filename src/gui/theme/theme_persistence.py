@@ -44,6 +44,7 @@ class ThemePersistence:
     def __init__(self):
         """Initialize theme persistence manager."""
         from src.core.version_manager import get_settings_names
+
         org_name, app_name = get_settings_names()
         self.settings = QSettings(org_name, app_name)
         self._mutex = QMutex()
@@ -67,7 +68,7 @@ class ThemePersistence:
             "custom_colors": {},
             "system_theme_detection": False,
             "auto_save_enabled": True,
-            "theme_version": "2.0.0"
+            "theme_version": "2.0.0",
         }
 
         logger.info("ThemePersistence initialized with QSettings-only architecture")
@@ -260,7 +261,7 @@ class ThemePersistence:
         try:
             theme_data = self.load_theme()
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(theme_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Theme exported to {file_path}")
@@ -281,7 +282,7 @@ class ThemePersistence:
             True if import was successful
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 theme_data = json.load(f)
 
             # Validate imported data
@@ -309,11 +310,12 @@ class ThemePersistence:
                 "total_operation_time_ms": self._total_operation_time,
                 "average_operation_time_ms": (
                     self._total_operation_time / self._operation_count
-                    if self._operation_count > 0 else 0
+                    if self._operation_count > 0
+                    else 0
                 ),
                 "last_operation_time_ms": self._last_operation_time,
                 "cache_enabled": self._cache_enabled,
-                "cache_size": len(self._settings_cache) if self._cache_enabled else 0
+                "cache_size": len(self._settings_cache) if self._cache_enabled else 0,
             }
 
     def enable_cache(self) -> None:
@@ -353,12 +355,26 @@ class ThemePersistence:
                 self.settings.remove("")
 
                 # Save theme data with proper structure
-                self.settings.setValue("theme_name", theme_data.get("theme_name", "dark"))
-                self.settings.setValue("theme_variant", theme_data.get("theme_variant", "blue"))
-                self.settings.setValue("qt_material_available", theme_data.get("qt_material_available", False))
-                self.settings.setValue("system_theme_detection", theme_data.get("system_theme_detection", False))
-                self.settings.setValue("auto_save_enabled", theme_data.get("auto_save_enabled", True))
-                self.settings.setValue("theme_version", theme_data.get("theme_version", "2.0.0"))
+                self.settings.setValue(
+                    "theme_name", theme_data.get("theme_name", "dark")
+                )
+                self.settings.setValue(
+                    "theme_variant", theme_data.get("theme_variant", "blue")
+                )
+                self.settings.setValue(
+                    "qt_material_available",
+                    theme_data.get("qt_material_available", False),
+                )
+                self.settings.setValue(
+                    "system_theme_detection",
+                    theme_data.get("system_theme_detection", False),
+                )
+                self.settings.setValue(
+                    "auto_save_enabled", theme_data.get("auto_save_enabled", True)
+                )
+                self.settings.setValue(
+                    "theme_version", theme_data.get("theme_version", "2.0.0")
+                )
 
                 # Save custom colors as JSON string
                 custom_colors = theme_data.get("custom_colors", {})
@@ -394,9 +410,15 @@ class ThemePersistence:
             # Load basic theme settings
             theme_data["theme_name"] = self.settings.value("theme_name", "dark")
             theme_data["theme_variant"] = self.settings.value("theme_variant", "blue")
-            theme_data["qt_material_available"] = self.settings.value("qt_material_available", False, type=bool)
-            theme_data["system_theme_detection"] = self.settings.value("system_theme_detection", False, type=bool)
-            theme_data["auto_save_enabled"] = self.settings.value("auto_save_enabled", True, type=bool)
+            theme_data["qt_material_available"] = self.settings.value(
+                "qt_material_available", False, type=bool
+            )
+            theme_data["system_theme_detection"] = self.settings.value(
+                "system_theme_detection", False, type=bool
+            )
+            theme_data["auto_save_enabled"] = self.settings.value(
+                "auto_save_enabled", True, type=bool
+            )
             theme_data["theme_version"] = self.settings.value("theme_version", "2.0.0")
 
             # Load custom colors from JSON string
@@ -464,12 +486,16 @@ class ThemePersistence:
             custom_colors = theme_data.get("custom_colors", {})
             if custom_colors:
                 for color_name, color_value in custom_colors.items():
-                    if not isinstance(color_name, str) or not isinstance(color_value, str):
-                        logger.warning(f"Invalid custom color format: {color_name}={color_value}")
+                    if not isinstance(color_name, str) or not isinstance(
+                        color_value, str
+                    ):
+                        logger.warning(
+                            f"Invalid custom color format: {color_name}={color_value}"
+                        )
                         return False
 
                     # Basic hex color validation
-                    if not (color_value.startswith('#') and len(color_value) == 7):
+                    if not (color_value.startswith("#") and len(color_value) == 7):
                         try:
                             # Try to parse as hex
                             int(color_value, 16)
@@ -514,4 +540,6 @@ class ThemePersistence:
 
         # Log slow operations
         if elapsed_ms > 100:  # More than 100ms is slow
-            logger.warning(f"Slow theme persistence operation: {operation_type} took {elapsed_ms:.2f}ms")
+            logger.warning(
+                f"Slow theme persistence operation: {operation_type} took {elapsed_ms:.2f}ms"
+            )

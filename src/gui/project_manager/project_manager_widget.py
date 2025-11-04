@@ -6,8 +6,15 @@ Provides UI for creating, opening, and managing projects.
 
 from typing import Optional
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget,
-    QListWidgetItem, QInputDialog, QMessageBox, QFileDialog
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QInputDialog,
+    QMessageBox,
+    QFileDialog,
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -86,11 +93,11 @@ class ProjectManagerWidget(QWidget):
 
             for project in projects:
                 item_text = f"{project['name']}"
-                if project.get('import_tag') == 'imported_project':
+                if project.get("import_tag") == "imported_project":
                     item_text += " [Imported]"
 
                 item = QListWidgetItem(item_text)
-                item.setData(Qt.UserRole, project['id'])
+                item.setData(Qt.UserRole, project["id"])
                 self.project_list.addItem(item)
 
             logger.info(f"Refreshed project list: {len(projects)} projects")
@@ -102,19 +109,13 @@ class ProjectManagerWidget(QWidget):
     def _create_new_project(self) -> None:
         """Create new project."""
         try:
-            name, ok = QInputDialog.getText(
-                self,
-                "New Project",
-                "Project name:"
-            )
+            name, ok = QInputDialog.getText(self, "New Project", "Project name:")
 
             if ok and name:
                 # Check for duplicate
                 if self.project_manager.check_duplicate(name):
                     QMessageBox.warning(
-                        self,
-                        "Duplicate Project",
-                        f"Project '{name}' already exists."
+                        self, "Duplicate Project", f"Project '{name}' already exists."
                     )
                     return
 
@@ -131,10 +132,7 @@ class ProjectManagerWidget(QWidget):
         """Import existing library."""
         try:
             folder = QFileDialog.getExistingDirectory(
-                self,
-                "Select Library Folder",
-                "",
-                QFileDialog.ShowDirsOnly
+                self, "Select Library Folder", "", QFileDialog.ShowDirsOnly
             )
 
             if not folder:
@@ -142,10 +140,7 @@ class ProjectManagerWidget(QWidget):
 
             # Get project name
             name, ok = QInputDialog.getText(
-                self,
-                "Import Library",
-                "Project name:",
-                text=folder.split('/')[-1]
+                self, "Import Library", "Project name:", text=folder.split("/")[-1]
             )
 
             if not ok or not name:
@@ -154,9 +149,7 @@ class ProjectManagerWidget(QWidget):
             # Check for duplicate
             if self.project_manager.check_duplicate(name):
                 QMessageBox.warning(
-                    self,
-                    "Duplicate Project",
-                    f"Project '{name}' already exists."
+                    self, "Duplicate Project", f"Project '{name}' already exists."
                 )
                 return
 
@@ -164,11 +157,7 @@ class ProjectManagerWidget(QWidget):
             dry_run = self.dry_run_analyzer.analyze(folder, name)
 
             if not dry_run.can_proceed:
-                QMessageBox.warning(
-                    self,
-                    "Import Failed",
-                    "No files to import."
-                )
+                QMessageBox.warning(self, "Import Failed", "No files to import.")
                 return
 
             # Show dry run report
@@ -181,10 +170,7 @@ class ProjectManagerWidget(QWidget):
             )
 
             reply = QMessageBox.question(
-                self,
-                "Import Library",
-                report_text,
-                QMessageBox.Yes | QMessageBox.No
+                self, "Import Library", report_text, QMessageBox.Yes | QMessageBox.No
             )
 
             if reply == QMessageBox.Yes:
@@ -192,7 +178,9 @@ class ProjectManagerWidget(QWidget):
                 import_report = self.project_importer.import_project(
                     folder,
                     name,
-                    structure_type=dry_run.structure_analysis.get('structure_type', 'nested')
+                    structure_type=dry_run.structure_analysis.get(
+                        "structure_type", "nested"
+                    ),
                 )
 
                 if import_report.success:
@@ -201,14 +189,14 @@ class ProjectManagerWidget(QWidget):
                     QMessageBox.information(
                         self,
                         "Import Complete",
-                        f"Imported {import_report.files_imported} files."
+                        f"Imported {import_report.files_imported} files.",
                     )
                     logger.info(f"Imported library: {name}")
                 else:
                     QMessageBox.critical(
                         self,
                         "Import Failed",
-                        f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}"
+                        f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}",
                     )
 
         except Exception as e:
@@ -249,7 +237,7 @@ class ProjectManagerWidget(QWidget):
                 self,
                 "Delete Project",
                 f"Delete project '{project_name}'?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -267,4 +255,3 @@ class ProjectManagerWidget(QWidget):
     def _on_project_double_clicked(self, item: QListWidgetItem) -> None:
         """Handle project double-click."""
         self._open_selected_project()
-

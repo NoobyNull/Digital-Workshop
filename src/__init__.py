@@ -9,13 +9,16 @@ from .core.version_manager import get_display_version, get_organization_name
 __version__ = get_display_version()
 __author__ = "Digital Workshop Development Team"
 
+
 def get_version():
     """Get the current version string."""
     return __version__
 
+
 def get_author():
     """Get the author information."""
     return __author__
+
 
 def get_organization():
     """Get the organization name."""

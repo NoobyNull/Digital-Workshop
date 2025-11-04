@@ -12,9 +12,20 @@ from typing import Dict, List, Optional, Any
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
-    QLineEdit, QTextEdit, QComboBox, QPushButton, QLabel,
-    QFrame, QScrollArea, QMessageBox, QSizePolicy
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QFormLayout,
+    QGroupBox,
+    QLineEdit,
+    QTextEdit,
+    QComboBox,
+    QPushButton,
+    QLabel,
+    QFrame,
+    QScrollArea,
+    QMessageBox,
+    QSizePolicy,
 )
 
 from src.core.logging_config import get_logger, log_function_call
@@ -23,6 +34,7 @@ from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.fast_hasher import FastHasher
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_24
 from .star_rating_widget import StarRatingWidget
+from .thumbnail_inspector import ThumbnailInspectorLabel
 
 
 class MetadataEditorWidget(QWidget):
@@ -147,31 +159,40 @@ class MetadataEditorWidget(QWidget):
         group_layout.setContentsMargins(SPACING_12, SPACING_12, SPACING_12, SPACING_12)
         group_layout.setSpacing(SPACING_8)
 
-        # Preview image label
-        self.preview_image_label = QLabel()
+        # Preview image label with double-click inspector
+        self.preview_image_label = ThumbnailInspectorLabel()
         self.preview_image_label.setAlignment(Qt.AlignCenter)
         self.preview_image_label.setMinimumHeight(200)
-        self.preview_image_label.setStyleSheet("""
+        # Use theme-aware colors instead of hardcoded white background
+        self.preview_image_label.setStyleSheet(
+            """
             QLabel {
-                border: 2px dashed #ccc;
+                border: 2px dashed #666;
                 border-radius: 8px;
-                background-color: #f9f9f9;
-                color: #666;
+                background-color: #1E1E1E;
+                color: #999;
             }
-        """)
-        self.preview_image_label.setText("No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one")
+        """
+        )
+        self.preview_image_label.setText(
+            "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one\n\n(Double-click to inspect at full resolution)"
+        )
         group_layout.addWidget(self.preview_image_label)
 
         # Preview actions
         preview_button_layout = QHBoxLayout()
 
         self.generate_preview_button = QPushButton("Generate Preview")
-        self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
+        self.generate_preview_button.clicked.connect(
+            self._generate_preview_for_current_model
+        )
         preview_button_layout.addWidget(self.generate_preview_button)
 
         self.run_ai_analysis_button = QPushButton("Run AI Analysis")
         self.run_ai_analysis_button.clicked.connect(self._run_ai_analysis)
-        self.run_ai_analysis_button.setToolTip("Analyze the preview image with AI to generate metadata")
+        self.run_ai_analysis_button.setToolTip(
+            "Analyze the preview image with AI to generate metadata"
+        )
         preview_button_layout.addWidget(self.run_ai_analysis_button)
 
         preview_button_layout.addStretch()
@@ -289,7 +310,7 @@ class MetadataEditorWidget(QWidget):
             self.category_field.addItem("")  # Empty option for no category
 
             for category in self.categories:
-                self.category_field.addItem(category['name'])
+                self.category_field.addItem(category["name"])
 
             self.logger.debug(f"Loaded {len(self.categories)} categories")
 
@@ -325,12 +346,12 @@ class MetadataEditorWidget(QWidget):
 
             # Store original metadata for change detection
             self.original_metadata = {
-                'title': model.get('title', ''),
-                'description': model.get('description', ''),
-                'keywords': model.get('keywords', ''),
-                'category': model.get('category', ''),
-                'source': model.get('source', ''),
-                'rating': model.get('rating', 0)
+                "title": model.get("title", ""),
+                "description": model.get("description", ""),
+                "keywords": model.get("keywords", ""),
+                "category": model.get("category", ""),
+                "source": model.get("source", ""),
+                "rating": model.get("rating", 0),
             }
 
             # Load preview image
@@ -343,7 +364,9 @@ class MetadataEditorWidget(QWidget):
 
         except Exception as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
-            self.logger.warning(f"Failed to load metadata for model {model_id}: {str(e)}")
+            self.logger.warning(
+                f"Failed to load metadata for model {model_id}: {str(e)}"
+            )
             try:
                 self._clear_form()
             except Exception:
@@ -357,12 +380,12 @@ class MetadataEditorWidget(QWidget):
         Args:
             model: Model information dictionary
         """
-        self.model_filename_label.setText(model.get('filename', 'Unknown'))
-        fmt = model.get('format') or 'Unknown'
+        self.model_filename_label.setText(model.get("filename", "Unknown"))
+        fmt = model.get("format") or "Unknown"
         self.model_format_label.setText(str(fmt).upper())
 
         # Format file size
-        file_size = model.get('file_size', 0)
+        file_size = model.get("file_size", 0)
         if file_size > 1024 * 1024:
             size_text = f"{file_size / (1024 * 1024):.1f} MB"
         elif file_size > 1024:
@@ -372,7 +395,7 @@ class MetadataEditorWidget(QWidget):
         self.model_size_label.setText(size_text)
 
         # Triangle count
-        triangle_count = model.get('triangle_count') or 0
+        triangle_count = model.get("triangle_count") or 0
         self.model_triangles_label.setText(f"{int(triangle_count):,}")
 
     def _load_metadata_fields(self, model: Dict[str, Any]) -> None:
@@ -392,13 +415,13 @@ class MetadataEditorWidget(QWidget):
 
         try:
             # Load text fields
-            self.title_field.setText(model.get('title', ''))
-            self.description_field.setPlainText(model.get('description', ''))
-            self.keywords_field.setText(model.get('keywords', ''))
-            self.source_field.setText(model.get('source', ''))
+            self.title_field.setText(model.get("title", ""))
+            self.description_field.setPlainText(model.get("description", ""))
+            self.keywords_field.setText(model.get("keywords", ""))
+            self.source_field.setText(model.get("source", ""))
 
             # Load category
-            category = model.get('category', '')
+            category = model.get("category", "")
             if category:
                 index = self.category_field.findText(category)
                 if index >= 0:
@@ -409,7 +432,7 @@ class MetadataEditorWidget(QWidget):
                 self.category_field.setCurrentIndex(0)
 
             # Load rating (coerce None or invalid values to 0 without errors)
-            rating_val = model.get('rating', 0)
+            rating_val = model.get("rating", 0)
             try:
                 rating_int = int(rating_val) if rating_val is not None else 0
             except Exception:
@@ -471,17 +494,17 @@ class MetadataEditorWidget(QWidget):
 
             # Collect metadata
             metadata = {
-                'title': self.title_field.text().strip(),
-                'description': self.description_field.toPlainText().strip(),
-                'keywords': self.keywords_field.text().strip(),
-                'category': self.category_field.currentText().strip(),
-                'source': self.source_field.text().strip(),
-                'rating': self.star_rating.get_rating()
+                "title": self.title_field.text().strip(),
+                "description": self.description_field.toPlainText().strip(),
+                "keywords": self.keywords_field.text().strip(),
+                "category": self.category_field.currentText().strip(),
+                "source": self.source_field.text().strip(),
+                "rating": self.star_rating.get_rating(),
             }
 
             # Remove empty category
-            if not metadata['category']:
-                metadata['category'] = None
+            if not metadata["category"]:
+                metadata["category"] = None
 
             # Save to database
             success = self._save_to_database(metadata)
@@ -497,7 +520,9 @@ class MetadataEditorWidget(QWidget):
                 self.metadata_saved.emit(self.current_model_id)
 
                 QMessageBox.information(self, "Success", "Metadata saved successfully")
-                self.logger.info(f"Metadata saved for model ID: {self.current_model_id}")
+                self.logger.info(
+                    f"Metadata saved for model ID: {self.current_model_id}"
+                )
             else:
                 QMessageBox.warning(self, "Warning", "Failed to save metadata")
 
@@ -519,18 +544,14 @@ class MetadataEditorWidget(QWidget):
             # Check if metadata already exists
             existing_metadata = self.db_manager.get_model(self.current_model_id)
 
-            if existing_metadata and existing_metadata.get('title') is not None:
+            if existing_metadata and existing_metadata.get("title") is not None:
                 # Update existing metadata
                 success = self.db_manager.update_model_metadata(
-                    self.current_model_id,
-                    **metadata
+                    self.current_model_id, **metadata
                 )
             else:
                 # Add new metadata
-                self.db_manager.add_model_metadata(
-                    self.current_model_id,
-                    **metadata
-                )
+                self.db_manager.add_model_metadata(self.current_model_id, **metadata)
                 success = True
 
             return success
@@ -550,9 +571,11 @@ class MetadataEditorWidget(QWidget):
         title = self.title_field.text().strip()
         if not title:
             reply = QMessageBox.question(
-                self, "Missing Title",
+                self,
+                "Missing Title",
                 "The model title is empty. Do you want to continue?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
             )
             if reply == QMessageBox.No:
                 return False
@@ -561,17 +584,21 @@ class MetadataEditorWidget(QWidget):
         keywords = self.keywords_field.text().strip()
         if keywords:
             # Check for valid comma-separated format
-            keyword_list = [k.strip() for k in keywords.split(',')]
+            keyword_list = [k.strip() for k in keywords.split(",")]
             if len(keyword_list) > 20:  # Reasonable limit
-                QMessageBox.warning(self, "Too Many Keywords",
-                                  "Please limit the number of keywords to 20 or fewer.")
+                QMessageBox.warning(
+                    self,
+                    "Too Many Keywords",
+                    "Please limit the number of keywords to 20 or fewer.",
+                )
                 return False
 
         # Validate rating
         rating = self.star_rating.get_rating()
         if not 0 <= rating <= 5:
-            QMessageBox.warning(self, "Invalid Rating",
-                              "The rating must be between 0 and 5.")
+            QMessageBox.warning(
+                self, "Invalid Rating", "The rating must be between 0 and 5."
+            )
             return False
 
         return True
@@ -631,12 +658,12 @@ class MetadataEditorWidget(QWidget):
 
         # Compare current values with original metadata
         current_metadata = {
-            'title': self.title_field.text().strip(),
-            'description': self.description_field.toPlainText().strip(),
-            'keywords': self.keywords_field.text().strip(),
-            'category': self.category_field.currentText().strip() or None,
-            'source': self.source_field.text().strip(),
-            'rating': self.star_rating.get_rating()
+            "title": self.title_field.text().strip(),
+            "description": self.description_field.toPlainText().strip(),
+            "keywords": self.keywords_field.text().strip(),
+            "category": self.category_field.currentText().strip() or None,
+            "source": self.source_field.text().strip(),
+            "rating": self.star_rating.get_rating(),
         }
 
         return current_metadata != self.original_metadata
@@ -649,24 +676,24 @@ class MetadataEditorWidget(QWidget):
             if not model:
                 self._clear_preview_image()
                 return
-            
-            model_path = model.get('file_path')
+
+            model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
                 self._clear_preview_image()
                 return
-            
+
             # Get file hash and thumbnail path
             hasher = FastHasher()
             hash_result = hasher.hash_file(model_path)
             file_hash = hash_result.hash_value if hash_result.success else None
-            
+
             if not file_hash:
                 self._clear_preview_image()
                 return
-            
+
             thumbnail_service = ImportThumbnailService()
             thumbnail_path = thumbnail_service.get_thumbnail_path(file_hash)
-            
+
             if thumbnail_path and thumbnail_path.exists():
                 # Load and display the thumbnail
                 pixmap = QPixmap(str(thumbnail_path))
@@ -675,62 +702,74 @@ class MetadataEditorWidget(QWidget):
                     scaled_pixmap = pixmap.scaled(
                         self.preview_image_label.size(),
                         Qt.KeepAspectRatio,
-                        Qt.SmoothTransformation
+                        Qt.SmoothTransformation,
                     )
-                    self.preview_image_label.setPixmap(scaled_pixmap)
+                    # Use set_thumbnail to store both scaled and full-resolution versions
+                    self.preview_image_label.set_thumbnail(
+                        scaled_pixmap, str(thumbnail_path)
+                    )
                     self.preview_image_label.setText("")  # Clear any placeholder text
                     self.logger.debug(f"Loaded preview image for model {model_id}")
                 else:
                     self._clear_preview_image()
             else:
                 self._clear_preview_image()
-                
+
         except Exception as e:
-            self.logger.error(f"Failed to load preview image for model {model_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to load preview image for model {model_id}: {str(e)}"
+            )
             self._clear_preview_image()
 
     def _clear_preview_image(self) -> None:
         """Clear the preview image display."""
         self.preview_image_label.clear()
-        self.preview_image_label.setText("No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one")
-        self.preview_image_label.setStyleSheet("""
+        self.preview_image_label.setText(
+            "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one"
+        )
+        # Use theme-aware colors instead of hardcoded white background
+        self.preview_image_label.setStyleSheet(
+            """
             QLabel {
-                border: 2px dashed #ccc;
+                border: 2px dashed #666;
                 border-radius: 8px;
-                background-color: #f9f9f9;
-                color: #666;
+                background-color: #1E1E1E;
+                color: #999;
             }
-        """)
+        """
+        )
 
     def _generate_preview_for_current_model(self) -> None:
         """Generate preview image for the currently loaded model."""
         if self.current_model_id is None:
             QMessageBox.warning(self, "Warning", "No model selected")
             return
-        
+
         try:
-            self.logger.info(f"Generating preview for model ID: {self.current_model_id}")
-            
+            self.logger.info(
+                f"Generating preview for model ID: {self.current_model_id}"
+            )
+
             # Get model information
             model = self.db_manager.get_model(self.current_model_id)
             if not model:
                 QMessageBox.warning(self, "Error", "Model not found in database")
                 return
-            
-            model_path = model.get('file_path')
+
+            model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
                 QMessageBox.warning(self, "Error", "Model file not found on disk")
                 return
-            
+
             # Get file hash
             hasher = FastHasher()
             hash_result = hasher.hash_file(model_path)
             file_hash = hash_result.hash_value if hash_result.success else None
-            
+
             if not file_hash:
                 QMessageBox.warning(self, "Error", "Failed to compute file hash")
                 return
-            
+
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
@@ -739,8 +778,18 @@ class MetadataEditorWidget(QWidget):
             settings = QSettings()
 
             # Get current thumbnail preferences
-            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            bg_image = settings.value(
+                "thumbnail/background_image", config.thumbnail_bg_image, type=str
+            )
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
+            bg_color = settings.value(
+                "thumbnail/background_color", config.thumbnail_bg_color, type=str
+            )
+
+            # Use background image if set, otherwise use background color
+            background = bg_image if bg_image else bg_color
 
             # Generate thumbnail with current preferences
             thumbnail_service = ImportThumbnailService()
@@ -748,36 +797,35 @@ class MetadataEditorWidget(QWidget):
                 model_path=model_path,
                 file_hash=file_hash,
                 material=material,
-                background=bg_image,
-                force_regenerate=True
+                background=background,
+                force_regenerate=True,
             )
-            
+
             if result.success:
                 # Save thumbnail path to database
                 if result.thumbnail_path:
                     self.db_manager.update_model_thumbnail(
-                        self.current_model_id,
-                        str(result.thumbnail_path)
+                        self.current_model_id, str(result.thumbnail_path)
                     )
-                    self.logger.info(f"Saved thumbnail path to database: {result.thumbnail_path}")
+                    self.logger.info(
+                        f"Saved thumbnail path to database: {result.thumbnail_path}"
+                    )
 
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
                 QMessageBox.information(
-                    self,
-                    "Success",
-                    "Preview generated successfully!"
+                    self, "Success", "Preview generated successfully!"
                 )
                 self.logger.info(f"Preview generated for model {self.current_model_id}")
             else:
                 error_msg = result.error or "Unknown error"
                 QMessageBox.warning(
-                    self,
-                    "Error",
-                    f"Failed to generate preview: {error_msg}"
+                    self, "Error", f"Failed to generate preview: {error_msg}"
                 )
-                self.logger.error(f"Preview generation failed for model {self.current_model_id}: {error_msg}")
-                
+                self.logger.error(
+                    f"Preview generation failed for model {self.current_model_id}: {error_msg}"
+                )
+
         except Exception as e:
             error_msg = f"Exception during preview generation: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
@@ -796,12 +844,12 @@ class MetadataEditorWidget(QWidget):
                 QMessageBox.warning(self, "Error", "Model not found in database")
                 return
 
-            thumbnail_path = model.get('thumbnail_path')
+            thumbnail_path = model.get("thumbnail_path")
             if not thumbnail_path or not Path(thumbnail_path).exists():
                 QMessageBox.warning(
                     self,
                     "No Preview",
-                    "Please generate a preview image first before running AI analysis."
+                    "Please generate a preview image first before running AI analysis.",
                 )
                 return
 
@@ -811,7 +859,7 @@ class MetadataEditorWidget(QWidget):
                 QMessageBox.warning(
                     self,
                     "AI Service Unavailable",
-                    "AI description service is not available. Please configure an AI provider in settings."
+                    "AI description service is not available. Please configure an AI provider in settings.",
                 )
                 return
 
@@ -823,21 +871,23 @@ class MetadataEditorWidget(QWidget):
                     "No AI providers are configured. Please set an API key environment variable:\n"
                     "- GOOGLE_API_KEY for Gemini\n"
                     "- OPENAI_API_KEY for OpenAI\n"
-                    "- ANTHROPIC_API_KEY for Anthropic"
+                    "- ANTHROPIC_API_KEY for Anthropic",
                 )
                 return
 
             # Use the first available provider if current_provider is not set
             if not ai_service.current_provider:
                 ai_service.current_provider = next(iter(ai_service.providers.values()))
-                self.logger.info(f"Set current provider to: {list(ai_service.providers.keys())[0]}")
+                self.logger.info(
+                    f"Set current provider to: {list(ai_service.providers.keys())[0]}"
+                )
 
             # Check if provider is configured
             if not ai_service.current_provider.is_configured():
                 QMessageBox.warning(
                     self,
                     "AI Provider Not Configured",
-                    "The selected AI provider is not properly configured. Please check your API key settings."
+                    "The selected AI provider is not properly configured. Please check your API key settings.",
                 )
                 return
 
@@ -846,7 +896,9 @@ class MetadataEditorWidget(QWidget):
             self.run_ai_analysis_button.setText("Analyzing...")
 
             # Run analysis
-            self.logger.info(f"Running AI analysis on preview for model {self.current_model_id}")
+            self.logger.info(
+                f"Running AI analysis on preview for model {self.current_model_id}"
+            )
             result = ai_service.analyze_image(thumbnail_path)
 
             # Apply results to metadata
@@ -856,7 +908,7 @@ class MetadataEditorWidget(QWidget):
             QMessageBox.information(
                 self,
                 "Analysis Complete",
-                "AI analysis completed successfully. Metadata has been updated."
+                "AI analysis completed successfully. Metadata has been updated.",
             )
 
         except ValueError as e:
@@ -877,12 +929,13 @@ class MetadataEditorWidget(QWidget):
             # Try to get from parent window
             parent = self.parent()
             while parent:
-                if hasattr(parent, 'ai_service'):
+                if hasattr(parent, "ai_service"):
                     return parent.ai_service
                 parent = parent.parent()
 
             # If not found in parent hierarchy, try to create one
             from src.gui.services.ai_description_service import AIDescriptionService
+
             return AIDescriptionService()
         except Exception as e:
             self.logger.error(f"Failed to get AI service: {e}")
@@ -892,24 +945,28 @@ class MetadataEditorWidget(QWidget):
         """Apply AI analysis results to metadata fields."""
         try:
             # Update title if provided
-            if 'title' in result and result['title']:
-                self.title_field.setText(result['title'])
+            if "title" in result and result["title"]:
+                self.title_field.setText(result["title"])
                 self.logger.info(f"Updated title: {result['title']}")
 
             # Update description if provided
-            if 'description' in result and result['description']:
-                self.description_field.setPlainText(result['description'])
-                self.logger.info(f"Updated description: {result['description'][:50]}...")
+            if "description" in result and result["description"]:
+                self.description_field.setPlainText(result["description"])
+                self.logger.info(
+                    f"Updated description: {result['description'][:50]}..."
+                )
 
             # Update keywords if provided
-            if 'metadata_keywords' in result and result['metadata_keywords']:
-                keywords_str = ', '.join(result['metadata_keywords'])
+            if "metadata_keywords" in result and result["metadata_keywords"]:
+                keywords_str = ", ".join(result["metadata_keywords"])
                 self.keywords_field.setText(keywords_str)
                 self.logger.info(f"Updated keywords: {keywords_str}")
 
             # Mark as changed
             self.metadata_changed.emit(self.current_model_id)
-            self.logger.info(f"Applied AI analysis results to model {self.current_model_id}")
+            self.logger.info(
+                f"Applied AI analysis results to model {self.current_model_id}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to apply AI results: {e}")
@@ -931,9 +988,11 @@ class MetadataEditorWidget(QWidget):
         """Handle widget close event."""
         if self.has_unsaved_changes():
             reply = QMessageBox.question(
-                self, "Unsaved Changes",
+                self,
+                "Unsaved Changes",
                 "There are unsaved changes. Do you want to save them?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Cancel,
             )
 
             if reply == QMessageBox.Yes:

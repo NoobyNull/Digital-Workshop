@@ -58,6 +58,7 @@ class CacheEntry:
         """Calculate approximate memory size of cached data."""
         try:
             import sys
+
             return sys.getsizeof(str(self.data))
         except Exception:
             return 1024  # Default estimate
@@ -128,7 +129,9 @@ class ThemeCache:
         # Compression support
         self._compression_enabled = True
 
-        logger.info(f"ThemeCache initialized: max_size={self._max_size}, memory_limit={self._memory_limit} bytes")
+        logger.info(
+            f"ThemeCache initialized: max_size={self._max_size}, memory_limit={self._memory_limit} bytes"
+        )
 
     def get(self, key: str) -> Optional[Dict[str, Any]]:
         """
@@ -272,7 +275,11 @@ class ThemeCache:
                 "max_size": self._max_size,
                 "memory_usage_bytes": self._current_memory,
                 "memory_limit_bytes": self._memory_limit,
-                "memory_usage_percent": (self._current_memory / self._memory_limit) if self._memory_limit > 0 else 0,
+                "memory_usage_percent": (
+                    (self._current_memory / self._memory_limit)
+                    if self._memory_limit > 0
+                    else 0
+                ),
                 "hits": self._hits,
                 "misses": self._misses,
                 "hit_ratio": hit_ratio,
@@ -280,7 +287,7 @@ class ThemeCache:
                 "cleanup_count": self._cleanup_count,
                 "compression_enabled": self._compression_enabled,
                 "oldest_entry_age": self._get_oldest_entry_age(),
-                "newest_entry_age": self._get_newest_entry_age()
+                "newest_entry_age": self._get_newest_entry_age(),
             }
 
     def resize(self, new_max_size: int) -> None:
@@ -433,15 +440,16 @@ class ThemeCache:
         """
         try:
             import psutil
+
             memory_gb = psutil.virtual_memory().total / (1024**3)
 
             # Adaptive sizing based on available memory
             if memory_gb >= 8:
                 return 100  # Large cache for systems with 8GB+
             elif memory_gb >= 4:
-                return 50   # Medium cache for systems with 4GB+
+                return 50  # Medium cache for systems with 4GB+
             else:
-                return 25   # Small cache for systems with <4GB
+                return 25  # Small cache for systems with <4GB
 
         except ImportError:
             # Fallback if psutil not available
@@ -456,6 +464,7 @@ class ThemeCache:
         """
         try:
             import psutil
+
             available_memory = psutil.virtual_memory().available
 
             # Use up to 1% of available memory for cache
@@ -501,10 +510,16 @@ class ThemeCache:
 
             if keys_to_remove:
                 self._cleanup_count += 1
-                logger.debug(f"Background cleanup removed {len(keys_to_remove)} old entries")
+                logger.debug(
+                    f"Background cleanup removed {len(keys_to_remove)} old entries"
+                )
 
             # Check memory pressure and cleanup if needed
-            memory_usage_ratio = self._current_memory / self._memory_limit if self._memory_limit > 0 else 0
+            memory_usage_ratio = (
+                self._current_memory / self._memory_limit
+                if self._memory_limit > 0
+                else 0
+            )
             if memory_usage_ratio > self._memory_pressure_threshold:
                 self._handle_memory_pressure()
 

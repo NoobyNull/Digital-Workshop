@@ -7,4 +7,4 @@ This package contains all user interface components including the main window,
 
 from .main_window import MainWindow
 
-__all__ = ['MainWindow']
+__all__ = ["MainWindow"]

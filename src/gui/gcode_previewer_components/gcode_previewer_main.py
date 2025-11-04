@@ -4,9 +4,23 @@ from typing import Optional
 from pathlib import Path
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog,
-    QTableWidget, QTableWidgetItem, QSplitter, QGroupBox, QProgressBar,
-    QSlider, QSpinBox, QComboBox, QCheckBox, QTabWidget, QMessageBox
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QFileDialog,
+    QTableWidget,
+    QTableWidgetItem,
+    QSplitter,
+    QGroupBox,
+    QProgressBar,
+    QSlider,
+    QSpinBox,
+    QComboBox,
+    QCheckBox,
+    QTabWidget,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont
@@ -27,9 +41,9 @@ from .gcode_interactive_loader import InteractiveGcodeLoader
 
 class GcodePreviewerWidget(QWidget):
     """Main widget for G-code preview and visualization."""
-    
+
     gcode_loaded = Signal(str)  # Emits filepath when G-code is loaded
-    
+
     def __init__(self, parent: Optional[QWidget] = None):
         """Initialize the G-code previewer widget."""
         super().__init__(parent)
@@ -58,7 +72,7 @@ class GcodePreviewerWidget(QWidget):
         self._init_ui()
         self._connect_signals()
         self.logger.info("G-code Previewer Widget initialized")
-    
+
     def _init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout(self)
@@ -260,107 +274,120 @@ class GcodePreviewerWidget(QWidget):
 
     def _connect_signals(self) -> None:
         """Connect animation controller signals."""
-        self.animation_controller.frame_changed.connect(self._on_animation_frame_changed)
-        self.animation_controller.state_changed.connect(self._on_animation_state_changed)
+        self.animation_controller.frame_changed.connect(
+            self._on_animation_frame_changed
+        )
+        self.animation_controller.state_changed.connect(
+            self._on_animation_state_changed
+        )
 
         # Connect timeline signals
         if self.timeline:
             self.timeline.frame_changed.connect(self._on_timeline_frame_changed)
-            self.timeline.playback_requested.connect(self._on_timeline_playback_requested)
+            self.timeline.playback_requested.connect(
+                self._on_timeline_playback_requested
+            )
             self.timeline.pause_requested.connect(self._on_timeline_pause_requested)
             self.timeline.stop_requested.connect(self._on_timeline_stop_requested)
 
         # Connect interactive loader signals
         if self.interactive_loader:
-            self.interactive_loader.loading_complete.connect(self._on_interactive_loader_complete)
-            self.interactive_loader.chunk_loaded.connect(self._on_interactive_loader_chunk_loaded)
+            self.interactive_loader.loading_complete.connect(
+                self._on_interactive_loader_complete
+            )
+            self.interactive_loader.chunk_loaded.connect(
+                self._on_interactive_loader_chunk_loaded
+            )
 
         # Connect editor signals
         if self.editor:
             self.editor.reload_requested.connect(self._on_gcode_reload)
-    
+
     def _on_load_file(self) -> None:
         """Handle load file button click with security validation."""
         filepath, _ = QFileDialog.getOpenFileName(
             self,
             "Open G-code File",
             "",
-            "G-code Files (*.nc *.gcode *.gco *.tap);;All Files (*)"
+            "G-code Files (*.nc *.gcode *.gco *.tap);;All Files (*)",
         )
-        
+
         if filepath:
             # Validate and sanitize path
             validated_path = self._validate_file_path(filepath)
             if validated_path:
                 self.load_gcode_file(validated_path)
-    
+
     def _validate_file_path(self, filepath: str) -> Optional[str]:
         """
         Validate file path for security and accessibility.
-        
+
         Args:
             filepath: Path to validate
-            
+
         Returns:
             Validated absolute path or None if invalid
         """
         try:
             # Convert to Path object for safe manipulation
             file_path = Path(filepath).resolve()
-            
+
             # Check file exists
             if not file_path.exists():
                 self.logger.error(f"File does not exist: {filepath}")
                 QMessageBox.warning(self, "Invalid File", "File does not exist.")
                 return None
-            
+
             # Check it's a file (not a directory)
             if not file_path.is_file():
                 self.logger.error(f"Path is not a file: {filepath}")
                 QMessageBox.warning(self, "Invalid File", "Path must be a file.")
                 return None
-            
+
             # Check file is readable
             if not os.access(file_path, os.R_OK):
                 self.logger.error(f"File not readable: {filepath}")
                 QMessageBox.warning(self, "Access Denied", "Cannot read file.")
                 return None
-            
+
             # Validate file extension
-            valid_extensions = {'.nc', '.gcode', '.gco', '.tap', '.txt'}
+            valid_extensions = {".nc", ".gcode", ".gco", ".tap", ".txt"}
             if file_path.suffix.lower() not in valid_extensions:
                 self.logger.warning(f"Unusual file extension: {file_path.suffix}")
                 reply = QMessageBox.question(
-                    self, "Unusual Extension",
+                    self,
+                    "Unusual Extension",
                     f"File has unusual extension '{file_path.suffix}'. Continue?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply != QMessageBox.Yes:
                     return None
-            
+
             # Check file size (warn for very large files)
             MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
             file_size = file_path.stat().st_size
-            
+
             if file_size > MAX_FILE_SIZE:
                 self.logger.warning(f"Very large file: {file_size} bytes")
                 reply = QMessageBox.question(
-                    self, "Large File",
+                    self,
+                    "Large File",
                     f"File is {file_size / (1024*1024):.1f}MB. "
                     "This may take a while to load. Continue?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply != QMessageBox.Yes:
                     return None
-            
+
             return str(file_path)
-            
+
         except Exception as e:
             self.logger.error(f"Path validation failed: {e}")
-            QMessageBox.critical(self, "Validation Error",
-                               f"Failed to validate file path: {str(e)}")
+            QMessageBox.critical(
+                self, "Validation Error", f"Failed to validate file path: {str(e)}"
+            )
             return None
-    
+
     def load_gcode_file(self, filepath: str) -> None:
         """Load and display a G-code file in background thread."""
         try:
@@ -368,47 +395,47 @@ class GcodePreviewerWidget(QWidget):
             validated_path = self._validate_file_path(filepath)
             if not validated_path:
                 return
-            
+
             # Stop any existing loader
             if self.loader_thread and self.loader_thread.isRunning():
                 self.loader_thread.cancel()
                 self.loader_thread.wait(5000)  # Wait max 5 seconds
-            
+
             # Show progress UI immediately
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            
+
             # Get file info (quick operation)
             file_path = Path(validated_path)
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
-            
+
             # Update UI
             info_text = f"Loading: {file_path.name} ({file_size_mb:.1f}MB)..."
             self.file_label.setText(info_text)
             self.file_label.setStyleSheet("color: orange;")
-            
+
             self.current_file = validated_path
             self.moves = []
-            
+
             # Clear renderer (quick operation)
             self.renderer.clear_incremental()
             self.vtk_widget.update_render()
-            
+
             # Start background loading
             if self.interactive_loader:
                 self.interactive_loader.load_file(validated_path)
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start loading: {e}")
             self.file_label.setText(f"Error: {str(e)}")
             self.file_label.setStyleSheet("color: red;")
             self.progress_bar.setVisible(False)
-    
+
     def _update_statistics(self) -> None:
         """Update statistics display."""
         stats = self.parser.get_statistics()
-        bounds = stats['bounds']
-        
+        bounds = stats["bounds"]
+
         stats_text = f"""
         <b>Toolpath Statistics</b><br>
         Total Moves: {stats['total_moves']}<br>
@@ -421,9 +448,9 @@ class GcodePreviewerWidget(QWidget):
         Y: {bounds['min_y']:.2f} to {bounds['max_y']:.2f}<br>
         Z: {bounds['min_z']:.2f} to {bounds['max_z']:.2f}
         """
-        
+
         self.stats_label.setText(stats_text)
-    
+
     def _update_moves_table(self) -> None:
         """Update moves table with first 50 moves."""
         self.moves_table.setRowCount(0)
@@ -432,15 +459,33 @@ class GcodePreviewerWidget(QWidget):
             row = self.moves_table.rowCount()
             self.moves_table.insertRow(row)
 
-            move_type = "Rapid" if move.is_rapid else "Cut" if move.is_cutting else "Arc"
+            move_type = (
+                "Rapid" if move.is_rapid else "Cut" if move.is_cutting else "Arc"
+            )
 
             self.moves_table.setItem(row, 0, QTableWidgetItem(str(move.line_number)))
             self.moves_table.setItem(row, 1, QTableWidgetItem(move_type))
-            self.moves_table.setItem(row, 2, QTableWidgetItem(f"{move.x:.2f}" if move.x else "-"))
-            self.moves_table.setItem(row, 3, QTableWidgetItem(f"{move.y:.2f}" if move.y else "-"))
-            self.moves_table.setItem(row, 4, QTableWidgetItem(f"{move.z:.2f}" if move.z else "-"))
-            self.moves_table.setItem(row, 5, QTableWidgetItem(f"{move.feed_rate:.1f}" if move.feed_rate else "-"))
-            self.moves_table.setItem(row, 6, QTableWidgetItem(f"{move.spindle_speed:.0f}" if move.spindle_speed else "-"))
+            self.moves_table.setItem(
+                row, 2, QTableWidgetItem(f"{move.x:.2f}" if move.x else "-")
+            )
+            self.moves_table.setItem(
+                row, 3, QTableWidgetItem(f"{move.y:.2f}" if move.y else "-")
+            )
+            self.moves_table.setItem(
+                row, 4, QTableWidgetItem(f"{move.z:.2f}" if move.z else "-")
+            )
+            self.moves_table.setItem(
+                row,
+                5,
+                QTableWidgetItem(f"{move.feed_rate:.1f}" if move.feed_rate else "-"),
+            )
+            self.moves_table.setItem(
+                row,
+                6,
+                QTableWidgetItem(
+                    f"{move.spindle_speed:.0f}" if move.spindle_speed else "-"
+                ),
+            )
 
     def _on_play(self) -> None:
         """Handle play button click."""
@@ -486,10 +531,14 @@ class GcodePreviewerWidget(QWidget):
     def _on_viz_mode_changed(self, mode: str) -> None:
         """Handle visualization mode change."""
         if mode == "Feed Rate":
-            actor = self.feed_speed_visualizer.create_feed_rate_visualization(self.moves)
+            actor = self.feed_speed_visualizer.create_feed_rate_visualization(
+                self.moves
+            )
             self.visualization_mode = "feed_rate"
         elif mode == "Spindle Speed":
-            actor = self.feed_speed_visualizer.create_spindle_speed_visualization(self.moves)
+            actor = self.feed_speed_visualizer.create_spindle_speed_visualization(
+                self.moves
+            )
             self.visualization_mode = "spindle_speed"
         else:
             self.renderer.render_toolpath(self.moves)
@@ -532,7 +581,9 @@ class GcodePreviewerWidget(QWidget):
     def _on_export_video(self) -> None:
         """Handle export video."""
         if not self.export_manager.is_video_export_available():
-            self.logger.warning("Video export requires OpenCV. Install with: pip install opencv-python")
+            self.logger.warning(
+                "Video export requires OpenCV. Install with: pip install opencv-python"
+            )
             return
 
         filepath, _ = QFileDialog.getSaveFileName(
@@ -551,51 +602,55 @@ class GcodePreviewerWidget(QWidget):
             # Validate file still exists
             if not os.path.exists(self.current_file):
                 self.logger.error(f"File no longer exists: {self.current_file}")
-                QMessageBox.warning(self, "File Not Found",
-                                  "The G-code file no longer exists.")
+                QMessageBox.warning(
+                    self, "File Not Found", "The G-code file no longer exists."
+                )
                 return
-            
+
             # Check file size (limit to 10MB for editor)
             MAX_EDITOR_SIZE = 10 * 1024 * 1024  # 10MB
             file_size = os.path.getsize(self.current_file)
-            
+
             if file_size > MAX_EDITOR_SIZE:
                 self.logger.warning(f"File too large for editor: {file_size} bytes")
                 reply = QMessageBox.question(
-                    self, "Large File",
+                    self,
+                    "Large File",
                     f"File is {file_size / (1024*1024):.1f}MB. "
                     "Large files may be slow to edit. Continue?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply != QMessageBox.Yes:
                     return
-            
+
             # Read file with proper error handling
             try:
-                with open(self.current_file, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(
+                    self.current_file, "r", encoding="utf-8", errors="ignore"
+                ) as f:
                     content = f.read()
             except (OSError, IOError) as e:
                 self.logger.error(f"Failed to read file: {e}")
-                QMessageBox.critical(self, "Read Error",
-                                   f"Failed to read file: {str(e)}")
+                QMessageBox.critical(
+                    self, "Read Error", f"Failed to read file: {str(e)}"
+                )
                 return
-            
+
             # Create editor dialog
             editor_widget = GcodeEditorWidget()
             editor_widget.set_content(content)
             editor_widget.reload_requested.connect(self._on_gcode_reload)
             editor_widget.show()
-            
+
         except Exception as e:
             self.logger.error(f"Failed to open editor: {e}", exc_info=True)
-            QMessageBox.critical(self, "Error",
-                               f"Failed to open editor: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to open editor: {str(e)}")
 
     def _on_gcode_reload(self, content: str) -> None:
         """Handle G-code reload from editor."""
         try:
             # Parse the edited content
-            self.moves = self.parser.parse_lines(content.split('\n'))
+            self.moves = self.parser.parse_lines(content.split("\n"))
 
             # Update animation controller
             self.animation_controller.set_moves(self.moves)
@@ -626,7 +681,9 @@ class GcodePreviewerWidget(QWidget):
 
         layers = self.layer_analyzer.get_layers()
         for layer in layers:
-            self.layer_combo.addItem(f"Layer {layer.layer_number} (Z={layer.z_height:.2f})")
+            self.layer_combo.addItem(
+                f"Layer {layer.layer_number} (Z={layer.z_height:.2f})"
+            )
 
         self.layer_combo.blockSignals(False)
 
@@ -754,4 +811,3 @@ class GcodePreviewerWidget(QWidget):
 
         # Update statistics
         self._update_statistics()
-

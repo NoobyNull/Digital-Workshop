@@ -8,10 +8,29 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QLineEdit, QTextEdit, QComboBox, QSpinBox, QSlider,
-    QProgressBar, QTabWidget, QTableWidget, QTableWidgetItem, QCheckBox, QRadioButton,
-    QGroupBox, QDockWidget, QListWidget, QListWidgetItem, QToolBar, QStatusBar
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QLineEdit,
+    QTextEdit,
+    QComboBox,
+    QSpinBox,
+    QSlider,
+    QProgressBar,
+    QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QCheckBox,
+    QRadioButton,
+    QGroupBox,
+    QDockWidget,
+    QListWidget,
+    QListWidgetItem,
+    QToolBar,
+    QStatusBar,
 )
 
 from src.gui.theme import ThemeManager, SPACING_12
@@ -175,4 +194,3 @@ class PreviewWindow(QMainWindow):
         tm = ThemeManager.instance()
         tm.register_widget(self, css_text=CSS_PREVIEW_TEMPLATE)
         tm.apply_stylesheet(self)
-

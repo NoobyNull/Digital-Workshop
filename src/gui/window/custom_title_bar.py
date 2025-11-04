@@ -6,9 +6,7 @@ Single Responsibility: Provide a custom, themeable title bar for the main window
 
 from PySide6.QtCore import Qt, QSize, QRect, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QIcon
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QApplication
-)
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QApplication
 
 
 class CustomTitleBar(QWidget):
@@ -70,7 +68,8 @@ class CustomTitleBar(QWidget):
         """Create a window control button."""
         btn = QPushButton(text)
         btn.setFixedSize(32, 24)
-        btn.setStyleSheet("""
+        btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: transparent;
                 color: white;
@@ -84,13 +83,15 @@ class CustomTitleBar(QWidget):
             QPushButton:pressed {
                 background-color: rgba(255, 255, 255, 0.2);
             }
-        """)
+        """
+        )
         return btn
 
     def _apply_theme(self) -> None:
         """Apply the current theme to the title bar."""
         try:
             from src.gui.theme.simple_service import ThemeService
+
             service = ThemeService.instance()
             theme, _ = service.get_current_theme()
 
@@ -127,20 +128,24 @@ class CustomTitleBar(QWidget):
                 btn.setStyleSheet(button_stylesheet)
 
             # Update title bar background
-            self.setStyleSheet(f"""
+            self.setStyleSheet(
+                f"""
                 CustomTitleBar {{
                     background-color: {bg_color};
                     border-bottom: 1px solid {border_color};
                 }}
-            """)
+            """
+            )
         except Exception:
             # Fallback to dark theme
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 CustomTitleBar {
                     background-color: #1e1e1e;
                     border-bottom: 1px solid #333333;
                 }
-            """)
+            """
+            )
 
     def set_title(self, title: str) -> None:
         """Update the window title."""
@@ -154,7 +159,10 @@ class CustomTitleBar(QWidget):
     def mousePressEvent(self, event):
         """Handle mouse press for window dragging."""
         if event.button() == Qt.LeftButton:
-            self.drag_start_pos = event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
+            self.drag_start_pos = (
+                event.globalPosition().toPoint()
+                - self.window().frameGeometry().topLeft()
+            )
             event.accept()
 
     def mouseMoveEvent(self, event):
@@ -173,4 +181,3 @@ class CustomTitleBar(QWidget):
         if event.button() == Qt.LeftButton:
             self.maximize_requested.emit()
             event.accept()
-

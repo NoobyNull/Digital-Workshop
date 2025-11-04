@@ -12,7 +12,14 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QMainWindow, QStatusBar, QLabel, QProgressBar, QPushButton, QMessageBox
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QMessageBox,
+)
 
 from src.core.database_manager import get_database_manager
 from src.gui.components.deduplication_status_widget import DeduplicationStatusWidget
@@ -26,7 +33,9 @@ class StatusBarManager:
     memory usage display, and background process status updates.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the status bar manager.
 
@@ -69,7 +78,9 @@ class StatusBarManager:
         self.status_label = QLabel("Ready")
         self.status_label.setMinimumWidth(300)  # Give it more space
         # Qt-material handles font styling automatically
-        self.status_bar.addWidget(self.status_label, 1)  # Stretch factor 1 to take available space
+        self.status_bar.addWidget(
+            self.status_label, 1
+        )  # Stretch factor 1 to take available space
 
         # Progress bar for long operations
         self.progress_bar = QProgressBar()
@@ -139,22 +150,33 @@ class StatusBarManager:
                 "Toolbar icons active",
                 "Loading:",
                 "Metadata saved",
-                "Added"
+                "Added",
             ]
 
             # Don't override important UI feedback messages
             is_important = any(msg in current_message for msg in important_messages)
             if not is_important:
                 import psutil
+
                 process = psutil.Process()
                 memory_mb = process.memory_info().rss / 1024 / 1024
                 self.memory_label.setText(f"Memory: {memory_mb:.1f} MB")
         except ImportError:
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
+            if self.status_label.text() not in [
+                "Applied main_window.css",
+                "Modern UI styling applied",
+                "Stylesheet reloaded",
+                "Toolbar icons active",
+            ]:
                 self.memory_label.setText("Memory: N/A (psutil not available)")
         except Exception as e:
             self.logger.warning(f"Failed to update memory status: {str(e)}")
-            if self.status_label.text() not in ["Applied main_window.css", "Modern UI styling applied", "Stylesheet reloaded", "Toolbar icons active"]:
+            if self.status_label.text() not in [
+                "Applied main_window.css",
+                "Modern UI styling applied",
+                "Stylesheet reloaded",
+                "Toolbar icons active",
+            ]:
                 self.memory_label.setText("Memory: Error")
 
     def _toggle_background_hasher(self) -> None:
@@ -168,13 +190,21 @@ class StatusBarManager:
             if self.background_hasher.is_paused():
                 # Resume
                 self.background_hasher.resume()
-                self.hash_indicator.setToolTip("Background hashing active - Click to pause")
-                self.main_window.statusBar().showMessage("Background hashing resumed", 2000)
+                self.hash_indicator.setToolTip(
+                    "Background hashing active - Click to pause"
+                )
+                self.main_window.statusBar().showMessage(
+                    "Background hashing resumed", 2000
+                )
             else:
                 # Pause
                 self.background_hasher.pause()
-                self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
-                self.main_window.statusBar().showMessage("Background hashing paused", 2000)
+                self.hash_indicator.setToolTip(
+                    "Background hashing paused - Click to resume"
+                )
+                self.main_window.statusBar().showMessage(
+                    "Background hashing paused", 2000
+                )
         except Exception as e:
             self.logger.error(f"Failed to toggle background hasher: {e}")
 
@@ -217,7 +247,9 @@ class StatusBarManager:
         except Exception:
             pass
 
-    def _on_duplicate_found(self, new_model_id: int, existing_id: int, new_path: str, old_path: str) -> None:
+    def _on_duplicate_found(
+        self, new_model_id: int, existing_id: int, new_path: str, old_path: str
+    ) -> None:
         """Handle duplicate file detected - prompt user for action."""
         try:
             reply = QMessageBox.question(
@@ -228,7 +260,7 @@ class StatusBarManager:
                 f"New: {new_path}\n\n"
                 f"Update to new location?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
+                QMessageBox.Yes,
             )
 
             if reply == QMessageBox.Yes:
@@ -236,17 +268,19 @@ class StatusBarManager:
                 db_manager = get_database_manager()
                 db_manager.update_model_path(existing_id, new_path)
                 db_manager.delete_model(new_model_id)
-                self.logger.info(f"Updated file path for model {existing_id}, removed duplicate {new_model_id}")
+                self.logger.info(
+                    f"Updated file path for model {existing_id}, removed duplicate {new_model_id}"
+                )
 
                 # Refresh model library if available
-                if hasattr(self.main_window, 'model_library_widget'):
+                if hasattr(self.main_window, "model_library_widget"):
                     self.main_window.model_library_widget._load_models_from_database()
             else:
                 # Keep duplicate, just mark it as hashed with the same hash
                 db_manager = get_database_manager()
                 existing = db_manager.get_model(existing_id)
-                if existing and existing.get('file_hash'):
-                    db_manager.update_file_hash(new_model_id, existing['file_hash'])
+                if existing and existing.get("file_hash"):
+                    db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
         except Exception as e:
             self.logger.error(f"Failed to handle duplicate: {e}")
@@ -255,7 +289,9 @@ class StatusBarManager:
         """Handle all hashing complete."""
         try:
             self.hash_indicator.setToolTip("Background hashing idle - Click to start")
-            self.main_window.statusBar().showMessage("Background hashing complete", 2000)
+            self.main_window.statusBar().showMessage(
+                "Background hashing complete", 2000
+            )
             self.logger.info("Background hashing completed")
         except Exception:
             pass
@@ -277,7 +313,7 @@ class StatusBarManager:
 
     def _cycle_theme(self) -> None:
         """Handle cycle theme action."""
-        if hasattr(self.main_window, '_cycle_theme'):
+        if hasattr(self.main_window, "_cycle_theme"):
             self.main_window._cycle_theme()
 
     def _update_theme_icon(self) -> None:
@@ -285,6 +321,7 @@ class StatusBarManager:
         try:
             # Get current theme
             from src.gui.theme.simple_service import ThemeService
+
             service = ThemeService.instance()
             current_theme, _ = service.get_current_theme()
 
@@ -299,6 +336,7 @@ class StatusBarManager:
             # Set icon if qtawesome is available
             try:
                 import qtawesome as qta
+
                 icon = qta.icon(icon_name)
                 self.theme_button.setIcon(icon)
             except Exception:
@@ -310,7 +348,9 @@ class StatusBarManager:
 
 
 # Convenience function for easy status bar setup
-def setup_main_window_status_bar(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> StatusBarManager:
+def setup_main_window_status_bar(
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> StatusBarManager:
     """
     Convenience function to set up status bar for a main window.
 

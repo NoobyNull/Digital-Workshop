@@ -14,9 +14,17 @@ from typing import Dict, List, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton,
-    QButtonGroup, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QRadioButton,
+    QButtonGroup,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QMessageBox,
 )
 from PySide6.QtGui import QFont
 
@@ -126,12 +134,12 @@ class DeduplicationDialog(QDialog):
             self.models_table.insertRow(i)
 
             # Filename
-            filename = Path(model['file_path']).name
+            filename = Path(model["file_path"]).name
             self.models_table.setItem(i, 0, QTableWidgetItem(filename))
 
             # Size
             try:
-                size_mb = Path(model['file_path']).stat().st_size / (1024 * 1024)
+                size_mb = Path(model["file_path"]).stat().st_size / (1024 * 1024)
                 size_text = f"{size_mb:.2f}"
             except:
                 size_text = "N/A"
@@ -139,14 +147,14 @@ class DeduplicationDialog(QDialog):
 
             # Modified
             try:
-                mtime = Path(model['file_path']).stat().st_mtime
+                mtime = Path(model["file_path"]).stat().st_mtime
                 modified = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
             except:
                 modified = "N/A"
             self.models_table.setItem(i, 2, QTableWidgetItem(modified))
 
             # Path
-            self.models_table.setItem(i, 3, QTableWidgetItem(model['file_path']))
+            self.models_table.setItem(i, 3, QTableWidgetItem(model["file_path"]))
 
         # Resize columns
         header = self.models_table.horizontalHeader()
@@ -168,4 +176,3 @@ class DeduplicationDialog(QDialog):
     def get_keep_strategy(self) -> Optional[str]:
         """Get selected keep strategy."""
         return self.keep_strategy
-

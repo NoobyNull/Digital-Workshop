@@ -14,8 +14,13 @@ from typing import Dict, List, Optional, Tuple, Union
 import gc
 
 from .base_parser import (
-    BaseParser, Model, ModelFormat, Triangle, Vector3D,
-    ParseError, ProgressCallback
+    BaseParser,
+    Model,
+    ModelFormat,
+    Triangle,
+    Vector3D,
+    ParseError,
+    ProgressCallback,
 )
 from src.core.logging_config import get_logger
 
@@ -23,6 +28,7 @@ from src.core.logging_config import get_logger
 @dataclass
 class ThreeMFComponent:
     """Component definition in 3MF."""
+
     object_id: int
     transform: List[float]  # 4x4 transformation matrix (row-major)
 
@@ -30,6 +36,7 @@ class ThreeMFComponent:
 @dataclass
 class ThreeMFObject:
     """Object definition in 3MF."""
+
     object_id: int
     type: str  # "model" or "other"
     vertices: List[Vector3D]
@@ -41,6 +48,7 @@ class ThreeMFObject:
 @dataclass
 class ThreeMFBuildItem:
     """Build item in 3MF."""
+
     object_id: int
     transform: List[float]  # 4x4 transformation matrix (row-major)
 
@@ -66,12 +74,12 @@ class ThreeMFParser(BaseParser):
 
     def get_supported_extensions(self) -> List[str]:
         """Get list of supported file extensions."""
-        return ['.3mf']
+        return [".3mf"]
 
     def parse_file(
         self,
         file_path: Union[str, Path],
-        progress_callback: Optional[ProgressCallback] = None
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> Model:
         """
         Parse a 3MF file.
@@ -90,7 +98,9 @@ class ThreeMFParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(f"Starting 3MF parsing: {file_path} ({file_path.stat().st_size} bytes)")
+        self.logger.info(
+            f"Starting 3MF parsing: {file_path} ({file_path.stat().st_size} bytes)"
+        )
 
         start_time = time.time()
 
@@ -115,7 +125,7 @@ class ThreeMFParser(BaseParser):
                 header=f"3MF model with {len(triangles)} triangles",
                 triangles=triangles,
                 stats=stats,
-                format_type=ModelFormat.THREE_MF
+                format_type=ModelFormat.THREE_MF,
             )
 
         except Exception as e:
@@ -123,9 +133,7 @@ class ThreeMFParser(BaseParser):
             raise ParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_3mf_file(
-        self,
-        file_path: Path,
-        progress_callback: Optional[ProgressCallback] = None
+        self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> List[Triangle]:
         """
         Parse 3MF file content.
@@ -142,17 +150,17 @@ class ThreeMFParser(BaseParser):
                 progress_callback.report(0.0, "Opening 3MF archive")
 
             # Open 3MF file as ZIP archive
-            with zipfile.ZipFile(file_path, 'r') as zip_file:
+            with zipfile.ZipFile(file_path, "r") as zip_file:
                 # Check for required files
-                if '3D/3dmodel.model' not in zip_file.namelist():
+                if "3D/3dmodel.model" not in zip_file.namelist():
                     raise ParseError("Invalid 3MF file: missing 3D/3dmodel.model")
 
                 # Parse 3D model
                 if progress_callback:
                     progress_callback.report(20.0, "Parsing 3D model")
 
-                with zip_file.open('3D/3dmodel.model') as model_file:
-                    content = model_file.read().decode('utf-8')
+                with zip_file.open("3D/3dmodel.model") as model_file:
+                    content = model_file.read().decode("utf-8")
                     root = ET.fromstring(content)
 
                     # Parse objects
@@ -190,43 +198,45 @@ class ThreeMFParser(BaseParser):
             root: Root element of the 3MF model
         """
         # Define namespace
-        ns = {'3mf': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
+        ns = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 
         # Find all objects
-        for obj_elem in root.findall('.//3mf:object', ns):
+        for obj_elem in root.findall(".//3mf:object", ns):
             try:
-                object_id = int(obj_elem.get('id', '0'))
-                obj_type = obj_elem.get('type', 'model')
-                name = obj_elem.get('name', '')
+                object_id = int(obj_elem.get("id", "0"))
+                obj_type = obj_elem.get("type", "model")
+                name = obj_elem.get("name", "")
 
                 vertices = []
                 triangles = []
                 components = []
 
                 # Parse vertices
-                vertices_elem = obj_elem.find('3mf:vertices', ns)
+                vertices_elem = obj_elem.find("3mf:vertices", ns)
                 if vertices_elem is not None:
-                    for vertex_elem in vertices_elem.findall('3mf:vertex', ns):
-                        x = float(vertex_elem.get('x', '0'))
-                        y = float(vertex_elem.get('y', '0'))
-                        z = float(vertex_elem.get('z', '0'))
+                    for vertex_elem in vertices_elem.findall("3mf:vertex", ns):
+                        x = float(vertex_elem.get("x", "0"))
+                        y = float(vertex_elem.get("y", "0"))
+                        z = float(vertex_elem.get("z", "0"))
                         vertices.append(Vector3D(x, y, z))
 
                 # Parse triangles
-                triangles_elem = obj_elem.find('3mf:triangles', ns)
+                triangles_elem = obj_elem.find("3mf:triangles", ns)
                 if triangles_elem is not None:
-                    for triangle_elem in triangles_elem.findall('3mf:triangle', ns):
-                        v1 = int(triangle_elem.get('v1', '0'))
-                        v2 = int(triangle_elem.get('v2', '0'))
-                        v3 = int(triangle_elem.get('v3', '0'))
+                    for triangle_elem in triangles_elem.findall("3mf:triangle", ns):
+                        v1 = int(triangle_elem.get("v1", "0"))
+                        v2 = int(triangle_elem.get("v2", "0"))
+                        v3 = int(triangle_elem.get("v3", "0"))
                         triangles.append((v1, v2, v3))
 
                 # Parse components
-                components_elem = obj_elem.find('3mf:components', ns)
+                components_elem = obj_elem.find("3mf:components", ns)
                 if components_elem is not None:
-                    for component_elem in components_elem.findall('3mf:component', ns):
-                        comp_object_id = int(component_elem.get('objectid', '0'))
-                        transform = self._parse_transform(component_elem.get('transform', ''))
+                    for component_elem in components_elem.findall("3mf:component", ns):
+                        comp_object_id = int(component_elem.get("objectid", "0"))
+                        transform = self._parse_transform(
+                            component_elem.get("transform", "")
+                        )
                         components.append(ThreeMFComponent(comp_object_id, transform))
 
                 # Create object
@@ -236,7 +246,7 @@ class ThreeMFParser(BaseParser):
                     vertices=vertices,
                     triangles=triangles,
                     components=components,
-                    name=name
+                    name=name,
                 )
 
                 self.objects[object_id] = obj
@@ -253,18 +263,18 @@ class ThreeMFParser(BaseParser):
             root: Root element of the 3MF model
         """
         # Define namespace
-        ns = {'3mf': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
+        ns = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 
         # Find build element
-        build_elem = root.find('3mf:build', ns)
+        build_elem = root.find("3mf:build", ns)
         if build_elem is None:
             return
 
         # Find all build items
-        for item_elem in build_elem.findall('3mf:item', ns):
+        for item_elem in build_elem.findall("3mf:item", ns):
             try:
-                object_id = int(item_elem.get('objectid', '0'))
-                transform = self._parse_transform(item_elem.get('transform', ''))
+                object_id = int(item_elem.get("objectid", "0"))
+                transform = self._parse_transform(item_elem.get("transform", ""))
 
                 build_item = ThreeMFBuildItem(object_id, transform)
                 self.build_items.append(build_item)
@@ -286,10 +296,22 @@ class ThreeMFParser(BaseParser):
         if not transform_str:
             # Identity matrix
             return [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]
 
         try:
@@ -298,23 +320,51 @@ class ThreeMFParser(BaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
+                self.logger.warning(
+                    f"Invalid transform: {transform_str}, using identity"
+                )
                 return [
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
                 ]
 
             return values
 
         except ValueError:
-            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
+            self.logger.warning(
+                f"Invalid transform values: {transform_str}, using identity"
+            )
             return [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]
 
     def _generate_triangles(self) -> List[Triangle]:
@@ -332,7 +382,9 @@ class ThreeMFParser(BaseParser):
 
         return triangles
 
-    def _generate_triangles_for_item(self, build_item: ThreeMFBuildItem) -> List[Triangle]:
+    def _generate_triangles_for_item(
+        self, build_item: ThreeMFBuildItem
+    ) -> List[Triangle]:
         """
         Generate triangles for a specific build item.
 
@@ -369,10 +421,22 @@ class ThreeMFParser(BaseParser):
 
             # Apply transform if needed
             if build_item.transform != [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
             ]:
                 vertices = self._apply_transform(vertices, build_item.transform)
 
@@ -393,9 +457,7 @@ class ThreeMFParser(BaseParser):
         return triangles
 
     def _generate_triangles_for_component(
-        self,
-        component: ThreeMFComponent,
-        parent_transform: List[float]
+        self, component: ThreeMFComponent, parent_transform: List[float]
     ) -> List[Triangle]:
         """
         Generate triangles for a component.
@@ -416,7 +478,9 @@ class ThreeMFParser(BaseParser):
             return triangles
 
         # Combine transforms
-        combined_transform = self._multiply_matrices(parent_transform, component.transform)
+        combined_transform = self._multiply_matrices(
+            parent_transform, component.transform
+        )
 
         # Process triangles
         for triangle_indices in comp_obj.triangles:
@@ -454,7 +518,9 @@ class ThreeMFParser(BaseParser):
 
         return triangles
 
-    def _multiply_matrices(self, matrix_a: List[float], matrix_b: List[float]) -> List[float]:
+    def _multiply_matrices(
+        self, matrix_a: List[float], matrix_b: List[float]
+    ) -> List[float]:
         """
         Multiply two 4x4 matrices.
 
@@ -474,7 +540,9 @@ class ThreeMFParser(BaseParser):
 
         return result
 
-    def _apply_transform(self, vertices: List[Vector3D], transform: List[float]) -> List[Vector3D]:
+    def _apply_transform(
+        self, vertices: List[Vector3D], transform: List[float]
+    ) -> List[Vector3D]:
         """
         Apply transformation matrix to vertices.
 
@@ -493,10 +561,30 @@ class ThreeMFParser(BaseParser):
             w = 1.0
 
             # Apply transformation
-            new_x = transform[0] * x + transform[1] * y + transform[2] * z + transform[3] * w
-            new_y = transform[4] * x + transform[5] * y + transform[6] * z + transform[7] * w
-            new_z = transform[8] * x + transform[9] * y + transform[10] * z + transform[11] * w
-            new_w = transform[12] * x + transform[13] * y + transform[14] * z + transform[15] * w
+            new_x = (
+                transform[0] * x
+                + transform[1] * y
+                + transform[2] * z
+                + transform[3] * w
+            )
+            new_y = (
+                transform[4] * x
+                + transform[5] * y
+                + transform[6] * z
+                + transform[7] * w
+            )
+            new_z = (
+                transform[8] * x
+                + transform[9] * y
+                + transform[10] * z
+                + transform[11] * w
+            )
+            new_w = (
+                transform[12] * x
+                + transform[13] * y
+                + transform[14] * z
+                + transform[15] * w
+            )
 
             # Convert back to 3D coordinates
             if new_w != 0:
@@ -508,7 +596,9 @@ class ThreeMFParser(BaseParser):
 
         return transformed
 
-    def _calculate_face_normal(self, v1: Vector3D, v2: Vector3D, v3: Vector3D) -> Vector3D:
+    def _calculate_face_normal(
+        self, v1: Vector3D, v2: Vector3D, v3: Vector3D
+    ) -> Vector3D:
         """
         Calculate face normal from three vertices.
 
@@ -532,7 +622,7 @@ class ThreeMFParser(BaseParser):
         # Normalize
         length = (normal_x**2 + normal_y**2 + normal_z**2) ** 0.5
         if length > 0:
-            return Vector3D(normal_x/length, normal_y/length, normal_z/length)
+            return Vector3D(normal_x / length, normal_y / length, normal_z / length)
 
         return Vector3D(0, 0, 1)  # Default normal
 
@@ -558,18 +648,18 @@ class ThreeMFParser(BaseParser):
 
             # Check if it's a valid ZIP file
             try:
-                with zipfile.ZipFile(file_path, 'r') as zip_file:
+                with zipfile.ZipFile(file_path, "r") as zip_file:
                     # Check for required 3MF files
-                    if '3D/3dmodel.model' not in zip_file.namelist():
+                    if "3D/3dmodel.model" not in zip_file.namelist():
                         return False, "Invalid 3MF file: missing 3D/3dmodel.model"
 
                     # Check if we can read the model file
-                    with zip_file.open('3D/3dmodel.model') as model_file:
-                        content = model_file.read(1000).decode('utf-8')
-                        if '<?xml' not in content.lower():
+                    with zip_file.open("3D/3dmodel.model") as model_file:
+                        content = model_file.read(1000).decode("utf-8")
+                        if "<?xml" not in content.lower():
                             return False, "Invalid 3MF file: invalid XML format"
 
-                        if 'model' not in content.lower():
+                        if "model" not in content.lower():
                             return False, "Invalid 3MF file: not a 3D model"
 
                 return True, ""

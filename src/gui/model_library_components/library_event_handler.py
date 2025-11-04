@@ -44,18 +44,26 @@ class LibraryEventHandler:
     def setup_connections(self) -> None:
         """Setup signal connections."""
         self.logger.info("Setting up connections in LibraryEventHandler")
-        
+
         self.library_widget.view_tabs.currentChanged.connect(self.on_tab_changed)
 
         self.library_widget.file_tree.clicked.connect(self.on_file_tree_clicked)
 
-        self.library_widget.import_selected_button.clicked.connect(self.library_widget._import_selected_files)
-        self.library_widget.import_folder_button.clicked.connect(self.library_widget._import_selected_folder)
+        self.library_widget.import_selected_button.clicked.connect(
+            self.library_widget._import_selected_files
+        )
+        self.library_widget.import_folder_button.clicked.connect(
+            self.library_widget._import_selected_folder
+        )
 
         self.library_widget.list_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.list_view.doubleClicked.connect(self.on_model_double_clicked)
+        self.library_widget.list_view.doubleClicked.connect(
+            self.on_model_double_clicked
+        )
         self.library_widget.grid_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
+        self.library_widget.grid_view.doubleClicked.connect(
+            self.on_model_double_clicked
+        )
 
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
 
@@ -64,15 +72,23 @@ class LibraryEventHandler:
         self.library_widget.grid_view.setAcceptDrops(True)
 
         self.library_widget.list_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.list_view.customContextMenuRequested.connect(self.show_context_menu)
+        self.library_widget.list_view.customContextMenuRequested.connect(
+            self.show_context_menu
+        )
         self.library_widget.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.grid_view.customContextMenuRequested.connect(self.show_context_menu)
+        self.library_widget.grid_view.customContextMenuRequested.connect(
+            self.show_context_menu
+        )
 
         # Set up file tree context menu
-        self.logger.info(f"Setting up file_tree context menu. Widget exists: {hasattr(self.library_widget, 'file_tree')}")
-        if hasattr(self.library_widget, 'file_tree'):
+        self.logger.info(
+            f"Setting up file_tree context menu. Widget exists: {hasattr(self.library_widget, 'file_tree')}"
+        )
+        if hasattr(self.library_widget, "file_tree"):
             self.library_widget.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-            self.library_widget.file_tree.customContextMenuRequested.connect(self.show_file_tree_context_menu)
+            self.library_widget.file_tree.customContextMenuRequested.connect(
+                self.show_file_tree_context_menu
+            )
             self.logger.info("File tree context menu connection established")
         else:
             self.logger.error("file_tree widget not found!")
@@ -96,9 +112,15 @@ class LibraryEventHandler:
 
     def apply_filters(self) -> None:
         """Apply search and category filters."""
-        if self.library_widget._disposed or not hasattr(self.library_widget, "proxy_model"):
+        if self.library_widget._disposed or not hasattr(
+            self.library_widget, "proxy_model"
+        ):
             return
-        text = self.library_widget.search_box.text() if hasattr(self.library_widget, "search_box") else ""
+        text = (
+            self.library_widget.search_box.text()
+            if hasattr(self.library_widget, "search_box")
+            else ""
+        )
         try:
             self.library_widget.proxy_model.setFilterRegularExpression(
                 QRegularExpression(text, QRegularExpression.CaseInsensitiveOption)
@@ -165,13 +187,13 @@ class LibraryEventHandler:
         try:
             index = self.library_widget.file_tree.indexAt(position)
             self.logger.info(f"Index valid: {index.isValid()}")
-            
+
             menu = QMenu(self.library_widget)
-            
+
             # Add Root Folder action - always available
             add_root_action = menu.addAction("Add Root Folder")
             self.logger.info("Added 'Add Root Folder' action to menu")
-            
+
             # Check if clicking on a valid file/folder
             if index.isValid():
                 source_index = self.library_widget.file_proxy_model.mapToSource(index)
@@ -180,13 +202,15 @@ class LibraryEventHandler:
                 if file_path and Path(file_path).exists():
                     # Add separator before file-specific actions
                     menu.addSeparator()
-                    
+
                     # File/folder specific actions
                     import_action = menu.addAction("Import")
                     open_action = menu.addAction("Open in Explorer")
-                    
+
                     # Execute menu
-                    action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
+                    action = menu.exec(
+                        self.library_widget.file_tree.mapToGlobal(position)
+                    )
 
                     if action == add_root_action:
                         self._add_root_folder()
@@ -195,27 +219,29 @@ class LibraryEventHandler:
                     elif action == open_action:
                         self.library_widget._open_in_native_app(file_path)
                     return
-            
+
             # If no valid file/folder, just show Add Root Folder option
             action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
             if action == add_root_action:
                 self._add_root_folder()
-                
+
         except Exception as e:
-            self.logger.error(f"Failed to show file tree context menu: {e}", exc_info=True)
+            self.logger.error(
+                f"Failed to show file tree context menu: {e}", exc_info=True
+            )
 
     def _add_root_folder(self) -> None:
         """Add a new root folder via dialog."""
         try:
             # Get RootFolderManager instance
             root_folder_manager = RootFolderManager.get_instance()
-            
+
             # Open folder selection dialog
             folder_path = QFileDialog.getExistingDirectory(
                 self.library_widget,
                 "Select Root Folder",
                 str(Path.home()),
-                QFileDialog.ShowDirsOnly
+                QFileDialog.ShowDirsOnly,
             )
 
             if not folder_path:
@@ -227,7 +253,7 @@ class LibraryEventHandler:
                 self.library_widget,
                 "Folder Display Name",
                 "Enter a display name for this folder:",
-                text=folder_name
+                text=folder_name,
             )
 
             if not ok or not display_name.strip():
@@ -236,25 +262,21 @@ class LibraryEventHandler:
             # Add to manager
             if root_folder_manager.add_folder(folder_path, display_name.strip()):
                 QMessageBox.information(
-                    self.library_widget,
-                    "Success",
-                    f"Added folder '{display_name}'"
+                    self.library_widget, "Success", f"Added folder '{display_name}'"
                 )
                 # Refresh the file browser to show the new root folder
-                if hasattr(self.library_widget, '_refresh_file_browser'):
+                if hasattr(self.library_widget, "_refresh_file_browser"):
                     self.library_widget._refresh_file_browser()
             else:
                 QMessageBox.warning(
                     self.library_widget,
                     "Error",
-                    "Failed to add folder. It may already exist or be inaccessible."
+                    "Failed to add folder. It may already exist or be inaccessible.",
                 )
         except Exception as e:
             self.logger.error(f"Failed to add root folder: {e}")
             QMessageBox.critical(
-                self.library_widget,
-                "Error",
-                f"Failed to add root folder: {e}"
+                self.library_widget, "Error", f"Failed to add root folder: {e}"
             )
 
     def drag_enter_event(self, event: QDragEnterEvent) -> None:
@@ -274,7 +296,13 @@ class LibraryEventHandler:
             for url in event.mimeData().urls():
                 if url.isLocalFile():
                     p = url.toLocalFile()
-                    if Path(p).is_file() and Path(p).suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                    if Path(p).is_file() and Path(p).suffix.lower() in [
+                        ".stl",
+                        ".obj",
+                        ".3mf",
+                        ".step",
+                        ".stp",
+                    ]:
                         files.append(p)
             if files:
                 self.library_widget.model_manager.load_models(files)
@@ -283,29 +311,35 @@ class LibraryEventHandler:
         """Generate preview image for a model."""
         try:
             self.logger.info(f"Generating preview for model ID: {model_id}")
-            
+
             # Get model information from database
             db_manager = get_database_manager()
             model = db_manager.get_model(model_id)
-            
+
             if not model:
-                QMessageBox.warning(self.library_widget, "Error", "Model not found in database")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Model not found in database"
+                )
                 return
-            
-            model_path = model.get('file_path')
+
+            model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
-                QMessageBox.warning(self.library_widget, "Error", "Model file not found on disk")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Model file not found on disk"
+                )
                 return
-            
+
             # Get file hash
             hasher = FastHasher()
             hash_result = hasher.hash_file(model_path)
             file_hash = hash_result.hash_value if hash_result.success else None
-            
+
             if not file_hash:
-                QMessageBox.warning(self.library_widget, "Error", "Failed to compute file hash")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Failed to compute file hash"
+                )
                 return
-            
+
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
@@ -314,8 +348,18 @@ class LibraryEventHandler:
             settings = QSettings()
 
             # Get current thumbnail preferences
-            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            bg_image = settings.value(
+                "thumbnail/background_image", config.thumbnail_bg_image, type=str
+            )
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
+            bg_color = settings.value(
+                "thumbnail/background_color", config.thumbnail_bg_color, type=str
+            )
+
+            # Use background image if set, otherwise use background color
+            background = bg_image if bg_image else bg_color
 
             # Generate thumbnail with current preferences
             thumbnail_service = ImportThumbnailService()
@@ -323,32 +367,35 @@ class LibraryEventHandler:
                 model_path=model_path,
                 file_hash=file_hash,
                 material=material,
-                background=bg_image,
-                force_regenerate=True
+                background=background,
+                force_regenerate=True,
             )
-            
+
             if result.success:
                 QMessageBox.information(
                     self.library_widget,
                     "Success",
-                    f"Preview generated successfully!\nSaved to: {result.thumbnail_path}"
+                    f"Preview generated successfully!\nSaved to: {result.thumbnail_path}",
                 )
-                self.logger.info(f"Preview generated for model {model_id}: {result.thumbnail_path}")
-                
+                self.logger.info(
+                    f"Preview generated for model {model_id}: {result.thumbnail_path}"
+                )
+
                 # Refresh the library view to show updated thumbnail
-                if hasattr(self.library_widget, '_refresh_model_display'):
+                if hasattr(self.library_widget, "_refresh_model_display"):
                     self.library_widget._refresh_model_display(model_id)
             else:
                 error_msg = result.error or "Unknown error"
                 QMessageBox.warning(
                     self.library_widget,
                     "Error",
-                    f"Failed to generate preview: {error_msg}"
+                    f"Failed to generate preview: {error_msg}",
                 )
-                self.logger.error(f"Preview generation failed for model {model_id}: {error_msg}")
-                
+                self.logger.error(
+                    f"Preview generation failed for model {model_id}: {error_msg}"
+                )
+
         except Exception as e:
             error_msg = f"Exception during preview generation: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self.library_widget, "Error", error_msg)
-

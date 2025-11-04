@@ -83,4 +83,3 @@ class MainWindowFacade:
         logger.info("Cleaning up main window components")
         self.save_layout()
         self.save_settings()
-

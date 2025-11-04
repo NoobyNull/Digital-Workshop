@@ -13,8 +13,13 @@ from typing import Dict, List, Optional, Tuple, Union, TextIO
 import gc
 
 from .base_parser import (
-    BaseParser, Model, ModelFormat, Triangle, Vector3D,
-    ParseError, ProgressCallback
+    BaseParser,
+    Model,
+    ModelFormat,
+    Triangle,
+    Vector3D,
+    ParseError,
+    ProgressCallback,
 )
 from src.core.logging_config import get_logger
 
@@ -22,6 +27,7 @@ from src.core.logging_config import get_logger
 @dataclass
 class OBJMaterial:
     """Material definition from MTL file."""
+
     name: str
     ambient: Tuple[float, float, float] = (0.2, 0.2, 0.2)
     diffuse: Tuple[float, float, float] = (0.8, 0.8, 0.8)
@@ -44,6 +50,7 @@ class OBJMaterial:
 @dataclass
 class OBJFace:
     """Face definition with vertex, texture, and normal indices."""
+
     vertex_indices: List[int]
     texture_indices: List[int]
     normal_indices: List[int]
@@ -70,12 +77,12 @@ class OBJParser(BaseParser):
 
     def get_supported_extensions(self) -> List[str]:
         """Get list of supported file extensions."""
-        return ['.obj']
+        return [".obj"]
 
     def parse_file(
         self,
         file_path: Union[str, Path],
-        progress_callback: Optional[ProgressCallback] = None
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> Model:
         """
         Parse an OBJ file.
@@ -94,7 +101,9 @@ class OBJParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(f"Starting OBJ parsing: {file_path} ({file_path.stat().st_size} bytes)")
+        self.logger.info(
+            f"Starting OBJ parsing: {file_path} ({file_path.stat().st_size} bytes)"
+        )
 
         start_time = time.time()
 
@@ -127,7 +136,7 @@ class OBJParser(BaseParser):
                 header=f"OBJ model with {len(faces)} faces",
                 triangles=triangles,
                 stats=stats,
-                format_type=ModelFormat.OBJ
+                format_type=ModelFormat.OBJ,
             )
 
         except Exception as e:
@@ -135,12 +144,13 @@ class OBJParser(BaseParser):
             raise ParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_obj_file(
-        self,
-        file_path: Path,
-        progress_callback: Optional[ProgressCallback] = None
+        self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Tuple[
-        List[Vector3D], List[Vector3D], List[Tuple[float, float]],
-        List[OBJFace], Dict[str, OBJMaterial]
+        List[Vector3D],
+        List[Vector3D],
+        List[Tuple[float, float]],
+        List[OBJFace],
+        Dict[str, OBJMaterial],
     ]:
         """
         Parse OBJ file content.
@@ -160,7 +170,7 @@ class OBJParser(BaseParser):
         current_material = ""
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 lines = file.readlines()
 
                 if progress_callback:
@@ -175,11 +185,13 @@ class OBJParser(BaseParser):
                     # Report progress
                     if progress_callback and i % 1000 == 0:
                         progress = (i / line_count) * 100
-                        progress_callback.report(progress, f"Parsed {i}/{line_count} lines")
+                        progress_callback.report(
+                            progress, f"Parsed {i}/{line_count} lines"
+                        )
 
                     # Strip comments and whitespace
                     line = line.strip()
-                    if not line or line.startswith('#'):
+                    if not line or line.startswith("#"):
                         continue
 
                     # Split line into parts
@@ -190,36 +202,44 @@ class OBJParser(BaseParser):
                     command = parts[0].lower()
 
                     try:
-                        if command == 'v':
+                        if command == "v":
                             # Vertex: v x y z [w]
                             if len(parts) >= 4:
-                                x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                                x, y, z = (
+                                    float(parts[1]),
+                                    float(parts[2]),
+                                    float(parts[3]),
+                                )
                                 vertices.append(Vector3D(x, y, z))
 
-                        elif command == 'vn':
+                        elif command == "vn":
                             # Vertex normal: vn x y z
                             if len(parts) >= 4:
-                                x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                                x, y, z = (
+                                    float(parts[1]),
+                                    float(parts[2]),
+                                    float(parts[3]),
+                                )
                                 normals.append(Vector3D(x, y, z))
 
-                        elif command == 'vt':
+                        elif command == "vt":
                             # Texture coordinate: vt u [v] [w]
                             if len(parts) >= 2:
                                 u = float(parts[1])
                                 v = float(parts[2]) if len(parts) > 2 else 0.0
                                 texture_coords.append((u, v))
 
-                        elif command == 'f':
+                        elif command == "f":
                             # Face: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3 ...
                             face = self._parse_face(parts[1:], current_material)
                             faces.append(face)
 
-                        elif command == 'usemtl':
+                        elif command == "usemtl":
                             # Use material: usemtl material_name
                             if len(parts) >= 2:
                                 current_material = parts[1]
 
-                        elif command == 'mtllib':
+                        elif command == "mtllib":
                             # Material library: mtllib filename.mtl
                             if len(parts) >= 2:
                                 mtl_file = parts[1]
@@ -258,7 +278,7 @@ class OBJParser(BaseParser):
         for part in face_parts:
             # Parse vertex/texture/normal indices
             # Formats: v, v/vt, v//vn, v/vt/vn
-            indices = part.split('/')
+            indices = part.split("/")
 
             # Vertex index (required)
             if indices[0]:
@@ -282,7 +302,7 @@ class OBJParser(BaseParser):
             vertex_indices=vertex_indices,
             texture_indices=texture_indices,
             normal_indices=normal_indices,
-            material_name=material_name
+            material_name=material_name,
         )
 
     def _convert_faces_to_triangles(
@@ -290,7 +310,7 @@ class OBJParser(BaseParser):
         vertices: List[Vector3D],
         normals: List[Vector3D],
         texture_coords: List[Tuple[float, float]],
-        faces: List[OBJFace]
+        faces: List[OBJFace],
     ) -> List[Triangle]:
         """
         Convert faces to triangles.
@@ -314,11 +334,27 @@ class OBJParser(BaseParser):
             # For faces with more than 3 vertices, create a triangle fan
             for i in range(1, len(face.vertex_indices) - 1):
                 # Get vertices
-                v1_idx = face.vertex_indices[0] - 1 if face.vertex_indices[0] > 0 else len(vertices) + face.vertex_indices[0]
-                v2_idx = face.vertex_indices[i] - 1 if face.vertex_indices[i] > 0 else len(vertices) + face.vertex_indices[i]
-                v3_idx = face.vertex_indices[i+1] - 1 if face.vertex_indices[i+1] > 0 else len(vertices) + face.vertex_indices[i+1]
+                v1_idx = (
+                    face.vertex_indices[0] - 1
+                    if face.vertex_indices[0] > 0
+                    else len(vertices) + face.vertex_indices[0]
+                )
+                v2_idx = (
+                    face.vertex_indices[i] - 1
+                    if face.vertex_indices[i] > 0
+                    else len(vertices) + face.vertex_indices[i]
+                )
+                v3_idx = (
+                    face.vertex_indices[i + 1] - 1
+                    if face.vertex_indices[i + 1] > 0
+                    else len(vertices) + face.vertex_indices[i + 1]
+                )
 
-                if 0 <= v1_idx < len(vertices) and 0 <= v2_idx < len(vertices) and 0 <= v3_idx < len(vertices):
+                if (
+                    0 <= v1_idx < len(vertices)
+                    and 0 <= v2_idx < len(vertices)
+                    and 0 <= v3_idx < len(vertices)
+                ):
                     v1 = vertices[v1_idx]
                     v2 = vertices[v2_idx]
                     v3 = vertices[v3_idx]
@@ -328,7 +364,11 @@ class OBJParser(BaseParser):
 
                     # If face has normals, use the first one
                     if face.normal_indices and face.normal_indices[0] != 0:
-                        n_idx = face.normal_indices[0] - 1 if face.normal_indices[0] > 0 else len(normals) + face.normal_indices[0]
+                        n_idx = (
+                            face.normal_indices[0] - 1
+                            if face.normal_indices[0] > 0
+                            else len(normals) + face.normal_indices[0]
+                        )
                         if 0 <= n_idx < len(normals):
                             normal = normals[n_idx]
 
@@ -336,7 +376,9 @@ class OBJParser(BaseParser):
 
         return triangles
 
-    def _calculate_face_normal(self, v1: Vector3D, v2: Vector3D, v3: Vector3D) -> Vector3D:
+    def _calculate_face_normal(
+        self, v1: Vector3D, v2: Vector3D, v3: Vector3D
+    ) -> Vector3D:
         """
         Calculate face normal from three vertices.
 
@@ -360,7 +402,7 @@ class OBJParser(BaseParser):
         # Normalize
         length = (normal_x**2 + normal_y**2 + normal_z**2) ** 0.5
         if length > 0:
-            return Vector3D(normal_x/length, normal_y/length, normal_z/length)
+            return Vector3D(normal_x / length, normal_y / length, normal_z / length)
 
         return Vector3D(0, 0, 1)  # Default normal
 
@@ -376,14 +418,14 @@ class OBJParser(BaseParser):
             return
 
         try:
-            with open(mtl_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(mtl_path, "r", encoding="utf-8", errors="ignore") as file:
                 lines = file.readlines()
 
                 current_material = None
 
                 for line in lines:
                     line = line.strip()
-                    if not line or line.startswith('#'):
+                    if not line or line.startswith("#"):
                         continue
 
                     parts = line.split()
@@ -392,7 +434,7 @@ class OBJParser(BaseParser):
 
                     command = parts[0].lower()
 
-                    if command == 'newmtl':
+                    if command == "newmtl":
                         # New material: newmtl material_name
                         if len(parts) >= 2:
                             material_name = parts[1]
@@ -401,88 +443,94 @@ class OBJParser(BaseParser):
 
                     elif current_material is not None:
                         try:
-                            if command == 'ka':
+                            if command == "ka":
                                 # Ambient color: ka r g b
                                 if len(parts) >= 4:
                                     current_material.ambient = (
-                                        float(parts[1]), float(parts[2]), float(parts[3])
+                                        float(parts[1]),
+                                        float(parts[2]),
+                                        float(parts[3]),
                                     )
 
-                            elif command == 'kd':
+                            elif command == "kd":
                                 # Diffuse color: kd r g b
                                 if len(parts) >= 4:
                                     current_material.diffuse = (
-                                        float(parts[1]), float(parts[2]), float(parts[3])
+                                        float(parts[1]),
+                                        float(parts[2]),
+                                        float(parts[3]),
                                     )
 
-                            elif command == 'ks':
+                            elif command == "ks":
                                 # Specular color: ks r g b
                                 if len(parts) >= 4:
                                     current_material.specular = (
-                                        float(parts[1]), float(parts[2]), float(parts[3])
+                                        float(parts[1]),
+                                        float(parts[2]),
+                                        float(parts[3]),
                                     )
 
-                            elif command == 'ns':
+                            elif command == "ns":
                                 # Specular exponent: ns value
                                 if len(parts) >= 2:
                                     current_material.specular_exponent = float(parts[1])
 
-                            elif command == 'ni':
+                            elif command == "ni":
                                 # Optical density: ni value
                                 if len(parts) >= 2:
                                     current_material.optical_density = float(parts[1])
 
-                            elif command == 'd':
+                            elif command == "d":
                                 # Dissolve: d value
                                 if len(parts) >= 2:
                                     current_material.dissolve = float(parts[1])
 
-                            elif command == 'tr':
+                            elif command == "tr":
                                 # Transparency: tr value (inverse of dissolve)
                                 if len(parts) >= 2:
                                     current_material.dissolve = 1.0 - float(parts[1])
 
-                            elif command == 'illum':
+                            elif command == "illum":
                                 # Illumination model: illum value
                                 if len(parts) >= 2:
                                     current_material.illumination_model = int(parts[1])
 
-                            elif command == 'map_ka':
+                            elif command == "map_ka":
                                 # Ambient texture map: map_ka filename
                                 if len(parts) >= 2:
                                     current_material.ambient_map = parts[1]
 
-                            elif command == 'map_kd':
+                            elif command == "map_kd":
                                 # Diffuse texture map: map_kd filename
                                 if len(parts) >= 2:
                                     current_material.diffuse_map = parts[1]
 
-                            elif command == 'map_ks':
+                            elif command == "map_ks":
                                 # Specular texture map: map_ks filename
                                 if len(parts) >= 2:
                                     current_material.specular_map = parts[1]
 
-                            elif command == 'map_ns':
+                            elif command == "map_ns":
                                 # Specular exponent map: map_ns filename
                                 if len(parts) >= 2:
                                     current_material.exponent_map = parts[1]
 
-                            elif command == 'map_d':
+                            elif command == "map_d":
                                 # Dissolve map: map_d filename
                                 if len(parts) >= 2:
                                     current_material.dissolve_map = parts[1]
 
-                            elif command == 'map_bump' or command == 'bump':
+                            elif command == "map_bump" or command == "bump":
                                 # Bump map: map_bump filename
                                 if len(parts) >= 2:
                                     current_material.bump_map = parts[1]
 
-                            elif command == 'disp':
+                            elif command == "disp":
                                 # Displacement map: disp filename
                                 if len(parts) >= 2:
                                     current_material.displacement_map = parts[1]
 
-                            elif command == 'decal':
+                            elif command == "decal":
                                 # Decal map: decal filename
                                 if len(parts) >= 2:
                                     current_material.decal_map = parts[1]
@@ -491,7 +539,9 @@ class OBJParser(BaseParser):
                             self.logger.warning(f"Invalid MTL line: {line} - {str(e)}")
                             continue
 
-                self.logger.info(f"Loaded {len(self.materials)} materials from {mtl_path}")
+                self.logger.info(
+                    f"Loaded {len(self.materials)} materials from {mtl_path}"
+                )
 
         except Exception as e:
             self.logger.error(f"Failed to load MTL file {mtl_path}: {str(e)}")
@@ -517,14 +567,14 @@ class OBJParser(BaseParser):
                 return False, "File is empty"
 
             # Basic format validation
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 # Check for at least one vertex
                 content = file.read(1000).lower()
-                if 'v ' not in content:
+                if "v " not in content:
                     return False, "No vertex data found in OBJ file"
 
                 # Check for at least one face
-                if 'f ' not in content:
+                if "f " not in content:
                     return False, "No face data found in OBJ file"
 
             return True, ""

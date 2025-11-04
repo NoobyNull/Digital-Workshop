@@ -23,7 +23,10 @@ class VTKWidget(QWidget):
         global vtk, QVTKRenderWindowInteractor
         if vtk is None:
             import vtk as vtk_module
-            from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor as QVTKInteractor
+            from vtk.qt.QVTKRenderWindowInteractor import (
+                QVTKRenderWindowInteractor as QVTKInteractor,
+            )
+
             vtk = vtk_module
             QVTKRenderWindowInteractor = QVTKInteractor
 
@@ -157,4 +160,3 @@ class VTKWidget(QWidget):
         """Set camera to isometric view."""
         self.camera_controller.set_view_isometric()
         self.update_render()
-

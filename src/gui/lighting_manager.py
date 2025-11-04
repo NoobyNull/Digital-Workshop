@@ -28,16 +28,17 @@ class LightingManager:
         # Load lighting settings from config
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             self.position = [
                 config.default_light_position_x,
                 config.default_light_position_y,
-                config.default_light_position_z
+                config.default_light_position_z,
             ]
             self.color = [
                 config.default_light_color_r,
                 config.default_light_color_g,
-                config.default_light_color_b
+                config.default_light_color_b,
             ]
             self.intensity = config.default_light_intensity
             self.cone_angle = config.default_light_cone_angle
@@ -127,18 +128,24 @@ class LightingManager:
                 fill_pos = [-p * 0.5 for p in self.position]
                 fill_light.SetPosition(*fill_pos)
                 fill_light.SetColor(0.8, 0.8, 0.9)  # Slightly cool fill light
-                fill_light.SetIntensity(float(self.fill_light_intensity))  # Use config intensity
+                fill_light.SetIntensity(
+                    float(self.fill_light_intensity)
+                )  # Use config intensity
 
                 # Add lights to renderer
                 if self.renderer:
                     self.renderer.AddLight(self.light)
                     self.renderer.AddLight(fill_light)
-                    self.logger.info("LightingManager created key and fill lights and added to renderer")
+                    self.logger.info(
+                        "LightingManager created key and fill lights and added to renderer"
+                    )
             else:
                 # Add only key light if fill light is disabled
                 if self.renderer:
                     self.renderer.AddLight(self.light)
-                    self.logger.info("LightingManager created key light only (fill light disabled)")
+                    self.logger.info(
+                        "LightingManager created key light only (fill light disabled)"
+                    )
 
             # Immediate render for responsive UX
             self._render_now()
@@ -231,12 +238,21 @@ class LightingManager:
                 except Exception:
                     pass
             cone = float(self.cone_angle)
-            props = {"position": pos, "color": col, "intensity": inten, "cone_angle": cone}
+            props = {
+                "position": pos,
+                "color": col,
+                "intensity": inten,
+                "cone_angle": cone,
+            }
             self.logger.debug(f"get_properties -> {props}")
             return props
         except Exception as e:
             self.logger.error(f"get_properties error: {e}")
-            return {"position": list(self.position), "color": list(self.color), "intensity": float(self.intensity)}
+            return {
+                "position": list(self.position),
+                "color": list(self.color),
+                "intensity": float(self.intensity),
+            }
 
     def apply_properties(self, props: Dict[str, Any]) -> None:
         """Set all properties from dict."""

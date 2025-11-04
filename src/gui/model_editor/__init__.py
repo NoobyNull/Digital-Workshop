@@ -13,8 +13,7 @@ from .model_editor_core import ModelEditor, RotationAxis
 from .model_geometry_analyzer import ModelGeometryAnalyzer
 
 __all__ = [
-    'ModelEditor',
-    'RotationAxis',
-    'ModelGeometryAnalyzer',
+    "ModelEditor",
+    "RotationAxis",
+    "ModelGeometryAnalyzer",
 ]
-

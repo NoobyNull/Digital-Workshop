@@ -29,11 +29,12 @@ class CoordinateSystem(Enum):
 
     Defines the different coordinate spaces used in the application.
     """
-    SCREEN = "screen"           # Global screen coordinates
-    CLIENT = "client"           # Main window client area coordinates
-    WIDGET = "widget"           # Widget-local coordinates
-    DOCK = "dock"              # Dock widget coordinates
-    UNIFIED = "unified"        # Unified snapping coordinate system
+
+    SCREEN = "screen"  # Global screen coordinates
+    CLIENT = "client"  # Main window client area coordinates
+    WIDGET = "widget"  # Widget-local coordinates
+    DOCK = "dock"  # Dock widget coordinates
+    UNIFIED = "unified"  # Unified snapping coordinate system
 
 
 class TransformationKey(NamedTuple):
@@ -42,6 +43,7 @@ class TransformationKey(NamedTuple):
 
     Used to cache transformation results for performance optimization.
     """
+
     source_system: CoordinateSystem
     target_system: CoordinateSystem
     source_point: Tuple[float, float]
@@ -55,6 +57,7 @@ class TransformationResult:
 
     Contains the transformed coordinates and metadata about the transformation.
     """
+
     point: QPointF
     source_system: CoordinateSystem
     target_system: CoordinateSystem
@@ -65,7 +68,9 @@ class TransformationResult:
     def __post_init__(self):
         """Validate transformation result after initialization."""
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
 
 
 class TransformationCache:
@@ -140,7 +145,8 @@ class TransformationCache:
         """Remove expired cache entries."""
         current_time = time.time()
         expired_keys = [
-            key for key, result in self._cache.items()
+            key
+            for key, result in self._cache.items()
             if current_time - result.timestamp > self.ttl_seconds
         ]
 
@@ -174,17 +180,20 @@ class TransformationCache:
             Dictionary with cache statistics
         """
         current_time = time.time()
-        active_entries = len([
-            key for key, result in self._cache.items()
-            if current_time - result.timestamp <= self.ttl_seconds
-        ])
+        active_entries = len(
+            [
+                key
+                for key, result in self._cache.items()
+                if current_time - result.timestamp <= self.ttl_seconds
+            ]
+        )
 
         return {
             "total_entries": len(self._cache),
             "active_entries": active_entries,
             "max_size": self.max_size,
             "hit_ratio": 0.0,  # Would need hit/miss counters for this
-            "memory_usage_mb": len(self._cache) * 0.1  # Rough estimate
+            "memory_usage_mb": len(self._cache) * 0.1,  # Rough estimate
         }
 
 
@@ -252,7 +261,9 @@ class CoordinateManager:
 
             # Client coordinate system (main window client area)
             if self.main_window:
-                self._system_origins[CoordinateSystem.CLIENT] = self.main_window.mapToGlobal(QPoint(0, 0))
+                self._system_origins[CoordinateSystem.CLIENT] = (
+                    self.main_window.mapToGlobal(QPoint(0, 0))
+                )
                 self._system_bounds[CoordinateSystem.CLIENT] = self.main_window.rect()
             else:
                 self._system_origins[CoordinateSystem.CLIENT] = QPoint(0, 0)
@@ -304,11 +315,15 @@ class CoordinateManager:
                 return
 
             # Update client coordinate system
-            self._system_origins[CoordinateSystem.CLIENT] = self.main_window.mapToGlobal(QPoint(0, 0))
+            self._system_origins[CoordinateSystem.CLIENT] = (
+                self.main_window.mapToGlobal(QPoint(0, 0))
+            )
             self._system_bounds[CoordinateSystem.CLIENT] = self.main_window.rect()
 
             # Update unified system to match screen
-            self._system_bounds[CoordinateSystem.UNIFIED] = self._system_bounds[CoordinateSystem.SCREEN]
+            self._system_bounds[CoordinateSystem.UNIFIED] = self._system_bounds[
+                CoordinateSystem.SCREEN
+            ]
 
             # Clear cache since window geometry changed
             self.cache.clear()
@@ -322,7 +337,7 @@ class CoordinateManager:
         point: QPointF,
         source_system: CoordinateSystem,
         target_system: CoordinateSystem,
-        context_widget: Optional[QWidget] = None
+        context_widget: Optional[QWidget] = None,
     ) -> TransformationResult:
         """
         Transform a point from one coordinate system to another.
@@ -342,7 +357,7 @@ class CoordinateManager:
                 source_system=source_system,
                 target_system=target_system,
                 source_point=(point.x(), point.y()),
-                context_widget=id(context_widget) if context_widget else None
+                context_widget=id(context_widget) if context_widget else None,
             )
 
             # Check cache first
@@ -354,7 +369,9 @@ class CoordinateManager:
             self._cache_misses += 1
 
             # Perform transformation
-            transformed_point = self._transform_point_impl(point, source_system, target_system, context_widget)
+            transformed_point = self._transform_point_impl(
+                point, source_system, target_system, context_widget
+            )
 
             # Create result
             result = TransformationResult(
@@ -363,7 +380,9 @@ class CoordinateManager:
                 target_system=target_system,
                 timestamp=time.time(),
                 context_widget=context_widget,
-                confidence=self._calculate_confidence(source_system, target_system, context_widget)
+                confidence=self._calculate_confidence(
+                    source_system, target_system, context_widget
+                ),
             )
 
             # Cache the result
@@ -372,7 +391,9 @@ class CoordinateManager:
 
             return result
         except Exception as e:
-            self.logger.error(f"Failed to transform point {point} from {source_system} to {target_system}: {e}")
+            self.logger.error(
+                f"Failed to transform point {point} from {source_system} to {target_system}: {e}"
+            )
             # Return identity transformation on error
             return TransformationResult(
                 point=point,
@@ -380,7 +401,7 @@ class CoordinateManager:
                 target_system=target_system,
                 timestamp=time.time(),
                 context_widget=context_widget,
-                confidence=0.0
+                confidence=0.0,
             )
 
     def _transform_point_impl(
@@ -388,7 +409,7 @@ class CoordinateManager:
         point: QPointF,
         source_system: CoordinateSystem,
         target_system: CoordinateSystem,
-        context_widget: Optional[QWidget] = None
+        context_widget: Optional[QWidget] = None,
     ) -> QPointF:
         """
         Internal implementation of point transformation.
@@ -424,7 +445,12 @@ class CoordinateManager:
                     dock_pos = context_widget.mapFromGlobal(point.toPoint())
                     return QPointF(dock_pos)
                 else:
-                    return self.transform_point(point, CoordinateSystem.SCREEN, CoordinateSystem.WIDGET, context_widget).point
+                    return self.transform_point(
+                        point,
+                        CoordinateSystem.SCREEN,
+                        CoordinateSystem.WIDGET,
+                        context_widget,
+                    ).point
             elif target_system == CoordinateSystem.UNIFIED:
                 return QPointF(point)  # Unified system matches screen
 
@@ -448,7 +474,9 @@ class CoordinateManager:
                     return QPointF(widget_pos)
             elif target_system == CoordinateSystem.UNIFIED:
                 # Client to unified: convert to screen first
-                screen_pos = self.transform_point(point, CoordinateSystem.CLIENT, CoordinateSystem.SCREEN).point
+                screen_pos = self.transform_point(
+                    point, CoordinateSystem.CLIENT, CoordinateSystem.SCREEN
+                ).point
                 return screen_pos
 
         elif source_system == CoordinateSystem.WIDGET and context_widget:
@@ -469,12 +497,27 @@ class CoordinateManager:
                     # Map through parent dock if this widget is inside a dock
                     dock_parent = self._find_dock_parent(context_widget)
                     if dock_parent:
-                        return self.transform_point(point, CoordinateSystem.WIDGET, CoordinateSystem.DOCK, dock_parent).point
+                        return self.transform_point(
+                            point,
+                            CoordinateSystem.WIDGET,
+                            CoordinateSystem.DOCK,
+                            dock_parent,
+                        ).point
                     else:
-                        return self.transform_point(point, CoordinateSystem.WIDGET, CoordinateSystem.CLIENT, context_widget).point
+                        return self.transform_point(
+                            point,
+                            CoordinateSystem.WIDGET,
+                            CoordinateSystem.CLIENT,
+                            context_widget,
+                        ).point
             elif target_system == CoordinateSystem.UNIFIED:
                 # Widget to unified: convert to screen first
-                screen_pos = self.transform_point(point, CoordinateSystem.WIDGET, CoordinateSystem.SCREEN, context_widget).point
+                screen_pos = self.transform_point(
+                    point,
+                    CoordinateSystem.WIDGET,
+                    CoordinateSystem.SCREEN,
+                    context_widget,
+                ).point
                 return screen_pos
 
         elif source_system == CoordinateSystem.DOCK and context_widget:
@@ -492,7 +535,12 @@ class CoordinateManager:
                 return QPointF(point)  # Assume already in correct widget coordinates
             elif target_system == CoordinateSystem.UNIFIED:
                 # Dock to unified: convert to screen first
-                screen_pos = self.transform_point(point, CoordinateSystem.DOCK, CoordinateSystem.SCREEN, context_widget).point
+                screen_pos = self.transform_point(
+                    point,
+                    CoordinateSystem.DOCK,
+                    CoordinateSystem.SCREEN,
+                    context_widget,
+                ).point
                 return screen_pos
 
         elif source_system == CoordinateSystem.UNIFIED:
@@ -501,7 +549,9 @@ class CoordinateManager:
             elif target_system == CoordinateSystem.CLIENT:
                 # Unified to client: convert to screen first
                 screen_pos = QPointF(point)
-                return screen_pos - QPointF(self._system_origins[CoordinateSystem.CLIENT])
+                return screen_pos - QPointF(
+                    self._system_origins[CoordinateSystem.CLIENT]
+                )
             elif target_system == CoordinateSystem.WIDGET and context_widget:
                 # Unified to widget: convert to screen first
                 screen_pos = QPointF(point)
@@ -518,7 +568,9 @@ class CoordinateManager:
                     return QPointF(widget_pos)
 
         # Fallback: return original point
-        self.logger.warning(f"Unsupported transformation from {source_system} to {target_system}")
+        self.logger.warning(
+            f"Unsupported transformation from {source_system} to {target_system}"
+        )
         return QPointF(point)
 
     def _find_dock_parent(self, widget: QWidget) -> Optional[QDockWidget]:
@@ -545,7 +597,7 @@ class CoordinateManager:
         self,
         source_system: CoordinateSystem,
         target_system: CoordinateSystem,
-        context_widget: Optional[QWidget]
+        context_widget: Optional[QWidget],
     ) -> float:
         """
         Calculate confidence level for a transformation.
@@ -563,24 +615,39 @@ class CoordinateManager:
             return 1.0
 
         # Transformations involving the main window have high confidence
-        if source_system == CoordinateSystem.CLIENT or target_system == CoordinateSystem.CLIENT:
+        if (
+            source_system == CoordinateSystem.CLIENT
+            or target_system == CoordinateSystem.CLIENT
+        ):
             return 0.95
 
         # Widget transformations with context have good confidence
-        if context_widget and (source_system == CoordinateSystem.WIDGET or target_system == CoordinateSystem.WIDGET):
+        if context_widget and (
+            source_system == CoordinateSystem.WIDGET
+            or target_system == CoordinateSystem.WIDGET
+        ):
             return 0.9
 
         # Dock transformations with context have good confidence
         if context_widget and isinstance(context_widget, QDockWidget):
-            if source_system == CoordinateSystem.DOCK or target_system == CoordinateSystem.DOCK:
+            if (
+                source_system == CoordinateSystem.DOCK
+                or target_system == CoordinateSystem.DOCK
+            ):
                 return 0.9
 
         # Screen transformations are reliable
-        if source_system == CoordinateSystem.SCREEN or target_system == CoordinateSystem.SCREEN:
+        if (
+            source_system == CoordinateSystem.SCREEN
+            or target_system == CoordinateSystem.SCREEN
+        ):
             return 0.95
 
         # Unified system transformations are reliable
-        if source_system == CoordinateSystem.UNIFIED or target_system == CoordinateSystem.UNIFIED:
+        if (
+            source_system == CoordinateSystem.UNIFIED
+            or target_system == CoordinateSystem.UNIFIED
+        ):
             return 0.95
 
         # Default confidence for other transformations
@@ -591,7 +658,7 @@ class CoordinateManager:
         rect: QRectF,
         source_system: CoordinateSystem,
         target_system: CoordinateSystem,
-        context_widget: Optional[QWidget] = None
+        context_widget: Optional[QWidget] = None,
     ) -> QRectF:
         """
         Transform a rectangle from one coordinate system to another.
@@ -607,10 +674,18 @@ class CoordinateManager:
         """
         try:
             # Transform all four corners and create bounding rectangle
-            top_left = self.transform_point(rect.topLeft(), source_system, target_system, context_widget).point
-            top_right = self.transform_point(rect.topRight(), source_system, target_system, context_widget).point
-            bottom_left = self.transform_point(rect.bottomLeft(), source_system, target_system, context_widget).point
-            bottom_right = self.transform_point(rect.bottomRight(), source_system, target_system, context_widget).point
+            top_left = self.transform_point(
+                rect.topLeft(), source_system, target_system, context_widget
+            ).point
+            top_right = self.transform_point(
+                rect.topRight(), source_system, target_system, context_widget
+            ).point
+            bottom_left = self.transform_point(
+                rect.bottomLeft(), source_system, target_system, context_widget
+            ).point
+            bottom_right = self.transform_point(
+                rect.bottomRight(), source_system, target_system, context_widget
+            ).point
 
             # Find min/max coordinates
             min_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
@@ -620,7 +695,9 @@ class CoordinateManager:
 
             return QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
         except Exception as e:
-            self.logger.error(f"Failed to transform rectangle {rect} from {source_system} to {target_system}: {e}")
+            self.logger.error(
+                f"Failed to transform rectangle {rect} from {source_system} to {target_system}: {e}"
+            )
             return QRectF(rect)  # Return original on error
 
     def get_system_bounds(self, system: CoordinateSystem) -> QRect:
@@ -662,7 +739,9 @@ class CoordinateManager:
             bounds = self.get_system_bounds(system)
             return bounds.contains(point.toPoint())
         except Exception as e:
-            self.logger.error(f"Failed to check if point {point} is in system {system}: {e}")
+            self.logger.error(
+                f"Failed to check if point {point} is in system {system}: {e}"
+            )
             return False
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -685,7 +764,7 @@ class CoordinateManager:
                 "cache_hit_ratio_percent": hit_ratio,
                 "cache_stats": cache_stats,
                 "memory_usage_mb": cache_stats["memory_usage_mb"],
-                "coordinate_systems": len(self._system_origins)
+                "coordinate_systems": len(self._system_origins),
             }
         except Exception as e:
             self.logger.error(f"Failed to get performance stats: {e}")
@@ -693,7 +772,7 @@ class CoordinateManager:
                 "error": str(e),
                 "total_transformations": self._transform_count,
                 "cache_hits": self._cache_hits,
-                "cache_misses": self._cache_misses
+                "cache_misses": self._cache_misses,
             }
 
     def clear_cache(self) -> None:

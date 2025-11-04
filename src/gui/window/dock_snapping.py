@@ -74,7 +74,9 @@ class SnapOverlayLayer(QWidget):
     def _style_for(self, active: bool) -> str:
         """Get stylesheet for active/inactive state."""
         bg = self._rgba_active if active else self._rgba_inactive
-        border = f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
+        border = (
+            f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
+        )
         return f"background-color: {bg}; border: {border}; border-radius: 3px;"
 
     def set_active(self, edge: Optional[str]) -> None:
@@ -110,7 +112,13 @@ class DockDragHandler(QObject):
 
     SNAP_MARGIN = 56  # px
 
-    def __init__(self, main_window: QMainWindow, dock: QDockWidget, overlay: SnapOverlayLayer, logger: logging.Logger):
+    def __init__(
+        self,
+        main_window: QMainWindow,
+        dock: QDockWidget,
+        overlay: SnapOverlayLayer,
+        logger: logging.Logger,
+    ):
         """
         Initialize the dock drag handler.
 
@@ -196,10 +204,14 @@ class DockDragHandler(QObject):
                 self._mw.updateGeometry()
 
                 # If the central widget is a splitter or tab widget, ensure it resizes
-                if hasattr(central_widget, 'setSizePolicy'):
-                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                if hasattr(central_widget, "setSizePolicy"):
+                    central_widget.setSizePolicy(
+                        QSizePolicy.Expanding, QSizePolicy.Expanding
+                    )
 
-                self._logger.debug("Central widget resize ensured for right dock movement")
+                self._logger.debug(
+                    "Central widget resize ensured for right dock movement"
+                )
         except Exception as e:
             try:
                 self._logger.debug(f"Failed to ensure central widget resize: {e}")
@@ -213,7 +225,9 @@ class DockDragHandler(QObject):
         rect = self._mw.frameGeometry()
         if not rect.contains(pos):
             # Allow a small outside tolerance
-            grown = rect.adjusted(-self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN)
+            grown = rect.adjusted(
+                -self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN
+            )
             if not grown.contains(pos):
                 return None
         # distances
@@ -234,7 +248,9 @@ class DockDragHandler(QObject):
 
 
 # Convenience function for easy dock snapping setup
-def setup_dock_snapping(main_window: QMainWindow, logger: logging.Logger) -> tuple[SnapOverlayLayer, Dict[str, DockDragHandler]]:
+def setup_dock_snapping(
+    main_window: QMainWindow, logger: logging.Logger
+) -> tuple[SnapOverlayLayer, Dict[str, DockDragHandler]]:
     """
     Convenience function to set up dock snapping for a main window.
 

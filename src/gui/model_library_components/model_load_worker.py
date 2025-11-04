@@ -18,7 +18,10 @@ from src.parsers.obj_parser import OBJParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.stl_parser import STLParser, STLProgressCallback
 from src.parsers.threemf_parser import ThreeMFParser
-from src.gui.components.detailed_progress_tracker import DetailedProgressTracker, LoadingStage
+from src.gui.components.detailed_progress_tracker import (
+    DetailedProgressTracker,
+    LoadingStage,
+)
 
 
 logger = get_logger(__name__)
@@ -63,23 +66,30 @@ class ModelLoadWorker(QThread):
                 file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
 
                 # Create detailed progress tracker for this file
-                tracker = DetailedProgressTracker(triangle_count=0, file_size_mb=file_size_mb)
+                tracker = DetailedProgressTracker(
+                    triangle_count=0, file_size_mb=file_size_mb
+                )
 
                 # Set callback to emit progress
                 def emit_progress(progress: float, message: str) -> None:
                     # Adjust for multiple files
                     file_progress = (i / max(1, len(self.file_paths))) * 100.0
                     overall_progress = file_progress + (progress / len(self.file_paths))
-                    self.progress_updated.emit(overall_progress, f"{filename}: {message}")
+                    self.progress_updated.emit(
+                        overall_progress, f"{filename}: {message}"
+                    )
 
                 tracker.set_progress_callback(emit_progress)
 
                 operation_id = self.performance_monitor.start_operation(
-                    "load_model_to_library", {"file_path": file_path, "filename": filename}
+                    "load_model_to_library",
+                    {"file_path": file_path, "filename": filename},
                 )
 
                 # Check cache first
-                tracker.start_stage(LoadingStage.METADATA, f"Checking cache for {filename}")
+                tracker.start_stage(
+                    LoadingStage.METADATA, f"Checking cache for {filename}"
+                )
                 cached_model = self.model_cache.get(file_path, CacheLevel.METADATA)
                 if cached_model:
                     model = cached_model
@@ -101,7 +111,9 @@ class ModelLoadWorker(QThread):
                     # Parse with progress tracking
                     tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")
                     model = parser.parse_metadata_only(file_path)
-                    tracker.complete_stage(f"Parsed {model.stats.triangle_count:,} triangles")
+                    tracker.complete_stage(
+                        f"Parsed {model.stats.triangle_count:,} triangles"
+                    )
                     self.model_cache.put(file_path, CacheLevel.METADATA, model)
 
                 model_info = {
@@ -114,8 +126,16 @@ class ModelLoadWorker(QThread):
                     "vertex_count": model.stats.vertex_count,
                     "dimensions": model.stats.get_dimensions(),
                     "parsing_time": model.stats.parsing_time_seconds,
-                    "min_bounds": (model.stats.min_bounds.x, model.stats.min_bounds.y, model.stats.min_bounds.z),
-                    "max_bounds": (model.stats.max_bounds.x, model.stats.max_bounds.y, model.stats.max_bounds.z),
+                    "min_bounds": (
+                        model.stats.min_bounds.x,
+                        model.stats.min_bounds.y,
+                        model.stats.min_bounds.z,
+                    ),
+                    "max_bounds": (
+                        model.stats.max_bounds.x,
+                        model.stats.max_bounds.y,
+                        model.stats.max_bounds.z,
+                    ),
                 }
 
                 self.model_loaded.emit(model_info)
@@ -131,4 +151,3 @@ class ModelLoadWorker(QThread):
 
         self.finished.emit()
         self.logger.info("Model loading completed")
-

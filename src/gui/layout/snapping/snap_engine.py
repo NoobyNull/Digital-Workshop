@@ -23,7 +23,10 @@ from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtWidgets import QWidget
 
 from src.core.logging_config import get_logger
-from src.gui.layout.snapping.coordinate_manager import CoordinateManager, CoordinateSystem
+from src.gui.layout.snapping.coordinate_manager import (
+    CoordinateManager,
+    CoordinateSystem,
+)
 from src.gui.layout.snapping.snap_configuration import SnapConfiguration, SnapZone
 
 
@@ -33,11 +36,12 @@ class SnapType(Enum):
 
     Defines different ways widgets can snap to targets.
     """
-    EDGE = "edge"           # Snap to edge of target
-    CENTER = "center"       # Snap to center of target
-    CORNER = "corner"       # Snap to corner of target
-    GRID = "grid"          # Snap to grid points
-    CUSTOM = "custom"      # Custom snap behavior
+
+    EDGE = "edge"  # Snap to edge of target
+    CENTER = "center"  # Snap to center of target
+    CORNER = "corner"  # Snap to corner of target
+    GRID = "grid"  # Snap to grid points
+    CUSTOM = "custom"  # Custom snap behavior
 
 
 @dataclass
@@ -57,6 +61,7 @@ class SnapCandidate:
         widget: Optional widget associated with this snap target
         confidence: Confidence level of this snap candidate (0.0 to 1.0)
     """
+
     zone: SnapZone
     snap_type: SnapType
     position: QPointF
@@ -70,7 +75,9 @@ class SnapCandidate:
         if self.distance < 0:
             raise ValueError(f"Distance must be non-negative, got {self.distance}")
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
         if self.score < 0:
             raise ValueError(f"Score must be non-negative, got {self.score}")
 
@@ -92,6 +99,7 @@ class SnapResult:
         candidates_found: Number of snap candidates evaluated
         performance_metrics: Additional performance data
     """
+
     snapped_position: QPointF
     original_position: QPointF
     snap_candidate: Optional[SnapCandidate]
@@ -104,9 +112,13 @@ class SnapResult:
     def __post_init__(self):
         """Validate snap result after initialization."""
         if not 0.0 <= self.snap_strength <= 1.0:
-            raise ValueError(f"Snap strength must be between 0.0 and 1.0, got {self.snap_strength}")
+            raise ValueError(
+                f"Snap strength must be between 0.0 and 1.0, got {self.snap_strength}"
+            )
         if self.calculation_time_ms < 0:
-            raise ValueError(f"Calculation time must be non-negative, got {self.calculation_time_ms}")
+            raise ValueError(
+                f"Calculation time must be non-negative, got {self.calculation_time_ms}"
+            )
 
 
 class SpatialIndex:
@@ -223,16 +235,14 @@ class SpatialIndex:
 
         return cells
 
-    def _zone_intersects_circle(self, zone: SnapZone, center: QPointF, radius: float) -> bool:
+    def _zone_intersects_circle(
+        self, zone: SnapZone, center: QPointF, radius: float
+    ) -> bool:
         """Check if a snap zone intersects with a circle."""
         # Simple distance check to zone bounds
-        zone_center = QPointF(
-            zone.area.center().x(),
-            zone.area.center().y()
-        )
+        zone_center = QPointF(zone.area.center().x(), zone.area.center().y())
         distance = math.hypot(
-            center.x() - zone_center.x(),
-            center.y() - zone_center.y()
+            center.x() - zone_center.x(), center.y() - zone_center.y()
         )
         return distance <= radius + max(zone.area.width(), zone.area.height()) / 2
 
@@ -266,7 +276,7 @@ class SpatialIndex:
             "occupied_cells": len(self._grid),
             "bounds": self._bounds.getCoords() if self._bounds else None,
             "cell_size": self.cell_size,
-            "memory_usage_mb": len(self._grid) * 0.01  # Rough estimate
+            "memory_usage_mb": len(self._grid) * 0.01,  # Rough estimate
         }
 
 
@@ -290,7 +300,9 @@ class SnapEngine:
         _snap_history: History of recent snap operations
     """
 
-    def __init__(self, config: SnapConfiguration, coordinate_manager: CoordinateManager):
+    def __init__(
+        self, config: SnapConfiguration, coordinate_manager: CoordinateManager
+    ):
         """
         Initialize the snap engine.
 
@@ -312,7 +324,7 @@ class SnapEngine:
             "total_calculations": 0,
             "cache_hits": 0,
             "cache_misses": 0,
-            "avg_calculation_time_ms": 0.0
+            "avg_calculation_time_ms": 0.0,
         }
 
         # Build spatial index from configuration
@@ -351,7 +363,7 @@ class SnapEngine:
         position: QPointF,
         source_system: CoordinateSystem = CoordinateSystem.CLIENT,
         context_widget: Optional[QWidget] = None,
-        max_candidates: int = 10
+        max_candidates: int = 10,
     ) -> SnapResult:
         """
         Calculate the best snap position for a given point.
@@ -383,15 +395,22 @@ class SnapEngine:
                     snap_applied=False,
                     snap_strength=0.0,
                     calculation_time_ms=(time.time() - start_time) * 1000,
-                    candidates_found=0
+                    candidates_found=0,
                 )
 
             # Find nearby snap zones
-            search_radius = max(zone.snap_threshold for zone in self.config.get_active_snap_zones()) * 2
-            nearby_zones = self.spatial_index.find_nearby_zones(unified_pos, search_radius)
+            search_radius = (
+                max(zone.snap_threshold for zone in self.config.get_active_snap_zones())
+                * 2
+            )
+            nearby_zones = self.spatial_index.find_nearby_zones(
+                unified_pos, search_radius
+            )
 
             # Generate snap candidates
-            candidates = self._generate_snap_candidates(unified_pos, nearby_zones, context_widget)
+            candidates = self._generate_snap_candidates(
+                unified_pos, nearby_zones, context_widget
+            )
 
             # Filter and rank candidates
             best_candidate = self._select_best_candidate(candidates, max_candidates)
@@ -419,7 +438,7 @@ class SnapEngine:
                 snap_strength=snap_strength,
                 calculation_time_ms=(time.time() - start_time) * 1000,
                 candidates_found=len(candidates),
-                performance_metrics=self._get_calculation_metrics()
+                performance_metrics=self._get_calculation_metrics(),
             )
 
             # Add to history
@@ -439,7 +458,7 @@ class SnapEngine:
                 snap_strength=0.0,
                 calculation_time_ms=(time.time() - start_time) * 1000,
                 candidates_found=0,
-                performance_metrics={"error": str(e)}
+                performance_metrics={"error": str(e)},
             )
 
     def _should_skip_calculation(self, position: QPointF) -> bool:
@@ -458,7 +477,7 @@ class SnapEngine:
         hysteresis_threshold = self.config.performance.hysteresis_threshold
         distance = math.hypot(
             position.x() - self._last_snap_position.x(),
-            position.y() - self._last_snap_position.y()
+            position.y() - self._last_snap_position.y(),
         )
 
         return distance < hysteresis_threshold
@@ -467,7 +486,7 @@ class SnapEngine:
         self,
         position: QPointF,
         zones: List[SnapZone],
-        context_widget: Optional[QWidget]
+        context_widget: Optional[QWidget],
     ) -> List[SnapCandidate]:
         """
         Generate snap candidates from nearby zones.
@@ -489,7 +508,9 @@ class SnapEngine:
 
                 # Generate candidates for different snap types
                 for snap_type in [SnapType.EDGE, SnapType.CENTER, SnapType.CORNER]:
-                    candidate = self._create_snap_candidate(position, zone, snap_type, context_widget)
+                    candidate = self._create_snap_candidate(
+                        position, zone, snap_type, context_widget
+                    )
                     if candidate:
                         candidates.append(candidate)
 
@@ -506,7 +527,7 @@ class SnapEngine:
         position: QPointF,
         zone: SnapZone,
         snap_type: SnapType,
-        context_widget: Optional[QWidget]
+        context_widget: Optional[QWidget],
     ) -> Optional[SnapCandidate]:
         """
         Create a snap candidate for a specific zone and snap type.
@@ -533,8 +554,7 @@ class SnapEngine:
 
             # Calculate distance and score
             distance = math.hypot(
-                position.x() - snap_pos.x(),
-                position.y() - snap_pos.y()
+                position.x() - snap_pos.x(), position.y() - snap_pos.y()
             )
 
             # Check if within snap threshold
@@ -551,11 +571,13 @@ class SnapEngine:
                 distance=distance,
                 score=score,
                 widget=context_widget,
-                confidence=self._calculate_candidate_confidence(distance, zone)
+                confidence=self._calculate_candidate_confidence(distance, zone),
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to create snap candidate for zone {zone.name}: {e}")
+            self.logger.error(
+                f"Failed to create snap candidate for zone {zone.name}: {e}"
+            )
             return None
 
     def _calculate_edge_snap(self, position: QPointF, zone: SnapZone) -> QPointF:
@@ -579,7 +601,9 @@ class SnapEngine:
 
         return QPointF(snap_x, snap_y)
 
-    def _calculate_center_snap(self, position: QPointF, zone: SnapZone) -> QPointF:  # pylint: disable=unused-argument
+    def _calculate_center_snap(
+        self, position: QPointF, zone: SnapZone
+    ) -> QPointF:  # pylint: disable=unused-argument
         """Calculate center snap position."""
         # Note: position is not used for center snap as we always snap to the zone center
         # This maintains API consistency with other snap calculation methods
@@ -595,17 +619,21 @@ class SnapEngine:
             zone_rect.topLeft(),
             zone_rect.topRight(),
             zone_rect.bottomLeft(),
-            zone_rect.bottomRight()
+            zone_rect.bottomRight(),
         ]
 
-        nearest_corner = min(corners, key=lambda corner: math.hypot(
-            position.x() - corner.x(),
-            position.y() - corner.y()
-        ))
+        nearest_corner = min(
+            corners,
+            key=lambda corner: math.hypot(
+                position.x() - corner.x(), position.y() - corner.y()
+            ),
+        )
 
         return nearest_corner
 
-    def _calculate_candidate_score(self, distance: float, zone: SnapZone, snap_type: SnapType) -> float:
+    def _calculate_candidate_score(
+        self, distance: float, zone: SnapZone, snap_type: SnapType
+    ) -> float:
         """
         Calculate score for a snap candidate.
 
@@ -634,10 +662,15 @@ class SnapEngine:
             SnapType.CENTER: 0.8,
             SnapType.CORNER: 0.6,
             SnapType.GRID: 0.9,
-            SnapType.CUSTOM: 0.7
+            SnapType.CUSTOM: 0.7,
         }.get(snap_type, 0.5)
 
-        return distance_score * magnetism_multiplier * priority_multiplier * type_multiplier
+        return (
+            distance_score
+            * magnetism_multiplier
+            * priority_multiplier
+            * type_multiplier
+        )
 
     def _calculate_candidate_confidence(self, distance: float, zone: SnapZone) -> float:
         """
@@ -662,7 +695,9 @@ class SnapEngine:
 
         return min(1.0, base_confidence * (0.5 + 0.5 * distance_factor))
 
-    def _select_best_candidate(self, candidates: List[SnapCandidate], max_candidates: int) -> Optional[SnapCandidate]:
+    def _select_best_candidate(
+        self, candidates: List[SnapCandidate], max_candidates: int
+    ) -> Optional[SnapCandidate]:
         """
         Select the best snap candidate from the list.
 
@@ -682,7 +717,9 @@ class SnapEngine:
         # Select candidate with highest score
         return max(limited_candidates, key=lambda c: c.score)
 
-    def _apply_snap_magnetism(self, position: QPointF, candidate: SnapCandidate) -> QPointF:
+    def _apply_snap_magnetism(
+        self, position: QPointF, candidate: SnapCandidate
+    ) -> QPointF:
         """
         Apply magnetic attraction to the snap position.
 
@@ -702,7 +739,9 @@ class SnapEngine:
                 return position
 
             # Calculate pull strength (stronger when closer)
-            pull_strength = magnetism * (1.0 - (distance / candidate.zone.snap_threshold))
+            pull_strength = magnetism * (
+                1.0 - (distance / candidate.zone.snap_threshold)
+            )
 
             # Apply pull towards snap position
             snap_pos = candidate.position
@@ -720,9 +759,13 @@ class SnapEngine:
         self._performance_stats["total_calculations"] += 1
 
         # Update average calculation time
-        total_time = self._performance_stats["avg_calculation_time_ms"] * (self._performance_stats["total_calculations"] - 1)
+        total_time = self._performance_stats["avg_calculation_time_ms"] * (
+            self._performance_stats["total_calculations"] - 1
+        )
         total_time += calculation_time * 1000  # Convert to ms
-        self._performance_stats["avg_calculation_time_ms"] = total_time / self._performance_stats["total_calculations"]
+        self._performance_stats["avg_calculation_time_ms"] = (
+            total_time / self._performance_stats["total_calculations"]
+        )
 
     def _get_calculation_metrics(self) -> Dict[str, Any]:
         """Get current calculation metrics."""
@@ -730,7 +773,9 @@ class SnapEngine:
             "spatial_index_stats": self.spatial_index.get_stats(),
             "performance_stats": self._performance_stats.copy(),
             "history_size": len(self._snap_history),
-            "last_calculation_time_ms": self._performance_stats["avg_calculation_time_ms"]
+            "last_calculation_time_ms": self._performance_stats[
+                "avg_calculation_time_ms"
+            ],
         }
 
     def update_configuration(self) -> None:
@@ -748,7 +793,9 @@ class SnapEngine:
         except Exception as e:
             self.logger.error(f"Failed to update configuration: {e}")
 
-    def get_snap_zones_near_position(self, position: QPointF, radius: float) -> List[SnapZone]:
+    def get_snap_zones_near_position(
+        self, position: QPointF, radius: float
+    ) -> List[SnapZone]:
         """
         Get snap zones near a given position.
 
@@ -775,9 +822,13 @@ class SnapEngine:
             "calculation_metrics": self._get_calculation_metrics(),
             "history_stats": {
                 "total_snaps": len(self._snap_history),
-                "avg_snap_strength": sum(r.snap_strength for r in self._snap_history) / max(len(self._snap_history), 1),
-                "snap_applied_ratio": sum(1 for r in self._snap_history if r.snap_applied) / max(len(self._snap_history), 1)
-            }
+                "avg_snap_strength": sum(r.snap_strength for r in self._snap_history)
+                / max(len(self._snap_history), 1),
+                "snap_applied_ratio": sum(
+                    1 for r in self._snap_history if r.snap_applied
+                )
+                / max(len(self._snap_history), 1),
+            },
         }
 
     def reset(self) -> None:
@@ -793,7 +844,7 @@ class SnapEngine:
                 "total_calculations": 0,
                 "cache_hits": 0,
                 "cache_misses": 0,
-                "avg_calculation_time_ms": 0.0
+                "avg_calculation_time_ms": 0.0,
             }
             self.spatial_index.clear()
             self.coordinate_manager.clear_cache()

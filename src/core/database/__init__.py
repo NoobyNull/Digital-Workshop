@@ -12,9 +12,9 @@ from .metadata_repository import MetadataRepository
 from .db_maintenance import DatabaseMaintenance
 
 __all__ = [
-    'DatabaseManager',
-    'DatabaseOperations',
-    'ModelRepository',
-    'MetadataRepository',
-    'DatabaseMaintenance',
+    "DatabaseManager",
+    "DatabaseOperations",
+    "ModelRepository",
+    "MetadataRepository",
+    "DatabaseMaintenance",
 ]

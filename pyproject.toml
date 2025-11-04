@@ -60,6 +60,11 @@ extend-exclude = '''
 )/
 '''
 
+[tool.pylint.MASTER]
+ignore-patterns = [
+    "^.*_ui\\.py$",
+]
+
 [tool.pylint.messages_control]
 disable = [
     "C0114",  # missing-module-docstring
@@ -78,7 +83,7 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
-ignore-long-lines = "^\s*(# )?<?https?://\S+>?$"
+ignore-long-lines = "^\\s*(# )?<?https?://\\S+>?$"
 single-line-if-stmt = "no"
 
 [tool.pylint.design]

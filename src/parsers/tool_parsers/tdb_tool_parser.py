@@ -2,6 +2,7 @@
 TDB tool database parser for IDC-Woodcraft-Carveco-Tool-Database.tdb format.
 TDB files are binary files with UTF-16 encoding.
 """
+
 # pylint: disable=unused-variable
 
 import struct

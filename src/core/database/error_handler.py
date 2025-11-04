@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 class DatabaseErrorType(Enum):
     """Database error type enumeration."""
+
     CONNECTION_ERROR = "connection_error"
     TRANSACTION_ERROR = "transaction_error"
     QUERY_ERROR = "query_error"
@@ -39,6 +40,7 @@ class DatabaseErrorType(Enum):
 
 class ConnectionState(Enum):
     """Database connection state."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     FAILED = "failed"
@@ -49,6 +51,7 @@ class ConnectionState(Enum):
 @dataclass
 class DatabaseError:
     """Comprehensive database error information."""
+
     error_type: DatabaseErrorType
     message: str
     details: Dict[str, Any]
@@ -63,6 +66,7 @@ class DatabaseError:
 @dataclass
 class ConnectionMetrics:
     """Database connection performance metrics."""
+
     connection_id: str
     created_at: datetime
     last_used: datetime
@@ -90,19 +94,21 @@ class DatabaseErrorHandler:
         self._active_connections = weakref.WeakValueDictionary()
         self._lock = threading.Lock()
         self._recovery_callbacks: List[Callable] = []
-        
+
         # Configuration
         self.max_error_history = 1000
         self.connection_timeout = 30.0
         self.recovery_attempts = 3
         self.disk_space_threshold = 0.90  # 90% full
-        
+
         # Start monitoring
         self._start_monitoring()
 
     def _start_monitoring(self) -> None:
         """Start background monitoring of database health."""
-        self._monitoring_thread = threading.Thread(target=self._monitor_database_health, daemon=True)
+        self._monitoring_thread = threading.Thread(
+            target=self._monitor_database_health, daemon=True
+        )
         self._monitoring_thread.start()
         logger.info("Database error monitoring started")
 
@@ -123,47 +129,50 @@ class DatabaseErrorHandler:
             # Check disk space
             disk_usage = psutil.disk_usage(os.path.dirname(self.db_path))
             usage_percent = disk_usage.used / disk_usage.total
-            
+
             if usage_percent > self.disk_space_threshold:
                 self._log_error(
                     DatabaseErrorType.DISK_SPACE_ERROR,
                     f"Disk space critical: {usage_percent:.1%} used",
-                    {"usage_percent": usage_percent, "free_gb": disk_usage.free / (1024**3)},
-                    "Please free up disk space to continue using the database."
+                    {
+                        "usage_percent": usage_percent,
+                        "free_gb": disk_usage.free / (1024**3),
+                    },
+                    "Please free up disk space to continue using the database.",
                 )
-            
+
             # Check database file size
             if os.path.exists(self.db_path):
                 file_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
                 free_space_mb = disk_usage.free / (1024 * 1024)
-                
+
                 if file_size_mb > free_space_mb * 0.8:
                     self._log_error(
                         DatabaseErrorType.DISK_SPACE_ERROR,
                         f"Database file size ({file_size_mb:.1f}MB) approaches available space",
                         {"file_size_mb": file_size_mb, "free_space_mb": free_space_mb},
-                        "Consider cleaning up old data or freeing disk space."
+                        "Consider cleaning up old data or freeing disk space.",
                     )
-            
+
             # Check database integrity
             with self._create_safe_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA integrity_check")
                 result = cursor.fetchone()
-                
+
                 if result[0] != "ok":
                     self._log_error(
                         DatabaseErrorType.CORRUPTION_ERROR,
                         f"Database integrity check failed: {result[0]}",
                         {"integrity_result": result[0]},
-                        "Database may be corrupted. Consider restoring from backup."
+                        "Database may be corrupted. Consider restoring from backup.",
                     )
-            
+
             # Check connection count
             active_count = len(self._active_connections)
             if active_count > 50:  # Arbitrary threshold
                 logger.warning(f"High connection count: {active_count}")
-            
+
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}")
 
@@ -171,16 +180,16 @@ class DatabaseErrorHandler:
         """Check for connection leaks."""
         current_time = datetime.now()
         leaked_connections = []
-        
+
         for conn_id, metrics in list(self.connection_metrics.items()):
             if metrics.state == ConnectionState.FAILED:
                 continue
-                
+
             # Check for connections not used for a long time
             idle_time = (current_time - metrics.last_used).total_seconds()
             if idle_time > 3600:  # 1 hour
                 leaked_connections.append(conn_id)
-        
+
         if leaked_connections:
             logger.warning(f"Potential connection leaks detected: {leaked_connections}")
             # In a real implementation, we would force-close these connections
@@ -190,12 +199,19 @@ class DatabaseErrorHandler:
         with self._lock:
             if len(self.error_history) > self.max_error_history:
                 # Keep only the most recent errors
-                self.error_history = self.error_history[-self.max_error_history:]
+                self.error_history = self.error_history[-self.max_error_history :]
                 logger.debug("Cleaned up old error history")
 
-    def _log_error(self, error_type: DatabaseErrorType, message: str, details: Dict[str, Any],
-                   user_message: str, recoverable: bool = True, suggested_action: str = "",
-                   context: Dict[str, Any] = None) -> DatabaseError:
+    def _log_error(
+        self,
+        error_type: DatabaseErrorType,
+        message: str,
+        details: Dict[str, Any],
+        user_message: str,
+        recoverable: bool = True,
+        suggested_action: str = "",
+        context: Dict[str, Any] = None,
+    ) -> DatabaseError:
         """
         Log a database error.
 
@@ -220,23 +236,32 @@ class DatabaseErrorHandler:
             recoverable=recoverable,
             suggested_action=suggested_action,
             context=context or {},
-            traceback_info=traceback.format_exc() if error_type != DatabaseErrorType.UNKNOWN_ERROR else None
+            traceback_info=(
+                traceback.format_exc()
+                if error_type != DatabaseErrorType.UNKNOWN_ERROR
+                else None
+            ),
         )
-        
+
         with self._lock:
             self.error_history.append(error)
-        
+
         # Log according to error severity
-        if error_type in [DatabaseErrorType.CORRUPTION_ERROR, DatabaseErrorType.CONNECTION_ERROR]:
+        if error_type in [
+            DatabaseErrorType.CORRUPTION_ERROR,
+            DatabaseErrorType.CONNECTION_ERROR,
+        ]:
             logger.critical(f"Critical database error: {message}")
         elif error_type == DatabaseErrorType.UNKNOWN_ERROR:
             logger.error(f"Unknown database error: {message}")
         else:
             logger.warning(f"Database error: {message}")
-        
+
         return error
 
-    def handle_sqlite_error(self, error: sqlite3.Error, context: Dict[str, Any] = None) -> DatabaseError:
+    def handle_sqlite_error(
+        self, error: sqlite3.Error, context: Dict[str, Any] = None
+    ) -> DatabaseError:
         """
         Handle SQLite-specific errors.
 
@@ -248,8 +273,8 @@ class DatabaseErrorHandler:
             DatabaseError object
         """
         error_message = str(error)
-        error_code = getattr(error, 'sqlite_errorcode', None)
-        
+        error_code = getattr(error, "sqlite_errorcode", None)
+
         # Map SQLite error codes to our error types
         if "database is locked" in error_message.lower():
             error_type = DatabaseErrorType.CONNECTION_ERROR
@@ -265,7 +290,9 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.CONSTRAINT_ERROR
             user_message = "Data constraint violation occurred."
             recoverable = True
-            suggested_action = "Check data integrity and ensure unique constraints are satisfied."
+            suggested_action = (
+                "Check data integrity and ensure unique constraints are satisfied."
+            )
         elif "database disk image is malformed" in error_message.lower():
             error_type = DatabaseErrorType.CORRUPTION_ERROR
             user_message = "Database file appears to be corrupted."
@@ -280,8 +307,10 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.UNKNOWN_ERROR
             user_message = "An unexpected database error occurred."
             recoverable = True
-            suggested_action = "Please try again or contact support if the problem persists."
-        
+            suggested_action = (
+                "Please try again or contact support if the problem persists."
+            )
+
         return self._log_error(
             error_type=error_type,
             message=f"SQLite error ({error_code}): {error_message}",
@@ -289,10 +318,12 @@ class DatabaseErrorHandler:
             user_message=user_message,
             recoverable=recoverable,
             suggested_action=suggested_action,
-            context=context
+            context=context,
         )
 
-    def handle_connection_error(self, error: Exception, context: Dict[str, Any] = None) -> DatabaseError:
+    def handle_connection_error(
+        self, error: Exception, context: Dict[str, Any] = None
+    ) -> DatabaseError:
         """
         Handle connection-related errors.
 
@@ -304,18 +335,23 @@ class DatabaseErrorHandler:
             DatabaseError object
         """
         error_message = str(error)
-        
+
         return self._log_error(
             error_type=DatabaseErrorType.CONNECTION_ERROR,
             message=f"Connection error: {error_message}",
-            details={"error_type": type(error).__name__, "original_error": error_message},
+            details={
+                "error_type": type(error).__name__,
+                "original_error": error_message,
+            },
             user_message="Failed to connect to the database.",
             recoverable=True,
             suggested_action="Check database file accessibility and permissions.",
-            context=context
+            context=context,
         )
 
-    def handle_transaction_error(self, error: Exception, context: Dict[str, Any] = None) -> DatabaseError:
+    def handle_transaction_error(
+        self, error: Exception, context: Dict[str, Any] = None
+    ) -> DatabaseError:
         """
         Handle transaction-related errors.
 
@@ -327,18 +363,23 @@ class DatabaseErrorHandler:
             DatabaseError object
         """
         error_message = str(error)
-        
+
         return self._log_error(
             error_type=DatabaseErrorType.TRANSACTION_ERROR,
             message=f"Transaction error: {error_message}",
-            details={"error_type": type(error).__name__, "original_error": error_message},
+            details={
+                "error_type": type(error).__name__,
+                "original_error": error_message,
+            },
             user_message="Database transaction failed.",
             recoverable=True,
             suggested_action="Transaction will be rolled back automatically. Please try again.",
-            context=context
+            context=context,
         )
 
-    def handle_timeout_error(self, operation: str, timeout_duration: float, context: Dict[str, Any] = None) -> DatabaseError:
+    def handle_timeout_error(
+        self, operation: str, timeout_duration: float, context: Dict[str, Any] = None
+    ) -> DatabaseError:
         """
         Handle timeout errors.
 
@@ -357,7 +398,7 @@ class DatabaseErrorHandler:
             user_message=f"The database operation '{operation}' took too long to complete.",
             recoverable=True,
             suggested_action="The operation will be retried automatically. If it continues to fail, there may be performance issues.",
-            context=context
+            context=context,
         )
 
     def attempt_recovery(self, error: DatabaseError) -> bool:
@@ -372,9 +413,9 @@ class DatabaseErrorHandler:
         """
         if not error.recoverable:
             return False
-        
+
         recovery_successful = False
-        
+
         try:
             if error.error_type == DatabaseErrorType.CONNECTION_ERROR:
                 recovery_successful = self._recover_connection()
@@ -384,22 +425,22 @@ class DatabaseErrorHandler:
                 recovery_successful = self._recover_disk_space()
             elif error.error_type == DatabaseErrorType.SCHEMA_ERROR:
                 recovery_successful = self._recover_schema()
-            
+
             # Call registered recovery callbacks
             for callback in self._recovery_callbacks:
                 try:
                     callback(error)
                 except Exception as e:
                     logger.error(f"Recovery callback failed: {str(e)}")
-            
+
             if recovery_successful:
                 logger.info(f"Successfully recovered from {error.error_type.value}")
             else:
                 logger.warning(f"Recovery failed for {error.error_type.value}")
-                
+
         except Exception as e:
             logger.error(f"Recovery attempt failed: {str(e)}")
-        
+
         return recovery_successful
 
     def _recover_connection(self) -> bool:
@@ -422,7 +463,7 @@ class DatabaseErrorHandler:
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA integrity_check")
                 result = cursor.fetchone()
-                
+
                 if result[0] == "ok":
                     return True
                 else:
@@ -430,7 +471,7 @@ class DatabaseErrorHandler:
                     logger.info("Attempting to dump and restore corrupted database")
                     # This would involve more complex recovery logic
                     return False
-                    
+
         except Exception:
             return False
 
@@ -439,12 +480,12 @@ class DatabaseErrorHandler:
         try:
             disk_usage = psutil.disk_usage(os.path.dirname(self.db_path))
             usage_percent = disk_usage.used / disk_usage.total
-            
+
             if usage_percent <= self.disk_space_threshold:
                 return True
             else:
                 return False
-                
+
         except Exception:
             return False
 
@@ -454,17 +495,19 @@ class DatabaseErrorHandler:
             # Check if required tables exist
             with self._create_safe_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT name FROM sqlite_master 
                     WHERE type='table' AND name IN ('models', 'model_metadata')
-                """)
+                """
+                )
                 tables = cursor.fetchall()
-                
+
                 if len(tables) >= 2:  # Both required tables exist
                     return True
                 else:
                     return False
-                    
+
         except Exception:
             return False
 
@@ -492,23 +535,34 @@ class DatabaseErrorHandler:
         """
         with self._lock:
             recent_errors = [
-                error for error in self.error_history
+                error
+                for error in self.error_history
                 if error.timestamp > datetime.now() - timedelta(hours=24)
             ]
-            
+
             error_counts = {}
             for error in recent_errors:
                 error_type = error.error_type.value
                 error_counts[error_type] = error_counts.get(error_type, 0) + 1
-            
+
             return {
-                'total_errors_24h': len(recent_errors),
-                'error_counts_by_type': error_counts,
-                'recoverable_errors': sum(1 for e in recent_errors if e.recoverable),
-                'critical_errors': sum(1 for e in recent_errors if e.error_type in [
-                    DatabaseErrorType.CORRUPTION_ERROR, DatabaseErrorType.CONNECTION_ERROR
-                ]),
-                'most_common_error': max(error_counts.items(), key=lambda x: x[1]) if error_counts else None
+                "total_errors_24h": len(recent_errors),
+                "error_counts_by_type": error_counts,
+                "recoverable_errors": sum(1 for e in recent_errors if e.recoverable),
+                "critical_errors": sum(
+                    1
+                    for e in recent_errors
+                    if e.error_type
+                    in [
+                        DatabaseErrorType.CORRUPTION_ERROR,
+                        DatabaseErrorType.CONNECTION_ERROR,
+                    ]
+                ),
+                "most_common_error": (
+                    max(error_counts.items(), key=lambda x: x[1])
+                    if error_counts
+                    else None
+                ),
             }
 
     def get_connection_metrics(self, connection_id: str) -> Optional[ConnectionMetrics]:
@@ -543,10 +597,10 @@ class DatabaseErrorHandler:
             User-friendly error message
         """
         message = error.user_message
-        
+
         if error.suggested_action:
             message += f" {error.suggested_action}"
-        
+
         return message
 
 
@@ -583,20 +637,20 @@ class ConnectionManager:
         """
         if timeout is None:
             timeout = self.error_handler.connection_timeout
-        
+
         conn = None
         connection_id = None
-        
+
         try:
             # Create connection
             conn = self._create_healthy_connection(timeout)
-            
+
             # Track connection
             with self._lock:
                 connection_id = f"conn_{self._connection_counter}"
                 self._connection_counter += 1
                 self._connections[connection_id] = conn
-                
+
                 # Create metrics
                 metrics = ConnectionMetrics(
                     connection_id=connection_id,
@@ -607,12 +661,12 @@ class ConnectionManager:
                     error_count=0,
                     state=ConnectionState.HEALTHY,
                     memory_usage_kb=0.0,
-                    disk_usage_mb=0.0
+                    disk_usage_mb=0.0,
                 )
                 self.error_handler.connection_metrics[connection_id] = metrics
-            
+
             yield conn
-            
+
         except Exception as e:
             # Handle connection error
             if conn:
@@ -620,16 +674,16 @@ class ConnectionManager:
                     conn.close()
                 except:
                     pass
-            
+
             error = self.error_handler.handle_connection_error(e)
             raise error
-            
+
         finally:
             # Clean up connection tracking
             if connection_id:
                 with self._lock:
                     self._connections.pop(connection_id, None)
-                
+
                 if conn:
                     try:
                         conn.close()
@@ -652,28 +706,24 @@ class ConnectionManager:
         # Check disk space before creating connection
         disk_usage = psutil.disk_usage(os.path.dirname(self.db_path))
         usage_percent = disk_usage.used / disk_usage.total
-        
+
         if usage_percent > self.error_handler.disk_space_threshold:
             raise sqlite3.Error("Insufficient disk space for database operations")
-        
+
         # Create connection with optimized settings
-        conn = sqlite3.connect(
-            self.db_path,
-            timeout=timeout,
-            check_same_thread=False
-        )
-        
+        conn = sqlite3.connect(self.db_path, timeout=timeout, check_same_thread=False)
+
         # Configure connection for performance and reliability
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode = WAL")
         conn.execute("PRAGMA synchronous = NORMAL")
         conn.execute("PRAGMA cache_size = 10000")
-        
+
         # Test connection
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
         cursor.fetchone()
-        
+
         return conn
 
     def get_connection_stats(self) -> Dict[str, Any]:
@@ -685,17 +735,21 @@ class ConnectionManager:
         """
         with self._lock:
             return {
-                'total_connections': len(self._connections),
-                'active_connections': len([c for c in self._connections.values() if c is not None]),
-                'connection_metrics': {
+                "total_connections": len(self._connections),
+                "active_connections": len(
+                    [c for c in self._connections.values() if c is not None]
+                ),
+                "connection_metrics": {
                     conn_id: {
-                        'state': metrics.state.value,
-                        'query_count': metrics.query_count,
-                        'error_count': metrics.error_count,
-                        'uptime_seconds': (datetime.now() - metrics.created_at).total_seconds()
+                        "state": metrics.state.value,
+                        "query_count": metrics.query_count,
+                        "error_count": metrics.error_count,
+                        "uptime_seconds": (
+                            datetime.now() - metrics.created_at
+                        ).total_seconds(),
                     }
                     for conn_id, metrics in self.error_handler.connection_metrics.items()
-                }
+                },
             }
 
     def close_all_connections(self) -> None:
@@ -708,7 +762,7 @@ class ConnectionManager:
                         logger.debug(f"Closed connection {conn_id}")
                 except Exception as e:
                     logger.error(f"Error closing connection {conn_id}: {str(e)}")
-            
+
             self._connections.clear()
 
 
@@ -717,7 +771,9 @@ class GracefulDegradationManager:
 
     def __init__(self):
         """Initialize graceful degradation manager."""
-        self.degradation_level = 0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
+        self.degradation_level = (
+            0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
+        )
         self.available_features = set()
         self.fallback_data = {}
 
@@ -736,20 +792,22 @@ class GracefulDegradationManager:
         """Update available features based on degradation level."""
         if self.degradation_level == 0:
             self.available_features = {
-                'read', 'write', 'search', 'metadata', 'transactions'
+                "read",
+                "write",
+                "search",
+                "metadata",
+                "transactions",
             }
         elif self.degradation_level == 1:
             self.available_features = {
-                'read', 'search', 'metadata'  # Reduced write capabilities
+                "read",
+                "search",
+                "metadata",  # Reduced write capabilities
             }
         elif self.degradation_level == 2:
-            self.available_features = {
-                'read', 'search'  # Read-only mode
-            }
+            self.available_features = {"read", "search"}  # Read-only mode
         else:  # level 3
-            self.available_features = {
-                'read'  # Minimal functionality
-            }
+            self.available_features = {"read"}  # Minimal functionality
 
     def is_feature_available(self, feature: str) -> bool:
         """

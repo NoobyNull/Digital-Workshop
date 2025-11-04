@@ -11,8 +11,14 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QRadioButton, QButtonGroup, QMessageBox
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QRadioButton,
+    QButtonGroup,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 
@@ -128,4 +134,3 @@ class ZUpSaveDialog(QDialog):
     def get_new_filepath(self) -> str:
         """Get the new file path for save as new option."""
         return self._get_new_filename()
-

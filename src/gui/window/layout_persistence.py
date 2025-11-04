@@ -28,7 +28,9 @@ class LayoutPersistenceManager:
     user experience across application sessions.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the layout persistence manager.
 
@@ -107,13 +109,17 @@ class LayoutPersistenceManager:
                     "default_window_geometry": base64.b64encode(geom).decode("ascii"),
                     "default_window_state": base64.b64encode(state).decode("ascii"),
                     "default_layout_version": 1,
-                    "default_saved": True
+                    "default_saved": True,
                 }
 
                 # Also save active hero tab index as default
                 try:
-                    if hasattr(self.main_window, "hero_tabs") and isinstance(self.main_window.hero_tabs, QTabWidget):
-                        default_payload["default_hero_tab_index"] = int(self.main_window.hero_tabs.currentIndex())
+                    if hasattr(self.main_window, "hero_tabs") and isinstance(
+                        self.main_window.hero_tabs, QTabWidget
+                    ):
+                        default_payload["default_hero_tab_index"] = int(
+                            self.main_window.hero_tabs.currentIndex()
+                        )
                 except Exception:
                     pass
 
@@ -124,7 +130,9 @@ class LayoutPersistenceManager:
 
                 # Mark that default has been saved
                 settings.setValue("layout/default_saved", True)
-                self.logger.info("Saved current layout as default for fresh installations")
+                self.logger.info(
+                    "Saved current layout as default for fresh installations"
+                )
         except Exception as e:
             self.logger.warning(f"Failed to save current layout as default: {e}")
 
@@ -142,16 +150,25 @@ class LayoutPersistenceManager:
                     state = base64.b64decode(default_state)
                     # Validate geometry for multi-monitor setups
                     geom = self._validate_geometry_for_screens(geom)
-                    restored = self.main_window.restoreGeometry(geom) and self.main_window.restoreState(state)
+                    restored = self.main_window.restoreGeometry(
+                        geom
+                    ) and self.main_window.restoreState(state)
                     if restored:
                         self.logger.info("Restored default layout from saved defaults")
                         # Restore default hero tab if available
                         try:
                             default_hero_idx = settings.get("default_hero_tab_index")
-                            if (isinstance(default_hero_idx, int) and hasattr(self.main_window, "hero_tabs") and
-                                isinstance(self.main_window.hero_tabs, QTabWidget) and
-                                0 <= default_hero_idx < self.main_window.hero_tabs.count()):
-                                self.main_window.hero_tabs.setCurrentIndex(default_hero_idx)
+                            if (
+                                isinstance(default_hero_idx, int)
+                                and hasattr(self.main_window, "hero_tabs")
+                                and isinstance(self.main_window.hero_tabs, QTabWidget)
+                                and 0
+                                <= default_hero_idx
+                                < self.main_window.hero_tabs.count()
+                            ):
+                                self.main_window.hero_tabs.setCurrentIndex(
+                                    default_hero_idx
+                                )
                         except Exception:
                             pass
                         self.schedule_layout_save()
@@ -180,13 +197,19 @@ class LayoutPersistenceManager:
         try:
             if hasattr(self.main_window, "model_library_dock"):
                 self.main_window.model_library_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.main_window.model_library_dock)
+                self.main_window.addDockWidget(
+                    Qt.LeftDockWidgetArea, self.main_window.model_library_dock
+                )
             if hasattr(self.main_window, "properties_dock"):
                 self.main_window.properties_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.properties_dock)
+                self.main_window.addDockWidget(
+                    Qt.RightDockWidgetArea, self.main_window.properties_dock
+                )
             if hasattr(self.main_window, "metadata_dock"):
                 self.main_window.metadata_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.metadata_dock)
+                self.main_window.addDockWidget(
+                    Qt.RightDockWidgetArea, self.main_window.metadata_dock
+                )
         except Exception as e:
             self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
 
@@ -260,21 +283,33 @@ class LayoutPersistenceManager:
 
             # Persist active main tab index if available
             try:
-                if hasattr(self.main_window, "main_tabs") and isinstance(self.main_window.main_tabs, QTabWidget):
-                    payload["active_main_tab_index"] = int(self.main_window.main_tabs.currentIndex())
+                if hasattr(self.main_window, "main_tabs") and isinstance(
+                    self.main_window.main_tabs, QTabWidget
+                ):
+                    payload["active_main_tab_index"] = int(
+                        self.main_window.main_tabs.currentIndex()
+                    )
             except Exception:
                 pass
 
             # Persist active center tab index (inside "3d Model") if available
             try:
-                if hasattr(self.main_window, "center_tabs") and isinstance(self.main_window.center_tabs, QTabWidget):
-                    payload["active_center_tab_index"] = int(self.main_window.center_tabs.currentIndex())
+                if hasattr(self.main_window, "center_tabs") and isinstance(
+                    self.main_window.center_tabs, QTabWidget
+                ):
+                    payload["active_center_tab_index"] = int(
+                        self.main_window.center_tabs.currentIndex()
+                    )
             except Exception:
                 pass
             # Persist active hero tab index if available
             try:
-                if hasattr(self.main_window, "hero_tabs") and isinstance(self.main_window.hero_tabs, QTabWidget):
-                    payload["active_hero_tab_index"] = int(self.main_window.hero_tabs.currentIndex())
+                if hasattr(self.main_window, "hero_tabs") and isinstance(
+                    self.main_window.hero_tabs, QTabWidget
+                ):
+                    payload["active_hero_tab_index"] = int(
+                        self.main_window.hero_tabs.currentIndex()
+                    )
             except Exception:
                 pass
 
@@ -330,14 +365,18 @@ class LayoutPersistenceManager:
             dock.topLevelChanged.connect(lambda _=False: self.schedule_layout_save())
             # Some bindings expose dockLocationChanged(area)
             if hasattr(dock, "dockLocationChanged"):
-                dock.dockLocationChanged.connect(lambda _area=None: self.schedule_layout_save())
+                dock.dockLocationChanged.connect(
+                    lambda _area=None: self.schedule_layout_save()
+                )
             dock.visibilityChanged.connect(lambda _=False: self.schedule_layout_save())
         except Exception:
             pass
 
 
 # Convenience function for easy layout persistence setup
-def setup_layout_persistence(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> LayoutPersistenceManager:
+def setup_layout_persistence(
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> LayoutPersistenceManager:
     """
     Convenience function to set up layout persistence for a main window.
 

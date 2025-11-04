@@ -21,6 +21,7 @@ from src.core.cancellation_token import CancellationToken
 
 class WorkerState(Enum):
     """States for worker threads."""
+
     IDLE = "idle"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -31,6 +32,7 @@ class WorkerState(Enum):
 @dataclass
 class WorkerResult:
     """Result from a worker thread."""
+
     chunk_id: str
     triangles: List[Triangle]
     processing_time: float
@@ -61,7 +63,7 @@ class ThreadPoolCoordinator:
         self,
         chunks: List[FileChunk],
         cancellation_token: CancellationToken,
-        progress_callback: Optional[Callable[[float, str], None]] = None
+        progress_callback: Optional[Callable[[float, str], None]] = None,
     ) -> Model:
         """
         Coordinate parsing of file chunks using a thread pool.
@@ -92,9 +94,7 @@ class ThreadPoolCoordinator:
                     break
 
                 future = executor.submit(
-                    self._process_chunk_worker,
-                    chunk,
-                    cancellation_token
+                    self._process_chunk_worker, chunk, cancellation_token
                 )
                 futures[future] = chunk
 
@@ -110,16 +110,23 @@ class ThreadPoolCoordinator:
 
                     chunk = futures[future]
                     try:
-                        result = future.result(timeout=30)  # 30 second timeout per chunk
+                        result = future.result(
+                            timeout=30
+                        )  # 30 second timeout per chunk
                         results.append(result)
                         completed_count += 1
 
                         # Update progress
                         if progress_callback:
                             progress = (completed_count / len(chunks)) * 100
-                            progress_callback(progress, f"Processed chunk {completed_count}/{len(chunks)}")
+                            progress_callback(
+                                progress,
+                                f"Processed chunk {completed_count}/{len(chunks)}",
+                            )
 
-                        self.logger.debug(f"Completed chunk {chunk.id}: {result.processing_time:.2f}s")
+                        self.logger.debug(
+                            f"Completed chunk {chunk.id}: {result.processing_time:.2f}s"
+                        )
 
                     except Exception as e:
                         self.logger.error(f"Failed to process chunk {chunk.id}: {e}")
@@ -128,7 +135,7 @@ class ThreadPoolCoordinator:
                             chunk_id=chunk.id,
                             triangles=[],
                             processing_time=0.0,
-                            error=e
+                            error=e,
                         )
                         results.append(error_result)
 
@@ -145,8 +152,7 @@ class ThreadPoolCoordinator:
 
     @staticmethod
     def _process_chunk_worker(
-        chunk: FileChunk,
-        cancellation_token: CancellationToken
+        chunk: FileChunk, cancellation_token: CancellationToken
     ) -> WorkerResult:
         """
         Worker function to process a single chunk.
@@ -166,14 +172,14 @@ class ThreadPoolCoordinator:
             # Direct chunk processing - no parser instance needed
 
             # Process the chunk
-            triangles = ThreadPoolCoordinator._parse_chunk_data_static(chunk, cancellation_token)
+            triangles = ThreadPoolCoordinator._parse_chunk_data_static(
+                chunk, cancellation_token
+            )
 
             processing_time = time.time() - start_time
 
             return WorkerResult(
-                chunk_id=chunk.id,
-                triangles=triangles,
-                processing_time=processing_time
+                chunk_id=chunk.id, triangles=triangles, processing_time=processing_time
             )
 
         except Exception as e:
@@ -183,13 +189,12 @@ class ThreadPoolCoordinator:
                 chunk_id=chunk.id,
                 triangles=[],
                 processing_time=processing_time,
-                error=e
+                error=e,
             )
 
     @staticmethod
     def _parse_chunk_data_static(
-        chunk: FileChunk,
-        cancellation_token: CancellationToken
+        chunk: FileChunk, cancellation_token: CancellationToken
     ) -> List[Triangle]:
         """
         Parse triangle data from a file chunk.
@@ -204,17 +209,21 @@ class ThreadPoolCoordinator:
         triangles = []
 
         try:
-            with open(chunk.file_path, 'rb') as file:
+            with open(chunk.file_path, "rb") as file:
                 # Seek to chunk start
                 file.seek(chunk.start_offset)
 
                 # Read chunk data
                 data = file.read(chunk.size)
                 if len(data) != chunk.size:
-                    raise ValueError(f"Incomplete chunk read: expected {chunk.size}, got {len(data)}")
+                    raise ValueError(
+                        f"Incomplete chunk read: expected {chunk.size}, got {len(data)}"
+                    )
 
                 # Parse triangles from the data
-                triangles = ThreadPoolCoordinator._parse_triangle_data_static(data, chunk.triangle_count, cancellation_token)
+                triangles = ThreadPoolCoordinator._parse_triangle_data_static(
+                    data, chunk.triangle_count, cancellation_token
+                )
 
         except Exception as e:
             # Can't log here as logger is not serializable
@@ -224,9 +233,7 @@ class ThreadPoolCoordinator:
 
     @staticmethod
     def _parse_triangle_data_static(
-        data: bytes,
-        expected_count: int,
-        cancellation_token: CancellationToken
+        data: bytes, expected_count: int, cancellation_token: CancellationToken
     ) -> List[Triangle]:
         """
         Parse triangle data from raw bytes.
@@ -262,7 +269,7 @@ class ThreadPoolCoordinator:
             # Unpack triangle data (little-endian)
             # Format: 3 floats (normal) + 9 floats (3 vertices) + 1 uint16 (attribute)
             try:
-                values = struct.unpack('<12fH', data[offset:offset + TRIANGLE_SIZE])
+                values = struct.unpack("<12fH", data[offset : offset + TRIANGLE_SIZE])
 
                 normal = Vector3D(values[0], values[1], values[2])
                 v1 = Vector3D(values[3], values[4], values[5])
@@ -279,10 +286,7 @@ class ThreadPoolCoordinator:
         return triangles
 
     def _aggregate_results(
-        self,
-        file_path: Path,
-        results: List[WorkerResult],
-        start_time: float
+        self, file_path: Path, results: List[WorkerResult], start_time: float
     ) -> Model:
         """
         Aggregate results from all worker threads.
@@ -318,8 +322,8 @@ class ThreadPoolCoordinator:
 
         # Calculate bounds
         if all_triangles:
-            min_x = min_y = min_z = float('inf')
-            max_x = max_y = max_z = float('-inf')
+            min_x = min_y = min_z = float("inf")
+            max_x = max_y = max_z = float("-inf")
 
             for triangle in all_triangles:
                 for vertex in triangle.get_vertices():
@@ -347,7 +351,7 @@ class ThreadPoolCoordinator:
             max_bounds=max_bounds,
             file_size_bytes=file_size,
             format_type=ModelFormat.STL,
-            parsing_time_seconds=parsing_time
+            parsing_time_seconds=parsing_time,
         )
 
         # Create model
@@ -355,7 +359,7 @@ class ThreadPoolCoordinator:
             header=f"Multi-threaded STL: {file_path.name}",
             triangles=all_triangles,
             stats=stats,
-            format_type=ModelFormat.STL
+            format_type=ModelFormat.STL,
         )
 
         self.logger.info(

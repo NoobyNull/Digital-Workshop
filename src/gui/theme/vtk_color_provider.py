@@ -40,13 +40,17 @@ class VTKColorProvider(QObject):
         super().__init__()
 
         # Import theme service
-        from .qt_material_service import QtMaterialThemeService
+        from .simple_service import ThemeService
 
-        self.theme_service = QtMaterialThemeService.instance()
+        self.theme_service = ThemeService.instance()
 
         # Connect to theme service signals
-        self.theme_service.theme_changed.connect(self._on_theme_changed)
-        self.theme_service.colors_updated.connect(self._on_colors_updated)
+        try:
+            self.theme_service.theme_changed.connect(self._on_theme_changed)
+            self.theme_service.colors_updated.connect(self._on_colors_updated)
+        except AttributeError:
+            # Signals may not be available in simple service
+            pass
 
         # Registered VTK managers
         self._vtk_managers: List["VTKSceneManager"] = []

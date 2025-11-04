@@ -48,30 +48,30 @@ from src.gui.layout.snapping.snap_configuration import (
     SnapConfiguration,
     SnapZone,
     VisualSettings,
-    PerformanceSettings
+    PerformanceSettings,
 )
 from src.gui.layout.snapping.coordinate_manager import (
     CoordinateManager,
     CoordinateSystem,
-    TransformationResult
+    TransformationResult,
 )
 from src.gui.layout.snapping.snap_engine import (
     SnapEngine,
     SnapResult,
     SnapCandidate,
-    SnapType
+    SnapType,
 )
 from src.gui.layout.snapping.event_processor import (
     EventProcessor,
     SnapEvent,
     EventType,
-    EventFilter
+    EventFilter,
 )
 from src.gui.layout.snapping.snap_guide_renderer import (
     SnapGuideRenderer,
     SnapGuide,
     GuideType,
-    AnimationState
+    AnimationState,
 )
 
 
@@ -140,8 +140,7 @@ class SnappingSystem:
 
             # Setup event handlers for snap results
             self.event_processor.register_event_handler(
-                EventType.SNAP_REQUEST,
-                self._handle_snap_request
+                EventType.SNAP_REQUEST, self._handle_snap_request
             )
 
             self.logger.debug("Component integration setup completed")
@@ -159,9 +158,7 @@ class SnappingSystem:
         try:
             # Calculate snap position
             snap_result = self.snap_engine.calculate_snap(
-                event.position,
-                CoordinateSystem.UNIFIED,
-                event.source_widget
+                event.position, CoordinateSystem.UNIFIED, event.source_widget
             )
 
             # Render visual feedback
@@ -272,7 +269,7 @@ class SnappingSystem:
         self,
         position: QPointF,
         source_system: CoordinateSystem = CoordinateSystem.CLIENT,
-        context_widget: Optional[QWidget] = None
+        context_widget: Optional[QWidget] = None,
     ) -> SnapResult:
         """
         Calculate snap position for a given point.
@@ -405,7 +402,7 @@ class SnappingSystem:
                 "snap_engine_stats": self.snap_engine.get_performance_stats(),
                 "event_processor_stats": self.event_processor.get_performance_stats(),
                 "guide_renderer_stats": self.guide_renderer.get_performance_stats(),
-                "configuration_memory_usage": self.config.get_memory_usage()
+                "configuration_memory_usage": self.config.get_memory_usage(),
             }
         except Exception as e:
             self.logger.error(f"Failed to get performance stats: {e}")
@@ -454,7 +451,9 @@ class SnappingSystem:
 
 
 # Convenience function for easy system setup
-def create_snapping_system(main_window: QMainWindow, config_file: Optional[str] = None) -> SnappingSystem:
+def create_snapping_system(
+    main_window: QMainWindow, config_file: Optional[str] = None
+) -> SnappingSystem:
     """
     Create and initialize a complete snapping system.
 
@@ -487,35 +486,30 @@ def create_snapping_system(main_window: QMainWindow, config_file: Optional[str] 
 # Export main classes and types for easy importing
 __all__ = [
     # Main system
-    'SnappingSystem',
-    'create_snapping_system',
-
+    "SnappingSystem",
+    "create_snapping_system",
     # Configuration
-    'SnapConfiguration',
-    'SnapZone',
-    'VisualSettings',
-    'PerformanceSettings',
-
+    "SnapConfiguration",
+    "SnapZone",
+    "VisualSettings",
+    "PerformanceSettings",
     # Coordinate management
-    'CoordinateManager',
-    'CoordinateSystem',
-    'TransformationResult',
-
+    "CoordinateManager",
+    "CoordinateSystem",
+    "TransformationResult",
     # Snap engine
-    'SnapEngine',
-    'SnapResult',
-    'SnapCandidate',
-    'SnapType',
-
+    "SnapEngine",
+    "SnapResult",
+    "SnapCandidate",
+    "SnapType",
     # Event processing
-    'EventProcessor',
-    'SnapEvent',
-    'EventType',
-    'EventFilter',
-
+    "EventProcessor",
+    "SnapEvent",
+    "EventType",
+    "EventFilter",
     # Visual rendering
-    'SnapGuideRenderer',
-    'SnapGuide',
-    'GuideType',
-    'AnimationState',
+    "SnapGuideRenderer",
+    "SnapGuide",
+    "GuideType",
+    "AnimationState",
 ]

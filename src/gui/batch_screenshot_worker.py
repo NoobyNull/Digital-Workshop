@@ -29,7 +29,7 @@ class BatchScreenshotWorker(QThread):
         material_manager=None,
         screenshot_size: int = 256,
         background_image: Optional[str] = None,
-        material_name: Optional[str] = None
+        material_name: Optional[str] = None,
     ):
         """
         Initialize the batch screenshot worker.
@@ -49,7 +49,7 @@ class BatchScreenshotWorker(QThread):
             width=screenshot_size,
             height=screenshot_size,
             background_image=background_image,
-            material_name=material_name
+            material_name=material_name,
         )
         self._stop_requested = False
 
@@ -76,9 +76,9 @@ class BatchScreenshotWorker(QThread):
                     break
 
                 try:
-                    model_id = model.get('id')
-                    file_path = model.get('file_path')
-                    file_hash = model.get('file_hash')
+                    model_id = model.get("id")
+                    file_path = model.get("file_path")
+                    file_hash = model.get("file_hash")
 
                     if not file_path or not Path(file_path).exists():
                         self.logger.warning(f"Model file not found: {file_path}")
@@ -87,18 +87,20 @@ class BatchScreenshotWorker(QThread):
 
                     # Generate screenshot
                     screenshot_path = self._generate_screenshot_for_model(
-                        model_id,
-                        file_path,
-                        file_hash
+                        model_id, file_path, file_hash
                     )
 
                     if screenshot_path:
                         # Update database with thumbnail path
-                        self.db_manager.update_model_thumbnail(model_id, screenshot_path)
+                        self.db_manager.update_model_thumbnail(
+                            model_id, screenshot_path
+                        )
                         self.screenshot_generated.emit(model_id, screenshot_path)
                         self.logger.info(f"Generated screenshot for model {model_id}")
                     else:
-                        self.logger.warning(f"Failed to generate screenshot for model {model_id}")
+                        self.logger.warning(
+                            f"Failed to generate screenshot for model {model_id}"
+                        )
 
                     # Emit progress
                     self.progress_updated.emit(idx + 1, total)
@@ -115,10 +117,7 @@ class BatchScreenshotWorker(QThread):
             self.error_occurred.emit(f"Batch generation failed: {e}")
 
     def _generate_screenshot_for_model(
-        self,
-        model_id: int,
-        file_path: str,
-        file_hash: Optional[str] = None
+        self, model_id: int, file_path: str, file_hash: Optional[str] = None
     ) -> Optional[str]:
         """
         Generate a screenshot for a single model.
@@ -149,17 +148,18 @@ class BatchScreenshotWorker(QThread):
                 model_path=file_path,
                 output_path=output_path,
                 material_manager=self.material_manager,
-                material_name=None  # Use default material
+                material_name=None,  # Use default material
             )
 
             return screenshot_path
 
         except Exception as e:
-            self.logger.error(f"Failed to generate screenshot for model {model_id}: {e}")
+            self.logger.error(
+                f"Failed to generate screenshot for model {model_id}: {e}"
+            )
             return None
 
     def stop(self) -> None:
         """Request the worker to stop processing."""
         self._stop_requested = True
         self.logger.info("Stop requested for batch screenshot generation")
-

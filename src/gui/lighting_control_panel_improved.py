@@ -20,8 +20,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
-
 class LightingControlPanel(QDockWidget):
     """Improved lighting control panel with sliders for position, color, and intensity."""
 
@@ -159,7 +157,9 @@ class LightingControlPanel(QDockWidget):
         self.setWidget(container)
 
     # ---- Public API ----
-    def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
+    def values(
+        self,
+    ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity)"""
         return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity
 
@@ -208,7 +208,9 @@ class LightingControlPanel(QDockWidget):
                 self.intensity_changed.emit(self._intensity)
 
     # ---- Internals ----
-    def _make_pos_slider(self, name: str, min_val: float, max_val: float, initial: float) -> QSlider:
+    def _make_pos_slider(
+        self, name: str, min_val: float, max_val: float, initial: float
+    ) -> QSlider:
         """Create a position slider with proper range and styling."""
         slider = QSlider(Qt.Horizontal)
         slider.setMinimum(int(min_val))
@@ -224,8 +226,6 @@ class LightingControlPanel(QDockWidget):
             slider.valueChanged.connect(self._on_y_position_changed)
         elif name == "Z":
             slider.valueChanged.connect(self._on_z_position_changed)
-
-
 
         return slider
 

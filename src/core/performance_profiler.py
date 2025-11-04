@@ -23,6 +23,7 @@ from src.core.logging_config import get_logger, log_function_call
 
 class PerformanceMetric(Enum):
     """Types of performance metrics."""
+
     LOAD_TIME = "load_time"
     PARSE_TIME = "parse_time"
     GPU_TIME = "gpu_time"
@@ -35,6 +36,7 @@ class PerformanceMetric(Enum):
 @dataclass
 class PerformanceSample:
     """Single performance measurement sample."""
+
     timestamp: float
     metric: PerformanceMetric
     value: float
@@ -51,9 +53,13 @@ class PerformanceSample:
     @property
     def value_seconds(self) -> float:
         """Get time value in seconds."""
-        if self.metric in [PerformanceMetric.LOAD_TIME, PerformanceMetric.PARSE_TIME,
-                          PerformanceMetric.GPU_TIME, PerformanceMetric.IO_TIME,
-                          PerformanceMetric.CHUNK_TIME]:
+        if self.metric in [
+            PerformanceMetric.LOAD_TIME,
+            PerformanceMetric.PARSE_TIME,
+            PerformanceMetric.GPU_TIME,
+            PerformanceMetric.IO_TIME,
+            PerformanceMetric.CHUNK_TIME,
+        ]:
             return self.value
         return self.value
 
@@ -61,11 +67,12 @@ class PerformanceSample:
 @dataclass
 class PerformanceStats:
     """Aggregated performance statistics."""
+
     operation: str
     metric: PerformanceMetric
     count: int = 0
     total: float = 0.0
-    min_value: float = float('inf')
+    min_value: float = float("inf")
     max_value: float = 0.0
     avg_value: float = 0.0
     std_dev: float = 0.0
@@ -82,7 +89,9 @@ class PerformanceStats:
         if self.count > 1:
             # Welford's online algorithm
             delta = value - self.avg_value
-            self.std_dev = ((self.std_dev * (self.count - 2) + delta * delta) / (self.count - 1)) ** 0.5
+            self.std_dev = (
+                (self.std_dev * (self.count - 2) + delta * delta) / (self.count - 1)
+            ) ** 0.5
 
     @property
     def is_significant(self) -> bool:
@@ -97,7 +106,9 @@ class PerformanceProfiler:
     Collects, analyzes, and reports performance metrics for loading operations.
     """
 
-    def __init__(self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0):
+    def __init__(
+        self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0
+    ):
         """
         Initialize performance profiler.
 
@@ -111,7 +122,9 @@ class PerformanceProfiler:
 
         # Data storage
         self.samples: List[PerformanceSample] = []
-        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(dict)
+        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(
+            dict
+        )
         self.active_timers: Dict[str, float] = {}
 
         # Thread safety
@@ -121,11 +134,15 @@ class PerformanceProfiler:
         self.profile_output_dir = Path("performance_profiles")
         self.profile_output_dir.mkdir(exist_ok=True)
 
-        self.logger.info(f"PerformanceProfiler initialized (enabled: {enable_profiling})")
+        self.logger.info(
+            f"PerformanceProfiler initialized (enabled: {enable_profiling})"
+        )
 
     @log_function_call
     @contextmanager
-    def time_operation(self, operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME):
+    def time_operation(
+        self, operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME
+    ):
         """
         Context manager for timing operations.
 
@@ -168,7 +185,7 @@ class PerformanceProfiler:
         metric: PerformanceMetric,
         value: float,
         operation: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Record a performance sample.
@@ -187,7 +204,7 @@ class PerformanceProfiler:
             metric=metric,
             value=value,
             operation=operation,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         with self._lock:
@@ -202,7 +219,9 @@ class PerformanceProfiler:
             self.stats[operation][metric].add_sample(value)
 
     @log_function_call
-    def get_operation_stats(self, operation: str) -> Dict[PerformanceMetric, PerformanceStats]:
+    def get_operation_stats(
+        self, operation: str
+    ) -> Dict[PerformanceMetric, PerformanceStats]:
         """
         Get performance statistics for an operation.
 
@@ -224,10 +243,7 @@ class PerformanceProfiler:
             Nested dictionary of operation -> metric -> stats
         """
         with self._lock:
-            return {
-                op: dict(metrics)
-                for op, metrics in self.stats.items()
-            }
+            return {op: dict(metrics) for op, metrics in self.stats.items()}
 
     @log_function_call
     def get_performance_report(self, operations: Optional[List[str]] = None) -> str:
@@ -277,6 +293,7 @@ class PerformanceProfiler:
         Returns:
             Profiling decorator
         """
+
         def decorator(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -294,23 +311,28 @@ class PerformanceProfiler:
 
                     # Save profile data
                     timestamp = int(time.time())
-                    profile_file = self.profile_output_dir / f"{operation}_{timestamp}.prof"
+                    profile_file = (
+                        self.profile_output_dir / f"{operation}_{timestamp}.prof"
+                    )
 
                     # Save binary profile
                     profiler.dump_stats(str(profile_file))
 
                     # Generate text report
                     s = io.StringIO()
-                    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+                    ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats(20)  # Top 20 functions
 
-                    text_report = self.profile_output_dir / f"{operation}_{timestamp}.txt"
-                    with open(text_report, 'w') as f:
+                    text_report = (
+                        self.profile_output_dir / f"{operation}_{timestamp}.txt"
+                    )
+                    with open(text_report, "w") as f:
                         f.write(s.getvalue())
 
                     self.logger.info(f"Profile saved: {profile_file} and {text_report}")
 
             return wrapper
+
         return decorator
 
     @log_function_call
@@ -319,7 +341,7 @@ class PerformanceProfiler:
         operation_func: Callable,
         operation_name: str,
         iterations: int = 10,
-        warmup_iterations: int = 2
+        warmup_iterations: int = 2,
     ) -> Dict[str, Any]:
         """
         Benchmark an operation over multiple iterations.
@@ -336,7 +358,9 @@ class PerformanceProfiler:
         if not self.enable_profiling:
             return {"error": "Profiling disabled"}
 
-        self.logger.info(f"Starting benchmark: {operation_name} ({iterations} iterations)")
+        self.logger.info(
+            f"Starting benchmark: {operation_name} ({iterations} iterations)"
+        )
 
         # Warmup
         for i in range(warmup_iterations):
@@ -361,7 +385,7 @@ class PerformanceProfiler:
                     PerformanceMetric.LOAD_TIME,
                     duration,
                     f"{operation_name}_benchmark",
-                    {"iteration": i + 1}
+                    {"iteration": i + 1},
                 )
 
             except Exception as e:
@@ -378,7 +402,7 @@ class PerformanceProfiler:
 
         # Calculate standard deviation
         variance = sum((t - avg_time) ** 2 for t in times) / len(times)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
 
         results = {
             "operation": operation_name,
@@ -387,7 +411,7 @@ class PerformanceProfiler:
             "min_time": min_time,
             "max_time": max_time,
             "std_dev": std_dev,
-            "times": times
+            "times": times,
         }
 
         self.logger.info(
@@ -401,7 +425,7 @@ class PerformanceProfiler:
     def detect_performance_regressions(
         self,
         baseline_stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]],
-        threshold_percent: float = 10.0
+        threshold_percent: float = 10.0,
     ) -> List[Dict[str, Any]]:
         """
         Detect performance regressions compared to baseline.
@@ -435,14 +459,16 @@ class PerformanceProfiler:
                     percent_change = ((current_avg - baseline_avg) / baseline_avg) * 100
 
                     if percent_change > threshold_percent:
-                        regressions.append({
-                            "operation": operation,
-                            "metric": metric.value,
-                            "baseline_avg": baseline_avg,
-                            "current_avg": current_avg,
-                            "percent_change": percent_change,
-                            "threshold": threshold_percent
-                        })
+                        regressions.append(
+                            {
+                                "operation": operation,
+                                "metric": metric.value,
+                                "baseline_avg": baseline_avg,
+                                "current_avg": current_avg,
+                                "percent_change": percent_change,
+                                "threshold": threshold_percent,
+                            }
+                        )
 
         return regressions
 
@@ -461,19 +487,27 @@ class PerformanceProfiler:
             import csv
 
             with self._lock:
-                with open(output_file, 'w', newline='') as csvfile:
-                    fieldnames = ['timestamp', 'metric', 'value', 'operation', 'metadata']
+                with open(output_file, "w", newline="") as csvfile:
+                    fieldnames = [
+                        "timestamp",
+                        "metric",
+                        "value",
+                        "operation",
+                        "metadata",
+                    ]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
 
                     for sample in self.samples:
-                        writer.writerow({
-                            'timestamp': sample.timestamp,
-                            'metric': sample.metric.value,
-                            'value': sample.value,
-                            'operation': sample.operation,
-                            'metadata': str(sample.metadata)
-                        })
+                        writer.writerow(
+                            {
+                                "timestamp": sample.timestamp,
+                                "metric": sample.metric.value,
+                                "value": sample.value,
+                                "operation": sample.operation,
+                                "metadata": str(sample.metadata),
+                            }
+                        )
 
             self.logger.info(f"Exported {len(self.samples)} samples to {output_file}")
             return True
@@ -495,9 +529,11 @@ class PerformanceProfiler:
     def __str__(self) -> str:
         """String representation of profiler status."""
         with self._lock:
-            return (f"PerformanceProfiler(samples={len(self.samples)}, "
-                    f"operations={len(self.stats)}, "
-                    f"active_timers={len(self.active_timers)})")
+            return (
+                f"PerformanceProfiler(samples={len(self.samples)}, "
+                f"operations={len(self.stats)}, "
+                f"active_timers={len(self.active_timers)})"
+            )
 
 
 # Global profiler instance
@@ -535,7 +571,9 @@ def profile_function(operation: str):
     return profiler.profile_function(operation)
 
 
-def time_operation(operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME):
+def time_operation(
+    operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME
+):
     """
     Context manager to time an operation.
 

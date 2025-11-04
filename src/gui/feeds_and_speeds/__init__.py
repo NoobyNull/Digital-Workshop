@@ -6,10 +6,9 @@ from .personal_toolbox_manager import PersonalToolboxManager
 from .unit_converter import UnitConverter
 
 __all__ = [
-    'FeedsAndSpeedsWidget',
-    'ToolLibraryManager',
-    'Tool',
-    'PersonalToolboxManager',
-    'UnitConverter',
+    "FeedsAndSpeedsWidget",
+    "ToolLibraryManager",
+    "Tool",
+    "PersonalToolboxManager",
+    "UnitConverter",
 ]
-

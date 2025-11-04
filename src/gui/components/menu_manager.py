@@ -16,8 +16,6 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMainWindow, QMenuBar
 
 
-
-
 class MenuManager:
     """
     Manages the application's menu bar and all associated menu actions.
@@ -26,7 +24,9 @@ class MenuManager:
     to provide a complete menu system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ):
         """
         Initialize the menu manager.
 
@@ -62,7 +62,7 @@ class MenuManager:
         open_action.setStatusTip("Open a 3D model file")
         open_action.triggered.connect(self._open_model)
         file_menu.addAction(open_action)
-        
+
         # Import Models action
         import_action = QAction("&Import Models...", self.main_window)
         import_action.setShortcut(QKeySequence("Ctrl+I"))
@@ -147,13 +147,17 @@ class MenuManager:
         view_menu.addAction(self.show_metadata_action)
 
         # Model Library restoration action
-        self.show_model_library_action = QAction("Show &Model Library", self.main_window)
+        self.show_model_library_action = QAction(
+            "Show &Model Library", self.main_window
+        )
         try:
             self.show_model_library_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
         except Exception:
             pass
         self.show_model_library_action.setStatusTip("Restore the Model Library panel")
-        self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
+        self.show_model_library_action.setToolTip(
+            "Show the Model Library (Ctrl+Shift+L)"
+        )
         self.show_model_library_action.triggered.connect(self._restore_model_library)
         view_menu.addAction(self.show_model_library_action)
 
@@ -172,8 +176,12 @@ class MenuManager:
             self.toggle_layout_edit_action.setShortcut(QKeySequence("Ctrl+Shift+E"))
         except Exception:
             pass
-        self.toggle_layout_edit_action.setStatusTip("Enable rearranging docks. When off, docks are locked in place but still resize with the window.")
-        self.toggle_layout_edit_action.setToolTip("Toggle Layout Edit Mode (Ctrl+Shift+E)")
+        self.toggle_layout_edit_action.setStatusTip(
+            "Enable rearranging docks. When off, docks are locked in place but still resize with the window."
+        )
+        self.toggle_layout_edit_action.setToolTip(
+            "Toggle Layout Edit Mode (Ctrl+Shift+E)"
+        )
         self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
         view_menu.addAction(self.toggle_layout_edit_action)
 
@@ -181,9 +189,15 @@ class MenuManager:
         tools_menu = menubar.addMenu("&Tools")
 
         # Generate screenshots action
-        generate_screenshots_action = QAction("Generate &Screenshots for Library", self.main_window)
-        generate_screenshots_action.setStatusTip("Generate screenshots of all models in the library with applied materials")
-        generate_screenshots_action.triggered.connect(self._generate_library_screenshots)
+        generate_screenshots_action = QAction(
+            "Generate &Screenshots for Library", self.main_window
+        )
+        generate_screenshots_action.setStatusTip(
+            "Generate screenshots of all models in the library with applied materials"
+        )
+        generate_screenshots_action.triggered.connect(
+            self._generate_library_screenshots
+        )
         tools_menu.addAction(generate_screenshots_action)
 
         # Help menu
@@ -214,67 +228,67 @@ class MenuManager:
     def _open_model(self) -> None:
         """Handle open model action."""
         # This would need to be connected to the main window's model loading logic
-        if hasattr(self.main_window, '_open_model'):
+        if hasattr(self.main_window, "_open_model"):
             self.main_window._open_model()
-    
+
     def _import_models(self) -> None:
         """Handle import models action."""
-        if hasattr(self.main_window, '_import_models'):
+        if hasattr(self.main_window, "_import_models"):
             self.main_window._import_models()
 
     def _edit_model(self) -> None:
         """Handle edit model action."""
-        if hasattr(self.main_window, '_edit_model'):
+        if hasattr(self.main_window, "_edit_model"):
             self.main_window._edit_model()
 
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
-        if hasattr(self.main_window, '_show_preferences'):
+        if hasattr(self.main_window, "_show_preferences"):
             self.main_window._show_preferences()
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
-        if hasattr(self.main_window, '_zoom_in'):
+        if hasattr(self.main_window, "_zoom_in"):
             self.main_window._zoom_in()
 
     def _zoom_out(self) -> None:
         """Handle zoom out action."""
-        if hasattr(self.main_window, '_zoom_out'):
+        if hasattr(self.main_window, "_zoom_out"):
             self.main_window._zoom_out()
 
     def _reset_view(self) -> None:
         """Handle reset view action."""
-        if hasattr(self.main_window, '_reset_view'):
+        if hasattr(self.main_window, "_reset_view"):
             self.main_window._reset_view()
 
     def _save_current_view(self) -> None:
         """Handle save current view action."""
-        if hasattr(self.main_window, '_save_current_view'):
+        if hasattr(self.main_window, "_save_current_view"):
             self.main_window._save_current_view()
 
     def _reset_dock_layout(self) -> None:
         """Handle reset dock layout action."""
-        if hasattr(self.main_window, '_reset_dock_layout'):
+        if hasattr(self.main_window, "_reset_dock_layout"):
             self.main_window._reset_dock_layout()
 
     def _restore_metadata_manager(self) -> None:
         """Handle restore metadata manager action."""
-        if hasattr(self.main_window, '_restore_metadata_manager'):
+        if hasattr(self.main_window, "_restore_metadata_manager"):
             self.main_window._restore_metadata_manager()
 
     def _restore_model_library(self) -> None:
         """Handle restore model library action."""
-        if hasattr(self.main_window, '_restore_model_library'):
+        if hasattr(self.main_window, "_restore_model_library"):
             self.main_window._restore_model_library()
 
     def _reload_stylesheet_action(self) -> None:
         """Handle reload stylesheet action."""
-        if hasattr(self.main_window, '_reload_stylesheet_action'):
+        if hasattr(self.main_window, "_reload_stylesheet_action"):
             self.main_window._reload_stylesheet_action()
 
     def _set_layout_edit_mode(self, enabled: bool) -> None:
         """Handle layout edit mode toggle."""
-        if hasattr(self.main_window, '_set_layout_edit_mode'):
+        if hasattr(self.main_window, "_set_layout_edit_mode"):
             # Show message when user toggles from menu (not during initialization)
             self.main_window._set_layout_edit_mode(enabled, show_message=True)
 
@@ -282,6 +296,7 @@ class MenuManager:
         """Show tips and tricks dialog."""
         try:
             from src.gui.walkthrough import WalkthroughDialog
+
             dialog = WalkthroughDialog(self.main_window)
             dialog.exec()
         except Exception as e:
@@ -289,17 +304,19 @@ class MenuManager:
 
     def _show_about(self) -> None:
         """Handle show about action."""
-        if hasattr(self.main_window, '_show_about'):
+        if hasattr(self.main_window, "_show_about"):
             self.main_window._show_about()
 
     def _generate_library_screenshots(self) -> None:
         """Handle generate library screenshots action."""
-        if hasattr(self.main_window, '_generate_library_screenshots'):
+        if hasattr(self.main_window, "_generate_library_screenshots"):
             self.main_window._generate_library_screenshots()
 
 
 # Convenience function for easy menu setup
-def setup_main_window_menus(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> MenuManager:
+def setup_main_window_menus(
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> MenuManager:
     """
     Convenience function to set up menus for a main window.
 

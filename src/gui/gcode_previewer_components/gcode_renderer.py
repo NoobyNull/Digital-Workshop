@@ -10,15 +10,15 @@ if TYPE_CHECKING:
 
 class GcodeRenderer:
     """Renders G-code toolpaths using VTK."""
-    
+
     # Class-level vtk module (loaded once per class)
-    _vtk_module: Optional['VtkModule'] = None
+    _vtk_module: Optional["VtkModule"] = None
 
     def __init__(self):
         """Initialize the renderer."""
         # Lazy load VTK at instance creation
         self._ensure_vtk_loaded()
-        
+
         # Use the class-level module
         vtk = self._vtk_module
 
@@ -34,42 +34,59 @@ class GcodeRenderer:
 
         # For incremental rendering - organize by move type
         self.move_data = {
-            'rapid': {'points': vtk.vtkPoints(), 'lines': vtk.vtkCellArray(), 'actor': None},
-            'cutting': {'points': vtk.vtkPoints(), 'lines': vtk.vtkCellArray(), 'actor': None},
-            'arc': {'points': vtk.vtkPoints(), 'lines': vtk.vtkCellArray(), 'actor': None},
-            'tool_change': {'points': vtk.vtkPoints(), 'lines': vtk.vtkCellArray(), 'actor': None},
+            "rapid": {
+                "points": vtk.vtkPoints(),
+                "lines": vtk.vtkCellArray(),
+                "actor": None,
+            },
+            "cutting": {
+                "points": vtk.vtkPoints(),
+                "lines": vtk.vtkCellArray(),
+                "actor": None,
+            },
+            "arc": {
+                "points": vtk.vtkPoints(),
+                "lines": vtk.vtkCellArray(),
+                "actor": None,
+            },
+            "tool_change": {
+                "points": vtk.vtkPoints(),
+                "lines": vtk.vtkCellArray(),
+                "actor": None,
+            },
         }
         self.prev_point = None
 
         # Color scheme for different move types
         self.colors = {
-            'rapid': (1.0, 0.5, 0.0),      # Orange - fast moves
-            'cutting': (0.0, 1.0, 0.0),    # Green - cutting moves
-            'arc': (0.0, 0.5, 1.0),        # Cyan - arc moves
-            'tool_change': (1.0, 0.0, 1.0), # Magenta - tool changes
+            "rapid": (1.0, 0.5, 0.0),  # Orange - fast moves
+            "cutting": (0.0, 1.0, 0.0),  # Green - cutting moves
+            "arc": (0.0, 0.5, 1.0),  # Cyan - arc moves
+            "tool_change": (1.0, 0.0, 1.0),  # Magenta - tool changes
         }
 
         # Line widths for different move types
         self.line_widths = {
-            'rapid': 1.5,
-            'cutting': 3.0,
-            'arc': 2.5,
-            'tool_change': 2.0,
+            "rapid": 1.5,
+            "cutting": 3.0,
+            "arc": 2.5,
+            "tool_change": 2.0,
         }
-    
+
     @classmethod
     def _ensure_vtk_loaded(cls) -> None:
         """Ensure VTK module is loaded (once per class)."""
         if cls._vtk_module is None:
             try:
                 import vtk as vtk_module
+
                 cls._vtk_module = vtk_module
             except ImportError as e:
                 raise ImportError(
                     "VTK is required for G-code rendering. "
                     "Install with: pip install vtk"
                 ) from e
-    
+
     @property
     def vtk(self):
         """Access VTK module."""
@@ -88,9 +105,9 @@ class GcodeRenderer:
 
         # Reset move data
         for move_type in self.move_data:
-            self.move_data[move_type]['points'] = vtk.vtkPoints()
-            self.move_data[move_type]['lines'] = vtk.vtkCellArray()
-            self.move_data[move_type]['actor'] = None
+            self.move_data[move_type]["points"] = vtk.vtkPoints()
+            self.move_data[move_type]["lines"] = vtk.vtkCellArray()
+            self.move_data[move_type]["actor"] = None
 
         prev_point = None
 
@@ -108,33 +125,36 @@ class GcodeRenderer:
                 # Add line segment based on move type
                 if move.is_rapid:
                     self._add_line_segment(
-                        self.move_data['rapid']['points'],
-                        self.move_data['rapid']['lines'],
-                        prev_point, current_point
+                        self.move_data["rapid"]["points"],
+                        self.move_data["rapid"]["lines"],
+                        prev_point,
+                        current_point,
                     )
                 elif move.is_cutting:
                     self._add_line_segment(
-                        self.move_data['cutting']['points'],
-                        self.move_data['cutting']['lines'],
-                        prev_point, current_point
+                        self.move_data["cutting"]["points"],
+                        self.move_data["cutting"]["lines"],
+                        prev_point,
+                        current_point,
                     )
                 elif move.is_arc:
                     self._add_line_segment(
-                        self.move_data['arc']['points'],
-                        self.move_data['arc']['lines'],
-                        prev_point, current_point
+                        self.move_data["arc"]["points"],
+                        self.move_data["arc"]["lines"],
+                        prev_point,
+                        current_point,
                     )
 
             prev_point = current_point
 
         # Create actors for each move type
-        for move_type in ['rapid', 'cutting', 'arc']:
-            if self.move_data[move_type]['points'].GetNumberOfPoints() > 0:
+        for move_type in ["rapid", "cutting", "arc"]:
+            if self.move_data[move_type]["points"].GetNumberOfPoints() > 0:
                 actor = self._create_actor(
-                    self.move_data[move_type]['points'],
-                    self.move_data[move_type]['lines'],
+                    self.move_data[move_type]["points"],
+                    self.move_data[move_type]["lines"],
                     self.colors[move_type],
-                    self.line_widths[move_type]
+                    self.line_widths[move_type],
                 )
                 self.renderer.AddActor(actor)
                 self.actors[move_type] = actor
@@ -160,27 +180,27 @@ class GcodeRenderer:
         polydata = self.vtk.vtkPolyData()
         polydata.SetPoints(points)
         polydata.SetLines(lines)
-        
+
         mapper = self.vtk.vtkPolyDataMapper()
         mapper.SetInputData(polydata)
-        
+
         actor = self.vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(*color)
         actor.GetProperty().SetLineWidth(line_width)
-        
+
         return actor
 
     def _add_axes(self) -> None:
         """Add coordinate axes to the scene."""
         axes = self.vtk.vtkAxesActor()
         axes.SetScale(10.0)
-        
+
         # Create a transform to position the axes
         transform = self.vtk.vtkTransform()
         transform.Translate(0, 0, 0)
         axes.SetUserTransform(transform)
-        
+
         self.renderer.AddActor(axes)
 
     def get_renderer(self):
@@ -202,15 +222,17 @@ class GcodeRenderer:
     def clear_incremental(self) -> None:
         """Clear incremental rendering data."""
         for move_type in self.move_data:
-            self.move_data[move_type]['points'] = self.vtk.vtkPoints()
-            self.move_data[move_type]['lines'] = self.vtk.vtkCellArray()
+            self.move_data[move_type]["points"] = self.vtk.vtkPoints()
+            self.move_data[move_type]["lines"] = self.vtk.vtkCellArray()
 
             # Remove old actor if exists
-            if self.move_data[move_type]['actor']:
-                self.renderer.RemoveActor(self.move_data[move_type]['actor'])
+            if self.move_data[move_type]["actor"]:
+                self.renderer.RemoveActor(self.move_data[move_type]["actor"])
                 # Properly cleanup VTK resources
-                self.move_data[move_type]['actor'].ReleaseGraphicsResources(self.render_window)
-            self.move_data[move_type]['actor'] = None
+                self.move_data[move_type]["actor"].ReleaseGraphicsResources(
+                    self.render_window
+                )
+            self.move_data[move_type]["actor"] = None
 
         self.prev_point = None
 
@@ -229,21 +251,24 @@ class GcodeRenderer:
             if self.prev_point is not None:
                 if move.is_rapid:
                     self._add_line_segment(
-                        self.move_data['rapid']['points'],
-                        self.move_data['rapid']['lines'],
-                        self.prev_point, current_point
+                        self.move_data["rapid"]["points"],
+                        self.move_data["rapid"]["lines"],
+                        self.prev_point,
+                        current_point,
                     )
                 elif move.is_cutting:
                     self._add_line_segment(
-                        self.move_data['cutting']['points'],
-                        self.move_data['cutting']['lines'],
-                        self.prev_point, current_point
+                        self.move_data["cutting"]["points"],
+                        self.move_data["cutting"]["lines"],
+                        self.prev_point,
+                        current_point,
                     )
                 elif move.is_arc:
                     self._add_line_segment(
-                        self.move_data['arc']['points'],
-                        self.move_data['arc']['lines'],
-                        self.prev_point, current_point
+                        self.move_data["arc"]["points"],
+                        self.move_data["arc"]["lines"],
+                        self.prev_point,
+                        current_point,
                     )
 
             self.prev_point = current_point
@@ -255,40 +280,41 @@ class GcodeRenderer:
         """Update the incremental rendering actors with proper cleanup."""
         for move_type in self.move_data:
             # Proper VTK cleanup sequence
-            old_actor = self.move_data[move_type]['actor']
+            old_actor = self.move_data[move_type]["actor"]
             if old_actor:
                 self.renderer.RemoveActor(old_actor)
                 # Clean up the actor's internal resources
                 old_actor.ReleaseGraphicsResources(self.render_window)
                 del old_actor  # Explicit deletion
-            
-            self.move_data[move_type]['actor'] = None
+
+            self.move_data[move_type]["actor"] = None
 
         # Create new actors
-        for move_type in ['rapid', 'cutting', 'arc']:
-            if self.move_data[move_type]['points'].GetNumberOfPoints() > 0:
+        for move_type in ["rapid", "cutting", "arc"]:
+            if self.move_data[move_type]["points"].GetNumberOfPoints() > 0:
                 actor = self._create_actor(
-                    self.move_data[move_type]['points'],
-                    self.move_data[move_type]['lines'],
+                    self.move_data[move_type]["points"],
+                    self.move_data[move_type]["lines"],
                     self.colors[move_type],
-                    self.line_widths[move_type]
+                    self.line_widths[move_type],
                 )
                 self.renderer.AddActor(actor)
-                self.move_data[move_type]['actor'] = actor
-    
+                self.move_data[move_type]["actor"] = actor
+
     def cleanup(self) -> None:
         """Cleanup all VTK resources before destruction."""
         # Remove all actors
         for move_type in self.move_data:
-            if self.move_data[move_type]['actor']:
-                self.renderer.RemoveActor(self.move_data[move_type]['actor'])
-                self.move_data[move_type]['actor'].ReleaseGraphicsResources(self.render_window)
-        
+            if self.move_data[move_type]["actor"]:
+                self.renderer.RemoveActor(self.move_data[move_type]["actor"])
+                self.move_data[move_type]["actor"].ReleaseGraphicsResources(
+                    self.render_window
+                )
+
         # Clear data structures
         self.move_data.clear()
         self.actors.clear()
-        
+
         # Clean up renderer and window
         if self.render_window:
             self.render_window.Finalize()
-

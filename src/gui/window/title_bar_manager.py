@@ -18,7 +18,7 @@ from src.gui.window.custom_title_bar import CustomTitleBar
 class WindowTitleBarManager(QObject):
     """
     Centralized manager for custom title bars across all application windows.
-    
+
     Tracks all windows and updates their title bars when theme changes.
     Uses weak references to avoid memory leaks.
     """
@@ -57,9 +57,12 @@ class WindowTitleBarManager(QObject):
     def _get_logger() -> logging.Logger:
         """Get logger instance."""
         from src.core.logging_config import get_logger
+
         return get_logger(__name__)
 
-    def register_window(self, window: QWidget, title_bar: Optional[CustomTitleBar] = None) -> None:
+    def register_window(
+        self, window: QWidget, title_bar: Optional[CustomTitleBar] = None
+    ) -> None:
         """
         Register a window with the manager.
 
@@ -101,7 +104,7 @@ class WindowTitleBarManager(QObject):
             updated_count = 0
             for window_id, title_bar in list(self._title_bars.items()):
                 try:
-                    if title_bar and hasattr(title_bar, 'update_theme'):
+                    if title_bar and hasattr(title_bar, "update_theme"):
                         title_bar.update_theme()
                         updated_count += 1
                 except Exception as e:
@@ -126,7 +129,8 @@ class WindowTitleBarManager(QObject):
             # WeakSet automatically removes dead references
             # This method is here for explicit cleanup if needed
             dead_ids = [
-                wid for wid in self._title_bars.keys()
+                wid
+                for wid in self._title_bars.keys()
                 if not any(id(w) == wid for w in self._windows)
             ]
             for wid in dead_ids:
@@ -135,4 +139,3 @@ class WindowTitleBarManager(QObject):
                 self.logger.debug(f"Cleaned up {len(dead_ids)} dead references")
         except Exception as e:
             self.logger.warning(f"Failed to clean dead references: {e}")
-

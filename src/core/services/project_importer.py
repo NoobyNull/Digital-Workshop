@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 @dataclass
 class ImportReport:
     """Report of import operation."""
+
     project_id: str
     project_name: str
     import_date: str
@@ -55,7 +56,7 @@ class ProjectImporter:
         folder_path: str,
         project_name: str,
         structure_type: str = "nested",
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> ImportReport:
         """
         Import a project from folder.
@@ -78,7 +79,7 @@ class ProjectImporter:
 
         try:
             folder_path = str(Path(folder_path).resolve())
-            
+
             if not os.path.isdir(folder_path):
                 raise ValueError(f"Folder not found: {folder_path}")
 
@@ -89,7 +90,7 @@ class ProjectImporter:
                     base_path=folder_path,
                     import_tag="imported_project",
                     original_path=folder_path,
-                    structure_type=structure_type
+                    structure_type=structure_type,
                 )
                 logger.info(f"Created project: {project_name} ({project_id})")
             except ValueError as e:
@@ -112,10 +113,12 @@ class ProjectImporter:
                 try:
                     # Filter file
                     filter_result = self.file_filter.filter_file(file_path)
-                    
+
                     if not filter_result.is_allowed:
                         files_blocked += 1
-                        logger.debug(f"Blocked file: {file_path} ({filter_result.reason})")
+                        logger.debug(
+                            f"Blocked file: {file_path} ({filter_result.reason})"
+                        )
                         continue
 
                     # Get file info
@@ -131,7 +134,7 @@ class ProjectImporter:
                         file_size=file_size,
                         status="imported",
                         link_type="original",
-                        original_path=file_path
+                        original_path=file_path,
                     )
 
                     files_imported += 1
@@ -158,17 +161,19 @@ class ProjectImporter:
                 total_size_bytes=total_size,
                 import_duration_seconds=duration,
                 errors=errors,
-                success=files_imported > 0 and files_failed == 0
+                success=files_imported > 0 and files_failed == 0,
             )
 
-            logger.info(f"Import complete: {project_name} ({files_imported} files, {duration:.1f}s)")
+            logger.info(
+                f"Import complete: {project_name} ({files_imported} files, {duration:.1f}s)"
+            )
             return report
 
         except Exception as e:
             logger.error(f"Import failed: {str(e)}")
             error_msg = f"Import failed: {str(e)}"
             errors.append(error_msg)
-            
+
             duration = (datetime.now() - start_time).total_seconds()
             return ImportReport(
                 project_id="",
@@ -181,7 +186,7 @@ class ProjectImporter:
                 total_size_bytes=0,
                 import_duration_seconds=duration,
                 errors=errors,
-                success=False
+                success=False,
             )
 
     def get_import_summary(self, report: ImportReport) -> str:
@@ -206,4 +211,3 @@ Status: {'✓ Success' if report.success else '✗ Failed'}
                 summary += f"  ... and {len(report.errors) - 5} more errors\n"
 
         return summary
-

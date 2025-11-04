@@ -33,7 +33,7 @@ class ProjectRepository:
         base_path: Optional[str] = None,
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
-        structure_type: Optional[str] = None
+        structure_type: Optional[str] = None,
     ) -> str:
         """
         Create a new project.
@@ -62,16 +62,25 @@ class ProjectRepository:
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO projects (
                         id, name, base_path, import_tag, original_path,
                         structure_type, created_at, updated_at
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    project_id, name, base_path, import_tag, original_path,
-                    structure_type, now, now
-                ))
+                """,
+                    (
+                        project_id,
+                        name,
+                        base_path,
+                        import_tag,
+                        original_path,
+                        structure_type,
+                        now,
+                        now,
+                    ),
+                )
                 conn.commit()
 
             logger.info(f"Project created: {name} (ID: {project_id})")
@@ -123,8 +132,7 @@ class ProjectRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT * FROM projects WHERE LOWER(name) = LOWER(?)",
-                    (name,)
+                    "SELECT * FROM projects WHERE LOWER(name) = LOWER(?)", (name,)
                 )
                 row = cursor.fetchone()
                 return dict(row) if row else None
@@ -134,7 +142,9 @@ class ProjectRepository:
             return None
 
     @log_function_call(logger)
-    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_projects(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """
         List all projects.
 
@@ -153,7 +163,7 @@ class ProjectRepository:
                 if limit:
                     cursor.execute(
                         "SELECT * FROM projects ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                        (limit, offset)
+                        (limit, offset),
                     )
                 else:
                     cursor.execute("SELECT * FROM projects ORDER BY created_at DESC")
@@ -201,25 +211,26 @@ class ProjectRepository:
         """
         try:
             allowed_fields = {
-                'name', 'base_path', 'import_tag', 'original_path',
-                'structure_type', 'import_date'
+                "name",
+                "base_path",
+                "import_tag",
+                "original_path",
+                "structure_type",
+                "import_date",
             }
-            
+
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
             if not update_fields:
                 return False
 
-            update_fields['updated_at'] = datetime.now().isoformat()
-            
+            update_fields["updated_at"] = datetime.now().isoformat()
+
             set_clause = ", ".join([f"{k} = ?" for k in update_fields.keys()])
             values = list(update_fields.values()) + [project_id]
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    f"UPDATE projects SET {set_clause} WHERE id = ?",
-                    values
-                )
+                cursor.execute(f"UPDATE projects SET {set_clause} WHERE id = ?", values)
                 conn.commit()
 
             logger.info(f"Project updated: {project_id}")
@@ -243,10 +254,10 @@ class ProjectRepository:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Delete associated files first (cascade handled by FK)
                 cursor.execute("DELETE FROM files WHERE project_id = ?", (project_id,))
-                
+
                 # Delete project
                 cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
                 conn.commit()
@@ -276,4 +287,3 @@ class ProjectRepository:
         except sqlite3.Error as e:
             logger.error(f"Database error counting projects: {str(e)}")
             return 0
-

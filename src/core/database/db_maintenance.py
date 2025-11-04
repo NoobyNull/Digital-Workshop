@@ -41,26 +41,32 @@ class DatabaseMaintenance:
                 model_count = cursor.fetchone()[0]
 
                 # Get category counts
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT mm.category, COUNT(*) as count
                     FROM model_metadata mm
                     WHERE mm.category IS NOT NULL
                     GROUP BY mm.category
                     ORDER BY count DESC
-                """)
+                """
+                )
                 category_counts = dict(cursor.fetchall())
 
                 # Get format counts
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT format, COUNT(*) as count
                     FROM models
                     GROUP BY format
                     ORDER BY count DESC
-                """)
+                """
+                )
                 format_counts = dict(cursor.fetchall())
 
                 # Get total file size
-                cursor.execute("SELECT SUM(file_size) FROM models WHERE file_size IS NOT NULL")
+                cursor.execute(
+                    "SELECT SUM(file_size) FROM models WHERE file_size IS NOT NULL"
+                )
                 total_size = cursor.fetchone()[0] or 0
 
                 stats = {
@@ -68,7 +74,7 @@ class DatabaseMaintenance:
                     "category_counts": category_counts,
                     "format_counts": format_counts,
                     "total_size_bytes": total_size,
-                    "total_size_mb": round(total_size / (1024 * 1024), 2)
+                    "total_size_mb": round(total_size / (1024 * 1024), 2),
                 }
 
                 logger.debug(f"Retrieved database stats: {stats}")
@@ -105,4 +111,3 @@ class DatabaseMaintenance:
         except sqlite3.Error as e:
             logger.error(f"Failed to analyze database: {str(e)}")
             raise
-

@@ -19,8 +19,6 @@ from PySide6.QtWidgets import (
 logger = logging.getLogger(__name__)
 
 
-
-
 class LightingControlPanel(QDialog):
     """Floating dialog panel for lighting controls with sliders"""
 
@@ -40,15 +38,27 @@ class LightingControlPanel(QDialog):
         settings = QSettings()
         self._default_pos_x = settings.value("lighting/default_pos_x", 90.0, type=float)
         self._default_pos_y = settings.value("lighting/default_pos_y", 90.0, type=float)
-        self._default_pos_z = settings.value("lighting/default_pos_z", 180.0, type=float)
+        self._default_pos_z = settings.value(
+            "lighting/default_pos_z", 180.0, type=float
+        )
         self._default_color = (1.0, 1.0, 1.0)  # normalized RGB
-        self._default_intensity = settings.value("lighting/default_intensity", 1.2, type=float)
-        self._default_cone_angle = settings.value("lighting/default_cone_angle", 90.0, type=float)
+        self._default_intensity = settings.value(
+            "lighting/default_intensity", 1.2, type=float
+        )
+        self._default_cone_angle = settings.value(
+            "lighting/default_cone_angle", 90.0, type=float
+        )
 
         # Current values (defaults) - using angle-based positions (0-180 deg, 90 = center)
-        self._pos_x = self._default_pos_x  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_y = self._default_pos_y  # degrees, 90 = center (maps to 100 actual position)
-        self._pos_z = self._default_pos_z  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_x = (
+            self._default_pos_x
+        )  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_y = (
+            self._default_pos_y
+        )  # degrees, 90 = center (maps to 100 actual position)
+        self._pos_z = (
+            self._default_pos_z
+        )  # degrees, 90 = center (maps to 100 actual position)
         self._color = self._default_color  # normalized RGB
         self._intensity = self._default_intensity
         self._cone_angle = self._default_cone_angle  # Cone angle in degrees (1-90)
@@ -194,9 +204,16 @@ class LightingControlPanel(QDialog):
     # New signal for cone angle
     cone_angle_changed = Signal(float)  # 1-90 degrees
 
-    def values(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float, float]:
+    def values(
+        self,
+    ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float, float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity, cone_angle)"""
-        return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity, self._cone_angle
+        return (
+            (self._pos_x, self._pos_y, self._pos_z),
+            self._color,
+            self._intensity,
+            self._cone_angle,
+        )
 
     def set_values(
         self,
@@ -258,7 +275,9 @@ class LightingControlPanel(QDialog):
                 self.cone_angle_changed.emit(self._cone_angle)
 
     # ---- Internals ----
-    def _make_pos_slider(self, name: str, min_val: float, max_val: float, initial: float) -> QSlider:
+    def _make_pos_slider(
+        self, name: str, min_val: float, max_val: float, initial: float
+    ) -> QSlider:
         """Create a position slider with proper range and styling."""
         slider = QSlider(Qt.Horizontal)
         slider.setMinimum(int(min_val))
@@ -274,8 +293,6 @@ class LightingControlPanel(QDialog):
             slider.valueChanged.connect(self._on_y_position_changed)
         elif name == "Z":
             slider.valueChanged.connect(self._on_z_position_changed)
-
-
 
         return slider
 
@@ -364,8 +381,6 @@ class LightingControlPanel(QDialog):
             )
         except Exception as e:
             logger.error(f"Failed to save lighting defaults: {e}")
-
-
 
     def _apply_button_style(self, button: QPushButton) -> None:
         """Apply styling to a button using qt-material theme."""

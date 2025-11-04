@@ -33,6 +33,7 @@ class CameraController:
         # Load camera settings from config
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             self.mouse_sensitivity = config.mouse_sensitivity
             self.fps_limit = config.fps_limit
@@ -53,7 +54,7 @@ class CameraController:
         model: STLModel,
         actor: Optional[vtk.vtkActor],
         update_grid_callback=None,
-        update_ground_callback=None
+        update_ground_callback=None,
     ) -> None:
         """
         Fit camera to model bounds.
@@ -98,7 +99,9 @@ class CameraController:
                 update_grid_callback(radius, center_x=cx, center_y=cy)
             if update_ground_callback:
                 ground_z = zmin - 0.5
-                update_ground_callback(radius, center_x=cx, center_y=cy, z_position=ground_z)
+                update_ground_callback(
+                    radius, center_x=cx, center_y=cy, z_position=ground_z
+                )
 
             # Set camera
             cam = self.renderer.GetActiveCamera()
@@ -147,9 +150,7 @@ class CameraController:
 
     @log_function_call(logger)
     def fit_camera_preserving_orientation(
-        self,
-        model: STLModel,
-        actor: Optional[vtk.vtkActor]
+        self, model: STLModel, actor: Optional[vtk.vtkActor]
     ) -> None:
         """
         Fit camera to model while preserving orientation.
@@ -288,7 +289,7 @@ class CameraController:
             sin_a = math.sin(angle_rad)
 
             # Rodrigues' rotation formula
-            k_dot_v = (view_x * view_up[0] + view_y * view_up[1] + view_z * view_up[2])
+            k_dot_v = view_x * view_up[0] + view_y * view_up[1] + view_z * view_up[2]
             k_norm = (view_x**2 + view_y**2 + view_z**2) ** 0.5
 
             if k_norm < 1e-6:
@@ -299,19 +300,19 @@ class CameraController:
             k_z = view_z / k_norm
 
             new_up_x = (
-                view_up[0] * cos_a +
-                (k_y * view_up[2] - k_z * view_up[1]) * sin_a +
-                k_x * k_dot_v * (1 - cos_a)
+                view_up[0] * cos_a
+                + (k_y * view_up[2] - k_z * view_up[1]) * sin_a
+                + k_x * k_dot_v * (1 - cos_a)
             )
             new_up_y = (
-                view_up[1] * cos_a +
-                (k_z * view_up[0] - k_x * view_up[2]) * sin_a +
-                k_y * k_dot_v * (1 - cos_a)
+                view_up[1] * cos_a
+                + (k_z * view_up[0] - k_x * view_up[2]) * sin_a
+                + k_y * k_dot_v * (1 - cos_a)
             )
             new_up_z = (
-                view_up[2] * cos_a +
-                (k_x * view_up[1] - k_y * view_up[0]) * sin_a +
-                k_z * k_dot_v * (1 - cos_a)
+                view_up[2] * cos_a
+                + (k_x * view_up[1] - k_y * view_up[0]) * sin_a
+                + k_z * k_dot_v * (1 - cos_a)
             )
 
             camera.SetViewUp(new_up_x, new_up_y, new_up_z)
@@ -321,4 +322,3 @@ class CameraController:
 
         except Exception as e:
             logger.error(f"Failed to rotate view: {e}")
-

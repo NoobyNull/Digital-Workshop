@@ -13,4 +13,3 @@ from .material_manager_main import MaterialManager
 __all__ = [
     "MaterialManager",
 ]
-

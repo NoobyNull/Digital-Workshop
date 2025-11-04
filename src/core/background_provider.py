@@ -49,15 +49,19 @@ class BackgroundProvider:
             # Try to get preference from settings
             if self.settings:
                 # Check for image preference
-                bg_image = getattr(self.settings, 'thumbnail_bg_image', None)
+                bg_image = getattr(self.settings, "thumbnail_bg_image", None)
                 if bg_image and self._validate_image_path(bg_image):
-                    self.logger.debug(f"Using background image from settings: {bg_image}")
+                    self.logger.debug(
+                        f"Using background image from settings: {bg_image}"
+                    )
                     return bg_image
 
                 # Check for color preference
-                bg_color = getattr(self.settings, 'thumbnail_bg_color', None)
+                bg_color = getattr(self.settings, "thumbnail_bg_color", None)
                 if bg_color:
-                    self.logger.debug(f"Using background color from settings: {bg_color}")
+                    self.logger.debug(
+                        f"Using background color from settings: {bg_color}"
+                    )
                     return self._parse_color(bg_color)
 
             # Fall back to default
@@ -77,14 +81,17 @@ class BackgroundProvider:
         """
         try:
             if not self.DEFAULT_BACKGROUNDS_DIR.exists():
-                self.logger.warning(f"Default backgrounds directory not found: {self.DEFAULT_BACKGROUNDS_DIR}")
+                self.logger.warning(
+                    f"Default backgrounds directory not found: {self.DEFAULT_BACKGROUNDS_DIR}"
+                )
                 return []
 
             # Supported image formats
-            image_extensions = {'.png', '.jpg', '.jpeg', '.bmp'}
+            image_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
 
             backgrounds = [
-                f for f in self.DEFAULT_BACKGROUNDS_DIR.iterdir()
+                f
+                for f in self.DEFAULT_BACKGROUNDS_DIR.iterdir()
                 if f.is_file() and f.suffix.lower() in image_extensions
             ]
 
@@ -117,9 +124,11 @@ class BackgroundProvider:
                 return False
 
             # Check extension
-            supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp'}
+            supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if path.suffix.lower() not in supported_extensions:
-                self.logger.warning(f"Unsupported background image format: {path.suffix}")
+                self.logger.warning(
+                    f"Unsupported background image format: {path.suffix}"
+                )
                 return False
 
             return True
@@ -128,7 +137,9 @@ class BackgroundProvider:
             self.logger.error(f"Error validating image path: {e}", exc_info=True)
             return False
 
-    def _parse_color(self, color: Union[str, Tuple, List]) -> Tuple[float, float, float]:
+    def _parse_color(
+        self, color: Union[str, Tuple, List]
+    ) -> Tuple[float, float, float]:
         """
         Parse color from various formats to RGB tuple (0-1 range).
 
@@ -172,11 +183,11 @@ class BackgroundProvider:
             RGB tuple with values 0-1
         """
         # Remove '#' if present
-        hex_color = hex_color.lstrip('#')
+        hex_color = hex_color.lstrip("#")
 
         # Handle 3-digit hex colors (expand to 6-digit)
         if len(hex_color) == 3:
-            hex_color = ''.join([c*2 for c in hex_color])
+            hex_color = "".join([c * 2 for c in hex_color])
 
         # Convert to RGB
         r = int(hex_color[0:2], 16) / 255.0

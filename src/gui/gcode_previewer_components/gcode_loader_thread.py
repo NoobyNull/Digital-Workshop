@@ -34,11 +34,13 @@ class GcodeLoaderThread(QThread):
     def run(self) -> None:
         """Run the loader in background thread."""
         try:
-            with open(self.filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
             total_lines = len(lines)
-            self.logger.info(f"Starting to load {total_lines:,} lines from {self.filepath}")
+            self.logger.info(
+                f"Starting to load {total_lines:,} lines from {self.filepath}"
+            )
 
             # Parse lines and emit batches
             batch = []
@@ -50,12 +52,12 @@ class GcodeLoaderThread(QThread):
                 line = line.strip()
 
                 # Skip empty lines and comments
-                if not line or line.startswith(';') or line.startswith('%'):
+                if not line or line.startswith(";") or line.startswith("%"):
                     continue
 
                 # Remove inline comments
-                if ';' in line:
-                    line = line.split(';')[0].strip()
+                if ";" in line:
+                    line = line.split(";")[0].strip()
 
                 move = self.parser._parse_line(line, line_num)
                 if move:
@@ -87,4 +89,3 @@ class GcodeLoaderThread(QThread):
     def stop(self) -> None:
         """Request the loader to stop."""
         self._stop_requested = True
-

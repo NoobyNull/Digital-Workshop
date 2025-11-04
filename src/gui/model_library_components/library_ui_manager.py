@@ -4,12 +4,24 @@ UI management for model library.
 Handles UI creation, layout, and styling.
 """
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSize
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QGroupBox, QHeaderView, QLabel, QLineEdit, QListView,
-    QProgressBar, QPushButton,
-    QTableView, QTabWidget, QVBoxLayout, QHBoxLayout, QWidget, QTreeView
+    QComboBox,
+    QFrame,
+    QGroupBox,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QListView,
+    QProgressBar,
+    QPushButton,
+    QTableView,
+    QTabWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QTreeView,
 )
 
 from src.core.logging_config import get_logger
@@ -17,6 +29,7 @@ from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16, SPACING_
 from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 from .file_system_proxy import FileSystemProxyModel
+from .grid_icon_delegate import GridIconDelegate
 
 
 logger = get_logger(__name__)
@@ -90,10 +103,16 @@ class LibraryUIManager:
 
         self.library_widget.file_model = MultiRootFileSystemModel()
         self.library_widget.file_proxy_model = FileSystemProxyModel()
-        self.library_widget.file_proxy_model.setSourceModel(self.library_widget.file_model)
+        self.library_widget.file_proxy_model.setSourceModel(
+            self.library_widget.file_model
+        )
 
-        self.library_widget.file_model.indexing_started.connect(self.library_widget._on_indexing_started)
-        self.library_widget.file_model.indexing_completed.connect(self.library_widget._on_indexing_completed)
+        self.library_widget.file_model.indexing_started.connect(
+            self.library_widget._on_indexing_started
+        )
+        self.library_widget.file_model.indexing_completed.connect(
+            self.library_widget._on_indexing_completed
+        )
 
         self.library_widget.file_tree = QTreeView()
         self.library_widget.file_tree.setModel(self.library_widget.file_proxy_model)
@@ -109,7 +128,9 @@ class LibraryUIManager:
 
         self.library_widget.refresh_button = QPushButton("Refresh")
         self.library_widget.refresh_button.setToolTip("Refresh directory index")
-        self.library_widget.refresh_button.clicked.connect(self.library_widget._refresh_file_browser)
+        self.library_widget.refresh_button.clicked.connect(
+            self.library_widget._refresh_file_browser
+        )
         import_layout.addWidget(self.library_widget.refresh_button)
 
         import_layout.addStretch()
@@ -119,7 +140,9 @@ class LibraryUIManager:
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
-        self.library_widget.import_folder_button.setToolTip("Import the selected folder")
+        self.library_widget.import_folder_button.setToolTip(
+            "Import the selected folder"
+        )
         import_layout.addWidget(self.library_widget.import_folder_button)
 
         layout.addWidget(import_frame)
@@ -160,6 +183,12 @@ class LibraryUIManager:
         self.library_widget.grid_view.setSpacing(10)
         self.library_widget.grid_view.setUniformItemSizes(True)
         self.library_widget.grid_view.setModel(self.library_widget.proxy_model)
+
+        # Use custom delegate to hide filenames in grid view
+        grid_delegate = GridIconDelegate(self.library_widget.grid_view)
+        grid_delegate.set_icon_size(QSize(128, 128))
+        self.library_widget.grid_view.setItemDelegate(grid_delegate)
+
         self.library_widget.view_tabs.addTab(self.library_widget.grid_view, "Grid")
 
         layout.addWidget(self.library_widget.view_tabs)
@@ -187,4 +216,3 @@ class LibraryUIManager:
     def apply_styling(self) -> None:
         """Apply CSS styling (no-op - qt-material handles this)."""
         pass
-

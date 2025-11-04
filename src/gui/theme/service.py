@@ -45,6 +45,7 @@ class ThemeService:
 
         # Import ThemeManager here to avoid circular imports
         from .manager import ThemeManager
+
         self._manager = ThemeManager.instance()
 
         self._logger.info("ThemeService initialized")
@@ -243,4 +244,3 @@ class ThemeService:
     def get_manager(self):
         """Get the underlying ThemeManager instance."""
         return self._manager
-

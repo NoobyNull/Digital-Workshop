@@ -6,8 +6,15 @@ Displays run mode explanation and allows storage location customization.
 
 from pathlib import Path
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QFileDialog, QGroupBox, QTextEdit
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+    QFileDialog,
+    QGroupBox,
+    QTextEdit,
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -66,17 +73,13 @@ class RunModeSetupDialog(QDialog):
         storage_group = QGroupBox("Storage Location")
         storage_layout = QVBoxLayout()
 
-        storage_label = QLabel(
-            "Choose where to store your projects and model files:"
-        )
+        storage_label = QLabel("Choose where to store your projects and model files:")
         storage_layout.addWidget(storage_label)
 
         # Storage path input
         path_layout = QHBoxLayout()
         self.storage_path_input = QLineEdit()
-        self.storage_path_input.setText(
-            self.run_mode_manager.get_storage_location()
-        )
+        self.storage_path_input.setText(self.run_mode_manager.get_storage_location())
         self.storage_path_input.setReadOnly(True)
         path_layout.addWidget(self.storage_path_input)
 
@@ -128,10 +131,7 @@ class RunModeSetupDialog(QDialog):
         try:
             current_path = self.storage_path_input.text()
             folder = QFileDialog.getExistingDirectory(
-                self,
-                "Select Storage Location",
-                current_path,
-                QFileDialog.ShowDirsOnly
+                self, "Select Storage Location", current_path, QFileDialog.ShowDirsOnly
             )
 
             if folder:
@@ -160,4 +160,3 @@ class RunModeSetupDialog(QDialog):
     def get_storage_location(self) -> str:
         """Get configured storage location."""
         return self.storage_path_input.text()
-

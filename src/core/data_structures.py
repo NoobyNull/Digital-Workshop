@@ -13,6 +13,7 @@ from typing import List, Optional, Tuple, Union, Any
 
 class ModelFormat(Enum):
     """3D model file format types."""
+
     STL = "stl"
     OBJ = "obj"
     THREE_MF = "3mf"
@@ -23,6 +24,7 @@ class ModelFormat(Enum):
 @dataclass
 class Vector3D:
     """3D vector representation for vertices, normals, etc."""
+
     x: float
     y: float
     z: float
@@ -39,6 +41,7 @@ class Vector3D:
 @dataclass
 class Triangle:
     """Triangle representation with normal and three vertices."""
+
     normal: Vector3D
     vertex1: Vector3D
     vertex2: Vector3D
@@ -53,6 +56,7 @@ class Triangle:
 @dataclass
 class ModelStats:
     """Statistical information about a 3D model."""
+
     vertex_count: int
     triangle_count: int
     min_bounds: Vector3D
@@ -66,12 +70,13 @@ class ModelStats:
         return (
             self.max_bounds.x - self.min_bounds.x,
             self.max_bounds.y - self.min_bounds.y,
-            self.max_bounds.z - self.min_bounds.z
+            self.max_bounds.z - self.min_bounds.z,
         )
 
 
 class LoadingState(Enum):
     """Loading states for progressive model loading."""
+
     METADATA_ONLY = "metadata_only"
     LOW_RES_GEOMETRY = "low_res_geometry"
     FULL_GEOMETRY = "full_geometry"
@@ -81,6 +86,7 @@ class LoadingState(Enum):
 @dataclass
 class Model:
     """Complete 3D model representation with geometry and statistics."""
+
     header: str
     triangles: List[Triangle]
     stats: ModelStats
@@ -103,9 +109,9 @@ class Model:
         """Estimate memory usage in bytes."""
         # Note: This is a rough estimate and does not include NumPy array buffers.
         return (
-            len(self.header.encode('utf-8')) +
-            len(self.triangles) * (50 + 4 * 9) +  # Rough estimate for Triangle objects
-            100  # Stats and other data
+            len(self.header.encode("utf-8"))
+            + len(self.triangles) * (50 + 4 * 9)  # Rough estimate for Triangle objects
+            + 100  # Stats and other data
         )
 
     def is_fully_loaded(self) -> bool:

@@ -34,7 +34,7 @@ class ProjectManager:
         base_path: Optional[str] = None,
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
-        structure_type: Optional[str] = None
+        structure_type: Optional[str] = None,
     ) -> str:
         """
         Create a new project.
@@ -55,7 +55,7 @@ class ProjectManager:
                 base_path=base_path,
                 import_tag=import_tag,
                 original_path=original_path,
-                structure_type=structure_type
+                structure_type=structure_type,
             )
             logger.info(f"Created project: {name} ({project_id})")
             return project_id
@@ -77,10 +77,10 @@ class ProjectManager:
         """
         try:
             project = self.db_manager.get_project(project_id)
-            
+
             if not project:
                 raise ValueError(f"Project not found: {project_id}")
-            
+
             self.current_project = project
             logger.info(f"Opened project: {project['name']}")
             return True
@@ -125,7 +125,9 @@ class ProjectManager:
             return None
 
     @log_function_call(logger)
-    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_projects(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """List all projects."""
         try:
             return self.db_manager.list_projects(limit=limit, offset=offset)
@@ -155,9 +157,9 @@ class ProjectManager:
     def delete_project(self, project_id: str) -> bool:
         """Delete project."""
         try:
-            if self.current_project and self.current_project['id'] == project_id:
+            if self.current_project and self.current_project["id"] == project_id:
                 self.close_project()
-            
+
             return self.db_manager.delete_project(project_id)
 
         except Exception as e:
@@ -200,4 +202,3 @@ class ProjectManager:
         except Exception as e:
             logger.error(f"Failed to get file count: {str(e)}")
             return 0
-

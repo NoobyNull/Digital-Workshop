@@ -74,7 +74,7 @@ class VTKResourceTracker:
             "total_created": 0,
             "total_cleaned": 0,
             "total_leaked": 0,
-            "by_type": defaultdict(int)
+            "by_type": defaultdict(int),
         }
 
         # Register default cleanup callbacks
@@ -166,9 +166,14 @@ class VTKResourceTracker:
         except Exception as e:
             self.logger.warning(f"Error registering default cleanup callbacks: {e}")
 
-    def register_resource(self, resource: Any, resource_type: ResourceType,
-                         name: Optional[str] = None, parent_id: Optional[str] = None,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+    def register_resource(
+        self,
+        resource: Any,
+        resource_type: ResourceType,
+        name: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Register a VTK resource for tracking.
 
@@ -199,7 +204,7 @@ class VTKResourceTracker:
                     "metadata": metadata or {},
                     "created_time": self._get_timestamp(),
                     "last_accessed": self._get_timestamp(),
-                    "cleanup_attempts": 0
+                    "cleanup_attempts": 0,
                 }
 
                 # Track relationships
@@ -211,7 +216,9 @@ class VTKResourceTracker:
                 self.stats["total_created"] += 1
                 self.stats["by_type"][resource_type.value] += 1
 
-                self.logger.debug(f"Registered VTK resource: {resource_id} ({resource_type.value})")
+                self.logger.debug(
+                    f"Registered VTK resource: {resource_id} ({resource_type.value})"
+                )
 
                 return resource_id
 
@@ -227,10 +234,15 @@ class VTKResourceTracker:
                 for resource_id, resource_info in self.resources.items():
                     if resource_info["resource"] == resource_ref:
                         # Only log as leaked if it wasn't intentionally cleaned up
-                        if resource_info["state"] not in [ResourceState.CLEANED, ResourceState.DESTROYED]:
+                        if resource_info["state"] not in [
+                            ResourceState.CLEANED,
+                            ResourceState.DESTROYED,
+                        ]:
                             resource_info["state"] = ResourceState.LEAKED
                             self.stats["total_leaked"] += 1
-                            self.logger.debug(f"VTK resource finalized (not leaked): {resource_id}")
+                            self.logger.debug(
+                                f"VTK resource finalized (not leaked): {resource_id}"
+                            )
                         else:
                             # Resource was properly handled, just mark as destroyed
                             resource_info["state"] = ResourceState.DESTROYED
@@ -328,9 +340,7 @@ class VTKResourceTracker:
                 resource = resource_ref() if resource_ref else None
 
                 if not resource:
-                    self.logger.debug(
-                        f"Resource {resource_id} already destroyed"
-                    )
+                    self.logger.debug(f"Resource {resource_id} already destroyed")
                     # Mark as cleaned before unregistering
                     resource_info["state"] = ResourceState.CLEANED
                     self.stats["total_cleaned"] += 1
@@ -379,7 +389,9 @@ class VTKResourceTracker:
         """
         try:
             with self.lock:
-                self.logger.info(f"Cleaning up {len(self.resources)} tracked VTK resources")
+                self.logger.info(
+                    f"Cleaning up {len(self.resources)} tracked VTK resources"
+                )
 
                 success_count = 0
                 error_count = 0
@@ -397,11 +409,13 @@ class VTKResourceTracker:
                         self.logger.debug(f"Error cleaning up {resource_id}: {e}")
                         error_count += 1
 
-                self.logger.info(f"Cleanup completed: {success_count} success, {error_count} errors")
+                self.logger.info(
+                    f"Cleanup completed: {success_count} success, {error_count} errors"
+                )
                 return {
                     "total": len(self.resources),
                     "success": success_count,
-                    "errors": error_count
+                    "errors": error_count,
                 }
 
         except Exception as e:
@@ -431,7 +445,9 @@ class VTKResourceTracker:
             # Fallback: just return all resource IDs
             return list(self.resources.keys())
 
-    def register_cleanup_callback(self, resource_type: ResourceType, callback: Callable) -> None:
+    def register_cleanup_callback(
+        self, resource_type: ResourceType, callback: Callable
+    ) -> None:
         """
         Register a cleanup callback for a specific resource type.
 
@@ -499,14 +515,19 @@ class VTKResourceTracker:
                 leaked = []
                 for resource_id, resource_info in self.resources.items():
                     resource_ref = resource_info["resource"]
-                    if resource_ref() is None and resource_info["state"] != ResourceState.CLEANED:
-                        leaked.append({
-                            "resource_id": resource_id,
-                            "resource_type": resource_info["resource_type"].value,
-                            "name": resource_info["name"],
-                            "created_time": resource_info["created_time"],
-                            "cleanup_attempts": resource_info["cleanup_attempts"]
-                        })
+                    if (
+                        resource_ref() is None
+                        and resource_info["state"] != ResourceState.CLEANED
+                    ):
+                        leaked.append(
+                            {
+                                "resource_id": resource_id,
+                                "resource_type": resource_info["resource_type"].value,
+                                "name": resource_info["name"],
+                                "created_time": resource_info["created_time"],
+                                "cleanup_attempts": resource_info["cleanup_attempts"],
+                            }
+                        )
 
                 return leaked
 
@@ -539,7 +560,7 @@ class VTKResourceTracker:
                     "total_created": self.stats["total_created"],
                     "total_cleaned": self.stats["total_cleaned"],
                     "total_leaked": self.stats["total_leaked"],
-                    "cleanup_callbacks_registered": len(self.cleanup_callbacks)
+                    "cleanup_callbacks_registered": len(self.cleanup_callbacks),
                 }
 
         except Exception as e:
@@ -549,6 +570,7 @@ class VTKResourceTracker:
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     def clear_tracking_data(self) -> None:
@@ -565,7 +587,7 @@ class VTKResourceTracker:
                     "total_created": 0,
                     "total_cleaned": 0,
                     "total_leaked": 0,
-                    "by_type": defaultdict(int)
+                    "by_type": defaultdict(int),
                 }
 
                 self.logger.info("Resource tracking data cleared")
@@ -586,9 +608,13 @@ def get_vtk_resource_tracker() -> VTKResourceTracker:
     return _vtk_resource_tracker
 
 
-def register_vtk_resource(resource: Any, resource_type: ResourceType,
-                         name: Optional[str] = None, parent_id: Optional[str] = None,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+def register_vtk_resource(
+    resource: Any,
+    resource_type: ResourceType,
+    name: Optional[str] = None,
+    parent_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> str:
     """
     Convenience function to register a VTK resource.
 
@@ -602,7 +628,9 @@ def register_vtk_resource(resource: Any, resource_type: ResourceType,
     Returns:
         Unique resource ID
     """
-    return get_vtk_resource_tracker().register_resource(resource, resource_type, name, parent_id, metadata)
+    return get_vtk_resource_tracker().register_resource(
+        resource, resource_type, name, parent_id, metadata
+    )
 
 
 def cleanup_vtk_resource(resource_id: str) -> bool:

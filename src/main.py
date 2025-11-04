@@ -38,8 +38,11 @@ Examples:
   python main.py --log-level INFO          # Start with INFO logging
   python main.py --log-level WARNING       # Start with WARNING logging
   python main.py --log-console             # Enable console logging (default: file only)
+  python main.py --log-human               # Use human-readable log format (default: JSON)
   python main.py --debug --log-console     # DEBUG logging to both file and console
-        """
+  python main.py --debug --log-human       # DEBUG logging with human-readable format
+  python main.py --mem-only                # Development only: Run entire database in memory
+        """,
     )
 
     # Log level arguments
@@ -49,20 +52,34 @@ Examples:
         action="store_const",
         const="DEBUG",
         dest="log_level",
-        help="Enable DEBUG level logging (verbose output)"
+        help="Enable DEBUG level logging (verbose output)",
     )
     log_group.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="INFO",
-        help="Set logging level (default: INFO)"
+        help="Set logging level (default: INFO)",
     )
 
     # Console logging argument
     parser.add_argument(
         "--log-console",
         action="store_true",
-        help="Enable console logging (default: logs go to file only, activities always shown)"
+        help="Enable console logging (default: logs go to file only, activities always shown)",
+    )
+
+    # Human-readable logging argument
+    parser.add_argument(
+        "--log-human",
+        action="store_true",
+        help="Use human-readable log format instead of JSON (default: JSON format)",
+    )
+
+    # Development-only: In-memory database
+    parser.add_argument(
+        "--mem-only",
+        action="store_true",
+        help="[DEVELOPMENT ONLY] Run entire database in memory (data not persisted)",
     )
 
     return parser.parse_args()
@@ -77,13 +94,21 @@ def main():
     log_level = args.log_level if args.log_level is not None else "INFO"
     logger.info(f"Log level set to: {log_level}")
 
+    # Set environment variable for in-memory database if --mem-only flag is used
+    if args.mem_only:
+        os.environ["USE_MEMORY_DB"] = "true"
+        logger.warning(
+            "⚠️  DEVELOPMENT MODE: Running with in-memory database only - data will NOT be persisted!"
+        )
+
     config = ApplicationConfig.get_default()
     config = dataclasses.replace(
         config,
         log_level=log_level,
-        enable_console_logging=args.log_console
+        enable_console_logging=args.log_console,
+        log_human_readable=args.log_human,
     )
-    
+
     exception_handler = ExceptionHandler()
     app = None
 
@@ -107,23 +132,23 @@ def main():
     except KeyboardInterrupt:
         logger.info("Application interrupted by user")
         return 130  # Standard Unix exit code for Ctrl+C
-        
+
     except (OSError, IOError) as e:
         logger.error(f"File system error: {str(e)}")
         exception_handler.handle_startup_error(e)
         return 1
-        
+
     except ImportError as e:
         logger.error(f"Missing dependency: {str(e)}")
         exception_handler.handle_startup_error(e)
         return 1
-        
+
     except Exception as e:
         # Catch all other exceptions
         logger.error(f"Application startup failed: {str(e)}", exc_info=True)
         exception_handler.handle_startup_error(e)
         return 1
-        
+
     finally:
         # Ensure cleanup happens
         if app:

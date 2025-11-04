@@ -37,13 +37,18 @@ class ApplicationConfig:
 
     # Memory Override Settings
     use_manual_memory_override: bool = False
-    manual_cache_limit_percent: int = 80  # Allow cache to use up to 80% of total system RAM
+    manual_cache_limit_percent: int = (
+        80  # Allow cache to use up to 80% of total system RAM
+    )
     min_memory_specification_mb: int = 512
     system_memory_reserve_percent: int = 20
 
     # UI Configuration
-    default_window_width: int = 1200
-    default_window_height: int = 800
+    # Default window size: snapped to middle wide, full height
+    # Calculated as: 50% of screen width, 100% of screen height
+    # These are fallback values; actual defaults are calculated at runtime based on screen size
+    default_window_width: int = 1200  # Will be overridden by screen-based calculation
+    default_window_height: int = 800  # Will be overridden by screen-based calculation
     minimum_window_width: int = 800
     minimum_window_height: int = 600
     maximize_on_startup: bool = False
@@ -58,7 +63,7 @@ class ApplicationConfig:
     ground_visible: bool = True
     ground_color: str = "theme"  # Use theme ground color, fallback to "#999999"
     ground_offset: float = 0.5
-    
+
     # 3D Viewer - Background Gradient Settings
     gradient_top_color: str = "#4A6FA5"  # Light sky blue
     gradient_bottom_color: str = "#1E3A5F"  # Dark ground blue
@@ -88,11 +93,14 @@ class ApplicationConfig:
     enable_file_logging: bool = True
     enable_console_logging: bool = False  # Console logging disabled by default
     log_retention_days: int = 30
+    log_human_readable: bool = False  # Use human-readable format instead of JSON
 
     # Thumbnail Generation Configuration
-    thumbnail_bg_color: str = "theme"  # Use theme thumbnail background, fallback to "#F5F5F5"
+    thumbnail_bg_color: str = "#404658"  # Professional dark teal-gray background color
     thumbnail_bg_image: Optional[str] = None  # Path to custom background image
-    thumbnail_material: Optional[str] = None  # Wood species name for thumbnail material (e.g., 'Oak', 'Walnut')
+    thumbnail_material: Optional[str] = (
+        None  # Wood species name for thumbnail material (e.g., 'Oak', 'Walnut')
+    )
 
     def get_effective_memory_limit_mb(
         self,
@@ -122,7 +130,9 @@ class ApplicationConfig:
         if self.use_manual_memory_override:
             # Calculate cache limit as percentage of total system RAM
             if total_system_memory_mb is not None:
-                return int(total_system_memory_mb * (self.manual_cache_limit_percent / 100))
+                return int(
+                    total_system_memory_mb * (self.manual_cache_limit_percent / 100)
+                )
 
         # Use provided values or defaults
         if available_memory_mb is None:
@@ -137,42 +147,87 @@ class ApplicationConfig:
         if total_memory_gb >= 64:
             # High-memory systems: Use up to 60% of available memory, max 16GB
             calculated_limit = min(
-                int(available_memory_mb * 0.6),
-                16384  # 16GB max for app
+                int(available_memory_mb * 0.6), 16384  # 16GB max for app
             )
         elif total_memory_gb >= 32:
             # Medium-high memory systems: Use up to 50% of available memory, max 8GB
             calculated_limit = min(
-                int(available_memory_mb * 0.5),
-                8192   # 8GB max for app
+                int(available_memory_mb * 0.5), 8192  # 8GB max for app
             )
         elif total_memory_gb >= 16:
             # Medium memory systems: Use up to 40% of available memory, max 4GB
             calculated_limit = min(
-                int(available_memory_mb * 0.4),
-                4096   # 4GB max for app
+                int(available_memory_mb * 0.4), 4096  # 4GB max for app
             )
         else:
             # Low memory systems: Use conservative approach
             fifty_percent_mb = available_memory_mb // 2
             hard_max_mb = int(
-                total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
+                total_system_memory_mb
+                * (100 - self.system_memory_reserve_percent)
+                / 100
             )
             calculated_limit = max(
-                self.min_memory_specification_mb,
-                min(fifty_percent_mb, hard_max_mb)
+                self.min_memory_specification_mb, min(fifty_percent_mb, hard_max_mb)
             )
 
         return calculated_limit
+
+    @staticmethod
+    def calculate_default_window_size() -> tuple[int, int]:
+        """
+        Calculate default window size based on screen geometry.
+
+        Default is "snapped to middle wide, full height":
+        - Width: 50% of screen width
+        - Height: 100% of screen height
+
+        Returns:
+            Tuple of (width, height) in pixels
+        """
+        try:
+            from PySide6.QtGui import QGuiApplication
+
+            # Get the primary screen
+            screen = QGuiApplication.primaryScreen()
+            if screen:
+                screen_geometry = screen.geometry()
+                screen_width = screen_geometry.width()
+                screen_height = screen_geometry.height()
+
+                # Calculate: 50% width, 100% height
+                default_width = int(screen_width * 0.5)
+                default_height = screen_height
+
+                return (default_width, default_height)
+        except Exception:
+            pass
+
+        # Fallback to hardcoded defaults if calculation fails
+        return (1200, 800)
 
     @classmethod
     def get_default(cls) -> "ApplicationConfig":
         """Get the default application configuration."""
         config = cls()
-        
+
+        # Calculate default window size based on screen geometry
+        try:
+            default_width, default_height = cls.calculate_default_window_size()
+            config.default_window_width = default_width
+            config.default_window_height = default_height
+        except Exception:
+            # Keep the hardcoded defaults if calculation fails
+            pass
+
         # Populate with dynamic version information
         try:
-            from .version_manager import get_display_version, get_organization_name, get_app_name
+            from .version_manager import (
+                get_display_version,
+                get_organization_name,
+                get_app_name,
+            )
+
             config.version = get_display_version()
             config.organization_name = get_organization_name()
             config.name = get_app_name()
@@ -180,7 +235,7 @@ class ApplicationConfig:
         except ImportError:
             # Fallback to defaults if version manager not available
             pass
-            
+
         return config
 
     def get_full_version_string(self) -> str:

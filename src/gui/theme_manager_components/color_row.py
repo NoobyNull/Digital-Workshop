@@ -7,9 +7,7 @@ Provides a row with label, color preview, pick button, and reset button.
 from typing import Callable, Optional
 
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QColorDialog
-)
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QColorDialog
 
 from src.gui.theme import ThemeManager, COLORS, SPACING_8, hex_to_rgb
 from .theme_manager_helpers import contrasting_text_color, pretty_label
@@ -85,7 +83,9 @@ class ColorRow(QWidget):
         except Exception:
             initial = QColor(255, 0, 255)  # fallback visually noticeable
 
-        color = QColorDialog.getColor(initial, self, f"Select color for {self.var_name}")
+        color = QColorDialog.getColor(
+            initial, self, f"Select color for {self.var_name}"
+        )
         if color.isValid():
             new_hex = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
             self._apply_button_style(new_hex)
@@ -95,4 +95,3 @@ class ColorRow(QWidget):
         """Reset color to default."""
         self._apply_button_style(self._default_hex)
         self._on_changed(self.var_name, self._default_hex)
-

@@ -7,8 +7,15 @@ Shows detected errors and offers fixing options:
 """
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QGroupBox, QRadioButton, QButtonGroup
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QGroupBox,
+    QRadioButton,
+    QButtonGroup,
 )
 from PySide6.QtCore import Qt
 from typing import List, Optional
@@ -69,7 +76,7 @@ class ModelErrorDialog(QDialog):
 
         # Buttons
         button_layout = QHBoxLayout()
-        
+
         fix_btn = QPushButton("Fix & Continue")
         fix_btn.clicked.connect(self._on_fix_clicked)
         button_layout.addWidget(fix_btn)
@@ -87,21 +94,19 @@ class ModelErrorDialog(QDialog):
             return "No errors detected."
 
         text = f"Found {len(self.errors)} error type(s):\n\n"
-        
+
         for error in self.errors:
-            severity_icon = {
-                "critical": "🔴",
-                "warning": "🟡",
-                "info": "🔵"
-            }.get(error.severity, "⚪")
-            
+            severity_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(
+                error.severity, "⚪"
+            )
+
             text += f"{severity_icon} {error.error_type.upper()}\n"
             text += f"   {error.description}\n"
-            
+
             if error.affected_triangles:
                 count = len(error.affected_triangles)
                 text += f"   Affected triangles: {count}\n"
-            
+
             text += "\n"
 
         return text
@@ -115,4 +120,3 @@ class ModelErrorDialog(QDialog):
     def get_fix_mode(self) -> str:
         """Get selected fix mode."""
         return self.fix_mode or "preview"
-

@@ -316,7 +316,6 @@ class ProfessionalCostCalculator:
             pricing_strategy=self.pricing_strategy.value,
         )
 
-
     def set_hourly_rates(
         self,
         labor_rate: float = None,

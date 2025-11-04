@@ -37,7 +37,12 @@ class ThemeApplicationError(Exception):
     and rollback status.
     """
 
-    def __init__(self, message: str, failed_components: List[str] = None, rollback_successful: bool = False):
+    def __init__(
+        self,
+        message: str,
+        failed_components: List[str] = None,
+        rollback_successful: bool = False,
+    ):
         """
         Initialize theme application error.
 
@@ -109,7 +114,9 @@ class ThemeApplication(QObject):
         # Qt-material availability
         self._qt_material_available = self._check_qt_material_availability()
 
-        logger.info(f"ThemeApplication initialized: qt_material={self._qt_material_available}")
+        logger.info(
+            f"ThemeApplication initialized: qt_material={self._qt_material_available}"
+        )
 
     def apply_theme(self, theme: str, variant: str = "blue") -> bool:
         """
@@ -153,7 +160,9 @@ class ThemeApplication(QObject):
             if success:
                 self._current_theme = theme
                 self._current_variant = variant
-                self.application_completed.emit(True, f"Theme {theme}/{variant} applied successfully")
+                self.application_completed.emit(
+                    True, f"Theme {theme}/{variant} applied successfully"
+                )
                 logger.info(f"Theme {theme}/{variant} applied in {elapsed:.2f}ms")
                 return True
             else:
@@ -173,7 +182,9 @@ class ThemeApplication(QObject):
                 self._attempt_rollback()
 
             self.application_failed.emit(str(e), "theme_application")
-            self.application_completed.emit(False, f"Theme application failed: {str(e)}")
+            self.application_completed.emit(
+                False, f"Theme application failed: {str(e)}"
+            )
             return False
 
         finally:
@@ -220,8 +231,14 @@ class ThemeApplication(QObject):
             Dictionary containing application metrics
         """
         with QMutexLocker(self._application_mutex):
-            total_applications = self._successful_applications + self._failed_applications
-            success_rate = self._successful_applications / total_applications if total_applications > 0 else 0
+            total_applications = (
+                self._successful_applications + self._failed_applications
+            )
+            success_rate = (
+                self._successful_applications / total_applications
+                if total_applications > 0
+                else 0
+            )
 
             return {
                 "total_applications": total_applications,
@@ -230,13 +247,15 @@ class ThemeApplication(QObject):
                 "success_rate": success_rate,
                 "total_application_time_ms": self._total_application_time,
                 "average_application_time_ms": (
-                    self._total_application_time / total_applications if total_applications > 0 else 0
+                    self._total_application_time / total_applications
+                    if total_applications > 0
+                    else 0
                 ),
                 "current_theme": self._current_theme,
                 "current_variant": self._current_variant,
                 "qt_material_available": self._qt_material_available,
                 "rollback_enabled": self._rollback_enabled,
-                "application_in_progress": self._application_in_progress
+                "application_in_progress": self._application_in_progress,
             }
 
     def enable_rollback(self) -> None:
@@ -309,7 +328,9 @@ class ThemeApplication(QObject):
             if not qt_success:
                 fallback_success = self._apply_fallback_theme(theme, variant)
                 if not fallback_success:
-                    logger.error("Both Qt-material and fallback theme application failed")
+                    logger.error(
+                        "Both Qt-material and fallback theme application failed"
+                    )
                     return False
 
             # Stage 4: Widget-specific updates
@@ -384,11 +405,14 @@ class ThemeApplication(QObject):
             if palette_name == "dark":
                 try:
                     from qdarkstyle.palette.dark import DarkPalette
-                    stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6', palette=DarkPalette)
+
+                    stylesheet = qdarkstyle.load_stylesheet(
+                        qt_api="pyside6", palette=DarkPalette
+                    )
                 except ImportError:
-                    stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6")
             else:
-                stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
+                stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6")
 
             app.setStyleSheet(stylesheet)
 
@@ -406,13 +430,19 @@ class ThemeApplication(QObject):
         """Detect system theme preference."""
         try:
             import platform
+
             system = platform.system()
 
             if system == "Windows":
                 try:
                     import winreg
-                    registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-                    registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
+
+                    registry_path = (
+                        r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+                    )
+                    registry_key = winreg.OpenKey(
+                        winreg.HKEY_CURRENT_USER, registry_path
+                    )
                     value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
                     winreg.CloseKey(registry_key)
                     return "light" if value == 1 else "dark"
@@ -421,11 +451,12 @@ class ThemeApplication(QObject):
             elif system == "Darwin":  # macOS
                 try:
                     import subprocess
+
                     result = subprocess.run(
                         ["defaults", "read", "-g", "AppleInterfaceStyle"],
                         capture_output=True,
                         text=True,
-                        timeout=1
+                        timeout=1,
                     )
                     return "dark" if "Dark" in result.stdout else "light"
                 except Exception:
@@ -931,13 +962,17 @@ class ThemeApplication(QObject):
             from .theme_registry import ThemeRegistry
 
             registry = ThemeRegistry()
-            successful, failed = registry.update_all_themes({
-                "theme_name": theme,
-                "theme_variant": variant,
-                "custom_colors": self._get_theme_colors(theme, variant)
-            })
+            successful, failed = registry.update_all_themes(
+                {
+                    "theme_name": theme,
+                    "theme_variant": variant,
+                    "custom_colors": self._get_theme_colors(theme, variant),
+                }
+            )
 
-            logger.info(f"Widget theme updates: {successful} successful, {failed} failed")
+            logger.info(
+                f"Widget theme updates: {successful} successful, {failed} failed"
+            )
             return True  # Return True even if some widgets failed
 
         except Exception as e:
@@ -1049,13 +1084,13 @@ class ThemeApplication(QObject):
         """
         # Map variants to hue ranges
         hue_map = {
-            "blue": 220,    # Blue range
-            "amber": 45,    # Yellow/Orange range
-            "cyan": 180,    # Cyan range
-            "red": 0,       # Red range
-            "green": 120,   # Green range
+            "blue": 220,  # Blue range
+            "amber": 45,  # Yellow/Orange range
+            "cyan": 180,  # Cyan range
+            "red": 0,  # Red range
+            "green": 120,  # Green range
             "purple": 270,  # Purple range
-            "teal": 180     # Teal range (same as cyan)
+            "teal": 180,  # Teal range (same as cyan)
         }
 
         base_hue = hue_map.get(variant, 220)  # Default to blue
@@ -1123,8 +1158,8 @@ class ThemeApplication(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and lighten
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -1137,8 +1172,8 @@ class ThemeApplication(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and darken
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -1155,6 +1190,7 @@ class ThemeApplication(QObject):
         """
         try:
             import qdarkstyle
+
             return True
         except ImportError:
             return False
@@ -1195,7 +1231,7 @@ class ThemeApplication(QObject):
                 self._rollback_data = {
                     "stylesheet": app.styleSheet(),
                     "theme": self._current_theme,
-                    "variant": self._current_variant
+                    "variant": self._current_variant,
                 }
                 logger.debug("Rollback data stored")
         except Exception as e:

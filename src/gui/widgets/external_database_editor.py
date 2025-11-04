@@ -7,9 +7,21 @@ with real-time calculations and validation.
 
 from typing import Optional, List
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QLineEdit, QComboBox, QLabel, QMessageBox, QFileDialog,
-    QSpinBox, QDoubleSpinBox, QDialogButtonBox, QTabWidget
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QPushButton,
+    QLineEdit,
+    QComboBox,
+    QLabel,
+    QMessageBox,
+    QFileDialog,
+    QSpinBox,
+    QDoubleSpinBox,
+    QDialogButtonBox,
+    QTabWidget,
 )
 from PySide6.QtCore import Qt
 from src.core.logging_config import get_logger
@@ -94,9 +106,9 @@ class ExternalDatabaseEditor(QDialog):
         # Tools table
         self.tools_table = QTableWidget()
         self.tools_table.setColumnCount(7)
-        self.tools_table.setHorizontalHeaderLabels([
-            "GUID", "Name", "Type", "Diameter", "Vendor", "Provider", "Actions"
-        ])
+        self.tools_table.setHorizontalHeaderLabels(
+            ["GUID", "Name", "Type", "Diameter", "Vendor", "Provider", "Actions"]
+        )
         self.tools_table.setColumnWidth(0, 150)
         self.tools_table.setColumnWidth(1, 150)
         self.tools_table.setColumnWidth(2, 100)
@@ -125,9 +137,9 @@ class ExternalDatabaseEditor(QDialog):
         # Providers table
         self.providers_table = QTableWidget()
         self.providers_table.setColumnCount(4)
-        self.providers_table.setHorizontalHeaderLabels([
-            "Provider Name", "Tool Count", "Last Updated", "Source"
-        ])
+        self.providers_table.setHorizontalHeaderLabels(
+            ["Provider Name", "Tool Count", "Last Updated", "Source"]
+        )
         self.providers_table.setColumnWidth(0, 200)
         self.providers_table.setColumnWidth(1, 100)
         self.providers_table.setColumnWidth(2, 150)
@@ -154,7 +166,9 @@ class ExternalDatabaseEditor(QDialog):
 
         params_layout.addWidget(QLabel("Tool Type:"))
         self.search_type = QComboBox()
-        self.search_type.addItems(["All", "End Mill", "Bit", "V-Bit", "Ball End Mill", "Drill"])
+        self.search_type.addItems(
+            ["All", "End Mill", "Bit", "V-Bit", "Ball End Mill", "Drill"]
+        )
         params_layout.addWidget(self.search_type)
 
         params_layout.addWidget(QLabel("Min Diameter:"))
@@ -180,9 +194,9 @@ class ExternalDatabaseEditor(QDialog):
         # Results table
         self.search_results_table = QTableWidget()
         self.search_results_table.setColumnCount(6)
-        self.search_results_table.setHorizontalHeaderLabels([
-            "Name", "Type", "Diameter", "Vendor", "Provider", "Actions"
-        ])
+        self.search_results_table.setHorizontalHeaderLabels(
+            ["Name", "Type", "Diameter", "Vendor", "Provider", "Actions"]
+        )
         layout.addWidget(self.search_results_table)
 
         widget.setLayout(layout)
@@ -192,17 +206,33 @@ class ExternalDatabaseEditor(QDialog):
         """Refresh the tools table with current data."""
         try:
             search_text = self.tools_search.text()
-            tools = self.tool_repo.search_tools(search_text) if search_text else self.tool_repo.get_all_tools()
+            tools = (
+                self.tool_repo.search_tools(search_text)
+                if search_text
+                else self.tool_repo.get_all_tools()
+            )
 
             self.tools_table.setRowCount(len(tools))
 
             for row, tool in enumerate(tools):
-                self.tools_table.setItem(row, 0, QTableWidgetItem(tool.get('guid', 'N/A')))
-                self.tools_table.setItem(row, 1, QTableWidgetItem(tool.get('description', 'N/A')))
-                self.tools_table.setItem(row, 2, QTableWidgetItem(tool.get('type', 'N/A')))
-                self.tools_table.setItem(row, 3, QTableWidgetItem(str(tool.get('diameter', 'N/A'))))
-                self.tools_table.setItem(row, 4, QTableWidgetItem(tool.get('vendor', 'N/A')))
-                self.tools_table.setItem(row, 5, QTableWidgetItem(tool.get('provider', 'N/A')))
+                self.tools_table.setItem(
+                    row, 0, QTableWidgetItem(tool.get("guid", "N/A"))
+                )
+                self.tools_table.setItem(
+                    row, 1, QTableWidgetItem(tool.get("description", "N/A"))
+                )
+                self.tools_table.setItem(
+                    row, 2, QTableWidgetItem(tool.get("type", "N/A"))
+                )
+                self.tools_table.setItem(
+                    row, 3, QTableWidgetItem(str(tool.get("diameter", "N/A")))
+                )
+                self.tools_table.setItem(
+                    row, 4, QTableWidgetItem(tool.get("vendor", "N/A"))
+                )
+                self.tools_table.setItem(
+                    row, 5, QTableWidgetItem(tool.get("provider", "N/A"))
+                )
 
                 edit_btn = QPushButton("Edit")
                 edit_btn.clicked.connect(lambda checked, t=tool: self._edit_tool(t))
@@ -222,11 +252,19 @@ class ExternalDatabaseEditor(QDialog):
             self.providers_table.setRowCount(len(providers))
 
             for row, provider in enumerate(providers):
-                self.providers_table.setItem(row, 0, QTableWidgetItem(provider.get('name', 'N/A')))
-                tool_count = self.tool_repo.get_tools_by_provider(provider.get('id', 0))
-                self.providers_table.setItem(row, 1, QTableWidgetItem(str(len(tool_count))))
-                self.providers_table.setItem(row, 2, QTableWidgetItem(provider.get('updated_at', 'N/A')))
-                self.providers_table.setItem(row, 3, QTableWidgetItem(provider.get('source', 'N/A')))
+                self.providers_table.setItem(
+                    row, 0, QTableWidgetItem(provider.get("name", "N/A"))
+                )
+                tool_count = self.tool_repo.get_tools_by_provider(provider.get("id", 0))
+                self.providers_table.setItem(
+                    row, 1, QTableWidgetItem(str(len(tool_count)))
+                )
+                self.providers_table.setItem(
+                    row, 2, QTableWidgetItem(provider.get("updated_at", "N/A"))
+                )
+                self.providers_table.setItem(
+                    row, 3, QTableWidgetItem(provider.get("source", "N/A"))
+                )
 
             self.logger.info(f"Loaded {len(providers)} providers")
 
@@ -244,19 +282,30 @@ class ExternalDatabaseEditor(QDialog):
             # Query database with filters
             all_tools = self.tool_repo.get_all_tools()
             filtered = [
-                t for t in all_tools
-                if (tool_type == "All" or t.get('type') == tool_type) and
-                   (min_dia <= float(t.get('diameter', 0)) <= max_dia)
+                t
+                for t in all_tools
+                if (tool_type == "All" or t.get("type") == tool_type)
+                and (min_dia <= float(t.get("diameter", 0)) <= max_dia)
             ]
 
             self.search_results_table.setRowCount(len(filtered))
 
             for row, tool in enumerate(filtered):
-                self.search_results_table.setItem(row, 0, QTableWidgetItem(tool.get('description', 'N/A')))
-                self.search_results_table.setItem(row, 1, QTableWidgetItem(tool.get('type', 'N/A')))
-                self.search_results_table.setItem(row, 2, QTableWidgetItem(str(tool.get('diameter', 'N/A'))))
-                self.search_results_table.setItem(row, 3, QTableWidgetItem(tool.get('vendor', 'N/A')))
-                self.search_results_table.setItem(row, 4, QTableWidgetItem(tool.get('provider', 'N/A')))
+                self.search_results_table.setItem(
+                    row, 0, QTableWidgetItem(tool.get("description", "N/A"))
+                )
+                self.search_results_table.setItem(
+                    row, 1, QTableWidgetItem(tool.get("type", "N/A"))
+                )
+                self.search_results_table.setItem(
+                    row, 2, QTableWidgetItem(str(tool.get("diameter", "N/A")))
+                )
+                self.search_results_table.setItem(
+                    row, 3, QTableWidgetItem(tool.get("vendor", "N/A"))
+                )
+                self.search_results_table.setItem(
+                    row, 4, QTableWidgetItem(tool.get("provider", "N/A"))
+                )
 
                 use_btn = QPushButton("Use")
                 use_btn.clicked.connect(lambda checked, t=tool: self._use_tool(t))
@@ -271,12 +320,16 @@ class ExternalDatabaseEditor(QDialog):
     def _edit_tool(self, tool):
         """Edit a tool's properties."""
         self.logger.debug(f"Editing tool: {tool.get('guid')}")
-        QMessageBox.information(self, "Edit Tool", f"Edit functionality for: {tool.get('description')}")
+        QMessageBox.information(
+            self, "Edit Tool", f"Edit functionality for: {tool.get('description')}"
+        )
 
     def _use_tool(self, tool):
         """Use selected tool (typically for feeding back to Feeds and Speeds)."""
         self.logger.debug(f"Using tool: {tool.get('guid')}")
-        QMessageBox.information(self, "Tool Selected", f"Selected: {tool.get('description')}")
+        QMessageBox.information(
+            self, "Tool Selected", f"Selected: {tool.get('description')}"
+        )
         self.accept()
 
     def _export_database(self):
@@ -288,7 +341,9 @@ class ExternalDatabaseEditor(QDialog):
 
             if file_path:
                 self.logger.info(f"Exporting database to {file_path}")
-                QMessageBox.information(self, "Export", "Database exported successfully")
+                QMessageBox.information(
+                    self, "Export", "Database exported successfully"
+                )
 
         except Exception as e:
             self.logger.error(f"Export failed: {e}")
@@ -298,12 +353,17 @@ class ExternalDatabaseEditor(QDialog):
         """Import database from external file."""
         try:
             file_path, _ = QFileDialog.getOpenFileName(
-                self, "Import Database", "", "Tool Database (*.csv *.json *.db *.tdb *.vtdb)"
+                self,
+                "Import Database",
+                "",
+                "Tool Database (*.csv *.json *.db *.tdb *.vtdb)",
             )
 
             if file_path:
                 self.logger.info(f"Importing database from {file_path}")
-                QMessageBox.information(self, "Import", "Database imported successfully")
+                QMessageBox.information(
+                    self, "Import", "Database imported successfully"
+                )
                 self._refresh_tools_table()
 
         except Exception as e:

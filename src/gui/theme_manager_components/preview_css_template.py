@@ -246,4 +246,3 @@ QLabel {{
     color: {{label_text}};
 }}
 """
-

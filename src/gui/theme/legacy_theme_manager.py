@@ -43,8 +43,8 @@ class LegacyThemeManager(QObject):
 
     # Signals for backward compatibility
     theme_changed = Signal(str, str)  # theme, variant
-    colors_updated = Signal(dict)     # color_dict
-    error_occurred = Signal(str)      # error_message
+    colors_updated = Signal(dict)  # color_dict
+    error_occurred = Signal(str)  # error_message
 
     def __init__(self):
         """Initialize legacy theme manager with backward compatibility."""
@@ -67,14 +67,14 @@ class LegacyThemeManager(QObject):
         logger.info("LegacyThemeManager initialized with backward compatibility")
 
     @classmethod
-    def instance(cls) -> 'LegacyThemeManager':
+    def instance(cls) -> "LegacyThemeManager":
         """
         Get singleton instance (backward compatibility method).
 
         Returns:
             LegacyThemeManager: Singleton instance
         """
-        if not hasattr(cls, '_instance') or cls._instance is None:
+        if not hasattr(cls, "_instance") or cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
@@ -95,7 +95,9 @@ class LegacyThemeManager(QObject):
             if variant is None:
                 variant = "blue"
 
-            self._log_migration_warning("apply_theme", "UnifiedThemeManager.apply_theme")
+            self._log_migration_warning(
+                "apply_theme", "UnifiedThemeManager.apply_theme"
+            )
 
             try:
                 success = self._unified_manager.apply_theme(theme_name, variant)
@@ -146,7 +148,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("get_theme_colors", "UnifiedThemeManager.get_theme_colors")
+            self._log_migration_warning(
+                "get_theme_colors", "UnifiedThemeManager.get_theme_colors"
+            )
 
             try:
                 return self._unified_manager.get_theme_colors()
@@ -164,7 +168,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("save_settings", "UnifiedThemeManager.save_settings")
+            self._log_migration_warning(
+                "save_settings", "UnifiedThemeManager.save_settings"
+            )
 
             try:
                 return self._unified_manager.save_settings()
@@ -182,7 +188,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("load_settings", "UnifiedThemeManager.load_settings")
+            self._log_migration_warning(
+                "load_settings", "UnifiedThemeManager.load_settings"
+            )
 
             try:
                 return self._unified_manager.load_settings()
@@ -200,7 +208,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("get_current_theme", "UnifiedThemeManager.get_current_theme")
+            self._log_migration_warning(
+                "get_current_theme", "UnifiedThemeManager.get_current_theme"
+            )
 
             try:
                 return self._unified_manager.get_current_theme()
@@ -218,7 +228,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("reset_to_default", "UnifiedThemeManager.reset_to_default")
+            self._log_migration_warning(
+                "reset_to_default", "UnifiedThemeManager.reset_to_default"
+            )
 
             try:
                 return self._unified_manager.reset_to_default()
@@ -239,7 +251,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("export_theme", "UnifiedThemeManager.export_theme")
+            self._log_migration_warning(
+                "export_theme", "UnifiedThemeManager.export_theme"
+            )
 
             try:
                 return self._unified_manager.export_theme(file_path)
@@ -260,7 +274,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("import_theme", "UnifiedThemeManager.import_theme")
+            self._log_migration_warning(
+                "import_theme", "UnifiedThemeManager.import_theme"
+            )
 
             try:
                 return self._unified_manager.import_theme(file_path)
@@ -282,7 +298,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("register_widget", "UnifiedThemeManager.register_widget")
+            self._log_migration_warning(
+                "register_widget", "UnifiedThemeManager.register_widget"
+            )
 
             try:
                 return self._unified_manager.register_widget(widget, widget_name)
@@ -303,7 +321,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("unregister_widget", "UnifiedThemeManager.unregister_widget")
+            self._log_migration_warning(
+                "unregister_widget", "UnifiedThemeManager.unregister_widget"
+            )
 
             try:
                 return self._unified_manager.unregister_widget(widget_name)
@@ -321,17 +341,19 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("get_system_status", "UnifiedThemeManager.get_system_status")
+            self._log_migration_warning(
+                "get_system_status", "UnifiedThemeManager.get_system_status"
+            )
 
             try:
                 status = self._unified_manager.get_system_status()
 
                 # Add legacy compatibility information
-                status['legacy_compatibility'] = {
-                    'enabled': True,
-                    'operation_count': self._operation_count,
-                    'deprecated_operations': self._deprecated_operations,
-                    'migration_warnings_shown': len(self._migration_warnings_shown)
+                status["legacy_compatibility"] = {
+                    "enabled": True,
+                    "operation_count": self._operation_count,
+                    "deprecated_operations": self._deprecated_operations,
+                    "migration_warnings_shown": len(self._migration_warnings_shown),
                 }
 
                 return status
@@ -339,12 +361,12 @@ class LegacyThemeManager(QObject):
             except Exception as e:
                 logger.error(f"Legacy get_system_status failed: {e}")
                 return {
-                    'error': str(e),
-                    'legacy_compatibility': {
-                        'enabled': True,
-                        'operation_count': self._operation_count,
-                        'deprecated_operations': self._deprecated_operations
-                    }
+                    "error": str(e),
+                    "legacy_compatibility": {
+                        "enabled": True,
+                        "operation_count": self._operation_count,
+                        "deprecated_operations": self._deprecated_operations,
+                    },
                 }
 
     def cleanup_resources(self) -> None:
@@ -354,7 +376,9 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("cleanup_resources", "UnifiedThemeManager.cleanup_resources")
+            self._log_migration_warning(
+                "cleanup_resources", "UnifiedThemeManager.cleanup_resources"
+            )
 
             try:
                 self._unified_manager.cleanup_resources()
@@ -370,7 +394,9 @@ class LegacyThemeManager(QObject):
                 lambda success, msg: None  # Handle success/failure
             )
             self._unified_manager.theme_validation_failed.connect(
-                lambda msg, errors: self.error_occurred.emit(f"Validation failed: {msg}")
+                lambda msg, errors: self.error_occurred.emit(
+                    f"Validation failed: {msg}"
+                )
             )
 
             logger.debug("Legacy theme manager signals connected")
@@ -405,18 +431,18 @@ class LegacyThemeManager(QObject):
         """
         with self._lock:
             return {
-                'legacy_operations': self._operation_count,
-                'deprecated_operations': self._deprecated_operations,
-                'migration_warnings_shown': len(self._migration_warnings_shown),
-                'warnings_list': list(self._migration_warnings_shown),
-                'recommendations': [
+                "legacy_operations": self._operation_count,
+                "deprecated_operations": self._deprecated_operations,
+                "migration_warnings_shown": len(self._migration_warnings_shown),
+                "warnings_list": list(self._migration_warnings_shown),
+                "recommendations": [
                     "Migrate to UnifiedThemeManager for better performance",
                     "Use qt-material color variables instead of hardcoded colors",
                     "Consider using theme signals for dynamic updates",
-                    "Review setStyleSheet() calls for qt-material compatibility"
+                    "Review setStyleSheet() calls for qt-material compatibility",
                 ],
-                'compatibility_status': 'active',
-                'estimated_migration_effort': self._estimate_migration_effort()
+                "compatibility_status": "active",
+                "estimated_migration_effort": self._estimate_migration_effort(),
             }
 
     def _estimate_migration_effort(self) -> str:
@@ -427,11 +453,11 @@ class LegacyThemeManager(QObject):
             String describing migration effort level
         """
         if self._deprecated_operations > 100:
-            return 'high'
+            return "high"
         elif self._deprecated_operations > 20:
-            return 'medium'
+            return "medium"
         else:
-            return 'low'
+            return "low"
 
 
 # Create singleton instance

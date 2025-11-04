@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class IFTDefinition:
     """Definition of an Interaction File Type."""
+
     name: str
     extension: str
     description: str
@@ -34,37 +35,37 @@ class IFTService:
             name="STL Model",
             extension=".stl",
             description="Stereolithography 3D model file",
-            color="#FF6B6B"
+            color="#FF6B6B",
         ),
         "obj": IFTDefinition(
             name="OBJ Model",
             extension=".obj",
             description="Wavefront OBJ 3D model file",
-            color="#4ECDC4"
+            color="#4ECDC4",
         ),
         "step": IFTDefinition(
             name="STEP Model",
             extension=".step",
             description="STEP 3D model file",
-            color="#45B7D1"
+            color="#45B7D1",
         ),
         "pdf": IFTDefinition(
             name="PDF Document",
             extension=".pdf",
             description="Portable Document Format",
-            color="#FFA07A"
+            color="#FFA07A",
         ),
         "png": IFTDefinition(
             name="PNG Image",
             extension=".png",
             description="Portable Network Graphics image",
-            color="#98D8C8"
+            color="#98D8C8",
         ),
         "jpg": IFTDefinition(
             name="JPEG Image",
             extension=".jpg",
             description="JPEG image file",
-            color="#F7DC6F"
+            color="#F7DC6F",
         ),
     }
 
@@ -82,7 +83,7 @@ class IFTService:
             # Check if IFTs are stored in settings
             self.settings.beginGroup("IFT")
             keys = self.settings.childKeys()
-            
+
             if keys:
                 # Load from settings
                 for key in keys:
@@ -93,7 +94,7 @@ class IFTService:
                 # Use defaults and save
                 self.ifts = self.DEFAULT_IFTS.copy()
                 self._save_ifts()
-            
+
             self.settings.endGroup()
             logger.info(f"Loaded {len(self.ifts)} IFT definitions")
 
@@ -107,18 +108,18 @@ class IFTService:
         try:
             self.settings.beginGroup("IFT")
             self.settings.remove("")  # Clear existing
-            
+
             for key, ift in self.ifts.items():
                 data = {
-                    'name': ift.name,
-                    'extension': ift.extension,
-                    'description': ift.description,
-                    'icon': ift.icon,
-                    'color': ift.color,
-                    'enabled': ift.enabled
+                    "name": ift.name,
+                    "extension": ift.extension,
+                    "description": ift.description,
+                    "icon": ift.icon,
+                    "color": ift.color,
+                    "enabled": ift.enabled,
                 }
                 self.settings.setValue(key, data)
-            
+
             self.settings.endGroup()
             logger.info(f"Saved {len(self.ifts)} IFT definitions")
 
@@ -207,7 +208,7 @@ class IFTService:
         """Validate IFT definition."""
         if not ift.name or not ift.extension:
             return False
-        if not ift.extension.startswith('.'):
+        if not ift.extension.startswith("."):
             return False
         return True
 
@@ -218,4 +219,3 @@ class IFTService:
     def get_enabled_ift_count(self) -> int:
         """Get number of enabled IFT definitions."""
         return sum(1 for ift in self.ifts.values() if ift.enabled)
-

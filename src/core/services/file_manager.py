@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class LinkType(Enum):
     """File linking types."""
+
     HARD = "hard"
     SYMBOLIC = "symbolic"
     COPY = "copy"
@@ -26,6 +27,7 @@ class LinkType(Enum):
 
 class FileStatus(Enum):
     """File status values."""
+
     PENDING = "pending"
     IMPORTING = "importing"
     IMPORTED = "imported"
@@ -57,7 +59,7 @@ class FileManager:
         file_hash: Optional[str] = None,
         status: str = "pending",
         link_type: Optional[str] = None,
-        original_path: Optional[str] = None
+        original_path: Optional[str] = None,
     ) -> int:
         """
         Add file to project.
@@ -84,7 +86,7 @@ class FileManager:
                 file_hash=file_hash,
                 status=status,
                 link_type=link_type,
-                original_path=original_path
+                original_path=original_path,
             )
 
         except Exception as e:
@@ -147,10 +149,7 @@ class FileManager:
 
     @log_function_call(logger)
     def link_file(
-        self,
-        source_path: str,
-        dest_path: str,
-        link_type: str = "hard"
+        self, source_path: str, dest_path: str, link_type: str = "hard"
     ) -> bool:
         """
         Link file with fallback logic.
@@ -199,7 +198,9 @@ class FileManager:
             return False
 
     @log_function_call(logger)
-    def find_duplicate(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash."""
         try:
             return self.db_manager.find_duplicate_by_hash(project_id, file_hash)
@@ -215,4 +216,3 @@ class FileManager:
         except Exception as e:
             logger.error(f"Failed to get file count: {str(e)}")
             return 0
-

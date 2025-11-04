@@ -11,11 +11,10 @@ from .performance_tracker import PerformanceTracker
 from .viewer_ui_manager import ViewerUIManager
 
 __all__ = [
-    'VTKSceneManager',
-    'ModelRenderer',
-    'RenderMode',
-    'CameraController',
-    'PerformanceTracker',
-    'ViewerUIManager',
+    "VTKSceneManager",
+    "ModelRenderer",
+    "RenderMode",
+    "CameraController",
+    "PerformanceTracker",
+    "ViewerUIManager",
 ]
-

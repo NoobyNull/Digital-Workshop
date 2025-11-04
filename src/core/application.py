@@ -7,10 +7,12 @@ the application lifecycle management and coordinates all components.
 """
 
 import sys
+import os
 from typing import Optional
+from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QCoreApplication
+from PySide6.QtCore import QCoreApplication, QSettings
 
 from .application_config import ApplicationConfig
 from .application_bootstrap import ApplicationBootstrap
@@ -181,7 +183,9 @@ class Application:
     def _perform_unified_cleanup(self) -> None:
         """Perform unified cleanup using the cleanup coordinator."""
         try:
-            from src.core.cleanup.unified_cleanup_coordinator import UnifiedCleanupCoordinator
+            from src.core.cleanup.unified_cleanup_coordinator import (
+                UnifiedCleanupCoordinator,
+            )
 
             coordinator = UnifiedCleanupCoordinator()
 
@@ -190,13 +194,13 @@ class Application:
             renderer = None
             interactor = None
 
-            if self.main_window and hasattr(self.main_window, 'viewer'):
+            if self.main_window and hasattr(self.main_window, "viewer"):
                 viewer = self.main_window.viewer
-                if viewer and hasattr(viewer, 'render_window'):
+                if viewer and hasattr(viewer, "render_window"):
                     render_window = viewer.render_window
-                if viewer and hasattr(viewer, 'renderer'):
+                if viewer and hasattr(viewer, "renderer"):
                     renderer = viewer.renderer
-                if viewer and hasattr(viewer, 'interactor'):
+                if viewer and hasattr(viewer, "interactor"):
                     interactor = viewer.interactor
 
             # Coordinate cleanup with all resources
@@ -205,7 +209,7 @@ class Application:
                 renderer=renderer,
                 interactor=interactor,
                 main_window=self.main_window,
-                application=self
+                application=self,
             )
 
             if self.logger:
@@ -216,7 +220,9 @@ class Application:
 
         except Exception as e:
             if self.logger:
-                self.logger.warning(f"Unified cleanup failed, continuing with standard cleanup: {e}")
+                self.logger.warning(
+                    f"Unified cleanup failed, continuing with standard cleanup: {e}"
+                )
 
     def _create_qt_application(self, argv: list) -> bool:
         """Create the QApplication instance.
@@ -229,15 +235,36 @@ class Application:
         """
         try:
             self.qt_app = QApplication(argv)
-            
+
             # Initialize QSettings with organization and application names
             # This must be done before any QSettings usage to ensure proper persistence
-            QCoreApplication.setOrganizationName("Digital Workshop")
-            QCoreApplication.setApplicationName("3D Model Manager")
-            
+            # Use consistent names that won't be changed later
+            org_name = self.config.organization_name
+            app_name = self.config.name
+
+            QCoreApplication.setOrganizationName(org_name)
+            QCoreApplication.setApplicationName(app_name)
+
+            # Configure QSettings for memory-only mode
+            if os.getenv("USE_MEMORY_DB", "false").lower() == "true":
+                # In memory-only mode, use file-based INI format in temp directory
+                import tempfile
+
+                temp_dir = Path(tempfile.gettempdir()) / "digital_workshop_dev"
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                settings_file = temp_dir / "settings.ini"
+
+                # Create a file-based QSettings that uses INI format
+                QSettings.setPath(
+                    QSettings.IniFormat, QSettings.UserScope, str(temp_dir)
+                )
+                QSettings.setDefaultFormat(QSettings.IniFormat)
+
             self.logger = get_logger(__name__)
             self.logger.info("QApplication created")
-            self.logger.info("QSettings initialized with organization: 'Digital Workshop', application: '3D Model Manager'")
+            self.logger.info(
+                f"QSettings initialized with organization: '{org_name}', application: '{app_name}'"
+            )
             return True
         except RuntimeError as e:
             print(f"Failed to create QApplication: {str(e)}")
@@ -312,18 +339,16 @@ class Application:
     def _apply_theme_early(self) -> None:
         """Apply theme early, right after QApplication is created."""
         try:
-            from src.gui.theme.qt_material_service import QtMaterialThemeService
-            service = QtMaterialThemeService.instance()
-            theme, variant = service.get_current_theme()
-            result = service.apply_theme(theme, variant)
+            from src.gui.theme import ThemeService
+
+            service = ThemeService.instance()
+            theme, _ = service.get_current_theme()
+            service.apply_theme(theme)
             if self.logger:
-                if result:
-                    self.logger.info(f"Theme applied early: {theme} ({variant})")
-                else:
-                    self.logger.warning(f"Theme application returned False: {theme} ({variant})")
+                self.logger.debug(f"Theme applied: {theme}")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to apply theme early: {e}", exc_info=True)
+                self.logger.debug(f"Theme application: {e}")
 
     def _connect_signals(self) -> None:
         """Connect application signals."""
@@ -336,7 +361,10 @@ class Application:
                 lambda model_id: self.logger.info("Model selected: %d", model_id)
             )
 
-            # Connect window close signal
+            # Store the original closeEvent method
+            self._original_close_event = self.main_window.closeEvent
+
+            # Connect window close signal - wrap the original closeEvent
             self.main_window.closeEvent = self._on_main_window_close
 
     def _on_main_window_close(self, event) -> None:
@@ -347,6 +375,17 @@ class Application:
         """
         if self.logger:
             self.logger.info("Main window close event received")
+
+        # CRITICAL: Call the original MainWindow closeEvent FIRST
+        # This ensures window settings are saved before cleanup
+        try:
+            if hasattr(self, "_original_close_event") and self._original_close_event:
+                self._original_close_event(event)
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Failed to call original closeEvent: {e}")
+
+        # Then perform application cleanup
         self.cleanup()
         event.accept()
 

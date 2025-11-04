@@ -91,9 +91,7 @@ class ToolExportManager:
                             progress, f"Exported {i + 1}/{len(tools)} tools"
                         )
 
-            self.logger.info(
-                f"Exported {len(tools)} tools to CSV: {output_path}"
-            )
+            self.logger.info(f"Exported {len(tools)} tools to CSV: {output_path}")
             return True, f"Successfully exported {len(tools)} tools to CSV", len(tools)
 
         except Exception as e:
@@ -142,9 +140,7 @@ class ToolExportManager:
                     "vendor": tool["vendor"],
                     "geometry": tool["geometry"],
                     "start_values": tool["start_values"],
-                    "custom_properties": json.loads(
-                        tool["custom_properties"] or "{}"
-                    ),
+                    "custom_properties": json.loads(tool["custom_properties"] or "{}"),
                 }
                 export_data["tools"].append(tool_entry)
 
@@ -157,9 +153,7 @@ class ToolExportManager:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
 
-            self.logger.info(
-                f"Exported {len(tools)} tools to JSON: {output_path}"
-            )
+            self.logger.info(f"Exported {len(tools)} tools to JSON: {output_path}")
             return True, f"Successfully exported {len(tools)} tools to JSON", len(tools)
 
         except Exception as e:
@@ -256,9 +250,7 @@ class ToolExportManager:
             self.logger.error(error_msg)
             return False, error_msg, 0
 
-    def get_export_statistics(
-        self, provider_id: Optional[int] = None
-    ) -> dict:
+    def get_export_statistics(self, provider_id: Optional[int] = None) -> dict:
         """
         Get statistics about available tools for export.
 

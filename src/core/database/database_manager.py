@@ -58,10 +58,12 @@ class DatabaseManager:
         format: str,
         file_path: str,
         file_size: Optional[int] = None,
-        file_hash: Optional[str] = None
+        file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
-        return self._model_repo.add_model(filename, format, file_path, file_size, file_hash)
+        return self._model_repo.add_model(
+            filename, format, file_path, file_size, file_hash
+        )
 
     def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find a model by its file hash."""
@@ -80,9 +82,7 @@ class DatabaseManager:
         return self._model_repo.get_model(model_id)
 
     def get_all_models(
-        self,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None
+        self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get all models from the database."""
         return self._model_repo.get_all_models(limit, offset)
@@ -110,7 +110,9 @@ class DatabaseManager:
         """Update model metadata."""
         return self._metadata_repo.update_model_metadata(model_id, **kwargs)
 
-    def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
+    def save_camera_orientation(
+        self, model_id: int, camera_data: Dict[str, float]
+    ) -> bool:
         """Save camera orientation for a model."""
         return self._metadata_repo.save_camera_orientation(model_id, camera_data)
 
@@ -126,7 +128,9 @@ class DatabaseManager:
         """Get all categories from the database."""
         return self._metadata_repo.get_categories()
 
-    def add_category(self, name: str, color: str = "#CCCCCC", sort_order: int = 0) -> int:
+    def add_category(
+        self, name: str, color: str = "#CCCCCC", sort_order: int = 0
+    ) -> int:
         """Add a new category."""
         return self._metadata_repo.add_category(name, color, sort_order)
 
@@ -166,7 +170,7 @@ class DatabaseManager:
                 cursor = conn.cursor()
 
                 # Filter valid fields
-                valid_fields = {'filename', 'format', 'file_path', 'file_size'}
+                valid_fields = {"filename", "format", "file_path", "file_size"}
                 updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
                 if not updates:
@@ -177,11 +181,14 @@ class DatabaseManager:
                 values = list(updates.values())
                 values.append(model_id)
 
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE models
                     SET {set_clause}, last_modified = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, values)
+                """,
+                    values,
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
@@ -199,7 +206,7 @@ class DatabaseManager:
         self,
         query: str = "",
         category: Optional[str] = None,
-        format: Optional[str] = None
+        format: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for models by query and filters.
@@ -269,7 +276,7 @@ class DatabaseManager:
                 cursor = conn.cursor()
 
                 # Filter valid fields
-                valid_fields = {'name', 'color'}
+                valid_fields = {"name", "color"}
                 updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
                 if not updates:
@@ -280,11 +287,14 @@ class DatabaseManager:
                 values = list(updates.values())
                 values.append(category_id)
 
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE categories
                     SET {set_clause}
                     WHERE id = ?
-                """, values)
+                """,
+                    values,
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
@@ -306,7 +316,7 @@ class DatabaseManager:
         base_path: Optional[str] = None,
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
-        structure_type: Optional[str] = None
+        structure_type: Optional[str] = None,
     ) -> str:
         """Create a new project."""
         return self._project_repo.create_project(
@@ -321,7 +331,9 @@ class DatabaseManager:
         """Get project by name (case-insensitive)."""
         return self._project_repo.get_project_by_name(name)
 
-    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_projects(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """List all projects."""
         return self._project_repo.list_projects(limit, offset)
 
@@ -352,12 +364,18 @@ class DatabaseManager:
         file_hash: Optional[str] = None,
         status: str = "pending",
         link_type: Optional[str] = None,
-        original_path: Optional[str] = None
+        original_path: Optional[str] = None,
     ) -> int:
         """Add a file to a project."""
         return self._file_repo.add_file(
-            project_id, file_path, file_name, file_size, file_hash,
-            status, link_type, original_path
+            project_id,
+            file_path,
+            file_name,
+            file_size,
+            file_hash,
+            status,
+            link_type,
+            original_path,
         )
 
     def get_file(self, file_id: int) -> Optional[Dict[str, Any]]:
@@ -388,7 +406,9 @@ class DatabaseManager:
         """Get total number of files in a project."""
         return self._file_repo.get_file_count_by_project(project_id)
 
-    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate_by_hash(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash in a project."""
         return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
 
@@ -398,4 +418,3 @@ class DatabaseManager:
     def close(self) -> None:
         """Close the database connection."""
         logger.info("Database manager closed")
-

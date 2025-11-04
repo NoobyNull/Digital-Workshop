@@ -19,14 +19,16 @@ from .data_structures import Model
 
 class CacheLevel(Enum):
     """Cache levels for different model representations."""
-    METADATA = "metadata"          # Just file metadata and statistics
+
+    METADATA = "metadata"  # Just file metadata and statistics
     GEOMETRY_LOW = "geometry_low"  # Low-resolution geometry
-    GEOMETRY_FULL = "geometry_full" # Full-resolution geometry
+    GEOMETRY_FULL = "geometry_full"  # Full-resolution geometry
 
 
 @dataclass
 class CacheEntry:
     """Entry in the model cache."""
+
     file_path: str
     file_hash: str
     cache_level: CacheLevel
@@ -65,7 +67,7 @@ class ModelCache:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
         self.disk_cache_db = str(self.cache_dir / "cache.db")
-        
+
         # Initialize disk cache
         self._init_disk_cache()
 
@@ -78,7 +80,8 @@ class ModelCache:
         """Initialize the disk cache database."""
         try:
             with sqlite3.connect(self.disk_cache_db) as conn:
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS cache_entries (
                         file_path TEXT PRIMARY KEY,
                         file_hash TEXT NOT NULL,
@@ -89,15 +92,20 @@ class ModelCache:
                         last_access_time REAL NOT NULL,
                         creation_time REAL NOT NULL
                     )
-                """)
+                """
+                )
 
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_file_hash ON cache_entries(file_hash)
-                """)
+                """
+                )
 
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_cache_level ON cache_entries(cache_level)
-                """)
+                """
+                )
 
                 conn.commit()
 
@@ -161,7 +169,9 @@ class ModelCache:
                         else:
                             # Fallback: approximate via size * itemsize if available
                             try:
-                                size += int(getattr(arr, "size", 0)) * int(getattr(arr, "itemsize", 4))
+                                size += int(getattr(arr, "size", 0)) * int(
+                                    getattr(arr, "itemsize", 4)
+                                )
                             except Exception:
                                 pass
                 return size
@@ -222,8 +232,7 @@ class ModelCache:
 
         # Sort by last access time (LRU)
         sorted_entries = sorted(
-            self.memory_cache.items(),
-            key=lambda x: x[1].last_access_time
+            self.memory_cache.items(), key=lambda x: x[1].last_access_time
         )
 
         for key, entry in sorted_entries:
@@ -255,7 +264,9 @@ class ModelCache:
             self.stats.eviction_count += 1
 
         if entries_to_evict:
-            self.logger.debug(f"Evicted {len(entries_to_evict)} entries, freed {bytes_freed} bytes")
+            self.logger.debug(
+                f"Evicted {len(entries_to_evict)} entries, freed {bytes_freed} bytes"
+            )
 
     def _store_to_disk_cache(self, key: str, entry: CacheEntry) -> None:
         """
@@ -284,15 +295,17 @@ class ModelCache:
                         entry.size_bytes,
                         entry.access_count,
                         entry.last_access_time,
-                        entry.creation_time
-                    )
+                        entry.creation_time,
+                    ),
                 )
                 conn.commit()
 
         except Exception as e:
             self.logger.error(f"Failed to store to disk cache: {str(e)}")
 
-    def _load_from_disk_cache(self, file_path: str, cache_level: CacheLevel) -> Optional[CacheEntry]:
+    def _load_from_disk_cache(
+        self, file_path: str, cache_level: CacheLevel
+    ) -> Optional[CacheEntry]:
         """
         Load entry from disk cache.
 
@@ -312,13 +325,19 @@ class ModelCache:
                     FROM cache_entries
                     WHERE file_path = ? AND cache_level = ?
                     """,
-                    (file_path, cache_level.value)
+                    (file_path, cache_level.value),
                 )
 
                 row = cursor.fetchone()
                 if row:
-                    (file_hash, data, size_bytes, access_count,
-                     last_access_time, creation_time) = row
+                    (
+                        file_hash,
+                        data,
+                        size_bytes,
+                        access_count,
+                        last_access_time,
+                        creation_time,
+                    ) = row
 
                     deserialized_data = self._deserialize_data(data)
 
@@ -331,7 +350,7 @@ class ModelCache:
                         access_count=access_count,
                         last_access_time=last_access_time,
                         creation_time=creation_time,
-                        memory_only=False
+                        memory_only=False,
                     )
 
                 return None
@@ -385,7 +404,9 @@ class ModelCache:
                 self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug(f"Cache hit (memory): {file_path} [{cache_level.value}]")
+                self.logger.debug(
+                    f"Cache hit (memory): {file_path} [{cache_level.value}]"
+                )
                 return entry.data
 
             # Check disk cache if enabled
@@ -404,7 +425,9 @@ class ModelCache:
                         self.access_order.append(key)
 
                     self.stats.hit_count += 1
-                    self.logger.debug(f"Cache hit (disk): {file_path} [{cache_level.value}]")
+                    self.logger.debug(
+                        f"Cache hit (disk): {file_path} [{cache_level.value}]"
+                    )
                     return entry.data
 
             # Cache miss
@@ -412,8 +435,13 @@ class ModelCache:
             self.logger.debug(f"Cache miss: {file_path} [{cache_level.value}]")
             return None
 
-    def put(self, file_path: str, cache_level: CacheLevel, data: Any,
-            memory_only: bool = False) -> bool:
+    def put(
+        self,
+        file_path: str,
+        cache_level: CacheLevel,
+        data: Any,
+        memory_only: bool = False,
+    ) -> bool:
         """
         Store data in cache.
 
@@ -434,9 +462,11 @@ class ModelCache:
 
             # Estimate data size
             data_size = self._estimate_data_size(data)
-            
+
             # Create cache entry
-            entry = self._create_cache_entry(file_path, file_hash, cache_level, data, data_size, memory_only)
+            entry = self._create_cache_entry(
+                file_path, file_hash, cache_level, data, data_size, memory_only
+            )
 
             # Store in memory cache - let OS handle memory management
             self.memory_cache[key] = entry
@@ -454,11 +484,20 @@ class ModelCache:
             # Update statistics
             self._update_stats()
 
-            self.logger.debug(f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)")
+            self.logger.debug(
+                f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)"
+            )
             return True
 
-    def _create_cache_entry(self, file_path: str, file_hash: str, cache_level: CacheLevel,
-                           data: Any, data_size: int, memory_only: bool = False) -> CacheEntry:
+    def _create_cache_entry(
+        self,
+        file_path: str,
+        file_hash: str,
+        cache_level: CacheLevel,
+        data: Any,
+        data_size: int,
+        memory_only: bool = False,
+    ) -> CacheEntry:
         """Create a cache entry with the given parameters."""
         current_time = time.time()
         return CacheEntry(
@@ -470,18 +509,25 @@ class ModelCache:
             access_count=1,
             last_access_time=current_time,
             creation_time=current_time,
-            memory_only=memory_only
+            memory_only=memory_only,
         )
 
-    def _store_entry(self, file_path: str, cache_level: CacheLevel, data: Any,
-                    memory_only: bool = False) -> bool:
+    def _store_entry(
+        self,
+        file_path: str,
+        cache_level: CacheLevel,
+        data: Any,
+        memory_only: bool = False,
+    ) -> bool:
         """Store a cache entry using the standard path."""
         key = f"{file_path}:{cache_level.value}"
         file_hash = self._generate_file_hash(file_path)
         data_size = self._estimate_data_size(data)
-        
+
         # Create cache entry
-        entry = self._create_cache_entry(file_path, file_hash, cache_level, data, data_size, memory_only)
+        entry = self._create_cache_entry(
+            file_path, file_hash, cache_level, data, data_size, memory_only
+        )
 
         # Store in memory cache
         if not memory_only or self._make_space_in_memory(data_size):
@@ -500,7 +546,9 @@ class ModelCache:
         # Update statistics
         self._update_stats()
 
-        self.logger.debug(f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)")
+        self.logger.debug(
+            f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)"
+        )
         return True
 
     def remove(self, file_path: str, cache_level: Optional[CacheLevel] = None) -> bool:
@@ -539,7 +587,7 @@ class ModelCache:
                         with sqlite3.connect(self.disk_cache_db) as conn:
                             cursor = conn.execute(
                                 "DELETE FROM cache_entries WHERE file_path = ? AND cache_level = ?",
-                                (file_path, level.value)
+                                (file_path, level.value),
                             )
                             if cursor.rowcount > 0:
                                 removed = True
@@ -602,7 +650,9 @@ class ModelCache:
                         self.stats.disk_entries = row[0] or 0
                         self.stats.disk_size_bytes = row[1] or 0
 
-                    self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
+                    self.stats.total_entries = (
+                        self.stats.memory_entries + self.stats.disk_entries
+                    )
 
             except Exception as e:
                 self.logger.error(f"Failed to update statistics: {str(e)}")
@@ -653,7 +703,9 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info(f"High memory usage ({memory_usage_ratio:.1%}), evicting entries")
+                self.logger.info(
+                    f"High memory usage ({memory_usage_ratio:.1%}), evicting entries"
+                )
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries if enabled
@@ -667,11 +719,13 @@ class ModelCache:
                             DELETE FROM cache_entries
                             WHERE last_access_time < ? AND access_count < 3
                             """,
-                            (cutoff_time,)
+                            (cutoff_time,),
                         )
                         deleted_count = cursor.rowcount
                         if deleted_count > 0:
-                            self.logger.info(f"Cleaned up {deleted_count} old disk cache entries")
+                            self.logger.info(
+                                f"Cleaned up {deleted_count} old disk cache entries"
+                            )
                         conn.commit()
 
                 except Exception as e:
@@ -687,15 +741,17 @@ class ModelCache:
 
             self.logger.info("Model cache cleaned up")
 
-    def get_or_load_progressive(self, file_path: str, parser, progress_callback=None) -> Optional[Model]:
+    def get_or_load_progressive(
+        self, file_path: str, parser, progress_callback=None
+    ) -> Optional[Model]:
         """
         Get model from cache or load it with progressive loading.
-        
+
         Args:
             file_path: Path to the model file
             parser: Parser instance to load the file if not cached
             progress_callback: Optional progress callback
-            
+
         Returns:
             Model instance or None if loading failed
         """
@@ -704,23 +760,23 @@ class ModelCache:
             model = self.get(file_path, CacheLevel.GEOMETRY_FULL)
             if model:
                 return model
-            
+
             # Try cached low-res version
             model = self.get(file_path, CacheLevel.GEOMETRY_LOW)
             if model:
                 self.logger.info(f"Using cached low-res version: {file_path}")
                 return model
-            
+
             # Try cached metadata version
             model = self.get(file_path, CacheLevel.METADATA)
             if model:
                 self.logger.info(f"Using cached metadata: {file_path}")
                 return model
-            
+
             # Load full geometry - let OS handle memory management
             if progress_callback:
                 progress_callback(10.0, "Loading model...")
-            
+
             try:
                 full_model = parser.parse_file(file_path, progress_callback)
                 if full_model:
@@ -728,11 +784,11 @@ class ModelCache:
                     return full_model
             except Exception as e:
                 self.logger.error(f"Failed to load full geometry: {e}")
-            
+
             # Fallback to metadata only
             if progress_callback:
                 progress_callback(50.0, "Loading metadata...")
-            
+
             try:
                 metadata_model = parser._parse_metadata_only_internal(file_path)
                 if metadata_model:
@@ -740,36 +796,38 @@ class ModelCache:
                     return metadata_model
             except Exception as e:
                 self.logger.error(f"Failed to load metadata: {e}")
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.error(f"Progressive loading failed for {file_path}: {e}")
             return None
-    
-    def _load_full_geometry(self, file_path: str, parser, progress_callback=None) -> Optional[Model]:
+
+    def _load_full_geometry(
+        self, file_path: str, parser, progress_callback=None
+    ) -> Optional[Model]:
         """Load full geometry with caching."""
         # First, try to get cached version
         model = self.get(file_path, CacheLevel.GEOMETRY_FULL)
         if model:
             return model
-        
+
         # Try low-res version as fallback
         model = self.get(file_path, CacheLevel.GEOMETRY_LOW)
         if model:
             self.logger.info(f"Using cached low-res version: {file_path}")
             return model
-        
+
         # Try metadata-only version as fallback
         model = self.get(file_path, CacheLevel.METADATA)
         if model:
             self.logger.info(f"Using cached metadata: {file_path}")
             return model
-        
+
         # Load full geometry
         if progress_callback:
             progress_callback(10.0, "Loading full geometry...")
-        
+
         try:
             full_model = parser.parse_file(file_path, progress_callback)
             if full_model:
@@ -777,36 +835,38 @@ class ModelCache:
                 return full_model
         except Exception as e:
             self.logger.error(f"Failed to load full geometry: {e}")
-        
+
         # Fallback to low-res
         return self._load_low_res_geometry(file_path, parser, progress_callback)
-    
-    def _load_low_res_geometry(self, file_path: str, parser, progress_callback=None) -> Optional[Model]:
+
+    def _load_low_res_geometry(
+        self, file_path: str, parser, progress_callback=None
+    ) -> Optional[Model]:
         """Load low-resolution geometry with caching."""
         # Try cached versions first
         model = self.get(file_path, CacheLevel.GEOMETRY_LOW)
         if model:
             return model
-        
+
         model = self.get(file_path, CacheLevel.METADATA)
         if model:
             return model
-        
+
         # Load metadata first
         if progress_callback:
             progress_callback(10.0, "Loading file metadata...")
-        
+
         try:
             metadata_model = parser._parse_metadata_only_internal(file_path)
             if metadata_model:
                 self.put(file_path, CacheLevel.METADATA, metadata_model)
         except Exception as e:
             self.logger.error(f"Failed to load metadata: {e}")
-        
+
         # Load low-res geometry
         if progress_callback:
             progress_callback(40.0, "Loading low-resolution geometry...")
-        
+
         try:
             low_res_model = parser._load_low_res_geometry(file_path, progress_callback)
             if low_res_model:
@@ -814,21 +874,23 @@ class ModelCache:
                 return low_res_model
         except Exception as e:
             self.logger.error(f"Failed to load low-res geometry: {e}")
-        
+
         # Fallback to metadata
         return metadata_model
-    
-    def _load_metadata_only(self, file_path: str, parser, progress_callback=None) -> Optional[Model]:
+
+    def _load_metadata_only(
+        self, file_path: str, parser, progress_callback=None
+    ) -> Optional[Model]:
         """Load metadata only with caching."""
         # Try cached version first
         model = self.get(file_path, CacheLevel.METADATA)
         if model:
             return model
-        
+
         # Load metadata
         if progress_callback:
             progress_callback(20.0, "Loading file metadata...")
-        
+
         try:
             metadata_model = parser._parse_metadata_only_internal(file_path)
             if metadata_model:
@@ -836,7 +898,7 @@ class ModelCache:
                 return metadata_model
         except Exception as e:
             self.logger.error(f"Failed to load metadata: {e}")
-        
+
         return None
 
 

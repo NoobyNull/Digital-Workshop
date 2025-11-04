@@ -9,9 +9,19 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import Signal, Qt, QTimer, QStringListModel
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QProgressBar, QSplitter, QTabWidget, QListWidget, QListWidgetItem,
-    QLabel, QCompleter, QDialog
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QProgressBar,
+    QSplitter,
+    QTabWidget,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+    QCompleter,
+    QDialog,
 )
 from PySide6.QtGui import QFont
 
@@ -241,11 +251,11 @@ class SearchWidget(QWidget):
             results: Search results dictionary
         """
         self.progress_bar.setVisible(False)
-        self.current_results = results['results']
+        self.current_results = results["results"]
 
         # Update results header
-        total_count = results['total_count']
-        execution_time = results['execution_time']
+        total_count = results["total_count"]
+        execution_time = results["execution_time"]
         self.results_header.setText(
             f"Found {total_count} results in {execution_time:.3f} seconds"
         )
@@ -258,7 +268,7 @@ class SearchWidget(QWidget):
             self.results_list.addItem(item)
 
         # Emit search requested signal
-        self.search_requested.emit(results['query'], results['filters'])
+        self.search_requested.emit(results["query"], results["filters"])
 
     def create_result_item(self, result: Dict[str, Any]) -> QListWidgetItem:
         """
@@ -271,18 +281,20 @@ class SearchWidget(QWidget):
             QListWidgetItem with formatted result
         """
         # Get model information
-        title = result.get('title') or result.get('filename', 'Unknown')
-        description = result.get('description', '')
-        category = result.get('category', 'Uncategorized')
-        format_type = result.get('format', '').upper()
-        rating = result.get('rating', 0)
+        title = result.get("title") or result.get("filename", "Unknown")
+        description = result.get("description", "")
+        category = result.get("category", "Uncategorized")
+        format_type = result.get("format", "").upper()
+        rating = result.get("rating", 0)
 
         # Create item text
         item_text = f"<b>{title}</b>"
 
         if description:
             # Truncate long descriptions
-            desc_text = description[:100] + "..." if len(description) > 100 else description
+            desc_text = (
+                description[:100] + "..." if len(description) > 100 else description
+            )
             item_text += f"<br><i>{desc_text}</i>"
 
         # Add metadata
@@ -297,7 +309,7 @@ class SearchWidget(QWidget):
         # Create item
         item = QListWidgetItem()
         item.setText(item_text)
-        item.setData(Qt.UserRole, result['id'])  # Store model ID
+        item.setData(Qt.UserRole, result["id"])  # Store model ID
 
         # Enable rich text
         item.setTextFormat(Qt.RichText)
@@ -365,8 +377,8 @@ class SearchWidget(QWidget):
 
             for item in history:
                 # Format history item
-                query = item['query']
-                timestamp = item['timestamp']
+                query = item["query"]
+                timestamp = item["timestamp"]
 
                 # Parse timestamp
                 dt = datetime.fromisoformat(timestamp)
@@ -394,9 +406,9 @@ class SearchWidget(QWidget):
 
             for item in saved:
                 # Format saved search item
-                name = item['name']
-                query = item['query']
-                created_at = item['created_at']
+                name = item["name"]
+                query = item["query"]
+                created_at = item["created_at"]
 
                 # Parse timestamp
                 dt = datetime.fromisoformat(created_at)
@@ -427,10 +439,10 @@ class SearchWidget(QWidget):
             return
 
         # Set query
-        self.search_edit.setText(search_data['query'])
+        self.search_edit.setText(search_data["query"])
 
         # Set filters
-        filters = search_data.get('filters', {})
+        filters = search_data.get("filters", {})
         if filters:
             # Apply filters to advanced search widget
             self.advanced_search.set_filters(filters)
@@ -450,10 +462,10 @@ class SearchWidget(QWidget):
             return
 
         # Set query
-        self.search_edit.setText(search_data['query'])
+        self.search_edit.setText(search_data["query"])
 
         # Set filters
-        filters = search_data.get('filters', {})
+        filters = search_data.get("filters", {})
         if filters:
             # Apply filters to advanced search widget
             self.advanced_search.set_filters(filters)
@@ -478,4 +490,3 @@ class SearchWidget(QWidget):
         self.search_edit.setText(query)
         if query:
             self.perform_search()
-

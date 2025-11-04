@@ -35,7 +35,7 @@ class FileRepository:
         file_hash: Optional[str] = None,
         status: str = "pending",
         link_type: Optional[str] = None,
-        original_path: Optional[str] = None
+        original_path: Optional[str] = None,
     ) -> int:
         """
         Add a file to a project.
@@ -61,16 +61,27 @@ class FileRepository:
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO files (
                         project_id, file_path, file_name, file_size, file_hash,
                         status, link_type, original_path, created_at, updated_at
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    project_id, file_path, file_name, file_size, file_hash,
-                    status, link_type, original_path, now, now
-                ))
+                """,
+                    (
+                        project_id,
+                        file_path,
+                        file_name,
+                        file_size,
+                        file_hash,
+                        status,
+                        link_type,
+                        original_path,
+                        now,
+                        now,
+                    ),
+                )
                 conn.commit()
 
             logger.info(f"File added to project {project_id}: {file_name}")
@@ -120,7 +131,7 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? ORDER BY created_at DESC",
-                    (project_id,)
+                    (project_id,),
                 )
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
@@ -147,7 +158,7 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? AND status = ? ORDER BY created_at DESC",
-                    (project_id, status)
+                    (project_id, status),
                 )
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
@@ -175,7 +186,7 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "UPDATE files SET status = ?, updated_at = ? WHERE id = ?",
-                    (status, now, file_id)
+                    (status, now, file_id),
                 )
                 conn.commit()
 
@@ -200,25 +211,27 @@ class FileRepository:
         """
         try:
             allowed_fields = {
-                'file_path', 'file_name', 'file_size', 'file_hash',
-                'status', 'link_type', 'original_path'
+                "file_path",
+                "file_name",
+                "file_size",
+                "file_hash",
+                "status",
+                "link_type",
+                "original_path",
             }
-            
+
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
             if not update_fields:
                 return False
 
-            update_fields['updated_at'] = datetime.now().isoformat()
-            
+            update_fields["updated_at"] = datetime.now().isoformat()
+
             set_clause = ", ".join([f"{k} = ?" for k in update_fields.keys()])
             values = list(update_fields.values()) + [file_id]
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    f"UPDATE files SET {set_clause} WHERE id = ?",
-                    values
-                )
+                cursor.execute(f"UPDATE files SET {set_clause} WHERE id = ?", values)
                 conn.commit()
 
             logger.info(f"File updated: {file_id}")
@@ -266,7 +279,9 @@ class FileRepository:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM files WHERE project_id = ?", (project_id,))
+                cursor.execute(
+                    "SELECT COUNT(*) FROM files WHERE project_id = ?", (project_id,)
+                )
                 result = cursor.fetchone()
                 return result[0] if result else 0
 
@@ -275,7 +290,9 @@ class FileRepository:
             return 0
 
     @log_function_call(logger)
-    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate_by_hash(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Find duplicate file by hash in a project.
 
@@ -292,7 +309,7 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? AND file_hash = ? LIMIT 1",
-                    (project_id, file_hash)
+                    (project_id, file_hash),
                 )
                 row = cursor.fetchone()
                 return dict(row) if row else None
@@ -300,4 +317,3 @@ class FileRepository:
         except sqlite3.Error as e:
             logger.error(f"Database error finding duplicate: {str(e)}")
             return None
-

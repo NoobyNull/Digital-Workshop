@@ -9,15 +9,28 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, Signal, QDir, QThread
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget,
-    QListWidgetItem, QCheckBox, QLineEdit, QFileDialog, QMessageBox,
-    QGroupBox, QInputDialog, QFrame, QSizePolicy, QProgressBar, QComboBox
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QCheckBox,
+    QLineEdit,
+    QFileDialog,
+    QMessageBox,
+    QGroupBox,
+    QInputDialog,
+    QFrame,
+    QSizePolicy,
+    QProgressBar,
+    QComboBox,
 )
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12, SPACING_16
-
 
 
 class FileMaintenanceWorker(QThread):
@@ -42,11 +55,7 @@ class FileMaintenanceWorker(QThread):
             from src.gui.material_manager import MaterialManager
 
             db_manager = get_database_manager()
-            result = {
-                "processed": 0,
-                "updated": 0,
-                "errors": 0
-            }
+            result = {"processed": 0, "updated": 0, "errors": 0}
 
             if self.operation == "recalculate_hashes":
                 result = self._recalculate_hashes(db_manager, calculate_file_hash)
@@ -86,8 +95,8 @@ class FileMaintenanceWorker(QThread):
                 if self._stop_requested:
                     break
 
-                model_id = model.get('id')
-                file_path = model.get('file_path')
+                model_id = model.get("id")
+                file_path = model.get("file_path")
 
                 self.progress.emit(idx + 1, total, f"Hashing model {model_id}")
 
@@ -128,9 +137,9 @@ class FileMaintenanceWorker(QThread):
                 if self._stop_requested:
                     break
 
-                model_id = model.get('id')
-                file_path = model.get('file_path')
-                current_hash = model.get('file_hash')
+                model_id = model.get("id")
+                file_path = model.get("file_path")
+                current_hash = model.get("file_hash")
 
                 self.progress.emit(idx + 1, total, f"Matching model {model_id}")
 
@@ -175,10 +184,7 @@ class FileMaintenanceWorker(QThread):
             material = config.thumbnail_material
 
             screenshot_gen = ScreenshotGenerator(
-                width=128,
-                height=128,
-                background_image=bg_image,
-                material_name=material
+                width=128, height=128, background_image=bg_image, material_name=material
             )
             material_manager = MaterialManager()
 
@@ -186,9 +192,9 @@ class FileMaintenanceWorker(QThread):
                 if self._stop_requested:
                     break
 
-                model_id = model.get('id')
-                file_path = model.get('file_path')
-                file_hash = model.get('file_hash')
+                model_id = model.get("id")
+                file_path = model.get("file_path")
+                file_hash = model.get("file_hash")
 
                 self.progress.emit(idx + 1, total, f"Generating thumbnail {model_id}")
 
@@ -211,7 +217,7 @@ class FileMaintenanceWorker(QThread):
                         model_path=file_path,
                         output_path=output_path,
                         material_manager=material_manager,
-                        material_name=None
+                        material_name=None,
                     )
 
                     if screenshot_path:
