@@ -716,7 +716,7 @@ class PerformanceMonitor:
 
         freed_mb = memory_before - memory_after
         if freed_mb > 1.0:  # Only log if significant
-            self.logger.info("Garbage collection freed %sMB", freed_mb:.1f)
+            self.logger.info("Garbage collection freed %.1fMB", freed_mb)
 
     def export_performance_report(self, file_path: str) -> None:
         """
