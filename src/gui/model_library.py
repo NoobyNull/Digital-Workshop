@@ -1287,7 +1287,6 @@ class ModelLibraryWidget(QWidget):
             QMessageBox.critical(dialog, "Error", f"Failed to save metadata: {str(e)}")
 
     def _simple_metadata_edit(
-        """TODO: Add docstring."""
         self, model_id: int, model_info: Optional[Dict[str, Any]] = None
     ) -> None:
         """

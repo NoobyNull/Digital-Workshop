@@ -93,7 +93,6 @@ class BackgroundLoadingManager:
 
     @log_function_call
     def load_file_async(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         progress_callback: Optional[ProgressCallback] = None,
@@ -293,7 +292,6 @@ class BackgroundLoadingManager:
         return len(to_remove)
 
     def _execute_loading_job(
-        """TODO: Add docstring."""
         self, job: LoadingJob, progress_callback: Optional[ProgressCallback]
     ) -> Model:
         """
@@ -392,7 +390,6 @@ class BackgroundLoadingManager:
                 raise
 
     def _update_job_progress(
-        """TODO: Add docstring."""
         self,
         job: LoadingJob,
         progress: float,

@@ -82,7 +82,6 @@ class VTKFallbackRenderer:
         return capabilities
 
     def activate_fallback(
-        """TODO: Add docstring."""
         self, renderer: vtk.vtkRenderer, mode: Optional[FallbackMode] = None
     ) -> bool:
         """

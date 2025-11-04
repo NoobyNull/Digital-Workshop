@@ -204,17 +204,35 @@ The installer is created automatically during build. For custom installer config
 
 ## Documentation
 
-### User Documentation
+### 🚀 Getting Started
+- **[README_MODULAR_INSTALLER.md](README_MODULAR_INSTALLER.md)** - Master index for modular installer system
+- **[MODULAR_INSTALLER_START_HERE.md](MODULAR_INSTALLER_START_HERE.md)** - Quick 5-minute overview
 
-- **Getting Started**: [`docs/guides/`](docs/guides/)
-- **Architecture**: [`docs/architecture/`](docs/architecture/)
-- **API Reference**: Inline documentation in source code
+### 📦 Modular Installer System
+- **[INSTALLER_IMPLEMENTATION.md](INSTALLER_IMPLEMENTATION.md)** - Implementation guide
+- **[INSTALLER_MODES_SPECIFICATION.md](INSTALLER_MODES_SPECIFICATION.md)** - 4 installation modes
+- **[PER_MODULE_COMPILATION_GUIDE.md](PER_MODULE_COMPILATION_GUIDE.md)** - Per-module compilation
+- **[MODULAR_INSTALLER_COMPLETE_PLAN.md](MODULAR_INSTALLER_COMPLETE_PLAN.md)** - Technical plan
+- **[MODULAR_INSTALLER_VISUAL_GUIDE.md](MODULAR_INSTALLER_VISUAL_GUIDE.md)** - Visual diagrams
 
-### Developer Documentation
+### 🎯 Project Features
+- **[DWW_FORMAT_SPECIFICATION.md](DWW_FORMAT_SPECIFICATION.md)** - DWW export format
+- **[DWW_USER_GUIDE.md](DWW_USER_GUIDE.md)** - DWW user guide
+- **[README_TAB_DATA.md](README_TAB_DATA.md)** - Tab data integration
 
-- **Development Guidelines**: [`docs/architecture/DEVELOPMENT_GUIDELINES.md`](docs/architecture/DEVELOPMENT_GUIDELINES.md)
-- **Project Structure**: See structure section above
-- **Testing Guide**: [`tests/README.md`](tests/README.md) (if exists)
+### 🔒 Security & Standards
+- **[SECURITY.md](SECURITY.md)** - Security policies
+- **[FILE_TYPE_SECURITY_POLICY.md](FILE_TYPE_SECURITY_POLICY.md)** - File type restrictions
+- **[LINTING_STANDARDS.md](LINTING_STANDARDS.md)** - Code standards
+
+### 📁 Documentation Folders
+- **[analysis/](analysis/)** - Analysis reports
+- **[archive/](archive/)** - Archived documentation
+- **[builds/](builds/)** - Build process docs
+- **[features/](features/)** - Feature guides
+- **[fixes/](fixes/)** - Bug fix documentation
+- **[releases/](releases/)** - Release notes
+- **[reports/](reports/)** - Technical reports
 
 ## Contributing
 

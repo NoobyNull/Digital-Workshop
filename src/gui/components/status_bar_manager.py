@@ -236,7 +236,6 @@ class StatusBarManager:
             pass
 
     def _on_duplicate_found(
-        """TODO: Add docstring."""
         self, new_model_id: int, existing_id: int, new_path: str, old_path: str
     ) -> None:
         """Handle duplicate file detected - prompt user for action."""
@@ -336,7 +335,6 @@ class StatusBarManager:
 
 # Convenience function for easy status bar setup
 def setup_main_window_status_bar(
-    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> StatusBarManager:
     """

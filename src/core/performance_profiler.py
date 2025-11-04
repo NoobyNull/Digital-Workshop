@@ -135,7 +135,6 @@ class PerformanceProfiler:
     @log_function_call
     @contextmanager
     def time_operation(
-        """TODO: Add docstring."""
         self, operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME
     ):
         """
@@ -176,7 +175,6 @@ class PerformanceProfiler:
 
     @log_function_call
     def record_sample(
-        """TODO: Add docstring."""
         self,
         metric: PerformanceMetric,
         value: float,
@@ -329,7 +327,6 @@ class PerformanceProfiler:
 
     @log_function_call
     def benchmark_operation(
-        """TODO: Add docstring."""
         self,
         operation_func: Callable,
         operation_name: str,
@@ -414,7 +411,6 @@ class PerformanceProfiler:
 
     @log_function_call
     def detect_performance_regressions(
-        """TODO: Add docstring."""
         self,
         baseline_stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]],
         threshold_percent: float = 10.0,

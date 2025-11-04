@@ -194,7 +194,6 @@ class LightingControlPanel(QDialog):
     cone_angle_changed = Signal(float)  # 1-90 degrees
 
     def values(
-        """TODO: Add docstring."""
         self,
     ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float, float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity, cone_angle)"""
@@ -206,7 +205,6 @@ class LightingControlPanel(QDialog):
         )
 
     def set_values(
-        """TODO: Add docstring."""
         self,
         position: Tuple[float, float, float] | None = None,
         color: Tuple[float, float, float] | None = None,
@@ -267,7 +265,6 @@ class LightingControlPanel(QDialog):
 
     # ---- Internals ----
     def _make_pos_slider(
-        """TODO: Add docstring."""
         self, name: str, min_val: float, max_val: float, initial: float
     ) -> QSlider:
         """Create a position slider with proper range and styling."""

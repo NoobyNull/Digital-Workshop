@@ -222,7 +222,6 @@ class OptimizedVTKCleanupCoordinator:
 
     @log_function_call(logger)
     def coordinate_optimized_cleanup(
-        """TODO: Add docstring."""
         self,
         render_window: vtk.vtkRenderWindow,
         scenario: ShutdownScenario = ShutdownScenario.NORMAL_SHUTDOWN,
@@ -279,7 +278,6 @@ class OptimizedVTKCleanupCoordinator:
             self.cleanup_in_progress = False
 
     def _execute_cleanup_phase(
-        """TODO: Add docstring."""
         self, phase: CleanupPhase, render_window: vtk.vtkRenderWindow
     ) -> bool:
         """Execute a specific cleanup phase."""
@@ -678,7 +676,6 @@ def get_optimized_vtk_cleanup_coordinator() -> OptimizedVTKCleanupCoordinator:
 
 
 def coordinate_optimized_shutdown_cleanup(
-    """TODO: Add docstring."""
     render_window: vtk.vtkRenderWindow,
     scenario: ShutdownScenario = ShutdownScenario.NORMAL_SHUTDOWN,
 ) -> bool:

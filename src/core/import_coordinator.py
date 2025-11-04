@@ -132,7 +132,6 @@ class ImportCoordinatorWorker(QThread):
     import_failed = Signal(str)  # error_message
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         mode: FileManagementMode,
@@ -317,7 +316,6 @@ class ImportCoordinatorWorker(QThread):
         return processed_files
 
     def _generate_thumbnails(
-        """TODO: Add docstring."""
         self, processed_files: List[ImportFileInfo]
     ) -> Optional[ThumbnailBatchResult]:
         """Generate thumbnails for processed files."""
@@ -385,7 +383,6 @@ class ImportCoordinatorWorker(QThread):
             return None
 
     def _store_in_database(
-        """TODO: Add docstring."""
         self, session: ImportSession, processed_files: List[ImportFileInfo]
     ) -> List[Dict[str, Any]]:
         """Store import results in the database."""
@@ -537,7 +534,6 @@ class ImportCoordinator(QObject):
         self.logger.info("ImportCoordinator initialized")
 
     def start_import(
-        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         mode: FileManagementMode,

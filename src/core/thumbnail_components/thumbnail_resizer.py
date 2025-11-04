@@ -40,7 +40,6 @@ class ThumbnailResizer:
         self.logger = get_logger(__name__)
 
     def resize_and_save(
-        """TODO: Add docstring."""
         self,
         source_image_path: Path,
         file_hash: str,
@@ -134,7 +133,6 @@ class ThumbnailResizer:
         return paths
 
     def cleanup_old_sizes(
-        """TODO: Add docstring."""
         self, file_hash: str, output_dir: Path, keep_sizes: Optional[list] = None
     ) -> None:
         """

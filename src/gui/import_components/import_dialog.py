@@ -84,7 +84,6 @@ class ImportWorker(QThread):
     import_failed = Signal(str)  # error_message
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         mode: FileManagementMode,

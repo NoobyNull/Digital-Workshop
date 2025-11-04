@@ -34,7 +34,6 @@ class MaterialPickerWidget(QDialog):
     material_selected = Signal(str)  # species name
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         db_manager=None,
         material_manager: Optional[MaterialManager] = None,

@@ -34,7 +34,6 @@ class ToolMigrationUtility:
         self.provider_repo = ProviderRepository(sqlite_db_path)
 
     def migrate_from_json(
-        """TODO: Add docstring."""
         self,
         json_file_path: str,
         provider_name: str = "IDC Woodcraft",
@@ -195,7 +194,6 @@ class ToolMigrationUtility:
             return None
 
     def migrate_from_existing_json_library(
-        """TODO: Add docstring."""
         self, progress_callback: Optional[Callable[[float, str], None]] = None
     ) -> Tuple[int, int, List[str]]:
         """

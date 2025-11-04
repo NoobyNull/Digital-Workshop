@@ -127,7 +127,6 @@ class AdaptiveChunker:
 
     @log_function_call
     def create_adaptive_chunks(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         target_chunk_count: Optional[int] = None,
@@ -237,7 +236,6 @@ class AdaptiveChunker:
             return FileFormat.OBJ
 
     def _determine_optimal_strategy(
-        """TODO: Add docstring."""
         self, format_type: FileFormat, file_size: int, triangle_count: int
     ) -> ChunkingStrategy:
         """
@@ -270,7 +268,6 @@ class AdaptiveChunker:
         return ChunkingStrategy.ADAPTIVE_SIZE
 
     def _calculate_chunking_parameters(
-        """TODO: Add docstring."""
         self,
         analysis: FileAnalysis,
         target_chunk_count: Optional[int],
@@ -324,7 +321,6 @@ class AdaptiveChunker:
         )
 
     def _create_format_aware_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -348,7 +344,6 @@ class AdaptiveChunker:
             return self._create_generic_format_chunks(file_path, analysis, params)
 
     def _create_stl_binary_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -400,7 +395,6 @@ class AdaptiveChunker:
         return chunks
 
     def _create_text_based_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -459,7 +453,6 @@ class AdaptiveChunker:
         return chunks
 
     def _create_generic_format_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -477,7 +470,6 @@ class AdaptiveChunker:
         return self._create_adaptive_size_chunks(file_path, analysis, params)
 
     def _create_memory_constrained_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -498,7 +490,6 @@ class AdaptiveChunker:
         )
 
     def _create_adaptive_size_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
@@ -533,7 +524,6 @@ class AdaptiveChunker:
         )
 
     def _create_fixed_size_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """

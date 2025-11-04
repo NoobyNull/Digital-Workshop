@@ -59,7 +59,6 @@ class BaseToolParser(ABC):
 
     @abstractmethod
     def parse(
-        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> List[ToolData]:
         """

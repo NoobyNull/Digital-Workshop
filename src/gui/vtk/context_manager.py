@@ -126,7 +126,6 @@ class VTKContextManager:
             return ContextState.UNKNOWN
 
     def validate_context(
-        """TODO: Add docstring."""
         self, render_window: vtk.vtkRenderWindow, operation: str = "unknown"
     ) -> Tuple[bool, ContextState]:
         """
@@ -418,7 +417,6 @@ def get_vtk_context_manager() -> VTKContextManager:
 
 
 def validate_vtk_context(
-    """TODO: Add docstring."""
     render_window: vtk.vtkRenderWindow, operation: str = "unknown"
 ) -> Tuple[bool, ContextState]:
     """

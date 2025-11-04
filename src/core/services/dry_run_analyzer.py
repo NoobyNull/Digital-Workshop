@@ -171,7 +171,6 @@ class DryRunAnalyzer:
             return {}
 
     def _generate_recommendations(
-        """TODO: Add docstring."""
         self,
         allowed_count: int,
         blocked_count: int,

@@ -40,9 +40,157 @@ BUILD_CONFIG = {
     "assets_dir": "resources"
 }
 
+class ModularBuildManager:
+    """Manages modular per-module compilation for Digital Workshop."""
+
+    MODULES = ["core", "pyside6", "vtk", "opencv", "numpy"]
+
+    def __init__(self, config=None):
+        """Initialize the modular build manager."""
+        self.config = config or BUILD_CONFIG
+        self.project_root = Path.cwd()
+        self.start_time = datetime.now()
+        self.modules_dir = self.project_root / "dist" / "modules"
+
+    def compile_module(self, module_name: str) -> bool:
+        """
+        Compile a single module.
+
+        Args:
+            module_name: Name of the module to compile
+
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info("Compiling module: %s", module_name)
+
+        spec_file = self.project_root / "config" / f"pyinstaller-{module_name}.spec"
+        if not spec_file.exists():
+            logger.error("Spec file not found: %s", spec_file)
+            return False
+
+        cmd = [sys.executable, "-m", "PyInstaller", str(spec_file), "--clean"]
+
+        logger.info("Running command: %s", " ".join(cmd))
+        result = subprocess.run(cmd, cwd=self.project_root, check=False)
+
+        if result.returncode != 0:
+            logger.error("PyInstaller build failed for module: %s", module_name)
+            return False
+
+        logger.info("Module compiled successfully: %s", module_name)
+        return True
+
+    def compile_all_modules(self) -> bool:
+        """
+        Compile all modules.
+
+        Returns:
+            True if all successful, False otherwise
+        """
+        logger.info("Compiling all modules...")
+
+        all_success = True
+        for module in self.MODULES:
+            if not self.compile_module(module):
+                all_success = False
+                logger.error("Failed to compile module: %s", module)
+
+        return all_success
+
+    def generate_manifest(self) -> bool:
+        """
+        Generate manifest file with module information.
+
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info("Generating manifest...")
+
+        try:
+            manifest = {
+                "app_name": self.config["app_name"],
+                "version": self.config["version"],
+                "build_date": datetime.now().isoformat(),
+                "modules": {}
+            }
+
+            # Collect module information
+            for module in self.MODULES:
+                module_dir = self.modules_dir / module
+
+                if module_dir.exists():
+                    # Calculate module size
+                    total_size = 0
+                    for file_path in module_dir.rglob("*"):
+                        if file_path.is_file():
+                            total_size += file_path.stat().st_size
+
+                    manifest["modules"][module] = {
+                        "version": self.config["version"],
+                        "size_bytes": total_size,
+                        "size_mb": round(total_size / (1024 * 1024), 2),
+                        "path": str(module_dir.relative_to(self.project_root))
+                    }
+
+            # Save manifest
+            manifest_file = self.modules_dir / "manifest.json"
+            manifest_file.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(manifest_file, 'w') as f:
+                json.dump(manifest, f, indent=2)
+
+            logger.info("Manifest generated: %s", manifest_file)
+            return True
+
+        except Exception as e:
+            logger.error("Failed to generate manifest: %s", e)
+            return False
+
+    def generate_checksums(self) -> bool:
+        """
+        Generate checksums for all modules.
+
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info("Generating checksums...")
+
+        try:
+            import hashlib
+
+            checksums = {}
+
+            for module in self.MODULES:
+                module_dir = self.modules_dir / module
+
+                if module_dir.exists():
+                    hasher = hashlib.sha256()
+
+                    # Hash all files in module
+                    for file_path in sorted(module_dir.rglob("*")):
+                        if file_path.is_file():
+                            with open(file_path, 'rb') as f:
+                                hasher.update(f.read())
+
+                    checksums[module] = hasher.hexdigest()
+
+            # Save checksums
+            checksums_file = self.modules_dir / "checksums.json"
+            with open(checksums_file, 'w') as f:
+                json.dump(checksums, f, indent=2)
+
+            logger.info("Checksums generated: %s", checksums_file)
+            return True
+
+        except Exception as e:
+            logger.error("Failed to generate checksums: %s", e)
+            return False
+
+
 class BuildManager:
     """Manages the build and packaging process for Digital Workshop."""
-    
+
     def __init__(self, config=None):
         """Initialize the build manager with configuration."""
         self.config = config or BUILD_CONFIG

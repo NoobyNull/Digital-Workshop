@@ -35,7 +35,6 @@ class SecurityEventLogger:
         self.events = []
 
     def log_event(
-        """TODO: Add docstring."""
         self,
         event_type: SecurityEventType,
         description: str,

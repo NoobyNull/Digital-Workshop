@@ -170,7 +170,6 @@ class VTKResourceTracker:
             self.logger.warning("Error registering default cleanup callbacks: %s", e)
 
     def register_resource(
-        """TODO: Add docstring."""
         self,
         resource: Any,
         resource_type: ResourceType,
@@ -598,7 +597,6 @@ def get_vtk_resource_tracker() -> VTKResourceTracker:
 
 
 def register_vtk_resource(
-    """TODO: Add docstring."""
     resource: Any,
     resource_type: ResourceType,
     name: Optional[str] = None,

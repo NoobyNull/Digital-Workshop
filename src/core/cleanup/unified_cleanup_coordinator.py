@@ -241,7 +241,6 @@ class UnifiedCleanupCoordinator:
             return False
 
     def coordinate_cleanup(
-        """TODO: Add docstring."""
         self,
         render_window=None,
         renderer=None,
@@ -384,7 +383,6 @@ class UnifiedCleanupCoordinator:
             self._context_state = CleanupContext.UNKNOWN
 
     def _execute_cleanup_phases(
-        """TODO: Add docstring."""
         self, render_window, renderer, interactor, main_window, application
     ) -> bool:
         """
@@ -456,7 +454,6 @@ class UnifiedCleanupCoordinator:
         return overall_success
 
     def _execute_phase(
-        """TODO: Add docstring."""
         self,
         phase: CleanupPhase,
         render_window,
@@ -563,7 +560,6 @@ class UnifiedCleanupCoordinator:
         return phase_success
 
     def _sort_handlers_by_dependencies(
-        """TODO: Add docstring."""
         self, handlers: List[CleanupHandler]
     ) -> List[CleanupHandler]:
         """Sort handlers by their dependencies."""
@@ -591,7 +587,6 @@ class UnifiedCleanupCoordinator:
         return sorted_handlers
 
     def _get_phase_context_data(
-        """TODO: Add docstring."""
         self,
         phase: CleanupPhase,
         render_window,
@@ -681,7 +676,6 @@ def get_unified_cleanup_coordinator() -> UnifiedCleanupCoordinator:
 
 
 def coordinate_unified_cleanup(
-    """TODO: Add docstring."""
     render_window=None,
     renderer=None,
     interactor=None,

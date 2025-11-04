@@ -356,7 +356,6 @@ class LoadingWorker(QObject):
         self._current_task = None
 
     def load_file_progressive(
-        """TODO: Add docstring."""
         self, file_path: str, parser_func: Callable, progress_tracker: ProgressTracker
     ) -> Any:
         """
@@ -475,7 +474,6 @@ class ProgressiveLoader(QObject):
 
     @log_function_call(logger)
     def load_file(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         parser_func: Callable,
@@ -518,7 +516,6 @@ class ProgressiveLoader(QObject):
         return future
 
     def _load_file_worker(
-        """TODO: Add docstring."""
         self, file_path: str, parser_func: Callable, worker: LoadingWorker
     ) -> Any:
         """Worker function for file loading."""
@@ -676,7 +673,6 @@ def get_progressive_loader() -> ProgressiveLoader:
 
 
 def load_file_progressive(
-    """TODO: Add docstring."""
     file_path: str,
     parser_func: Callable,
     progress_callback: Optional[Callable[[LoadingProgress], None]] = None,

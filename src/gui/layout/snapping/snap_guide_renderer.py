@@ -340,7 +340,6 @@ class SnapGuideRenderer:
     """
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         main_window: QMainWindow,
         config: SnapConfiguration,
@@ -390,7 +389,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to setup rendering integration: %s", e)
 
     def render_snap_result(
-        """TODO: Add docstring."""
         self, snap_result: SnapResult, context_widget: Optional[QWidget] = None
     ) -> None:
         """
@@ -424,7 +422,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render snap result: %s", e)
 
     def _create_guides_from_snap_result(
-        """TODO: Add docstring."""
         self, snap_result: SnapResult, context_widget: Optional[QWidget]
     ) -> List[SnapGuide]:
         """
@@ -462,7 +459,6 @@ class SnapGuideRenderer:
         return guides
 
     def _create_edge_guides(
-        """TODO: Add docstring."""
         self, candidate: SnapCandidate, context_widget: Optional[QWidget]
     ) -> List[SnapGuide]:
         """Create edge highlight guides."""
@@ -507,7 +503,6 @@ class SnapGuideRenderer:
         return guides
 
     def _create_center_guides(
-        """TODO: Add docstring."""
         self, candidate: SnapCandidate, context_widget: Optional[QWidget]
     ) -> List[SnapGuide]:
         """Create center indicator guides."""
@@ -560,7 +555,6 @@ class SnapGuideRenderer:
         return guides
 
     def _create_corner_guides(
-        """TODO: Add docstring."""
         self, candidate: SnapCandidate, context_widget: Optional[QWidget]
     ) -> List[SnapGuide]:
         """Create corner marker guides."""
@@ -608,7 +602,6 @@ class SnapGuideRenderer:
         return guides
 
     def _create_target_guide(
-        """TODO: Add docstring."""
         self, candidate: SnapCandidate, context_widget: Optional[QWidget]
     ) -> SnapGuide:
         """Create target crosshair guide."""
@@ -644,7 +637,6 @@ class SnapGuideRenderer:
             )
 
     def _distance_to_line_segment(
-        """TODO: Add docstring."""
         self, point: QPointF, line_start: QPointF, line_end: QPointF
     ) -> float:
         """
@@ -759,7 +751,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render guides: %s", e)
 
     def _render_single_guide(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """
@@ -808,7 +799,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render guide %s: {e}", guide.guide_type.value)
 
     def _render_edge_highlight(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """Render edge highlight guide."""
@@ -821,7 +811,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render edge highlight: %s", e)
 
     def _render_center_indicator(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """Render center indicator guide."""
@@ -836,7 +825,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render center indicator: %s", e)
 
     def _render_corner_marker(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """Render corner marker guide."""
@@ -882,7 +870,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render corner marker: %s", e)
 
     def _render_target_crosshair(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """Render target crosshair guide."""
@@ -908,7 +895,6 @@ class SnapGuideRenderer:
             self.logger.error("Failed to render target crosshair: %s", e)
 
     def _render_distance_line(
-        """TODO: Add docstring."""
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
     ) -> None:
         """Render distance line guide."""

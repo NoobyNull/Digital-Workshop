@@ -217,7 +217,6 @@ class LibraryStructureDetector:
             return "balanced"
 
     def _calculate_confidence(
-        """TODO: Add docstring."""
         self,
         file_type_grouping: Dict[str, int],
         total_files: int,
@@ -286,7 +285,6 @@ class LibraryStructureDetector:
         return patterns
 
     def _generate_recommendations(
-        """TODO: Add docstring."""
         self, structure_type: str, confidence_score: float, total_files: int
     ) -> List[str]:
         """Generate recommendations for import."""

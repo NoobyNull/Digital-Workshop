@@ -287,7 +287,6 @@ class VTKCleanupCoordinator:
         self.logger.debug("Registered cleanup callback for phase: %s", phase.value)
 
     def register_resource(
-        """TODO: Add docstring."""
         self,
         name: str,
         resource: Any,
@@ -309,7 +308,6 @@ class VTKCleanupCoordinator:
         self.logger.debug("Registered resource for cleanup: %s (priority: {priority.value})", name)
 
     def coordinate_cleanup(
-        """TODO: Add docstring."""
         self,
         render_window: Optional[vtk.vtkRenderWindow] = None,
         renderer: Optional[vtk.vtkRenderer] = None,
@@ -975,7 +973,6 @@ def get_vtk_cleanup_coordinator() -> VTKCleanupCoordinator:
 
 
 def coordinate_vtk_cleanup(
-    """TODO: Add docstring."""
     render_window: Optional[vtk.vtkRenderWindow] = None,
     renderer: Optional[vtk.vtkRenderer] = None,
     interactor: Optional[vtk.vtkRenderWindowInteractor] = None,

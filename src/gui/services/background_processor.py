@@ -193,7 +193,6 @@ class BackgroundProcessor:
             pass
 
     def _on_duplicate_found(
-        """TODO: Add docstring."""
         self, new_model_id: int, existing_id: int, new_path: str, old_path: str
     ) -> None:
         """Handle duplicate file detected - prompt user for action."""
@@ -242,7 +241,6 @@ class BackgroundProcessor:
 
 # Convenience function for easy background processing setup
 def setup_background_processing(
-    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> BackgroundProcessor:
     """
