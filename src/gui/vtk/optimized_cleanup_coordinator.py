@@ -137,7 +137,7 @@ class OptimizedVTKCleanupCoordinator:
                 )
 
                 if attempt < max_retries - 1:
-                    self.logger.info(f"Retrying in {retry_delay}s...")
+                    self.logger.info("Retrying in %ss...", retry_delay)
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
@@ -168,7 +168,7 @@ class OptimizedVTKCleanupCoordinator:
                             "status": "emergency_cleanup_completed",
                         }
                     except Exception as e:
-                        self.logger.error(f"Emergency resource cleanup failed: {e}")
+                        self.logger.error("Emergency resource cleanup failed: %s", e)
                         return {
                             "cleanup_count": 0,
                             "status": "emergency_cleanup_failed",
@@ -186,7 +186,7 @@ class OptimizedVTKCleanupCoordinator:
             self.logger.info("Fallback resource tracker created successfully")
 
         except Exception as e:
-            self.logger.error(f"Failed to create fallback resource tracker: {e}")
+            self.logger.error("Failed to create fallback resource tracker: %s", e)
 
     def _setup_optimized_cleanup_phases(self) -> None:
         """Setup optimized cleanup phases with proper ordering."""
@@ -239,7 +239,7 @@ class OptimizedVTKCleanupCoordinator:
             True if cleanup completed successfully
         """
         try:
-            self.logger.info(f"Starting optimized cleanup sequence for scenario: {scenario.value}")
+            self.logger.info("Starting optimized cleanup sequence for scenario: %s", scenario.value)
             self.cleanup_in_progress = True
             self.cleanup_operations += 1
 
@@ -250,13 +250,13 @@ class OptimizedVTKCleanupCoordinator:
             cleanup_success = True
             for phase in CleanupPhase:
                 try:
-                    self.logger.debug(f"Executing cleanup phase: {phase.value}")
+                    self.logger.debug("Executing cleanup phase: %s", phase.value)
                     phase_success = self._execute_cleanup_phase(phase, render_window)
                     if not phase_success:
-                        self.logger.warning(f"Cleanup phase {phase.value} reported issues")
+                        self.logger.warning("Cleanup phase %s reported issues", phase.value)
                         cleanup_success = False
                 except Exception as e:
-                    self.logger.error(f"Cleanup phase {phase.value} failed: {e}")
+                    self.logger.error("Cleanup phase %s failed: {e}", phase.value)
                     cleanup_success = False
 
             # Update success metrics
@@ -270,7 +270,7 @@ class OptimizedVTKCleanupCoordinator:
             return cleanup_success
 
         except Exception as e:
-            self.logger.error(f"Error during optimized cleanup coordination: {e}")
+            self.logger.error("Error during optimized cleanup coordination: %s", e)
             self.failed_cleanups += 1
             return False
         finally:
@@ -290,13 +290,13 @@ class OptimizedVTKCleanupCoordinator:
                     if not result:
                         phase_success = False
                 except Exception as e:
-                    self.logger.error(f"Cleanup callback {callback.__name__} failed: {e}")
+                    self.logger.error("Cleanup callback %s failed: {e}", callback.__name__)
                     phase_success = False
 
             return phase_success
 
         except Exception as e:
-            self.logger.error(f"Failed to execute cleanup phase {phase.value}: {e}")
+            self.logger.error("Failed to execute cleanup phase %s: {e}", phase.value)
             return False
 
     # Cleanup phase implementations
@@ -313,7 +313,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to prepare cleanup environment: {e}")
+            self.logger.error("Failed to prepare cleanup environment: %s", e)
             return False
 
     def _suppress_vtk_errors_temporarily(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -323,7 +323,7 @@ class OptimizedVTKCleanupCoordinator:
             self.error_handler.suppress_errors_temporarily(2000)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to suppress VTK errors: {e}")
+            self.logger.error("Failed to suppress VTK errors: %s", e)
             return False
 
     def _perform_early_context_detection(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -336,7 +336,7 @@ class OptimizedVTKCleanupCoordinator:
             if early_detection:
                 self.context_lost_detected = True
                 self.early_detections += 1
-                self.logger.warning(f"Early context loss detected: {context_state.value}")
+                self.logger.warning("Early context loss detected: %s", context_state.value)
 
                 # Adjust cleanup strategy based on context state
                 if context_state == ContextState.DESTROYING:
@@ -350,7 +350,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Early context detection failed: {e}")
+            self.logger.error("Early context detection failed: %s", e)
             return False
 
     def _adjust_cleanup_for_destroying_context(self) -> bool:
@@ -369,7 +369,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to adjust cleanup for destroying context: {e}")
+            self.logger.error("Failed to adjust cleanup for destroying context: %s", e)
             return False
 
     def _adjust_cleanup_for_lost_context(self) -> bool:
@@ -388,7 +388,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to adjust cleanup for lost context: {e}")
+            self.logger.error("Failed to adjust cleanup for lost context: %s", e)
             return False
 
     def _cleanup_vtk_resources_by_priority(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -399,13 +399,13 @@ class OptimizedVTKCleanupCoordinator:
             if self.resource_tracker is not None:
                 try:
                     cleanup_stats = self.resource_tracker.cleanup_all_resources()
-                    self.logger.info(f"Resource tracker cleanup completed: {cleanup_stats}")
+                    self.logger.info("Resource tracker cleanup completed: %s", cleanup_stats)
                 except Exception as e:
-                    self.logger.warning(f"Resource tracker cleanup failed: {e}")
+                    self.logger.warning("Resource tracker cleanup failed: %s", e)
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup VTK resources by priority: {e}")
+            self.logger.error("Failed to cleanup VTK resources by priority: %s", e)
             return False
 
     def _cleanup_vtk_actors(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -422,7 +422,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup VTK actors: {e}")
+            self.logger.error("Failed to cleanup VTK actors: %s", e)
             return False
 
     def _cleanup_vtk_renderers(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -439,7 +439,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup VTK renderers: {e}")
+            self.logger.error("Failed to cleanup VTK renderers: %s", e)
             return False
 
     def _cleanup_vtk_windows(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -451,7 +451,7 @@ class OptimizedVTKCleanupCoordinator:
                 # Record VTK cleanup end time
                 self.vtk_cleanup_end_time = time.time()
                 vtk_cleanup_duration = self.vtk_cleanup_end_time - self.vtk_cleanup_start_time
-                self.logger.info(f"VTK cleanup completed in {vtk_cleanup_duration:.3f}s")
+                self.logger.info("VTK cleanup completed in %ss", vtk_cleanup_duration:.3f)
 
                 # Finalize the render window
                 if hasattr(render_window, "Finalize"):
@@ -459,7 +459,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup VTK windows: {e}")
+            self.logger.error("Failed to cleanup VTK windows: %s", e)
             return False
 
     def _cleanup_vtk_interactors(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -474,7 +474,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup VTK interactors: {e}")
+            self.logger.error("Failed to cleanup VTK interactors: %s", e)
             return False
 
     def _coordinate_context_transition(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -488,14 +488,14 @@ class OptimizedVTKCleanupCoordinator:
             # Ensure VTK cleanup is complete before proceeding
             if self.vtk_cleanup_end_time > 0:
                 transition_delay = self.opengl_cleanup_start_time - self.vtk_cleanup_end_time
-                self.logger.info(f"Context transition delay: {transition_delay:.3f}s")
+                self.logger.info("Context transition delay: %ss", transition_delay:.3f)
 
             # Use the enhanced context manager for coordination
             coordination_success = self.context_manager.coordinate_cleanup_sequence(render_window)
 
             return coordination_success
         except Exception as e:
-            self.logger.error(f"Failed to coordinate context transition: {e}")
+            self.logger.error("Failed to coordinate context transition: %s", e)
             return False
 
     def _cleanup_opengl_resources(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -506,15 +506,15 @@ class OptimizedVTKCleanupCoordinator:
             # Record OpenGL cleanup end time
             self.opengl_cleanup_end_time = time.time()
             opengl_cleanup_duration = self.opengl_cleanup_end_time - self.opengl_cleanup_start_time
-            self.logger.info(f"OpenGL cleanup completed in {opengl_cleanup_duration:.3f}s")
+            self.logger.info("OpenGL cleanup completed in %ss", opengl_cleanup_duration:.3f)
 
             # Calculate total cleanup time
             total_cleanup_time = self.opengl_cleanup_end_time - self.vtk_cleanup_start_time
-            self.logger.info(f"Total cleanup time: {total_cleanup_time:.3f}s")
+            self.logger.info("Total cleanup time: %ss", total_cleanup_time:.3f)
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup OpenGL resources: {e}")
+            self.logger.error("Failed to cleanup OpenGL resources: %s", e)
             return False
 
     def _perform_final_resource_cleanup(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -527,7 +527,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to perform final resource cleanup: {e}")
+            self.logger.error("Failed to perform final resource cleanup: %s", e)
             return False
 
     def _cleanup_resource_tracker(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -538,13 +538,13 @@ class OptimizedVTKCleanupCoordinator:
             if self.resource_tracker is not None:
                 try:
                     final_stats = self.resource_tracker.cleanup_all_resources()
-                    self.logger.info(f"Final resource tracker cleanup: {final_stats}")
+                    self.logger.info("Final resource tracker cleanup: %s", final_stats)
                 except Exception as e:
-                    self.logger.warning(f"Final resource tracker cleanup failed: {e}")
+                    self.logger.warning("Final resource tracker cleanup failed: %s", e)
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to cleanup resource tracker: {e}")
+            self.logger.error("Failed to cleanup resource tracker: %s", e)
             return False
 
     def _verify_cleanup_completion(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -554,7 +554,7 @@ class OptimizedVTKCleanupCoordinator:
 
             # Check cleanup metrics
             success_rate = self.successful_cleanups / max(1, self.cleanup_operations)
-            self.logger.info(f"Cleanup success rate: {success_rate:.2%}")
+            self.logger.info("Cleanup success rate: %s", success_rate:.2%)
 
             # Check for context loss
             if self.context_lost_detected:
@@ -562,7 +562,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to verify cleanup completion: {e}")
+            self.logger.error("Failed to verify cleanup completion: %s", e)
             return False
 
     def _force_garbage_collection(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -577,7 +577,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to force garbage collection: {e}")
+            self.logger.error("Failed to force garbage collection: %s", e)
             return False
 
     # Emergency and deferred cleanup methods
@@ -591,7 +591,7 @@ class OptimizedVTKCleanupCoordinator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Emergency VTK cleanup failed: {e}")
+            self.logger.error("Emergency VTK cleanup failed: %s", e)
             return False
 
     def _deferred_vtk_cleanup(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -602,7 +602,7 @@ class OptimizedVTKCleanupCoordinator:
             # Skip operations that require valid context
             return True
         except Exception as e:
-            self.logger.error(f"Deferred VTK cleanup failed: {e}")
+            self.logger.error("Deferred VTK cleanup failed: %s", e)
             return False
 
     # Skip methods for emergency cleanup

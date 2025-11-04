@@ -76,7 +76,7 @@ class ToolLibraryManager:
         try:
             path = Path(file_path)
             if not path.exists():
-                self.logger.warning(f"Library file not found: {file_path}")
+                self.logger.warning("Library file not found: %s", file_path)
                 return False
 
             with open(path, "r") as f:
@@ -98,15 +98,15 @@ class ToolLibraryManager:
                     )
                     tools.append(tool)
                 except Exception as e:
-                    self.logger.debug(f"Failed to parse tool: {e}")
+                    self.logger.debug("Failed to parse tool: %s", e)
                     continue
 
             self.libraries[library_name] = tools
-            self.logger.info(f"Loaded {len(tools)} tools from {library_name}")
+            self.logger.info("Loaded %s tools from {library_name}", len(tools))
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to load library {library_name}: {e}")
+            self.logger.error("Failed to load library %s: {e}", library_name)
             return False
 
     def get_library(self, library_name: str) -> List[Tool]:

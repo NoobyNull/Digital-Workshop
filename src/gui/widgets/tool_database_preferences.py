@@ -138,7 +138,7 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.logger.info("Preferences loaded successfully")
 
         except Exception as e:
-            self.logger.error(f"Failed to load preferences: {e}")
+            self.logger.error("Failed to load preferences: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load preferences: {str(e)}")
 
     def _add_external_path(self):
@@ -150,7 +150,7 @@ class ToolDatabasePreferencesDialog(QDialog):
                 self.paths_list.item(i).text() == file_path for i in range(self.paths_list.count())
             ):
                 self.paths_list.addItem(QListWidgetItem(file_path))
-                self.logger.info(f"Added external database path: {file_path}")
+                self.logger.info("Added external database path: %s", file_path)
             else:
                 QMessageBox.information(self, "Info", "Path already added")
 
@@ -160,7 +160,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         if current_item:
             row = self.paths_list.row(current_item)
             removed_item = self.paths_list.takeItem(row)
-            self.logger.info(f"Removed external database path: {removed_item.text()}")
+            self.logger.info("Removed external database path: %s", removed_item.text())
 
     def _save_and_close(self):
         """Save preferences and close dialog."""
@@ -183,5 +183,5 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.accept()
 
         except Exception as e:
-            self.logger.error(f"Failed to save preferences: {e}")
+            self.logger.error("Failed to save preferences: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save preferences: {str(e)}")

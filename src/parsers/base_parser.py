@@ -121,14 +121,14 @@ class BaseParser(ABC):
 
                 cached_model = self.model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
                 if cached_model:
-                    self.logger.info(f"Loaded model from cache: {file_path}")
+                    self.logger.info("Loaded model from cache: %s", file_path)
                     self.performance_monitor.end_operation(operation_id, success=True)
                     return cached_model
 
                 # Try to get cached metadata
                 cached_metadata = self.model_cache.get(file_path, CacheLevel.METADATA)
                 if cached_metadata:
-                    self.logger.info(f"Loaded metadata from cache: {file_path}")
+                    self.logger.info("Loaded metadata from cache: %s", file_path)
                     # Load full geometry in background if needed
                     if cached_metadata.needs_geometry_loading():
                         self._load_geometry_async(cached_metadata, progress_callback)

@@ -85,7 +85,7 @@ class DocumentationIndexer:
             if file_path.exists():
                 self._index_file(file_path)
 
-        logger.info(f"Documentation index built: {len(self.topics)} topics")
+        logger.info("Documentation index built: %s topics", len(self.topics))
         return self.topics
 
     def _scan_directory(self, directory: Path) -> None:
@@ -94,7 +94,7 @@ class DocumentationIndexer:
             for md_file in directory.rglob("*.md"):
                 self._index_file(md_file)
         except Exception as e:
-            logger.warning(f"Error scanning directory {directory}: {e}")
+            logger.warning("Error scanning directory %s: {e}", directory)
 
     def _index_file(self, file_path: Path) -> None:
         """Index a single markdown file."""
@@ -107,7 +107,7 @@ class DocumentationIndexer:
             self.topics.extend(sections)
 
         except Exception as e:
-            logger.warning(f"Error indexing file {file_path}: {e}")
+            logger.warning("Error indexing file %s: {e}", file_path)
 
     def _extract_sections(self, content: str, file_path: Path) -> List[HelpTopic]:
         """Extract sections from markdown content."""

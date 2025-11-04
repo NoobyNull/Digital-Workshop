@@ -102,7 +102,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             ThreeMFParseError: If parsing fails
             FileNotFoundError: If file doesn't exist
         """
-        self.logger.info(f"Starting 3MF parsing: {file_path}")
+        self.logger.info("Starting 3MF parsing: %s", file_path)
 
         try:
             # Parse 3MF file
@@ -140,7 +140,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to parse 3MF file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse 3MF file %s: {str(e)}", file_path)
             raise
 
     def _parse_3mf_file(
@@ -166,7 +166,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 self._parse_3mf_file_standard(file_path, progress_callback)
 
         except Exception as e:
-            self.logger.error(f"Error parsing 3MF file: {str(e)}")
+            self.logger.error("Error parsing 3MF file: %s", str(e))
             raise ThreeMFParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_3mf_file_standard(
@@ -314,7 +314,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                     gc.collect()
 
             except (ValueError, AttributeError) as e:
-                self.logger.warning(f"Invalid object element: {str(e)}")
+                self.logger.warning("Invalid object element: %s", str(e))
                 continue
 
     def _parse_build_items(self, root: ET.Element) -> None:
@@ -344,7 +344,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 self.build_items.append(build_item)
 
             except (ValueError, AttributeError) as e:
-                self.logger.warning(f"Invalid build item element: {str(e)}")
+                self.logger.warning("Invalid build item element: %s", str(e))
                 continue
 
     def _parse_transform(self, transform_str: str) -> List[float]:
@@ -384,7 +384,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
+                self.logger.warning("Invalid transform: %s, using identity", transform_str)
                 return [
                     1.0,
                     0.0,
@@ -407,7 +407,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return values
 
         except ValueError:
-            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
+            self.logger.warning("Invalid transform values: %s, using identity", transform_str)
             return [
                 1.0,
                 0.0,
@@ -458,7 +458,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         # Get the object
         obj = self.objects.get(build_item.object_id)
         if obj is None:
-            self.logger.warning(f"Object {build_item.object_id} not found")
+            self.logger.warning("Object %s not found", build_item.object_id)
             return triangles
 
         # Process triangles
@@ -472,7 +472,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 if 0 <= vertex_idx < len(obj.vertices):
                     vertices.append(obj.vertices[vertex_idx])
                 else:
-                    self.logger.warning(f"Vertex index {vertex_idx} out of range")
+                    self.logger.warning("Vertex index %s out of range", vertex_idx)
                     break
 
             if len(vertices) != 3:
@@ -533,7 +533,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         # Get the component object
         comp_obj = self.objects.get(component.object_id)
         if comp_obj is None:
-            self.logger.warning(f"Component object {component.object_id} not found")
+            self.logger.warning("Component object %s not found", component.object_id)
             return triangles
 
         # Combine transforms
@@ -550,7 +550,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 if 0 <= vertex_idx < len(comp_obj.vertices):
                     vertices.append(comp_obj.vertices[vertex_idx])
                 else:
-                    self.logger.warning(f"Vertex index {vertex_idx} out of range")
+                    self.logger.warning("Vertex index %s out of range", vertex_idx)
                     break
 
             if len(vertices) != 3:
@@ -702,7 +702,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
         except Exception as e:
-            self.logger.error(f"Error validating 3MF geometry: {str(e)}")
+            self.logger.error("Error validating 3MF geometry: %s", str(e))
             return {
                 "is_valid": False,
                 "issues": [f"Validation error: {str(e)}"],
@@ -760,7 +760,7 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             return stats
 
         except Exception as e:
-            self.logger.error(f"Error getting 3MF geometry stats: {str(e)}")
+            self.logger.error("Error getting 3MF geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
     def get_parser_info(self) -> Dict[str, str]:

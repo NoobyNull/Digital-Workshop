@@ -45,7 +45,7 @@ class EventHandler:
 
             if model:
                 file_path = model["file_path"]
-                logger.info(f"Loading model from library: {file_path}")
+                logger.info("Loading model from library: %s", file_path)
 
                 filename = Path(file_path).name
                 self.main_window.status_label.setText(f"Loading: {filename}")
@@ -57,14 +57,14 @@ class EventHandler:
 
                 QTimer.singleShot(500, lambda: self.restore_saved_camera(model_id))
             else:
-                logger.warning(f"Model with ID {model_id} not found in database")
+                logger.warning("Model with ID %s not found in database", model_id)
 
         except Exception as e:
-            logger.error(f"Failed to handle model double-click: {str(e)}")
+            logger.error("Failed to handle model double-click: %s", str(e))
 
     def on_models_added(self, model_ids: List[int]) -> None:
         """Handle models added to the library."""
-        activity_logger.info(f"Added {len(model_ids)} models to library")
+        activity_logger.info("Added %s models to library", len(model_ids))
 
         if model_ids:
             self.main_window.status_label.setText(f"Added {len(model_ids)} models to library")
@@ -75,7 +75,7 @@ class EventHandler:
     def on_metadata_saved(self, model_id: int) -> None:
         """Handle metadata saved event from the metadata editor."""
         try:
-            activity_logger.info(f"Metadata saved for model ID: {model_id}")
+            activity_logger.info("Metadata saved for model ID: %s", model_id)
             self.main_window.status_label.setText("Metadata saved")
 
             if hasattr(self.main_window, "model_library_widget"):
@@ -84,16 +84,16 @@ class EventHandler:
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
         except Exception as e:
-            logger.error(f"Failed to handle metadata saved event: {str(e)}")
+            logger.error("Failed to handle metadata saved event: %s", str(e))
 
     def on_metadata_changed(self, model_id: int) -> None:
         """Handle metadata changed event from the metadata editor."""
         try:
-            logger.debug(f"Metadata changed for model ID: {model_id}")
+            logger.debug("Metadata changed for model ID: %s", model_id)
             self.main_window.status_label.setText("Metadata modified (unsaved changes)")
 
         except Exception as e:
-            logger.error(f"Failed to handle metadata changed event: {str(e)}")
+            logger.error("Failed to handle metadata changed event: %s", str(e))
 
     def show_preferences(self) -> None:
         """Show preferences dialog."""
@@ -127,7 +127,7 @@ class EventHandler:
                 logger.info("Viewer settings reloaded to scene manager")
 
         except Exception as e:
-            logger.error(f"Failed to sync viewer settings: {e}")
+            logger.error("Failed to sync viewer settings: %s", e)
 
     def show_theme_manager(self) -> None:
         """Show the Theme Manager dialog."""
@@ -138,14 +138,14 @@ class EventHandler:
             dlg.theme_applied.connect(self.on_theme_applied)
             dlg.exec()
         except Exception as e:
-            logger.error(f"Failed to open Theme Manager: {e}")
+            logger.error("Failed to open Theme Manager: %s", e)
             QMessageBox.warning(
                 self.main_window, "Theme Manager", f"Failed to open Theme Manager:\n{e}"
             )
 
     def on_theme_applied(self, preset_name: str) -> None:
         """Handle theme change notification."""
-        logger.info(f"Theme changed: {preset_name}")
+        logger.info("Theme changed: %s", preset_name)
 
     def zoom_in(self) -> None:
         """Handle zoom in action."""
@@ -178,7 +178,7 @@ class EventHandler:
                 if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                     self.main_window.viewer_widget.reset_save_view_button()
             except Exception as e:
-                logger.warning(f"Failed to reset save view button: {e}")
+                logger.warning("Failed to reset save view button: %s", e)
         else:
             QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
 
@@ -239,12 +239,12 @@ class EventHandler:
 
                     if success:
                         self.main_window.status_label.setText("View saved for this model")
-                        logger.info(f"Saved camera view for model ID {model_id}")
+                        logger.info("Saved camera view for model ID %s", model_id)
                         try:
                             if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                                 self.main_window.viewer_widget.reset_save_view_button()
                         except Exception as e:
-                            logger.warning(f"Failed to reset save view button: {e}")
+                            logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(
                             3000, lambda: self.main_window.status_label.setText("Ready")
                         )
@@ -260,7 +260,7 @@ class EventHandler:
                 QMessageBox.warning(self.main_window, "Save View", "Viewer not initialized.")
 
         except Exception as e:
-            logger.error(f"Failed to save current view: {e}")
+            logger.error("Failed to save current view: %s", e)
             QMessageBox.warning(self.main_window, "Save View", f"Failed to save view: {str(e)}")
 
     @log_function_call(logger)
@@ -292,14 +292,14 @@ class EventHandler:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    logger.info(f"Restored saved camera view for model ID {model_id}")
+                    logger.info("Restored saved camera view for model ID %s", model_id)
                     self.main_window.status_label.setText("Restored saved view")
                     QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
             else:
-                logger.debug(f"No saved camera view for model ID {model_id}")
+                logger.debug("No saved camera view for model ID %s", model_id)
 
         except Exception as e:
-            logger.warning(f"Failed to restore saved camera: {e}")
+            logger.warning("Failed to restore saved camera: %s", e)
 
     def show_about(self) -> None:
         """Show about dialog."""
@@ -362,7 +362,7 @@ class EventHandler:
             logger.info("Started batch screenshot generation")
 
         except Exception as e:
-            logger.error(f"Failed to start screenshot generation: {e}")
+            logger.error("Failed to start screenshot generation: %s", e)
             QMessageBox.critical(
                 self.main_window,
                 "Screenshot Generation Error",
@@ -377,22 +377,22 @@ class EventHandler:
                 self.main_window.progress_bar.setValue(progress)
                 self.main_window.status_label.setText(f"Generating screenshots: {current}/{total}")
         except Exception as e:
-            logger.warning(f"Failed to update progress: {e}")
+            logger.warning("Failed to update progress: %s", e)
 
     def on_screenshot_generated(self, model_id: int, screenshot_path: str) -> None:
         """Handle screenshot generated event."""
         try:
-            logger.debug(f"Screenshot generated for model {model_id}: {screenshot_path}")
+            logger.debug("Screenshot generated for model %s: {screenshot_path}", model_id)
         except Exception as e:
-            logger.warning(f"Failed to handle screenshot generated event: {e}")
+            logger.warning("Failed to handle screenshot generated event: %s", e)
 
     def on_screenshot_error(self, error_message: str) -> None:
         """Handle screenshot generation error."""
         try:
-            logger.error(f"Screenshot generation error: {error_message}")
+            logger.error("Screenshot generation error: %s", error_message)
             self.main_window.status_label.setText(f"Error: {error_message}")
         except Exception as e:
-            logger.warning(f"Failed to handle screenshot error: {e}")
+            logger.warning("Failed to handle screenshot error: %s", e)
 
     def on_screenshots_finished(self) -> None:
         """Handle screenshot generation finished."""
@@ -402,4 +402,4 @@ class EventHandler:
             logger.info("Batch screenshot generation finished")
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
         except Exception as e:
-            logger.warning(f"Failed to handle screenshots finished: {e}")
+            logger.warning("Failed to handle screenshots finished: %s", e)

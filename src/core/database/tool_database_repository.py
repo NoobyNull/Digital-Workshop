@@ -92,11 +92,11 @@ class ToolDatabaseRepository:
                     )
 
                 conn.commit()
-                self.logger.info(f"Added tool: {tool_data.get('description')} (ID: {tool_id})")
+                self.logger.info("Added tool: %s (ID: {tool_id})", tool_data.get('description'))
                 return tool_id
 
         except Exception as e:
-            self.logger.error(f"Failed to add tool: {e}")
+            self.logger.error("Failed to add tool: %s", e)
             return None
 
     def get_tools_by_provider(self, provider_id: int) -> List[Dict[str, Any]]:
@@ -154,7 +154,7 @@ class ToolDatabaseRepository:
                 return tools
 
         except Exception as e:
-            self.logger.error(f"Failed to get tools for provider {provider_id}: {e}")
+            self.logger.error("Failed to get tools for provider %s: {e}", provider_id)
             return []
 
     def search_tools(self, query: str, provider_id: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -183,7 +183,7 @@ class ToolDatabaseRepository:
                 return [dict(row) for row in cursor.fetchall()]
 
         except Exception as e:
-            self.logger.error(f"Failed to search tools: {e}")
+            self.logger.error("Failed to search tools: %s", e)
             return []
 
     def delete_tool(self, tool_id: int) -> bool:
@@ -196,11 +196,11 @@ class ToolDatabaseRepository:
 
                 success = cursor.rowcount > 0
                 if success:
-                    self.logger.info(f"Deleted tool ID: {tool_id}")
+                    self.logger.info("Deleted tool ID: %s", tool_id)
                 return success
 
         except Exception as e:
-            self.logger.error(f"Failed to delete tool {tool_id}: {e}")
+            self.logger.error("Failed to delete tool %s: {e}", tool_id)
             return False
 
     def list_tools(self) -> List[Dict[str, Any]]:
@@ -212,7 +212,7 @@ class ToolDatabaseRepository:
                 cursor.execute("SELECT * FROM tools ORDER BY description")
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            self.logger.error(f"Failed to list tools: {e}")
+            self.logger.error("Failed to list tools: %s", e)
             return []
 
     def get_tool(self, tool_id: int) -> Optional[Dict[str, Any]]:
@@ -225,7 +225,7 @@ class ToolDatabaseRepository:
                 result = cursor.fetchone()
                 return dict(result) if result else None
         except Exception as e:
-            self.logger.error(f"Failed to get tool {tool_id}: {e}")
+            self.logger.error("Failed to get tool %s: {e}", tool_id)
             return None
 
     def get_tool_by_id(self, tool_id: int) -> Optional[Dict[str, Any]]:
@@ -257,10 +257,10 @@ class ToolDatabaseRepository:
 
                 cursor.execute(f"UPDATE tools SET {set_clause} WHERE id = ?", values)
                 conn.commit()
-                self.logger.info(f"Updated tool {tool_id}")
+                self.logger.info("Updated tool %s", tool_id)
                 return cursor.rowcount > 0
         except Exception as e:
-            self.logger.error(f"Failed to update tool {tool_id}: {e}")
+            self.logger.error("Failed to update tool %s: {e}", tool_id)
             return False
 
     def list_tools_for_provider(self, provider_id: int) -> List[Dict[str, Any]]:
@@ -290,7 +290,7 @@ class ToolDatabaseRepository:
                 cursor.execute(sql, params)
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            self.logger.error(f"Failed to search tools: {e}")
+            self.logger.error("Failed to search tools: %s", e)
             return []
 
     def search_tools_by_description(self, description: str) -> List[Dict[str, Any]]:
@@ -305,7 +305,7 @@ class ToolDatabaseRepository:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            self.logger.error(f"Failed to search tools by description: {e}")
+            self.logger.error("Failed to search tools by description: %s", e)
             return []
 
     def filter_by_diameter(
@@ -322,7 +322,7 @@ class ToolDatabaseRepository:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            self.logger.error(f"Failed to filter tools by diameter: {e}")
+            self.logger.error("Failed to filter tools by diameter: %s", e)
             return []
 
     def add_tool_properties(self, tool_id: int, properties: Dict[str, Any]) -> bool:
@@ -341,10 +341,10 @@ class ToolDatabaseRepository:
                         (tool_id, prop_name, property_value_json, "custom"),
                     )
                 conn.commit()
-                self.logger.info(f"Added properties to tool {tool_id}")
+                self.logger.info("Added properties to tool %s", tool_id)
                 return True
         except Exception as e:
-            self.logger.error(f"Failed to add tool properties: {e}")
+            self.logger.error("Failed to add tool properties: %s", e)
             return False
 
     def get_tool_properties(self, tool_id: int) -> Optional[Dict[str, Any]]:
@@ -367,7 +367,7 @@ class ToolDatabaseRepository:
                         properties[row["property_name"]] = row["property_value"]
                 return properties if properties else None
         except Exception as e:
-            self.logger.error(f"Failed to get tool properties: {e}")
+            self.logger.error("Failed to get tool properties: %s", e)
             return None
 
     def get_tool_count_by_provider(self, provider_id: int) -> int:
@@ -379,5 +379,5 @@ class ToolDatabaseRepository:
                 result = cursor.fetchone()
                 return result[0] if result else 0
         except Exception as e:
-            self.logger.error(f"Failed to get tool count: {e}")
+            self.logger.error("Failed to get tool count: %s", e)
             return 0

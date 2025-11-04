@@ -180,7 +180,7 @@ class MaterialPickerWidget(QDialog):
                 self.species_combo.addItem("No valid MTL materials found", userData=None)
 
         except Exception as e:
-            self.logger.error(f"Failed to load MTL materials: {e}")
+            self.logger.error("Failed to load MTL materials: %s", e)
             self.species_combo.addItem("Error loading materials", userData=None)
 
         self.species_combo.blockSignals(False)
@@ -312,7 +312,7 @@ class MaterialPickerWidget(QDialog):
                             material["d"] = float(parts[1])
 
         except Exception as e:
-            self.logger.warning(f"Failed to parse MTL file for display {mtl_path}: {e}")
+            self.logger.warning("Failed to parse MTL file for display %s: {e}", mtl_path)
 
         return material
 

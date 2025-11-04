@@ -180,7 +180,7 @@ class EnhancedErrorHandler(IErrorHandler):
             return recovery_success
 
         except Exception as handling_error:
-            self.logger.error(f"Error handler failed: {str(handling_error)}", exc_info=True)
+            self.logger.error("Error handler failed: %s", str(handling_error), exc_info=True)
             return False
 
     def log_error(self, error: Exception, level: str = "ERROR") -> None:
@@ -215,7 +215,7 @@ class EnhancedErrorHandler(IErrorHandler):
             )
 
         except Exception as log_error:
-            self.logger.error(f"Failed to log error: {str(log_error)}", exc_info=True)
+            self.logger.error("Failed to log error: %s", str(log_error), exc_info=True)
 
     def should_retry(self, error: Exception) -> bool:
         """
@@ -250,7 +250,7 @@ class EnhancedErrorHandler(IErrorHandler):
         """
         with self._lock:
             self._recovery_callbacks[error_type] = callback
-            self.logger.debug(f"Registered recovery callback for {error_type}")
+            self.logger.debug("Registered recovery callback for %s", error_type)
 
     def get_error_statistics(self) -> Dict[str, Any]:
         """
@@ -700,7 +700,7 @@ class EnhancedErrorHandler(IErrorHandler):
             return False
 
         except Exception as recovery_error:
-            self.logger.error(f"Recovery attempt failed: {str(recovery_error)}", exc_info=True)
+            self.logger.error("Recovery attempt failed: %s", str(recovery_error), exc_info=True)
             return False
 
     def _handle_retry_strategy(self, error_info: ErrorInfo) -> bool:

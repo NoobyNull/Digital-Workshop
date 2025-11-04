@@ -98,7 +98,7 @@ class OBJParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(f"Starting OBJ parsing: {file_path} ({file_path.stat().st_size} bytes)")
+        self.logger.info("Starting OBJ parsing: %s ({file_path.stat().st_size} bytes)", file_path)
 
         start_time = time.time()
 
@@ -131,7 +131,7 @@ class OBJParser(BaseParser):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to parse OBJ file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse OBJ file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_obj_file(
@@ -235,7 +235,7 @@ class OBJParser(BaseParser):
                                 self._load_mtl_file(file_path.parent / mtl_file)
 
                     except (ValueError, IndexError) as e:
-                        self.logger.warning(f"Invalid line {i+1}: {line} - {str(e)}")
+                        self.logger.warning("Invalid line %s: {line} - {str(e)}", i+1)
                         continue
 
                     # Periodic garbage collection
@@ -401,7 +401,7 @@ class OBJParser(BaseParser):
             mtl_path: Path to the MTL file
         """
         if not mtl_path.exists():
-            self.logger.warning(f"MTL file not found: {mtl_path}")
+            self.logger.warning("MTL file not found: %s", mtl_path)
             return
 
         try:
@@ -523,13 +523,13 @@ class OBJParser(BaseParser):
                                     current_material.decal_map = parts[1]
 
                         except (ValueError, IndexError) as e:
-                            self.logger.warning(f"Invalid MTL line: {line} - {str(e)}")
+                            self.logger.warning("Invalid MTL line: %s - {str(e)}", line)
                             continue
 
-                self.logger.info(f"Loaded {len(self.materials)} materials from {mtl_path}")
+                self.logger.info("Loaded %s materials from {mtl_path}", len(self.materials))
 
         except Exception as e:
-            self.logger.error(f"Failed to load MTL file {mtl_path}: {str(e)}")
+            self.logger.error("Failed to load MTL file %s: {str(e)}", mtl_path)
 
     def validate_file(self, file_path: Union[str, Path]) -> Tuple[bool, str]:
         """

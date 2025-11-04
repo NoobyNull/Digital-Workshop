@@ -76,7 +76,7 @@ class CentralWidgetManager:
                 self.main_window.material_manager = MaterialManager(get_database_manager())
             except Exception as e:
                 self.main_window.material_manager = None
-                self.logger.warning(f"MaterialManager unavailable: {e}")
+                self.logger.warning("MaterialManager unavailable: %s", e)
 
             try:
                 renderer = getattr(self.main_window.viewer_widget, "renderer", None)
@@ -88,10 +88,10 @@ class CentralWidgetManager:
                     try:
                         self._load_lighting_settings()
                     except Exception as le:
-                        self.logger.warning(f"Failed to load lighting settings: {le}")
+                        self.logger.warning("Failed to load lighting settings: %s", le)
             except Exception as e:
                 self.main_window.lighting_manager = None
-                self.logger.warning(f"LightingManager unavailable: {e}")
+                self.logger.warning("LightingManager unavailable: %s", e)
 
             # Create MaterialLightingIntegrator for material and lighting integration
             try:
@@ -103,7 +103,7 @@ class CentralWidgetManager:
                 self.logger.info("MaterialLightingIntegrator created successfully")
             except Exception as e:
                 self.main_window.material_lighting_integrator = None
-                self.logger.warning(f"MaterialLightingIntegrator unavailable: {e}")
+                self.logger.warning("MaterialLightingIntegrator unavailable: %s", e)
 
             if hasattr(self.main_window.viewer_widget, "lighting_panel_requested"):
                 self.main_window.viewer_widget.lighting_panel_requested.connect(
@@ -129,7 +129,7 @@ class CentralWidgetManager:
             self.logger.info("3D viewer widget created successfully")
 
         except ImportError as e:
-            self.logger.warning(f"Failed to import 3D viewer widget: {str(e)}")
+            self.logger.warning("Failed to import 3D viewer widget: %s", str(e))
             self.main_window.viewer_widget = QTextEdit()
             self.main_window.viewer_widget.setReadOnly(True)
             self.main_window.viewer_widget.setPlainText(
@@ -209,7 +209,7 @@ class CentralWidgetManager:
             )
             self.logger.info("G-code Previewer widget created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
+            self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
             self.main_window.hero_tabs.addTab(
                 _placeholder("GCP", "G-code Previewer\n\nComponent unavailable."),
                 "G Code Previewer",
@@ -223,7 +223,7 @@ class CentralWidgetManager:
             self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "Cut List Optimizer")
             self.logger.info("CLO widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create CLO widget: {e}")
+            self.logger.warning("Failed to create CLO widget: %s", e)
             self.main_window.hero_tabs.addTab(
                 _placeholder("CLO", "Cut List Optimizer\n\nComponent unavailable."),
                 "Cut List Optimizer",
@@ -239,7 +239,7 @@ class CentralWidgetManager:
             )
             self.logger.info("Feeds & Speeds widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
+            self.logger.warning("Failed to create Feeds & Speeds widget: %s", e)
             self.main_window.hero_tabs.addTab(
                 _placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."),
                 "Feed and Speed",
@@ -260,7 +260,7 @@ class CentralWidgetManager:
             self.main_window.dynamic_tab_manager = setup_dynamic_tabs(self.main_window.hero_tabs)
             self.logger.info("Dynamic tab manager initialized")
         except Exception as e:
-            self.logger.warning(f"Failed to initialize dynamic tab manager: {e}")
+            self.logger.warning("Failed to initialize dynamic tab manager: %s", e)
 
         # Persist active hero tab on change
         try:
@@ -296,7 +296,7 @@ class CentralWidgetManager:
 
             self.logger.info("Hero tabs set as central widget - dock system will manage layout")
         except Exception as e:
-            self.logger.warning(f"Failed to set central widget: {e}")
+            self.logger.warning("Failed to set central widget: %s", e)
 
         # 3) Ensure all docks are visible but don't force positioning
         try:
@@ -315,7 +315,7 @@ class CentralWidgetManager:
                     self.main_window.model_library_dock.setVisible(True)
             self.logger.info("All docks made visible - user can arrange freely")
         except Exception as e:
-            self.logger.warning(f"Failed to ensure dock visibility: {e}")
+            self.logger.warning("Failed to ensure dock visibility: %s", e)
 
         self.logger.debug("Center Hero Tabs layout with right-column stacking completed")
 

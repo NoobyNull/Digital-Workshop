@@ -56,7 +56,7 @@ class ModelGeometryAnalyzer:
                 f"Analyzed model: {len(self.faces)} faces, {len(self.triangles)} triangles"
             )
         except Exception as e:
-            self.logger.error(f"Failed to analyze model: {e}")
+            self.logger.error("Failed to analyze model: %s", e)
 
     def _group_triangles_into_faces(self) -> None:
         """Group triangles into faces based on normal direction."""

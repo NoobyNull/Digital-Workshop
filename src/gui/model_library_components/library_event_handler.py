@@ -128,7 +128,7 @@ class LibraryEventHandler:
                 if model_id:
                     self.library_widget.model_selected.emit(model_id)
         except Exception as e:
-            self.logger.warning(f"Failed to handle model click: {e}")
+            self.logger.warning("Failed to handle model click: %s", e)
 
     def on_model_double_clicked(self, index: QModelIndex) -> None:
         """Handle model double-click."""
@@ -140,7 +140,7 @@ class LibraryEventHandler:
                 if model_id:
                     self.library_widget.model_double_clicked.emit(model_id)
         except Exception as e:
-            self.logger.warning(f"Failed to handle model double-click: {e}")
+            self.logger.warning("Failed to handle model double-click: %s", e)
 
     def show_context_menu(self, position) -> None:
         """Show context menu for models."""
@@ -169,14 +169,14 @@ class LibraryEventHandler:
             elif action == remove_action:
                 self.library_widget._remove_model(model_id)
         except Exception as e:
-            self.logger.warning(f"Failed to show context menu: {e}")
+            self.logger.warning("Failed to show context menu: %s", e)
 
     def show_file_tree_context_menu(self, position) -> None:
         """Show context menu for file tree."""
-        self.logger.info(f"show_file_tree_context_menu called at position: {position}")
+        self.logger.info("show_file_tree_context_menu called at position: %s", position)
         try:
             index = self.library_widget.file_tree.indexAt(position)
-            self.logger.info(f"Index valid: {index.isValid()}")
+            self.logger.info("Index valid: %s", index.isValid())
 
             menu = QMenu(self.library_widget)
 
@@ -214,7 +214,7 @@ class LibraryEventHandler:
                 self._add_root_folder()
 
         except Exception as e:
-            self.logger.error(f"Failed to show file tree context menu: {e}", exc_info=True)
+            self.logger.error("Failed to show file tree context menu: %s", e, exc_info=True)
 
     def _add_root_folder(self) -> None:
         """Add a new root folder via dialog."""
@@ -260,7 +260,7 @@ class LibraryEventHandler:
                     "Failed to add folder. It may already exist or be inaccessible.",
                 )
         except Exception as e:
-            self.logger.error(f"Failed to add root folder: {e}")
+            self.logger.error("Failed to add root folder: %s", e)
             QMessageBox.critical(self.library_widget, "Error", f"Failed to add root folder: {e}")
 
     def drag_enter_event(self, event: QDragEnterEvent) -> None:
@@ -294,7 +294,7 @@ class LibraryEventHandler:
     def _generate_preview(self, model_id: int) -> None:
         """Generate preview image for a model."""
         try:
-            self.logger.info(f"Generating preview for model ID: {model_id}")
+            self.logger.info("Generating preview for model ID: %s", model_id)
 
             # Get model information from database
             db_manager = get_database_manager()
@@ -353,7 +353,7 @@ class LibraryEventHandler:
                     "Success",
                     f"Preview generated successfully!\nSaved to: {result.thumbnail_path}",
                 )
-                self.logger.info(f"Preview generated for model {model_id}: {result.thumbnail_path}")
+                self.logger.info("Preview generated for model %s: {result.thumbnail_path}", model_id)
 
                 # Refresh the library view to show updated thumbnail
                 if hasattr(self.library_widget, "_refresh_model_display"):
@@ -365,7 +365,7 @@ class LibraryEventHandler:
                     "Error",
                     f"Failed to generate preview: {error_msg}",
                 )
-                self.logger.error(f"Preview generation failed for model {model_id}: {error_msg}")
+                self.logger.error("Preview generation failed for model %s: {error_msg}", model_id)
 
         except Exception as e:
             error_msg = f"Exception during preview generation: {str(e)}"

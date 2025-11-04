@@ -45,7 +45,7 @@ class LightingManager:
             self.enable_fill_light = config.enable_fill_light
             self.fill_light_intensity = config.fill_light_intensity
         except Exception as e:
-            self.logger.warning(f"Failed to load lighting settings from config: {e}")
+            self.logger.warning("Failed to load lighting settings from config: %s", e)
             # Default light properties
             self.position = [90.0, 90.0, 180.0]  # X, Y, Z
             self.color = [1.0, 1.0, 1.0]  # RGB normalized
@@ -147,10 +147,10 @@ class LightingManager:
             self._render_now()
 
             dt_ms = (time.perf_counter() - t0) * 1000.0
-            self.logger.debug(f"create_light completed in {dt_ms:.2f} ms")
+            self.logger.debug("create_light completed in %s ms", dt_ms:.2f)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to create/add light: {e}")
+            self.logger.error("Failed to create/add light: %s", e)
             return False
 
     def update_position(self, x: float, y: float, z: float) -> None:
@@ -165,7 +165,7 @@ class LightingManager:
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_position took {dt_ms:.2f} ms")
         except Exception as e:
-            self.logger.error(f"update_position error: {e}")
+            self.logger.error("update_position error: %s", e)
 
     def update_color(self, r: float, g: float, b: float) -> None:
         """Update light color (normalized 0-1)."""
@@ -182,7 +182,7 @@ class LightingManager:
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_color took {dt_ms:.2f} ms")
         except Exception as e:
-            self.logger.error(f"update_color error: {e}")
+            self.logger.error("update_color error: %s", e)
 
     def update_intensity(self, value: float) -> None:
         """Update intensity (0-2.0 range)."""
@@ -197,7 +197,7 @@ class LightingManager:
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_intensity took {dt_ms:.2f} ms")
         except Exception as e:
-            self.logger.error(f"update_intensity error: {e}")
+            self.logger.error("update_intensity error: %s", e)
 
     def update_cone_angle(self, angle: float) -> None:
         """Update spotlight cone angle (1-90 degrees)."""
@@ -212,7 +212,7 @@ class LightingManager:
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_cone_angle took {dt_ms:.2f} ms")
         except Exception as e:
-            self.logger.error(f"update_cone_angle error: {e}")
+            self.logger.error("update_cone_angle error: %s", e)
 
     def get_properties(self) -> Dict[str, Any]:
         """Return current light properties as dict."""
@@ -240,10 +240,10 @@ class LightingManager:
                 "intensity": inten,
                 "cone_angle": cone,
             }
-            self.logger.debug(f"get_properties -> {props}")
+            self.logger.debug("get_properties -> %s", props)
             return props
         except Exception as e:
-            self.logger.error(f"get_properties error: {e}")
+            self.logger.error("get_properties error: %s", e)
             return {
                 "position": list(self.position),
                 "color": list(self.color),
@@ -268,4 +268,4 @@ class LightingManager:
             if "cone_angle" in props and props["cone_angle"] is not None:
                 self.update_cone_angle(props["cone_angle"])
         except Exception as e:
-            self.logger.error(f"apply_properties error: {e}")
+            self.logger.error("apply_properties error: %s", e)

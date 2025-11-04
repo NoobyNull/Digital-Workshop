@@ -160,10 +160,10 @@ class LoadingProgressWidget(QWidget):
             # Show the widget
             self.setVisible(True)
 
-            self.logger.debug(f"Started loading display for job {job_id}: {file_path}")
+            self.logger.debug("Started loading display for job %s: {file_path}", job_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to start loading display: {e}")
+            self.logger.error("Failed to start loading display: %s", e)
 
     def update_progress(self, progress: float, message: str) -> None:
         """
@@ -205,7 +205,7 @@ class LoadingProgressWidget(QWidget):
             self.last_progress_update = current_time
 
         except Exception as e:
-            self.logger.error(f"Failed to update progress: {e}")
+            self.logger.error("Failed to update progress: %s", e)
 
     def _animate_progress(self, from_value: int, to_value: int) -> None:
         """
@@ -235,7 +235,7 @@ class LoadingProgressWidget(QWidget):
 
         except Exception as e:
             # Fallback to direct update if animation fails
-            self.logger.debug(f"Progress animation failed, using direct update: {e}")
+            self.logger.debug("Progress animation failed, using direct update: %s", e)
             self.progress_bar.setValue(to_value)
 
     def finish_loading(self, success: bool = True, final_message: str = "Completed") -> None:
@@ -264,10 +264,10 @@ class LoadingProgressWidget(QWidget):
             # Keep widget visible briefly, then hide
             QTimer.singleShot(3000, self._hide_widget)
 
-            self.logger.debug(f"Finished loading display for job {self.current_job_id}")
+            self.logger.debug("Finished loading display for job %s", self.current_job_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to finish loading display: {e}")
+            self.logger.error("Failed to finish loading display: %s", e)
 
     def cancel_loading(self) -> None:
         """Cancel the current loading operation."""
@@ -284,10 +284,10 @@ class LoadingProgressWidget(QWidget):
             # Emit cancel signal
             self.cancel_requested.emit()
 
-            self.logger.debug(f"Cancelled loading for job {self.current_job_id}")
+            self.logger.debug("Cancelled loading for job %s", self.current_job_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to cancel loading: {e}")
+            self.logger.error("Failed to cancel loading: %s", e)
 
     def _update_time_estimate(self, current_time: float, progress: float) -> None:
         """
@@ -326,7 +326,7 @@ class LoadingProgressWidget(QWidget):
                 self.time_label.setText("")
 
         except Exception as e:
-            self.logger.debug(f"Failed to update time estimate: {e}")
+            self.logger.debug("Failed to update time estimate: %s", e)
             self.time_label.setText("")
 
     def _on_cancel_clicked(self) -> None:
@@ -340,7 +340,7 @@ class LoadingProgressWidget(QWidget):
             self.setVisible(False)
             self.current_job_id = None
         except Exception as e:
-            self.logger.error(f"Failed to hide widget: {e}")
+            self.logger.error("Failed to hide widget: %s", e)
 
     def _get_current_time(self) -> float:
         """Get current time in seconds."""

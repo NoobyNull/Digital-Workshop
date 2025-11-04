@@ -344,9 +344,9 @@ class SnapEngine:
             for zone in active_zones:
                 self.spatial_index.add_zone(zone)
 
-            self.logger.debug(f"Rebuilt spatial index with {len(active_zones)} zones")
+            self.logger.debug("Rebuilt spatial index with %s zones", len(active_zones))
         except Exception as e:
-            self.logger.error(f"Failed to rebuild spatial index: {e}")
+            self.logger.error("Failed to rebuild spatial index: %s", e)
 
     def calculate_snap(
         self,
@@ -434,7 +434,7 @@ class SnapEngine:
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate snap for position {position}: {e}")
+            self.logger.error("Failed to calculate snap for position %s: {e}", position)
             return SnapResult(
                 snapped_position=original_position,
                 original_position=original_position,
@@ -503,7 +503,7 @@ class SnapEngine:
             candidates.sort(key=lambda c: c.distance)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate snap candidates: {e}")
+            self.logger.error("Failed to generate snap candidates: %s", e)
 
         return candidates
 
@@ -558,7 +558,7 @@ class SnapEngine:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to create snap candidate for zone {zone.name}: {e}")
+            self.logger.error("Failed to create snap candidate for zone %s: {e}", zone.name)
             return None
 
     def _calculate_edge_snap(self, position: QPointF, zone: SnapZone) -> QPointF:
@@ -721,7 +721,7 @@ class SnapEngine:
             return QPointF(position.x() + pull_x, position.y() + pull_y)
 
         except Exception as e:
-            self.logger.error(f"Failed to apply snap magnetism: {e}")
+            self.logger.error("Failed to apply snap magnetism: %s", e)
             return position
 
     def _update_performance_stats(self, calculation_time: float) -> None:
@@ -759,7 +759,7 @@ class SnapEngine:
 
             self.logger.info("Snap engine configuration updated")
         except Exception as e:
-            self.logger.error(f"Failed to update configuration: {e}")
+            self.logger.error("Failed to update configuration: %s", e)
 
     def get_snap_zones_near_position(self, position: QPointF, radius: float) -> List[SnapZone]:
         """
@@ -815,5 +815,5 @@ class SnapEngine:
 
             self.logger.info("Snap engine reset to initial state")
         except Exception as e:
-            self.logger.error(f"Failed to reset snap engine: {e}")
+            self.logger.error("Failed to reset snap engine: %s", e)
             raise

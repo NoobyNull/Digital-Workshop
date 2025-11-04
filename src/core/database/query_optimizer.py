@@ -225,7 +225,7 @@ class QueryOptimizer:
                 return query_plan
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to analyze query: {str(e)}")
+            logger.error("Failed to analyze query: %s", str(e))
             raise
 
     def _estimate_query_cost(self, query: str, plan_rows: List[tuple]) -> float:
@@ -333,7 +333,7 @@ class QueryOptimizer:
         if use_cache:
             cached_result = self.query_cache.get(query, params)
             if cached_result is not None:
-                logger.debug(f"Cache hit for query: {query[:50]}...")
+                logger.debug("Cache hit for query: %s...", query[:50])
                 return cached_result
 
         start_time = time.time()
@@ -349,12 +349,12 @@ class QueryOptimizer:
                     self.query_cache.put(query, params, results)
 
                 execution_time = time.time() - start_time
-                logger.debug(f"Query executed in {execution_time:.3f}s: {query[:50]}...")
+                logger.debug("Query executed in %ss: {query[:50]}...", execution_time:.3f)
 
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Query execution failed: {str(e)}")
+            logger.error("Query execution failed: %s", str(e))
             raise
 
     def get_optimized_indexes(self) -> List[IndexInfo]:
@@ -383,11 +383,11 @@ class QueryOptimizer:
                 # Filter out existing indexes
                 new_indexes = [idx for idx in recommended_indexes if idx.name not in existing_names]
 
-                logger.info(f"Found {len(new_indexes)} new recommended indexes")
+                logger.info("Found %s new recommended indexes", len(new_indexes))
                 return new_indexes
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get recommended indexes: {str(e)}")
+            logger.error("Failed to get recommended indexes: %s", str(e))
             return []
 
     def _recommend_indexes_for_query(self, query_pattern: str) -> List[IndexInfo]:
@@ -508,7 +508,7 @@ class QueryOptimizer:
                     )
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get existing indexes: {str(e)}")
+            logger.error("Failed to get existing indexes: %s", str(e))
 
         return indexes
 
@@ -526,9 +526,9 @@ class QueryOptimizer:
             try:
                 self._create_index(idx)
                 created_indexes.append(idx.name)
-                logger.info(f"Created index: {idx.name}")
+                logger.info("Created index: %s", idx.name)
             except Exception as e:
-                logger.error(f"Failed to create index {idx.name}: {str(e)}")
+                logger.error("Failed to create index %s: {str(e)}", idx.name)
 
         return created_indexes
 
@@ -602,7 +602,7 @@ class QueryOptimizer:
             logger.info("Query optimization analysis completed")
 
         except Exception as e:
-            logger.error(f"Optimization analysis failed: {str(e)}")
+            logger.error("Optimization analysis failed: %s", str(e))
 
         return results
 
@@ -705,16 +705,16 @@ class IndexManager:
                         """
                         cursor.execute(create_sql)
                         created_indexes.append(idx_name)
-                        logger.debug(f"Created index: {idx_name}")
+                        logger.debug("Created index: %s", idx_name)
 
                     except sqlite3.Error as e:
-                        logger.warning(f"Failed to create index {idx_name}: {str(e)}")
+                        logger.warning("Failed to create index %s: {str(e)}", idx_name)
 
                 conn.commit()
-                logger.info(f"Created {len(created_indexes)} performance indexes")
+                logger.info("Created %s performance indexes", len(created_indexes))
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to create performance indexes: {str(e)}")
+            logger.error("Failed to create performance indexes: %s", str(e))
 
         return created_indexes
 
@@ -774,7 +774,7 @@ class IndexManager:
                     )
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to analyze index usage: {str(e)}")
+            logger.error("Failed to analyze index usage: %s", str(e))
 
         return analysis
 
@@ -824,10 +824,10 @@ class IndexManager:
                     conn.commit()
 
                     dropped_indexes.append(idx_name)
-                    logger.info(f"Dropped unused index: {idx_name}")
+                    logger.info("Dropped unused index: %s", idx_name)
 
             except sqlite3.Error as e:
-                logger.error(f"Failed to drop index {idx_name}: {str(e)}")
+                logger.error("Failed to drop index %s: {str(e)}", idx_name)
 
         return dropped_indexes
 
@@ -847,4 +847,4 @@ def query_performance_monitor(optimizer: QueryOptimizer, query: str):
     finally:
         execution_time = time.time() - start_time
         if execution_time > 0.1:  # Log slow queries
-            logger.warning(f"Slow query detected: {execution_time:.3f}s - {query[:100]}...")
+            logger.warning("Slow query detected: %ss - {query[:100]}...", execution_time:.3f)

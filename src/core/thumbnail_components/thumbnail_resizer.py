@@ -67,11 +67,11 @@ class ThumbnailResizer:
         try:
             # Open the source image
             if not source_image_path.exists():
-                self.logger.error(f"Source image not found: {source_image_path}")
+                self.logger.error("Source image not found: %s", source_image_path)
                 return output_paths
 
             source_image = Image.open(source_image_path)
-            self.logger.debug(f"Opened source image: {source_image.size}")
+            self.logger.debug("Opened source image: %s", source_image.size)
 
             # Generate each size
             for size_name, (width, height) in sizes.items():
@@ -84,15 +84,15 @@ class ThumbnailResizer:
                     resized.save(output_path, "PNG", optimize=True)
 
                     output_paths[size_name] = output_path
-                    self.logger.debug(f"Saved {size_name} thumbnail: {output_path}")
+                    self.logger.debug("Saved %s thumbnail: {output_path}", size_name)
 
                 except Exception as e:
-                    self.logger.error(f"Failed to resize to {size_name} ({width}x{height}): {e}")
+                    self.logger.error("Failed to resize to %s ({width}x{height}): {e}", size_name)
 
             return output_paths
 
         except Exception as e:
-            self.logger.error(f"Failed to resize thumbnails: {e}", exc_info=True)
+            self.logger.error("Failed to resize thumbnails: %s", e, exc_info=True)
             return output_paths
 
     def get_thumbnail_path(self, file_hash: str, output_dir: Path, size: str = "xlarge") -> Path:
@@ -108,7 +108,7 @@ class ThumbnailResizer:
             Path to the thumbnail file
         """
         if size not in self.SIZES:
-            self.logger.warning(f"Unknown size: {size}, defaulting to xlarge")
+            self.logger.warning("Unknown size: %s, defaulting to xlarge", size)
             size = "xlarge"
 
         width, height = self.SIZES[size]
@@ -165,7 +165,7 @@ class ThumbnailResizer:
 
                 if not should_keep:
                     file_path.unlink()
-                    self.logger.debug(f"Cleaned up old thumbnail: {file_path}")
+                    self.logger.debug("Cleaned up old thumbnail: %s", file_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to cleanup old thumbnails: {e}")
+            self.logger.error("Failed to cleanup old thumbnails: %s", e)

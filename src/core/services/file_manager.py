@@ -89,7 +89,7 @@ class FileManager:
             )
 
         except Exception as e:
-            logger.error(f"Failed to add file: {str(e)}")
+            logger.error("Failed to add file: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -98,7 +98,7 @@ class FileManager:
         try:
             return self.db_manager.get_file(file_id)
         except Exception as e:
-            logger.error(f"Failed to get file: {str(e)}")
+            logger.error("Failed to get file: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -107,7 +107,7 @@ class FileManager:
         try:
             return self.db_manager.get_files_by_project(project_id)
         except Exception as e:
-            logger.error(f"Failed to get files: {str(e)}")
+            logger.error("Failed to get files: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -116,7 +116,7 @@ class FileManager:
         try:
             return self.db_manager.get_files_by_status(project_id, status)
         except Exception as e:
-            logger.error(f"Failed to get files by status: {str(e)}")
+            logger.error("Failed to get files by status: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -125,7 +125,7 @@ class FileManager:
         try:
             return self.db_manager.update_file_status(file_id, status)
         except Exception as e:
-            logger.error(f"Failed to update file status: {str(e)}")
+            logger.error("Failed to update file status: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -134,7 +134,7 @@ class FileManager:
         try:
             return self.db_manager.update_file(file_id, **kwargs)
         except Exception as e:
-            logger.error(f"Failed to update file: {str(e)}")
+            logger.error("Failed to update file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -143,7 +143,7 @@ class FileManager:
         try:
             return self.db_manager.delete_file(file_id)
         except Exception as e:
-            logger.error(f"Failed to delete file: {str(e)}")
+            logger.error("Failed to delete file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -166,32 +166,32 @@ class FileManager:
             if link_type == "hard":
                 try:
                     os.link(source_path, dest_path)
-                    logger.info(f"Hard linked: {source_path} -> {dest_path}")
+                    logger.info("Hard linked: %s -> {dest_path}", source_path)
                     return True
                 except Exception as e:
-                    logger.warning(f"Hard link failed: {str(e)}, trying symbolic link")
+                    logger.warning("Hard link failed: %s, trying symbolic link", str(e))
                     link_type = "symbolic"
 
             if link_type == "symbolic":
                 try:
                     os.symlink(source_path, dest_path)
-                    logger.info(f"Symbolic linked: {source_path} -> {dest_path}")
+                    logger.info("Symbolic linked: %s -> {dest_path}", source_path)
                     return True
                 except Exception as e:
-                    logger.warning(f"Symbolic link failed: {str(e)}, trying copy")
+                    logger.warning("Symbolic link failed: %s, trying copy", str(e))
                     link_type = "copy"
 
             if link_type == "copy":
                 try:
                     shutil.copy2(source_path, dest_path)
-                    logger.info(f"Copied: {source_path} -> {dest_path}")
+                    logger.info("Copied: %s -> {dest_path}", source_path)
                     return True
                 except Exception as e:
-                    logger.error(f"Copy failed: {str(e)}")
+                    logger.error("Copy failed: %s", str(e))
                     return False
 
         except Exception as e:
-            logger.error(f"Failed to link file: {str(e)}")
+            logger.error("Failed to link file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -200,7 +200,7 @@ class FileManager:
         try:
             return self.db_manager.find_duplicate_by_hash(project_id, file_hash)
         except Exception as e:
-            logger.error(f"Failed to find duplicate: {str(e)}")
+            logger.error("Failed to find duplicate: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -209,5 +209,5 @@ class FileManager:
         try:
             return self.db_manager.get_file_count_by_project(project_id)
         except Exception as e:
-            logger.error(f"Failed to get file count: {str(e)}")
+            logger.error("Failed to get file count: %s", str(e))
             return 0

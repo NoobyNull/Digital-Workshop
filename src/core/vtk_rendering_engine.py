@@ -58,10 +58,10 @@ class VTKRenderingEngine:
 
             self.camera = self.renderer.GetActiveCamera()
 
-            self.logger.debug(f"Render window created: {self.width}x{self.height}")
+            self.logger.debug("Render window created: %sx{self.height}", self.width)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to setup render window: {e}")
+            self.logger.error("Failed to setup render window: %s", e)
             return False
 
     def set_background_color(self, color: Union[str, Tuple[float, float, float]]) -> None:
@@ -83,7 +83,7 @@ class VTKRenderingEngine:
                 # Professional studio background: dark teal-gray
                 self.renderer.SetBackground(0.25, 0.35, 0.40)
         except Exception as e:
-            self.logger.error(f"Failed to set background color: {e}")
+            self.logger.error("Failed to set background color: %s", e)
             # Professional studio background: dark teal-gray
             self.renderer.SetBackground(0.25, 0.35, 0.40)
 
@@ -96,7 +96,7 @@ class VTKRenderingEngine:
         """
         try:
             if not Path(image_path).exists():
-                self.logger.warning(f"Background image not found: {image_path}")
+                self.logger.warning("Background image not found: %s", image_path)
                 return
 
             # Read image
@@ -144,10 +144,10 @@ class VTKRenderingEngine:
             actor.GetProperty().SetOpacity(1.0)
 
             self.renderer.AddActor(actor)
-            self.logger.debug(f"Background image set: {image_path}")
+            self.logger.debug("Background image set: %s", image_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to set background image: {e}")
+            self.logger.error("Failed to set background image: %s", e)
 
     def setup_lighting(self) -> None:
         """Setup professional studio lighting for rendering."""
@@ -187,7 +187,7 @@ class VTKRenderingEngine:
 
             self.logger.debug("Professional studio lighting setup complete")
         except Exception as e:
-            self.logger.warning(f"Failed to setup lighting: {e}")
+            self.logger.warning("Failed to setup lighting: %s", e)
 
     def setup_camera(self, bounds: Tuple[float, ...], zoom_factor: float = 1.0) -> None:
         """
@@ -204,9 +204,9 @@ class VTKRenderingEngine:
             if zoom_factor != 1.0:
                 self.camera.Zoom(zoom_factor)
 
-            self.logger.debug(f"Camera setup complete (zoom: {zoom_factor})")
+            self.logger.debug("Camera setup complete (zoom: %s)", zoom_factor)
         except Exception as e:
-            self.logger.error(f"Failed to setup camera: {e}")
+            self.logger.error("Failed to setup camera: %s", e)
 
     def render(self) -> None:
         """Perform rendering."""
@@ -214,7 +214,7 @@ class VTKRenderingEngine:
             self.render_window.Render()
             self.logger.debug("Render complete")
         except Exception as e:
-            self.logger.error(f"Failed to render: {e}")
+            self.logger.error("Failed to render: %s", e)
 
     def capture_screenshot(self, output_path: str) -> bool:
         """
@@ -239,10 +239,10 @@ class VTKRenderingEngine:
             writer.SetInputConnection(window_to_image.GetOutputPort())
             writer.Write()
 
-            self.logger.debug(f"Screenshot saved: {output_path}")
+            self.logger.debug("Screenshot saved: %s", output_path)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to capture screenshot: {e}")
+            self.logger.error("Failed to capture screenshot: %s", e)
             return False
 
     def cleanup(self) -> None:
@@ -255,4 +255,4 @@ class VTKRenderingEngine:
             self.camera = None
             self.logger.debug("Cleanup complete")
         except Exception as e:
-            self.logger.warning(f"Cleanup error: {e}")
+            self.logger.warning("Cleanup error: %s", e)

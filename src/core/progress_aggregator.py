@@ -109,7 +109,7 @@ class ProgressAggregator:
             chunk_id = f"chunk_{i:03d}"
             self.chunks[chunk_id] = ChunkProgress(chunk_id=chunk_id)
 
-        self.logger.debug(f"Initialized progress aggregator for {total_chunks} chunks")
+        self.logger.debug("Initialized progress aggregator for %s chunks", total_chunks)
 
     @log_function_call
     def update_chunk_progress(
@@ -130,7 +130,7 @@ class ProgressAggregator:
         """
         with self._lock:
             if chunk_id not in self.chunks:
-                self.logger.warning(f"Unknown chunk ID: {chunk_id}")
+                self.logger.warning("Unknown chunk ID: %s", chunk_id)
                 return
 
             chunk = self.chunks[chunk_id]
@@ -149,7 +149,7 @@ class ProgressAggregator:
             if error:
                 chunk.error = error
 
-            self.logger.debug(f"Updated chunk {chunk_id}: {progress:.1f}% - {status}")
+            self.logger.debug("Updated chunk %s: {progress:.1f}% - {status}", chunk_id)
 
     @log_function_call
     def update_sub_operation_progress(
@@ -172,7 +172,7 @@ class ProgressAggregator:
         """
         with self._lock:
             if chunk_id not in self.chunks:
-                self.logger.warning(f"Unknown chunk ID: {chunk_id}")
+                self.logger.warning("Unknown chunk ID: %s", chunk_id)
                 return
 
             chunk = self.chunks[chunk_id]

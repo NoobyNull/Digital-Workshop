@@ -248,7 +248,7 @@ class PerformanceMonitor:
 
         except Exception as e:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"Failed to detect GPU info: {e}")
+                self.logger.debug("Failed to detect GPU info: %s", e)
             # Absolute fallback
             memory = psutil.virtual_memory()
             return {
@@ -337,7 +337,7 @@ class PerformanceMonitor:
             return profile
 
         except Exception as e:
-            self.logger.error(f"Failed to detect system capabilities: {str(e)}")
+            self.logger.error("Failed to detect system capabilities: %s", str(e))
             # Return conservative default profile
             return PerformanceProfile(
                 performance_level=PerformanceLevel.MINIMAL,
@@ -402,7 +402,7 @@ class PerformanceMonitor:
                 time.sleep(self.monitoring_interval)
 
             except Exception as e:
-                self.logger.error(f"Error in monitoring loop: {str(e)}")
+                self.logger.error("Error in monitoring loop: %s", str(e))
                 time.sleep(self.monitoring_interval)
 
     def _get_memory_stats(self) -> MemoryStats:
@@ -429,7 +429,7 @@ class PerformanceMonitor:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to get memory stats: {str(e)}")
+            self.logger.error("Failed to get memory stats: %s", str(e))
             return MemoryStats(0, 0, 0, 0, 0)
 
     def start_operation(
@@ -458,7 +458,7 @@ class PerformanceMonitor:
         }
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(f"Started tracking operation: {operation_name} (ID: {operation_id})")
+            self.logger.debug("Started tracking operation: %s (ID: {operation_id})", operation_name)
         return operation_id
 
     def end_operation(
@@ -479,7 +479,7 @@ class PerformanceMonitor:
             Operation metrics if found, None otherwise
         """
         if operation_id not in self.active_operations:
-            self.logger.warning(f"Operation ID not found: {operation_id}")
+            self.logger.warning("Operation ID not found: %s", operation_id)
             return None
 
         operation = self.active_operations.pop(operation_id)
@@ -606,7 +606,7 @@ class PerformanceMonitor:
             return report
 
         except Exception as e:
-            self.logger.error(f"Failed to generate performance report: {str(e)}")
+            self.logger.error("Failed to generate performance report: %s", str(e))
             # Return fallback report
             return {
                 "system_info": {
@@ -716,7 +716,7 @@ class PerformanceMonitor:
 
         freed_mb = memory_before - memory_after
         if freed_mb > 1.0:  # Only log if significant
-            self.logger.info(f"Garbage collection freed {freed_mb:.1f}MB")
+            self.logger.info("Garbage collection freed %sMB", freed_mb:.1f)
 
     def export_performance_report(self, file_path: str) -> None:
         """
@@ -768,10 +768,10 @@ class PerformanceMonitor:
             with open(file_path, "w") as f:
                 json.dump(report, f, indent=2)
 
-            self.logger.info(f"Performance report exported to {file_path}")
+            self.logger.info("Performance report exported to %s", file_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to export performance report: {str(e)}")
+            self.logger.error("Failed to export performance report: %s", str(e))
 
     def cleanup(self) -> None:
         """Clean up resources."""

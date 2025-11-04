@@ -202,9 +202,9 @@ class SnapConfiguration:
         if self.config_file and self.config_file.exists():
             try:
                 self.load_from_file()
-                self.logger.info(f"Loaded snap configuration from {self.config_file}")
+                self.logger.info("Loaded snap configuration from %s", self.config_file)
             except Exception as e:
-                self.logger.warning(f"Failed to load configuration file, using defaults: {e}")
+                self.logger.warning("Failed to load configuration file, using defaults: %s", e)
         else:
             self.logger.info("Using default snap configuration")
 
@@ -236,9 +236,9 @@ class SnapConfiguration:
             for zone in default_zones:
                 self.snap_zones[zone.name] = zone
 
-            self.logger.debug(f"Initialized {len(default_zones)} default snap zones")
+            self.logger.debug("Initialized %s default snap zones", len(default_zones))
         except Exception as e:
-            self.logger.error(f"Failed to initialize default snap zones: {e}")
+            self.logger.error("Failed to initialize default snap zones: %s", e)
             raise
 
     def add_snap_zone(self, zone: SnapZone) -> None:
@@ -346,7 +346,7 @@ class SnapConfiguration:
             active_zones.sort(key=lambda z: z.priority, reverse=True)
             return active_zones
         except Exception as e:
-            self.logger.error(f"Failed to get active snap zones: {e}")
+            self.logger.error("Failed to get active snap zones: %s", e)
             return []
 
     def set_enabled(self, enabled: bool) -> None:
@@ -359,9 +359,9 @@ class SnapConfiguration:
         try:
             old_state = self.enabled
             self.enabled = enabled
-            self.logger.info(f"Snapping system {'enabled' if enabled else 'disabled'}")
+            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
         except Exception as e:
-            self.logger.error(f"Failed to set snapping enabled state: {e}")
+            self.logger.error("Failed to set snapping enabled state: %s", e)
             self.enabled = old_state  # Restore previous state
 
     def to_dict(self) -> Dict[str, Any]:
@@ -413,7 +413,7 @@ class SnapConfiguration:
                 "snap_zones": zones_data,
             }
         except Exception as e:
-            self.logger.error(f"Failed to convert configuration to dictionary: {e}")
+            self.logger.error("Failed to convert configuration to dictionary: %s", e)
             return {}
 
     def from_dict(self, data: Dict[str, Any]) -> bool:
@@ -492,7 +492,7 @@ class SnapConfiguration:
             )
             return True
         except Exception as e:
-            self.logger.error(f"Failed to load configuration from dictionary: {e}")
+            self.logger.error("Failed to load configuration from dictionary: %s", e)
             return False
 
     def save_to_file(self, file_path: Optional[str] = None) -> bool:
@@ -519,10 +519,10 @@ class SnapConfiguration:
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
-            self.logger.info(f"Saved snap configuration to {save_path}")
+            self.logger.info("Saved snap configuration to %s", save_path)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to save configuration to file: {e}")
+            self.logger.error("Failed to save configuration to file: %s", e)
             return False
 
     def load_from_file(self, file_path: Optional[str] = None) -> bool:
@@ -541,7 +541,7 @@ class SnapConfiguration:
                 load_path = Path(self.DEFAULT_CONFIG_FILE)
 
             if not load_path.exists():
-                self.logger.warning(f"Configuration file does not exist: {load_path}")
+                self.logger.warning("Configuration file does not exist: %s", load_path)
                 return False
 
             with open(load_path, "r", encoding="utf-8") as f:
@@ -549,10 +549,10 @@ class SnapConfiguration:
 
             success = self.from_dict(data)
             if success:
-                self.logger.info(f"Loaded snap configuration from {load_path}")
+                self.logger.info("Loaded snap configuration from %s", load_path)
             return success
         except Exception as e:
-            self.logger.error(f"Failed to load configuration from file: {e}")
+            self.logger.error("Failed to load configuration from file: %s", e)
             return False
 
     def reset_to_defaults(self) -> None:
@@ -570,7 +570,7 @@ class SnapConfiguration:
 
             self.logger.info("Reset snap configuration to defaults")
         except Exception as e:
-            self.logger.error(f"Failed to reset configuration to defaults: {e}")
+            self.logger.error("Failed to reset configuration to defaults: %s", e)
             raise
 
     def validate_configuration(self) -> List[str]:
@@ -617,7 +617,7 @@ class SnapConfiguration:
 
             return errors
         except Exception as e:
-            self.logger.error(f"Configuration validation failed: {e}")
+            self.logger.error("Configuration validation failed: %s", e)
             return [f"Validation error: {e}"]
 
     def get_memory_usage(self) -> int:
@@ -643,5 +643,5 @@ class SnapConfiguration:
 
             return memory
         except Exception as e:
-            self.logger.error(f"Failed to calculate memory usage: {e}")
+            self.logger.error("Failed to calculate memory usage: %s", e)
             return 0

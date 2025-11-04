@@ -39,11 +39,11 @@ class ToolPreferencesRepository:
                 )
 
                 conn.commit()
-                self.logger.debug(f"Set preference: {key}")
+                self.logger.debug("Set preference: %s", key)
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to set preference {key}: {e}")
+            self.logger.error("Failed to set preference %s: {e}", key)
             return False
 
     def get_preference(self, key: str, default: Any = None) -> Any:
@@ -66,7 +66,7 @@ class ToolPreferencesRepository:
                 return default
 
         except Exception as e:
-            self.logger.error(f"Failed to get preference {key}: {e}")
+            self.logger.error("Failed to get preference %s: {e}", key)
             return default
 
     def get_external_db_paths(self) -> Dict[str, str]:
@@ -89,7 +89,7 @@ class ToolPreferencesRepository:
                     paths[format_type] = row[1]
 
         except Exception as e:
-            self.logger.error(f"Failed to get external DB paths: {e}")
+            self.logger.error("Failed to get external DB paths: %s", e)
 
         return paths
 
@@ -104,9 +104,9 @@ class ToolPreferencesRepository:
 
                 success = cursor.rowcount > 0
                 if success:
-                    self.logger.debug(f"Deleted preference: {key}")
+                    self.logger.debug("Deleted preference: %s", key)
                 return success
 
         except Exception as e:
-            self.logger.error(f"Failed to delete preference {key}: {e}")
+            self.logger.error("Failed to delete preference %s: {e}", key)
             return False

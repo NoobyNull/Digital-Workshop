@@ -72,9 +72,9 @@ class WindowTitleBarManager(QObject):
             self._windows.add(window)
             if title_bar:
                 self._title_bars[id(window)] = title_bar
-            self.logger.debug(f"Registered window: {window.__class__.__name__}")
+            self.logger.debug("Registered window: %s", window.__class__.__name__)
         except Exception as e:
-            self.logger.warning(f"Failed to register window: {e}")
+            self.logger.warning("Failed to register window: %s", e)
 
     def unregister_window(self, window: QWidget) -> None:
         """
@@ -87,9 +87,9 @@ class WindowTitleBarManager(QObject):
             window_id = id(window)
             if window_id in self._title_bars:
                 del self._title_bars[window_id]
-            self.logger.debug(f"Unregistered window: {window.__class__.__name__}")
+            self.logger.debug("Unregistered window: %s", window.__class__.__name__)
         except Exception as e:
-            self.logger.warning(f"Failed to unregister window: {e}")
+            self.logger.warning("Failed to unregister window: %s", e)
 
     def update_all_title_bars(self, theme: str) -> None:
         """
@@ -106,12 +106,12 @@ class WindowTitleBarManager(QObject):
                         title_bar.update_theme()
                         updated_count += 1
                 except Exception as e:
-                    self.logger.debug(f"Failed to update title bar: {e}")
+                    self.logger.debug("Failed to update title bar: %s", e)
 
-            self.logger.debug(f"Updated {updated_count} title bars for theme: {theme}")
+            self.logger.debug("Updated %s title bars for theme: {theme}", updated_count)
             self.theme_changed.emit(theme)
         except Exception as e:
-            self.logger.error(f"Failed to update all title bars: {e}")
+            self.logger.error("Failed to update all title bars: %s", e)
 
     def get_registered_windows_count(self) -> int:
         """Get count of registered windows."""
@@ -134,6 +134,6 @@ class WindowTitleBarManager(QObject):
             for wid in dead_ids:
                 del self._title_bars[wid]
             if dead_ids:
-                self.logger.debug(f"Cleaned up {len(dead_ids)} dead references")
+                self.logger.debug("Cleaned up %s dead references", len(dead_ids))
         except Exception as e:
-            self.logger.warning(f"Failed to clean dead references: {e}")
+            self.logger.warning("Failed to clean dead references: %s", e)

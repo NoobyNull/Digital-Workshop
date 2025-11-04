@@ -41,7 +41,7 @@ class SettingsManager:
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
-            logger.warning(f"Failed to save lighting settings: {e}")
+            logger.warning("Failed to save lighting settings: %s", e)
 
     @log_function_call(logger)
     def load_lighting_settings(self) -> None:
@@ -89,7 +89,7 @@ class SettingsManager:
 
                 logger.info("Lighting settings loaded from QSettings")
         except Exception as e:
-            logger.warning(f"Failed to load lighting settings: {e}")
+            logger.warning("Failed to load lighting settings: %s", e)
 
     def save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
@@ -116,9 +116,9 @@ class SettingsManager:
                 settings = QSettings()
                 vis = bool(self.main_window.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
-                logger.debug(f"Saved metadata panel visibility: {vis}")
+                logger.debug("Saved metadata panel visibility: %s", vis)
         except Exception as e:
-            logger.warning(f"Failed to save metadata panel visibility: {e}")
+            logger.warning("Failed to save metadata panel visibility: %s", e)
 
     @log_function_call(logger)
     def load_metadata_panel_visibility(self) -> bool:
@@ -129,10 +129,10 @@ class SettingsManager:
                 if settings.contains("metadata_panel/visible"):
                     vis = settings.value("metadata_panel/visible", True, type=bool)
                     self.main_window.metadata_dock.setVisible(vis)
-                    logger.debug(f"Restored metadata panel visibility: {vis}")
+                    logger.debug("Restored metadata panel visibility: %s", vis)
                     return True
         except Exception as e:
-            logger.warning(f"Failed to load metadata panel visibility: {e}")
+            logger.warning("Failed to load metadata panel visibility: %s", e)
         return False
 
     def save_library_panel_visibility(self) -> None:
@@ -142,9 +142,9 @@ class SettingsManager:
                 settings = QSettings()
                 vis = bool(self.main_window.library_dock.isVisible())
                 settings.setValue("library_panel/visible", vis)
-                logger.debug(f"Saved library panel visibility: {vis}")
+                logger.debug("Saved library panel visibility: %s", vis)
         except Exception as e:
-            logger.warning(f"Failed to save library panel visibility: {e}")
+            logger.warning("Failed to save library panel visibility: %s", e)
 
     def load_library_panel_visibility(self) -> bool:
         """Load and restore the library panel visibility state."""
@@ -154,10 +154,10 @@ class SettingsManager:
                 if settings.contains("library_panel/visible"):
                     vis = settings.value("library_panel/visible", True, type=bool)
                     self.main_window.library_dock.setVisible(vis)
-                    logger.debug(f"Restored library panel visibility: {vis}")
+                    logger.debug("Restored library panel visibility: %s", vis)
                     return True
         except Exception as e:
-            logger.warning(f"Failed to load library panel visibility: {e}")
+            logger.warning("Failed to load library panel visibility: %s", e)
         return False
 
     @log_function_call(logger)
@@ -188,7 +188,7 @@ class SettingsManager:
 
             logger.debug("Viewer settings saved to QSettings")
         except Exception as e:
-            logger.warning(f"Failed to save viewer settings: {e}")
+            logger.warning("Failed to save viewer settings: %s", e)
 
     @log_function_call(logger)
     def save_window_settings(self) -> None:
@@ -217,4 +217,4 @@ class SettingsManager:
 
             logger.debug("Window settings saved to QSettings")
         except Exception as e:
-            logger.warning(f"Failed to save window settings: {e}")
+            logger.warning("Failed to save window settings: %s", e)

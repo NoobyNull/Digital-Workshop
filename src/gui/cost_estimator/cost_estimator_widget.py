@@ -346,7 +346,7 @@ class CostEstimatorWidget(QWidget):
             self.logger.info("Cost estimate calculated successfully")
 
         except Exception as e:
-            self.logger.error(f"Error calculating estimate: {e}")
+            self.logger.error("Error calculating estimate: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to calculate estimate: {e}")
 
     def _update_displays(self) -> None:

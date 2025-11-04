@@ -175,7 +175,7 @@ class STEPParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(f"Starting STEP parsing: {file_path} ({file_path.stat().st_size} bytes)")
+        self.logger.info("Starting STEP parsing: %s ({file_path.stat().st_size} bytes)", file_path)
 
         start_time = time.time()
 
@@ -211,7 +211,7 @@ class STEPParser(BaseParser):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to parse STEP file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse STEP file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_step_file(
@@ -280,7 +280,7 @@ class STEPParser(BaseParser):
                 self._store_specific_entity(entity)
 
             except (ValueError, IndexError) as e:
-                self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
+                self.logger.warning("Invalid entity: %s - {str(e)}", match.group(0))
                 continue
 
     def _parse_parameters(self, parameters_str: str) -> List[Union[str, int, float, Tuple, List]]:

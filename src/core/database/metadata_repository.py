@@ -58,11 +58,11 @@ class MetadataRepository:
                 metadata_id = cursor.lastrowid
                 conn.commit()
 
-                logger.info(f"Added metadata for model {model_id}")
+                logger.info("Added metadata for model %s", model_id)
                 return metadata_id
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to add metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to add metadata for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -118,12 +118,12 @@ class MetadataRepository:
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated metadata for model {model_id}")
+                    logger.info("Updated metadata for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to update metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to update metadata for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -165,10 +165,10 @@ class MetadataRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Saved camera orientation for model {model_id}")
+                    logger.info("Saved camera orientation for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to save camera orientation: {e}")
+            logger.error("Failed to save camera orientation: %s", e)
             return False
 
     @log_function_call(logger)
@@ -200,7 +200,7 @@ class MetadataRepository:
                     return dict(row)
                 return None
         except sqlite3.Error as e:
-            logger.error(f"Failed to get camera orientation: {e}")
+            logger.error("Failed to get camera orientation: %s", e)
             return None
 
     @log_function_call(logger)
@@ -230,12 +230,12 @@ class MetadataRepository:
                 conn.commit()
 
                 if success:
-                    logger.debug(f"Incremented view count for model {model_id}")
+                    logger.debug("Incremented view count for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to increment view count for model {model_id}: {str(e)}")
+            logger.error("Failed to increment view count for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -261,11 +261,11 @@ class MetadataRepository:
                 rows = cursor.fetchall()
                 categories = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(categories)} categories")
+                logger.debug("Retrieved %s categories", len(categories))
                 return categories
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get categories: {str(e)}")
+            logger.error("Failed to get categories: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -320,8 +320,8 @@ class MetadataRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Deleted category {category_id}")
+                    logger.info("Deleted category %s", category_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete category {category_id}: {e}")
+            logger.error("Failed to delete category %s: {e}", category_id)
             return False

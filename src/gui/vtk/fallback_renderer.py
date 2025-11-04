@@ -102,7 +102,7 @@ class VTKFallbackRenderer:
             self.original_renderer = renderer
             self.fallback_mode = mode or self._select_best_fallback_mode()
 
-            self.logger.info(f"Activating fallback rendering mode: {self.fallback_mode.value}")
+            self.logger.info("Activating fallback rendering mode: %s", self.fallback_mode.value)
 
             success = self._apply_fallback_mode()
 
@@ -115,7 +115,7 @@ class VTKFallbackRenderer:
             return success
 
         except Exception as e:
-            self.logger.error(f"Error activating fallback: {e}")
+            self.logger.error("Error activating fallback: %s", e)
             return False
 
     def _select_best_fallback_mode(self) -> FallbackMode:
@@ -140,7 +140,7 @@ class VTKFallbackRenderer:
             return FallbackMode.BOUNDING_BOX
 
         except Exception as e:
-            self.logger.debug(f"Error selecting fallback mode: {e}")
+            self.logger.debug("Error selecting fallback mode: %s", e)
             return FallbackMode.WIREFRAME_ONLY
 
     def _apply_fallback_mode(self) -> bool:
@@ -155,11 +155,11 @@ class VTKFallbackRenderer:
             elif self.fallback_mode == FallbackMode.BOUNDING_BOX:
                 return self._setup_bounding_box_fallback()
             else:
-                self.logger.warning(f"Unknown fallback mode: {self.fallback_mode}")
+                self.logger.warning("Unknown fallback mode: %s", self.fallback_mode)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error applying fallback mode {self.fallback_mode}: {e}")
+            self.logger.error("Error applying fallback mode %s: {e}", self.fallback_mode)
             return False
 
     def _setup_software_rendering(self) -> bool:
@@ -192,13 +192,13 @@ class VTKFallbackRenderer:
                         return True
 
                 except Exception as e:
-                    self.logger.debug(f"Software rendering setup error: {e}")
+                    self.logger.debug("Software rendering setup error: %s", e)
 
             # If specific setup fails, try generic offscreen rendering
             return self._setup_generic_offscreen()
 
         except Exception as e:
-            self.logger.error(f"Software rendering setup failed: {e}")
+            self.logger.error("Software rendering setup failed: %s", e)
             return False
 
     def _setup_generic_offscreen(self) -> bool:
@@ -224,7 +224,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Generic offscreen setup failed: {e}")
+            self.logger.error("Generic offscreen setup failed: %s", e)
             return False
 
     def _setup_image_cache(self) -> bool:
@@ -238,7 +238,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Image cache setup failed: {e}")
+            self.logger.error("Image cache setup failed: %s", e)
             return False
 
     def _setup_wireframe_fallback(self) -> bool:
@@ -263,7 +263,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Wireframe fallback setup failed: {e}")
+            self.logger.error("Wireframe fallback setup failed: %s", e)
             return False
 
     def _setup_bounding_box_fallback(self) -> bool:
@@ -284,7 +284,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Bounding box fallback setup failed: {e}")
+            self.logger.error("Bounding box fallback setup failed: %s", e)
             return False
 
     def _clear_all_actors(self) -> None:
@@ -293,7 +293,7 @@ class VTKFallbackRenderer:
             if self.original_renderer:
                 self.original_renderer.RemoveAllViewProps()
         except Exception as e:
-            self.logger.debug(f"Error clearing actors: {e}")
+            self.logger.debug("Error clearing actors: %s", e)
 
     def deactivate_fallback(self) -> bool:
         """
@@ -322,7 +322,7 @@ class VTKFallbackRenderer:
             return success
 
         except Exception as e:
-            self.logger.error(f"Error deactivating fallback: {e}")
+            self.logger.error("Error deactivating fallback: %s", e)
             return False
 
     def _restore_original_rendering(self) -> bool:
@@ -335,7 +335,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error restoring original rendering: {e}")
+            self.logger.error("Error restoring original rendering: %s", e)
             return False
 
     def is_fallback_active(self) -> bool:
@@ -369,7 +369,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Error checking fallback capability: {e}")
+            self.logger.debug("Error checking fallback capability: %s", e)
             return False
 
     def render_with_fallback(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -392,7 +392,7 @@ class VTKFallbackRenderer:
 
             # Context is invalid, check if fallback is appropriate
             if not self.can_use_fallback(context_state):
-                self.logger.warning(f"Cannot use fallback for context state: {context_state}")
+                self.logger.warning("Cannot use fallback for context state: %s", context_state)
                 return False
 
             # Activate fallback if not already active
@@ -405,7 +405,7 @@ class VTKFallbackRenderer:
             return self._fallback_render(render_window)
 
         except Exception as e:
-            self.logger.error(f"Error in fallback render: {e}")
+            self.logger.error("Error in fallback render: %s", e)
             return False
 
     def _normal_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -460,11 +460,11 @@ class VTKFallbackRenderer:
             elif self.fallback_mode == FallbackMode.BOUNDING_BOX:
                 return self._bounding_box_render(render_window)
             else:
-                self.logger.warning(f"Unknown fallback mode for rendering: {self.fallback_mode}")
+                self.logger.warning("Unknown fallback mode for rendering: %s", self.fallback_mode)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error in fallback render mode {self.fallback_mode}: {e}")
+            self.logger.error("Error in fallback render mode %s: {e}", self.fallback_mode)
             return False
 
     def _software_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -475,7 +475,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Software render error: {e}")
+            self.logger.debug("Software render error: %s", e)
             return False
 
     def _cached_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -487,7 +487,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Cached render error: {e}")
+            self.logger.debug("Cached render error: %s", e)
             return False
 
     def _wireframe_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -497,7 +497,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Wireframe render error: {e}")
+            self.logger.debug("Wireframe render error: %s", e)
             return False
 
     def _bounding_box_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -507,7 +507,7 @@ class VTKFallbackRenderer:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Bounding box render error: {e}")
+            self.logger.debug("Bounding box render error: %s", e)
             return False
 
     def get_fallback_info(self) -> Dict[str, Any]:
@@ -529,7 +529,7 @@ class VTKFallbackRenderer:
             mode: The fallback mode to use
         """
         self.fallback_mode = mode
-        self.logger.info(f"Fallback mode set to: {mode.value}")
+        self.logger.info("Fallback mode set to: %s", mode.value)
 
     def enable_image_cache(self, enabled: bool, max_size: int = 50) -> None:
         """

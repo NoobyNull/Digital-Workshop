@@ -173,10 +173,10 @@ class MemoryMonitor:
                     try:
                         callback(self._stats)
                     except Exception as e:
-                        self.logger.warning(f"Memory monitor callback failed: {e}")
+                        self.logger.warning("Memory monitor callback failed: %s", e)
 
             except Exception as e:
-                self.logger.error(f"Memory monitoring error: {e}")
+                self.logger.error("Memory monitoring error: %s", e)
 
             time.sleep(self.update_interval)
 
@@ -202,7 +202,7 @@ class MemoryMonitor:
                     self._stats.pressure_level = MemoryPressure.LOW
 
         except Exception as e:
-            self.logger.warning(f"Failed to update memory stats: {e}")
+            self.logger.warning("Failed to update memory stats: %s", e)
 
     def _check_pressure_levels(self) -> None:
         """Check and log memory pressure levels."""
@@ -294,7 +294,7 @@ class MemoryManager:
         # Register cleanup callback
         self.monitor.add_pressure_callback(self._on_memory_pressure)
 
-        self.logger.info(f"MemoryManager initialized with {max_memory_gb}GB limit")
+        self.logger.info("MemoryManager initialized with %sGB limit", max_memory_gb)
 
     def _on_memory_pressure(self, stats: MemoryStats) -> None:
         """
@@ -338,17 +338,17 @@ class MemoryManager:
             block = self.memory_pool.allocate(size_bytes)
             if block:
                 self.allocation_tracking[owner].append(len(block))
-                self.logger.debug(f"Allocated {len(block)} bytes from pool for {owner}")
+                self.logger.debug("Allocated %s bytes from pool for {owner}", len(block))
                 return block
 
             # Fallback to direct allocation if pool fails
             try:
                 block = bytearray(size_bytes)
                 self.allocation_tracking[owner].append(len(block))
-                self.logger.debug(f"Direct allocated {len(block)} bytes for {owner}")
+                self.logger.debug("Direct allocated %s bytes for {owner}", len(block))
                 return block
             except MemoryError:
-                self.logger.error(f"Memory allocation failed for {owner}: {size_bytes} bytes")
+                self.logger.error("Memory allocation failed for %s: {size_bytes} bytes", owner)
                 return None
 
     @log_function_call
@@ -364,9 +364,9 @@ class MemoryManager:
             try:
                 # Try to return to pool
                 self.memory_pool.free(block)
-                self.logger.debug(f"Returned {len(block)} bytes to pool for {owner}")
+                self.logger.debug("Returned %s bytes to pool for {owner}", len(block))
             except Exception as e:
-                self.logger.warning(f"Failed to return block to pool: {e}")
+                self.logger.warning("Failed to return block to pool: %s", e)
 
             # Remove from tracking
             if owner in self.allocation_tracking:
@@ -407,7 +407,7 @@ class MemoryManager:
         # Force garbage collection
         collected = gc.collect()
         if collected > 0:
-            self.logger.debug(f"Garbage collection freed {collected} objects")
+            self.logger.debug("Garbage collection freed %s objects", collected)
             cleanup_count += 1
 
         # Clean up memory pool
@@ -438,7 +438,7 @@ class MemoryManager:
         # releasing GPU memory, etc.
 
         if cleanup_count > 0:
-            self.logger.info(f"Force cleanup completed: {cleanup_count} operations")
+            self.logger.info("Force cleanup completed: %s operations", cleanup_count)
 
         return cleanup_count
 

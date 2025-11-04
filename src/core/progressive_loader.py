@@ -135,7 +135,7 @@ class HardwareDetector:
                 return HardwareCapability.MINIMAL
 
         except Exception as e:
-            logger.warning(f"Hardware detection failed: {str(e)}")
+            logger.warning("Hardware detection failed: %s", str(e))
             return HardwareCapability.STANDARD
 
     @staticmethod
@@ -213,7 +213,7 @@ class FileChunker:
             chunks.append(chunk)
             chunk_id += 1
 
-        logger.info(f"Created {len(chunks)} chunks for {file_path} ({file_size} bytes)")
+        logger.info("Created %s chunks for {file_path} ({file_size} bytes)", len(chunks))
         return chunks
 
     def read_chunk(self, file_path: str, chunk: ChunkInfo) -> bytes:
@@ -235,7 +235,7 @@ class FileChunker:
                 # Use regular file reading
                 return self._read_chunk_regular(file_path, chunk)
         except Exception as e:
-            logger.error(f"Failed to read chunk {chunk.chunk_id}: {str(e)}")
+            logger.error("Failed to read chunk %s: {str(e)}", chunk.chunk_id)
             raise
 
     def _read_chunk_regular(self, file_path: str, chunk: ChunkInfo) -> bytes:
@@ -324,7 +324,7 @@ class ProgressTracker:
             try:
                 callback(progress)
             except Exception as e:
-                logger.error(f"Progress callback failed: {str(e)}")
+                logger.error("Progress callback failed: %s", str(e))
 
     def get_current_progress(self) -> Optional[LoadingProgress]:
         """Get current progress."""
@@ -405,7 +405,7 @@ class LoadingWorker(QObject):
                     progress_tracker.update_progress(bytes_loaded, i + 1, total_chunks)
 
                 except Exception as e:
-                    logger.error(f"Failed to process chunk {chunk.chunk_id}: {str(e)}")
+                    logger.error("Failed to process chunk %s: {str(e)}", chunk.chunk_id)
                     chunk.error = str(e)
                     # Continue with other chunks
 
@@ -530,7 +530,7 @@ class ProgressiveLoader(QObject):
                 return result
 
         except Exception as e:
-            logger.error(f"File loading failed for {file_path}: {str(e)}")
+            logger.error("File loading failed for %s: {str(e)}", file_path)
             raise
         finally:
             with self._lock:
@@ -551,7 +551,7 @@ class ProgressiveLoader(QObject):
             if worker:
                 worker.cancel()
                 self._active_loads.pop(file_path, None)
-                logger.info(f"Cancelled loading for {file_path}")
+                logger.info("Cancelled loading for %s", file_path)
                 return True
         return False
 
@@ -580,7 +580,7 @@ class ProgressiveLoader(QObject):
             self._clean_cache()
 
         except Exception as e:
-            logger.warning(f"Failed to cache result for {file_path}: {str(e)}")
+            logger.warning("Failed to cache result for %s: {str(e)}", file_path)
 
     def _get_cached_result(self, file_path: str) -> Optional[Any]:
         """Get cached result if available and not expired."""
@@ -595,11 +595,11 @@ class ProgressiveLoader(QObject):
                 del self._results_cache[file_path]
                 return None
 
-            logger.debug(f"Using cached result for {file_path}")
+            logger.debug("Using cached result for %s", file_path)
             return result
 
         except Exception as e:
-            logger.warning(f"Failed to get cached result for {file_path}: {str(e)}")
+            logger.warning("Failed to get cached result for %s: {str(e)}", file_path)
             return None
 
     def _clean_cache(self) -> None:
@@ -616,10 +616,10 @@ class ProgressiveLoader(QObject):
                 del self._results_cache[key]
 
             if expired_keys:
-                logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
+                logger.debug("Cleaned %s expired cache entries", len(expired_keys))
 
         except Exception as e:
-            logger.warning(f"Failed to clean cache: {str(e)}")
+            logger.warning("Failed to clean cache: %s", str(e))
 
     def clear_cache(self) -> None:
         """Clear all cached results."""
@@ -657,7 +657,7 @@ class ProgressiveLoader(QObject):
             logger.info("Progressive loader shutdown completed")
 
         except Exception as e:
-            logger.error(f"Error during progressive loader shutdown: {str(e)}")
+            logger.error("Error during progressive loader shutdown: %s", str(e))
 
 
 # Global progressive loader instance

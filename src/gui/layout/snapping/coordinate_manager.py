@@ -241,7 +241,7 @@ class CoordinateManager:
         self._cache_hits = 0
         self._cache_misses = 0
 
-        self.logger.info(f"Coordinate manager initialized with cache size {cache_size}")
+        self.logger.info("Coordinate manager initialized with cache size %s", cache_size)
 
     def _initialize_coordinate_systems(self) -> None:
         """
@@ -281,7 +281,7 @@ class CoordinateManager:
 
             self.logger.debug("Initialized coordinate systems")
         except Exception as e:
-            self.logger.error(f"Failed to initialize coordinate systems: {e}")
+            self.logger.error("Failed to initialize coordinate systems: %s", e)
             raise
 
     def update_screen_geometry(self, geometry: QRect) -> None:
@@ -298,9 +298,9 @@ class CoordinateManager:
             # Clear cache since screen geometry changed
             self.cache.clear()
 
-            self.logger.debug(f"Updated screen geometry to {geometry}")
+            self.logger.debug("Updated screen geometry to %s", geometry)
         except Exception as e:
-            self.logger.error(f"Failed to update screen geometry: {e}")
+            self.logger.error("Failed to update screen geometry: %s", e)
 
     def update_main_window_geometry(self) -> None:
         """
@@ -328,7 +328,7 @@ class CoordinateManager:
 
             self.logger.debug("Updated main window coordinate systems")
         except Exception as e:
-            self.logger.error(f"Failed to update main window geometry: {e}")
+            self.logger.error("Failed to update main window geometry: %s", e)
 
     def transform_point(
         self,
@@ -562,7 +562,7 @@ class CoordinateManager:
                     return QPointF(widget_pos)
 
         # Fallback: return original point
-        self.logger.warning(f"Unsupported transformation from {source_system} to {target_system}")
+        self.logger.warning("Unsupported transformation from %s to {target_system}", source_system)
         return QPointF(point)
 
     def _find_dock_parent(self, widget: QWidget) -> Optional[QDockWidget]:
@@ -718,7 +718,7 @@ class CoordinateManager:
             bounds = self.get_system_bounds(system)
             return bounds.contains(point.toPoint())
         except Exception as e:
-            self.logger.error(f"Failed to check if point {point} is in system {system}: {e}")
+            self.logger.error("Failed to check if point %s is in system {system}: {e}", point)
             return False
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -744,7 +744,7 @@ class CoordinateManager:
                 "coordinate_systems": len(self._system_origins),
             }
         except Exception as e:
-            self.logger.error(f"Failed to get performance stats: {e}")
+            self.logger.error("Failed to get performance stats: %s", e)
             return {
                 "error": str(e),
                 "total_transformations": self._transform_count,
@@ -764,7 +764,7 @@ class CoordinateManager:
             self._cache_misses = 0
             self.logger.debug("Coordinate transformation cache cleared")
         except Exception as e:
-            self.logger.error(f"Failed to clear cache: {e}")
+            self.logger.error("Failed to clear cache: %s", e)
 
     def reset(self) -> None:
         """
@@ -780,5 +780,5 @@ class CoordinateManager:
             self._initialize_coordinate_systems()
             self.logger.info("Coordinate manager reset to initial state")
         except Exception as e:
-            self.logger.error(f"Failed to reset coordinate manager: {e}")
+            self.logger.error("Failed to reset coordinate manager: %s", e)
             raise

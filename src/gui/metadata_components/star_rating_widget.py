@@ -73,7 +73,7 @@ class StarRatingWidget(QWidget):
             self.current_rating = rating
             self.update()
             self.rating_changed.emit(rating)
-            self.logger.debug(f"Rating set to: {rating}")
+            self.logger.debug("Rating set to: %s", rating)
 
     def get_rating(self) -> int:
         """

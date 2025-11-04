@@ -55,22 +55,22 @@ class FormatDetector:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        self.logger.info(f"Detecting format for: {file_path.name}")
+        self.logger.info("Detecting format for: %s", file_path.name)
 
         # First try detection by extension
         format_by_extension = self._detect_by_extension(file_path)
-        self.logger.debug(f"Extension detection result: {format_by_extension}")
+        self.logger.debug("Extension detection result: %s", format_by_extension)
 
         if format_by_extension != ModelFormat.UNKNOWN:
             # Verify with content analysis for certain formats
             if format_by_extension == ModelFormat.STL:
                 verified_format = self._verify_stl_format(file_path)
-                self.logger.debug(f"STL verification result: {verified_format}")
+                self.logger.debug("STL verification result: %s", verified_format)
                 if verified_format != ModelFormat.UNKNOWN:
                     return verified_format
             elif format_by_extension == ModelFormat.OBJ:
                 obj_verified = self._verify_obj_format(file_path)
-                self.logger.debug(f"OBJ verification result: {obj_verified}")
+                self.logger.debug("OBJ verification result: %s", obj_verified)
                 if obj_verified:
                     return ModelFormat.OBJ
             elif format_by_extension == ModelFormat.THREE_MF:
@@ -143,7 +143,7 @@ class FormatDetector:
                 return ModelFormat.UNKNOWN
 
         except Exception as e:
-            self.logger.warning(f"Error verifying STL format: {str(e)}")
+            self.logger.warning("Error verifying STL format: %s", str(e))
             return ModelFormat.UNKNOWN
 
     def _verify_obj_format(self, file_path: Path) -> bool:
@@ -187,7 +187,7 @@ class FormatDetector:
                 return result
 
         except Exception as e:
-            self.logger.warning(f"Error verifying OBJ format: {str(e)}")
+            self.logger.warning("Error verifying OBJ format: %s", str(e))
             return False
 
     def _verify_3mf_format(self, file_path: Path) -> bool:
@@ -213,7 +213,7 @@ class FormatDetector:
                     return "<?xml" in content.lower() and "model" in content.lower()
 
         except Exception as e:
-            self.logger.warning(f"Error verifying 3MF format: {str(e)}")
+            self.logger.warning("Error verifying 3MF format: %s", str(e))
             return False
 
     def _verify_step_format(self, file_path: Path) -> bool:
@@ -233,7 +233,7 @@ class FormatDetector:
                 return "ISO-10303-21" in content and "DATA;" in content
 
         except Exception as e:
-            self.logger.warning(f"Error verifying STEP format: {str(e)}")
+            self.logger.warning("Error verifying STEP format: %s", str(e))
             return False
 
     def _detect_by_content(self, file_path: Path) -> ModelFormat:
@@ -267,7 +267,7 @@ class FormatDetector:
             return ModelFormat.UNKNOWN
 
         except Exception as e:
-            self.logger.error(f"Error detecting format by content: {str(e)}")
+            self.logger.error("Error detecting format by content: %s", str(e))
             return ModelFormat.UNKNOWN
 
     def is_supported_format(self, file_path: Path) -> bool:

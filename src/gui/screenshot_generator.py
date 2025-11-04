@@ -63,7 +63,7 @@ class ScreenshotGenerator:
         """
         engine = None
         try:
-            self.logger.info(f"Starting screenshot generation for: {model_path}")
+            self.logger.info("Starting screenshot generation for: %s", model_path)
 
             # Create rendering engine
             engine = VTKRenderingEngine(width=self.width, height=self.height)
@@ -74,7 +74,7 @@ class ScreenshotGenerator:
             self.logger.info("Loading model...")
             model = self._load_model(model_path)
             if not model:
-                self.logger.error(f"Failed to load model: {model_path}")
+                self.logger.error("Failed to load model: %s", model_path)
                 return None
 
             self.logger.info(
@@ -85,10 +85,10 @@ class ScreenshotGenerator:
             self.logger.info("Creating actor from model...")
             actor = self._create_actor_from_model(model)
             if not actor:
-                self.logger.error(f"Failed to create actor for model: {model_path}")
+                self.logger.error("Failed to create actor for model: %s", model_path)
                 return None
 
-            self.logger.info(f"Actor created successfully: {actor}")
+            self.logger.info("Actor created successfully: %s", actor)
             engine.renderer.AddActor(actor)
 
             # Apply material if provided
@@ -115,7 +115,7 @@ class ScreenshotGenerator:
                     else:
                         self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
                 except Exception as e:
-                    self.logger.warning(f"Failed to apply material: {e}")
+                    self.logger.warning("Failed to apply material: %s", e)
 
             # Setup lighting and camera
             engine.setup_lighting()
@@ -129,10 +129,10 @@ class ScreenshotGenerator:
                 engine.set_background_color((0.95, 0.95, 0.95))
 
             # Log camera position and bounds
-            self.logger.debug(f"Camera position: {engine.camera.GetPosition()}")
-            self.logger.debug(f"Camera focal point: {engine.camera.GetFocalPoint()}")
-            self.logger.debug(f"Camera view up: {engine.camera.GetViewUp()}")
-            self.logger.debug(f"Renderer visible bounds: {bounds}")
+            self.logger.debug("Camera position: %s", engine.camera.GetPosition())
+            self.logger.debug("Camera focal point: %s", engine.camera.GetFocalPoint())
+            self.logger.debug("Camera view up: %s", engine.camera.GetViewUp())
+            self.logger.debug("Renderer visible bounds: %s", bounds)
 
             # Double render to ensure material/texture is fully applied
             self.logger.info("Performing initial render...")
@@ -149,14 +149,14 @@ class ScreenshotGenerator:
             success = engine.capture_screenshot(screenshot_path)
 
             if success:
-                self.logger.info(f"Screenshot saved: {screenshot_path}")
+                self.logger.info("Screenshot saved: %s", screenshot_path)
                 return screenshot_path
             else:
-                self.logger.error(f"Failed to save screenshot to {screenshot_path}")
+                self.logger.error("Failed to save screenshot to %s", screenshot_path)
                 return None
 
         except Exception as e:
-            self.logger.error(f"Error capturing screenshot: {e}", exc_info=True)
+            self.logger.error("Error capturing screenshot: %s", e, exc_info=True)
             return None
         finally:
             if engine:
@@ -170,13 +170,13 @@ class ScreenshotGenerator:
             model = parser.parse_file(model_path, lazy_loading=False)
             return model
         except Exception as e:
-            self.logger.error(f"Failed to load model {model_path}: {e}")
+            self.logger.error("Failed to load model %s: {e}", model_path)
             return None
 
     def _create_actor_from_model(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from a model."""
         try:
-            self.logger.info(f"Creating actor from model with {len(model.triangles)} triangles")
+            self.logger.info("Creating actor from model with %s triangles", len(model.triangles))
 
             # Check if model is array-based (using the same logic as ModelRenderer)
             if hasattr(model, "is_array_based") and model.is_array_based():
@@ -187,13 +187,13 @@ class ScreenshotGenerator:
                 return self._create_actor_from_triangles(model)
 
         except Exception as e:
-            self.logger.error(f"Failed to create actor: {e}", exc_info=True)
+            self.logger.error("Failed to create actor: %s", e, exc_info=True)
             return None
 
     def _create_actor_from_triangles(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from triangle-based model."""
         try:
-            self.logger.info(f"Creating actor from {len(model.triangles)} triangles")
+            self.logger.info("Creating actor from %s triangles", len(model.triangles))
 
             # Create polydata from model (following the working ModelRenderer pattern)
             points = vtk.vtkPoints()
@@ -204,10 +204,10 @@ class ScreenshotGenerator:
             normals.SetNumberOfComponents(3)
             normals.SetName("Normals")
 
-            self.logger.debug(f"Processing {len(model.triangles)} triangles...")
+            self.logger.debug("Processing %s triangles...", len(model.triangles))
             for i, triangle in enumerate(model.triangles):
                 if i % 1000 == 0:  # Log progress for large models
-                    self.logger.debug(f"Processing triangle {i}/{len(model.triangles)}")
+                    self.logger.debug("Processing triangle %s/{len(model.triangles)}", i)
 
                 try:
                     # Add vertices using direct access (following working pattern)
@@ -235,12 +235,12 @@ class ScreenshotGenerator:
                     normals.InsertNextTuple(normal)
 
                 except Exception as tri_error:
-                    self.logger.warning(f"Error processing triangle {i}: {tri_error}")
+                    self.logger.warning("Error processing triangle %s: {tri_error}", i)
                     continue
 
             point_count = points.GetNumberOfPoints()
             cell_count = cells.GetNumberOfCells()
-            self.logger.info(f"Created polydata: {point_count} points, {cell_count} cells")
+            self.logger.info("Created polydata: %s points, {cell_count} cells", point_count)
 
             if point_count == 0 or cell_count == 0:
                 self.logger.error("No points or cells created - model may be empty or invalid")
@@ -253,7 +253,7 @@ class ScreenshotGenerator:
             polydata.GetPointData().SetNormals(normals)
 
             # No need to call Update() on vtkPolyData - it's not an algorithm
-            self.logger.debug(f"Polydata bounds: {polydata.GetBounds()}")
+            self.logger.debug("Polydata bounds: %s", polydata.GetBounds())
 
             # Create mapper and actor
             mapper = vtk.vtkPolyDataMapper()
@@ -271,10 +271,10 @@ class ScreenshotGenerator:
             prop.SetSpecularPower(20)  # Shininess
             prop.LightingOn()  # Enable lighting calculations
 
-            self.logger.info(f"Actor created successfully with bounds: {actor.GetBounds()}")
+            self.logger.info("Actor created successfully with bounds: %s", actor.GetBounds())
             return actor
         except Exception as e:
-            self.logger.error(f"Failed to create actor from triangles: {e}", exc_info=True)
+            self.logger.error("Failed to create actor from triangles: %s", e, exc_info=True)
             return None
 
     def _create_actor_from_arrays(self, model: STLModel) -> Optional[vtk.vtkActor]:
@@ -298,7 +298,7 @@ class ScreenshotGenerator:
                 self.logger.warning("Vertex array length is not multiple of 3; falling back")
                 return self._create_actor_from_triangles(model)
 
-            self.logger.info(f"Creating actor from arrays: {total_vertices} vertices")
+            self.logger.info("Creating actor from arrays: %s vertices", total_vertices)
 
             # Create points from vertex array
             points = vtk.vtkPoints()
@@ -352,7 +352,7 @@ class ScreenshotGenerator:
             )
             return actor
         except Exception as e:
-            self.logger.error(f"Failed to create actor from arrays: {e}", exc_info=True)
+            self.logger.error("Failed to create actor from arrays: %s", e, exc_info=True)
             return None
 
     def _get_temp_screenshot_path(self) -> str:

@@ -130,7 +130,7 @@ class VTKErrorHandler:
                         error_text = calldata if calldata else "Unknown VTK error"
                         self.handler._handle_vtk_error(error_text)
                     except Exception as e:
-                        self.handler.logger.debug(f"Error in VTK error callback: {e}")
+                        self.handler.logger.debug("Error in VTK error callback: %s", e)
 
             # Set up the observer using the custom class
             self.vtk_error_observer = VTKErrorObserver(self)
@@ -142,7 +142,7 @@ class VTKErrorHandler:
             vtk.vtkObject.SetGlobalWarningDisplay(0)
 
         except Exception as e:
-            self.logger.warning(f"Failed to set up VTK error observer: {e}")
+            self.logger.warning("Failed to set up VTK error observer: %s", e)
 
     def _handle_vtk_error(self, error_text: str) -> None:
         """Handle a VTK error message."""
@@ -173,21 +173,21 @@ class VTKErrorHandler:
                 try:
                     recovery_success = self.recovery_strategies[error_code](error_info)
                     if recovery_success:
-                        self.logger.debug(f"Recovery strategy succeeded for {error_code.value}")
+                        self.logger.debug("Recovery strategy succeeded for %s", error_code.value)
                     else:
-                        self.logger.warning(f"Recovery strategy failed for {error_code.value}")
+                        self.logger.warning("Recovery strategy failed for %s", error_code.value)
                 except Exception as e:
-                    self.logger.error(f"Recovery strategy failed with exception: {e}")
+                    self.logger.error("Recovery strategy failed with exception: %s", e)
 
             # Execute callback if registered
             if error_code in self.error_callbacks:
                 try:
                     self.error_callbacks[error_code](error_info)
                 except Exception as e:
-                    self.logger.error(f"Error callback failed: {e}")
+                    self.logger.error("Error callback failed: %s", e)
 
         except Exception as e:
-            self.logger.error(f"Error in VTK error handler: {e}")
+            self.logger.error("Error in VTK error handler: %s", e)
 
     def _classify_error(self, error_text: str) -> VTKErrorCode:
         """Classify VTK error text into appropriate error code."""
@@ -247,7 +247,7 @@ class VTKErrorHandler:
 
         # Log with appropriate level
         if severity == VTKErrorSeverity.CRITICAL:
-            self.logger.critical(f"VTK Critical Error: {error_info['error_text']}", extra=log_data)
+            self.logger.critical("VTK Critical Error: %s", error_info['error_text'], extra=log_data)
         elif severity == VTKErrorSeverity.HIGH:
             self.logger.error(
                 f"VTK High Severity Error: {error_info['error_text']}", extra=log_data
@@ -257,7 +257,7 @@ class VTKErrorHandler:
                 f"VTK Medium Severity Error: {error_info['error_text']}", extra=log_data
             )
         else:  # LOW severity
-            self.logger.debug(f"VTK Low Severity Error: {error_info['error_text']}", extra=log_data)
+            self.logger.debug("VTK Low Severity Error: %s", error_info['error_text'], extra=log_data)
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
@@ -306,13 +306,13 @@ class VTKErrorHandler:
                     recovery_success = self.recovery_strategies[error_code](error_info)
                     return recovery_success
                 except Exception as e:
-                    self.logger.error(f"Recovery strategy failed: {e}")
+                    self.logger.error("Recovery strategy failed: %s", e)
 
             # Default: return True for low/medium severity, False for high/critical
             return severity in [VTKErrorSeverity.LOW, VTKErrorSeverity.MEDIUM]
 
         except Exception as e:
-            self.logger.error(f"Error in error handler: {e}")
+            self.logger.error("Error in error handler: %s", e)
             return False
 
     def register_error_callback(self, error_code: VTKErrorCode, callback: Callable) -> None:
@@ -324,7 +324,7 @@ class VTKErrorHandler:
             callback: Function to call when this error occurs
         """
         self.error_callbacks[error_code] = callback
-        self.logger.debug(f"Registered callback for error code: {error_code.value}")
+        self.logger.debug("Registered callback for error code: %s", error_code.value)
 
     def suppress_errors_temporarily(self, duration_ms: int = 1000) -> None:
         """

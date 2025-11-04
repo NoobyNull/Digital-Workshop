@@ -55,7 +55,7 @@ class ModelLoadWorker(QThread):
 
     def run(self) -> None:
         """Load models in background thread with detailed progress tracking."""
-        self.logger.info(f"Starting to load {len(self.file_paths)} models")
+        self.logger.info("Starting to load %s models", len(self.file_paths))
         for i, file_path in enumerate(self.file_paths):
             if self._is_cancelled:
                 self.logger.info("Model loading cancelled")

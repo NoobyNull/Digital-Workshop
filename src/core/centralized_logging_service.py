@@ -205,7 +205,7 @@ class CentralizedLoggingService:
                 self._log_with_context(logging.ERROR, str(error), **kwargs)
                 return True
         except Exception as handling_error:
-            self.logger.error(f"Error logging failed: {str(handling_error)}", exc_info=True)
+            self.logger.error("Error logging failed: %s", str(handling_error), exc_info=True)
             return False
 
     def log_critical(self, message: str, **kwargs) -> None:
@@ -256,7 +256,7 @@ class CentralizedLoggingService:
             )
 
         except Exception as e:
-            self.logger.error(f"Security event logging failed: {str(e)}", exc_info=True)
+            self.logger.error("Security event logging failed: %s", str(e), exc_info=True)
 
     def log_performance_metric(self, metric: PerformanceMetric) -> None:
         """Log a performance metric."""
@@ -289,7 +289,7 @@ class CentralizedLoggingService:
             )
 
         except Exception as e:
-            self.logger.error(f"Performance metric logging failed: {str(e)}", exc_info=True)
+            self.logger.error("Performance metric logging failed: %s", str(e), exc_info=True)
 
     def set_correlation_id(self, correlation_id: str) -> None:
         """Set correlation ID for current context."""
@@ -449,10 +449,10 @@ class CentralizedLoggingService:
                     m for m in self._performance_metrics if m.timestamp.timestamp() > cutoff_time
                 ]
 
-            self.logger.info(f"Cleaned up logs older than {days_to_keep} days")
+            self.logger.info("Cleaned up logs older than %s days", days_to_keep)
 
         except Exception as e:
-            self.logger.error(f"Log cleanup failed: {str(e)}", exc_info=True)
+            self.logger.error("Log cleanup failed: %s", str(e), exc_info=True)
 
 
 # Decorator for automatic performance and error logging

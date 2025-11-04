@@ -61,7 +61,7 @@ class LegacyVTKCleanupCoordinator:
             return stats.failed_phases == 0
 
         except Exception as e:
-            self.logger.error(f"Legacy VTK cleanup failed: {e}")
+            self.logger.error("Legacy VTK cleanup failed: %s", e)
             return False
 
     def cleanup_all_resources(self) -> Dict[str, Any]:
@@ -86,7 +86,7 @@ class LegacyVTKCleanupCoordinator:
             }
 
         except Exception as e:
-            self.logger.error(f"Legacy cleanup_all_resources failed: {e}")
+            self.logger.error("Legacy cleanup_all_resources failed: %s", e)
             return {
                 "success": 0,
                 "errors": 1,
@@ -142,7 +142,7 @@ class LegacyViewerWidgetFacade:
             return stats.failed_phases == 0
 
         except Exception as e:
-            self.logger.error(f"Legacy viewer widget cleanup failed: {e}")
+            self.logger.error("Legacy viewer widget cleanup failed: %s", e)
             return False
 
 
@@ -192,7 +192,7 @@ class LegacyVTKSceneManager:
             return stats.failed_phases == 0
 
         except Exception as e:
-            self.logger.error(f"Legacy VTK scene manager cleanup failed: {e}")
+            self.logger.error("Legacy VTK scene manager cleanup failed: %s", e)
             return False
 
 
@@ -286,7 +286,7 @@ class CleanupErrorHandler:
 
             # Log error with appropriate level
             if self._error_counts[error_key] == 1:
-                self.logger.warning(f"Cleanup error in {context}: {error}")
+                self.logger.warning("Cleanup error in %s: {error}", context)
             elif self._error_counts[error_key] <= 3:
                 self.logger.warning(
                     f"Repeated cleanup error in {context} ({self._error_counts[error_key]} times): {error}"
@@ -299,7 +299,7 @@ class CleanupErrorHandler:
             return True
 
         except Exception as handling_error:
-            self.logger.error(f"Error in cleanup error handler: {handling_error}")
+            self.logger.error("Error in cleanup error handler: %s", handling_error)
             return False
 
     def get_error_statistics(self) -> Dict[str, Any]:

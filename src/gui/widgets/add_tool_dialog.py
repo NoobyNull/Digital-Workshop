@@ -98,10 +98,10 @@ class AddToolDialog(QDialog):
                 item.setData(Qt.UserRole, provider["id"])
                 self.provider_list.addItem(item)
 
-            self.logger.info(f"Loaded {len(providers)} providers")
+            self.logger.info("Loaded %s providers", len(providers))
 
         except Exception as e:
-            self.logger.error(f"Failed to load providers: {e}")
+            self.logger.error("Failed to load providers: %s", e)
 
     def _on_provider_selected(self):
         """Handle provider selection change."""
@@ -128,10 +128,10 @@ class AddToolDialog(QDialog):
                 item.setData(Qt.UserRole, tool["id"])
                 self.tool_list.addItem(item)
 
-            self.logger.info(f"Loaded {len(tools)} tools for provider {provider_id}")
+            self.logger.info("Loaded %s tools for provider {provider_id}", len(tools))
 
         except Exception as e:
-            self.logger.error(f"Failed to load tools: {e}")
+            self.logger.error("Failed to load tools: %s", e)
 
     def _on_tool_selected(self):
         """Handle tool selection change."""
@@ -155,6 +155,6 @@ class AddToolDialog(QDialog):
                 tool_data = self.tool_repo.get_tool_by_id(self.selected_tool)
                 return tool_data
             except Exception as e:
-                self.logger.error(f"Failed to get selected tool: {e}")
+                self.logger.error("Failed to get selected tool: %s", e)
 
         return None

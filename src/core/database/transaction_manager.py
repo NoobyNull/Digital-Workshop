@@ -181,7 +181,7 @@ class Transaction:
         try:
             self.connection.execute(f"SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.ACTIVE
-            logger.debug(f"Transaction {self.transaction_id} started")
+            logger.debug("Transaction %s started", self.transaction_id)
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
             raise TransactionError(f"Failed to begin transaction: {str(e)}")
@@ -192,7 +192,7 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.COMMITTED
             duration = time.time() - self.start_time
-            logger.info(f"Transaction {self.transaction_id} committed in {duration:.3f}s")
+            logger.info("Transaction %s committed in {duration:.3f}s", self.transaction_id)
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
             raise TransactionError(f"Failed to commit transaction: {str(e)}")
@@ -204,10 +204,10 @@ class Transaction:
             self.connection.execute(f"RELEASE SAVEPOINT {self._savepoint_name}")
             self.state = TransactionState.ROLLED_BACK
             duration = time.time() - self.start_time
-            logger.info(f"Transaction {self.transaction_id} rolled back after {duration:.3f}s")
+            logger.info("Transaction %s rolled back after {duration:.3f}s", self.transaction_id)
         except sqlite3.Error as e:
             self.state = TransactionState.FAILED
-            logger.error(f"Failed to rollback transaction {self.transaction_id}: {str(e)}")
+            logger.error("Failed to rollback transaction %s: {str(e)}", self.transaction_id)
 
     def add_operation(self, operation: str, params: tuple = None) -> None:
         """Add an operation to the transaction log."""
@@ -320,7 +320,7 @@ class TransactionManager:
 
             # Log transaction failure
             if transaction:
-                logger.error(f"Transaction {transaction.transaction_id} failed: {str(e)}")
+                logger.error("Transaction %s failed: {str(e)}", transaction.transaction_id)
 
             raise TransactionError(f"Transaction failed: {str(e)}")
 
@@ -441,9 +441,9 @@ class TransactionManager:
                     try:
                         transaction.rollback()
                         cleaned_count += 1
-                        logger.warning(f"Cleaned up stale transaction {tid}")
+                        logger.warning("Cleaned up stale transaction %s", tid)
                     except Exception as e:
-                        logger.error(f"Failed to cleanup stale transaction {tid}: {str(e)}")
+                        logger.error("Failed to cleanup stale transaction %s: {str(e)}", tid)
 
         return cleaned_count
 
@@ -455,7 +455,7 @@ class TransactionManager:
                 try:
                     transaction.rollback()
                 except Exception as e:
-                    logger.error(f"Failed to rollback transaction during cleanup: {str(e)}")
+                    logger.error("Failed to rollback transaction during cleanup: %s", str(e))
             self.active_transactions.clear()
 
         # Close connection pool
@@ -483,7 +483,7 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1):
             try:
                 return func(*args, **kwargs)
             except sqlite3.Error as e:
-                logger.error(f"Database error in {func.__name__}: {str(e)}")
+                logger.error("Database error in %s: {str(e)}", func.__name__)
                 raise DatabaseError(f"Database operation failed: {str(e)}")
 
         return wrapper

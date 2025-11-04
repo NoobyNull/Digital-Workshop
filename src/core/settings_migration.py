@@ -41,7 +41,7 @@ class SettingsMigrator:
         self.settings_path = self.app_data_path / "settings.json"
         self.old_settings_path = self.old_app_data_path / "settings.json"
 
-        logger.info(f"Settings migrator initialized for {app_name} v{self.current_version}")
+        logger.info("Settings migrator initialized for %s v{self.current_version}", app_name)
 
     def check_migration_needed(self) -> bool:
         """Check if migration is needed from a previous version.
@@ -62,7 +62,7 @@ class SettingsMigrator:
         # Check versions
         old_version = self._get_old_version()
         if old_version and old_version != self.current_version:
-            logger.info(f"Version change detected: {old_version} -> {self.current_version}")
+            logger.info("Version change detected: %s -> {self.current_version}", old_version)
             return True
 
         return False
@@ -88,7 +88,7 @@ class SettingsMigrator:
                 conn.close()
                 return f"1.0.{version}"
         except Exception as e:
-            logger.warning(f"Failed to get old version: {e}")
+            logger.warning("Failed to get old version: %s", e)
 
         return None
 
@@ -122,7 +122,7 @@ class SettingsMigrator:
             return True
 
         except Exception as e:
-            logger.error(f"Settings migration failed: {e}")
+            logger.error("Settings migration failed: %s", e)
             return False
 
     def _migrate_settings_file(self):
@@ -149,7 +149,7 @@ class SettingsMigrator:
             logger.info("Settings file migrated successfully")
 
         except Exception as e:
-            logger.error(f"Failed to migrate settings file: {e}")
+            logger.error("Failed to migrate settings file: %s", e)
             raise
 
     def _merge_settings(self, old_settings: Dict, current_settings: Dict) -> Dict:
@@ -206,7 +206,7 @@ class SettingsMigrator:
                 self._upgrade_database()
 
         except Exception as e:
-            logger.error(f"Failed to migrate database: {e}")
+            logger.error("Failed to migrate database: %s", e)
             raise
 
     def _upgrade_database(self):
@@ -256,7 +256,7 @@ class SettingsMigrator:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to upgrade database: {e}")
+            logger.error("Failed to upgrade database: %s", e)
             raise
 
     def _migrate_user_data(self):
@@ -305,7 +305,7 @@ class SettingsMigrator:
             logger.info("User data migrated successfully")
 
         except Exception as e:
-            logger.error(f"Failed to migrate user data: {e}")
+            logger.error("Failed to migrate user data: %s", e)
             raise
 
     def _update_version_info(self):
@@ -329,7 +329,7 @@ class SettingsMigrator:
             logger.info("Version information updated")
 
         except Exception as e:
-            logger.error(f"Failed to update version info: {e}")
+            logger.error("Failed to update version info: %s", e)
             raise
 
     def cleanup_old_data(self) -> bool:
@@ -345,14 +345,14 @@ class SettingsMigrator:
                 backup_path = self.old_app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
 
                 shutil.move(str(self.old_app_data_path), str(backup_path))
-                logger.info(f"Old data backed up to: {backup_path}")
+                logger.info("Old data backed up to: %s", backup_path)
 
                 # Optionally delete backup after confirmation
                 # For now, we'll keep it for safety
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to cleanup old data: {e}")
+            logger.error("Failed to cleanup old data: %s", e)
             return False
 
         return True
@@ -369,11 +369,11 @@ class SettingsMigrator:
 
             if self.app_data_path.exists():
                 shutil.copytree(self.app_data_path, backup_path)
-                logger.info(f"Backup created at: {backup_path}")
+                logger.info("Backup created at: %s", backup_path)
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to create backup: {e}")
+            logger.error("Failed to create backup: %s", e)
             return False
 
         return False
@@ -407,5 +407,5 @@ def migrate_on_startup() -> bool:
             return True
 
     except Exception as e:
-        logger.error(f"Migration process failed: {e}")
+        logger.error("Migration process failed: %s", e)
         return False

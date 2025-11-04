@@ -152,7 +152,7 @@ class ProjectDetailsWidget(QWidget):
             self._update_resources(model_data)
 
         except Exception as e:
-            self.logger.error(f"Failed to set model: {e}")
+            self.logger.error("Failed to set model: %s", e)
             self.clear()
 
     def _update_model_info(self, model_data: Dict[str, Any]) -> None:
@@ -184,7 +184,7 @@ class ProjectDetailsWidget(QWidget):
             self.info_labels["date_added"].setText(str(model_data.get("date_added", "-")))
 
         except Exception as e:
-            self.logger.error(f"Failed to update model info: {e}")
+            self.logger.error("Failed to update model info: %s", e)
 
     def _update_resources(self, model_data: Dict[str, Any]) -> None:
         """Update resources/files display."""
@@ -206,7 +206,7 @@ class ProjectDetailsWidget(QWidget):
             # This would require additional database schema to track related files
 
         except Exception as e:
-            self.logger.error(f"Failed to update resources: {e}")
+            self.logger.error("Failed to update resources: %s", e)
 
     def _add_resource_row(self, file_path: Path) -> None:
         """Add a resource file to the table."""
@@ -240,7 +240,7 @@ class ProjectDetailsWidget(QWidget):
             self.resources_table.setItem(row, 2, type_item)
 
         except Exception as e:
-            self.logger.error(f"Failed to add resource row: {e}")
+            self.logger.error("Failed to add resource row: %s", e)
 
     def _get_file_icon(self, file_path: Path) -> QIcon:
         """Get appropriate icon for file type."""

@@ -63,7 +63,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Widget cleanup error: {e}", exc_info=True)
+            self.logger.error("Widget cleanup error: %s", e, exc_info=True)
             return False
 
     def _cleanup_widgets(self) -> bool:
@@ -102,7 +102,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return overall_success
 
         except Exception as e:
-            self.logger.error(f"Widget cleanup failed: {e}", exc_info=True)
+            self.logger.error("Widget cleanup failed: %s", e, exc_info=True)
             return False
 
     def _cleanup_main_window(self, main_window) -> bool:
@@ -130,7 +130,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Main window cleanup failed: {e}")
+            self.logger.error("Main window cleanup failed: %s", e)
             return False
 
     def _cleanup_viewer_widget(self, viewer_widget) -> bool:
@@ -147,7 +147,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"3D viewer widget cleanup failed: {e}")
+            self.logger.error("3D viewer widget cleanup failed: %s", e)
             return False
 
     def _cleanup_metadata_editor(self, metadata_editor) -> bool:
@@ -164,7 +164,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Metadata editor cleanup failed: {e}")
+            self.logger.error("Metadata editor cleanup failed: %s", e)
             return False
 
     def _cleanup_model_library(self, model_library) -> bool:
@@ -181,7 +181,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Model library cleanup failed: {e}")
+            self.logger.error("Model library cleanup failed: %s", e)
             return False
 
     def _cleanup_window_components(self, main_window) -> bool:
@@ -208,7 +208,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Window components cleanup failed: {e}")
+            self.logger.error("Window components cleanup failed: %s", e)
             return False
 
     def _cleanup_snapping_system(self, snapping_system) -> bool:
@@ -225,7 +225,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Snapping system cleanup failed: {e}")
+            self.logger.error("Snapping system cleanup failed: %s", e)
             return False
 
     def _cleanup_event_coordinator(self, event_coordinator) -> bool:
@@ -242,7 +242,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Event coordinator cleanup failed: {e}")
+            self.logger.error("Event coordinator cleanup failed: %s", e)
             return False
 
     def _cleanup_timers(self, widget) -> bool:
@@ -269,11 +269,11 @@ class WidgetCleanupHandler(CleanupHandler):
 
             cleanup_timer_recursive(widget)
 
-            self.logger.debug(f"Cleaned up {timers_cleaned} timers")
+            self.logger.debug("Cleaned up %s timers", timers_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"Timer cleanup failed: {e}")
+            self.logger.error("Timer cleanup failed: %s", e)
             return False
 
     def _disconnect_signals(self, widget) -> bool:
@@ -300,13 +300,13 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Signal disconnection failed: {e}")
+            self.logger.error("Signal disconnection failed: %s", e)
             return False
 
     def _cleanup_tracked_widgets(self) -> bool:
         """Cleanup tracked widgets."""
         try:
-            self.logger.debug(f"Cleaning up {len(self._tracked_widgets)} tracked widgets")
+            self.logger.debug("Cleaning up %s tracked widgets", len(self._tracked_widgets))
 
             success = True
             for widget in self._tracked_widgets.copy():
@@ -315,13 +315,13 @@ class WidgetCleanupHandler(CleanupHandler):
                         widget.cleanup()
                     self._tracked_widgets.discard(widget)
                 except Exception as e:
-                    self.logger.warning(f"Failed to cleanup tracked widget: {e}")
+                    self.logger.warning("Failed to cleanup tracked widget: %s", e)
                     success = False
 
             return success
 
         except Exception as e:
-            self.logger.error(f"Tracked widgets cleanup failed: {e}")
+            self.logger.error("Tracked widgets cleanup failed: %s", e)
             return False
 
     def _cleanup_global_widgets(self) -> bool:
@@ -340,7 +340,7 @@ class WidgetCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Global widget cleanup failed: {e}")
+            self.logger.error("Global widget cleanup failed: %s", e)
             return False
 
     def register_widget(self, widget) -> None:
@@ -353,12 +353,12 @@ class WidgetCleanupHandler(CleanupHandler):
         try:
             if widget and isinstance(widget, QWidget):
                 self._tracked_widgets.add(widget)
-                self.logger.debug(f"Registered widget for cleanup: {type(widget).__name__}")
+                self.logger.debug("Registered widget for cleanup: %s", type(widget).__name__)
             else:
-                self.logger.warning(f"Invalid widget registration: {type(widget)}")
+                self.logger.warning("Invalid widget registration: %s", type(widget))
 
         except Exception as e:
-            self.logger.warning(f"Failed to register widget: {e}")
+            self.logger.warning("Failed to register widget: %s", e)
 
     def unregister_widget(self, widget) -> bool:
         """
@@ -373,12 +373,12 @@ class WidgetCleanupHandler(CleanupHandler):
         try:
             if widget in self._tracked_widgets:
                 self._tracked_widgets.discard(widget)
-                self.logger.debug(f"Unregistered widget from cleanup: {type(widget).__name__}")
+                self.logger.debug("Unregistered widget from cleanup: %s", type(widget).__name__)
                 return True
             return False
 
         except Exception as e:
-            self.logger.warning(f"Failed to unregister widget: {e}")
+            self.logger.warning("Failed to unregister widget: %s", e)
             return False
 
     def get_widget_cleanup_stats(self) -> Dict[str, Any]:
@@ -393,5 +393,5 @@ class WidgetCleanupHandler(CleanupHandler):
             }
 
         except Exception as e:
-            self.logger.warning(f"Failed to get widget cleanup stats: {e}")
+            self.logger.warning("Failed to get widget cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

@@ -255,7 +255,9 @@ class Application:
                 settings_file = temp_dir / "settings.ini"
 
                 # Create a file-based QSettings that uses INI format
-                QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, str(temp_dir))
+                QSettings.setPath(
+                    QSettings.IniFormat, QSettings.UserScope, str(temp_dir)
+                )
                 QSettings.setDefaultFormat(QSettings.IniFormat)
 
             self.logger = get_logger(__name__)
@@ -343,10 +345,10 @@ class Application:
             theme, _ = service.get_current_theme()
             service.apply_theme(theme)
             if self.logger:
-                self.logger.debug(f"Theme applied: {theme}")
+                self.logger.debug("Theme applied: %s", theme)
         except Exception as e:
             if self.logger:
-                self.logger.debug(f"Theme application: {e}")
+                self.logger.debug("Theme application: %s", e)
 
     def _connect_signals(self) -> None:
         """Connect application signals."""
@@ -381,7 +383,7 @@ class Application:
                 self._original_close_event(event)
         except Exception as e:
             if self.logger:
-                self.logger.warning(f"Failed to call original closeEvent: {e}")
+                self.logger.warning("Failed to call original closeEvent: %s", e)
 
         # Then perform application cleanup
         self.cleanup()

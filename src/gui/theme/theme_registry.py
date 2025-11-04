@@ -165,7 +165,7 @@ class WidgetRegistry:
 
         except Exception as e:
             self.update_errors += 1
-            logger.warning(f"Failed to update theme for widget {self.widget_name}: {e}")
+            logger.warning("Failed to update theme for widget %s: {e}", self.widget_name)
             return False
 
     def _update_stylesheet_fallback(self, widget: QWidget, theme_data: Dict[str, Any]) -> None:
@@ -194,7 +194,7 @@ class WidgetRegistry:
                 widget.setStyleSheet(stylesheet)
 
         except Exception as e:
-            logger.debug(f"Stylesheet fallback failed for {self.widget_name}: {e}")
+            logger.debug("Stylesheet fallback failed for %s: {e}", self.widget_name)
 
 
 class ThemeRegistry(QObject):
@@ -267,7 +267,7 @@ class ThemeRegistry(QObject):
             True if registration was successful
         """
         if not isinstance(widget, QWidget):
-            logger.warning(f"Cannot register non-QWidget object: {type(widget)}")
+            logger.warning("Cannot register non-QWidget object: %s", type(widget))
             return False
 
         widget_name = widget_name or f"{widget.__class__.__name__}_{id(widget)}"
@@ -277,7 +277,7 @@ class ThemeRegistry(QObject):
             if widget_name in self._widgets:
                 existing_entry = self._widgets[widget_name]
                 if existing_entry.is_alive():
-                    logger.debug(f"Widget {widget_name} already registered")
+                    logger.debug("Widget %s already registered", widget_name)
                     return True
                 else:
                     # Remove dead reference
@@ -288,12 +288,12 @@ class ThemeRegistry(QObject):
                 entry = WidgetRegistry(widget, widget_name)
                 self._widgets[widget_name] = entry
 
-                logger.debug(f"Registered widget for theme updates: {widget_name}")
+                logger.debug("Registered widget for theme updates: %s", widget_name)
                 self.widget_registered.emit(widget_name)
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to register widget {widget_name}: {e}")
+                logger.error("Failed to register widget %s: {e}", widget_name)
                 return False
 
     def unregister_widget(self, widget_name: str) -> bool:
@@ -309,7 +309,7 @@ class ThemeRegistry(QObject):
         with QMutexLocker(self._registry_mutex):
             if widget_name in self._widgets:
                 del self._widgets[widget_name]
-                logger.debug(f"Unregistered widget: {widget_name}")
+                logger.debug("Unregistered widget: %s", widget_name)
                 self.widget_unregistered.emit(widget_name)
                 return True
 
@@ -339,7 +339,7 @@ class ThemeRegistry(QObject):
                 self._total_updates += 1
                 return success
 
-            logger.warning(f"Widget not found in registry: {widget_name}")
+            logger.warning("Widget not found in registry: %s", widget_name)
             return False
 
     def update_all_themes(self, theme_data: Dict[str, Any]) -> Tuple[int, int]:
@@ -379,7 +379,7 @@ class ThemeRegistry(QObject):
         self._failed_updates += failed
         self._total_updates += successful + failed
 
-        logger.info(f"Theme update completed: {successful} successful, {failed} failed")
+        logger.info("Theme update completed: %s successful, {failed} failed", successful)
         self.theme_update_completed.emit(successful, failed)
 
         return successful, failed
@@ -500,7 +500,7 @@ class ThemeRegistry(QObject):
         """
         self._discovery_interval = max(1000, interval_ms)  # Minimum 1 second
         self._discovery_timer.setInterval(self._discovery_interval)
-        logger.debug(f"Discovery interval set to {self._discovery_interval}ms")
+        logger.debug("Discovery interval set to %sms", self._discovery_interval)
 
     def force_discovery(self) -> None:
         """Force immediate widget discovery."""
@@ -525,7 +525,7 @@ class ThemeRegistry(QObject):
                 self._cleanup_count += 1
 
             if dead_widgets:
-                logger.info(f"Cleaned up {len(dead_widgets)} dead widget references")
+                logger.info("Cleaned up %s dead widget references", len(dead_widgets))
 
             return len(dead_widgets)
 
@@ -548,10 +548,10 @@ class ThemeRegistry(QObject):
                     registered_count += 1
 
             if registered_count > 0:
-                logger.debug(f"Auto-discovered and registered {registered_count} widgets")
+                logger.debug("Auto-discovered and registered %s widgets", registered_count)
 
         except Exception as e:
-            logger.error(f"Widget discovery failed: {e}")
+            logger.error("Widget discovery failed: %s", e)
 
     def _register_widget_recursive(self, widget: QWidget, visited: Set[int] = None) -> bool:
         """
@@ -586,7 +586,7 @@ class ThemeRegistry(QObject):
                     if self._register_widget_recursive(child, visited):
                         registered_any = True
         except Exception as e:
-            logger.debug(f"Error registering child widgets: {e}")
+            logger.debug("Error registering child widgets: %s", e)
 
         return registered_any
 

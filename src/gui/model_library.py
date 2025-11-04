@@ -147,7 +147,7 @@ class ModelLoadWorker(QThread):
         self._is_cancelled = True
 
     def run(self) -> None:
-        self.logger.info(f"Starting to load {len(self.file_paths)} models")
+        self.logger.info("Starting to load %s models", len(self.file_paths))
         for i, file_path in enumerate(self.file_paths):
             if self._is_cancelled:
                 self.logger.info("Model loading cancelled")
@@ -285,7 +285,7 @@ class ThumbnailGenerator:
             painter.end()
             return pixmap
         except Exception as e:
-            self.logger.error(f"Failed to generate thumbnail: {e}")
+            self.logger.error("Failed to generate thumbnail: %s", e)
             px = QPixmap(self.size)
             px.fill(Qt.lightGray)
             p = QPainter(px)
@@ -581,7 +581,7 @@ class ModelLibraryWidget(QWidget):
             self.model_count_label.setText(f"Models: {len(self.current_models)}")
             self.status_label.setText("Ready")
         except Exception as e:
-            self.logger.error(f"Failed to load models from database: {e}")
+            self.logger.error("Failed to load models from database: %s", e)
             self.status_label.setText("Error loading models")
 
     def _update_model_view(self) -> None:
@@ -601,7 +601,7 @@ class ModelLibraryWidget(QWidget):
                     icon = QIcon(thumbnail_path)
                     name_item.setIcon(icon)
                 except Exception as e:
-                    self.logger.warning(f"Failed to load thumbnail icon: {e}")
+                    self.logger.warning("Failed to load thumbnail icon: %s", e)
 
             fmt = (model.get("format") or "Unknown").upper()
             format_item = QStandardItem(fmt)
@@ -726,7 +726,7 @@ class ModelLibraryWidget(QWidget):
             model_info["thumbnail"] = thumb
             self.current_models.append(model_info)
         except Exception as e:
-            self.logger.error(f"Failed to save model to database: {e}")
+            self.logger.error("Failed to save model to database: %s", e)
 
     def _on_load_progress(self, progress_percent: float, message: str) -> None:
         if self._disposed or self.model_loader is None:
@@ -931,7 +931,7 @@ class ModelLibraryWidget(QWidget):
 
             menu.exec_(view.mapToGlobal(position))
         except Exception as e:
-            self.logger.error(f"Error showing context menu: {e}")
+            self.logger.error("Error showing context menu: %s", e)
 
     def _show_file_tree_context_menu(self, position) -> None:
         """Show context menu for the file tree with import and open options."""
@@ -982,7 +982,7 @@ class ModelLibraryWidget(QWidget):
             menu.exec_(self.file_tree.mapToGlobal(position))
 
         except Exception as e:
-            self.logger.error(f"Error showing file tree context menu: {e}")
+            self.logger.error("Error showing file tree context menu: %s", e)
 
     def _add_root_folder_from_context(self) -> None:
         """Add a new root folder via context menu."""
@@ -1019,7 +1019,7 @@ class ModelLibraryWidget(QWidget):
                     "Failed to add folder. It may already exist or be inaccessible.",
                 )
         except Exception as e:
-            self.logger.error(f"Failed to add root folder: {e}")
+            self.logger.error("Failed to add root folder: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to add root folder: {e}")
 
     def _remove_root_folder_from_context(self, root_folder) -> None:
@@ -1045,7 +1045,7 @@ class ModelLibraryWidget(QWidget):
                 else:
                     QMessageBox.warning(self, "Error", "Failed to remove folder.")
         except Exception as e:
-            self.logger.error(f"Failed to remove root folder: {e}")
+            self.logger.error("Failed to remove root folder: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to remove root folder: {e}")
 
     def _import_from_context_menu(self, path: str) -> None:
@@ -1074,7 +1074,7 @@ class ModelLibraryWidget(QWidget):
                     )
 
         except Exception as e:
-            self.logger.error(f"Error importing from context menu: {e}")
+            self.logger.error("Error importing from context menu: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import: {e}")
 
     def _open_in_native_app(self, file_path: str) -> None:
@@ -1088,7 +1088,7 @@ class ModelLibraryWidget(QWidget):
                 QMessageBox.warning(self, "Open File", f"Could not open file: {file_path}")
 
         except Exception as e:
-            self.logger.error(f"Error opening file in native app: {e}")
+            self.logger.error("Error opening file in native app: %s", e)
             QMessageBox.critical(self, "Open File", f"Failed to open file: {e}")
 
     def _remove_model(self, model_id: int) -> None:
@@ -1097,7 +1097,7 @@ class ModelLibraryWidget(QWidget):
             # Get model details for confirmation dialog
             model_info = self.db_manager.get_model(model_id)
             if not model_info:
-                self.logger.warning(f"Model with ID {model_id} not found")
+                self.logger.warning("Model with ID %s not found", model_id)
                 return
 
             model_name = model_info.get("title") or model_info.get("filename", "Unknown")
@@ -1131,10 +1131,10 @@ class ModelLibraryWidget(QWidget):
                     self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
                 else:
                     self.status_label.setText(f"Failed to remove '{model_name}'")
-                    self.logger.error(f"Failed to remove model with ID {model_id}")
+                    self.logger.error("Failed to remove model with ID %s", model_id)
 
         except Exception as e:
-            self.logger.error(f"Error removing model: {e}")
+            self.logger.error("Error removing model: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to remove model: {str(e)}")
 
     def _refresh_models(self) -> None:
@@ -1148,7 +1148,7 @@ class ModelLibraryWidget(QWidget):
             model_id: ID of the model to edit metadata for
         """
         try:
-            self.logger.info(f"Opening metadata editor for model ID: {model_id}")
+            self.logger.info("Opening metadata editor for model ID: %s", model_id)
 
             # Get model info to display in dialog title
             model_info = self.db_manager.get_model(model_id)
@@ -1201,10 +1201,10 @@ class ModelLibraryWidget(QWidget):
             if result == QDialog.Accepted or editor.has_unsaved_changes():
                 self._load_models_from_database()
 
-            self.logger.info(f"Metadata editor closed for model ID: {model_id}")
+            self.logger.info("Metadata editor closed for model ID: %s", model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to open metadata editor: {e}")
+            self.logger.error("Failed to open metadata editor: %s", e)
             # Fallback to simple metadata edit if dialog fails
             self._simple_metadata_edit(model_id, model_info if "model_info" in locals() else None)
 
@@ -1218,7 +1218,7 @@ class ModelLibraryWidget(QWidget):
             model_id: ID of the model being edited
         """
         try:
-            self.logger.info(f"Saving metadata for model ID: {model_id}")
+            self.logger.info("Saving metadata for model ID: %s", model_id)
 
             # Validate input
             if not editor._validate_input():
@@ -1243,7 +1243,7 @@ class ModelLibraryWidget(QWidget):
 
             if success:
                 self.status_label.setText(f"Metadata saved for model")
-                self.logger.info(f"Metadata saved successfully for model ID: {model_id}")
+                self.logger.info("Metadata saved successfully for model ID: %s", model_id)
 
                 # Reload models to reflect changes
                 self._load_models_from_database()
@@ -1254,7 +1254,7 @@ class ModelLibraryWidget(QWidget):
                 QMessageBox.warning(dialog, "Error", "Failed to save metadata")
 
         except Exception as e:
-            self.logger.error(f"Failed to save metadata: {e}")
+            self.logger.error("Failed to save metadata: %s", e)
             QMessageBox.critical(dialog, "Error", f"Failed to save metadata: {str(e)}")
 
     def _simple_metadata_edit(
@@ -1289,13 +1289,13 @@ class ModelLibraryWidget(QWidget):
                 self.db_manager.update_model_metadata(model_id, title=new_title.strip())
 
                 self.status_label.setText(f"Updated title for '{model_name}'")
-                self.logger.info(f"Updated title for model ID {model_id}")
+                self.logger.info("Updated title for model ID %s", model_id)
 
                 # Reload models
                 self._load_models_from_database()
 
         except Exception as e:
-            self.logger.error(f"Failed to edit metadata: {e}")
+            self.logger.error("Failed to edit metadata: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to edit metadata: {str(e)}")
 
     def _show_file_in_explorer(self, model_id: int) -> None:
@@ -1346,10 +1346,10 @@ class ModelLibraryWidget(QWidget):
                 parent_dir = str(Path(file_path).parent)
                 subprocess.Popen(["xdg-open", parent_dir])
 
-            self.logger.info(f"Opened file explorer for: {file_path}")
+            self.logger.info("Opened file explorer for: %s", file_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to show file in explorer: {e}")
+            self.logger.error("Failed to show file in explorer: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to open file explorer: {str(e)}")
 
     def _bulk_update_metadata(self, model_ids: List[int]) -> None:
@@ -1361,7 +1361,7 @@ class ModelLibraryWidget(QWidget):
         """
         try:
             count = len(model_ids)
-            self.logger.info(f"Starting bulk metadata update for {count} models")
+            self.logger.info("Starting bulk metadata update for %s models", count)
 
             # Ask what field to update
             fields = ["Category", "Rating", "Keywords", "Source"]
@@ -1454,7 +1454,7 @@ class ModelLibraryWidget(QWidget):
                     self.status_label.setText(f"Updating metadata... ({i + 1}/{count})")
 
                 except Exception as e:
-                    self.logger.error(f"Failed to update model {model_id}: {e}")
+                    self.logger.error("Failed to update model %s: {e}", model_id)
 
             # Hide progress
             self.progress_bar.setVisible(False)
@@ -1478,10 +1478,10 @@ class ModelLibraryWidget(QWidget):
             self._load_models_from_database()
             self.status_label.setText("Ready")
 
-            self.logger.info(f"Bulk update completed: {success_count}/{count} models updated")
+            self.logger.info("Bulk update completed: %s/{count} models updated", success_count)
 
         except Exception as e:
-            self.logger.error(f"Bulk metadata update failed: {e}")
+            self.logger.error("Bulk metadata update failed: %s", e)
             self.progress_bar.setVisible(False)
             self.status_label.setText("Ready")
             QMessageBox.critical(self, "Error", f"Bulk update failed: {str(e)}")
@@ -1495,7 +1495,7 @@ class ModelLibraryWidget(QWidget):
         """
         try:
             count = len(model_ids)
-            self.logger.info(f"Starting bulk removal of {count} models")
+            self.logger.info("Starting bulk removal of %s models", count)
 
             # Show confirmation dialog
             reply = QMessageBox.question(
@@ -1537,7 +1537,7 @@ class ModelLibraryWidget(QWidget):
                     self.status_label.setText(f"Removing models... ({i + 1}/{count})")
 
                 except Exception as e:
-                    self.logger.error(f"Failed to remove model {model_id}: {e}")
+                    self.logger.error("Failed to remove model %s: {e}", model_id)
 
             # Hide progress
             self.progress_bar.setVisible(False)
@@ -1561,10 +1561,10 @@ class ModelLibraryWidget(QWidget):
             self._load_models_from_database()
             self.status_label.setText("Ready")
 
-            self.logger.info(f"Bulk removal completed: {success_count}/{count} models removed")
+            self.logger.info("Bulk removal completed: %s/{count} models removed", success_count)
 
         except Exception as e:
-            self.logger.error(f"Bulk removal failed: {e}")
+            self.logger.error("Bulk removal failed: %s", e)
             self.progress_bar.setVisible(False)
             self.status_label.setText("Ready")
             QMessageBox.critical(self, "Error", f"Bulk removal failed: {str(e)}")
@@ -1576,7 +1576,7 @@ class ModelLibraryWidget(QWidget):
             self.status_label.setText("Indexing directories...")
             self.logger.info("Manual file browser refresh initiated")
         except Exception as e:
-            self.logger.error(f"Error refreshing file browser: {e}")
+            self.logger.error("Error refreshing file browser: %s", e)
             self.status_label.setText("Error refreshing directories")
 
     def _on_indexing_started(self) -> None:
@@ -1610,10 +1610,10 @@ class ModelLibraryWidget(QWidget):
                     "You can update root folder settings in Preferences > Files.",
                 )
             else:
-                self.logger.debug(f"All {len(enabled_folders)} root folders are accessible")
+                self.logger.debug("All %s root folders are accessible", len(enabled_folders))
 
         except Exception as e:
-            self.logger.error(f"Error validating root folders: {e}")
+            self.logger.error("Error validating root folders: %s", e)
             # Don't show error dialog for validation failures to avoid startup blocking
 
     def _import_models(self) -> None:
@@ -1652,7 +1652,7 @@ class ModelLibraryWidget(QWidget):
             self._load_models(files_to_import)
 
         except Exception as e:
-            self.logger.error(f"Error importing selected files: {e}")
+            self.logger.error("Error importing selected files: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import files: {e}")
 
     def _import_selected_folder(self) -> None:
@@ -1715,7 +1715,7 @@ class ModelLibraryWidget(QWidget):
             self._load_models(files_to_import)
 
         except Exception as e:
-            self.logger.error(f"Error importing selected folder: {e}")
+            self.logger.error("Error importing selected folder: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import folder: {e}")
 
     def cleanup(self) -> None:
@@ -1848,10 +1848,10 @@ class ModelLibraryWidget(QWidget):
                     # Reload the model in viewer
                     self.model_double_clicked.emit(model_id)
                 except Exception as e:
-                    self.logger.error(f"Failed to update database after fix: {e}")
+                    self.logger.error("Failed to update database after fix: %s", e)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze model: {e}")
+            self.logger.error("Failed to analyze model: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
 
     def _regenerate_thumbnail(self, model_id: int) -> None:
@@ -1935,7 +1935,7 @@ class ModelLibraryWidget(QWidget):
                 )
 
         except Exception as e:
-            self.logger.error(f"Error regenerating thumbnail: {e}")
+            self.logger.error("Error regenerating thumbnail: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to regenerate thumbnail: {str(e)}")
 
     def closeEvent(self, event) -> None:

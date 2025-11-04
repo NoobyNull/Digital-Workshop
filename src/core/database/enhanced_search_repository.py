@@ -114,7 +114,7 @@ class EnhancedSearchRepository(ISearchRepository):
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search models: {str(e)}")
+            logger.error("Failed to search models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -151,11 +151,11 @@ class EnhancedSearchRepository(ISearchRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Tag search returned {len(model_ids)} results for tags: {tags}")
+                logger.debug("Tag search returned %s results for tags: {tags}", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by tags: {str(e)}")
+            logger.error("Failed to search by tags: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -187,11 +187,11 @@ class EnhancedSearchRepository(ISearchRepository):
                 rows = cursor.fetchall()
                 model_ids = [str(row[0]) for row in rows]
 
-                logger.debug(f"Date range search returned {len(model_ids)} results")
+                logger.debug("Date range search returned %s results", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by date range: {str(e)}")
+            logger.error("Failed to search by date range: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -233,7 +233,7 @@ class EnhancedSearchRepository(ISearchRepository):
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by file type: {str(e)}")
+            logger.error("Failed to search by file type: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -319,7 +319,7 @@ class EnhancedSearchRepository(ISearchRepository):
             return sorted_suggestions[:10]  # Limit to 10 suggestions
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get search suggestions: {str(e)}")
+            logger.error("Failed to get search suggestions: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -407,11 +407,11 @@ class EnhancedSearchRepository(ISearchRepository):
                         search["filters"] = {}
                     searches.append(search)
 
-                logger.debug(f"Retrieved {len(searches)} saved searches")
+                logger.debug("Retrieved %s saved searches", len(searches))
                 return searches
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get saved searches: {str(e)}")
+            logger.error("Failed to get saved searches: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -434,14 +434,14 @@ class EnhancedSearchRepository(ISearchRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Deleted saved search {search_id}")
+                    logger.info("Deleted saved search %s", search_id)
                 else:
-                    logger.warning(f"Saved search {search_id} not found for deletion")
+                    logger.warning("Saved search %s not found for deletion", search_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete saved search {search_id}: {str(e)}")
+            logger.error("Failed to delete saved search %s: {str(e)}", search_id)
             return False
 
     # Additional enhanced search methods for better functionality
@@ -578,11 +578,11 @@ class EnhancedSearchRepository(ISearchRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Advanced search returned {len(model_ids)} results")
+                logger.debug("Advanced search returned %s results", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to perform advanced search: {str(e)}")
+            logger.error("Failed to perform advanced search: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -644,7 +644,7 @@ class EnhancedSearchRepository(ISearchRepository):
                 return stats
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get search statistics: {str(e)}")
+            logger.error("Failed to get search statistics: %s", str(e))
             return {}
 
     @contextmanager

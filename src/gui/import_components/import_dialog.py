@@ -154,7 +154,7 @@ class ImportWorker(QThread):
                 )
 
                 if not success:
-                    self.logger.warning(f"Failed to process {file_name}: {error}")
+                    self.logger.warning("Failed to process %s: {error}", file_name)
                     continue
 
                 # Collect files for thumbnail generation (don't generate here - it blocks!)
@@ -228,7 +228,7 @@ class ImportWorker(QThread):
 
                     self.logger.info("Thumbnail generation completed")
                 except Exception as e:
-                    self.logger.warning(f"Failed to generate thumbnails: {e}")
+                    self.logger.warning("Failed to generate thumbnails: %s", e)
 
             # Complete import session
             result = self.file_manager.complete_import_session(
@@ -252,7 +252,7 @@ class ImportWorker(QThread):
             self.import_completed.emit(result)
 
         except Exception as e:
-            self.logger.error(f"Import worker failed: {e}", exc_info=True)
+            self.logger.error("Import worker failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
     def cancel(self):
@@ -628,7 +628,7 @@ class ImportDialog(QDialog):
                 except Exception as e:
                     # Collect failed files instead of showing dialog
                     failed_files.append((Path(file_path).name, str(e)))
-                    self.logger.warning(f"Failed to add file {file_path}: {e}")
+                    self.logger.warning("Failed to add file %s: {e}", file_path)
 
         if added_count > 0:
             self._update_import_button_state()

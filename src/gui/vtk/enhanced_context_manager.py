@@ -134,7 +134,7 @@ class EnhancedVTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"Windows context validation error: {e}")
+            self.logger.debug("Windows context validation error: %s", e)
             return ContextState.UNKNOWN
 
     def _linux_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -152,7 +152,7 @@ class EnhancedVTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"Linux context validation error: {e}")
+            self.logger.debug("Linux context validation error: %s", e)
             return ContextState.UNKNOWN
 
     def _darwin_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -168,7 +168,7 @@ class EnhancedVTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"macOS context validation error: {e}")
+            self.logger.debug("macOS context validation error: %s", e)
             return ContextState.UNKNOWN
 
     @log_function_call(logger)
@@ -226,7 +226,7 @@ class EnhancedVTKContextManager:
             return False, context_state
 
         except Exception as e:
-            self.logger.debug(f"Early context detection error: {e}")
+            self.logger.debug("Early context detection error: %s", e)
             return False, ContextState.UNKNOWN
 
     def _validate_context_internal(
@@ -255,7 +255,7 @@ class EnhancedVTKContextManager:
             return context_state
 
         except Exception as e:
-            self.logger.debug(f"Context validation exception: {e}")
+            self.logger.debug("Context validation exception: %s", e)
             return ContextState.UNKNOWN
 
     def _generic_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -286,7 +286,7 @@ class EnhancedVTKContextManager:
             old_scenario = self.current_scenario
             self.current_scenario = scenario
 
-            self.logger.info(f"Shutdown scenario changed: {old_scenario.value} -> {scenario.value}")
+            self.logger.info("Shutdown scenario changed: %s -> {scenario.value}", old_scenario.value)
 
             # Trigger scenario-specific cleanup preparation
             self._prepare_scenario_cleanup(scenario)
@@ -294,7 +294,7 @@ class EnhancedVTKContextManager:
     def _prepare_scenario_cleanup(self, scenario: ShutdownScenario) -> None:
         """Prepare cleanup procedures based on shutdown scenario."""
         try:
-            self.logger.debug(f"Preparing cleanup for scenario: {scenario.value}")
+            self.logger.debug("Preparing cleanup for scenario: %s", scenario.value)
 
             # Clear any existing cleanup callbacks
             self.cleanup_callbacks.clear()
@@ -334,7 +334,7 @@ class EnhancedVTKContextManager:
                 )
 
         except Exception as e:
-            self.logger.error(f"Error preparing scenario cleanup: {e}")
+            self.logger.error("Error preparing scenario cleanup: %s", e)
 
     @log_function_call(logger)
     def coordinate_cleanup_sequence(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -358,7 +358,7 @@ class EnhancedVTKContextManager:
             early_detection, context_state = self.detect_context_loss_early(render_window)
 
             if early_detection:
-                self.logger.warning(f"Context loss detected early: {context_state.value}")
+                self.logger.warning("Context loss detected early: %s", context_state.value)
                 self.current_scenario = ShutdownScenario.CONTEXT_LOSS
 
             # Execute cleanup callbacks in order
@@ -370,10 +370,10 @@ class EnhancedVTKContextManager:
                     )
                     result = callback()
                     if not result:
-                        self.logger.warning(f"Cleanup callback {i+1} returned False")
+                        self.logger.warning("Cleanup callback %s returned False", i+1)
                         cleanup_success = False
                 except Exception as e:
-                    self.logger.error(f"Cleanup callback {i+1} failed: {e}")
+                    self.logger.error("Cleanup callback %s failed: {e}", i+1)
                     cleanup_success = False
 
             # Final verification
@@ -387,7 +387,7 @@ class EnhancedVTKContextManager:
             return cleanup_success
 
         except Exception as e:
-            self.logger.error(f"Error during coordinated cleanup: {e}")
+            self.logger.error("Error during coordinated cleanup: %s", e)
             return False
 
     # Scenario-specific cleanup methods
@@ -402,7 +402,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Emergency VTK cleanup failed: {e}")
+            self.logger.error("Emergency VTK cleanup failed: %s", e)
             return False
 
     def _immediate_vtk_cleanup(self) -> bool:
@@ -412,7 +412,7 @@ class EnhancedVTKContextManager:
             self.vtk_cleanup_completed = True
             return True
         except Exception as e:
-            self.logger.error(f"Immediate VTK cleanup failed: {e}")
+            self.logger.error("Immediate VTK cleanup failed: %s", e)
             return False
 
     def _graceful_vtk_cleanup(self) -> bool:
@@ -426,7 +426,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Graceful VTK cleanup failed: {e}")
+            self.logger.error("Graceful VTK cleanup failed: %s", e)
             return False
 
     def _standard_vtk_cleanup(self) -> bool:
@@ -440,7 +440,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Standard VTK cleanup failed: {e}")
+            self.logger.error("Standard VTK cleanup failed: %s", e)
             return False
 
     def _force_opengl_cleanup(self) -> bool:
@@ -450,7 +450,7 @@ class EnhancedVTKContextManager:
             self.opengl_cleanup_completed = True
             return True
         except Exception as e:
-            self.logger.error(f"Force OpenGL cleanup failed: {e}")
+            self.logger.error("Force OpenGL cleanup failed: %s", e)
             return False
 
     def _skip_opengl_cleanup(self) -> bool:
@@ -460,7 +460,7 @@ class EnhancedVTKContextManager:
             self.opengl_cleanup_completed = True
             return True
         except Exception as e:
-            self.logger.error(f"Skip OpenGL cleanup failed: {e}")
+            self.logger.error("Skip OpenGL cleanup failed: %s", e)
             return False
 
     def _coordinated_opengl_cleanup(self) -> bool:
@@ -474,7 +474,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Coordinated OpenGL cleanup failed: {e}")
+            self.logger.error("Coordinated OpenGL cleanup failed: %s", e)
             return False
 
     def _delayed_opengl_cleanup(self) -> bool:
@@ -488,7 +488,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Delayed OpenGL cleanup failed: {e}")
+            self.logger.error("Delayed OpenGL cleanup failed: %s", e)
             return False
 
     def _final_resource_cleanup(self) -> bool:
@@ -504,7 +504,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Final resource cleanup failed: {e}")
+            self.logger.error("Final resource cleanup failed: %s", e)
             return False
 
     def _basic_resource_cleanup(self) -> bool:
@@ -518,7 +518,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Basic resource cleanup failed: {e}")
+            self.logger.error("Basic resource cleanup failed: %s", e)
             return False
 
     def _standard_resource_cleanup(self) -> bool:
@@ -533,7 +533,7 @@ class EnhancedVTKContextManager:
 
             return True
         except Exception as e:
-            self.logger.error(f"Standard resource cleanup failed: {e}")
+            self.logger.error("Standard resource cleanup failed: %s", e)
             return False
 
     def _comprehensive_resource_cleanup(self) -> bool:
@@ -548,11 +548,11 @@ class EnhancedVTKContextManager:
                 self.context_timestamps.clear()
                 self.cleanup_callbacks.clear()
 
-            self.logger.info(f"Cleaned up {cache_size} cached context entries")
+            self.logger.info("Cleaned up %s cached context entries", cache_size)
 
             return True
         except Exception as e:
-            self.logger.error(f"Comprehensive resource cleanup failed: {e}")
+            self.logger.error("Comprehensive resource cleanup failed: %s", e)
             return False
 
     def _verify_cleanup_completion(self) -> None:
@@ -562,7 +562,7 @@ class EnhancedVTKContextManager:
                 vtk_status = "completed" if self.vtk_cleanup_completed else "pending"
                 opengl_status = "completed" if self.opengl_cleanup_completed else "pending"
 
-                self.logger.info(f"Cleanup verification: VTK={vtk_status}, OpenGL={opengl_status}")
+                self.logger.info("Cleanup verification: VTK=%s, OpenGL={opengl_status}", vtk_status)
 
                 # Reset flags for next cleanup cycle
                 self.vtk_cleanup_completed = False
@@ -570,7 +570,7 @@ class EnhancedVTKContextManager:
                 self.shutdown_initiated = False
 
         except Exception as e:
-            self.logger.error(f"Cleanup verification failed: {e}")
+            self.logger.error("Cleanup verification failed: %s", e)
 
     def get_diagnostic_info(self) -> Dict[str, Any]:
         """Get comprehensive diagnostic information."""
@@ -595,13 +595,13 @@ class EnhancedVTKContextManager:
         """Enable or disable early context loss detection."""
         with self._lock:
             self.early_detection_enabled = enabled
-            self.logger.info(f"Early context loss detection {'enabled' if enabled else 'disabled'}")
+            self.logger.info("Early context loss detection %s", 'enabled' if enabled else 'disabled')
 
     def set_detection_interval(self, interval: float) -> None:
         """Set the detection interval for early context loss detection."""
         with self._lock:
             self.detection_interval = max(0.01, interval)  # Minimum 10ms
-            self.logger.info(f"Detection interval set to {self.detection_interval}s")
+            self.logger.info("Detection interval set to %ss", self.detection_interval)
 
 
 # Global enhanced context manager instance

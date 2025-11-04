@@ -177,7 +177,7 @@ class AdvancedSearchWidget(QWidget):
                 category_layout.addWidget(checkbox)
 
         except Exception as e:
-            logger.error(f"Failed to load categories: {str(e)}")
+            logger.error("Failed to load categories: %s", str(e))
 
     def on_category_all_toggled(self, checked: bool):
         """

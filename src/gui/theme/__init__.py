@@ -111,7 +111,7 @@ def set_theme(theme_dict: dict) -> None:
             from src.core.logging_config import get_logger
 
             logger = get_logger(__name__)
-            logger.debug(f"Failed to set theme: {e}")
+            logger.debug("Failed to set theme: %s", e)
         except Exception:
             pass
 
@@ -173,9 +173,9 @@ def log_theme_system_status() -> None:
     logger = get_logger(__name__)
 
     logger.debug("Theme System Status:")
-    logger.debug(f"  Architecture: {info['architecture']}")
-    logger.debug(f"  Version: {info['version']}")
-    logger.debug(f"  Current Theme: {info['current_theme']}")
+    logger.debug("  Architecture: %s", info['architecture'])
+    logger.debug("  Version: %s", info['version'])
+    logger.debug("  Current Theme: %s", info['current_theme'])
 
 
 # ============================================================

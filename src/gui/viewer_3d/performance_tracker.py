@@ -45,7 +45,7 @@ class PerformanceTracker:
                 logger.debug("Performance monitoring stopped")
         except (RuntimeError, AttributeError) as e:
             # Timer may already be deleted
-            logger.debug(f"Performance monitoring stop failed (timer deleted): {e}")
+            logger.debug("Performance monitoring stop failed (timer deleted): %s", e)
 
     def frame_rendered(self) -> None:
         """Call this when a frame is rendered."""
@@ -72,7 +72,7 @@ class PerformanceTracker:
                         )
                         self.stop()
                     else:
-                        logger.warning(f"Performance tracker callback failed: {e}")
+                        logger.warning("Performance tracker callback failed: %s", e)
 
     def get_fps(self) -> float:
         """Get current FPS."""
@@ -90,4 +90,4 @@ class PerformanceTracker:
                     # Signal may already be disconnected or timer deleted
                     pass
         except Exception as e:
-            logger.debug(f"Error during performance tracker cleanup: {e}")
+            logger.debug("Error during performance tracker cleanup: %s", e)

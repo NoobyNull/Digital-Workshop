@@ -308,10 +308,10 @@ class MetadataEditorWidget(QWidget):
             for category in self.categories:
                 self.category_field.addItem(category["name"])
 
-            self.logger.debug(f"Loaded {len(self.categories)} categories")
+            self.logger.debug("Loaded %s categories", len(self.categories))
 
         except Exception as e:
-            self.logger.error(f"Failed to load categories: {str(e)}")
+            self.logger.error("Failed to load categories: %s", str(e))
 
     def load_model_metadata(self, model_id: int) -> None:
         """
@@ -321,13 +321,13 @@ class MetadataEditorWidget(QWidget):
             model_id: ID of the model to load metadata for
         """
         try:
-            self.logger.info(f"Loading metadata for model ID: {model_id}")
+            self.logger.info("Loading metadata for model ID: %s", model_id)
 
             # Get model information from database
             model = self.db_manager.get_model(model_id)
 
             if not model:
-                self.logger.warning(f"Model with ID {model_id} not found")
+                self.logger.warning("Model with ID %s not found", model_id)
                 self._clear_form()
                 return
 
@@ -356,11 +356,11 @@ class MetadataEditorWidget(QWidget):
             # Reset dirty state
             self._reset_dirty_state()
 
-            self.logger.info(f"Metadata loaded for model: {model['filename']}")
+            self.logger.info("Metadata loaded for model: %s", model['filename'])
 
         except Exception as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
-            self.logger.warning(f"Failed to load metadata for model {model_id}: {str(e)}")
+            self.logger.warning("Failed to load metadata for model %s: {str(e)}", model_id)
             try:
                 self._clear_form()
             except Exception:
@@ -480,7 +480,7 @@ class MetadataEditorWidget(QWidget):
             return
 
         try:
-            self.logger.info(f"Saving metadata for model ID: {self.current_model_id}")
+            self.logger.info("Saving metadata for model ID: %s", self.current_model_id)
 
             # Validate input
             if not self._validate_input():
@@ -514,12 +514,12 @@ class MetadataEditorWidget(QWidget):
                 self.metadata_saved.emit(self.current_model_id)
 
                 QMessageBox.information(self, "Success", "Metadata saved successfully")
-                self.logger.info(f"Metadata saved for model ID: {self.current_model_id}")
+                self.logger.info("Metadata saved for model ID: %s", self.current_model_id)
             else:
                 QMessageBox.warning(self, "Warning", "Failed to save metadata")
 
         except Exception as e:
-            self.logger.error(f"Failed to save metadata: {str(e)}")
+            self.logger.error("Failed to save metadata: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to save metadata: {str(e)}")
 
     def _save_to_database(self, metadata: Dict[str, Any]) -> bool:
@@ -547,7 +547,7 @@ class MetadataEditorWidget(QWidget):
             return success
 
         except Exception as e:
-            self.logger.error(f"Database save failed: {str(e)}")
+            self.logger.error("Database save failed: %s", str(e))
             return False
 
     def _validate_input(self) -> bool:
@@ -694,14 +694,14 @@ class MetadataEditorWidget(QWidget):
                     # Use set_thumbnail to store both scaled and full-resolution versions
                     self.preview_image_label.set_thumbnail(scaled_pixmap, str(thumbnail_path))
                     self.preview_image_label.setText("")  # Clear any placeholder text
-                    self.logger.debug(f"Loaded preview image for model {model_id}")
+                    self.logger.debug("Loaded preview image for model %s", model_id)
                 else:
                     self._clear_preview_image()
             else:
                 self._clear_preview_image()
 
         except Exception as e:
-            self.logger.error(f"Failed to load preview image for model {model_id}: {str(e)}")
+            self.logger.error("Failed to load preview image for model %s: {str(e)}", model_id)
             self._clear_preview_image()
 
     def _clear_preview_image(self) -> None:
@@ -729,7 +729,7 @@ class MetadataEditorWidget(QWidget):
             return
 
         try:
-            self.logger.info(f"Generating preview for model ID: {self.current_model_id}")
+            self.logger.info("Generating preview for model ID: %s", self.current_model_id)
 
             # Get model information
             model = self.db_manager.get_model(self.current_model_id)
@@ -786,12 +786,12 @@ class MetadataEditorWidget(QWidget):
                     self.db_manager.update_model_thumbnail(
                         self.current_model_id, str(result.thumbnail_path)
                     )
-                    self.logger.info(f"Saved thumbnail path to database: {result.thumbnail_path}")
+                    self.logger.info("Saved thumbnail path to database: %s", result.thumbnail_path)
 
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
                 QMessageBox.information(self, "Success", "Preview generated successfully!")
-                self.logger.info(f"Preview generated for model {self.current_model_id}")
+                self.logger.info("Preview generated for model %s", self.current_model_id)
             else:
                 error_msg = result.error or "Unknown error"
                 QMessageBox.warning(self, "Error", f"Failed to generate preview: {error_msg}")
@@ -851,7 +851,7 @@ class MetadataEditorWidget(QWidget):
             # Use the first available provider if current_provider is not set
             if not ai_service.current_provider:
                 ai_service.current_provider = next(iter(ai_service.providers.values()))
-                self.logger.info(f"Set current provider to: {list(ai_service.providers.keys())[0]}")
+                self.logger.info("Set current provider to: %s", list(ai_service.providers.keys())[0])
 
             # Check if provider is configured
             if not ai_service.current_provider.is_configured():
@@ -867,13 +867,13 @@ class MetadataEditorWidget(QWidget):
             self.run_ai_analysis_button.setText("Analyzing...")
 
             # Run analysis
-            self.logger.info(f"Running AI analysis on preview for model {self.current_model_id}")
+            self.logger.info("Running AI analysis on preview for model %s", self.current_model_id)
             result = ai_service.analyze_image(thumbnail_path)
 
             # Apply results to metadata
             self._apply_ai_results(result)
 
-            self.logger.info(f"AI analysis completed for model {self.current_model_id}")
+            self.logger.info("AI analysis completed for model %s", self.current_model_id)
             QMessageBox.information(
                 self,
                 "Analysis Complete",
@@ -882,7 +882,7 @@ class MetadataEditorWidget(QWidget):
 
         except ValueError as e:
             QMessageBox.warning(self, "Configuration Error", str(e))
-            self.logger.warning(f"AI analysis configuration error: {e}")
+            self.logger.warning("AI analysis configuration error: %s", e)
         except Exception as e:
             error_msg = f"AI analysis failed: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
@@ -907,7 +907,7 @@ class MetadataEditorWidget(QWidget):
 
             return AIDescriptionService()
         except Exception as e:
-            self.logger.error(f"Failed to get AI service: {e}")
+            self.logger.error("Failed to get AI service: %s", e)
             return None
 
     def _apply_ai_results(self, result: Dict[str, Any]) -> None:
@@ -916,25 +916,25 @@ class MetadataEditorWidget(QWidget):
             # Update title if provided
             if "title" in result and result["title"]:
                 self.title_field.setText(result["title"])
-                self.logger.info(f"Updated title: {result['title']}")
+                self.logger.info("Updated title: %s", result['title'])
 
             # Update description if provided
             if "description" in result and result["description"]:
                 self.description_field.setPlainText(result["description"])
-                self.logger.info(f"Updated description: {result['description'][:50]}...")
+                self.logger.info("Updated description: %s...", result['description'][:50])
 
             # Update keywords if provided
             if "metadata_keywords" in result and result["metadata_keywords"]:
                 keywords_str = ", ".join(result["metadata_keywords"])
                 self.keywords_field.setText(keywords_str)
-                self.logger.info(f"Updated keywords: {keywords_str}")
+                self.logger.info("Updated keywords: %s", keywords_str)
 
             # Mark as changed
             self.metadata_changed.emit(self.current_model_id)
-            self.logger.info(f"Applied AI analysis results to model {self.current_model_id}")
+            self.logger.info("Applied AI analysis results to model %s", self.current_model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to apply AI results: {e}")
+            self.logger.error("Failed to apply AI results: %s", e)
             raise
 
     def cleanup(self) -> None:

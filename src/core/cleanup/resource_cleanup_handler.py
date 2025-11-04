@@ -62,7 +62,7 @@ class ResourceCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Resource cleanup error: {e}", exc_info=True)
+            self.logger.error("Resource cleanup error: %s", e, exc_info=True)
             return False
 
     def _cleanup_resources(self) -> bool:
@@ -93,13 +93,13 @@ class ResourceCleanupHandler(CleanupHandler):
             return overall_success
 
         except Exception as e:
-            self.logger.error(f"Resource cleanup failed: {e}")
+            self.logger.error("Resource cleanup failed: %s", e)
             return False
 
     def _cleanup_temp_files(self) -> bool:
         """Cleanup temporary files."""
         try:
-            self.logger.debug(f"Cleaning up {len(self._temp_files)} temporary files")
+            self.logger.debug("Cleaning up %s temporary files", len(self._temp_files))
 
             files_cleaned = 0
             for temp_file in self._temp_files.copy():
@@ -107,22 +107,22 @@ class ResourceCleanupHandler(CleanupHandler):
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                         files_cleaned += 1
-                        self.logger.debug(f"Removed temporary file: {temp_file}")
+                        self.logger.debug("Removed temporary file: %s", temp_file)
                     self._temp_files.remove(temp_file)
                 except Exception as e:
-                    self.logger.warning(f"Failed to remove temporary file {temp_file}: {e}")
+                    self.logger.warning("Failed to remove temporary file %s: {e}", temp_file)
 
-            self.logger.debug(f"Cleaned up {files_cleaned} temporary files")
+            self.logger.debug("Cleaned up %s temporary files", files_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"Temporary files cleanup failed: {e}")
+            self.logger.error("Temporary files cleanup failed: %s", e)
             return False
 
     def _cleanup_file_handles(self) -> bool:
         """Cleanup file handles."""
         try:
-            self.logger.debug(f"Cleaning up {len(self._file_handles)} file handles")
+            self.logger.debug("Cleaning up %s file handles", len(self._file_handles))
 
             handles_cleaned = 0
             for handle in self._file_handles.copy():
@@ -133,19 +133,19 @@ class ResourceCleanupHandler(CleanupHandler):
                         self.logger.debug("Closed file handle")
                     self._file_handles.remove(handle)
                 except Exception as e:
-                    self.logger.warning(f"Failed to close file handle: {e}")
+                    self.logger.warning("Failed to close file handle: %s", e)
 
-            self.logger.debug(f"Cleaned up {handles_cleaned} file handles")
+            self.logger.debug("Cleaned up %s file handles", handles_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"File handles cleanup failed: {e}")
+            self.logger.error("File handles cleanup failed: %s", e)
             return False
 
     def _cleanup_network_connections(self) -> bool:
         """Cleanup network connections."""
         try:
-            self.logger.debug(f"Cleaning up {len(self._network_connections)} network connections")
+            self.logger.debug("Cleaning up %s network connections", len(self._network_connections))
 
             connections_cleaned = 0
             for connection in self._network_connections.copy():
@@ -156,19 +156,19 @@ class ResourceCleanupHandler(CleanupHandler):
                         self.logger.debug("Closed network connection")
                     self._network_connections.remove(connection)
                 except Exception as e:
-                    self.logger.warning(f"Failed to close network connection: {e}")
+                    self.logger.warning("Failed to close network connection: %s", e)
 
-            self.logger.debug(f"Cleaned up {connections_cleaned} network connections")
+            self.logger.debug("Cleaned up %s network connections", connections_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"Network connections cleanup failed: {e}")
+            self.logger.error("Network connections cleanup failed: %s", e)
             return False
 
     def _cleanup_tracked_resources(self) -> bool:
         """Cleanup tracked resources."""
         try:
-            self.logger.debug(f"Cleaning up {len(self._tracked_resources)} tracked resources")
+            self.logger.debug("Cleaning up %s tracked resources", len(self._tracked_resources))
 
             resources_cleaned = 0
             for resource in list(self._tracked_resources):
@@ -176,7 +176,7 @@ class ResourceCleanupHandler(CleanupHandler):
                     if hasattr(resource, "cleanup"):
                         resource.cleanup()
                         resources_cleaned += 1
-                        self.logger.debug(f"Cleaned up tracked resource: {type(resource).__name__}")
+                        self.logger.debug("Cleaned up tracked resource: %s", type(resource).__name__)
                 except Exception as e:
                     self.logger.warning(
                         f"Failed to cleanup tracked resource {type(resource).__name__}: {e}"
@@ -185,11 +185,11 @@ class ResourceCleanupHandler(CleanupHandler):
             # Clear the tracked resources set
             self._tracked_resources.clear()
 
-            self.logger.debug(f"Cleaned up {resources_cleaned} tracked resources")
+            self.logger.debug("Cleaned up %s tracked resources", resources_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"Tracked resources cleanup failed: {e}")
+            self.logger.error("Tracked resources cleanup failed: %s", e)
             return False
 
     def _force_garbage_collection(self) -> bool:
@@ -202,11 +202,11 @@ class ResourceCleanupHandler(CleanupHandler):
             collected += gc.collect()
             collected += gc.collect()
 
-            self.logger.debug(f"Garbage collection freed {collected} objects")
+            self.logger.debug("Garbage collection freed %s objects", collected)
             return True
 
         except Exception as e:
-            self.logger.error(f"Garbage collection failed: {e}")
+            self.logger.error("Garbage collection failed: %s", e)
             return False
 
     def register_temp_file(self, file_path: str) -> None:
@@ -219,12 +219,12 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if file_path and os.path.exists(file_path):
                 self._temp_files.append(file_path)
-                self.logger.debug(f"Registered temporary file for cleanup: {file_path}")
+                self.logger.debug("Registered temporary file for cleanup: %s", file_path)
             else:
-                self.logger.warning(f"Invalid temporary file registration: {file_path}")
+                self.logger.warning("Invalid temporary file registration: %s", file_path)
 
         except Exception as e:
-            self.logger.warning(f"Failed to register temporary file {file_path}: {e}")
+            self.logger.warning("Failed to register temporary file %s: {e}", file_path)
 
     def register_file_handle(self, handle) -> None:
         """
@@ -236,12 +236,12 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if handle and hasattr(handle, "close"):
                 self._file_handles.append(handle)
-                self.logger.debug(f"Registered file handle for cleanup: {type(handle).__name__}")
+                self.logger.debug("Registered file handle for cleanup: %s", type(handle).__name__)
             else:
-                self.logger.warning(f"Invalid file handle registration: {type(handle)}")
+                self.logger.warning("Invalid file handle registration: %s", type(handle))
 
         except Exception as e:
-            self.logger.warning(f"Failed to register file handle: {e}")
+            self.logger.warning("Failed to register file handle: %s", e)
 
     def register_network_connection(self, connection) -> None:
         """
@@ -257,10 +257,10 @@ class ResourceCleanupHandler(CleanupHandler):
                     f"Registered network connection for cleanup: {type(connection).__name__}"
                 )
             else:
-                self.logger.warning(f"Invalid network connection registration: {type(connection)}")
+                self.logger.warning("Invalid network connection registration: %s", type(connection))
 
         except Exception as e:
-            self.logger.warning(f"Failed to register network connection: {e}")
+            self.logger.warning("Failed to register network connection: %s", e)
 
     def register_resource(self, resource: Any) -> None:
         """
@@ -272,12 +272,12 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if resource:
                 self._tracked_resources.add(resource)
-                self.logger.debug(f"Registered resource for cleanup: {type(resource).__name__}")
+                self.logger.debug("Registered resource for cleanup: %s", type(resource).__name__)
             else:
-                self.logger.warning(f"Invalid resource registration: {type(resource)}")
+                self.logger.warning("Invalid resource registration: %s", type(resource))
 
         except Exception as e:
-            self.logger.warning(f"Failed to register resource: {e}")
+            self.logger.warning("Failed to register resource: %s", e)
 
     def create_temp_file(self, suffix: str = "", prefix: str = "cleanup_") -> str:
         """
@@ -295,12 +295,12 @@ class ResourceCleanupHandler(CleanupHandler):
             os.close(temp_fd)  # Close the file descriptor, keep the path
 
             self.register_temp_file(temp_path)
-            self.logger.debug(f"Created temporary file: {temp_path}")
+            self.logger.debug("Created temporary file: %s", temp_path)
 
             return temp_path
 
         except Exception as e:
-            self.logger.error(f"Failed to create temporary file: {e}")
+            self.logger.error("Failed to create temporary file: %s", e)
             return ""
 
     def get_resource_cleanup_stats(self) -> Dict[str, Any]:
@@ -317,5 +317,5 @@ class ResourceCleanupHandler(CleanupHandler):
             }
 
         except Exception as e:
-            self.logger.warning(f"Failed to get resource cleanup stats: {e}")
+            self.logger.warning("Failed to get resource cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

@@ -132,7 +132,7 @@ class CSVToolParser(BaseToolParser):
 
             # Check if file exists
             if not path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return []
 
             with open(path, "r", encoding="utf-8") as f:
@@ -169,14 +169,14 @@ class CSVToolParser(BaseToolParser):
                         progress = min(row_num / total_rows, 1.0)
                         progress_callback.report(progress, f"Parsing tool {row_num}/{total_rows}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from CSV file")
+            self.logger.info("Parsed %s tools from CSV file", len(tools))
             return tools
 
         except FileNotFoundError:
-            self.logger.warning(f"File not found: {file_path}")
+            self.logger.warning("File not found: %s", file_path)
             return []
         except Exception as e:
-            self.logger.error(f"Failed to parse CSV file: {e}")
+            self.logger.error("Failed to parse CSV file: %s", e)
             return []
 
     def _parse_float(self, value: str) -> float:

@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
             self.ai_service = AIDescriptionService()
             self.logger.info("AI Description Service initialized")
         except Exception as e:
-            self.logger.warning(f"Failed to initialize AI Description Service: {e}")
+            self.logger.warning("Failed to initialize AI Description Service: %s", e)
             self.ai_service = None
 
         # Hide window during initialization to prevent blinking
@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
                 f"FIX: Calculated default window size: {default_width}x{default_height} (50% width, 100% height)"
             )
         except Exception as e:
-            self.logger.warning(f"Failed to load window settings from config: {e}")
+            self.logger.warning("Failed to load window settings from config: %s", e)
             min_width = 800
             min_height = 600
             default_width = 1200
@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
                 self.logger.info("Model library dock created successfully")
 
             except Exception as e:
-                self.logger.warning(f"Failed to create model library widget: {e}")
+                self.logger.warning("Failed to create model library widget: %s", e)
                 # Native Qt fallback
                 fallback_widget = QLabel("Model Library\n\nComponent unavailable.")
                 fallback_widget.setAlignment(Qt.AlignCenter)
@@ -359,7 +359,7 @@ class MainWindow(QMainWindow):
             try:
                 self._register_dock_for_snapping(self.model_library_dock)
             except Exception as e:
-                self.logger.debug(f"Failed to register dock for snapping: {e}")
+                self.logger.debug("Failed to register dock for snapping: %s", e)
 
             # Connect visibility signal for menu synchronization
             self.model_library_dock.visibilityChanged.connect(
@@ -368,7 +368,7 @@ class MainWindow(QMainWindow):
             # Qt handles layout persistence automatically
 
         except Exception as e:
-            self.logger.error(f"Failed to setup model library dock: {e}")
+            self.logger.error("Failed to setup model library dock: %s", e)
 
     def _setup_project_manager_dock(self) -> None:
         """Set up project manager dock using native Qt."""
@@ -406,7 +406,7 @@ class MainWindow(QMainWindow):
                 self.logger.info("Project manager dock created successfully")
 
             except Exception as e:
-                self.logger.warning(f"Failed to create project manager widget: {e}")
+                self.logger.warning("Failed to create project manager widget: %s", e)
                 # Native Qt fallback
                 fallback_widget = QLabel("Project Manager\n\nComponent unavailable.")
                 fallback_widget.setAlignment(Qt.AlignCenter)
@@ -422,7 +422,7 @@ class MainWindow(QMainWindow):
             try:
                 self._register_dock_for_snapping(self.project_manager_dock)
             except Exception as e:
-                self.logger.debug(f"Failed to register dock for snapping: {e}")
+                self.logger.debug("Failed to register dock for snapping: %s", e)
 
             # Connect visibility signal for menu synchronization
             self.project_manager_dock.visibilityChanged.connect(
@@ -430,7 +430,7 @@ class MainWindow(QMainWindow):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to setup project manager dock: {e}")
+            self.logger.error("Failed to setup project manager dock: %s", e)
 
     def _setup_properties_dock(self) -> None:
         """Set up properties dock using native Qt."""
@@ -460,14 +460,14 @@ class MainWindow(QMainWindow):
             try:
                 self._register_dock_for_snapping(self.properties_dock)
             except Exception as e:
-                self.logger.debug(f"Failed to register dock for snapping: {e}")
+                self.logger.debug("Failed to register dock for snapping: %s", e)
 
             # Set minimum width for proper native layout
             self.properties_dock.setMinimumWidth(250)
             self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup properties dock: {e}")
+            self.logger.error("Failed to setup properties dock: %s", e)
 
     def _setup_metadata_dock(self) -> None:
         """Set up metadata dock using native Qt."""
@@ -522,7 +522,7 @@ class MainWindow(QMainWindow):
                 self.logger.info("Metadata dock created successfully")
 
             except Exception as e:
-                self.logger.warning(f"Failed to create metadata editor: {e}")
+                self.logger.warning("Failed to create metadata editor: %s", e)
                 # Native Qt fallback
                 fallback_widget = QLabel("Metadata Editor\n\nComponent unavailable.")
                 fallback_widget.setAlignment(Qt.AlignCenter)
@@ -536,14 +536,14 @@ class MainWindow(QMainWindow):
             try:
                 self._register_dock_for_snapping(self.metadata_dock)
             except Exception as e:
-                self.logger.debug(f"Failed to register dock for snapping: {e}")
+                self.logger.debug("Failed to register dock for snapping: %s", e)
 
             # Tabify with properties dock using native Qt
             try:
                 self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
                 self.logger.info("Properties and Metadata docks tabified using native Qt")
             except Exception as e:
-                self.logger.debug(f"Could not tabify docks: {e}")
+                self.logger.debug("Could not tabify docks: %s", e)
 
             # Set size constraints for native layout
             self.metadata_dock.setMinimumWidth(300)
@@ -557,7 +557,7 @@ class MainWindow(QMainWindow):
             # Qt handles layout persistence automatically
 
         except Exception as e:
-            self.logger.error(f"Failed to setup metadata dock: {e}")
+            self.logger.error("Failed to setup metadata dock: %s", e)
 
     def _load_native_dock_layout(self) -> None:
         """Load saved dock layout using native Qt methods.
@@ -608,7 +608,7 @@ class MainWindow(QMainWindow):
                 self.logger.info("Lighting panel signal connected to main window")
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup viewer widget: {e}")
+            self.logger.warning("Failed to setup viewer widget: %s", e)
             # Native Qt fallback
             self.viewer_widget = QLabel("3D Model Viewer\n\nComponent unavailable.")
             self.viewer_widget.setAlignment(Qt.AlignCenter)
@@ -628,7 +628,7 @@ class MainWindow(QMainWindow):
                 self.material_manager = MaterialManager(get_database_manager())
             except Exception as e:
                 self.material_manager = None
-                self.logger.warning(f"MaterialManager unavailable: {e}")
+                self.logger.warning("MaterialManager unavailable: %s", e)
 
             # Lighting manager
             try:
@@ -638,7 +638,7 @@ class MainWindow(QMainWindow):
                     self.lighting_manager.create_light()
             except Exception as e:
                 self.lighting_manager = None
-                self.logger.warning(f"LightingManager unavailable: {e}")
+                self.logger.warning("LightingManager unavailable: %s", e)
 
             # Create lighting control panel
             try:
@@ -668,7 +668,7 @@ class MainWindow(QMainWindow):
                     self.logger.info("Lighting panel signals connected to main window handlers")
             except Exception as e:
                 self.lighting_panel = None
-                self.logger.warning(f"Failed to create LightingControlPanel: {e}")
+                self.logger.warning("Failed to create LightingControlPanel: %s", e)
 
             # Material-Lighting integration
             try:
@@ -678,10 +678,10 @@ class MainWindow(QMainWindow):
                 self.logger.info("MaterialLightingIntegrator created successfully")
             except Exception as e:
                 self.material_lighting_integrator = None
-                self.logger.warning(f"MaterialLightingIntegrator unavailable: {e}")
+                self.logger.warning("MaterialLightingIntegrator unavailable: %s", e)
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup viewer managers: {e}")
+            self.logger.warning("Failed to setup viewer managers: %s", e)
 
     def _add_placeholder_tabs(self) -> None:
         """Add placeholder tabs for other features using native Qt widgets."""
@@ -709,7 +709,7 @@ class MainWindow(QMainWindow):
             self.hero_tabs.addTab(self.gcode_previewer_widget, "G Code Previewer")
             self.logger.info("G-code Previewer widget created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
+            self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
             self.hero_tabs.addTab(
                 create_placeholder(
                     "G Code Previewer", "G-code Previewer\n\nComponent unavailable."
@@ -726,7 +726,7 @@ class MainWindow(QMainWindow):
             self.hero_tabs.addTab(self.clo_widget, "Cut List Optimizer")
             self.logger.info("Cut List Optimizer widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create Cut List Optimizer widget: {e}")
+            self.logger.warning("Failed to create Cut List Optimizer widget: %s", e)
             self.hero_tabs.addTab(
                 create_placeholder(
                     "Cut List Optimizer", "Cut List Optimizer\n\nComponent unavailable."
@@ -743,7 +743,7 @@ class MainWindow(QMainWindow):
             self.hero_tabs.addTab(self.feeds_and_speeds_widget, "Feed and Speed")
             self.logger.info("Feeds & Speeds widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create Feeds & Speeds widget: {e}")
+            self.logger.warning("Failed to create Feeds & Speeds widget: %s", e)
             self.hero_tabs.addTab(
                 create_placeholder(
                     "Feed and Speed",
@@ -761,7 +761,7 @@ class MainWindow(QMainWindow):
             self.hero_tabs.addTab(self.cost_estimator_widget, "Project Cost Estimator")
             self.logger.info("Cost Estimator widget created successfully")
         except Exception as e:
-            self.logger.warning(f"Failed to create Cost Estimator widget: {e}")
+            self.logger.warning("Failed to create Cost Estimator widget: %s", e)
             self.hero_tabs.addTab(
                 create_placeholder(
                     "Project Cost Estimator",
@@ -778,7 +778,7 @@ class MainWindow(QMainWindow):
             if isinstance(active_tab, int) and 0 <= active_tab < self.hero_tabs.count():
                 self.hero_tabs.setCurrentIndex(active_tab)
         except Exception as e:
-            self.logger.debug(f"Failed to restore active tab: {e}")
+            self.logger.debug("Failed to restore active tab: %s", e)
 
     # Manual layout management methods removed - Qt handles layout automatically
 
@@ -814,7 +814,7 @@ class MainWindow(QMainWindow):
             if hasattr(self, "_layout_update_timer"):
                 self._layout_update_timer.start()
         except Exception as e:
-            self.logger.debug(f"Failed to trigger responsive layout update: {e}")
+            self.logger.debug("Failed to trigger responsive layout update: %s", e)
 
     # Snapping system removed - Qt handles dock management automatically
 
@@ -861,7 +861,7 @@ class MainWindow(QMainWindow):
                 except Exception:
                     pass
         except Exception as e:
-            self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
+            self.logger.warning("Failed to toggle Layout Edit Mode: %s", e)
 
     # Manual central widget update methods removed - Qt handles layout automatically
 
@@ -886,7 +886,7 @@ class MainWindow(QMainWindow):
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 self.logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
-            self.logger.warning(f"Failed to save lighting settings: {e}")
+            self.logger.warning("Failed to save lighting settings: %s", e)
 
     def _load_lighting_settings(self) -> None:
         """Load lighting settings from QSettings and apply to manager and panel."""
@@ -923,7 +923,7 @@ class MainWindow(QMainWindow):
                     pass
                 self.logger.info("Lighting settings loaded from QSettings")
         except Exception as e:
-            self.logger.warning(f"Failed to load lighting settings: {e}")
+            self.logger.warning("Failed to load lighting settings: %s", e)
 
     def _save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
@@ -941,7 +941,7 @@ class MainWindow(QMainWindow):
             else:
                 self.logger.warning("Lighting panel not available")
         except Exception as e:
-            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+            self.logger.warning("Failed to toggle lighting panel: %s", e)
 
     def _update_light_position(self, x: float, y: float, z: float) -> None:
         """Update light position from lighting panel."""
@@ -950,7 +950,7 @@ class MainWindow(QMainWindow):
                 self.lighting_manager.update_position(x, y, z)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light position: {e}")
+            self.logger.warning("Failed to update light position: %s", e)
 
     def _update_light_color(self, r: float, g: float, b: float) -> None:
         """Update light color from lighting panel."""
@@ -959,7 +959,7 @@ class MainWindow(QMainWindow):
                 self.lighting_manager.update_color(r, g, b)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light color: {e}")
+            self.logger.warning("Failed to update light color: %s", e)
 
     def _update_light_intensity(self, value: float) -> None:
         """Update light intensity from lighting panel."""
@@ -968,7 +968,7 @@ class MainWindow(QMainWindow):
                 self.lighting_manager.update_intensity(value)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light intensity: {e}")
+            self.logger.warning("Failed to update light intensity: %s", e)
 
     def _update_light_cone_angle(self, angle: float) -> None:
         """Update light cone angle from lighting panel."""
@@ -977,7 +977,7 @@ class MainWindow(QMainWindow):
                 self.lighting_manager.update_cone_angle(angle)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light cone angle: {e}")
+            self.logger.warning("Failed to update light cone angle: %s", e)
 
     def _apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current model."""
@@ -1024,7 +1024,7 @@ class MainWindow(QMainWindow):
             for key in layout_keys:
                 if settings.contains(key):
                     settings.remove(key)
-                    self.logger.debug(f"Cleared QSettings key: {key}")
+                    self.logger.debug("Cleared QSettings key: %s", key)
 
             # Restore default window size: 50% width, 100% height (snapped to middle wide, full height)
             try:
@@ -1032,9 +1032,9 @@ class MainWindow(QMainWindow):
 
                 default_width, default_height = ApplicationConfig.calculate_default_window_size()
                 self.resize(default_width, default_height)
-                self.logger.info(f"Reset window size to default: {default_width}x{default_height}")
+                self.logger.info("Reset window size to default: %sx{default_height}", default_width)
             except Exception as e:
-                self.logger.warning(f"Failed to calculate default window size: {e}")
+                self.logger.warning("Failed to calculate default window size: %s", e)
                 self.resize(1200, 800)
 
             # Restore default dock positions
@@ -1055,7 +1055,7 @@ class MainWindow(QMainWindow):
                 try:
                     self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
                 except Exception as e:
-                    self.logger.debug(f"Could not tabify docks: {e}")
+                    self.logger.debug("Could not tabify docks: %s", e)
 
             # Make sure all docks are visible
             if hasattr(self, "model_library_dock") and self.model_library_dock:
@@ -1072,7 +1072,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Layout reset to defaults", 3000)
 
         except Exception as e:
-            self.logger.error(f"Failed to reset dock layout: {e}")
+            self.logger.error("Failed to reset dock layout: %s", e)
             self.statusBar().showMessage("Failed to reset layout", 3000)
 
     def _restore_window_geometry_early(self) -> None:
@@ -1128,7 +1128,7 @@ class MainWindow(QMainWindow):
                     height = max(600, min(height, 2160))  # Cap at 4K height, min 600
 
                     self.resize(width, height)
-                    self.logger.info(f"FIX: Window resized to {width}x{height} from saved settings")
+                    self.logger.info("FIX: Window resized to %sx{height} from saved settings", width)
 
                     if maximized:
                         self.showMaximized()
@@ -1136,7 +1136,7 @@ class MainWindow(QMainWindow):
 
                     geometry_restored = True
                 except Exception as e:
-                    self.logger.debug(f"FIX: Failed to restore explicit size: {e}")
+                    self.logger.debug("FIX: Failed to restore explicit size: %s", e)
             else:
                 if not geometry_restored:
                     self.logger.info("FIX: No explicit window/width key found in QSettings")
@@ -1168,7 +1168,7 @@ class MainWindow(QMainWindow):
             self.logger.debug("FIX: Early window geometry restoration completed")
 
         except Exception as e:
-            self.logger.warning(f"FAILED to restore window geometry during init: {e}")
+            self.logger.warning("FAILED to restore window geometry during init: %s", e)
             # Don't re-raise - we want initialization to continue even if restoration fails
 
     def _restore_window_state(self) -> None:
@@ -1199,7 +1199,7 @@ class MainWindow(QMainWindow):
                     else:
                         self.logger.debug("Failed to restore window state, using defaults")
         except Exception as e:
-            self.logger.warning(f"Failed to restore window state: {e}")
+            self.logger.warning("Failed to restore window state: %s", e)
 
     def _save_window_settings(self) -> None:
         """Save current window geometry and dock state."""
@@ -1248,7 +1248,7 @@ class MainWindow(QMainWindow):
             for handler in self.logger.handlers:
                 handler.flush()
         except Exception as e:
-            self.logger.error(f"Failed to save window settings: {e}")
+            self.logger.error("Failed to save window settings: %s", e)
 
     def _setup_periodic_window_state_save(self) -> None:
         """Set up periodic window state saving (every 5 seconds).
@@ -1268,7 +1268,7 @@ class MainWindow(QMainWindow):
 
             self.logger.debug("Periodic window state save timer started (5 second interval)")
         except Exception as e:
-            self.logger.warning(f"Failed to set up periodic window state save: {e}")
+            self.logger.warning("Failed to set up periodic window state save: %s", e)
 
     def _periodic_save_window_state(self) -> None:
         """Periodically save window state without verbose logging.
@@ -1301,19 +1301,19 @@ class MainWindow(QMainWindow):
                 f"Periodic save: {self.width()}x{self.height()} at ({self.x()},{self.y()})"
             )
         except Exception as e:
-            self.logger.warning(f"Failed to periodically save window state: {e}")
+            self.logger.warning("Failed to periodically save window state: %s", e)
 
     def _on_model_loaded(self, info: str) -> None:
         """Handle model loaded signal from viewer."""
         try:
-            self.activity_logger.info(f"Model loaded: {info}")
+            self.activity_logger.info("Model loaded: %s", info)
             self.status_label.setText(f"Model loaded: {info}")
             self.progress_bar.setVisible(False)
 
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
         except Exception as e:
-            self.logger.error(f"Failed to handle model loaded signal: {e}")
+            self.logger.error("Failed to handle model loaded signal: %s", e)
 
     def showEvent(self, event) -> None:
         """Handle window show event - restore geometry and dock layout after window is shown.
@@ -1347,10 +1347,10 @@ class MainWindow(QMainWindow):
                 self.logger.debug("FIX: Window show event (not first show)")
 
         except Exception as e:
-            self.logger.warning(f"Failed to handle window show event: {e}")
+            self.logger.warning("Failed to handle window show event: %s", e)
 
         total_time = time.time() - start_time
-        self.logger.debug(f"showEvent completed in {total_time:.3f}s")
+        self.logger.debug("showEvent completed in %ss", total_time:.3f)
 
         super().showEvent(event)
 
@@ -1413,11 +1413,11 @@ class MainWindow(QMainWindow):
                     # Move window to saved position if valid
                     if x_pos >= 0 and y_pos >= 0:
                         self.move(x_pos, y_pos)
-                        self.logger.info(f"FIX: Window moved to ({x_pos},{y_pos})")
+                        self.logger.info("FIX: Window moved to (%s,{y_pos})", x_pos)
 
                     # Resize window
                     self.resize(width, height)
-                    self.logger.info(f"FIX: Window resized to {width}x{height}")
+                    self.logger.info("FIX: Window resized to %sx{height}", width)
 
                     if maximized:
                         self.showMaximized()
@@ -1425,13 +1425,13 @@ class MainWindow(QMainWindow):
 
                     geometry_restored = True
                 except Exception as e:
-                    self.logger.debug(f"FIX: Failed to restore explicit size: {e}")
+                    self.logger.debug("FIX: Failed to restore explicit size: %s", e)
 
             if not geometry_restored:
                 self.logger.info("FIX: No saved window geometry found, using current size")
 
         except Exception as e:
-            self.logger.warning(f"FIX: Failed to restore window geometry: {e}")
+            self.logger.warning("FIX: Failed to restore window geometry: %s", e)
 
     def _deferred_dock_layout_restoration(self) -> None:
         """
@@ -1460,7 +1460,7 @@ class MainWindow(QMainWindow):
                 self.logger.debug("CRITICAL FIX: No saved dock layout found")
 
         except Exception as e:
-            self.logger.warning(f"CRITICAL FIX: Failed to restore dock layout: {e}")
+            self.logger.warning("CRITICAL FIX: Failed to restore dock layout: %s", e)
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing.
@@ -1481,7 +1481,7 @@ class MainWindow(QMainWindow):
                 self._window_state_save_timer.stop()
                 self.logger.debug("Periodic window state save timer stopped")
         except Exception as e:
-            self.logger.warning(f"Failed to stop periodic save timer: {e}")
+            self.logger.warning("Failed to stop periodic save timer: %s", e)
 
         # CRITICAL: Force layout edit mode OFF before closing
         # This ensures the app always closes with layout locked
@@ -1490,7 +1490,7 @@ class MainWindow(QMainWindow):
                 self._set_layout_edit_mode(False, show_message=False)
                 self.logger.info("FIX: Layout edit mode forced OFF on application close")
         except Exception as e:
-            self.logger.warning(f"Failed to force layout edit mode OFF on close: {e}")
+            self.logger.warning("Failed to force layout edit mode OFF on close: %s", e)
 
         # CRITICAL: Clean up VTK resources FIRST (before any window destruction)
         # This prevents OpenGL context errors during shutdown
@@ -1511,7 +1511,7 @@ class MainWindow(QMainWindow):
             else:
                 self.logger.debug("No viewer widget found for VTK cleanup")
         except Exception as e:
-            self.logger.warning(f"Failed to cleanup VTK resources early: {e}")
+            self.logger.warning("Failed to cleanup VTK resources early: %s", e)
 
         # Save lighting settings
         try:
@@ -1519,9 +1519,9 @@ class MainWindow(QMainWindow):
             self.logger.info("FIX: Saving lighting settings")
             self._save_lighting_settings()
             lighting_time = time.time() - lighting_start
-            self.logger.info(f"SUCCESS: Lighting settings saved in {lighting_time:.3f}s")
+            self.logger.info("SUCCESS: Lighting settings saved in %ss", lighting_time:.3f)
         except Exception as e:
-            self.logger.warning(f"Failed to save lighting settings on close: {e}")
+            self.logger.warning("Failed to save lighting settings on close: %s", e)
 
         # Save viewer and window settings (config defaults, not current size)
         try:
@@ -1533,9 +1533,9 @@ class MainWindow(QMainWindow):
             settings_mgr.save_viewer_settings()
             settings_mgr.save_window_settings()
             viewer_time = time.time() - viewer_start
-            self.logger.info(f"SUCCESS: Viewer/window settings saved in {viewer_time:.3f}s")
+            self.logger.info("SUCCESS: Viewer/window settings saved in %ss", viewer_time:.3f)
         except Exception as e:
-            self.logger.warning(f"Failed to save viewer/window settings on close: {e}")
+            self.logger.warning("Failed to save viewer/window settings on close: %s", e)
 
         # CRITICAL: Save window geometry and state LAST (most important - must be after SettingsManager)
         try:
@@ -1545,7 +1545,7 @@ class MainWindow(QMainWindow):
             )
             self._save_window_settings()
             settings_time = time.time() - settings_start
-            self.logger.info(f"SUCCESS: Window geometry/state saved in {settings_time:.3f}s")
+            self.logger.info("SUCCESS: Window geometry/state saved in %ss", settings_time:.3f)
         except Exception as e:
             self.logger.error(
                 f"CRITICAL FAILURE: Failed to save window geometry/state on close: {e}"
@@ -1566,7 +1566,7 @@ class MainWindow(QMainWindow):
                 f"FINAL STATE: Window maximized: {self.isMaximized()}, minimized: {self.isMinimized()}"
             )
         except Exception as e:
-            self.logger.warning(f"Failed to log final window state: {e}")
+            self.logger.warning("Failed to log final window state: %s", e)
 
         total_time = time.time() - start_time
         self.logger.info(
@@ -1593,9 +1593,9 @@ class MainWindow(QMainWindow):
                 settings = QSettings()
                 vis = bool(self.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
-                self.logger.debug(f"Saved metadata panel visibility: {vis}")
+                self.logger.debug("Saved metadata panel visibility: %s", vis)
         except Exception as e:
-            self.logger.warning(f"Failed to save metadata panel visibility: {e}")
+            self.logger.warning("Failed to save metadata panel visibility: %s", e)
 
     # Old dock creation methods removed - using native Qt dock system
 
@@ -1610,7 +1610,7 @@ class MainWindow(QMainWindow):
             else:
                 self.logger.warning("Metadata dock not available")
         except Exception as e:
-            self.logger.error(f"Failed to restore Metadata Manager: {e}")
+            self.logger.error("Failed to restore Metadata Manager: %s", e)
 
     # Old dock creation methods removed - using native Qt dock system
 
@@ -1625,7 +1625,7 @@ class MainWindow(QMainWindow):
             else:
                 self.logger.warning("Model Library dock not available")
         except Exception as e:
-            self.logger.error(f"Failed to restore Model Library: {e}")
+            self.logger.error("Failed to restore Model Library: %s", e)
 
     def _update_library_action_state(self) -> None:
         """Enable/disable 'Show Model Library' based on panel visibility."""
@@ -1652,7 +1652,7 @@ class MainWindow(QMainWindow):
             db_manager = get_database_manager()
             success, error = migrate_import_schema(db_manager)
             if not success:
-                self.logger.warning(f"Database migration warning: {error}")
+                self.logger.warning("Database migration warning: %s", error)
 
             # Create and show import dialog
             root_folder_mgr = RootFolderManager.get_instance()
@@ -1677,7 +1677,7 @@ class MainWindow(QMainWindow):
                     QTimer.singleShot(5000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to show import dialog: {e}", exc_info=True)
+            self.logger.error("Failed to show import dialog: %s", e, exc_info=True)
             QMessageBox.critical(self, "Import Error", f"Failed to open import dialog:\n\n{str(e)}")
 
     # Menu action handlers
@@ -1704,7 +1704,7 @@ class MainWindow(QMainWindow):
 
             if model:
                 file_path = model["file_path"]
-                self.logger.info(f"Loading model from library: {file_path}")
+                self.logger.info("Loading model from library: %s", file_path)
 
                 # Update status
                 from pathlib import Path
@@ -1723,10 +1723,10 @@ class MainWindow(QMainWindow):
                 # After model loads, restore saved camera orientation if available
                 QTimer.singleShot(500, lambda: self._restore_saved_camera(model_id))
             else:
-                self.logger.warning(f"Model with ID {model_id} not found in database")
+                self.logger.warning("Model with ID %s not found in database", model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle model double-click: {str(e)}")
+            self.logger.error("Failed to handle model double-click: %s", str(e))
 
     # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
 
@@ -1737,7 +1737,7 @@ class MainWindow(QMainWindow):
         Args:
             model_ids: List of IDs of added models
         """
-        self.logger.info(f"Added {len(model_ids)} models to library")
+        self.logger.info("Added %s models to library", len(model_ids))
 
         # Update status
         if model_ids:
@@ -1779,10 +1779,10 @@ class MainWindow(QMainWindow):
             # Synchronize metadata tab to selected model
             self._sync_metadata_to_selected_model(model_id)
 
-            self.logger.debug(f"Model selected: {model_id}")
+            self.logger.debug("Model selected: %s", model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle model selection: {e}")
+            self.logger.error("Failed to handle model selection: %s", e)
 
     def _sync_metadata_to_selected_model(self, model_id: int) -> None:
         """
@@ -1797,20 +1797,20 @@ class MainWindow(QMainWindow):
         try:
             # Check if metadata editor exists
             if not hasattr(self, "metadata_editor") or self.metadata_editor is None:
-                self.logger.debug(f"Metadata editor not available for model {model_id}")
+                self.logger.debug("Metadata editor not available for model %s", model_id)
                 return
 
             # Load metadata for the selected model
             self.metadata_editor.load_model_metadata(model_id)
-            self.logger.debug(f"Metadata synchronized for model {model_id}")
+            self.logger.debug("Metadata synchronized for model %s", model_id)
 
             # Switch to metadata tab to show the loaded metadata
             if hasattr(self, "metadata_tabs") and self.metadata_tabs:
                 self.metadata_tabs.setCurrentIndex(0)  # Switch to Metadata tab
-                self.logger.debug(f"Switched to Metadata tab for model {model_id}")
+                self.logger.debug("Switched to Metadata tab for model %s", model_id)
 
         except Exception as e:
-            self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
+            self.logger.warning("Failed to synchronize metadata for model %s: {e}", model_id)
 
     def _edit_model(self) -> None:
         """Analyze the currently selected model for errors."""
@@ -1890,7 +1890,7 @@ class MainWindow(QMainWindow):
                 self._on_model_double_clicked(self.current_model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze model: {e}")
+            self.logger.error("Failed to analyze model: %s", e)
             from PySide6.QtWidgets import QMessageBox
 
             QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
@@ -1907,7 +1907,7 @@ class MainWindow(QMainWindow):
                     "Status bar manager does not have start_background_hasher method"
                 )
         except Exception as e:
-            self.logger.error(f"Failed to start background hasher: {e}")
+            self.logger.error("Failed to start background hasher: %s", e)
 
     def _connect_model_library_status_updates(self) -> None:
         """Connect model library progress updates to main window status bar."""
@@ -1934,14 +1934,14 @@ class MainWindow(QMainWindow):
                             self._on_model_library_progress
                         )
                     except Exception as e:
-                        self.logger.debug(f"Could not connect progress signal: {e}")
+                        self.logger.debug("Could not connect progress signal: %s", e)
 
             # Replace the method
             self.model_library_widget._load_models = _load_models_with_status_update
 
             self.logger.debug("Model library status updates connected")
         except Exception as e:
-            self.logger.warning(f"Failed to connect model library status updates: {e}")
+            self.logger.warning("Failed to connect model library status updates: %s", e)
 
     def _on_model_library_progress(self, progress_percent: float, message: str) -> None:
         """Handle progress updates from model library."""
@@ -1972,7 +1972,7 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setRange(0, 100)
                 self.progress_bar.setValue(int(progress_percent))
         except Exception as e:
-            self.logger.debug(f"Failed to update status from model library: {e}")
+            self.logger.debug("Failed to update status from model library: %s", e)
 
     def _on_metadata_saved(self, model_id: int) -> None:
         """
@@ -1982,7 +1982,7 @@ class MainWindow(QMainWindow):
             model_id: ID of the model whose metadata was saved
         """
         try:
-            self.logger.info(f"Metadata saved for model ID: {model_id}")
+            self.logger.info("Metadata saved for model ID: %s", model_id)
             self.status_label.setText("Metadata saved")
 
             # Update the model library to reflect changes
@@ -1993,7 +1993,7 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle metadata saved event: {str(e)}")
+            self.logger.error("Failed to handle metadata saved event: %s", str(e))
 
     def _on_metadata_changed(self, model_id: int) -> None:
         """
@@ -2003,12 +2003,12 @@ class MainWindow(QMainWindow):
             model_id: ID of the model whose metadata changed
         """
         try:
-            self.logger.debug(f"Metadata changed for model ID: {model_id}")
+            self.logger.debug("Metadata changed for model ID: %s", model_id)
             # Update status to indicate unsaved changes
             self.status_label.setText("Metadata modified (unsaved changes)")
 
         except Exception as e:
-            self.logger.error(f"Failed to handle metadata changed event: {str(e)}")
+            self.logger.error("Failed to handle metadata changed event: %s", str(e))
 
     def _on_project_opened(self, project_id: str) -> None:
         """
@@ -2018,35 +2018,35 @@ class MainWindow(QMainWindow):
             project_id: ID of the opened project
         """
         try:
-            self.logger.info(f"Project opened: {project_id}")
+            self.logger.info("Project opened: %s", project_id)
             self.status_label.setText(f"Project opened: {project_id}")
 
             # Set current project for all tabs that support tab data save/load
             if hasattr(self, "clo_widget") and self.clo_widget:
                 try:
                     self.clo_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Cut List Optimizer: {project_id}")
+                    self.logger.debug("Set current project for Cut List Optimizer: %s", project_id)
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Cut List Optimizer: {e}")
+                    self.logger.warning("Failed to set project for Cut List Optimizer: %s", e)
 
             if hasattr(self, "feeds_and_speeds_widget") and self.feeds_and_speeds_widget:
                 try:
                     self.feeds_and_speeds_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Feed and Speed: {project_id}")
+                    self.logger.debug("Set current project for Feed and Speed: %s", project_id)
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Feed and Speed: {e}")
+                    self.logger.warning("Failed to set project for Feed and Speed: %s", e)
 
             if hasattr(self, "cost_estimator_widget") and self.cost_estimator_widget:
                 try:
                     self.cost_estimator_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for Cost Estimator: {project_id}")
+                    self.logger.debug("Set current project for Cost Estimator: %s", project_id)
                 except Exception as e:
-                    self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
+                    self.logger.warning("Failed to set project for Cost Estimator: %s", e)
 
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project opened event: {str(e)}")
+            self.logger.error("Failed to handle project opened event: %s", str(e))
 
     def _on_project_created(self, project_id: str) -> None:
         """
@@ -2056,12 +2056,12 @@ class MainWindow(QMainWindow):
             project_id: ID of the created project
         """
         try:
-            self.logger.info(f"Project created: {project_id}")
+            self.logger.info("Project created: %s", project_id)
             self.status_label.setText(f"Project created: {project_id}")
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project created event: {str(e)}")
+            self.logger.error("Failed to handle project created event: %s", str(e))
 
     def _on_project_deleted(self, project_id: str) -> None:
         """
@@ -2071,12 +2071,12 @@ class MainWindow(QMainWindow):
             project_id: ID of the deleted project
         """
         try:
-            self.logger.info(f"Project deleted: {project_id}")
+            self.logger.info("Project deleted: %s", project_id)
             self.status_label.setText(f"Project deleted: {project_id}")
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project deleted event: {str(e)}")
+            self.logger.error("Failed to handle project deleted event: %s", str(e))
 
     def _update_project_manager_action_state(self) -> None:
         """Update project manager action state based on dock visibility."""
@@ -2089,7 +2089,7 @@ class MainWindow(QMainWindow):
                     )
 
         except Exception as e:
-            self.logger.debug(f"Failed to update project manager action state: {e}")
+            self.logger.debug("Failed to update project manager action state: %s", e)
 
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
@@ -2125,7 +2125,7 @@ class MainWindow(QMainWindow):
                 self.logger.error("ERROR: viewer_widget is None")
                 return
 
-            self.logger.info(f"viewer_widget type: {type(self.viewer_widget).__name__}")
+            self.logger.info("viewer_widget type: %s", type(self.viewer_widget).__name__)
             self.logger.info(
                 f"viewer_widget has scene_manager: {hasattr(self.viewer_widget, 'scene_manager')}"
             )
@@ -2134,7 +2134,7 @@ class MainWindow(QMainWindow):
             if hasattr(self.viewer_widget, "scene_manager"):
                 try:
                     scene_manager = self.viewer_widget.scene_manager
-                    self.logger.info(f"scene_manager type: {type(scene_manager).__name__}")
+                    self.logger.info("scene_manager type: %s", type(scene_manager).__name__)
 
                     # Reload all settings from QSettings
                     if hasattr(scene_manager, "reload_settings_from_qsettings"):
@@ -2151,7 +2151,7 @@ class MainWindow(QMainWindow):
                             self.logger.info("Fallback: Scene re-rendered")
 
                 except Exception as e:
-                    self.logger.error(f"ERROR in scene_manager path: {e}", exc_info=True)
+                    self.logger.error("ERROR in scene_manager path: %s", e, exc_info=True)
             else:
                 self.logger.warning("WARNING: viewer_widget has no scene_manager attribute")
 
@@ -2161,11 +2161,11 @@ class MainWindow(QMainWindow):
                         self.viewer_widget.render()
                         self.logger.info("Fallback: Viewer re-rendered directly")
                     except Exception as e:
-                        self.logger.error(f"ERROR in direct render: {e}")
+                        self.logger.error("ERROR in direct render: %s", e)
 
             self.logger.info("=== VIEWER SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
-            self.logger.error(f"FATAL ERROR applying viewer settings: {e}", exc_info=True)
+            self.logger.error("FATAL ERROR applying viewer settings: %s", e, exc_info=True)
 
     def _on_ai_settings_changed(self) -> None:
         """Handle AI settings change from preferences dialog."""
@@ -2187,7 +2187,7 @@ class MainWindow(QMainWindow):
 
             self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
-            self.logger.error(f"ERROR reloading AI service: {e}", exc_info=True)
+            self.logger.error("ERROR reloading AI service: %s", e, exc_info=True)
 
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
@@ -2198,13 +2198,13 @@ class MainWindow(QMainWindow):
             dlg.theme_applied.connect(self._on_theme_applied)
             dlg.exec()
         except Exception as e:
-            self.logger.error(f"Failed to open Theme Manager: {e}")
+            self.logger.error("Failed to open Theme Manager: %s", e)
             QMessageBox.warning(self, "Theme Manager", f"Failed to open Theme Manager:\n{e}")
 
     def _on_theme_applied(self, preset_name: str) -> None:
         """Handle theme change notification."""
         # Theme is managed by ThemeService and applied globally
-        self.logger.info(f"Theme changed: {preset_name}")
+        self.logger.info("Theme changed: %s", preset_name)
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
@@ -2241,7 +2241,7 @@ class MainWindow(QMainWindow):
                 if hasattr(self.viewer_widget, "reset_save_view_button"):
                     self.viewer_widget.reset_save_view_button()
             except Exception as e:
-                self.logger.warning(f"Failed to reset save view button: {e}")
+                self.logger.warning("Failed to reset save view button: %s", e)
         else:
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
 
@@ -2272,10 +2272,10 @@ class MainWindow(QMainWindow):
             # Update theme button icon
             self.status_bar_manager._update_theme_icon()
 
-            self.logger.info(f"Cycled theme from {current_theme} to {next_theme}")
+            self.logger.info("Cycled theme from %s to {next_theme}", current_theme)
 
         except Exception as e:
-            self.logger.error(f"Failed to cycle theme: {e}")
+            self.logger.error("Failed to cycle theme: %s", e)
             self.status_label.setText("Theme cycle failed")
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
 
@@ -2336,13 +2336,13 @@ class MainWindow(QMainWindow):
 
                     if success:
                         self.status_label.setText("View saved for this model")
-                        self.logger.info(f"Saved camera view for model ID {model_id}")
+                        self.logger.info("Saved camera view for model ID %s", model_id)
                         # Reset save view button after successful save
                         try:
                             if hasattr(self.viewer_widget, "reset_save_view_button"):
                                 self.viewer_widget.reset_save_view_button()
                         except Exception as e:
-                            self.logger.warning(f"Failed to reset save view button: {e}")
+                            self.logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
                     else:
                         QMessageBox.warning(self, "Save View", "Failed to save view to database.")
@@ -2352,7 +2352,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Save View", "Viewer not initialized.")
 
         except Exception as e:
-            self.logger.error(f"Failed to save current view: {e}")
+            self.logger.error("Failed to save current view: %s", e)
             QMessageBox.warning(self, "Save View", f"Failed to save view: {str(e)}")
 
     def _restore_saved_camera(self, model_id: int) -> None:
@@ -2385,14 +2385,14 @@ class MainWindow(QMainWindow):
                     self.viewer_widget.renderer.ResetCameraClippingRange()
                     self.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
+                    self.logger.info("Restored saved camera view for model ID %s", model_id)
                     self.status_label.setText("Restored saved view")
                     QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
             else:
-                self.logger.debug(f"No saved camera view for model ID {model_id}")
+                self.logger.debug("No saved camera view for model ID %s", model_id)
 
         except Exception as e:
-            self.logger.warning(f"Failed to restore saved camera: {e}")
+            self.logger.warning("Failed to restore saved camera: %s", e)
 
     def _show_help(self) -> None:
         """Show searchable help dialog."""
@@ -2402,7 +2402,7 @@ class MainWindow(QMainWindow):
             help_dialog = HelpDialog(self)
             help_dialog.exec()
         except Exception as e:
-            self.logger.error(f"Error showing help dialog: {e}")
+            self.logger.error("Error showing help dialog: %s", e)
             QMessageBox.warning(self, "Help Error", f"Could not open help system: {e}")
 
     def _show_about(self) -> None:
@@ -2466,7 +2466,7 @@ class MainWindow(QMainWindow):
             self.logger.info("Started batch screenshot generation")
 
         except Exception as e:
-            self.logger.error(f"Failed to start screenshot generation: {e}")
+            self.logger.error("Failed to start screenshot generation: %s", e)
             QMessageBox.critical(
                 self,
                 "Screenshot Generation Error",
@@ -2481,22 +2481,22 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setValue(progress)
                 self.status_label.setText(f"Generating screenshots: {current}/{total}")
         except Exception as e:
-            self.logger.warning(f"Failed to update progress: {e}")
+            self.logger.warning("Failed to update progress: %s", e)
 
     def _on_screenshot_generated(self, model_id: int, screenshot_path: str) -> None:
         """Handle screenshot generated event."""
         try:
-            self.logger.debug(f"Screenshot generated for model {model_id}: {screenshot_path}")
+            self.logger.debug("Screenshot generated for model %s: {screenshot_path}", model_id)
         except Exception as e:
-            self.logger.warning(f"Failed to handle screenshot generated event: {e}")
+            self.logger.warning("Failed to handle screenshot generated event: %s", e)
 
     def _on_screenshot_error(self, error_message: str) -> None:
         """Handle screenshot generation error."""
         try:
-            self.logger.error(f"Screenshot generation error: {error_message}")
+            self.logger.error("Screenshot generation error: %s", error_message)
             self.status_label.setText(f"Error: {error_message}")
         except Exception as e:
-            self.logger.warning(f"Failed to handle screenshot error: {e}")
+            self.logger.warning("Failed to handle screenshot error: %s", e)
 
     def _on_screenshots_finished(self) -> None:
         """Handle batch screenshot generation completion."""
@@ -2520,7 +2520,7 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle screenshots finished event: {e}")
+            self.logger.error("Failed to handle screenshots finished event: %s", e)
 
     def _toggle_maximize(self) -> None:
         """Toggle window maximize/restore state."""
@@ -2530,7 +2530,7 @@ class MainWindow(QMainWindow):
             else:
                 self.showMaximized()
         except Exception as e:
-            self.logger.warning(f"Failed to toggle maximize: {e}")
+            self.logger.warning("Failed to toggle maximize: %s", e)
 
     def _on_tab_switch_requested(self, tab_name: str) -> None:
         """Handle tab switch request from project manager."""
@@ -2547,12 +2547,12 @@ class MainWindow(QMainWindow):
             tab_index = tab_map.get(tab_name)
             if tab_index is not None and hasattr(self, "hero_tabs"):
                 self.hero_tabs.setCurrentIndex(tab_index)
-                self.logger.info(f"Switched to tab: {tab_name}")
+                self.logger.info("Switched to tab: %s", tab_name)
             else:
-                self.logger.warning(f"Unknown tab name: {tab_name}")
+                self.logger.warning("Unknown tab name: %s", tab_name)
 
         except Exception as e:
-            self.logger.error(f"Failed to switch tab: {e}")
+            self.logger.error("Failed to switch tab: %s", e)
 
     def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> None:
         """Snap a floating dock widget to the specified edge of the main window.
@@ -2570,13 +2570,13 @@ class MainWindow(QMainWindow):
             }
             target_area = area_map.get(edge)
             if target_area is None:
-                self.logger.warning(f"Invalid snap edge: {edge}")
+                self.logger.warning("Invalid snap edge: %s", edge)
                 return
 
             # Check if this dock is allowed to dock to the target area
             allowed = dock.allowedAreas()
             if not (allowed & target_area):
-                self.logger.debug(f"Dock {dock.windowTitle()} not allowed in {edge} area")
+                self.logger.debug("Dock %s not allowed in {edge} area", dock.windowTitle())
                 return
 
             # Perform the snap operation
@@ -2590,7 +2590,7 @@ class MainWindow(QMainWindow):
             self._save_window_settings()
 
         except Exception as e:
-            self.logger.warning(f"Failed to snap dock to {edge}: {e}")
+            self.logger.warning("Failed to snap dock to %s: {e}", edge)
 
     def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
         """Register a dock widget for snapping functionality.
@@ -2621,7 +2621,7 @@ class MainWindow(QMainWindow):
             self.logger.debug(f"Registered dock '{dock.windowTitle()}' for snapping")
 
         except Exception as e:
-            self.logger.warning(f"Failed to register dock for snapping: {e}")
+            self.logger.warning("Failed to register dock for snapping: %s", e)
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 

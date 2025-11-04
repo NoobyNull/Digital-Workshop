@@ -536,7 +536,7 @@ class AIDescriptionWidget(QWidget):
             self.description_generated.emit(self.current_image_path, result)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate description: {e}")
+            self.logger.error("Failed to generate description: %s", e)
             QMessageBox.critical(
                 self, "Generation Failed", f"Failed to generate description: {str(e)}"
             )

@@ -121,7 +121,7 @@ class DatabaseErrorHandler:
                 self._cleanup_old_errors()
                 time.sleep(30)  # Check every 30 seconds
             except Exception as e:
-                logger.error(f"Health monitoring error: {str(e)}")
+                logger.error("Health monitoring error: %s", str(e))
 
     def _check_database_health(self) -> None:
         """Check overall database health."""
@@ -171,10 +171,10 @@ class DatabaseErrorHandler:
             # Check connection count
             active_count = len(self._active_connections)
             if active_count > 50:  # Arbitrary threshold
-                logger.warning(f"High connection count: {active_count}")
+                logger.warning("High connection count: %s", active_count)
 
         except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
+            logger.error("Health check failed: %s", str(e))
 
     def _check_connection_leaks(self) -> None:
         """Check for connection leaks."""
@@ -191,7 +191,7 @@ class DatabaseErrorHandler:
                 leaked_connections.append(conn_id)
 
         if leaked_connections:
-            logger.warning(f"Potential connection leaks detected: {leaked_connections}")
+            logger.warning("Potential connection leaks detected: %s", leaked_connections)
             # In a real implementation, we would force-close these connections
 
     def _cleanup_old_errors(self) -> None:
@@ -249,11 +249,11 @@ class DatabaseErrorHandler:
             DatabaseErrorType.CORRUPTION_ERROR,
             DatabaseErrorType.CONNECTION_ERROR,
         ]:
-            logger.critical(f"Critical database error: {message}")
+            logger.critical("Critical database error: %s", message)
         elif error_type == DatabaseErrorType.UNKNOWN_ERROR:
-            logger.error(f"Unknown database error: {message}")
+            logger.error("Unknown database error: %s", message)
         else:
-            logger.warning(f"Database error: {message}")
+            logger.warning("Database error: %s", message)
 
         return error
 
@@ -427,15 +427,15 @@ class DatabaseErrorHandler:
                 try:
                     callback(error)
                 except Exception as e:
-                    logger.error(f"Recovery callback failed: {str(e)}")
+                    logger.error("Recovery callback failed: %s", str(e))
 
             if recovery_successful:
-                logger.info(f"Successfully recovered from {error.error_type.value}")
+                logger.info("Successfully recovered from %s", error.error_type.value)
             else:
-                logger.warning(f"Recovery failed for {error.error_type.value}")
+                logger.warning("Recovery failed for %s", error.error_type.value)
 
         except Exception as e:
-            logger.error(f"Recovery attempt failed: {str(e)}")
+            logger.error("Recovery attempt failed: %s", str(e))
 
         return recovery_successful
 
@@ -682,7 +682,7 @@ class ConnectionManager:
                     try:
                         conn.close()
                     except Exception as e:
-                        logger.error(f"Error closing connection: {str(e)}")
+                        logger.error("Error closing connection: %s", str(e))
 
     def _create_healthy_connection(self, timeout: float) -> sqlite3.Connection:
         """
@@ -749,9 +749,9 @@ class ConnectionManager:
                 try:
                     if conn:
                         conn.close()
-                        logger.debug(f"Closed connection {conn_id}")
+                        logger.debug("Closed connection %s", conn_id)
                 except Exception as e:
-                    logger.error(f"Error closing connection {conn_id}: {str(e)}")
+                    logger.error("Error closing connection %s: {str(e)}", conn_id)
 
             self._connections.clear()
 
@@ -773,7 +773,7 @@ class GracefulDegradationManager:
             level: Degradation level (0-3)
         """
         self.degradation_level = max(0, min(3, level))
-        logger.info(f"Database degradation level set to {self.degradation_level}")
+        logger.info("Database degradation level set to %s", self.degradation_level)
         self._update_available_features()
 
     def _update_available_features(self) -> None:

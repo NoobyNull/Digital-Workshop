@@ -130,7 +130,7 @@ class LayoutPersistenceManager:
                 settings.setValue("layout/default_saved", True)
                 self.logger.info("Saved current layout as default for fresh installations")
         except Exception as e:
-            self.logger.warning(f"Failed to save current layout as default: {e}")
+            self.logger.warning("Failed to save current layout as default: %s", e)
 
     def reset_dock_layout(self) -> None:
         """Restore dock widgets to their default docking layout."""
@@ -203,7 +203,7 @@ class LayoutPersistenceManager:
                     Qt.RightDockWidgetArea, self.main_window.metadata_dock
                 )
         except Exception as e:
-            self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
+            self.logger.warning("Failed to re-dock widgets: %s", str(e))
 
     def settings_json_path(self) -> Path:
         """Return AppData settings.json path."""
@@ -310,7 +310,7 @@ class LayoutPersistenceManager:
             self.write_settings_json(settings)
             self.logger.debug("Layout autosaved")
         except Exception as e:
-            self.logger.warning(f"Failed to save current layout: {e}")
+            self.logger.warning("Failed to save current layout: %s", e)
 
     def load_saved_layout(self) -> bool:
         """Restore previously saved layout from settings.json. Returns True if successful."""
@@ -348,7 +348,7 @@ class LayoutPersistenceManager:
                 self.logger.info("Restored window layout from saved settings")
             return ok_any
         except Exception as e:
-            self.logger.warning(f"Failed to load saved layout: {e}")
+            self.logger.warning("Failed to load saved layout: %s", e)
             return False
 
     def connect_layout_autosave(self, dock: QDockWidget) -> None:

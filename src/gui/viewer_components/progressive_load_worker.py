@@ -38,7 +38,7 @@ class ProgressiveLoadWorker(QThread):
     def run(self) -> None:
         """Run the progressive loading process."""
         try:
-            self.logger.info(f"Starting progressive loading: {self.file_path}")
+            self.logger.info("Starting progressive loading: %s", self.file_path)
 
             # Get model cache
             model_cache = get_model_cache()
@@ -73,7 +73,7 @@ class ProgressiveLoadWorker(QThread):
             self.loading_complete.emit()
 
         except Exception as e:
-            self.logger.error(f"Progressive loading failed: {str(e)}")
+            self.logger.error("Progressive loading failed: %s", str(e))
             self.error_occurred.emit(str(e))
 
     def cancel(self) -> None:

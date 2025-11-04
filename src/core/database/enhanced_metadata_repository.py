@@ -92,14 +92,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Added metadata for model {model_id}")
+                    logger.info("Added metadata for model %s", model_id)
                 else:
-                    logger.warning(f"No metadata added for model {model_id}")
+                    logger.warning("No metadata added for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to add metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to add metadata for model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -150,7 +150,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to get metadata for model %s: {str(e)}", model_id)
             return None
 
     @log_function_call(logger)
@@ -221,14 +221,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated metadata for model {model_id}")
+                    logger.info("Updated metadata for model %s", model_id)
                 else:
-                    logger.warning(f"No metadata found to update for model {model_id}")
+                    logger.warning("No metadata found to update for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to update metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to update metadata for model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -251,14 +251,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Deleted metadata for model {model_id}")
+                    logger.info("Deleted metadata for model %s", model_id)
                 else:
-                    logger.warning(f"No metadata found to delete for model {model_id}")
+                    logger.warning("No metadata found to delete for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to delete metadata for model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -318,11 +318,11 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Metadata search returned {len(model_ids)} results")
+                logger.debug("Metadata search returned %s results", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by metadata: {str(e)}")
+            logger.error("Failed to search by metadata: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -350,7 +350,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return keys
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get metadata keys for model {model_id}: {str(e)}")
+            logger.error("Failed to get metadata keys for model %s: {str(e)}", model_id)
             return []
 
     @log_function_call(logger)
@@ -386,7 +386,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return row[0] if row and row[0] is not None else None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get metadata value {key} for model {model_id}: {str(e)}")
+            logger.error("Failed to get metadata value %s for model {model_id}: {str(e)}", key)
             return None
 
     @log_function_call(logger)
@@ -426,14 +426,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.debug(f"Set metadata value {key} = {value} for model {model_id}")
+                    logger.debug("Set metadata value %s = {value} for model {model_id}", key)
                 else:
-                    logger.warning(f"No metadata record found to update for model {model_id}")
+                    logger.warning("No metadata record found to update for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to set metadata value {key} for model {model_id}: {str(e)}")
+            logger.error("Failed to set metadata value %s for model {model_id}: {str(e)}", key)
             return False
 
     # Additional enhanced methods for better functionality
@@ -465,7 +465,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.debug(f"Incremented view count for model {model_id}")
+                    logger.debug("Incremented view count for model %s", model_id)
                 else:
                     logger.warning(
                         f"No metadata found to increment view count for model {model_id}"
@@ -474,7 +474,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to increment view count for model {model_id}: {str(e)}")
+            logger.error("Failed to increment view count for model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -500,11 +500,11 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 rows = cursor.fetchall()
                 categories = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(categories)} categories")
+                logger.debug("Retrieved %s categories", len(categories))
                 return categories
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get categories: {str(e)}")
+            logger.error("Failed to get categories: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -570,14 +570,14 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Deleted category {category_id}")
+                    logger.info("Deleted category %s", category_id)
                 else:
-                    logger.warning(f"Category {category_id} not found for deletion")
+                    logger.warning("Category %s not found for deletion", category_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete category {category_id}: {str(e)}")
+            logger.error("Failed to delete category %s: {str(e)}", category_id)
             return False
 
     @log_function_call(logger)
@@ -611,11 +611,11 @@ class EnhancedMetadataRepository(IMetadataRepository):
                 rows = cursor.fetchall()
                 categories = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(categories)} popular categories")
+                logger.debug("Retrieved %s popular categories", len(categories))
                 return categories
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get popular categories: {str(e)}")
+            logger.error("Failed to get popular categories: %s", str(e))
             return []
 
     @contextmanager

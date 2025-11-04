@@ -117,14 +117,14 @@ class GPUMemoryManager:
                         self.memory_stats.allocated_bytes,
                     )
 
-                    self.logger.debug(f"Allocated STL buffer: {buffer_id} ({size_bytes} bytes)")
+                    self.logger.debug("Allocated STL buffer: %s ({size_bytes} bytes)", buffer_id)
                     return buffer
                 else:
-                    self.logger.error(f"GPU buffer allocation failed for {size_bytes} bytes")
+                    self.logger.error("GPU buffer allocation failed for %s bytes", size_bytes)
                     return None
 
             except Exception as e:
-                self.logger.error(f"Error allocating STL buffer: {e}")
+                self.logger.error("Error allocating STL buffer: %s", e)
                 return None
 
     def _calculate_buffer_size(self, triangle_count: int, buffer_type: str) -> int:
@@ -232,14 +232,14 @@ class GPUMemoryManager:
                     # Read chunk data
                     chunk_bytes = file.read(current_chunk_size * 50)
                     if len(chunk_bytes) != current_chunk_size * 50:
-                        self.logger.error(f"Incomplete read at chunk {chunk_idx}")
+                        self.logger.error("Incomplete read at chunk %s", chunk_idx)
                         self.free_buffer(output_buffer)
                         return None
 
                     # Upload to GPU
                     offset = total_processed * 50
                     if not output_buffer.copy_to_device(chunk_bytes, offset):
-                        self.logger.error(f"GPU upload failed at chunk {chunk_idx}")
+                        self.logger.error("GPU upload failed at chunk %s", chunk_idx)
                         self.free_buffer(output_buffer)
                         return None
 
@@ -251,11 +251,11 @@ class GPUMemoryManager:
                         progress = total_processed / triangle_count
                         progress_callback.report(progress * 100, f"Streaming chunk {chunk_idx}")
 
-            self.logger.info(f"Successfully streamed {triangle_count} triangles to GPU")
+            self.logger.info("Successfully streamed %s triangles to GPU", triangle_count)
             return output_buffer
 
         except Exception as e:
-            self.logger.error(f"Error streaming file to GPU: {e}")
+            self.logger.error("Error streaming file to GPU: %s", e)
             return None
 
     @log_function_call
@@ -285,10 +285,10 @@ class GPUMemoryManager:
                 # Free GPU memory
                 buffer.free()
 
-                self.logger.debug(f"Freed GPU buffer: {buffer_id} ({buffer.size_bytes} bytes)")
+                self.logger.debug("Freed GPU buffer: %s ({buffer.size_bytes} bytes)", buffer_id)
 
             except Exception as e:
-                self.logger.error(f"Error freeing GPU buffer: {e}")
+                self.logger.error("Error freeing GPU buffer: %s", e)
 
     @log_function_call
     def get_memory_stats(self) -> MemoryStats:

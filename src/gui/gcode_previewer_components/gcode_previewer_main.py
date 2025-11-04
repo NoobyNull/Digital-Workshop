@@ -103,7 +103,7 @@ class GcodePreviewerWidget(QWidget):
             self.vtk_widget = VTKWidget(self.renderer)
             splitter.addWidget(self.vtk_widget)
         except Exception as e:
-            self.logger.error(f"Failed to initialize VTK viewer: {e}")
+            self.logger.error("Failed to initialize VTK viewer: %s", e)
             # Create a placeholder label
             placeholder = QLabel("VTK Viewer unavailable")
             splitter.addWidget(placeholder)
@@ -320,26 +320,26 @@ class GcodePreviewerWidget(QWidget):
 
             # Check file exists
             if not file_path.exists():
-                self.logger.error(f"File does not exist: {filepath}")
+                self.logger.error("File does not exist: %s", filepath)
                 QMessageBox.warning(self, "Invalid File", "File does not exist.")
                 return None
 
             # Check it's a file (not a directory)
             if not file_path.is_file():
-                self.logger.error(f"Path is not a file: {filepath}")
+                self.logger.error("Path is not a file: %s", filepath)
                 QMessageBox.warning(self, "Invalid File", "Path must be a file.")
                 return None
 
             # Check file is readable
             if not os.access(file_path, os.R_OK):
-                self.logger.error(f"File not readable: {filepath}")
+                self.logger.error("File not readable: %s", filepath)
                 QMessageBox.warning(self, "Access Denied", "Cannot read file.")
                 return None
 
             # Validate file extension
             valid_extensions = {".nc", ".gcode", ".gco", ".tap", ".txt"}
             if file_path.suffix.lower() not in valid_extensions:
-                self.logger.warning(f"Unusual file extension: {file_path.suffix}")
+                self.logger.warning("Unusual file extension: %s", file_path.suffix)
                 reply = QMessageBox.question(
                     self,
                     "Unusual Extension",
@@ -354,7 +354,7 @@ class GcodePreviewerWidget(QWidget):
             file_size = file_path.stat().st_size
 
             if file_size > MAX_FILE_SIZE:
-                self.logger.warning(f"Very large file: {file_size} bytes")
+                self.logger.warning("Very large file: %s bytes", file_size)
                 reply = QMessageBox.question(
                     self,
                     "Large File",
@@ -368,7 +368,7 @@ class GcodePreviewerWidget(QWidget):
             return str(file_path)
 
         except Exception as e:
-            self.logger.error(f"Path validation failed: {e}")
+            self.logger.error("Path validation failed: %s", e)
             QMessageBox.critical(
                 self, "Validation Error", f"Failed to validate file path: {str(e)}"
             )
@@ -412,7 +412,7 @@ class GcodePreviewerWidget(QWidget):
                 self.interactive_loader.load_file(validated_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to start loading: {e}")
+            self.logger.error("Failed to start loading: %s", e)
             self.file_label.setText(f"Error: {str(e)}")
             self.file_label.setStyleSheet("color: red;")
             self.progress_bar.setVisible(False)
@@ -548,7 +548,7 @@ class GcodePreviewerWidget(QWidget):
         if filepath:
             self.export_manager.set_render_window(self.renderer.get_render_window())
             if self.export_manager.export_screenshot(filepath):
-                self.logger.info(f"Screenshot exported to {filepath}")
+                self.logger.info("Screenshot exported to %s", filepath)
 
     def _on_export_video(self) -> None:
         """Handle export video."""
@@ -573,7 +573,7 @@ class GcodePreviewerWidget(QWidget):
         try:
             # Validate file still exists
             if not os.path.exists(self.current_file):
-                self.logger.error(f"File no longer exists: {self.current_file}")
+                self.logger.error("File no longer exists: %s", self.current_file)
                 QMessageBox.warning(self, "File Not Found", "The G-code file no longer exists.")
                 return
 
@@ -582,7 +582,7 @@ class GcodePreviewerWidget(QWidget):
             file_size = os.path.getsize(self.current_file)
 
             if file_size > MAX_EDITOR_SIZE:
-                self.logger.warning(f"File too large for editor: {file_size} bytes")
+                self.logger.warning("File too large for editor: %s bytes", file_size)
                 reply = QMessageBox.question(
                     self,
                     "Large File",
@@ -598,7 +598,7 @@ class GcodePreviewerWidget(QWidget):
                 with open(self.current_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
             except (OSError, IOError) as e:
-                self.logger.error(f"Failed to read file: {e}")
+                self.logger.error("Failed to read file: %s", e)
                 QMessageBox.critical(self, "Read Error", f"Failed to read file: {str(e)}")
                 return
 
@@ -609,7 +609,7 @@ class GcodePreviewerWidget(QWidget):
             editor_widget.show()
 
         except Exception as e:
-            self.logger.error(f"Failed to open editor: {e}", exc_info=True)
+            self.logger.error("Failed to open editor: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to open editor: {str(e)}")
 
     def _on_gcode_reload(self, content: str) -> None:
@@ -638,7 +638,7 @@ class GcodePreviewerWidget(QWidget):
 
             self.logger.info("G-code reloaded and re-rendered")
         except Exception as e:
-            self.logger.error(f"Failed to reload G-code: {e}")
+            self.logger.error("Failed to reload G-code: %s", e)
 
     def _update_layer_combo(self) -> None:
         """Update layer combo box with detected layers."""
@@ -699,12 +699,12 @@ class GcodePreviewerWidget(QWidget):
         self.vtk_widget.update_render()
 
         self.gcode_loaded.emit(self.current_file)
-        self.logger.info(f"Finished loading G-code: {len(self.moves):,} moves")
+        self.logger.info("Finished loading G-code: %s moves", len(self.moves):,)
         self.progress_bar.setVisible(False)
 
     def _on_loader_error(self, error_msg: str) -> None:
         """Handle loader error."""
-        self.logger.error(f"Loader error: {error_msg}")
+        self.logger.error("Loader error: %s", error_msg)
         self.file_label.setText(f"Error: {error_msg}")
         self.file_label.setStyleSheet("color: red;")
         self.progress_bar.setVisible(False)
@@ -723,7 +723,7 @@ class GcodePreviewerWidget(QWidget):
             # Update frame label
             self.frame_label.setText(f"{frame_index}/{len(self.moves) - 1}")
 
-            self.logger.debug(f"Timeline frame changed to {frame_index}")
+            self.logger.debug("Timeline frame changed to %s", frame_index)
 
     def _on_timeline_playback_requested(self) -> None:
         """Handle playback request from timeline."""
@@ -765,7 +765,7 @@ class GcodePreviewerWidget(QWidget):
         self.vtk_widget.update_render()
 
         self.gcode_loaded.emit(self.current_file)
-        self.logger.info(f"Interactive loader finished: {len(self.moves):,} moves")
+        self.logger.info("Interactive loader finished: %s moves", len(self.moves):,)
 
     def _on_interactive_loader_chunk_loaded(self, chunk_moves: list) -> None:
         """Handle chunk loaded from interactive loader."""

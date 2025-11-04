@@ -169,10 +169,10 @@ class ProjectTreeWidget(QWidget):
                 # Load files for this project
                 self._load_project_files(project_id, project_item)
 
-            logger.info(f"Refreshed project tree: {len(projects)} projects")
+            logger.info("Refreshed project tree: %s projects", len(projects))
 
         except Exception as e:
-            logger.error(f"Failed to refresh project tree: {str(e)}")
+            logger.error("Failed to refresh project tree: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to refresh projects: {str(e)}")
 
     def _load_project_files(self, project_id: str, project_item: QTreeWidgetItem) -> None:
@@ -217,7 +217,7 @@ class ProjectTreeWidget(QWidget):
                     category_item.addChild(file_item)
 
         except Exception as e:
-            logger.warning(f"Failed to load files for project {project_id}: {str(e)}")
+            logger.warning("Failed to load files for project %s: {str(e)}", project_id)
 
     def _on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item click - single click on file to preview and switch tab."""
@@ -284,13 +284,13 @@ class ProjectTreeWidget(QWidget):
                 menu.exec(self.tree_widget.mapToGlobal(position))
 
         except Exception as e:
-            logger.error(f"Error showing context menu: {str(e)}")
+            logger.error("Error showing context menu: %s", str(e))
 
     def _handle_file_selection(self, file_path: str, open_file: bool = False) -> None:
         """Handle file selection and tab switching."""
         try:
             if not file_path or not Path(file_path).exists():
-                logger.warning(f"File not found: {file_path}")
+                logger.warning("File not found: %s", file_path)
                 return
 
             # Determine tab based on file extension
@@ -300,12 +300,12 @@ class ProjectTreeWidget(QWidget):
             if tab_name:
                 self.file_selected.emit(file_path, tab_name)
                 self.tab_switch_requested.emit(tab_name)
-                logger.info(f"File selected: {file_path}, switching to {tab_name}")
+                logger.info("File selected: %s, switching to {tab_name}", file_path)
             else:
-                logger.debug(f"No tab mapping for file type: {file_ext}")
+                logger.debug("No tab mapping for file type: %s", file_ext)
 
         except Exception as e:
-            logger.error(f"Error handling file selection: {str(e)}")
+            logger.error("Error handling file selection: %s", str(e))
 
     def _create_new_project(self) -> None:
         """Create new project."""
@@ -322,10 +322,10 @@ class ProjectTreeWidget(QWidget):
                 project_id = self.project_manager.create_project(name)
                 self.project_created.emit(project_id)
                 self._refresh_project_tree()
-                logger.info(f"Created project: {name}")
+                logger.info("Created project: %s", name)
 
         except Exception as e:
-            logger.error(f"Failed to create project: {str(e)}")
+            logger.error("Failed to create project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to create project: {str(e)}")
 
     def _add_files_to_project(self) -> None:
@@ -381,9 +381,9 @@ class ProjectTreeWidget(QWidget):
                         link_type="original",
                     )
                     added_count += 1
-                    logger.info(f"Added file to project: {file_name}")
+                    logger.info("Added file to project: %s", file_name)
                 except Exception as e:
-                    logger.warning(f"Failed to add file {file_path}: {str(e)}")
+                    logger.warning("Failed to add file %s: {str(e)}", file_path)
 
             if added_count > 0:
                 self._refresh_project_tree()
@@ -396,7 +396,7 @@ class ProjectTreeWidget(QWidget):
                 QMessageBox.warning(self, "No Files Added", "Failed to add files to project.")
 
         except Exception as e:
-            logger.error(f"Failed to add files to project: {str(e)}")
+            logger.error("Failed to add files to project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to add files: {str(e)}")
 
     def _import_library(self) -> None:
@@ -453,7 +453,7 @@ class ProjectTreeWidget(QWidget):
                         "Import Complete",
                         f"Imported {import_report.files_imported} files.",
                     )
-                    logger.info(f"Imported library: {name}")
+                    logger.info("Imported library: %s", name)
                 else:
                     QMessageBox.critical(
                         self,
@@ -462,7 +462,7 @@ class ProjectTreeWidget(QWidget):
                     )
 
         except Exception as e:
-            logger.error(f"Failed to import library: {str(e)}")
+            logger.error("Failed to import library: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import library: {str(e)}")
 
     def _open_project(self, project_id: str) -> None:
@@ -470,12 +470,12 @@ class ProjectTreeWidget(QWidget):
         try:
             if self.project_manager.open_project(project_id):
                 self.project_opened.emit(project_id)
-                logger.info(f"Opened project: {project_id}")
+                logger.info("Opened project: %s", project_id)
             else:
                 QMessageBox.critical(self, "Error", "Failed to open project.")
 
         except Exception as e:
-            logger.error(f"Failed to open project: {str(e)}")
+            logger.error("Failed to open project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to open project: {str(e)}")
 
     def _delete_selected_project(self) -> None:
@@ -505,12 +505,12 @@ class ProjectTreeWidget(QWidget):
                 if self.project_manager.delete_project(project_id):
                     self.project_deleted.emit(project_id)
                     self._refresh_project_tree()
-                    logger.info(f"Deleted project: {project_name}")
+                    logger.info("Deleted project: %s", project_name)
                 else:
                     QMessageBox.critical(self, "Error", "Failed to delete project.")
 
         except Exception as e:
-            logger.error(f"Failed to delete project: {str(e)}")
+            logger.error("Failed to delete project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to delete project: {str(e)}")
 
     def _export_project_as_dww(self) -> None:
@@ -546,13 +546,13 @@ class ProjectTreeWidget(QWidget):
 
             if success:
                 QMessageBox.information(self, "Export Successful", message)
-                logger.info(f"Exported project {project_name} to {file_path}")
+                logger.info("Exported project %s to {file_path}", project_name)
             else:
                 QMessageBox.critical(self, "Export Failed", message)
-                logger.error(f"Failed to export project: {message}")
+                logger.error("Failed to export project: %s", message)
 
         except Exception as e:
-            logger.error(f"Failed to export project: {str(e)}")
+            logger.error("Failed to export project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to export project: {str(e)}")
 
     def _import_dww_project(self) -> None:
@@ -626,7 +626,7 @@ class ProjectTreeWidget(QWidget):
 
                 if not success:
                     QMessageBox.critical(self, "Import Failed", message)
-                    logger.error(f"Failed to import DWW: {message}")
+                    logger.error("Failed to import DWW: %s", message)
                     return
 
                 # Import extracted files as a new project
@@ -642,15 +642,15 @@ class ProjectTreeWidget(QWidget):
                         "Import Complete",
                         f"Project '{import_name}' imported successfully with {file_count} files.",
                     )
-                    logger.info(f"Imported DWW project: {import_name}")
+                    logger.info("Imported DWW project: %s", import_name)
                 else:
                     QMessageBox.critical(
                         self,
                         "Import Failed",
                         f"Failed to import project files: {import_report.error}",
                     )
-                    logger.error(f"Failed to import project files: {import_report.error}")
+                    logger.error("Failed to import project files: %s", import_report.error)
 
         except Exception as e:
-            logger.error(f"Failed to import DWW project: {str(e)}")
+            logger.error("Failed to import DWW project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import DWW project: {str(e)}")

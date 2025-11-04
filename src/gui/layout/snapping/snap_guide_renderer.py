@@ -386,7 +386,7 @@ class SnapGuideRenderer:
             # Note: In a real implementation, this would integrate with the main window's paint system
             self.logger.debug("Rendering integration setup completed")
         except Exception as e:
-            self.logger.error(f"Failed to setup rendering integration: {e}")
+            self.logger.error("Failed to setup rendering integration: %s", e)
 
     def render_snap_result(
         self, snap_result: SnapResult, context_widget: Optional[QWidget] = None
@@ -419,7 +419,7 @@ class SnapGuideRenderer:
             self._update_performance_stats(render_time)
 
         except Exception as e:
-            self.logger.error(f"Failed to render snap result: {e}")
+            self.logger.error("Failed to render snap result: %s", e)
 
     def _create_guides_from_snap_result(
         self, snap_result: SnapResult, context_widget: Optional[QWidget]
@@ -454,7 +454,7 @@ class SnapGuideRenderer:
                 guides.append(self._create_target_guide(candidate, context_widget))
 
         except Exception as e:
-            self.logger.error(f"Failed to create guides from snap result: {e}")
+            self.logger.error("Failed to create guides from snap result: %s", e)
 
         return guides
 
@@ -498,7 +498,7 @@ class SnapGuideRenderer:
                     guides.append(guide)
 
         except Exception as e:
-            self.logger.error(f"Failed to create edge guides: {e}")
+            self.logger.error("Failed to create edge guides: %s", e)
 
         return guides
 
@@ -550,7 +550,7 @@ class SnapGuideRenderer:
             guides.append(v_guide)
 
         except Exception as e:
-            self.logger.error(f"Failed to create center guides: {e}")
+            self.logger.error("Failed to create center guides: %s", e)
 
         return guides
 
@@ -597,7 +597,7 @@ class SnapGuideRenderer:
             guides.append(guide)
 
         except Exception as e:
-            self.logger.error(f"Failed to create corner guides: {e}")
+            self.logger.error("Failed to create corner guides: %s", e)
 
         return guides
 
@@ -627,7 +627,7 @@ class SnapGuideRenderer:
                 },
             )
         except Exception as e:
-            self.logger.error(f"Failed to create target guide: {e}")
+            self.logger.error("Failed to create target guide: %s", e)
             # Return a minimal guide on error
             return SnapGuide(
                 guide_type=GuideType.TARGET_CROSSHAIR,
@@ -678,9 +678,9 @@ class SnapGuideRenderer:
             # Add to active guides
             self._active_guides.append(guide)
 
-            self.logger.debug(f"Added guide {guide.guide_type.value} at {guide.position}")
+            self.logger.debug("Added guide %s at {guide.position}", guide.guide_type.value)
         except Exception as e:
-            self.logger.error(f"Failed to add guide: {e}")
+            self.logger.error("Failed to add guide: %s", e)
 
     def remove_guide(self, guide: SnapGuide) -> None:
         """
@@ -699,9 +699,9 @@ class SnapGuideRenderer:
                 lambda: self._remove_guide_immediate(guide),
             )
 
-            self.logger.debug(f"Removing guide {guide.guide_type.value}")
+            self.logger.debug("Removing guide %s", guide.guide_type.value)
         except Exception as e:
-            self.logger.error(f"Failed to remove guide: {e}")
+            self.logger.error("Failed to remove guide: %s", e)
 
     def _remove_guide_immediate(self, guide: SnapGuide) -> None:
         """Remove a guide immediately without animation."""
@@ -710,7 +710,7 @@ class SnapGuideRenderer:
                 self._active_guides.remove(guide)
                 self.animation_controller.hide(guide)
         except Exception as e:
-            self.logger.error(f"Failed to remove guide immediately: {e}")
+            self.logger.error("Failed to remove guide immediately: %s", e)
 
     def clear_guides(self) -> None:
         """Clear all active guides."""
@@ -719,9 +719,9 @@ class SnapGuideRenderer:
             for guide in self._active_guides[:]:  # Copy list to avoid modification during iteration
                 self.remove_guide(guide)
 
-            self.logger.debug(f"Cleared {len(self._active_guides)} guides")
+            self.logger.debug("Cleared %s guides", len(self._active_guides))
         except Exception as e:
-            self.logger.error(f"Failed to clear guides: {e}")
+            self.logger.error("Failed to clear guides: %s", e)
 
     def render(self, painter: QPainter, target_rect: QRectF) -> None:
         """
@@ -748,7 +748,7 @@ class SnapGuideRenderer:
             self._update_performance_stats(render_time)
 
         except Exception as e:
-            self.logger.error(f"Failed to render guides: {e}")
+            self.logger.error("Failed to render guides: %s", e)
 
     def _render_single_guide(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -796,7 +796,7 @@ class SnapGuideRenderer:
             painter.setOpacity(original_opacity)
 
         except Exception as e:
-            self.logger.error(f"Failed to render guide {guide.guide_type.value}: {e}")
+            self.logger.error("Failed to render guide %s: {e}", guide.guide_type.value)
 
     def _render_edge_highlight(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -808,7 +808,7 @@ class SnapGuideRenderer:
             if not bounds.isEmpty():
                 painter.drawLine(bounds.topLeft(), bounds.bottomRight())
         except Exception as e:
-            self.logger.error(f"Failed to render edge highlight: {e}")
+            self.logger.error("Failed to render edge highlight: %s", e)
 
     def _render_center_indicator(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -822,7 +822,7 @@ class SnapGuideRenderer:
                 painter.drawLine(bounds.left(), center.y(), bounds.right(), center.y())
                 painter.drawLine(center.x(), bounds.top(), center.x(), bounds.bottom())
         except Exception as e:
-            self.logger.error(f"Failed to render center indicator: {e}")
+            self.logger.error("Failed to render center indicator: %s", e)
 
     def _render_corner_marker(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -867,7 +867,7 @@ class SnapGuideRenderer:
                     bounds.bottom(),
                 )
         except Exception as e:
-            self.logger.error(f"Failed to render corner marker: {e}")
+            self.logger.error("Failed to render corner marker: %s", e)
 
     def _render_target_crosshair(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -892,7 +892,7 @@ class SnapGuideRenderer:
                     center.y() + crosshair_size / 2,
                 )
         except Exception as e:
-            self.logger.error(f"Failed to render target crosshair: {e}")
+            self.logger.error("Failed to render target crosshair: %s", e)
 
     def _render_distance_line(
         self, painter: QPainter, guide: SnapGuide, target_rect: QRectF
@@ -904,7 +904,7 @@ class SnapGuideRenderer:
             if not bounds.isEmpty():
                 painter.drawLine(bounds.topLeft(), bounds.bottomRight())
         except Exception as e:
-            self.logger.error(f"Failed to render distance line: {e}")
+            self.logger.error("Failed to render distance line: %s", e)
 
     def _update_performance_stats(self, render_time_ms: float) -> None:
         """Update performance statistics."""
@@ -935,7 +935,7 @@ class SnapGuideRenderer:
                 "memory_usage_mb": len(self._active_guides) * 0.1,  # Rough estimate
             }
         except Exception as e:
-            self.logger.error(f"Failed to get performance stats: {e}")
+            self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
     def update_configuration(self) -> None:
@@ -953,7 +953,7 @@ class SnapGuideRenderer:
 
             self.logger.info("Snap guide renderer configuration updated")
         except Exception as e:
-            self.logger.error(f"Failed to update configuration: {e}")
+            self.logger.error("Failed to update configuration: %s", e)
 
     def reset(self) -> None:
         """
@@ -974,7 +974,7 @@ class SnapGuideRenderer:
 
             self.logger.info("Snap guide renderer reset to initial state")
         except Exception as e:
-            self.logger.error(f"Failed to reset renderer: {e}")
+            self.logger.error("Failed to reset renderer: %s", e)
             raise
 
     def cleanup(self) -> None:
@@ -990,4 +990,4 @@ class SnapGuideRenderer:
 
             self.logger.info("Snap guide renderer cleanup completed")
         except Exception as e:
-            self.logger.error(f"Error during renderer cleanup: {e}")
+            self.logger.error("Error during renderer cleanup: %s", e)

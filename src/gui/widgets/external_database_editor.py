@@ -220,10 +220,10 @@ class ExternalDatabaseEditor(QDialog):
                 edit_btn.clicked.connect(lambda checked, t=tool: self._edit_tool(t))
                 self.tools_table.setCellWidget(row, 6, edit_btn)
 
-            self.logger.info(f"Loaded {len(tools)} tools into table")
+            self.logger.info("Loaded %s tools into table", len(tools))
 
         except Exception as e:
-            self.logger.error(f"Failed to refresh tools table: {e}")
+            self.logger.error("Failed to refresh tools table: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load tools: {str(e)}")
 
     def _refresh_providers_table(self):
@@ -244,10 +244,10 @@ class ExternalDatabaseEditor(QDialog):
                     row, 3, QTableWidgetItem(provider.get("source", "N/A"))
                 )
 
-            self.logger.info(f"Loaded {len(providers)} providers")
+            self.logger.info("Loaded %s providers", len(providers))
 
         except Exception as e:
-            self.logger.error(f"Failed to refresh providers: {e}")
+            self.logger.error("Failed to refresh providers: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load providers: {str(e)}")
 
     def _perform_search(self):
@@ -287,22 +287,22 @@ class ExternalDatabaseEditor(QDialog):
                 use_btn.clicked.connect(lambda checked, t=tool: self._use_tool(t))
                 self.search_results_table.setCellWidget(row, 5, use_btn)
 
-            self.logger.info(f"Search found {len(filtered)} tools")
+            self.logger.info("Search found %s tools", len(filtered))
 
         except Exception as e:
-            self.logger.error(f"Search failed: {e}")
+            self.logger.error("Search failed: %s", e)
             QMessageBox.critical(self, "Error", f"Search failed: {str(e)}")
 
     def _edit_tool(self, tool):
         """Edit a tool's properties."""
-        self.logger.debug(f"Editing tool: {tool.get('guid')}")
+        self.logger.debug("Editing tool: %s", tool.get('guid'))
         QMessageBox.information(
             self, "Edit Tool", f"Edit functionality for: {tool.get('description')}"
         )
 
     def _use_tool(self, tool):
         """Use selected tool (typically for feeding back to Feeds and Speeds)."""
-        self.logger.debug(f"Using tool: {tool.get('guid')}")
+        self.logger.debug("Using tool: %s", tool.get('guid'))
         QMessageBox.information(self, "Tool Selected", f"Selected: {tool.get('description')}")
         self.accept()
 
@@ -314,11 +314,11 @@ class ExternalDatabaseEditor(QDialog):
             )
 
             if file_path:
-                self.logger.info(f"Exporting database to {file_path}")
+                self.logger.info("Exporting database to %s", file_path)
                 QMessageBox.information(self, "Export", "Database exported successfully")
 
         except Exception as e:
-            self.logger.error(f"Export failed: {e}")
+            self.logger.error("Export failed: %s", e)
             QMessageBox.critical(self, "Error", f"Export failed: {str(e)}")
 
     def _import_database(self):
@@ -332,10 +332,10 @@ class ExternalDatabaseEditor(QDialog):
             )
 
             if file_path:
-                self.logger.info(f"Importing database from {file_path}")
+                self.logger.info("Importing database from %s", file_path)
                 QMessageBox.information(self, "Import", "Database imported successfully")
                 self._refresh_tools_table()
 
         except Exception as e:
-            self.logger.error(f"Import failed: {e}")
+            self.logger.error("Import failed: %s", e)
             QMessageBox.critical(self, "Error", f"Import failed: {str(e)}")

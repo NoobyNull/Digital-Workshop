@@ -176,7 +176,7 @@ class STLParser(BaseParser):
                 return STLFormat.UNKNOWN
 
         except Exception as e:
-            self.logger.error(f"Error detecting STL format: {str(e)}")
+            self.logger.error("Error detecting STL format: %s", str(e))
             raise STLParseError(f"Failed to detect STL format: {str(e)}")
 
     def _parse_binary_stl(
@@ -216,7 +216,7 @@ class STLParser(BaseParser):
                     raise STLParseError("Invalid binary STL: cannot read triangle count")
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
-                self.logger.info(f"Parsing binary STL with {triangle_count} triangles")
+                self.logger.info("Parsing binary STL with %s triangles", triangle_count)
 
                 # Probe hardware acceleration and report status
                 backend = None
@@ -235,7 +235,7 @@ class STLParser(BaseParser):
                         [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
                     )
                 except Exception as accel_err:
-                    self.logger.warning(f"Hardware acceleration probe failed: {accel_err}")
+                    self.logger.warning("Hardware acceleration probe failed: %s", accel_err)
                     backend = None
 
                 # Validate triangle count is reasonable
@@ -275,12 +275,12 @@ class STLParser(BaseParser):
                             ),
                         )
                     except Exception as gpu_error:
-                        self.logger.warning(f"GPU parsing failed, falling back to CPU: {gpu_error}")
+                        self.logger.warning("GPU parsing failed, falling back to CPU: %s", gpu_error)
                         # Continue to CPU fallback below
 
                 # Decide path: array-based fast path for large models, else vectorized object path
                 if (np is not None) and (triangle_count >= 100000):
-                    self.logger.info(f"Using array-based fast path for {triangle_count} triangles")
+                    self.logger.info("Using array-based fast path for %s triangles", triangle_count)
                     return self._parse_binary_stl_arrays(file_path, progress_callback)
 
                 use_vectorized = (np is not None) and (triangle_count >= 20000)
@@ -358,7 +358,7 @@ class STLParser(BaseParser):
                     min_xyz = verts.reshape(-1, 3).min(axis=0)
                     max_xyz = verts.reshape(-1, 3).max(axis=0)
                     t_bnd1 = time.time()
-                    self.logger.info(f"Bounds computed in {t_bnd1 - t_bnd0:.2f}s")
+                    self.logger.info("Bounds computed in %ss", t_bnd1 - t_bnd0:.2f)
 
                     # Build Triangle dataclasses using multiple processes for large datasets
                     if progress_callback:
@@ -380,7 +380,7 @@ class STLParser(BaseParser):
                         if int(indices[i]) < int(indices[i + 1])
                     ]
 
-                    self.logger.info(f"Triangle build workers: {max_workers}")
+                    self.logger.info("Triangle build workers: %s", max_workers)
                     t_bld0 = time.time()
                     built_total = 0
                     with ProcessPoolExecutor(max_workers=max_workers) as pool:
@@ -406,7 +406,7 @@ class STLParser(BaseParser):
 
                     # Finalize build timing
                     t_bld1 = time.time()
-                    self.logger.info(f"Triangle build completed in {t_bld1 - t_bld0:.2f}s")
+                    self.logger.info("Triangle build completed in %ss", t_bld1 - t_bld0:.2f)
                     # Final GC to release worker-side memory sooner
                     gc.collect()
                     # Memory snapshot (best-effort)
@@ -414,7 +414,7 @@ class STLParser(BaseParser):
                         import psutil  # type: ignore
 
                         rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
-                        self.logger.info(f"Process RSS after vectorized parse: {rss_mb:.0f} MB")
+                        self.logger.info("Process RSS after vectorized parse: %s MB", rss_mb:.0f)
                     except Exception:
                         pass
 
@@ -518,7 +518,7 @@ class STLParser(BaseParser):
                 )
 
         except Exception as e:
-            self.logger.error(f"Error parsing binary STL: {str(e)}")
+            self.logger.error("Error parsing binary STL: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
 
     def _parse_binary_stl_arrays(
@@ -544,7 +544,7 @@ class STLParser(BaseParser):
                     raise STLParseError("Invalid binary STL: cannot read triangle count")
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
-                self.logger.info(f"Parsing binary STL with {triangle_count} triangles [array path]")
+                self.logger.info("Parsing binary STL with %s triangles [array path]", triangle_count)
 
                 if triangle_count <= 0:
                     raise STLParseError("Invalid triangle count in STL")
@@ -621,7 +621,7 @@ class STLParser(BaseParser):
                 min_xyz = flat.min(axis=0)
                 max_xyz = flat.max(axis=0)
                 t_bnd1 = time.time()
-                self.logger.info(f"Bounds computed in {t_bnd1 - t_bnd0:.2f}s")
+                self.logger.info("Bounds computed in %ss", t_bnd1 - t_bnd0:.2f)
 
                 # free large temps early
                 del verts
@@ -632,7 +632,7 @@ class STLParser(BaseParser):
                     import psutil  # type: ignore
 
                     rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
-                    self.logger.info(f"Process RSS after array parse: {rss_mb:.0f} MB")
+                    self.logger.info("Process RSS after array parse: %s MB", rss_mb:.0f)
                 except Exception:
                     pass
 
@@ -669,7 +669,7 @@ class STLParser(BaseParser):
                 )
 
         except Exception as e:
-            self.logger.error(f"Error in array-based binary STL parse: {str(e)}")
+            self.logger.error("Error in array-based binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
     def _parse_ascii_stl(
@@ -837,7 +837,7 @@ class STLParser(BaseParser):
                 )
 
         except Exception as e:
-            self.logger.error(f"Error parsing ASCII STL: {str(e)}")
+            self.logger.error("Error parsing ASCII STL: %s", str(e))
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
     def _parse_file_internal(
@@ -869,7 +869,7 @@ class STLParser(BaseParser):
         if file_size == 0:
             raise STLParseError("STL file is empty")
 
-        self.logger.info(f"Starting STL parsing: {file_path} ({file_size} bytes)")
+        self.logger.info("Starting STL parsing: %s ({file_size} bytes)", file_path)
 
         try:
             # Detect format
@@ -886,7 +886,7 @@ class STLParser(BaseParser):
                 raise STLParseError(f"Unsupported STL format: {format_type}")
 
         except Exception as e:
-            self.logger.error(f"Failed to parse STL file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse STL file %s: {str(e)}", file_path)
             raise
 
     def _parse_metadata_only_internal(self, file_path: str) -> Model:
@@ -944,11 +944,11 @@ class STLParser(BaseParser):
                 file_path=str(file_path),
             )
 
-            self.logger.info(f"Parsed STL metadata: {file_path} ({triangle_count} triangles)")
+            self.logger.info("Parsed STL metadata: %s ({triangle_count} triangles)", file_path)
             return model
 
         except Exception as e:
-            self.logger.error(f"Failed to parse STL metadata: {str(e)}")
+            self.logger.error("Failed to parse STL metadata: %s", str(e))
             raise STLParseError(f"Failed to parse STL metadata: {str(e)}")
 
     def _get_binary_triangle_count(self, file_path: Path) -> int:
@@ -1017,7 +1017,7 @@ class STLParser(BaseParser):
                 lod_model = loader.load_progressive(file_path, progress_callback)
                 return lod_model.active_model
             except Exception as e:
-                self.logger.warning(f"GPU progressive loading failed, falling back to CPU: {e}")
+                self.logger.warning("GPU progressive loading failed, falling back to CPU: %s", e)
 
         # Fallback to CPU-based progressive loading
         # Get full model first

@@ -169,7 +169,7 @@ class LibraryStructureDetector:
             return analysis
 
         except Exception as e:
-            logger.error(f"Failed to analyze library structure: {str(e)}")
+            logger.error("Failed to analyze library structure: %s", str(e))
             raise
 
     def _categorize_file(self, filename: str, ext: str) -> str:

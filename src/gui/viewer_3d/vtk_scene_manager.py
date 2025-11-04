@@ -70,7 +70,7 @@ class VTKSceneManager:
                 "viewer/enable_gradient", config.enable_gradient, type=bool
             )
         except Exception as e:
-            logger.warning(f"Failed to load grid/ground/gradient settings from QSettings: {e}")
+            logger.warning("Failed to load grid/ground/gradient settings from QSettings: %s", e)
             self.grid_visible = True
             self.grid_color = vtk_rgb("grid")
             self.grid_size = 10.0
@@ -116,7 +116,7 @@ class VTKSceneManager:
                 pass
 
         except Exception as e:
-            logger.debug(f"Could not fully suppress vtkOutputWindow: {e}")
+            logger.debug("Could not fully suppress vtkOutputWindow: %s", e)
 
     def _setup_renderer(self) -> None:
         """Set up the VTK renderer with lighting."""
@@ -141,7 +141,7 @@ class VTKSceneManager:
             # Use solid background color from theme
             bg_rgb = vtk_rgb("canvas_bg")
             self.renderer.SetBackground(*bg_rgb)
-            logger.debug(f"Applied solid background color: {bg_rgb}")
+            logger.debug("Applied solid background color: %s", bg_rgb)
 
         # Configure multi-threading respecting resource limits
         try:
@@ -173,12 +173,12 @@ class VTKSceneManager:
                 except Exception:
                     pass
         except Exception as e:
-            logger.warning(f"Failed to configure VTK thread count: {e}")
+            logger.warning("Failed to configure VTK thread count: %s", e)
             # Fallback to conservative default
             try:
                 threads = max(2, int((_mp.cpu_count() or 2) * 0.5))
                 vtk.vtkMultiThreader.SetGlobalDefaultNumberOfThreads(threads)
-                logger.info(f"VTK thread count set to {threads} (fallback conservative)")
+                logger.info("VTK thread count set to %s (fallback conservative)", threads)
             except Exception:
                 pass
 
@@ -293,12 +293,12 @@ class VTKSceneManager:
 
             if self.grid_actor:
                 self.grid_actor.SetVisibility(self.grid_visible)
-                logger.info(f"Grid actor visibility set to {self.grid_visible}")
+                logger.info("Grid actor visibility set to %s", self.grid_visible)
             if self.ground_actor:
                 self.ground_actor.SetVisibility(self.ground_visible)
-                logger.info(f"Ground actor visibility set to {self.ground_visible}")
+                logger.info("Ground actor visibility set to %s", self.ground_visible)
         except Exception as e:
-            logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
+            logger.error("Failed to create initial grid/ground: %s", e, exc_info=True)
 
     def _setup_camera(self) -> None:
         """Set up default camera."""
@@ -310,14 +310,14 @@ class VTKSceneManager:
         self.grid_visible = not self.grid_visible
         if self.grid_actor:
             self.grid_actor.SetVisibility(self.grid_visible)
-            logger.debug(f"Grid visibility toggled to {self.grid_visible}")
+            logger.debug("Grid visibility toggled to %s", self.grid_visible)
 
     def toggle_ground_plane(self) -> None:
         """Toggle ground plane visibility."""
         self.ground_visible = not self.ground_visible
         if self.ground_actor:
             self.ground_actor.SetVisibility(self.ground_visible)
-            logger.debug(f"Ground plane visibility toggled to {self.ground_visible}")
+            logger.debug("Ground plane visibility toggled to %s", self.ground_visible)
 
     def update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
         """Update grid visualization using config settings."""
@@ -423,7 +423,7 @@ class VTKSceneManager:
                     logger.debug("Fallback render failed, continuing anyway")
 
             except Exception as e:
-                logger.debug(f"Render error: {e}")
+                logger.debug("Render error: %s", e)
                 # Continue silently - errors are handled by the fallback renderer
 
     def reset_camera(self) -> None:
@@ -465,7 +465,7 @@ class VTKSceneManager:
             self.renderer = None
 
         except Exception as e:
-            logger.warning(f"Error during enhanced VTK cleanup: {e}")
+            logger.warning("Error during enhanced VTK cleanup: %s", e)
             # Fallback to basic cleanup
             self._basic_cleanup()
 
@@ -479,19 +479,19 @@ class VTKSceneManager:
                 if self.render_window:
                     self.render_window.Finalize()
             except Exception as e:
-                logger.debug(f"Basic render window cleanup error: {e}")
+                logger.debug("Basic render window cleanup error: %s", e)
 
             try:
                 if self.interactor:
                     self.interactor.TerminateApp()
             except Exception as e:
-                logger.debug(f"Basic interactor cleanup error: {e}")
+                logger.debug("Basic interactor cleanup error: %s", e)
 
             try:
                 if self.renderer:
                     self.renderer.RemoveAllViewProps()
             except Exception as e:
-                logger.debug(f"Basic renderer cleanup error: {e}")
+                logger.debug("Basic renderer cleanup error: %s", e)
 
             # Clear references
             self.grid_actor = None
@@ -505,7 +505,7 @@ class VTKSceneManager:
             logger.info("Basic VTK cleanup completed")
 
         except Exception as e:
-            logger.error(f"Error during basic cleanup: {e}")
+            logger.error("Error during basic cleanup: %s", e)
 
     def reload_settings_from_qsettings(self) -> None:
         """
@@ -564,7 +564,7 @@ class VTKSceneManager:
             logger.info("Viewer settings reloaded from QSettings and applied")
 
         except Exception as e:
-            logger.error(f"Failed to reload settings from QSettings: {e}", exc_info=True)
+            logger.error("Failed to reload settings from QSettings: %s", e, exc_info=True)
 
     def update_gradient_colors(
         self,
@@ -614,4 +614,4 @@ class VTKSceneManager:
             self.render()
 
         except Exception as e:
-            logger.error(f"Failed to update gradient colors: {e}", exc_info=True)
+            logger.error("Failed to update gradient colors: %s", e, exc_info=True)

@@ -147,7 +147,7 @@ class FileChunker:
                 "can_chunk": format_type == "binary" and triangle_count > 1000,
             }
         except Exception as e:
-            self.logger.error(f"Failed to get chunk metadata for {file_path}: {e}")
+            self.logger.error("Failed to get chunk metadata for %s: {e}", file_path)
             return {"file_path": str(file_path), "error": str(e), "can_chunk": False}
 
     def _analyze_file(self, file_path: Path) -> Tuple[str, int]:

@@ -93,7 +93,7 @@ class ThemeService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply theme: {e}", exc_info=True)
+            logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
     def _apply_fallback_theme(self, app: QApplication, theme: str) -> bool:
@@ -188,11 +188,11 @@ class ThemeService:
             self._current_library = "builtin"
             self._save_theme()
 
-            logger.info(f"Applied fallback theme: {theme} (effective: {effective_theme})")
+            logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply fallback theme: {e}", exc_info=True)
+            logger.error("Failed to apply fallback theme: %s", e, exc_info=True)
             return False
 
     # Old qt-material implementation removed - use built-in styling instead
@@ -301,7 +301,7 @@ class ThemeService:
     #     self._current_library = "fallback"
     #     self._save_theme()
     #
-    #     logger.info(f"Applied fallback theme: {theme} (effective: {effective_theme})")
+    #     logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
 
     # DEPRECATED: Old qt-material methods - kept for reference only
     # def get_available_themes(self) -> dict:

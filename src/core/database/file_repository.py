@@ -84,11 +84,11 @@ class FileRepository:
                 )
                 conn.commit()
 
-            logger.info(f"File added to project {project_id}: {file_name}")
+            logger.info("File added to project %s: {file_name}", project_id)
             return cursor.lastrowid
 
         except sqlite3.Error as e:
-            logger.error(f"Database error adding file: {str(e)}")
+            logger.error("Database error adding file: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -111,7 +111,7 @@ class FileRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving file: {str(e)}")
+            logger.error("Database error retrieving file: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -137,7 +137,7 @@ class FileRepository:
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving files: {str(e)}")
+            logger.error("Database error retrieving files: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -164,7 +164,7 @@ class FileRepository:
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving files by status: {str(e)}")
+            logger.error("Database error retrieving files by status: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -190,11 +190,11 @@ class FileRepository:
                 )
                 conn.commit()
 
-            logger.info(f"File status updated: {file_id} -> {status}")
+            logger.info("File status updated: %s -> {status}", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error updating file status: {str(e)}")
+            logger.error("Database error updating file status: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -234,11 +234,11 @@ class FileRepository:
                 cursor.execute(f"UPDATE files SET {set_clause} WHERE id = ?", values)
                 conn.commit()
 
-            logger.info(f"File updated: {file_id}")
+            logger.info("File updated: %s", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error updating file: {str(e)}")
+            logger.error("Database error updating file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -258,11 +258,11 @@ class FileRepository:
                 cursor.execute("DELETE FROM files WHERE id = ?", (file_id,))
                 conn.commit()
 
-            logger.info(f"File deleted: {file_id}")
+            logger.info("File deleted: %s", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error deleting file: {str(e)}")
+            logger.error("Database error deleting file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -284,7 +284,7 @@ class FileRepository:
                 return result[0] if result else 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error counting files: {str(e)}")
+            logger.error("Database error counting files: %s", str(e))
             return 0
 
     @log_function_call(logger)
@@ -311,5 +311,5 @@ class FileRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error finding duplicate: {str(e)}")
+            logger.error("Database error finding duplicate: %s", str(e))
             return None

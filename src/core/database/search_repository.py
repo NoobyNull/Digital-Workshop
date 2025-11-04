@@ -100,7 +100,7 @@ class SearchRepository:
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search models: {e}")
+            logger.error("Failed to search models: %s", e)
             raise
 
     @log_function_call(logger)
@@ -137,7 +137,7 @@ class SearchRepository:
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by filename: {e}")
+            logger.error("Failed to search by filename: %s", e)
             raise
 
     @log_function_call(logger)
@@ -190,11 +190,11 @@ class SearchRepository:
                 rows = cursor.fetchall()
 
                 results = [dict(row) for row in rows]
-                logger.debug(f"Metadata search returned {len(results)} results")
+                logger.debug("Metadata search returned %s results", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by metadata: {e}")
+            logger.error("Failed to search by metadata: %s", e)
             raise
 
     @log_function_call(logger)
@@ -231,11 +231,11 @@ class SearchRepository:
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(f"Found {len(results)} models from last {days} days")
+                logger.debug("Found %s models from last {days} days", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get recent models: {e}")
+            logger.error("Failed to get recent models: %s", e)
             raise
 
     @log_function_call(logger)
@@ -269,9 +269,9 @@ class SearchRepository:
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(f"Found {len(results)} popular models")
+                logger.debug("Found %s popular models", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get popular models: {e}")
+            logger.error("Failed to get popular models: %s", e)
             raise

@@ -47,7 +47,7 @@ class SystemThemeDetector:
             elif system == "Linux":
                 return self._detect_linux()
         except Exception as e:
-            logger.warning(f"Failed to detect system theme: {e}")
+            logger.warning("Failed to detect system theme: %s", e)
 
         return "light"  # Default fallback
 
@@ -69,7 +69,7 @@ class SystemThemeDetector:
             # value == 1 means light theme, value == 0 means dark theme
             return "light" if value == 1 else "dark"
         except Exception as e:
-            logger.debug(f"Windows theme detection failed: {e}")
+            logger.debug("Windows theme detection failed: %s", e)
             return "light"
 
     def _detect_macos(self) -> Literal["light", "dark"]:
@@ -94,7 +94,7 @@ class SystemThemeDetector:
                 return "dark"
             return "light"
         except Exception as e:
-            logger.debug(f"macOS theme detection failed: {e}")
+            logger.debug("macOS theme detection failed: %s", e)
             return "light"
 
     def _detect_linux(self) -> Literal["light", "dark"]:
@@ -140,13 +140,13 @@ class SystemThemeDetector:
 
             return "light"
         except Exception as e:
-            logger.debug(f"Linux theme detection failed: {e}")
+            logger.debug("Linux theme detection failed: %s", e)
             return "light"
 
     def _detect_system_theme(self) -> None:
         """Detect and cache current system theme."""
         self._current_mode = self.detect()
-        logger.info(f"System theme detected: {self._current_mode}")
+        logger.info("System theme detected: %s", self._current_mode)
 
     def get_current_mode(self) -> Literal["light", "dark"]:
         """Get the currently detected system theme mode."""
@@ -178,6 +178,6 @@ class SystemThemeDetector:
         self._detect_system_theme()
 
         if old_mode != self._current_mode:
-            logger.info(f"System theme changed: {old_mode} -> {self._current_mode}")
+            logger.info("System theme changed: %s -> {self._current_mode}", old_mode)
 
         return self._current_mode

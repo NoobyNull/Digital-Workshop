@@ -96,7 +96,7 @@ class ThreeMFParser(BaseParser):
         # Check file exists and get Path object
         file_path = self._check_file_exists(file_path)
 
-        self.logger.info(f"Starting 3MF parsing: {file_path} ({file_path.stat().st_size} bytes)")
+        self.logger.info("Starting 3MF parsing: %s ({file_path.stat().st_size} bytes)", file_path)
 
         start_time = time.time()
 
@@ -123,7 +123,7 @@ class ThreeMFParser(BaseParser):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to parse 3MF file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse 3MF file %s: {str(e)}", file_path)
             raise ParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_3mf_file(
@@ -244,7 +244,7 @@ class ThreeMFParser(BaseParser):
                 self.objects[object_id] = obj
 
             except (ValueError, AttributeError) as e:
-                self.logger.warning(f"Invalid object element: {str(e)}")
+                self.logger.warning("Invalid object element: %s", str(e))
                 continue
 
     def _parse_build_items(self, root: ET.Element) -> None:
@@ -272,7 +272,7 @@ class ThreeMFParser(BaseParser):
                 self.build_items.append(build_item)
 
             except (ValueError, AttributeError) as e:
-                self.logger.warning(f"Invalid build item element: {str(e)}")
+                self.logger.warning("Invalid build item element: %s", str(e))
                 continue
 
     def _parse_transform(self, transform_str: str) -> List[float]:
@@ -312,7 +312,7 @@ class ThreeMFParser(BaseParser):
 
             # Ensure we have 16 values
             if len(values) != 16:
-                self.logger.warning(f"Invalid transform: {transform_str}, using identity")
+                self.logger.warning("Invalid transform: %s, using identity", transform_str)
                 return [
                     1.0,
                     0.0,
@@ -335,7 +335,7 @@ class ThreeMFParser(BaseParser):
             return values
 
         except ValueError:
-            self.logger.warning(f"Invalid transform values: {transform_str}, using identity")
+            self.logger.warning("Invalid transform values: %s, using identity", transform_str)
             return [
                 1.0,
                 0.0,
@@ -385,7 +385,7 @@ class ThreeMFParser(BaseParser):
         # Get the object
         obj = self.objects.get(build_item.object_id)
         if obj is None:
-            self.logger.warning(f"Object {build_item.object_id} not found")
+            self.logger.warning("Object %s not found", build_item.object_id)
             return triangles
 
         # Process triangles
@@ -399,7 +399,7 @@ class ThreeMFParser(BaseParser):
                 if 0 <= vertex_idx < len(obj.vertices):
                     vertices.append(obj.vertices[vertex_idx])
                 else:
-                    self.logger.warning(f"Vertex index {vertex_idx} out of range")
+                    self.logger.warning("Vertex index %s out of range", vertex_idx)
                     break
 
             if len(vertices) != 3:
@@ -460,7 +460,7 @@ class ThreeMFParser(BaseParser):
         # Get the component object
         comp_obj = self.objects.get(component.object_id)
         if comp_obj is None:
-            self.logger.warning(f"Component object {component.object_id} not found")
+            self.logger.warning("Component object %s not found", component.object_id)
             return triangles
 
         # Combine transforms
@@ -477,7 +477,7 @@ class ThreeMFParser(BaseParser):
                 if 0 <= vertex_idx < len(comp_obj.vertices):
                     vertices.append(comp_obj.vertices[vertex_idx])
                 else:
-                    self.logger.warning(f"Vertex index {vertex_idx} out of range")
+                    self.logger.warning("Vertex index %s out of range", vertex_idx)
                     break
 
             if len(vertices) != 3:

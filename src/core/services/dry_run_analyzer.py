@@ -110,7 +110,7 @@ class DryRunAnalyzer:
             return report
 
         except Exception as e:
-            logger.error(f"Failed to perform dry run analysis: {str(e)}")
+            logger.error("Failed to perform dry run analysis: %s", str(e))
             raise
 
     def _categorize_files(self, files: List) -> Dict[str, int]:
@@ -131,7 +131,7 @@ class DryRunAnalyzer:
                 if os.path.exists(file_result.file_path):
                     total += os.path.getsize(file_result.file_path)
             except Exception as e:
-                logger.warning(f"Failed to get size of {file_result.file_path}: {str(e)}")
+                logger.warning("Failed to get size of %s: {str(e)}", file_result.file_path)
 
         return total
 
@@ -167,7 +167,7 @@ class DryRunAnalyzer:
                 "total_folders": analysis.total_folders,
             }
         except Exception as e:
-            logger.warning(f"Failed to analyze structure: {str(e)}")
+            logger.warning("Failed to analyze structure: %s", str(e))
             return {}
 
     def _generate_recommendations(

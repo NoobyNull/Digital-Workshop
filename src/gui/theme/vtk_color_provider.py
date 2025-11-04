@@ -215,7 +215,7 @@ class VTKColorProvider(QObject):
         """
         if vtk_manager not in self._vtk_managers:
             self._vtk_managers.append(vtk_manager)
-            logger.debug(f"Registered VTK manager: {vtk_manager.__class__.__name__}")
+            logger.debug("Registered VTK manager: %s", vtk_manager.__class__.__name__)
 
     def unregister_vtk_manager(self, vtk_manager: "VTKSceneManager") -> None:
         """
@@ -226,7 +226,7 @@ class VTKColorProvider(QObject):
         """
         if vtk_manager in self._vtk_managers:
             self._vtk_managers.remove(vtk_manager)
-            logger.debug(f"Unregistered VTK manager: {vtk_manager.__class__.__name__}")
+            logger.debug("Unregistered VTK manager: %s", vtk_manager.__class__.__name__)
 
     def update_vtk_colors(self) -> None:
         """Update all registered VTK managers with new colors."""
@@ -250,10 +250,10 @@ class VTKColorProvider(QObject):
             self.colors_changed.emit()
             self.vtk_colors_updated.emit(self.get_all_vtk_colors())
 
-            logger.debug(f"Updated {len(self._vtk_managers)} VTK managers")
+            logger.debug("Updated %s VTK managers", len(self._vtk_managers))
 
         except Exception as e:
-            logger.error(f"Failed to update VTK colors: {e}", exc_info=True)
+            logger.error("Failed to update VTK colors: %s", e, exc_info=True)
 
     def _update_vtk_color_cache(self) -> None:
         """Update the cached VTK colors."""
@@ -281,7 +281,7 @@ class VTKColorProvider(QObject):
         for color_name in common_colors:
             self.get_vtk_color(color_name)
 
-        logger.debug(f"Updated VTK color cache with {len(self._cached_vtk_colors)} colors")
+        logger.debug("Updated VTK color cache with %s colors", len(self._cached_vtk_colors))
 
     @staticmethod
     def _hex_to_vtk_rgb(hex_color: str) -> Tuple[float, float, float]:
@@ -320,7 +320,7 @@ class VTKColorProvider(QObject):
         if vtk_color_name in self._cached_vtk_colors:
             del self._cached_vtk_colors[vtk_color_name]
 
-        logger.debug(f"Added custom mapping: {vtk_color_name} -> {qt_material_color}")
+        logger.debug("Added custom mapping: %s -> {qt_material_color}", vtk_color_name)
 
     def remove_custom_mapping(self, vtk_color_name: str) -> bool:
         """
@@ -339,7 +339,7 @@ class VTKColorProvider(QObject):
             if vtk_color_name in self._cached_vtk_colors:
                 del self._cached_vtk_colors[vtk_color_name]
 
-            logger.debug(f"Removed custom mapping: {vtk_color_name}")
+            logger.debug("Removed custom mapping: %s", vtk_color_name)
             return True
 
         return False
@@ -355,7 +355,7 @@ class VTKColorProvider(QObject):
 
     def _on_theme_changed(self, theme: str, variant: str) -> None:
         """Handle theme change from theme service."""
-        logger.debug(f"VTK provider handling theme change: {theme}/{variant}")
+        logger.debug("VTK provider handling theme change: %s/{variant}", theme)
         self.update_vtk_colors()
 
     def _on_colors_updated(self) -> None:
@@ -369,11 +369,11 @@ class VTKColorProvider(QObject):
         vtk_colors = self.get_all_vtk_colors()
 
         logger.info("VTK Color Provider Info:")
-        logger.info(f"  Current theme: {theme}/{variant}")
-        logger.info(f"  Registered VTK managers: {len(self._vtk_managers)}")
-        logger.info(f"  Color mappings: {len(self._vtk_color_mapping)}")
-        logger.info(f"  Cached colors: {len(self._cached_vtk_colors)}")
-        logger.debug(f"  Available VTK colors: {list(vtk_colors.keys())}")
+        logger.info("  Current theme: %s/{variant}", theme)
+        logger.info("  Registered VTK managers: %s", len(self._vtk_managers))
+        logger.info("  Color mappings: %s", len(self._vtk_color_mapping))
+        logger.info("  Cached colors: %s", len(self._cached_vtk_colors))
+        logger.debug("  Available VTK colors: %s", list(vtk_colors.keys()))
 
 
 # Global instance for easy access

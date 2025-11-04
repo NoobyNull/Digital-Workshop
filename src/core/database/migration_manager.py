@@ -201,7 +201,7 @@ class MigrationManager:
                 logger.debug("Database version tracking initialized")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to initialize version tracking: {str(e)}")
+            logger.error("Failed to initialize version tracking: %s", str(e))
             raise
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -230,7 +230,7 @@ class MigrationManager:
 
         try:
             if not os.path.exists(self.migrations_dir):
-                logger.info(f"Migrations directory {self.migrations_dir} does not exist")
+                logger.info("Migrations directory %s does not exist", self.migrations_dir)
                 return migrations
 
             for filename in os.listdir(self.migrations_dir):
@@ -243,10 +243,10 @@ class MigrationManager:
             # Sort migrations by version
             migrations.sort(key=lambda m: DatabaseVersion.from_string(m.version))
 
-            logger.info(f"Discovered {len(migrations)} migrations")
+            logger.info("Discovered %s migrations", len(migrations))
 
         except Exception as e:
-            logger.error(f"Failed to discover migrations: {str(e)}")
+            logger.error("Failed to discover migrations: %s", str(e))
 
         return migrations
 
@@ -269,7 +269,7 @@ class MigrationManager:
             # Parse migration metadata and SQL
             parts = content.split("---")
             if len(parts) < 3:
-                logger.error(f"Invalid migration format in {filename}")
+                logger.error("Invalid migration format in %s", filename)
                 return None
 
             # Parse metadata
@@ -295,11 +295,11 @@ class MigrationManager:
                 estimated_duration=metadata.get("estimated_duration", 0.0),
             )
 
-            logger.debug(f"Loaded migration {migration.version}: {migration.name}")
+            logger.debug("Loaded migration %s: {migration.name}", migration.version)
             return migration
 
         except Exception as e:
-            logger.error(f"Failed to load migration {filename}: {str(e)}")
+            logger.error("Failed to load migration %s: {str(e)}", filename)
             return None
 
     @log_function_call(logger)
@@ -330,7 +330,7 @@ class MigrationManager:
                     return DatabaseVersion(0, 0, 0)
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get current version: {str(e)}")
+            logger.error("Failed to get current version: %s", str(e))
             return DatabaseVersion(0, 0, 0)
 
     @log_function_call(logger)
@@ -357,7 +357,7 @@ class MigrationManager:
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get applied migrations: {str(e)}")
+            logger.error("Failed to get applied migrations: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -379,11 +379,11 @@ class MigrationManager:
 
         try:
             shutil.copy2(self.db_path, backup_path)
-            logger.info(f"Database backup created: {backup_path}")
+            logger.info("Database backup created: %s", backup_path)
             return backup_path
 
         except Exception as e:
-            logger.error(f"Failed to create backup: {str(e)}")
+            logger.error("Failed to create backup: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -404,7 +404,7 @@ class MigrationManager:
         target_ver = DatabaseVersion.from_string(target_version)
 
         if current_version == target_ver:
-            logger.info(f"Database already at version {target_version}")
+            logger.info("Database already at version %s", target_version)
             return []
 
         # Discover migrations
@@ -432,7 +432,7 @@ class MigrationManager:
             operation = "downgrade"
 
         if not required_migrations:
-            logger.warning(f"No migrations found for {operation} to version {target_version}")
+            logger.warning("No migrations found for %s to version {target_version}", operation)
             return []
 
         # Create backup if requested
@@ -443,7 +443,7 @@ class MigrationManager:
         results = []
 
         try:
-            logger.info(f"Starting {operation} from {current_version} to {target_version}")
+            logger.info("Starting %s from {current_version} to {target_version}", operation)
 
             for migration in required_migrations:
                 if operation == "upgrade":
@@ -454,18 +454,18 @@ class MigrationManager:
                 results.append(result)
 
                 if result.status == MigrationStatus.FAILED:
-                    logger.error(f"Migration {migration.version} failed: {result.error_message}")
+                    logger.error("Migration %s failed: {result.error_message}", migration.version)
                     break
                 else:
-                    logger.info(f"Migration {migration.version} completed successfully")
+                    logger.info("Migration %s completed successfully", migration.version)
 
             if all(r.status == MigrationStatus.COMPLETED for r in results):
-                logger.info(f"Successfully {operation}d to version {target_version}")
+                logger.info("Successfully %sd to version {target_version}", operation)
             else:
-                logger.error(f"{operation.capitalize()} to {target_version} failed")
+                logger.error("%s to {target_version} failed", operation.capitalize())
 
         except Exception as e:
-            logger.error(f"Migration process failed: {str(e)}")
+            logger.error("Migration process failed: %s", str(e))
             raise
 
         return results
@@ -545,7 +545,7 @@ class MigrationManager:
         except sqlite3.Error as e:
             result.status = MigrationStatus.FAILED
             result.error_message = str(e)
-            logger.error(f"Migration up failed for {migration.version}: {str(e)}")
+            logger.error("Migration up failed for %s: {str(e)}", migration.version)
 
         result.end_time = time.time()
         self._migration_results.append(result)
@@ -623,7 +623,7 @@ class MigrationManager:
         except sqlite3.Error as e:
             result.status = MigrationStatus.FAILED
             result.error_message = str(e)
-            logger.error(f"Migration down failed for {migration.version}: {str(e)}")
+            logger.error("Migration down failed for %s: {str(e)}", migration.version)
 
         result.end_time = time.time()
         self._migration_results.append(result)
@@ -739,7 +739,7 @@ class MigrationManager:
 
         self._migrations[version] = migration
 
-        logger.info(f"Created migration {version}: {name}")
+        logger.info("Created migration %s: {name}", version)
         return filepath
 
     @log_function_call(logger)
@@ -827,7 +827,7 @@ class MigrationManager:
         except Exception as e:
             validation_results["valid"] = False
             validation_results["errors"].append(f"Validation failed: {str(e)}")
-            logger.error(f"Migration validation failed: {str(e)}")
+            logger.error("Migration validation failed: %s", str(e))
 
         return validation_results
 
@@ -877,11 +877,11 @@ class MigrationManager:
             # Reinitialize version tracking
             self._initialize_version_tracking()
 
-            logger.info(f"Database restored from backup: {backup_path}")
+            logger.info("Database restored from backup: %s", backup_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to restore from backup: {str(e)}")
+            logger.error("Failed to restore from backup: %s", str(e))
             return False
 
     def cleanup_old_backups(self, keep_count: int = 10) -> int:
@@ -910,15 +910,15 @@ class MigrationManager:
                 try:
                     os.remove(filepath)
                     removed_count += 1
-                    logger.debug(f"Removed old backup: {filepath}")
+                    logger.debug("Removed old backup: %s", filepath)
                 except Exception as e:
-                    logger.warning(f"Failed to remove backup {filepath}: {str(e)}")
+                    logger.warning("Failed to remove backup %s: {str(e)}", filepath)
 
-            logger.info(f"Cleaned up {removed_count} old backups")
+            logger.info("Cleaned up %s old backups", removed_count)
             return removed_count
 
         except Exception as e:
-            logger.error(f"Failed to cleanup old backups: {str(e)}")
+            logger.error("Failed to cleanup old backups: %s", str(e))
             return 0
 
 

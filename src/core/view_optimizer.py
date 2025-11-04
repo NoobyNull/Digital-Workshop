@@ -102,7 +102,7 @@ class ViewOptimizer:
             return best_view
 
         except Exception as e:
-            self.logger.error(f"Error finding optimal view: {e}", exc_info=True)
+            self.logger.error("Error finding optimal view: %s", e, exc_info=True)
             # Return safe default view
             return self._get_default_view(bounds)
 

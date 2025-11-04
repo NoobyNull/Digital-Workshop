@@ -114,7 +114,7 @@ class ThemeApplication(QObject):
         # Qt-material availability
         self._qt_material_available = self._check_qt_material_availability()
 
-        logger.info(f"ThemeApplication initialized: qt_material={self._qt_material_available}")
+        logger.info("ThemeApplication initialized: qt_material=%s", self._qt_material_available)
 
     def apply_theme(self, theme: str, variant: str = "blue") -> bool:
         """
@@ -161,7 +161,7 @@ class ThemeApplication(QObject):
                 self.application_completed.emit(
                     True, f"Theme {theme}/{variant} applied successfully"
                 )
-                logger.info(f"Theme {theme}/{variant} applied in {elapsed:.2f}ms")
+                logger.info("Theme %s/{variant} applied in {elapsed:.2f}ms", theme)
                 return True
             else:
                 error_msg = f"Failed to apply theme {theme}/{variant}"
@@ -173,7 +173,7 @@ class ThemeApplication(QObject):
             elapsed = (time.time() - start_time) * 1000
             self._track_application(False, elapsed)
 
-            logger.error(f"Theme application exception: {e}", exc_info=True)
+            logger.error("Theme application exception: %s", e, exc_info=True)
 
             # Attempt rollback if enabled
             if self._rollback_enabled:
@@ -271,7 +271,7 @@ class ThemeApplication(QObject):
         """
         with QMutexLocker(self._application_mutex):
             self._batch_size = max(1, size)
-            logger.debug(f"Batch size set to {self._batch_size}")
+            logger.debug("Batch size set to %s", self._batch_size)
 
     def _validate_theme_request(self, theme: str, variant: str) -> bool:
         """
@@ -288,11 +288,11 @@ class ThemeApplication(QObject):
         valid_variants = ["blue", "amber", "cyan", "red", "green", "purple", "teal"]
 
         if theme not in valid_themes:
-            logger.error(f"Invalid theme: {theme}")
+            logger.error("Invalid theme: %s", theme)
             return False
 
         if variant not in valid_variants:
-            logger.error(f"Invalid variant: {variant}")
+            logger.error("Invalid variant: %s", variant)
             return False
 
         return True
@@ -334,7 +334,7 @@ class ThemeApplication(QObject):
             return qt_success or fallback_success  # At least one method should succeed
 
         except Exception as e:
-            logger.error(f"Staged theme application failed: {e}")
+            logger.error("Staged theme application failed: %s", e)
             return False
 
     def _prepare_application(self, theme: str, variant: str) -> bool:
@@ -360,11 +360,11 @@ class ThemeApplication(QObject):
                 logger.warning("System resources may be constrained")
                 # Continue anyway, but log the warning
 
-            logger.debug(f"Theme application prepared: {theme}/{variant}")
+            logger.debug("Theme application prepared: %s/{variant}", theme)
             return True
 
         except Exception as e:
-            logger.error(f"Theme application preparation failed: {e}")
+            logger.error("Theme application preparation failed: %s", e)
             return False
 
     def _apply_qt_material_theme(self, theme: str, _variant: str) -> bool:
@@ -404,14 +404,14 @@ class ThemeApplication(QObject):
 
             app.setStyleSheet(stylesheet)
 
-            logger.info(f"QDarkStyleSheet theme applied: {palette_name}")
+            logger.info("QDarkStyleSheet theme applied: %s", palette_name)
             return True
 
         except ImportError:
             logger.warning("QDarkStyleSheet library not available")
             return False
         except Exception as e:
-            logger.error(f"QDarkStyleSheet theme application failed: {e}")
+            logger.error("QDarkStyleSheet theme application failed: %s", e)
             return False
 
     def _detect_system_theme(self) -> str:
@@ -472,11 +472,11 @@ class ThemeApplication(QObject):
             # Apply stylesheet
             app.setStyleSheet(stylesheet)
 
-            logger.info(f"Fallback theme applied: {theme}/{variant}")
+            logger.info("Fallback theme applied: %s/{variant}", theme)
             return True
 
         except Exception as e:
-            logger.error(f"Fallback theme application failed: {e}")
+            logger.error("Fallback theme application failed: %s", e)
             return False
 
     def _generate_fallback_stylesheet(self, theme: str, variant: str) -> str:
@@ -954,11 +954,11 @@ class ThemeApplication(QObject):
                 }
             )
 
-            logger.info(f"Widget theme updates: {successful} successful, {failed} failed")
+            logger.info("Widget theme updates: %s successful, {failed} failed", successful)
             return True  # Return True even if some widgets failed
 
         except Exception as e:
-            logger.error(f"Widget theme updates failed: {e}")
+            logger.error("Widget theme updates failed: %s", e)
             return False
 
     def _validate_application(self, theme: str, variant: str) -> bool:
@@ -988,14 +988,14 @@ class ThemeApplication(QObject):
             primary_color = theme_colors.get("primary", "")
 
             if primary_color not in stylesheet:
-                logger.warning(f"Primary color {primary_color} not found in stylesheet")
+                logger.warning("Primary color %s not found in stylesheet", primary_color)
                 # This is a warning, not a failure
 
-            logger.debug(f"Theme application validated: {theme}/{variant}")
+            logger.debug("Theme application validated: %s/{variant}", theme)
             return True
 
         except Exception as e:
-            logger.error(f"Theme application validation failed: {e}")
+            logger.error("Theme application validation failed: %s", e)
             return False
 
     def _get_theme_colors(self, theme: str, variant: str) -> Dict[str, str]:
@@ -1217,7 +1217,7 @@ class ThemeApplication(QObject):
                 }
                 logger.debug("Rollback data stored")
         except Exception as e:
-            logger.warning(f"Failed to store rollback data: {e}")
+            logger.warning("Failed to store rollback data: %s", e)
 
     def _attempt_rollback(self) -> None:
         """Attempt to rollback to previous theme state."""
@@ -1231,7 +1231,7 @@ class ThemeApplication(QObject):
                 app.setStyleSheet(self._rollback_data["stylesheet"])
                 logger.info("Theme application rolled back successfully")
         except Exception as e:
-            logger.error(f"Theme rollback failed: {e}")
+            logger.error("Theme rollback failed: %s", e)
 
     def _track_application(self, success: bool, elapsed_ms: float) -> None:
         """Track theme application performance."""

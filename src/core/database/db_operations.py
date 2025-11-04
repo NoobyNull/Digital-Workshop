@@ -54,7 +54,7 @@ class DatabaseOperations:
             return conn
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to create database connection: {str(e)}")
+            logger.error("Failed to create database connection: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -213,7 +213,7 @@ class DatabaseOperations:
                 logger.info("Database schema initialized successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to initialize database schema: {str(e)}")
+            logger.error("Failed to initialize database schema: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -336,5 +336,5 @@ class DatabaseOperations:
                 logger.info("files table created successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to migrate database schema: {str(e)}")
+            logger.error("Failed to migrate database schema: %s", str(e))
             raise

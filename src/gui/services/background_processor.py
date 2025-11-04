@@ -85,13 +85,13 @@ class BackgroundHasher(QThread):
                         self.model_hashed.emit(model["id"], file_hash)
 
                 except Exception as e:
-                    self.main_window.logger.warning(f"Failed to hash model {model['id']}: {e}")
+                    self.main_window.logger.warning("Failed to hash model %s: {e}", model['id'])
 
             # Signal completion
             self.all_complete.emit()
 
         except Exception as e:
-            self.main_window.logger.error(f"Background hasher error: {e}")
+            self.main_window.logger.error("Background hasher error: %s", e)
 
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate xxHash128 for a file."""
@@ -157,7 +157,7 @@ class BackgroundProcessor:
 
             self.logger.info("Background hasher started")
         except Exception as e:
-            self.logger.error(f"Failed to start background hasher: {e}")
+            self.logger.error("Failed to start background hasher: %s", e)
 
     def toggle_background_hasher(self) -> None:
         """Toggle pause/resume of background hasher."""
@@ -176,7 +176,7 @@ class BackgroundProcessor:
                 self.background_hasher.pause()
                 self.main_window.statusBar().showMessage("Background hashing paused", 2000)
         except Exception as e:
-            self.logger.error(f"Failed to toggle background hasher: {e}")
+            self.logger.error("Failed to toggle background hasher: %s", e)
 
     def _on_hash_progress(self, filename: str) -> None:
         """Handle hash progress update."""
@@ -188,7 +188,7 @@ class BackgroundProcessor:
     def _on_model_hashed(self, model_id: int, file_hash: str) -> None:
         """Handle model hashed successfully."""
         try:
-            self.logger.debug(f"Model {model_id} hashed: {file_hash[:16]}...")
+            self.logger.debug("Model %s hashed: {file_hash[:16]}...", model_id)
         except Exception:
             pass
 
@@ -228,7 +228,7 @@ class BackgroundProcessor:
                     db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
         except Exception as e:
-            self.logger.error(f"Failed to handle duplicate: {e}")
+            self.logger.error("Failed to handle duplicate: %s", e)
 
     def _on_hashing_complete(self) -> None:
         """Handle all hashing complete."""

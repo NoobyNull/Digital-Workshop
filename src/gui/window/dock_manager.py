@@ -82,7 +82,7 @@ class DockManager:
             self.logger.info("Model library widget created successfully")
 
         except ImportError as e:
-            self.logger.warning(f"Failed to import model library widget: {str(e)}")
+            self.logger.warning("Failed to import model library widget: %s", str(e))
 
             # Fallback to placeholder
             model_library_widget = QTextEdit()
@@ -162,7 +162,7 @@ class DockManager:
             self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
             self.logger.info("Properties dock added to right dock area")
         except Exception as e:
-            self.logger.warning(f"Failed to add properties dock: {e}")
+            self.logger.warning("Failed to add properties dock: %s", e)
 
         try:
             self._register_dock_for_snapping(self.properties_dock)
@@ -179,7 +179,7 @@ class DockManager:
             # Ensure the dock widget can resize properly
             self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         except Exception as e:
-            self.logger.warning(f"Failed to set properties dock size constraints: {e}")
+            self.logger.warning("Failed to set properties dock size constraints: %s", e)
 
         # Lighting control dialog (floating, initially hidden)
         try:
@@ -219,9 +219,9 @@ class DockManager:
                     )
                     self.logger.info("Lighting panel signals connected to main window handlers")
             except Exception as e:
-                self.logger.warning(f"Failed to connect lighting panel signals: {e}")
+                self.logger.warning("Failed to connect lighting panel signals: %s", e)
         except Exception as e:
-            self.logger.warning(f"Failed to create LightingControlPanel: {e}")
+            self.logger.warning("Failed to create LightingControlPanel: %s", e)
 
         # Metadata dock (flexible positioning)
         self.metadata_dock = QDockWidget("Metadata Editor", self.main_window)
@@ -285,7 +285,7 @@ class DockManager:
             # Let qt-material handle all dock styling
             self.logger.info("Metadata editor widget created successfully (tabbed)")
         except ImportError as e:
-            self.logger.warning(f"Failed to import metadata editor widget: {str(e)}")
+            self.logger.warning("Failed to import metadata editor widget: %s", str(e))
 
             # Fallback to placeholder
             metadata_widget = QTextEdit()
@@ -324,7 +324,7 @@ class DockManager:
             except Exception:
                 pass
         except Exception as e:
-            self.logger.warning(f"Failed to add metadata dock: {e}")
+            self.logger.warning("Failed to add metadata dock: %s", e)
 
         try:
             self._register_dock_for_snapping(self.metadata_dock)
@@ -377,13 +377,13 @@ class DockManager:
                 settings = QSettings()
                 meta_visible = settings.value("metadata_panel/visible", True, type=bool)
                 self.main_window.metadata_dock.setVisible(bool(meta_visible))
-                self.logger.info(f"Loaded metadata panel visibility: {bool(meta_visible)}")
+                self.logger.info("Loaded metadata panel visibility: %s", bool(meta_visible))
                 try:
                     self._update_metadata_action_state()
                 except Exception:
                     pass
         except Exception as e:
-            self.logger.warning(f"Failed to load metadata panel visibility: {e}")
+            self.logger.warning("Failed to load metadata panel visibility: %s", e)
 
         # Ensure metadata dock is visible but don't force positioning
         try:
@@ -393,7 +393,7 @@ class DockManager:
                     self.main_window.metadata_dock.setVisible(True)
                 self.logger.info("Metadata dock made visible - user can position freely")
         except Exception as e:
-            self.logger.warning(f"Failed to ensure metadata dock visibility: {e}")
+            self.logger.warning("Failed to ensure metadata dock visibility: %s", e)
 
         self.logger.debug("Dock widgets setup completed")
 
@@ -402,9 +402,9 @@ class DockManager:
         try:
             # When metadata tab is active, it can expand to fill the right side
             # This is handled by Qt's dock system automatically
-            self.logger.debug(f"Right dock tab changed to index {index}")
+            self.logger.debug("Right dock tab changed to index %s", index)
         except Exception as e:
-            self.logger.warning(f"Error handling dock tab change: {e}")
+            self.logger.warning("Error handling dock tab change: %s", e)
 
     def iter_docks(self) -> List[QDockWidget]:
         """Iterate over all known dock widgets."""
@@ -468,7 +468,7 @@ class DockManager:
             except Exception:
                 pass
         except Exception as e:
-            self.logger.warning(f"Failed to toggle Layout Edit Mode: {e}")
+            self.logger.warning("Failed to toggle Layout Edit Mode: %s", e)
 
     def snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> bool:
         """Dock the provided QDockWidget to the specified edge if allowed."""
@@ -573,7 +573,7 @@ class DockManager:
             # Let qt-material handle all dock styling
             self.logger.info("Metadata editor widget created successfully (restored)")
         except Exception as e:
-            self.logger.warning(f"Failed to create MetadataEditorWidget during restore: {e}")
+            self.logger.warning("Failed to create MetadataEditorWidget during restore: %s", e)
 
             # Fallback to placeholder
             metadata_widget = QTextEdit()
@@ -655,7 +655,7 @@ class DockManager:
             except Exception:
                 pass
         except Exception as e:
-            self.logger.error(f"Failed to restore Metadata Manager: {e}")
+            self.logger.error("Failed to restore Metadata Manager: %s", e)
 
     def create_model_library_dock(self) -> None:
         """Create the Model Library dock and integrate it into the UI."""
@@ -778,7 +778,7 @@ class DockManager:
             except Exception:
                 pass
         except Exception as e:
-            self.logger.error(f"Failed to restore Model Library: {e}")
+            self.logger.error("Failed to restore Model Library: %s", e)
 
     def update_library_action_state(self) -> None:
         """Enable/disable 'Show Model Library' based on panel visibility."""
@@ -818,9 +818,9 @@ class DockManager:
                 settings = QSettings()
                 vis = bool(self.main_window.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
-                self.logger.debug(f"Saved metadata panel visibility: {vis}")
+                self.logger.debug("Saved metadata panel visibility: %s", vis)
         except Exception as e:
-            self.logger.warning(f"Failed to save metadata panel visibility: {e}")
+            self.logger.warning("Failed to save metadata panel visibility: %s", e)
 
     # Helper methods that need to be connected to actual implementations
     def _setup_dock_context_menu(self, dock: QDockWidget, default_area: Qt.DockWidgetArea) -> None:

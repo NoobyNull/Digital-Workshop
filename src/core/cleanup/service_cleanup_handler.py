@@ -63,7 +63,7 @@ class ServiceCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Service cleanup error: {e}", exc_info=True)
+            self.logger.error("Service cleanup error: %s", e, exc_info=True)
             return False
 
     def _cleanup_services(self) -> bool:
@@ -114,7 +114,7 @@ class ServiceCleanupHandler(CleanupHandler):
             return overall_success
 
         except Exception as e:
-            self.logger.error(f"Service cleanup failed: {e}", exc_info=True)
+            self.logger.error("Service cleanup failed: %s", e, exc_info=True)
             return False
 
     def _cleanup_bootstrap_services(self) -> bool:
@@ -136,13 +136,13 @@ class ServiceCleanupHandler(CleanupHandler):
                     else:
                         self.logger.warning("Bootstrap has no cleanup method")
                 except Exception as e:
-                    self.logger.error(f"Bootstrap cleanup failed: {e}")
+                    self.logger.error("Bootstrap cleanup failed: %s", e)
                     success = False
 
             return success
 
         except Exception as e:
-            self.logger.error(f"Bootstrap services cleanup failed: {e}")
+            self.logger.error("Bootstrap services cleanup failed: %s", e)
             return False
 
     def _cleanup_background_threads(self) -> bool:
@@ -169,18 +169,18 @@ class ServiceCleanupHandler(CleanupHandler):
                             thread.cancel()
 
                         threads_cleaned += 1
-                        self.logger.debug(f"Cleaned up background thread: {thread.name}")
+                        self.logger.debug("Cleaned up background thread: %s", thread.name)
 
                 except Exception as e:
                     self.logger.warning(
                         f"Failed to cleanup thread {getattr(thread, 'name', 'unknown')}: {e}"
                     )
 
-            self.logger.debug(f"Cleaned up {threads_cleaned} background threads")
+            self.logger.debug("Cleaned up %s background threads", threads_cleaned)
             return True
 
         except Exception as e:
-            self.logger.error(f"Background threads cleanup failed: {e}")
+            self.logger.error("Background threads cleanup failed: %s", e)
             return False
 
     def _cleanup_caches(self) -> bool:
@@ -202,7 +202,7 @@ class ServiceCleanupHandler(CleanupHandler):
             return success
 
         except Exception as e:
-            self.logger.error(f"Caches cleanup failed: {e}")
+            self.logger.error("Caches cleanup failed: %s", e)
             return False
 
     def _cleanup_model_cache(self) -> bool:
@@ -222,12 +222,12 @@ class ServiceCleanupHandler(CleanupHandler):
             except ImportError:
                 self.logger.debug("Model cache not available")
             except Exception as e:
-                self.logger.warning(f"Model cache cleanup failed: {e}")
+                self.logger.warning("Model cache cleanup failed: %s", e)
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Model cache cleanup failed: {e}")
+            self.logger.error("Model cache cleanup failed: %s", e)
             return False
 
     def _cleanup_thumbnail_cache(self) -> bool:
@@ -247,12 +247,12 @@ class ServiceCleanupHandler(CleanupHandler):
             except ImportError:
                 self.logger.debug("Thumbnail service not available")
             except Exception as e:
-                self.logger.warning(f"Thumbnail service cleanup failed: {e}")
+                self.logger.warning("Thumbnail service cleanup failed: %s", e)
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Thumbnail cache cleanup failed: {e}")
+            self.logger.error("Thumbnail cache cleanup failed: %s", e)
             return False
 
     def _cleanup_file_hash_cache(self) -> bool:
@@ -272,12 +272,12 @@ class ServiceCleanupHandler(CleanupHandler):
             except ImportError:
                 self.logger.debug("Fast hasher not available")
             except Exception as e:
-                self.logger.warning(f"Fast hasher cleanup failed: {e}")
+                self.logger.warning("Fast hasher cleanup failed: %s", e)
 
             return True
 
         except Exception as e:
-            self.logger.error(f"File hash cache cleanup failed: {e}")
+            self.logger.error("File hash cache cleanup failed: %s", e)
             return False
 
     def _cleanup_database_connections(self) -> bool:
@@ -292,7 +292,7 @@ class ServiceCleanupHandler(CleanupHandler):
             return True
 
         except Exception as e:
-            self.logger.error(f"Database connections cleanup failed: {e}")
+            self.logger.error("Database connections cleanup failed: %s", e)
             return False
 
     def _cleanup_memory_manager(self) -> bool:
@@ -312,12 +312,12 @@ class ServiceCleanupHandler(CleanupHandler):
             except ImportError:
                 self.logger.debug("Memory manager not available")
             except Exception as e:
-                self.logger.warning(f"Memory manager cleanup failed: {e}")
+                self.logger.warning("Memory manager cleanup failed: %s", e)
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Memory manager cleanup failed: {e}")
+            self.logger.error("Memory manager cleanup failed: %s", e)
             return False
 
     def register_service(self, name: str, service: Any) -> None:
@@ -331,12 +331,12 @@ class ServiceCleanupHandler(CleanupHandler):
         try:
             if service:
                 self._services[name] = service
-                self.logger.debug(f"Registered service for cleanup: {name}")
+                self.logger.debug("Registered service for cleanup: %s", name)
             else:
-                self.logger.warning(f"Invalid service registration: {name}")
+                self.logger.warning("Invalid service registration: %s", name)
 
         except Exception as e:
-            self.logger.warning(f"Failed to register service {name}: {e}")
+            self.logger.warning("Failed to register service %s: {e}", name)
 
     def unregister_service(self, name: str) -> bool:
         """
@@ -351,12 +351,12 @@ class ServiceCleanupHandler(CleanupHandler):
         try:
             if name in self._services:
                 del self._services[name]
-                self.logger.debug(f"Unregistered service from cleanup: {name}")
+                self.logger.debug("Unregistered service from cleanup: %s", name)
                 return True
             return False
 
         except Exception as e:
-            self.logger.warning(f"Failed to unregister service {name}: {e}")
+            self.logger.warning("Failed to unregister service %s: {e}", name)
             return False
 
     def get_service_cleanup_stats(self) -> Dict[str, Any]:
@@ -371,5 +371,5 @@ class ServiceCleanupHandler(CleanupHandler):
             }
 
         except Exception as e:
-            self.logger.warning(f"Failed to get service cleanup stats: {e}")
+            self.logger.warning("Failed to get service cleanup stats: %s", e)
             return {"handler_name": self.name, "error": str(e)}

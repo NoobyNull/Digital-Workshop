@@ -83,7 +83,7 @@ class ThreadPoolCoordinator:
             raise ValueError("No chunks provided for parsing")
 
         start_time = time.time()
-        self.logger.info(f"Starting coordinated parsing of {len(chunks)} chunks")
+        self.logger.info("Starting coordinated parsing of %s chunks", len(chunks))
 
         # Submit all chunks to the thread pool
         futures = {}
@@ -125,7 +125,7 @@ class ThreadPoolCoordinator:
                         )
 
                     except Exception as e:
-                        self.logger.error(f"Failed to process chunk {chunk.id}: {e}")
+                        self.logger.error("Failed to process chunk %s: {e}", chunk.id)
                         # Continue with other chunks but mark this as failed
                         error_result = WorkerResult(
                             chunk_id=chunk.id,
@@ -136,7 +136,7 @@ class ThreadPoolCoordinator:
                         results.append(error_result)
 
             except Exception as e:
-                self.logger.error(f"Error during result collection: {e}")
+                self.logger.error("Error during result collection: %s", e)
                 raise
 
         # Check for cancellation

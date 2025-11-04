@@ -53,7 +53,7 @@ class ModelLoadingWorker(QThread):
     def run(self) -> None:
         """Run the model loading operation."""
         try:
-            self.logger.info(f"Starting async model loading: {self.file_path}")
+            self.logger.info("Starting async model loading: %s", self.file_path)
 
             # Check for cancellation
             if self.cancellation_check():
@@ -112,7 +112,7 @@ class ModelLoadingWorker(QThread):
                 self.error_occurred.emit("PARSING_ERROR", "Failed to parse model file")
 
         except Exception as e:
-            self.logger.error(f"Error during model loading: {e}", exc_info=True)
+            self.logger.error("Error during model loading: %s", e, exc_info=True)
             self.error_occurred.emit("GENERIC_ERROR", str(e))
 
     def _calculate_loading_steps(self, file_size: int) -> int:
@@ -145,7 +145,7 @@ class ModelLoadingWorker(QThread):
             model = DummyModel()
             return model
         except Exception as e:
-            self.logger.error(f"Failed to create dummy model: {e}")
+            self.logger.error("Failed to create dummy model: %s", e)
             return None
 
 
@@ -249,11 +249,11 @@ class EnhancedViewerService(IEnhancedViewerService):
             # Start loading
             self.current_loading_worker.start()
 
-            self.logger.info(f"Started async model loading: {file_path}")
+            self.logger.info("Started async model loading: %s", file_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to start model loading: {e}", exc_info=True)
+            self.logger.error("Failed to start model loading: %s", e, exc_info=True)
             self.ui_service.show_error("Loading Error", f"Failed to start loading: {e}")
             return False
 
@@ -267,7 +267,7 @@ class EnhancedViewerService(IEnhancedViewerService):
                 self.ui_service.set_ui_state(UIState.LOADING, progress.message)
 
         except Exception as e:
-            self.logger.error(f"Error handling loading progress: {e}")
+            self.logger.error("Error handling loading progress: %s", e)
 
     def _on_loading_completed(self, success: bool, model_info: str) -> None:
         """Handle loading completion."""
@@ -283,7 +283,7 @@ class EnhancedViewerService(IEnhancedViewerService):
                 self.ui_service.set_ui_state(UIState.ERROR, "Failed to load model")
 
         except Exception as e:
-            self.logger.error(f"Error handling loading completion: {e}")
+            self.logger.error("Error handling loading completion: %s", e)
         finally:
             self.current_loading_worker = None
 
@@ -298,10 +298,10 @@ class EnhancedViewerService(IEnhancedViewerService):
             user_message = self._get_user_friendly_error_message(error_type, message)
             self.ui_service.show_error("Loading Error", user_message, message)
 
-            self.logger.error(f"Model loading failed ({error_type}): {message}")
+            self.logger.error("Model loading failed (%s): {message}", error_type)
 
         except Exception as e:
-            self.logger.error(f"Error handling loading error: {e}")
+            self.logger.error("Error handling loading error: %s", e)
         finally:
             self.current_loading_worker = None
 
@@ -339,7 +339,7 @@ class EnhancedViewerService(IEnhancedViewerService):
                 self.logger.info("Model loading cancelled by user")
 
         except Exception as e:
-            self.logger.error(f"Error cancelling loading: {e}")
+            self.logger.error("Error cancelling loading: %s", e)
         finally:
             self.current_loading_worker = None
             self.cancellation_requested = False
@@ -366,14 +366,14 @@ class EnhancedViewerService(IEnhancedViewerService):
             return stats
 
         except Exception as e:
-            self.logger.error(f"Error getting performance stats: {e}")
+            self.logger.error("Error getting performance stats: %s", e)
             return {"error": str(e)}
 
     def set_performance_mode(self, mode: str) -> None:
         """Set performance mode (quality vs speed tradeoff)."""
         valid_modes = ["high", "balanced", "performance"]
         if mode not in valid_modes:
-            self.logger.warning(f"Invalid performance mode: {mode}")
+            self.logger.warning("Invalid performance mode: %s", mode)
             return
 
         self.performance_mode = mode
@@ -389,7 +389,7 @@ class EnhancedViewerService(IEnhancedViewerService):
             self.target_fps = 24
             self.adaptive_quality = True
 
-        self.logger.info(f"Performance mode set to: {mode}")
+        self.logger.info("Performance mode set to: %s", mode)
 
     def enable_vsync(self, enabled: bool) -> None:
         """Enable or disable VSync for tear-free rendering."""
@@ -404,16 +404,16 @@ class EnhancedViewerService(IEnhancedViewerService):
                 else:
                     self.logger.debug("VSync disabled")
         except Exception as e:
-            self.logger.error(f"Error applying VSync setting: {e}")
+            self.logger.error("Error applying VSync setting: %s", e)
 
     def set_target_fps(self, fps: int) -> None:
         """Set target frame rate."""
         if fps < 15 or fps > 120:
-            self.logger.warning(f"Target FPS {fps} is outside recommended range (15-120)")
+            self.logger.warning("Target FPS %s is outside recommended range (15-120)", fps)
             return
 
         self.target_fps = fps
-        self.logger.info(f"Target FPS set to: {fps}")
+        self.logger.info("Target FPS set to: %s", fps)
 
     def optimize_for_model_size(self, triangle_count: int) -> None:
         """Optimize rendering settings based on model complexity."""
@@ -432,4 +432,4 @@ class EnhancedViewerService(IEnhancedViewerService):
                 self.logger.info("Optimized for low-poly model")
 
         except Exception as e:
-            self.logger.error(f"Error optimizing for model size: {e}")
+            self.logger.error("Error optimizing for model size: %s", e)

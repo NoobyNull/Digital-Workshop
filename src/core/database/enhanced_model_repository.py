@@ -74,14 +74,14 @@ class EnhancedModelRepository(IModelRepository):
                 model_id = str(cursor.lastrowid)
                 conn.commit()
 
-                logger.info(f"Created model with ID: {model_id}")
+                logger.info("Created model with ID: %s", model_id)
                 return model_id
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to create model: {str(e)}")
+            logger.error("Failed to create model: %s", str(e))
             return None
         except ValueError as e:
-            logger.error(f"Invalid model data: {str(e)}")
+            logger.error("Invalid model data: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -117,7 +117,7 @@ class EnhancedModelRepository(IModelRepository):
                 return None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to read model {model_id}: {str(e)}")
+            logger.error("Failed to read model %s: {str(e)}", model_id)
             return None
 
     @log_function_call(logger)
@@ -169,14 +169,14 @@ class EnhancedModelRepository(IModelRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated model {model_id}")
+                    logger.info("Updated model %s", model_id)
                 else:
-                    logger.warning(f"Model {model_id} not found for update")
+                    logger.warning("Model %s not found for update", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to update model {model_id}: {str(e)}")
+            logger.error("Failed to update model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -204,14 +204,14 @@ class EnhancedModelRepository(IModelRepository):
                 conn.commit()
 
                 if success:
-                    logger.info(f"Deleted model {model_id}")
+                    logger.info("Deleted model %s", model_id)
                 else:
-                    logger.warning(f"Model {model_id} not found for deletion")
+                    logger.warning("Model %s not found for deletion", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete model {model_id}: {str(e)}")
+            logger.error("Failed to delete model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -240,11 +240,11 @@ class EnhancedModelRepository(IModelRepository):
                 rows = cursor.fetchall()
                 models = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(models)} models")
+                logger.debug("Retrieved %s models", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to list all models: {str(e)}")
+            logger.error("Failed to list all models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -305,11 +305,11 @@ class EnhancedModelRepository(IModelRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Search returned {len(model_ids)} results for criteria: {criteria}")
+                logger.debug("Search returned %s results for criteria: {criteria}", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search models: {str(e)}")
+            logger.error("Failed to search models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -331,7 +331,7 @@ class EnhancedModelRepository(IModelRepository):
                 return count > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to check model existence {model_id}: {str(e)}")
+            logger.error("Failed to check model existence %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -350,7 +350,7 @@ class EnhancedModelRepository(IModelRepository):
                 return count
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get model count: {str(e)}")
+            logger.error("Failed to get model count: %s", str(e))
             return 0
 
     # Additional enhanced methods for better performance and functionality
@@ -387,11 +387,11 @@ class EnhancedModelRepository(IModelRepository):
                 rows = cursor.fetchall()
                 models = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(models)} models (limit: {limit}, offset: {offset})")
+                logger.debug("Retrieved %s models (limit: {limit}, offset: {offset})", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get paginated models: {str(e)}")
+            logger.error("Failed to get paginated models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -425,7 +425,7 @@ class EnhancedModelRepository(IModelRepository):
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to find model by hash: {str(e)}")
+            logger.error("Failed to find model by hash: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -463,11 +463,11 @@ class EnhancedModelRepository(IModelRepository):
                     created_ids.append(str(cursor.lastrowid))
 
                 conn.commit()
-                logger.info(f"Bulk created {len(created_ids)} models")
+                logger.info("Bulk created %s models", len(created_ids))
                 return created_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to bulk create models: {str(e)}")
+            logger.error("Failed to bulk create models: %s", str(e))
             return []
 
     @contextmanager

@@ -90,11 +90,11 @@ class ModelEditor:
             self.total_rotation[axis.value] += normalized_degrees
             self.rotation_history.append((axis.value, normalized_degrees))
 
-            self.logger.info(f"Rotated model {normalized_degrees}° around {axis.value} axis")
+            self.logger.info("Rotated model %s° around {axis.value} axis", normalized_degrees)
             return self.current_model
 
         except Exception as e:
-            self.logger.error(f"Failed to rotate model: {e}")
+            self.logger.error("Failed to rotate model: %s", e)
             return self.current_model
 
     def _transform_triangle(self, triangle: Triangle, transform: vtk.vtkTransform) -> Triangle:
@@ -160,11 +160,11 @@ class ModelEditor:
                 stats=self.current_model.stats,
             )
 
-            self.logger.info(f"Added solid plane with {len(plane_triangles)} triangles")
+            self.logger.info("Added solid plane with %s triangles", len(plane_triangles))
             return self.current_model
 
         except Exception as e:
-            self.logger.error(f"Failed to add solid plane: {e}")
+            self.logger.error("Failed to add solid plane: %s", e)
             return self.current_model
 
     def _create_plane_triangles(

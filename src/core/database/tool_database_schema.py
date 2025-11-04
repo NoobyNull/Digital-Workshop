@@ -106,7 +106,7 @@ class ToolDatabaseSchema:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize database schema: {e}")
+            self.logger.error("Failed to initialize database schema: %s", e)
             return False
 
     def get_version(self) -> int:
@@ -127,4 +127,4 @@ class ToolDatabaseSchema:
                 cursor.execute(f"PRAGMA user_version = {version}")
                 conn.commit()
         except Exception as e:
-            self.logger.error(f"Failed to set database version: {e}")
+            self.logger.error("Failed to set database version: %s", e)

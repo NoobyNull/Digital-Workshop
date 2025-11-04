@@ -158,7 +158,7 @@ class ProgressiveSTLLoader:
         with self._lock:
             # Check cache first
             if cache_key in self._lod_cache:
-                self.logger.info(f"Using cached LOD model for {file_path}")
+                self.logger.info("Using cached LOD model for %s", file_path)
                 return self._lod_cache[cache_key]
 
         self._cancel_event.clear()
@@ -173,7 +173,7 @@ class ProgressiveSTLLoader:
             triangle_count = self._get_triangle_count(file_path_obj)
             file_size = file_path_obj.stat().st_size
 
-            self.logger.info(f"Progressive loading: {triangle_count} triangles ({file_size} bytes)")
+            self.logger.info("Progressive loading: %s triangles ({file_size} bytes)", triangle_count)
 
             # Phase 2: Load lowest LOD first for immediate preview
             lod_models = {}
@@ -255,7 +255,7 @@ class ProgressiveSTLLoader:
             return lod_model
 
         except Exception as e:
-            self.logger.error(f"Progressive loading failed: {e}")
+            self.logger.error("Progressive loading failed: %s", e)
             raise
 
     def _get_triangle_count(self, file_path: Path) -> int:

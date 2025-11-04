@@ -164,7 +164,7 @@ class CleanupHandler:
     def set_enabled(self, enabled: bool) -> None:
         """Enable or disable this handler."""
         self.enabled = enabled
-        self.logger.debug(f"Handler {self.name} {'enabled' if enabled else 'disabled'}")
+        self.logger.debug("Handler {self.name} %s", 'enabled' if enabled else 'disabled')
 
 
 class UnifiedCleanupCoordinator:
@@ -207,7 +207,7 @@ class UnifiedCleanupCoordinator:
             self.logger.info("Default cleanup handlers registered")
 
         except ImportError as e:
-            self.logger.warning(f"Could not import default handlers: {e}")
+            self.logger.warning("Could not import default handlers: %s", e)
 
     def register_handler(self, handler: CleanupHandler) -> None:
         """
@@ -218,7 +218,7 @@ class UnifiedCleanupCoordinator:
         """
         with self._lock:
             self._handlers[handler.name] = handler
-            self.logger.debug(f"Registered cleanup handler: {handler.name}")
+            self.logger.debug("Registered cleanup handler: %s", handler.name)
 
     def unregister_handler(self, handler_name: str) -> bool:
         """
@@ -233,7 +233,7 @@ class UnifiedCleanupCoordinator:
         with self._lock:
             if handler_name in self._handlers:
                 del self._handlers[handler_name]
-                self.logger.debug(f"Unregistered cleanup handler: {handler_name}")
+                self.logger.debug("Unregistered cleanup handler: %s", handler_name)
                 return True
             return False
 
@@ -291,11 +291,11 @@ class UnifiedCleanupCoordinator:
             # Log detailed report
             self.logger.info("=" * 60)
             self.logger.info("Cleanup Summary:")
-            self.logger.info(f"  Total phases: {self._stats.total_phases}")
-            self.logger.info(f"  Completed: {self._stats.completed_phases}")
-            self.logger.info(f"  Failed: {self._stats.failed_phases}")
-            self.logger.info(f"  Skipped: {self._stats.skipped_phases}")
-            self.logger.info(f"  Duration: {self._stats.total_duration:.3f}s")
+            self.logger.info("  Total phases: %s", self._stats.total_phases)
+            self.logger.info("  Completed: %s", self._stats.completed_phases)
+            self.logger.info("  Failed: %s", self._stats.failed_phases)
+            self.logger.info("  Skipped: %s", self._stats.skipped_phases)
+            self.logger.info("  Duration: %ss", self._stats.total_duration:.3f)
 
             if self._stats.handler_stats:
                 self.logger.info("\nHandler Statistics:")
@@ -316,7 +316,7 @@ class UnifiedCleanupCoordinator:
                     self.logger.warning("\nPhase Errors:")
                     for phase_name, errors in self._stats.phase_errors.items():
                         for error in errors:
-                            self.logger.warning(f"  {error}")
+                            self.logger.warning("  %s", error)
 
             self.logger.info("=" * 60)
 
@@ -331,7 +331,7 @@ class UnifiedCleanupCoordinator:
             return self._stats
 
         except Exception as e:
-            self.logger.error(f"Error during unified cleanup: {e}", exc_info=True)
+            self.logger.error("Error during unified cleanup: %s", e, exc_info=True)
             self._stats.errors.append(str(e))
             self._stats.total_duration = time.time() - start_time
             return self._stats
@@ -348,10 +348,10 @@ class UnifiedCleanupCoordinator:
             else:
                 self._context_state = CleanupContext.VALID
 
-            self.logger.debug(f"Cleanup context initialized: {self._context_state.value}")
+            self.logger.debug("Cleanup context initialized: %s", self._context_state.value)
 
         except Exception as e:
-            self.logger.warning(f"Context validation failed: {e}")
+            self.logger.warning("Context validation failed: %s", e)
             self._context_state = CleanupContext.UNKNOWN
 
     def _validate_vtk_context(self, render_window) -> None:
@@ -376,7 +376,7 @@ class UnifiedCleanupCoordinator:
                 self._context_state = CleanupContext.VALID
 
         except Exception as e:
-            self.logger.debug(f"VTK context validation error: {e}")
+            self.logger.debug("VTK context validation error: %s", e)
             self._context_state = CleanupContext.UNKNOWN
 
     def _execute_cleanup_phases(
@@ -404,7 +404,7 @@ class UnifiedCleanupCoordinator:
         for phase in phases:
             phase_start_time = time.time()
             try:
-                self.logger.info(f"Starting cleanup phase: {phase.value}")
+                self.logger.info("Starting cleanup phase: %s", phase.value)
                 phase_success = self._execute_phase(
                     phase, render_window, renderer, interactor, main_window, application
                 )
@@ -473,7 +473,7 @@ class UnifiedCleanupCoordinator:
         ]
 
         if not capable_handlers:
-            self.logger.debug(f"No handlers available for phase {phase.value}")
+            self.logger.debug("No handlers available for phase %s", phase.value)
             return True
 
         # Sort handlers by dependencies
@@ -634,7 +634,7 @@ class UnifiedCleanupCoordinator:
             return report
 
         except Exception as e:
-            self.logger.error(f"Verification failed: {e}", exc_info=True)
+            self.logger.error("Verification failed: %s", e, exc_info=True)
             return None
 
     def get_stats(self) -> CleanupStats:

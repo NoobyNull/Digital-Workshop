@@ -99,10 +99,10 @@ class ProjectManagerWidget(QWidget):
                 item.setData(Qt.UserRole, project["id"])
                 self.project_list.addItem(item)
 
-            logger.info(f"Refreshed project list: {len(projects)} projects")
+            logger.info("Refreshed project list: %s projects", len(projects))
 
         except Exception as e:
-            logger.error(f"Failed to refresh project list: {str(e)}")
+            logger.error("Failed to refresh project list: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to refresh projects: {str(e)}")
 
     def _create_new_project(self) -> None:
@@ -121,10 +121,10 @@ class ProjectManagerWidget(QWidget):
                 project_id = self.project_manager.create_project(name)
                 self.project_created.emit(project_id)
                 self._refresh_project_list()
-                logger.info(f"Created project: {name}")
+                logger.info("Created project: %s", name)
 
         except Exception as e:
-            logger.error(f"Failed to create project: {str(e)}")
+            logger.error("Failed to create project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to create project: {str(e)}")
 
     def _import_library(self) -> None:
@@ -186,7 +186,7 @@ class ProjectManagerWidget(QWidget):
                         "Import Complete",
                         f"Imported {import_report.files_imported} files.",
                     )
-                    logger.info(f"Imported library: {name}")
+                    logger.info("Imported library: %s", name)
                 else:
                     QMessageBox.critical(
                         self,
@@ -195,7 +195,7 @@ class ProjectManagerWidget(QWidget):
                     )
 
         except Exception as e:
-            logger.error(f"Failed to import library: {str(e)}")
+            logger.error("Failed to import library: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import library: {str(e)}")
 
     def _open_selected_project(self) -> None:
@@ -209,12 +209,12 @@ class ProjectManagerWidget(QWidget):
             project_id = item.data(Qt.UserRole)
             if self.project_manager.open_project(project_id):
                 self.project_opened.emit(project_id)
-                logger.info(f"Opened project: {project_id}")
+                logger.info("Opened project: %s", project_id)
             else:
                 QMessageBox.critical(self, "Error", "Failed to open project.")
 
         except Exception as e:
-            logger.error(f"Failed to open project: {str(e)}")
+            logger.error("Failed to open project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to open project: {str(e)}")
 
     def _delete_selected_project(self) -> None:
@@ -239,12 +239,12 @@ class ProjectManagerWidget(QWidget):
                 if self.project_manager.delete_project(project_id):
                     self.project_deleted.emit(project_id)
                     self._refresh_project_list()
-                    logger.info(f"Deleted project: {project_name}")
+                    logger.info("Deleted project: %s", project_name)
                 else:
                     QMessageBox.critical(self, "Error", "Failed to delete project.")
 
         except Exception as e:
-            logger.error(f"Failed to delete project: {str(e)}")
+            logger.error("Failed to delete project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to delete project: {str(e)}")
 
     def _on_project_double_clicked(self, item: QListWidgetItem) -> None:

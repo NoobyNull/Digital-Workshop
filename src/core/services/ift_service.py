@@ -96,10 +96,10 @@ class IFTService:
                 self._save_ifts()
 
             self.settings.endGroup()
-            logger.info(f"Loaded {len(self.ifts)} IFT definitions")
+            logger.info("Loaded %s IFT definitions", len(self.ifts))
 
         except Exception as e:
-            logger.error(f"Failed to load IFTs: {str(e)}")
+            logger.error("Failed to load IFTs: %s", str(e))
             self.ifts = self.DEFAULT_IFTS.copy()
 
     @log_function_call(logger)
@@ -121,10 +121,10 @@ class IFTService:
                 self.settings.setValue(key, data)
 
             self.settings.endGroup()
-            logger.info(f"Saved {len(self.ifts)} IFT definitions")
+            logger.info("Saved %s IFT definitions", len(self.ifts))
 
         except Exception as e:
-            logger.error(f"Failed to save IFTs: {str(e)}")
+            logger.error("Failed to save IFTs: %s", str(e))
 
     def get_ift(self, key: str) -> Optional[IFTDefinition]:
         """Get IFT definition by key."""
@@ -150,10 +150,10 @@ class IFTService:
         try:
             self.ifts[key] = ift
             self._save_ifts()
-            logger.info(f"Added IFT: {key}")
+            logger.info("Added IFT: %s", key)
             return True
         except Exception as e:
-            logger.error(f"Failed to add IFT: {str(e)}")
+            logger.error("Failed to add IFT: %s", str(e))
             return False
 
     def remove_ift(self, key: str) -> bool:
@@ -162,11 +162,11 @@ class IFTService:
             if key in self.ifts:
                 del self.ifts[key]
                 self._save_ifts()
-                logger.info(f"Removed IFT: {key}")
+                logger.info("Removed IFT: %s", key)
                 return True
             return False
         except Exception as e:
-            logger.error(f"Failed to remove IFT: {str(e)}")
+            logger.error("Failed to remove IFT: %s", str(e))
             return False
 
     def enable_ift(self, key: str) -> bool:
@@ -178,7 +178,7 @@ class IFTService:
                 return True
             return False
         except Exception as e:
-            logger.error(f"Failed to enable IFT: {str(e)}")
+            logger.error("Failed to enable IFT: %s", str(e))
             return False
 
     def disable_ift(self, key: str) -> bool:
@@ -190,7 +190,7 @@ class IFTService:
                 return True
             return False
         except Exception as e:
-            logger.error(f"Failed to disable IFT: {str(e)}")
+            logger.error("Failed to disable IFT: %s", str(e))
             return False
 
     def reset_to_defaults(self) -> bool:
@@ -201,7 +201,7 @@ class IFTService:
             logger.info("Reset IFTs to defaults")
             return True
         except Exception as e:
-            logger.error(f"Failed to reset IFTs: {str(e)}")
+            logger.error("Failed to reset IFTs: %s", str(e))
             return False
 
     def validate_ift(self, ift: IFTDefinition) -> bool:

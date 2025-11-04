@@ -30,7 +30,7 @@ class ProviderRepository:
             try:
                 conn.close()
             except Exception as e:
-                self.logger.warning(f"Error closing connection: {e}")
+                self.logger.warning("Error closing connection: %s", e)
 
     def add_provider(
         self,
@@ -56,15 +56,15 @@ class ProviderRepository:
             provider_id = cursor.lastrowid
             conn.commit()
 
-            self.logger.info(f"Added provider: {name} (ID: {provider_id})")
+            self.logger.info("Added provider: %s (ID: {provider_id})", name)
             return provider_id
 
         except sqlite3.IntegrityError:
-            self.logger.warning(f"Provider already exists: {name}")
+            self.logger.warning("Provider already exists: %s", name)
             existing = self.get_provider_by_name(name)
             return existing.get("id") if existing else None
         except Exception as e:
-            self.logger.error(f"Failed to add provider: {e}")
+            self.logger.error("Failed to add provider: %s", e)
             return None
         finally:
             self._close_connection(conn)
@@ -83,7 +83,7 @@ class ProviderRepository:
             return dict(row) if row else None
 
         except Exception as e:
-            self.logger.error(f"Failed to get provider {name}: {e}")
+            self.logger.error("Failed to get provider %s: {e}", name)
             return None
         finally:
             self._close_connection(conn)
@@ -102,7 +102,7 @@ class ProviderRepository:
             return dict(row) if row else None
 
         except Exception as e:
-            self.logger.error(f"Failed to get provider {provider_id}: {e}")
+            self.logger.error("Failed to get provider %s: {e}", provider_id)
             return None
         finally:
             self._close_connection(conn)
@@ -124,7 +124,7 @@ class ProviderRepository:
             return [dict(row) for row in cursor.fetchall()]
 
         except Exception as e:
-            self.logger.error(f"Failed to get providers: {e}")
+            self.logger.error("Failed to get providers: %s", e)
             return []
         finally:
             self._close_connection(conn)
@@ -150,10 +150,10 @@ class ProviderRepository:
                 values,
             )
             conn.commit()
-            self.logger.info(f"Updated provider {provider_id}")
+            self.logger.info("Updated provider %s", provider_id)
             return cursor.rowcount > 0
         except Exception as e:
-            self.logger.error(f"Failed to update provider {provider_id}: {e}")
+            self.logger.error("Failed to update provider %s: {e}", provider_id)
             return False
         finally:
             self._close_connection(conn)
@@ -169,11 +169,11 @@ class ProviderRepository:
 
             success = cursor.rowcount > 0
             if success:
-                self.logger.info(f"Deleted provider ID: {provider_id}")
+                self.logger.info("Deleted provider ID: %s", provider_id)
             return success
 
         except Exception as e:
-            self.logger.error(f"Failed to delete provider {provider_id}: {e}")
+            self.logger.error("Failed to delete provider %s: {e}", provider_id)
             return False
         finally:
             self._close_connection(conn)

@@ -86,18 +86,18 @@ class FeedsAndSpeedsWidget(QWidget):
                         str(library_path), "IDC Woodcraft"
                     )
                     if success:
-                        self.logger.info(f"Default library imported: {message}")
+                        self.logger.info("Default library imported: %s", message)
                     else:
-                        self.logger.warning(f"Failed to import default library: {message}")
+                        self.logger.warning("Failed to import default library: %s", message)
                         # Fall back to old manager
                         self.tool_library_manager.load_library("IDC Woodcraft", str(library_path))
                 else:
-                    self.logger.warning(f"Library not found: {library_path}")
+                    self.logger.warning("Library not found: %s", library_path)
             else:
-                self.logger.info(f"Found {len(providers)} providers in database")
+                self.logger.info("Found %s providers in database", len(providers))
 
         except Exception as e:
-            self.logger.error(f"Failed to load default library: {e}")
+            self.logger.error("Failed to load default library: %s", e)
 
     def _setup_ui(self) -> None:
         """Setup the user interface."""
@@ -302,9 +302,9 @@ class FeedsAndSpeedsWidget(QWidget):
             for provider in providers:
                 self.library_combo.addItem(provider["name"])
 
-            self.logger.info(f"Loaded {len(providers)} providers")
+            self.logger.info("Loaded %s providers", len(providers))
         except Exception as e:
-            self.logger.error(f"Failed to load providers: {e}")
+            self.logger.error("Failed to load providers: %s", e)
 
     def _on_import_tools(self) -> None:
         """Handle import tools button click."""
@@ -328,7 +328,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     QMessageBox.warning(self, "Import Failed", message)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to import: {str(e)}")
-                self.logger.error(f"Import error: {e}")
+                self.logger.error("Import error: %s", e)
 
     def _on_add_from_database(self) -> None:
         """Open Add Tool dialog to select tools from database."""
@@ -408,7 +408,7 @@ class FeedsAndSpeedsWidget(QWidget):
                 else:
                     tools = []
             except Exception as e:
-                self.logger.error(f"Failed to load tools: {e}")
+                self.logger.error("Failed to load tools: %s", e)
                 tools = []
 
         self.tools_table.setRowCount(len(tools))
@@ -464,7 +464,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     else:
                         tools = []
             except Exception as e:
-                self.logger.error(f"Search failed: {e}")
+                self.logger.error("Search failed: %s", e)
                 tools = []
 
         self.tools_table.setRowCount(len(tools))
@@ -506,7 +506,7 @@ class FeedsAndSpeedsWidget(QWidget):
                 else:
                     tools = []
             except Exception as e:
-                self.logger.error(f"Failed to load tools: {e}")
+                self.logger.error("Failed to load tools: %s", e)
                 tools = []
 
         if current_row < len(tools):

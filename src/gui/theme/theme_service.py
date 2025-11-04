@@ -331,7 +331,7 @@ class ThemeService:
             return True
 
         except Exception as e:
-            logger.warning(f"Failed to apply fallback theme: {e}")
+            logger.warning("Failed to apply fallback theme: %s", e)
             return False
 
     def get_current_theme(self) -> tuple[str, ThemeLibrary]:

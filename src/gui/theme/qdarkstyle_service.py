@@ -50,7 +50,7 @@ class QDarkStyleThemeService:
         try:
             import qdarkstyle
 
-            logger.info(f"QDarkStyleSheet available: {qdarkstyle.__version__}")
+            logger.info("QDarkStyleSheet available: %s", qdarkstyle.__version__)
             return True
         except ImportError:
             logger.warning("QDarkStyleSheet not available, will use Qt defaults")
@@ -108,11 +108,11 @@ class QDarkStyleThemeService:
 
             app.setStyleSheet(stylesheet)
 
-            logger.info(f"QDarkStyleSheet theme applied: {palette_name}")
+            logger.info("QDarkStyleSheet theme applied: %s", palette_name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply theme: {e}", exc_info=True)
+            logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
     def _detect_system_theme(self) -> str:
@@ -157,7 +157,7 @@ class QDarkStyleThemeService:
                 return "dark"  # Default to dark
 
         except Exception as e:
-            logger.debug(f"Failed to detect system theme: {e}")
+            logger.debug("Failed to detect system theme: %s", e)
             return "dark"  # Safe default
 
     def get_current_theme(self) -> ThemeType:

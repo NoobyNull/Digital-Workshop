@@ -269,8 +269,8 @@ class ComprehensiveLogger:
 
         except Exception as e:
             # Fallback to basic logging if structured logging fails
-            logger.error(f"Structured logging failed: {e}")
-            logger.error(f"Original message: {message}")
+            logger.error("Structured logging failed: %s", e)
+            logger.error("Original message: %s", message)
 
     def log_info(
         self,

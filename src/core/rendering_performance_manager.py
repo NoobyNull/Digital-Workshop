@@ -152,7 +152,7 @@ class HardwareDetector:
                     gpu_driver_version = gpu.driver
                     gpu_usage_percent = gpu.load * 100
             except Exception as e:
-                logger.warning(f"GPU detection failed: {str(e)}")
+                logger.warning("GPU detection failed: %s", str(e))
 
             # OpenGL detection (if VTK available)
             opengl_version = "Unknown"
@@ -163,7 +163,7 @@ class HardwareDetector:
                         opengl_version = ren_win.GetOpenGLVersion()
                     ren_win.Finalize()
                 except Exception as e:
-                    logger.warning(f"OpenGL detection failed: {str(e)}")
+                    logger.warning("OpenGL detection failed: %s", str(e))
 
             # Determine hardware tier
             hardware_tier = HardwareDetector._determine_hardware_tier(
@@ -197,7 +197,7 @@ class HardwareDetector:
             )
 
         except Exception as e:
-            logger.error(f"Hardware detection failed: {str(e)}")
+            logger.error("Hardware detection failed: %s", str(e))
             # Return default capabilities
             return HardwareCapabilities(
                 cpu_cores=4,
@@ -341,7 +341,7 @@ class LevelOfDetailManager:
         with self._lock:
             self._model_lods[model_id] = lod_levels
 
-        logger.debug(f"Created {len(lod_levels)} LOD levels for model {model_id}")
+        logger.debug("Created %s LOD levels for model {model_id}", len(lod_levels))
         return lod_levels
 
     def _calculate_lod_factors(self, triangle_count: int) -> List[float]:
@@ -375,7 +375,7 @@ class LevelOfDetailManager:
             decimator.Update()
             return decimator.GetOutput()
         except Exception as e:
-            logger.warning(f"Mesh decimation failed: {str(e)}")
+            logger.warning("Mesh decimation failed: %s", str(e))
             return mesh  # Return original mesh
 
     def get_optimal_lod(self, model_id: str, camera_distance: float, screen_size: float) -> int:
@@ -497,7 +497,7 @@ class VSyncManager:
     def set_vsync_enabled(self, enabled: bool) -> None:
         """Manually set VSync enabled state."""
         self._vsync_enabled = enabled
-        logger.info(f"VSync {'enabled' if enabled else 'disabled'}")
+        logger.info("VSync %s", 'enabled' if enabled else 'disabled')
 
     def get_vsync_enabled(self) -> bool:
         """Get current VSync state."""
@@ -678,7 +678,7 @@ class RenderingPerformanceManager:
                 gpu_memory_total = gpu.memoryTotal
                 gpu_usage = gpu.load * 100
         except Exception as e:
-            logger.debug(f"GPU metrics unavailable: {str(e)}")
+            logger.debug("GPU metrics unavailable: %s", str(e))
 
         # Get CPU usage
         cpu_usage = psutil.cpu_percent(interval=0.1)
@@ -763,14 +763,14 @@ class RenderingPerformanceManager:
                 try:
                     callback(new_quality)
                 except Exception as e:
-                    logger.error(f"Quality change callback failed: {str(e)}")
+                    logger.error("Quality change callback failed: %s", str(e))
 
             # Alert callbacks
             for callback in self._performance_alert_callbacks:
                 try:
                     callback(f"Rendering quality reduced to {new_quality.value} due to performance")
                 except Exception as e:
-                    logger.error(f"Performance alert callback failed: {str(e)}")
+                    logger.error("Performance alert callback failed: %s", str(e))
 
     def _increase_rendering_quality(self) -> None:
         """Increase rendering quality if performance allows."""
@@ -788,14 +788,14 @@ class RenderingPerformanceManager:
 
         if new_quality != current_quality:
             self.config.quality_level = new_quality
-            logger.info(f"Increasing rendering quality to {new_quality.value}")
+            logger.info("Increasing rendering quality to %s", new_quality.value)
 
             # Notify callbacks
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
                 except Exception as e:
-                    logger.error(f"Quality change callback failed: {str(e)}")
+                    logger.error("Quality change callback failed: %s", str(e))
 
     def _handle_gpu_memory_pressure(self) -> None:
         """Handle GPU memory pressure situation."""
@@ -816,7 +816,7 @@ class RenderingPerformanceManager:
             try:
                 callback("GPU memory pressure - reduced texture quality and disabled shadows")
             except Exception as e:
-                logger.error(f"Performance alert callback failed: {str(e)}")
+                logger.error("Performance alert callback failed: %s", str(e))
 
     def get_performance_report(self) -> Dict[str, Any]:
         """Get comprehensive performance report."""
@@ -881,7 +881,7 @@ class RenderingPerformanceManager:
         # Create LOD levels if needed
         if triangle_count > self.config.max_triangles // 2:
             # This would typically be called with the actual mesh object
-            logger.info(f"Creating LOD levels for model {model_id} with {triangle_count} triangles")
+            logger.info("Creating LOD levels for model %s with {triangle_count} triangles", model_id)
 
     def shutdown(self) -> None:
         """Shutdown the rendering performance manager."""

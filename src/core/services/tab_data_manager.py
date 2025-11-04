@@ -77,7 +77,7 @@ class TabDataManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data_with_timestamp, f, indent=2)
 
-            self.logger.info(f"Saved {tab_name} data to {file_path}")
+            self.logger.info("Saved %s data to {file_path}", tab_name)
 
             # Link file to project
             try:
@@ -87,9 +87,9 @@ class TabDataManager:
                     file_name=filename,
                     category=category or tab_name,
                 )
-                self.logger.info(f"Linked {filename} to project {project_id}")
+                self.logger.info("Linked %s to project {project_id}", filename)
             except Exception as e:
-                self.logger.warning(f"Could not link file to project: {e}")
+                self.logger.warning("Could not link file to project: %s", e)
                 # File was saved successfully, so don't fail
 
             return True, f"Data saved to {filename}"
@@ -137,7 +137,7 @@ class TabDataManager:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.logger.info(f"Loaded {filename} from {file_path}")
+            self.logger.info("Loaded %s from {file_path}", filename)
             return True, data, f"Data loaded from {filename}"
 
         except json.JSONDecodeError as e:
@@ -178,7 +178,7 @@ class TabDataManager:
             return None
 
         except Exception as e:
-            self.logger.error(f"Error getting file path: {e}")
+            self.logger.error("Error getting file path: %s", e)
             return None
 
     def list_tab_data_files(self, project_id: str, tab_name: str = None) -> Tuple[bool, list, str]:
@@ -249,7 +249,7 @@ class TabDataManager:
                 return False, f"File {filename} not found"
 
             file_path.unlink()
-            self.logger.info(f"Deleted {filename}")
+            self.logger.info("Deleted %s", filename)
             return True, f"Deleted {filename}"
 
         except Exception as e:

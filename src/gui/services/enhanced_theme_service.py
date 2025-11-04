@@ -59,11 +59,11 @@ class ThemePreviewWidget(QObject):
             self.preview_timer.timeout.connect(self._on_preview_timeout)
             self.preview_timer.start(self.preview_duration_ms)
 
-            self.logger.info(f"Started theme preview: {self.theme_name}")
+            self.logger.info("Started theme preview: %s", self.theme_name)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting theme preview: {e}")
+            self.logger.error("Error starting theme preview: %s", e)
             return False
 
     def cancel_preview(self) -> None:
@@ -78,19 +78,19 @@ class ThemePreviewWidget(QObject):
                 self._revert_to_original_theme()
                 self.preview_cancelled.emit(self.theme_name)
 
-            self.logger.info(f"Cancelled theme preview: {self.theme_name}")
+            self.logger.info("Cancelled theme preview: %s", self.theme_name)
 
         except Exception as e:
-            self.logger.error(f"Error cancelling theme preview: {e}")
+            self.logger.error("Error cancelling theme preview: %s", e)
 
     def _on_preview_timeout(self) -> None:
         """Handle preview timeout."""
         try:
             self._revert_to_original_theme()
             self.preview_completed.emit(self.theme_name)
-            self.logger.info(f"Theme preview completed: {self.theme_name}")
+            self.logger.info("Theme preview completed: %s", self.theme_name)
         except Exception as e:
-            self.logger.error(f"Error handling preview timeout: {e}")
+            self.logger.error("Error handling preview timeout: %s", e)
         finally:
             self.preview_timer = None
 
@@ -129,7 +129,7 @@ class ThemeValidationWorker(QThread):
     def run(self) -> None:
         """Run theme validation."""
         try:
-            self.logger.info(f"Starting theme validation: {self.theme_name}")
+            self.logger.info("Starting theme validation: %s", self.theme_name)
 
             # Simulate validation steps
             validation_steps = [
@@ -156,12 +156,12 @@ class ThemeValidationWorker(QThread):
             self.validation_completed.emit(self.theme_name, is_valid, error_message)
 
             if is_valid:
-                self.logger.info(f"Theme validation successful: {self.theme_name}")
+                self.logger.info("Theme validation successful: %s", self.theme_name)
             else:
-                self.logger.warning(f"Theme validation failed: {self.theme_name} - {error_message}")
+                self.logger.warning("Theme validation failed: %s - {error_message}", self.theme_name)
 
         except Exception as e:
-            self.logger.error(f"Error during theme validation: {e}", exc_info=True)
+            self.logger.error("Error during theme validation: %s", e, exc_info=True)
             self.validation_completed.emit(self.theme_name, False, str(e))
 
     def _validate_theme_file(self) -> Tuple[bool, str]:
@@ -242,9 +242,9 @@ class EnhancedThemeService(IEnhancedThemeService):
         try:
             saved_theme = self.settings_manager.get("ui.current_theme", "default")
             self.current_theme = saved_theme
-            self.logger.info(f"Loaded current theme: {self.current_theme}")
+            self.logger.info("Loaded current theme: %s", self.current_theme)
         except Exception as e:
-            self.logger.error(f"Error loading current theme: {e}")
+            self.logger.error("Error loading current theme: %s", e)
             self.current_theme = "default"
 
     def apply_theme_async(self, theme_name: str) -> bool:
@@ -264,11 +264,11 @@ class EnhancedThemeService(IEnhancedThemeService):
             future = self.thread_pool.submit(self._apply_theme_sync, theme_name)
 
             # This is non-blocking - theme application happens in background
-            self.logger.info(f"Started async theme application: {theme_name}")
+            self.logger.info("Started async theme application: %s", theme_name)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting async theme application: {e}")
+            self.logger.error("Error starting async theme application: %s", e)
             self.ui_service.show_error("Theme Error", f"Failed to start theme application: {e}")
             return False
 
@@ -298,14 +298,14 @@ class EnhancedThemeService(IEnhancedThemeService):
                     f"Theme '{theme_name}' has been applied successfully.",
                 )
 
-                self.logger.info(f"Theme applied successfully: {theme_name}")
+                self.logger.info("Theme applied successfully: %s", theme_name)
                 return True
             else:
                 self.ui_service.set_ui_state(UIState.ERROR, "Failed to apply theme")
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error applying theme: {e}", exc_info=True)
+            self.logger.error("Error applying theme: %s", e, exc_info=True)
             self.ui_service.set_ui_state(UIState.ERROR, "Theme application failed")
             return False
 
@@ -349,7 +349,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return preview_text
 
         except Exception as e:
-            self.logger.error(f"Error getting theme preview: {e}")
+            self.logger.error("Error getting theme preview: %s", e)
             return None
 
     def validate_theme(self, theme_name: str) -> Tuple[bool, str]:
@@ -391,7 +391,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return is_valid, error_message
 
         except Exception as e:
-            self.logger.error(f"Error validating theme: {e}")
+            self.logger.error("Error validating theme: %s", e)
             return False, f"Validation error: {e}"
 
     def _validate_theme_sync(self, theme_name: str) -> Tuple[bool, str]:
@@ -456,7 +456,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return success
 
         except Exception as e:
-            self.logger.error(f"Error starting theme preview: {e}")
+            self.logger.error("Error starting theme preview: %s", e)
             return False
 
     def revert_to_previous_theme(self) -> bool:
@@ -475,7 +475,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return success
 
         except Exception as e:
-            self.logger.error(f"Error reverting to previous theme: {e}")
+            self.logger.error("Error reverting to previous theme: %s", e)
             return False
 
     def get_theme_categories(self) -> Dict[str, List[str]]:
@@ -514,7 +514,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return categories
 
         except Exception as e:
-            self.logger.error(f"Error getting theme categories: {e}")
+            self.logger.error("Error getting theme categories: %s", e)
             return {}
 
     def _on_validation_completed(self, theme_name: str, is_valid: bool, error_message: str) -> None:
@@ -532,20 +532,20 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
                         "data": theme_data,
                     }
 
-                self.logger.info(f"Theme validation completed successfully: {theme_name}")
+                self.logger.info("Theme validation completed successfully: %s", theme_name)
             else:
-                self.logger.warning(f"Theme validation failed: {theme_name} - {error_message}")
+                self.logger.warning("Theme validation failed: %s - {error_message}", theme_name)
 
         except Exception as e:
-            self.logger.error(f"Error handling validation completion: {e}")
+            self.logger.error("Error handling validation completion: %s", e)
 
     def _on_validation_progress(self, theme_name: str, progress: float) -> None:
         """Handle validation progress updates."""
         try:
             # Could emit progress signal here if UI wants to show validation progress
-            self.logger.debug(f"Theme validation progress: {theme_name} - {progress:.1f}%")
+            self.logger.debug("Theme validation progress: %s - {progress:.1f}%", theme_name)
         except Exception as e:
-            self.logger.error(f"Error handling validation progress: {e}")
+            self.logger.error("Error handling validation progress: %s", e)
 
     def _on_preview_completed(self, theme_name: str) -> None:
         """Handle preview completion."""
@@ -553,9 +553,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             if theme_name in self.preview_widgets:
                 del self.preview_widgets[theme_name]
 
-            self.logger.info(f"Theme preview completed: {theme_name}")
+            self.logger.info("Theme preview completed: %s", theme_name)
         except Exception as e:
-            self.logger.error(f"Error handling preview completion: {e}")
+            self.logger.error("Error handling preview completion: %s", e)
 
     def _on_preview_cancelled(self, theme_name: str) -> None:
         """Handle preview cancellation."""
@@ -563,9 +563,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             if theme_name in self.preview_widgets:
                 del self.preview_widgets[theme_name]
 
-            self.logger.info(f"Theme preview cancelled: {theme_name}")
+            self.logger.info("Theme preview cancelled: %s", theme_name)
         except Exception as e:
-            self.logger.error(f"Error handling preview cancellation: {e}")
+            self.logger.error("Error handling preview cancellation: %s", e)
 
     def _get_theme_path(self, theme_name: str) -> Optional[Path]:
         """Get path to theme file."""
@@ -592,7 +592,7 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return theme_data
 
         except Exception as e:
-            self.logger.error(f"Error loading theme data: {e}")
+            self.logger.error("Error loading theme data: %s", e)
             return None
 
     def _apply_theme_data(self, theme_data: Dict[str, Any]) -> bool:
@@ -615,5 +615,5 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             return True
 
         except Exception as e:
-            self.logger.error(f"Error applying theme data: {e}")
+            self.logger.error("Error applying theme data: %s", e)
             return False

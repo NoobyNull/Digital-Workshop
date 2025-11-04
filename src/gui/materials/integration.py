@@ -49,7 +49,7 @@ class MaterialLightingIntegrator:
                     self.main_window.lighting_panel.raise_()
                     self.main_window.lighting_panel.activateWindow()
         except Exception as e:
-            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+            self.logger.warning("Failed to toggle lighting panel: %s", e)
 
     def update_light_position(self, x: float, y: float, z: float) -> None:
         """Update light position."""
@@ -58,7 +58,7 @@ class MaterialLightingIntegrator:
                 self.main_window.lighting_manager.update_position(x, y, z)
                 self._save_lighting_settings()
             except Exception as e:
-                self.logger.error(f"update_position failed: {e}")
+                self.logger.error("update_position failed: %s", e)
 
     def update_light_color(self, r: float, g: float, b: float) -> None:
         """Update light color."""
@@ -67,7 +67,7 @@ class MaterialLightingIntegrator:
                 self.main_window.lighting_manager.update_color(r, g, b)
                 self._save_lighting_settings()
             except Exception as e:
-                self.logger.error(f"update_color failed: {e}")
+                self.logger.error("update_color failed: %s", e)
 
     def update_light_intensity(self, value: float) -> None:
         """Update light intensity."""
@@ -76,7 +76,7 @@ class MaterialLightingIntegrator:
                 self.main_window.lighting_manager.update_intensity(value)
                 self._save_lighting_settings()
             except Exception as e:
-                self.logger.error(f"update_intensity failed: {e}")
+                self.logger.error("update_intensity failed: %s", e)
 
     def update_light_cone_angle(self, angle: float) -> None:
         """Update light cone angle."""
@@ -85,7 +85,7 @@ class MaterialLightingIntegrator:
                 self.main_window.lighting_manager.update_cone_angle(angle)
                 self._save_lighting_settings()
             except Exception as e:
-                self.logger.error(f"update_cone_angle failed: {e}")
+                self.logger.error("update_cone_angle failed: %s", e)
 
     def apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current viewer actor."""
@@ -183,9 +183,9 @@ class MaterialLightingIntegrator:
             try:
                 settings = QSettings()
                 settings.setValue("material/last_species", species_name)
-                self.logger.info(f"Saved last material species: {species_name}")
+                self.logger.info("Saved last material species: %s", species_name)
             except Exception as se:
-                self.logger.warning(f"Failed to persist last material species: {se}")
+                self.logger.warning("Failed to persist last material species: %s", se)
 
             # Track the currently applied material to prevent duplicates
             self._current_applied_material = species_name
@@ -194,7 +194,7 @@ class MaterialLightingIntegrator:
             try:
                 self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
             except Exception as e:
-                self.logger.warning(f"Failed to render after material application: {e}")
+                self.logger.warning("Failed to render after material application: %s", e)
 
         except Exception as e:
             self.logger.error(f"Failed to apply material '{species_name}': {e}")
@@ -291,7 +291,7 @@ class MaterialLightingIntegrator:
                             material["d"] = float(parts[1])
 
         except Exception as e:
-            self.logger.warning(f"Failed to parse MTL file {mtl_path}: {e}")
+            self.logger.warning("Failed to parse MTL file %s: {e}", mtl_path)
 
         return material
 
@@ -311,7 +311,7 @@ class MaterialLightingIntegrator:
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 self.logger.debug("Lighting settings saved to QSettings")
         except Exception as e:
-            self.logger.warning(f"Failed to save lighting settings: {e}")
+            self.logger.warning("Failed to save lighting settings: %s", e)
 
 
 # Convenience function for easy material and lighting integration setup

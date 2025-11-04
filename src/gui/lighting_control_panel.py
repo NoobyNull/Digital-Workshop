@@ -368,7 +368,7 @@ class LightingControlPanel(QDialog):
                 f"Cone Angle={self._cone_angle:.0f}°"
             )
         except Exception as e:
-            logger.error(f"Failed to save lighting defaults: {e}")
+            logger.error("Failed to save lighting defaults: %s", e)
 
     def _apply_button_style(self, button: QPushButton) -> None:
         """Apply styling to a button using qt-material theme."""

@@ -41,7 +41,7 @@ class CameraController:
             self.pan_speed = config.pan_speed
             self.auto_fit_on_load = config.auto_fit_on_load
         except Exception as e:
-            logger.warning(f"Failed to load camera settings from config: {e}")
+            logger.warning("Failed to load camera settings from config: %s", e)
             self.mouse_sensitivity = 1.0
             self.fps_limit = 0
             self.zoom_speed = 1.0
@@ -138,7 +138,7 @@ class CameraController:
             )
 
         except Exception as e:
-            logger.warning(f"Fallback camera reset due to error: {e}")
+            logger.warning("Fallback camera reset due to error: %s", e)
             try:
                 self.renderer.ResetCamera()
                 self.renderer.ResetCameraClippingRange()
@@ -242,7 +242,7 @@ class CameraController:
             )
 
         except Exception as e:
-            logger.error(f"Failed to fit camera preserving orientation: {e}")
+            logger.error("Failed to fit camera preserving orientation: %s", e)
             try:
                 self.renderer.ResetCamera()
                 self.renderer.ResetCameraClippingRange()
@@ -257,7 +257,7 @@ class CameraController:
             self.render_window.Render()
             logger.debug("Camera view reset")
         except Exception as e:
-            logger.error(f"Failed to reset view: {e}")
+            logger.error("Failed to reset view: %s", e)
 
     def rotate_around_view_axis(self, degrees: float) -> None:
         """
@@ -316,7 +316,7 @@ class CameraController:
             camera.SetViewUp(new_up_x, new_up_y, new_up_z)
             self.render_window.Render()
 
-            logger.debug(f"View rotated by {degrees} degrees")
+            logger.debug("View rotated by %s degrees", degrees)
 
         except Exception as e:
-            logger.error(f"Failed to rotate view: {e}")
+            logger.error("Failed to rotate view: %s", e)

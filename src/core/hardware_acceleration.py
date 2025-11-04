@@ -288,7 +288,7 @@ class HardwareAccelerationManager:
         if caps.recommended_backend == AccelBackend.CPU:
             self.logger.warning("No GPU acceleration detected; using CPU path")
         else:
-            self.logger.info(f"GPU acceleration enabled: {caps.recommended_backend.value}")
+            self.logger.info("GPU acceleration enabled: %s", caps.recommended_backend.value)
 
 
 # Singleton helpers

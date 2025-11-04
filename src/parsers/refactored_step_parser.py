@@ -181,7 +181,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             STEPParseError: If parsing fails
             FileNotFoundError: If file doesn't exist
         """
-        self.logger.info(f"Starting STEP parsing: {file_path}")
+        self.logger.info("Starting STEP parsing: %s", file_path)
 
         try:
             # Parse STEP file
@@ -220,7 +220,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to parse STEP file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse STEP file %s: {str(e)}", file_path)
             raise
 
     def _parse_step_file(
@@ -246,7 +246,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 self._parse_step_file_standard(file_path, progress_callback)
 
         except Exception as e:
-            self.logger.error(f"Error parsing STEP file: {str(e)}")
+            self.logger.error("Error parsing STEP file: %s", str(e))
             raise STEPParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_step_file_standard(
@@ -380,7 +380,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 entities_parsed += 1
 
             except (ValueError, IndexError) as e:
-                self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
+                self.logger.warning("Invalid entity: %s - {str(e)}", match.group(0))
                 continue
 
         return entities_parsed
@@ -412,7 +412,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 self._store_specific_entity(entity)
 
             except (ValueError, IndexError) as e:
-                self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
+                self.logger.warning("Invalid entity: %s - {str(e)}", match.group(0))
                 continue
 
     def _parse_parameters(self, parameters_str: str) -> List[Union[str, int, float, Tuple, List]]:
@@ -614,7 +614,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         """Process entity references to build complete geometry."""
         # This is a simplified implementation
         # A full STEP parser would need to handle many more entity types and relationships
-        self.logger.info(f"Processed {len(self.entities)} entities")
+        self.logger.info("Processed %s entities", len(self.entities))
 
     def _process_geometry(self) -> List[Dict[str, Any]]:
         """
@@ -761,7 +761,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
         except Exception as e:
-            self.logger.error(f"Error validating STEP geometry: {str(e)}")
+            self.logger.error("Error validating STEP geometry: %s", str(e))
             return {
                 "is_valid": False,
                 "issues": [f"Validation error: {str(e)}"],
@@ -807,7 +807,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             return stats
 
         except Exception as e:
-            self.logger.error(f"Error getting STEP geometry stats: {str(e)}")
+            self.logger.error("Error getting STEP geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
     def get_parser_info(self) -> Dict[str, str]:

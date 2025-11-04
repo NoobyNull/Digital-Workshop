@@ -54,7 +54,7 @@ class ModelLoader:
 
         # if file_dialog.exec_():
         #     file_path = file_dialog.selectedFiles()[0]
-        #     self.logger.info(f"Selected model file: {file_path}")
+        #     self.logger.info("Selected model file: %s", file_path)
 
         #     # Update status
         #     self.main_window.status_label.setText(f"Loading: {Path(file_path).name}")
@@ -73,11 +73,11 @@ class ModelLoader:
         if success:
             if hasattr(self.main_window, "status_label"):
                 self.main_window.status_label.setText(f"Loaded: {filename}")
-            self.activity_logger.info(f"Model loaded successfully: {filename}")
+            self.activity_logger.info("Model loaded successfully: %s", filename)
         else:
             if hasattr(self.main_window, "status_label"):
                 self.main_window.status_label.setText(f"Failed to load: {filename}")
-            self.activity_logger.error(f"Failed to load model: {filename} - {error_message}")
+            self.activity_logger.error("Failed to load model: %s - {error_message}", filename)
             QMessageBox.warning(
                 self.main_window,
                 "Load Error",
@@ -153,7 +153,7 @@ class ModelLoader:
         Args:
             info: Information about the loaded model
         """
-        self.logger.info(f"Viewer model loaded: {info}")
+        self.logger.info("Viewer model loaded: %s", info)
         # Reset save view button when new model is loaded
         try:
             if hasattr(self.main_window, "viewer_widget") and hasattr(
@@ -161,13 +161,13 @@ class ModelLoader:
             ):
                 self.main_window.viewer_widget.reset_save_view_button()
         except Exception as e:
-            self.logger.warning(f"Failed to reset save view button: {e}")
+            self.logger.warning("Failed to reset save view button: %s", e)
 
         # Apply default material from preferences for imported models
         try:
             self._apply_default_material_from_preferences()
         except Exception as e:
-            self.logger.warning(f"Failed to apply default material from preferences: {e}")
+            self.logger.warning("Failed to apply default material from preferences: %s", e)
 
         # Attempt to apply last-used material species (for library models)
         try:
@@ -180,14 +180,14 @@ class ModelLoader:
                 ):
                     species_list = self.main_window.material_manager.get_species_list()
                     if last_species in species_list:
-                        self.logger.info(f"Applying last material species on load: {last_species}")
+                        self.logger.info("Applying last material species on load: %s", last_species)
                         self._apply_material_species(last_species)
                     else:
                         self.logger.warning(
                             f"Last material '{last_species}' not found; skipping reapply"
                         )
         except Exception as e:
-            self.logger.warning(f"Failed to reapply last material species: {e}")
+            self.logger.warning("Failed to reapply last material species: %s", e)
 
         # Update model properties dock if it exists
         if hasattr(self.main_window, "properties_dock"):
@@ -246,10 +246,10 @@ class ModelLoader:
                 # Update view count
                 db_manager.increment_view_count(model_id)
             else:
-                self.logger.warning(f"Model with ID {model_id} not found in database")
+                self.logger.warning("Model with ID %s not found in database", model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle model selection: {str(e)}")
+            self.logger.error("Failed to handle model selection: %s", str(e))
 
     def on_model_double_clicked(self, model_id: int) -> None:
         """
@@ -265,7 +265,7 @@ class ModelLoader:
 
             if model:
                 file_path = model["file_path"]
-                self.logger.info(f"Loading model from library: {file_path}")
+                self.logger.info("Loading model from library: %s", file_path)
 
                 # Update status
                 filename = Path(file_path).name
@@ -284,10 +284,10 @@ class ModelLoader:
                 # After model loads, restore saved camera orientation if available
                 QTimer.singleShot(500, lambda: self._restore_saved_camera(model_id))
             else:
-                self.logger.warning(f"Model with ID {model_id} not found in database")
+                self.logger.warning("Model with ID %s not found in database", model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle model double-click: {str(e)}")
+            self.logger.error("Failed to handle model double-click: %s", str(e))
 
     def on_models_added(self, model_ids: List[int]) -> None:
         """
@@ -296,7 +296,7 @@ class ModelLoader:
         Args:
             model_ids: List of IDs of added models
         """
-        self.activity_logger.info(f"Added {len(model_ids)} models to library")
+        self.activity_logger.info("Added %s models to library", len(model_ids))
 
         # Update status
         if model_ids and hasattr(self.main_window, "status_label"):
@@ -316,7 +316,7 @@ class ModelLoader:
             default_material = settings.value("thumbnail/material", None, type=str)
 
             if default_material:
-                self.logger.info(f"Applying default material from preferences: {default_material}")
+                self.logger.info("Applying default material from preferences: %s", default_material)
                 if (
                     hasattr(self.main_window, "material_manager")
                     and self.main_window.material_manager
@@ -338,7 +338,7 @@ class ModelLoader:
             else:
                 self.logger.debug("No default material configured in preferences")
         except Exception as e:
-            self.logger.error(f"Failed to apply default material from preferences: {e}")
+            self.logger.error("Failed to apply default material from preferences: %s", e)
 
     def _apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current viewer actor."""
@@ -380,17 +380,17 @@ class ModelLoader:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
+                    self.logger.info("Restored saved camera view for model ID %s", model_id)
                     if hasattr(self.main_window, "status_label"):
                         self.main_window.status_label.setText("Restored saved view")
                         QTimer.singleShot(
                             2000, lambda: self.main_window.status_label.setText("Ready")
                         )
             else:
-                self.logger.debug(f"No saved camera view for model ID {model_id}")
+                self.logger.debug("No saved camera view for model ID %s", model_id)
 
         except Exception as e:
-            self.logger.warning(f"Failed to restore saved camera: {e}")
+            self.logger.warning("Failed to restore saved camera: %s", e)
 
     def _start_background_hasher(self) -> None:
         """Start background hasher to process new models."""

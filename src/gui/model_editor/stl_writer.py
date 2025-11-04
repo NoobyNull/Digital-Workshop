@@ -66,11 +66,11 @@ class STLWriter:
                     # Attribute byte count (2 bytes)
                     f.write(struct.pack("<H", triangle.attribute_byte_count))
 
-            logger.info(f"Wrote binary STL with {triangle_count} triangles to {output_path}")
+            logger.info("Wrote binary STL with %s triangles to {output_path}", triangle_count)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to write binary STL: {e}")
+            logger.error("Failed to write binary STL: %s", e)
             return False
 
     @staticmethod
@@ -113,11 +113,11 @@ class STLWriter:
 
                 f.write(f"endsolid {model.header}\n")
 
-            logger.info(f"Wrote ASCII STL with {len(model.triangles)} triangles to {output_path}")
+            logger.info("Wrote ASCII STL with %s triangles to {output_path}", len(model.triangles))
             return True
 
         except Exception as e:
-            logger.error(f"Failed to write ASCII STL: {e}")
+            logger.error("Failed to write ASCII STL: %s", e)
             return False
 
     @staticmethod

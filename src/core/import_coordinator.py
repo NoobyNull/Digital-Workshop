@@ -188,7 +188,7 @@ class ImportCoordinatorWorker(QThread):
                 return
 
             total_files = len(session.files)
-            self.logger.info(f"Starting coordinated import of {total_files} files")
+            self.logger.info("Starting coordinated import of %s files", total_files)
 
             # Stage 3: Process files (hashing + file management)
             processed_files = self._process_files(session)
@@ -234,7 +234,7 @@ class ImportCoordinatorWorker(QThread):
             gc.collect()
 
         except Exception as e:
-            self.logger.error(f"Import coordinator failed: {e}", exc_info=True)
+            self.logger.error("Import coordinator failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
     def _validate_settings(self) -> bool:
@@ -252,7 +252,7 @@ class ImportCoordinatorWorker(QThread):
             return True
 
         except Exception as e:
-            self.logger.error(f"Settings validation failed: {e}", exc_info=True)
+            self.logger.error("Settings validation failed: %s", e, exc_info=True)
             self.import_failed.emit(f"Validation error: {e}")
             return False
 
@@ -270,7 +270,7 @@ class ImportCoordinatorWorker(QThread):
             return session
 
         except Exception as e:
-            self.logger.error(f"Failed to start import session: {e}", exc_info=True)
+            self.logger.error("Failed to start import session: %s", e, exc_info=True)
             self.import_failed.emit(f"Session start error: {e}")
             return None
 
@@ -310,7 +310,7 @@ class ImportCoordinatorWorker(QThread):
             if success:
                 processed_files.append(file_info)
             else:
-                self.logger.warning(f"Failed to process {file_name}: {error}")
+                self.logger.warning("Failed to process %s: {error}", file_name)
 
         return processed_files
 
@@ -377,7 +377,7 @@ class ImportCoordinatorWorker(QThread):
             return result
 
         except Exception as e:
-            self.logger.error(f"Thumbnail generation failed: {e}", exc_info=True)
+            self.logger.error("Thumbnail generation failed: %s", e, exc_info=True)
             return None
 
     def _store_in_database(
@@ -402,10 +402,10 @@ class ImportCoordinatorWorker(QThread):
                     }
                     stored_models.append(model_data)
 
-            self.logger.info(f"Prepared {len(stored_models)} models for database storage")
+            self.logger.info("Prepared %s models for database storage", len(stored_models))
 
         except Exception as e:
-            self.logger.error(f"Database storage failed: {e}", exc_info=True)
+            self.logger.error("Database storage failed: %s", e, exc_info=True)
 
         return stored_models
 
@@ -429,11 +429,11 @@ class ImportCoordinatorWorker(QThread):
                 file_model_pairs, cancellation_token=self.cancellation_token
             )
 
-            self.logger.info(f"Queued {len(file_model_pairs)} models for background analysis")
+            self.logger.info("Queued %s models for background analysis", len(file_model_pairs))
             return None  # Analysis result will come later via signals
 
         except Exception as e:
-            self.logger.error(f"Failed to queue analysis: {e}", exc_info=True)
+            self.logger.error("Failed to queue analysis: %s", e, exc_info=True)
             return None
 
     def _handle_cancellation(self, session: ImportSession):
@@ -461,12 +461,12 @@ class ImportCoordinatorWorker(QThread):
             self.import_completed.emit(final_result)
 
         except Exception as e:
-            self.logger.error(f"Cancellation handling failed: {e}", exc_info=True)
+            self.logger.error("Cancellation handling failed: %s", e, exc_info=True)
 
     def _update_stage(self, stage: ImportWorkflowStage, message: str):
         """Update current stage and emit signal."""
         self.stage_changed.emit(stage, message)
-        self.logger.info(f"Import stage: {stage.value} - {message}")
+        self.logger.info("Import stage: %s - {message}", stage.value)
 
 
 class ImportCoordinator(QObject):
@@ -589,11 +589,11 @@ class ImportCoordinator(QObject):
 
             self._stats["total_imports"] += 1
 
-            self.logger.info(f"Started coordinated import of {len(file_paths)} files")
+            self.logger.info("Started coordinated import of %s files", len(file_paths))
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to start import: {e}", exc_info=True)
+            self.logger.error("Failed to start import: %s", e, exc_info=True)
             return False
 
     def cancel_import(self) -> bool:
@@ -671,7 +671,7 @@ class ImportCoordinator(QObject):
     def _on_import_failed(self, error_message: str):
         """Handle import failure."""
         self._stats["failed_imports"] += 1
-        self.logger.error(f"Import failed: {error_message}")
+        self.logger.error("Import failed: %s", error_message)
         self.import_failed.emit(error_message)
 
     def _on_worker_finished(self):

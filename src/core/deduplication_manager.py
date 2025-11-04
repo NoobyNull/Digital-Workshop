@@ -59,7 +59,7 @@ class DeduplicationManager:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to find duplicates: {e}")
+            self.logger.error("Failed to find duplicates: %s", e)
             return {}
 
     def get_file_stats(self, file_path: str) -> Optional[Dict]:
@@ -84,7 +84,7 @@ class DeduplicationManager:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get file stats for {file_path}: {e}")
+            self.logger.error("Failed to get file stats for %s: {e}", file_path)
             return None
 
     def deduplicate_group(self, models: List[Dict], keep_strategy: str) -> Tuple[int, List[int]]:
@@ -140,7 +140,7 @@ class DeduplicationManager:
                     ),
                 )
             else:
-                self.logger.error(f"Unknown keep strategy: {keep_strategy}")
+                self.logger.error("Unknown keep strategy: %s", keep_strategy)
                 return None, []
 
             keep_id = keep_model["id"]
@@ -149,12 +149,12 @@ class DeduplicationManager:
             # Link deleted models to the kept model
             for delete_id in delete_ids:
                 self.db_manager.link_duplicate_model(delete_id, keep_id)
-                self.logger.info(f"Linked duplicate model {delete_id} to {keep_id}")
+                self.logger.info("Linked duplicate model %s to {keep_id}", delete_id)
 
             return keep_id, delete_ids
 
         except Exception as e:
-            self.logger.error(f"Failed to deduplicate group: {e}")
+            self.logger.error("Failed to deduplicate group: %s", e)
             return None, []
 
     def get_duplicate_count(self) -> int:
@@ -172,5 +172,5 @@ class DeduplicationManager:
                 total += len(models) - 1
             return total
         except Exception as e:
-            self.logger.error(f"Failed to get duplicate count: {e}")
+            self.logger.error("Failed to get duplicate count: %s", e)
             return 0

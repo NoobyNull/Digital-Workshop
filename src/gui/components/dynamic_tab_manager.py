@@ -139,10 +139,10 @@ class DynamicTabManager:
                         config.current_name = new_name
                         self.logger.debug(f"Tab {index}: '{config.current_name}'")
                 except Exception as e:
-                    self.logger.debug(f"Error updating tab {index}: {e}")
+                    self.logger.debug("Error updating tab %s: {e}", index)
 
         except Exception as e:
-            self.logger.debug(f"Error updating tab names: {e}")
+            self.logger.debug("Error updating tab names: %s", e)
 
     def force_update(self) -> None:
         """Force immediate update of tab names."""

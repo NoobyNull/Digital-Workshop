@@ -128,7 +128,7 @@ class SnappingSystem:
             self.logger.info("Widget snapping system initialized successfully")
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize snapping system: {e}")
+            self.logger.error("Failed to initialize snapping system: %s", e)
             raise
 
     def _setup_component_integration(self) -> None:
@@ -144,7 +144,7 @@ class SnappingSystem:
 
             self.logger.debug("Component integration setup completed")
         except Exception as e:
-            self.logger.error(f"Failed to setup component integration: {e}")
+            self.logger.error("Failed to setup component integration: %s", e)
             raise
 
     def _handle_snap_request(self, event: SnapEvent) -> None:
@@ -165,7 +165,7 @@ class SnappingSystem:
                 self.guide_renderer.render_snap_result(snap_result, event.source_widget)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle snap request: {e}")
+            self.logger.error("Failed to handle snap request: %s", e)
 
     def add_snap_zone(self, zone: SnapZone) -> bool:
         """
@@ -184,7 +184,7 @@ class SnappingSystem:
                 self.logger.info(f"Added snap zone '{zone.name}'")
             return success
         except Exception as e:
-            self.logger.error(f"Failed to add snap zone: {e}")
+            self.logger.error("Failed to add snap zone: %s", e)
             return False
 
     def remove_snap_zone(self, zone_name: str) -> bool:
@@ -204,7 +204,7 @@ class SnappingSystem:
                 self.logger.info(f"Removed snap zone '{zone_name}'")
             return success
         except Exception as e:
-            self.logger.error(f"Failed to remove snap zone: {e}")
+            self.logger.error("Failed to remove snap zone: %s", e)
             return False
 
     def update_snap_zone(self, zone_name: str, **kwargs) -> bool:
@@ -225,7 +225,7 @@ class SnappingSystem:
                 self.logger.debug(f"Updated snap zone '{zone_name}': {kwargs}")
             return success
         except Exception as e:
-            self.logger.error(f"Failed to update snap zone: {e}")
+            self.logger.error("Failed to update snap zone: %s", e)
             return False
 
     def install_event_filter(self, widget: QWidget) -> bool:
@@ -307,9 +307,9 @@ class SnappingSystem:
             if not enabled:
                 self.guide_renderer.clear_guides()
 
-            self.logger.info(f"Snapping system {'enabled' if enabled else 'disabled'}")
+            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
         except Exception as e:
-            self.logger.error(f"Failed to set snapping enabled: {e}")
+            self.logger.error("Failed to set snapping enabled: %s", e)
 
     def is_enabled(self) -> bool:
         """
@@ -368,7 +368,7 @@ class SnappingSystem:
                 self.logger.info("Configuration loaded and applied")
             return success
         except Exception as e:
-            self.logger.error(f"Failed to load configuration: {e}")
+            self.logger.error("Failed to load configuration: %s", e)
             return False
 
     def reset_to_defaults(self) -> None:
@@ -382,7 +382,7 @@ class SnappingSystem:
 
             self.logger.info("Snapping system reset to defaults")
         except Exception as e:
-            self.logger.error(f"Failed to reset to defaults: {e}")
+            self.logger.error("Failed to reset to defaults: %s", e)
             raise
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -404,7 +404,7 @@ class SnappingSystem:
                 "configuration_memory_usage": self.config.get_memory_usage(),
             }
         except Exception as e:
-            self.logger.error(f"Failed to get performance stats: {e}")
+            self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
     def validate_configuration(self) -> List[str]:
@@ -438,7 +438,7 @@ class SnappingSystem:
 
             self.logger.info("Snapping system cleanup completed")
         except Exception as e:
-            self.logger.error(f"Error during system cleanup: {e}")
+            self.logger.error("Error during system cleanup: %s", e)
 
     def __enter__(self):
         """Context manager entry."""
@@ -473,12 +473,12 @@ def create_snapping_system(
         errors = system.validate_configuration()
         if errors:
             logger = get_logger(__name__)
-            logger.warning(f"Configuration validation issues: {errors}")
+            logger.warning("Configuration validation issues: %s", errors)
 
         return system
     except Exception as e:
         logger = get_logger(__name__)
-        logger.error(f"Failed to create snapping system: {e}")
+        logger.error("Failed to create snapping system: %s", e)
         raise RuntimeError(f"Snapping system initialization failed: {e}") from e
 
 

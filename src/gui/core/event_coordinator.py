@@ -81,7 +81,7 @@ class EventCoordinator:
                     self.main_window.background_hasher.wait(3000)  # Wait up to 3 seconds
                     self.logger.info("Background hasher stopped")
                 except Exception as e:
-                    self.logger.warning(f"Failed to stop background hasher cleanly: {e}")
+                    self.logger.warning("Failed to stop background hasher cleanly: %s", e)
 
         # Safety: Ensure layout edit mode is locked before closing
         try:
@@ -97,7 +97,7 @@ class EventCoordinator:
                 settings.setValue("ui/layout_edit_mode", False)
                 self.logger.info("Layout edit mode locked for safety on close")
         except Exception as e:
-            self.logger.warning(f"Failed to lock layout edit mode on close: {e}")
+            self.logger.warning("Failed to lock layout edit mode on close: %s", e)
 
         # Clean up resources
         if hasattr(self.main_window, "status_timer"):
@@ -116,7 +116,7 @@ class EventCoordinator:
                 self.main_window.material_manager.clear_texture_cache()
                 self.logger.info("Cleared MaterialManager texture cache on close")
         except Exception as e:
-            self.logger.warning(f"Failed to clear material texture cache: {e}")
+            self.logger.warning("Failed to clear material texture cache: %s", e)
 
         # Persist final lighting settings on close
         try:

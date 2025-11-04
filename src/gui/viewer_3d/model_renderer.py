@@ -61,7 +61,7 @@ class ModelRenderer:
         Returns:
             vtk.vtkPolyData with the model geometry
         """
-        logger.info(f"Creating VTK polydata for {len(model.triangles)} triangles")
+        logger.info("Creating VTK polydata for %s triangles", len(model.triangles))
         self._emit_progress(0.0, "Creating VTK polydata...")
 
         # Create points
@@ -184,7 +184,7 @@ class ModelRenderer:
             return polydata
 
         except Exception as e:
-            logger.error(f"Failed to create polydata from arrays: {e}", exc_info=True)
+            logger.error("Failed to create polydata from arrays: %s", e, exc_info=True)
             raise
 
     def _generate_uv_coordinates(self, polydata: vtk.vtkPolyData) -> None:
@@ -203,7 +203,7 @@ class ModelRenderer:
                 return
 
             num_points = points.GetNumberOfPoints()
-            logger.debug(f"Generating UV coordinates for {num_points} points")
+            logger.debug("Generating UV coordinates for %s points", num_points)
 
             # Find bounds
             bounds = polydata.GetBounds()
@@ -232,10 +232,10 @@ class ModelRenderer:
 
             # Add to polydata
             polydata.GetPointData().SetTCoords(uv_vtk)
-            logger.debug(f"Generated {num_points} UV coordinates")
+            logger.debug("Generated %s UV coordinates", num_points)
 
         except Exception as e:
-            logger.error(f"Failed to generate UV coordinates: {e}", exc_info=True)
+            logger.error("Failed to generate UV coordinates: %s", e, exc_info=True)
 
     def set_render_mode(self, mode: RenderMode) -> None:
         """
@@ -261,7 +261,7 @@ class ModelRenderer:
         elif self.render_mode == RenderMode.POINTS:
             prop.SetRepresentationToPoints()
 
-        logger.debug(f"Render mode set to {self.render_mode.value}")
+        logger.debug("Render mode set to %s", self.render_mode.value)
 
     def load_model(self, polydata: vtk.vtkPolyData) -> None:
         """
@@ -371,9 +371,9 @@ class ModelRenderer:
             settings = QSettings()
             default_material = settings.value("thumbnail/material", "maple", type=str)
 
-            logger.info(f"Applying default material: {default_material}")
+            logger.info("Applying default material: %s", default_material)
             return self.apply_material(default_material, material_manager)
 
         except Exception as e:
-            logger.error(f"Failed to apply default material: {e}", exc_info=True)
+            logger.error("Failed to apply default material: %s", e, exc_info=True)
             return False

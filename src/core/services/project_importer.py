@@ -91,7 +91,7 @@ class ProjectImporter:
                     original_path=folder_path,
                     structure_type=structure_type,
                 )
-                logger.info(f"Created project: {project_name} ({project_id})")
+                logger.info("Created project: %s ({project_id})", project_name)
             except ValueError as e:
                 raise ValueError(f"Failed to create project: {str(e)}")
 
@@ -115,7 +115,7 @@ class ProjectImporter:
 
                     if not filter_result.is_allowed:
                         files_blocked += 1
-                        logger.debug(f"Blocked file: {file_path} ({filter_result.reason})")
+                        logger.debug("Blocked file: %s ({filter_result.reason})", file_path)
                         continue
 
                     # Get file info
@@ -135,7 +135,7 @@ class ProjectImporter:
                     )
 
                     files_imported += 1
-                    logger.debug(f"Imported file: {file_name}")
+                    logger.debug("Imported file: %s", file_name)
 
                 except Exception as e:
                     files_failed += 1
@@ -167,7 +167,7 @@ class ProjectImporter:
             return report
 
         except Exception as e:
-            logger.error(f"Import failed: {str(e)}")
+            logger.error("Import failed: %s", str(e))
             error_msg = f"Import failed: {str(e)}"
             errors.append(error_msg)
 

@@ -87,5 +87,5 @@ class SearchSuggestionWorker(QThread):
             suggestions = self.search_engine.get_search_suggestions(self.query, self.limit)
             self.suggestions_ready.emit(suggestions)
         except Exception as e:
-            logger.error(f"Failed to get suggestions: {str(e)}")
+            logger.error("Failed to get suggestions: %s", str(e))
             self.suggestions_ready.emit([])

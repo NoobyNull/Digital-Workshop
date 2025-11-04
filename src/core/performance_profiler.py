@@ -130,7 +130,7 @@ class PerformanceProfiler:
         self.profile_output_dir = Path("performance_profiles")
         self.profile_output_dir.mkdir(exist_ok=True)
 
-        self.logger.info(f"PerformanceProfiler initialized (enabled: {enable_profiling})")
+        self.logger.info("PerformanceProfiler initialized (enabled: %s)", enable_profiling)
 
     @log_function_call
     @contextmanager
@@ -317,7 +317,7 @@ class PerformanceProfiler:
                     with open(text_report, "w") as f:
                         f.write(s.getvalue())
 
-                    self.logger.info(f"Profile saved: {profile_file} and {text_report}")
+                    self.logger.info("Profile saved: %s and {text_report}", profile_file)
 
             return wrapper
 
@@ -346,7 +346,7 @@ class PerformanceProfiler:
         if not self.enable_profiling:
             return {"error": "Profiling disabled"}
 
-        self.logger.info(f"Starting benchmark: {operation_name} ({iterations} iterations)")
+        self.logger.info("Starting benchmark: %s ({iterations} iterations)", operation_name)
 
         # Warmup
         for i in range(warmup_iterations):
@@ -375,7 +375,7 @@ class PerformanceProfiler:
                 )
 
             except Exception as e:
-                self.logger.error(f"Benchmark iteration {i + 1} failed: {e}")
+                self.logger.error("Benchmark iteration %s failed: {e}", i + 1)
                 continue
 
         if not times:
@@ -495,11 +495,11 @@ class PerformanceProfiler:
                             }
                         )
 
-            self.logger.info(f"Exported {len(self.samples)} samples to {output_file}")
+            self.logger.info("Exported %s samples to {output_file}", len(self.samples))
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to export samples to CSV: {e}")
+            self.logger.error("Failed to export samples to CSV: %s", e)
             return False
 
     @log_function_call

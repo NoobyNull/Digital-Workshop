@@ -274,7 +274,7 @@ class FileTypeFilter:
             )
 
         except Exception as e:
-            logger.error(f"Failed to filter file: {str(e)}")
+            logger.error("Failed to filter file: %s", str(e))
             raise
 
     @log_function_call(logger)

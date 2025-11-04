@@ -129,7 +129,7 @@ class ModelCache:
                     # Use adaptive cache size from performance profile
                     self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
             except Exception as e:
-                self.logger.warning(f"Failed to check config override, using adaptive: {e}")
+                self.logger.warning("Failed to check config override, using adaptive: %s", e)
                 self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
         else:
             self.max_memory_bytes = max_memory_mb * 1024 * 1024
@@ -193,7 +193,7 @@ class ModelCache:
                 conn.commit()
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize disk cache: {str(e)}")
+            self.logger.error("Failed to initialize disk cache: %s", str(e))
             raise
 
     def _generate_file_hash(self, file_path: str) -> str:
@@ -221,7 +221,7 @@ class ModelCache:
             return hasher.hexdigest()
 
         except Exception as e:
-            self.logger.error(f"Failed to generate file hash: {str(e)}")
+            self.logger.error("Failed to generate file hash: %s", str(e))
             hasher = xxhash.xxh128()
             hasher.update(file_path.encode())
             return hasher.hexdigest()
@@ -283,7 +283,7 @@ class ModelCache:
                 return pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
 
         except Exception as e:
-            self.logger.error(f"Failed to serialize data: {str(e)}")
+            self.logger.error("Failed to serialize data: %s", str(e))
             raise
 
     def _deserialize_data(self, data: bytes) -> Any:
@@ -300,7 +300,7 @@ class ModelCache:
             return pickle.loads(data)
 
         except Exception as e:
-            self.logger.error(f"Failed to deserialize data: {str(e)}")
+            self.logger.error("Failed to deserialize data: %s", str(e))
             raise
 
     def _evict_memory_entries(self, required_bytes: int) -> None:
@@ -345,7 +345,7 @@ class ModelCache:
             self.stats.eviction_count += 1
 
         if entries_to_evict:
-            self.logger.debug(f"Evicted {len(entries_to_evict)} entries, freed {bytes_freed} bytes")
+            self.logger.debug("Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict))
 
     def _store_to_disk_cache(self, key: str, entry: CacheEntry) -> None:
         """
@@ -380,7 +380,7 @@ class ModelCache:
                 conn.commit()
 
         except Exception as e:
-            self.logger.error(f"Failed to store to disk cache: {str(e)}")
+            self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
         self, file_path: str, cache_level: CacheLevel
@@ -435,7 +435,7 @@ class ModelCache:
                 return None
 
         except Exception as e:
-            self.logger.error(f"Failed to load from disk cache: {str(e)}")
+            self.logger.error("Failed to load from disk cache: %s", str(e))
             return None
 
     def _make_space_in_memory(self, required_bytes: int) -> bool:
@@ -483,7 +483,7 @@ class ModelCache:
                 self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug(f"Cache hit (memory): {file_path} [{cache_level.value}]")
+                self.logger.debug("Cache hit (memory): %s [{cache_level.value}]", file_path)
                 return entry.data
 
             # Check disk cache
@@ -501,12 +501,12 @@ class ModelCache:
                     self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug(f"Cache hit (disk): {file_path} [{cache_level.value}]")
+                self.logger.debug("Cache hit (disk): %s [{cache_level.value}]", file_path)
                 return entry.data
 
             # Cache miss
             self.stats.miss_count += 1
-            self.logger.debug(f"Cache miss: {file_path} [{cache_level.value}]")
+            self.logger.debug("Cache miss: %s [{cache_level.value}]", file_path)
             return None
 
     def put(
@@ -575,7 +575,7 @@ class ModelCache:
             # Update statistics
             self._update_stats()
 
-            self.logger.debug(f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)")
+            self.logger.debug("Cached: %s [{cache_level.value}] ({data_size} bytes)", file_path)
             return True
 
     def remove(self, file_path: str, cache_level: Optional[CacheLevel] = None) -> bool:
@@ -620,11 +620,11 @@ class ModelCache:
                         conn.commit()
 
                 except Exception as e:
-                    self.logger.error(f"Failed to remove from disk cache: {str(e)}")
+                    self.logger.error("Failed to remove from disk cache: %s", str(e))
 
             if removed:
                 self._update_stats()
-                self.logger.debug(f"Removed from cache: {file_path}")
+                self.logger.debug("Removed from cache: %s", file_path)
 
             return removed
 
@@ -649,7 +649,7 @@ class ModelCache:
                         conn.commit()
 
                 except Exception as e:
-                    self.logger.error(f"Failed to clear disk cache: {str(e)}")
+                    self.logger.error("Failed to clear disk cache: %s", str(e))
 
             # Reset statistics
             self.stats = CacheStats()
@@ -657,7 +657,7 @@ class ModelCache:
             # Force garbage collection
             gc.collect()
 
-            self.logger.info(f"Cache cleared (memory_only={memory_only})")
+            self.logger.info("Cache cleared (memory_only=%s)", memory_only)
 
     def _update_stats(self) -> None:
         """Update cache statistics."""
@@ -676,7 +676,7 @@ class ModelCache:
                 self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
 
         except Exception as e:
-            self.logger.error(f"Failed to update statistics: {str(e)}")
+            self.logger.error("Failed to update statistics: %s", str(e))
 
     def get_stats(self) -> CacheStats:
         """
@@ -719,7 +719,7 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info(f"High memory usage ({memory_usage_ratio:.1%}), evicting entries")
+                self.logger.info("High memory usage (%s), evicting entries", memory_usage_ratio:.1%)
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries
@@ -736,11 +736,11 @@ class ModelCache:
                     )
                     deleted_count = cursor.rowcount
                     if deleted_count > 0:
-                        self.logger.info(f"Cleaned up {deleted_count} old disk cache entries")
+                        self.logger.info("Cleaned up %s old disk cache entries", deleted_count)
                     conn.commit()
 
             except Exception as e:
-                self.logger.error(f"Failed to optimize disk cache: {str(e)}")
+                self.logger.error("Failed to optimize disk cache: %s", str(e))
 
     def cleanup(self) -> None:
         """Clean up cache resources."""

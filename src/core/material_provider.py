@@ -41,7 +41,7 @@ class MaterialProvider:
         """
         try:
             if not self.DEFAULT_MATERIALS_DIR.exists():
-                self.logger.warning(f"Materials directory not found: {self.DEFAULT_MATERIALS_DIR}")
+                self.logger.warning("Materials directory not found: %s", self.DEFAULT_MATERIALS_DIR)
                 return []
 
             materials = []
@@ -72,11 +72,11 @@ class MaterialProvider:
 
                 materials.append(material_info)
 
-            self.logger.debug(f"Found {len(materials)} material textures")
+            self.logger.debug("Found %s material textures", len(materials))
             return sorted(materials, key=lambda m: m["name"])
 
         except Exception as e:
-            self.logger.error(f"Error discovering materials: {e}", exc_info=True)
+            self.logger.error("Error discovering materials: %s", e, exc_info=True)
             return []
 
     def get_material_by_name(self, name: str) -> Optional[Dict[str, any]]:
@@ -92,7 +92,7 @@ class MaterialProvider:
         try:
             self.logger.debug(f"[STL_TEXTURE_DEBUG] Looking for material with name: '{name}'")
             materials = self.get_available_materials()
-            self.logger.debug(f"[STL_TEXTURE_DEBUG] Found {len(materials)} available materials")
+            self.logger.debug("[STL_TEXTURE_DEBUG] Found %s available materials", len(materials))
 
             for material in materials:
                 self.logger.debug(f"[STL_TEXTURE_DEBUG] Checking material: '{material['name']}'")
@@ -142,7 +142,7 @@ class MaterialProvider:
         properties = {}
 
         try:
-            self.logger.debug(f"Starting to parse MTL file: {mtl_path}")
+            self.logger.debug("Starting to parse MTL file: %s", mtl_path)
             with open(mtl_path, "r") as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
@@ -151,7 +151,7 @@ class MaterialProvider:
                     if not line or line.startswith("#"):
                         continue
 
-                    self.logger.debug(f"Parsing line {line_num}: {line}")
+                    self.logger.debug("Parsing line %s: {line}", line_num)
 
                     # Parse material properties
                     if line.startswith("newmtl"):
@@ -159,15 +159,15 @@ class MaterialProvider:
                         parts = line.split(maxsplit=1)
                         if len(parts) > 1:
                             properties["material_name"] = parts[1]
-                            self.logger.debug(f"Found material name: {parts[1]}")
+                            self.logger.debug("Found material name: %s", parts[1])
 
                     elif line.startswith("Ns"):
                         # Specular exponent (shininess)
                         try:
                             properties["shininess"] = float(line.split()[1])
-                            self.logger.debug(f"Found shininess: {properties['shininess']}")
+                            self.logger.debug("Found shininess: %s", properties['shininess'])
                         except (IndexError, ValueError) as e:
-                            self.logger.warning(f"Failed to parse Ns value: {e}")
+                            self.logger.warning("Failed to parse Ns value: %s", e)
 
                     elif line.startswith("Ka"):
                         # Ambient color
@@ -178,9 +178,9 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(f"Found ambient color: {properties['ambient']}")
+                            self.logger.debug("Found ambient color: %s", properties['ambient'])
                         except (IndexError, ValueError) as e:
-                            self.logger.warning(f"Failed to parse Ka values: {e}")
+                            self.logger.warning("Failed to parse Ka values: %s", e)
 
                     elif line.startswith("Kd"):
                         # Diffuse color
@@ -191,9 +191,9 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(f"Found diffuse color: {properties['diffuse']}")
+                            self.logger.debug("Found diffuse color: %s", properties['diffuse'])
                         except (IndexError, ValueError) as e:
-                            self.logger.warning(f"Failed to parse Kd values: {e}")
+                            self.logger.warning("Failed to parse Kd values: %s", e)
 
                     elif line.startswith("Ks"):
                         # Specular color
@@ -204,9 +204,9 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug(f"Found specular color: {properties['specular']}")
+                            self.logger.debug("Found specular color: %s", properties['specular'])
                         except (IndexError, ValueError) as e:
-                            self.logger.warning(f"Failed to parse Ks values: {e}")
+                            self.logger.warning("Failed to parse Ks values: %s", e)
 
                     elif line.startswith("map_Kd"):
                         # Diffuse texture map
@@ -214,7 +214,7 @@ class MaterialProvider:
                         if len(parts) > 1:
                             texture_path = parts[1]
                             properties["diffuse_map"] = texture_path
-                            self.logger.debug(f"Found diffuse texture map: {texture_path}")
+                            self.logger.debug("Found diffuse texture map: %s", texture_path)
 
                             # Resolve relative path
                             if not Path(texture_path).is_absolute():
@@ -233,13 +233,13 @@ class MaterialProvider:
                                     )
                             else:
                                 properties["diffuse_map_resolved"] = texture_path
-                                self.logger.debug(f"Absolute texture path: {texture_path}")
+                                self.logger.debug("Absolute texture path: %s", texture_path)
 
-            self.logger.info(f"Parsed MTL file: {mtl_path.name} with {len(properties)} properties")
-            self.logger.debug(f"Final properties: {properties}")
+            self.logger.info("Parsed MTL file: %s with {len(properties)} properties", mtl_path.name)
+            self.logger.debug("Final properties: %s", properties)
 
         except Exception as e:
-            self.logger.error(f"Error parsing MTL file {mtl_path}: {e}", exc_info=True)
+            self.logger.error("Error parsing MTL file %s: {e}", mtl_path, exc_info=True)
 
         return properties
 
@@ -255,21 +255,21 @@ class MaterialProvider:
         """
         try:
             if not texture_path.exists():
-                self.logger.warning(f"Texture file not found: {texture_path}")
+                self.logger.warning("Texture file not found: %s", texture_path)
                 return False
 
             if not texture_path.is_file():
-                self.logger.warning(f"Texture path is not a file: {texture_path}")
+                self.logger.warning("Texture path is not a file: %s", texture_path)
                 return False
 
             # Check extension
             supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if texture_path.suffix.lower() not in supported_extensions:
-                self.logger.warning(f"Unsupported texture format: {texture_path.suffix}")
+                self.logger.warning("Unsupported texture format: %s", texture_path.suffix)
                 return False
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Error validating texture: {e}", exc_info=True)
+            self.logger.error("Error validating texture: %s", e, exc_info=True)
             return False

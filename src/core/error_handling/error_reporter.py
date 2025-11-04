@@ -194,7 +194,7 @@ class ErrorReporter:
 
         except Exception as reporting_error:
             # Fallback error handling if reporting itself fails
-            self.logger.critical(f"Error reporting failed: {reporting_error}", exc_info=True)
+            self.logger.critical("Error reporting failed: %s", reporting_error, exc_info=True)
             raise
 
     def _store_error_report(self, error_report: ErrorReport) -> None:
@@ -256,7 +256,7 @@ class ErrorReporter:
         recovery_handler = self.recovery_strategies.get(strategy)
 
         if not recovery_handler:
-            self.logger.warning(f"No recovery handler for strategy: {strategy.value}")
+            self.logger.warning("No recovery handler for strategy: %s", strategy.value)
             return False
 
         try:
@@ -268,7 +268,7 @@ class ErrorReporter:
                     self.reporting_stats["failed_recoveries"] += 1
             return success
         except Exception as recovery_error:
-            self.logger.error(f"Recovery attempt failed: {recovery_error}", exc_info=True)
+            self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
             with self._lock:
                 self.reporting_stats["failed_recoveries"] += 1
             return False
@@ -294,7 +294,7 @@ class ErrorReporter:
 
         # Additional shutdown-specific logging
         if error_report.context_info:
-            self.logger.debug(f"Shutdown context: {error_report.context_info}")
+            self.logger.debug("Shutdown context: %s", error_report.context_info)
 
     def _handle_vtk_error(self, error_report: ErrorReport) -> None:
         """Handle VTK-related errors."""
@@ -308,7 +308,7 @@ class ErrorReporter:
             "opengl_version": error_report.system_info.get("opengl_version", "unknown"),
             "graphics_card": error_report.system_info.get("graphics_card", "unknown"),
         }
-        self.logger.debug(f"VTK diagnostic info: {vtk_info}")
+        self.logger.debug("VTK diagnostic info: %s", vtk_info)
 
     def _handle_memory_error(self, error_report: ErrorReport) -> None:
         """Handle memory-related errors."""
@@ -322,11 +322,11 @@ class ErrorReporter:
             "memory_usage": error_report.system_info.get("memory_usage", "unknown"),
             "process_memory": error_report.system_info.get("process_memory", "unknown"),
         }
-        self.logger.critical(f"Memory diagnostic info: {memory_info}")
+        self.logger.critical("Memory diagnostic info: %s", memory_info)
 
     def _handle_system_resource_error(self, error_report: ErrorReport) -> None:
         """Handle system resource errors."""
-        self.logger.error(f"System resource error: {error_report.error_message}")
+        self.logger.error("System resource error: %s", error_report.error_message)
 
         # Log system resource information
         resource_info = {
@@ -334,7 +334,7 @@ class ErrorReporter:
             "disk_space": error_report.system_info.get("disk_space", "unknown"),
             "system_load": error_report.system_info.get("system_load", "unknown"),
         }
-        self.logger.debug(f"System resource info: {resource_info}")
+        self.logger.debug("System resource info: %s", resource_info)
 
     # Recovery strategy implementations
     def _graceful_shutdown(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
@@ -346,7 +346,7 @@ class ErrorReporter:
             self.logger.info("Graceful shutdown recovery successful")
             return True
         except Exception as e:
-            self.logger.error(f"Graceful shutdown recovery failed: {e}")
+            self.logger.error("Graceful shutdown recovery failed: %s", e)
             return False
 
     def _immediate_shutdown(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
@@ -358,7 +358,7 @@ class ErrorReporter:
 
             os._exit(1)
         except Exception as e:
-            self.logger.error(f"Immediate shutdown failed: {e}")
+            self.logger.error("Immediate shutdown failed: %s", e)
             return False
 
     def _retry_with_backoff(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
@@ -375,16 +375,16 @@ class ErrorReporter:
 
                 try:
                     recovery_callback()
-                    self.logger.info(f"Retry successful on attempt {attempt + 1}")
+                    self.logger.info("Retry successful on attempt %s", attempt + 1)
                     return True
                 except Exception as e:
-                    self.logger.warning(f"Retry attempt {attempt + 1} failed: {e}")
+                    self.logger.warning("Retry attempt %s failed: {e}", attempt + 1)
                     continue
 
             self.logger.error("All retry attempts failed")
             return False
         except Exception as e:
-            self.logger.error(f"Retry with backoff failed: {e}")
+            self.logger.error("Retry with backoff failed: %s", e)
             return False
 
     def _fallback_mode(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
@@ -395,7 +395,7 @@ class ErrorReporter:
             self.logger.info("Fallback mode activated successfully")
             return True
         except Exception as e:
-            self.logger.error(f"Fallback mode activation failed: {e}")
+            self.logger.error("Fallback mode activation failed: %s", e)
             return False
 
     def _request_user_intervention(
@@ -408,7 +408,7 @@ class ErrorReporter:
 
         # Log recommended actions
         for action in error_report.classification.recommended_actions:
-            self.logger.info(f"Recommended action: {action}")
+            self.logger.info("Recommended action: %s", action)
 
         # In a real implementation, this would show a dialog to the user
         # For now, we'll just log that user intervention is needed
@@ -416,12 +416,12 @@ class ErrorReporter:
 
     def _ignore_and_continue(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
         """Ignore error and continue operation."""
-        self.logger.info(f"Ignoring error and continuing: {error_report.error_message}")
+        self.logger.info("Ignoring error and continuing: %s", error_report.error_message)
         return True
 
     def _defer_processing(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
         """Defer processing for later."""
-        self.logger.info(f"Deferring processing: {error_report.error_message}")
+        self.logger.info("Deferring processing: %s", error_report.error_message)
         # In a real implementation, this would queue the operation for later
         return True
 

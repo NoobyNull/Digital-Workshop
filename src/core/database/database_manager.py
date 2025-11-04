@@ -37,7 +37,7 @@ class DatabaseManager:
         self.db_path = Path(db_path)
         self._lock = threading.Lock()
 
-        logger.info(f"Initializing database manager with path: {self.db_path}")
+        logger.info("Initializing database manager with path: %s", self.db_path)
 
         # Initialize specialized modules
         self._db_ops = DatabaseOperations(str(self.db_path))
@@ -188,12 +188,12 @@ class DatabaseManager:
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated model {model_id}")
+                    logger.info("Updated model %s", model_id)
 
                 return success
 
         except Exception as e:
-            logger.error(f"Failed to update model {model_id}: {e}")
+            logger.error("Failed to update model %s: {e}", model_id)
             return False
 
     def search_models(
@@ -251,7 +251,7 @@ class DatabaseManager:
                 return [dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"Failed to search models: {e}")
+            logger.error("Failed to search models: %s", e)
             return []
 
     def update_category(self, category_id: int, **kwargs) -> bool:
@@ -294,12 +294,12 @@ class DatabaseManager:
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated category {category_id}")
+                    logger.info("Updated category %s", category_id)
 
                 return success
 
         except Exception as e:
-            logger.error(f"Failed to update category {category_id}: {e}")
+            logger.error("Failed to update category %s: {e}", category_id)
             return False
 
     # ===== Project Operations (delegated to ProjectRepository) =====

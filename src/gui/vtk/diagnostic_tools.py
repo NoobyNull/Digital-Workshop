@@ -62,7 +62,7 @@ class VTKDiagnosticTools:
             return diagnostics
 
         except Exception as e:
-            self.logger.error(f"Error getting comprehensive diagnostics: {e}")
+            self.logger.error("Error getting comprehensive diagnostics: %s", e)
             return {"error": str(e)}
 
     def _get_platform_info(self) -> Dict[str, Any]:
@@ -173,7 +173,7 @@ class VTKDiagnosticTools:
             return True
 
         except Exception as e:
-            self.logger.debug(f"OpenGL availability check failed: {e}")
+            self.logger.debug("OpenGL availability check failed: %s", e)
             return False
 
     def _get_opengl_version(self) -> Optional[str]:
@@ -377,7 +377,7 @@ class VTKDiagnosticTools:
             return diagnosis
 
         except Exception as e:
-            self.logger.error(f"Error diagnosing context loss: {e}")
+            self.logger.error("Error diagnosing context loss: %s", e)
             return {"error": str(e)}
 
     def diagnose_memory_issues(self) -> Dict[str, Any]:
@@ -414,7 +414,7 @@ class VTKDiagnosticTools:
             return diagnosis
 
         except Exception as e:
-            self.logger.error(f"Error diagnosing memory issues: {e}")
+            self.logger.error("Error diagnosing memory issues: %s", e)
             return {"error": str(e)}
 
     def diagnose_performance_issues(self) -> Dict[str, Any]:
@@ -459,7 +459,7 @@ class VTKDiagnosticTools:
             return diagnosis
 
         except Exception as e:
-            self.logger.error(f"Error diagnosing performance issues: {e}")
+            self.logger.error("Error diagnosing performance issues: %s", e)
             return {"error": str(e)}
 
     def generate_diagnostic_report(self, output_file: Optional[str] = None) -> str:
@@ -491,9 +491,9 @@ class VTKDiagnosticTools:
                 try:
                     with open(output_file, "w") as f:
                         f.write(report)
-                    self.logger.info(f"Diagnostic report saved to: {output_file}")
+                    self.logger.info("Diagnostic report saved to: %s", output_file)
                 except Exception as e:
-                    self.logger.error(f"Error saving diagnostic report: {e}")
+                    self.logger.error("Error saving diagnostic report: %s", e)
 
             return report
 
@@ -665,7 +665,7 @@ class VTKDiagnosticTools:
             return health
 
         except Exception as e:
-            self.logger.error(f"Error running health check: {e}")
+            self.logger.error("Error running health check: %s", e)
             return {
                 "overall_status": "error",
                 "issues": [str(e)],

@@ -81,11 +81,11 @@ class TDBToolParser(BaseToolParser):
                         progress = min((i + 1) / tool_count, 1.0)
                         progress_callback.report(progress, f"Parsing tool {i + 1}/{tool_count}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from TDB file")
+            self.logger.info("Parsed %s tools from TDB file", len(tools))
             return tools
 
         except Exception as e:
-            self.logger.error(f"Failed to parse TDB file: {e}")
+            self.logger.error("Failed to parse TDB file: %s", e)
             raise
 
     def _parse_tdb_tool(self, data: bytes) -> ToolData:

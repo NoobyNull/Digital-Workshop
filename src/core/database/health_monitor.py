@@ -184,7 +184,7 @@ class DatabaseHealthMonitor:
                 self._cleanup_old_data()
                 time.sleep(self.monitoring_interval)
             except Exception as e:
-                logger.error(f"Health monitoring error: {str(e)}")
+                logger.error("Health monitoring error: %s", str(e))
                 time.sleep(5)  # Brief pause on error
 
     def _collect_system_metrics(self) -> None:
@@ -239,7 +239,7 @@ class DatabaseHealthMonitor:
                 self._record_metric("database.file.size", db_size_mb, MetricType.GAUGE, "MB")
 
         except Exception as e:
-            logger.error(f"Failed to collect system metrics: {str(e)}")
+            logger.error("Failed to collect system metrics: %s", str(e))
 
     def _collect_database_metrics(self) -> None:
         """Collect database-specific metrics."""
@@ -293,7 +293,7 @@ class DatabaseHealthMonitor:
                 )
 
         except Exception as e:
-            logger.error(f"Failed to collect database metrics: {str(e)}")
+            logger.error("Failed to collect database metrics: %s", str(e))
 
     def _record_metric(
         self,
@@ -379,9 +379,9 @@ class DatabaseHealthMonitor:
 
                 # Log alert
                 if status == HealthStatus.CRITICAL:
-                    logger.critical(f"CRITICAL: {alert.message}")
+                    logger.critical("CRITICAL: %s", alert.message)
                 else:
-                    logger.warning(f"WARNING: {alert.message}")
+                    logger.warning("WARNING: %s", alert.message)
             else:
                 # Update existing alert
                 self._alerts[alert_key].value = metric.value
@@ -391,7 +391,7 @@ class DatabaseHealthMonitor:
             if alert_key in self._alerts and not self._alerts[alert_key].resolved:
                 self._alerts[alert_key].resolved = True
                 self._alerts[alert_key].resolved_at = datetime.now()
-                logger.info(f"Alert resolved: {metric.name}")
+                logger.info("Alert resolved: %s", metric.name)
 
     def _notify_alert_callbacks(self, alert: HealthAlert) -> None:
         """Notify registered alert callbacks."""
@@ -399,7 +399,7 @@ class DatabaseHealthMonitor:
             try:
                 callback(alert)
             except Exception as e:
-                logger.error(f"Alert callback failed: {str(e)}")
+                logger.error("Alert callback failed: %s", str(e))
 
     def _cleanup_old_data(self) -> None:
         """Clean up old metrics and alerts."""
@@ -488,7 +488,7 @@ class DatabaseHealthMonitor:
                     f"Critical slow query detected: {execution_time:.2f}s - {query[:100]}"
                 )
             elif execution_time > self._thresholds["query_time_warning"]:
-                logger.warning(f"Slow query detected: {execution_time:.2f}s - {query[:100]}")
+                logger.warning("Slow query detected: %ss - {query[:100]}", execution_time:.2f)
 
     def get_current_health_status(self) -> HealthStatus:
         """

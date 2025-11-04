@@ -189,7 +189,7 @@ class ImportFileManager:
                 test_file.unlink()
             except (PermissionError, OSError) as e:
                 error = f"No write permission for directory: {root_directory}"
-                self.logger.warning(f"{error}: {e}")
+                self.logger.warning("%s: {e}", error)
                 return False, error
 
             # Check if it's a configured root folder
@@ -522,9 +522,9 @@ class ImportFileManager:
                     path = Path(file_path)
                     if path.exists():
                         path.unlink()
-                        self.logger.info(f"Rolled back copied file: {file_path}")
+                        self.logger.info("Rolled back copied file: %s", file_path)
                 except Exception as e:
-                    self.logger.error(f"Failed to remove file during rollback: {file_path}: {e}")
+                    self.logger.error("Failed to remove file during rollback: %s: {e}", file_path)
                     rollback_success = False
 
             # Remove created directories (if empty)
@@ -535,7 +535,7 @@ class ImportFileManager:
                         # Only remove if empty
                         if not list(path.iterdir()):
                             path.rmdir()
-                            self.logger.info(f"Rolled back created directory: {dir_path}")
+                            self.logger.info("Rolled back created directory: %s", dir_path)
                 except Exception as e:
                     self.logger.error(
                         f"Failed to remove directory during rollback: {dir_path}: {e}"
@@ -550,7 +550,7 @@ class ImportFileManager:
             return rollback_success
 
         except Exception as e:
-            self.logger.error(f"Error during rollback: {e}", exc_info=True)
+            self.logger.error("Error during rollback: %s", e, exc_info=True)
             return False
 
     def complete_import_session(self, session: ImportSession, success: bool = True) -> ImportResult:

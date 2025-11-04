@@ -113,7 +113,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             OBJParseError: If parsing fails
             FileNotFoundError: If file doesn't exist
         """
-        self.logger.info(f"Starting OBJ parsing: {file_path}")
+        self.logger.info("Starting OBJ parsing: %s", file_path)
 
         try:
             # Parse OBJ file
@@ -154,7 +154,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to parse OBJ file {file_path}: {str(e)}")
+            self.logger.error("Failed to parse OBJ file %s: {str(e)}", file_path)
             raise
 
     def _parse_obj_file(
@@ -196,7 +196,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                 return self._parse_obj_file_standard(file_path, progress_callback)
 
         except Exception as e:
-            self.logger.error(f"Error parsing OBJ file: {str(e)}")
+            self.logger.error("Error parsing OBJ file: %s", str(e))
             raise OBJParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_obj_file_standard(
@@ -285,7 +285,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             self._load_mtl_file(file_path.parent / mtl_file)
 
                 except (ValueError, IndexError) as e:
-                    self.logger.warning(f"Invalid line {i+1}: {line} - {str(e)}")
+                    self.logger.warning("Invalid line %s: {line} - {str(e)}", i+1)
                     continue
 
                 # Periodic garbage collection
@@ -391,7 +391,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             self._load_mtl_file(file_path.parent / mtl_file)
 
                 except (ValueError, IndexError) as e:
-                    self.logger.warning(f"Invalid line {processed_lines}: {line} - {str(e)}")
+                    self.logger.warning("Invalid line %s: {line} - {str(e)}", processed_lines)
                     continue
 
                 # Periodic garbage collection for large files
@@ -564,7 +564,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             mtl_path: Path to the MTL file
         """
         if not mtl_path.exists():
-            self.logger.warning(f"MTL file not found: {mtl_path}")
+            self.logger.warning("MTL file not found: %s", mtl_path)
             return
 
         try:
@@ -686,13 +686,13 @@ class RefactoredOBJParser(RefactoredBaseParser):
                                     current_material.decal_map = parts[1]
 
                         except (ValueError, IndexError) as e:
-                            self.logger.warning(f"Invalid MTL line: {line} - {str(e)}")
+                            self.logger.warning("Invalid MTL line: %s - {str(e)}", line)
                             continue
 
-                self.logger.info(f"Loaded {len(self.materials)} materials from {mtl_path}")
+                self.logger.info("Loaded %s materials from {mtl_path}", len(self.materials))
 
         except Exception as e:
-            self.logger.error(f"Failed to load MTL file {mtl_path}: {str(e)}")
+            self.logger.error("Failed to load MTL file %s: {str(e)}", mtl_path)
 
     def _validate_geometry_internal(self, file_path: Path) -> Dict[str, Any]:
         """
@@ -736,7 +736,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
         except Exception as e:
-            self.logger.error(f"Error validating OBJ geometry: {str(e)}")
+            self.logger.error("Error validating OBJ geometry: %s", str(e))
             return {
                 "is_valid": False,
                 "issues": [f"Validation error: {str(e)}"],
@@ -786,7 +786,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             return stats
 
         except Exception as e:
-            self.logger.error(f"Error getting OBJ geometry stats: {str(e)}")
+            self.logger.error("Error getting OBJ geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
     def get_parser_info(self) -> Dict[str, str]:
@@ -840,7 +840,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
             }
 
         except Exception as e:
-            self.logger.error(f"Error getting OBJ model info: {str(e)}")
+            self.logger.error("Error getting OBJ model info: %s", str(e))
             return {
                 "vertex_count": 0,
                 "face_count": 0,
@@ -876,7 +876,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                 return True
 
         except Exception as e:
-            self.logger.warning(f"Error validating OBJ file {file_path}: {str(e)}")
+            self.logger.warning("Error validating OBJ file %s: {str(e)}", file_path)
             return False
 
     def _parse_stream_internal(self, file_path: Path) -> Iterator[Any]:
@@ -943,7 +943,7 @@ class RefactoredOBJParser(RefactoredBaseParser):
                             yield material_data
 
         except Exception as e:
-            self.logger.error(f"Error in OBJ streaming parse: {str(e)}")
+            self.logger.error("Error in OBJ streaming parse: %s", str(e))
             raise ParseError(f"Streaming failed: {str(e)}")
 
 

@@ -63,7 +63,7 @@ class CancellationToken:
             try:
                 callback()
             except Exception as e:
-                self.logger.warning(f"Cleanup callback failed: {e}")
+                self.logger.warning("Cleanup callback failed: %s", e)
 
         self.logger.debug("Cancellation completed")
 
@@ -96,7 +96,7 @@ class CancellationToken:
                 try:
                     callback()
                 except Exception as e:
-                    self.logger.warning(f"Immediate cleanup callback failed: {e}")
+                    self.logger.warning("Immediate cleanup callback failed: %s", e)
             else:
                 self._cleanup_callbacks.append(callback)
 

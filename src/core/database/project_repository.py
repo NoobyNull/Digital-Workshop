@@ -83,14 +83,14 @@ class ProjectRepository:
                 )
                 conn.commit()
 
-            logger.info(f"Project created: {name} (ID: {project_id})")
+            logger.info("Project created: %s (ID: {project_id})", name)
             return project_id
 
         except ValueError as e:
-            logger.warning(f"Failed to create project: {str(e)}")
+            logger.warning("Failed to create project: %s", str(e))
             raise
         except sqlite3.Error as e:
-            logger.error(f"Database error creating project: {str(e)}")
+            logger.error("Database error creating project: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -113,7 +113,7 @@ class ProjectRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving project: {str(e)}")
+            logger.error("Database error retrieving project: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -136,7 +136,7 @@ class ProjectRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving project by name: {str(e)}")
+            logger.error("Database error retrieving project by name: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -168,7 +168,7 @@ class ProjectRepository:
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error listing projects: {str(e)}")
+            logger.error("Database error listing projects: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -190,7 +190,7 @@ class ProjectRepository:
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error listing imported projects: {str(e)}")
+            logger.error("Database error listing imported projects: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -229,11 +229,11 @@ class ProjectRepository:
                 cursor.execute(f"UPDATE projects SET {set_clause} WHERE id = ?", values)
                 conn.commit()
 
-            logger.info(f"Project updated: {project_id}")
+            logger.info("Project updated: %s", project_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error updating project: {str(e)}")
+            logger.error("Database error updating project: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -258,11 +258,11 @@ class ProjectRepository:
                 cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
                 conn.commit()
 
-            logger.info(f"Project deleted: {project_id}")
+            logger.info("Project deleted: %s", project_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error deleting project: {str(e)}")
+            logger.error("Database error deleting project: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -281,5 +281,5 @@ class ProjectRepository:
                 return result[0] if result else 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error counting projects: {str(e)}")
+            logger.error("Database error counting projects: %s", str(e))
             return 0

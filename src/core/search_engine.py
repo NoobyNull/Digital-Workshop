@@ -93,7 +93,7 @@ class SearchEngine:
                 logger.info("FTS5 tables initialized successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to initialize FTS5 tables: {str(e)}")
+            logger.error("Failed to initialize FTS5 tables: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -251,7 +251,7 @@ class SearchEngine:
                 # Calculate execution time
                 execution_time = (datetime.now() - start_time).total_seconds()
 
-                logger.info(f"Search completed in {execution_time:.3f}s: {len(results)} results")
+                logger.info("Search completed in %ss: {len(results)} results", execution_time:.3f)
 
                 return {
                     "results": results,
@@ -262,7 +262,7 @@ class SearchEngine:
                 }
 
         except sqlite3.Error as e:
-            logger.error(f"Search failed: {str(e)}")
+            logger.error("Search failed: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -493,7 +493,7 @@ class SearchEngine:
                 conn.commit()
 
         except sqlite3.Error as e:
-            logger.warning(f"Failed to record search: {str(e)}")
+            logger.warning("Failed to record search: %s", str(e))
 
     @log_function_call(logger)
     def get_search_history(self, limit: int = 50) -> List[Dict[str, Any]]:
@@ -532,7 +532,7 @@ class SearchEngine:
                 return history
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get search history: {str(e)}")
+            logger.error("Failed to get search history: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -582,7 +582,7 @@ class SearchEngine:
                 return search_id
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to save search: {str(e)}")
+            logger.error("Failed to save search: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -617,7 +617,7 @@ class SearchEngine:
                 return searches
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get saved searches: {str(e)}")
+            logger.error("Failed to get saved searches: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -640,12 +640,12 @@ class SearchEngine:
                 conn.commit()
 
                 if success:
-                    logger.info(f"Deleted saved search with ID: {search_id}")
+                    logger.info("Deleted saved search with ID: %s", search_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete saved search: {str(e)}")
+            logger.error("Failed to delete saved search: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -724,7 +724,7 @@ class SearchEngine:
                 return sorted_suggestions[:limit]
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get search suggestions: {str(e)}")
+            logger.error("Failed to get search suggestions: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -755,11 +755,11 @@ class SearchEngine:
                 deleted_count = cursor.rowcount
                 conn.commit()
 
-                logger.info(f"Cleared {deleted_count} old search history records")
+                logger.info("Cleared %s old search history records", deleted_count)
                 return deleted_count
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to clear search history: {str(e)}")
+            logger.error("Failed to clear search history: %s", str(e))
             return 0
 
     @log_function_call(logger)
@@ -783,7 +783,7 @@ class SearchEngine:
                 logger.info("FTS5 indexes rebuilt successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to rebuild FTS indexes: {str(e)}")
+            logger.error("Failed to rebuild FTS indexes: %s", str(e))
             raise
 
 

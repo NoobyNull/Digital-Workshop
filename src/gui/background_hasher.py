@@ -88,7 +88,7 @@ class BackgroundHasher(QThread):
             filename = Path(file_path).name if file_path else "Unknown"
 
             if not file_path or not Path(file_path).exists():
-                self.logger.warning(f"File not found for model {model_id}: {file_path}")
+                self.logger.warning("File not found for model %s: {file_path}", model_id)
                 # Mark with empty hash so we don't try again
                 self.db_manager.update_file_hash(model_id, "")
                 continue
@@ -103,7 +103,7 @@ class BackgroundHasher(QThread):
                 )
 
                 if not result.success:
-                    self.logger.error(f"Failed to calculate hash for {filename}: {result.error}")
+                    self.logger.error("Failed to calculate hash for %s: {result.error}", filename)
                     # Mark with empty hash so we don't try again
                     self.db_manager.update_file_hash(model_id, "")
                     continue
@@ -133,10 +133,10 @@ class BackgroundHasher(QThread):
                     # No duplicate, update hash
                     self.db_manager.update_file_hash(model_id, file_hash)
                     self.model_hashed.emit(model_id, file_hash)
-                    self.logger.info(f"Hashed model {model_id}: {filename}")
+                    self.logger.info("Hashed model %s: {filename}", model_id)
 
             except Exception as e:
-                self.logger.error(f"Error hashing model {model_id} ({filename}): {e}")
+                self.logger.error("Error hashing model %s ({filename}): {e}", model_id)
                 # Mark with empty hash so we don't try again
                 self.db_manager.update_file_hash(model_id, "")
 

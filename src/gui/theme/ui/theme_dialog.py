@@ -74,7 +74,7 @@ class ThemeDialog(QDialog):
             from src.core.logging_config import get_logger
 
             logger = get_logger(__name__)
-            logger.error(f"Failed to initialize ThemeDialog: {e}", exc_info=True)
+            logger.error("Failed to initialize ThemeDialog: %s", e, exc_info=True)
             raise
 
     def _setup_ui(self) -> None:

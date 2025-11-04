@@ -160,20 +160,20 @@ class BackgroundLoadingManager:
                     job.state = LoadingState.COMPLETED
                     job.progress = 100.0
                     job.status_message = "Completed"
-                self.logger.info(f"Loading job {job_id} completed successfully")
+                self.logger.info("Loading job %s completed successfully", job_id)
             except Exception as e:
                 with self._lock:
                     job.error = e
                     job.state = LoadingState.FAILED
                     job.status_message = f"Failed: {str(e)}"
-                self.logger.error(f"Loading job {job_id} failed: {e}")
+                self.logger.error("Loading job %s failed: {e}", job_id)
             finally:
                 if completion_callback:
                     completion_callback(job_id, job.result, job.error)
 
         future.add_done_callback(on_completion)
 
-        self.logger.info(f"Started background loading job {job_id} for {file_path}")
+        self.logger.info("Started background loading job %s for {file_path}", job_id)
         return job_id
 
     @log_function_call
@@ -192,7 +192,7 @@ class BackgroundLoadingManager:
         with self._lock:
             job = self.jobs.get(job_id)
             if not job:
-                self.logger.warning(f"Attempted to cancel unknown job {job_id}")
+                self.logger.warning("Attempted to cancel unknown job %s", job_id)
                 return False
 
             if job.state in [
@@ -200,7 +200,7 @@ class BackgroundLoadingManager:
                 LoadingState.CANCELLED,
                 LoadingState.FAILED,
             ]:
-                self.logger.info(f"Job {job_id} already in terminal state: {job.state.value}")
+                self.logger.info("Job %s already in terminal state: {job.state.value}", job_id)
                 return False
 
             # Initiate cancellation
@@ -212,12 +212,12 @@ class BackgroundLoadingManager:
             if job.future and not job.future.done():
                 job.future.cancel()
 
-            self.logger.info(f"Initiated cancellation for job {job_id}")
+            self.logger.info("Initiated cancellation for job %s", job_id)
 
             # Ensure cancellation response time is under 500ms
             elapsed = time.time() - start_time
             if elapsed > 0.5:
-                self.logger.warning(f"Cancellation response time exceeded 500ms: {elapsed:.3f}s")
+                self.logger.warning("Cancellation response time exceeded 500ms: %ss", elapsed:.3f)
 
             return True
 
@@ -286,7 +286,7 @@ class BackgroundLoadingManager:
                 del self.jobs[job_id]
 
         if to_remove:
-            self.logger.info(f"Cleaned up {len(to_remove)} old jobs")
+            self.logger.info("Cleaned up %s old jobs", len(to_remove))
 
         return len(to_remove)
 
@@ -318,7 +318,7 @@ class BackgroundLoadingManager:
                 file_size_gb = job.file_path.stat().st_size / (1024**3)
                 if file_size_gb > 0.5:  # Use adaptive chunking for files > 500MB
                     chunks = self.adaptive_chunker.create_adaptive_chunks(job.file_path)
-                    self.logger.info(f"Using adaptive chunking: created {len(chunks)} chunks")
+                    self.logger.info("Using adaptive chunking: created %s chunks", len(chunks))
                 else:
                     chunks = self.chunker.create_chunks(job.file_path, target_chunk_size_mb=50)
 
@@ -439,10 +439,10 @@ class BackgroundLoadingManager:
                     # Remove from active jobs
                     del self.jobs[job_id]
 
-            self.logger.debug(f"Cleaned up resources for failed job {job_id}")
+            self.logger.debug("Cleaned up resources for failed job %s", job_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to cleanup job {job_id}: {e}")
+            self.logger.error("Failed to cleanup job %s: {e}", job_id)
 
     def get_error_recovery_suggestions(self, error: Exception) -> List[str]:
         """
@@ -500,7 +500,7 @@ class BackgroundLoadingManager:
                 )
 
         except Exception as e:
-            self.logger.warning(f"Failed to generate error recovery suggestions: {e}")
+            self.logger.warning("Failed to generate error recovery suggestions: %s", e)
             suggestions = ["Check application logs for more details"]
 
         return suggestions

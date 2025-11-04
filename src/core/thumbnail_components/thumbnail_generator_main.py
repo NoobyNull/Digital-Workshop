@@ -58,7 +58,7 @@ class ThumbnailGenerator:
             self.material_manager = MaterialManager(get_database_manager())
             self.logger.debug("MaterialManager initialized for thumbnail generation")
         except Exception as e:
-            self.logger.warning(f"Could not initialize MaterialManager for thumbnails: {e}")
+            self.logger.warning("Could not initialize MaterialManager for thumbnails: %s", e)
 
         # Default thumbnail size (1280x1280 for high quality with auto-downscaling)
         self.thumbnail_size = (1280, 1280)
@@ -102,7 +102,7 @@ class ThumbnailGenerator:
 
             # Check if thumbnail already exists (unless forced)
             if thumbnail_path.exists() and not force_regenerate:
-                self.logger.info(f"Thumbnail already exists: {thumbnail_path}")
+                self.logger.info("Thumbnail already exists: %s", thumbnail_path)
                 return thumbnail_path
 
             # If force regenerating, remove the old thumbnail
@@ -113,14 +113,14 @@ class ThumbnailGenerator:
                         f"Removed existing thumbnail for regeneration: {thumbnail_path}"
                     )
                 except Exception as e:
-                    self.logger.warning(f"Failed to remove existing thumbnail: {e}")
+                    self.logger.warning("Failed to remove existing thumbnail: %s", e)
 
-            self.logger.info(f"Generating thumbnail for: {model_path}")
+            self.logger.info("Generating thumbnail for: %s", model_path)
 
             # Load model
             model = self._load_model(model_path)
             if model is None:
-                self.logger.error(f"Failed to load model: {model_path}")
+                self.logger.error("Failed to load model: %s", model_path)
                 return None
 
             # Set thumbnail size
@@ -173,7 +173,7 @@ class ThumbnailGenerator:
             model = parser.parse_file(model_path, lazy_loading=False)
 
             if model is None:
-                self.logger.error(f"Parser returned None for: {model_path}")
+                self.logger.error("Parser returned None for: %s", model_path)
                 return None
 
             self.logger.debug(
@@ -184,7 +184,7 @@ class ThumbnailGenerator:
             return model
 
         except Exception as e:
-            self.logger.error(f"Error loading model {model_path}: {e}", exc_info=True)
+            self.logger.error("Error loading model %s: {e}", model_path, exc_info=True)
             return None
 
     def _render_thumbnail(
@@ -274,12 +274,12 @@ class ThumbnailGenerator:
                 self.logger.debug("Background is None, using default color")
                 engine.set_background_color((0.25, 0.35, 0.40))
             elif isinstance(background, str):
-                self.logger.debug(f"Background is string: {background}")
+                self.logger.debug("Background is string: %s", background)
                 if background.startswith("#"):
-                    self.logger.debug(f"Background is hex color: {background}")
+                    self.logger.debug("Background is hex color: %s", background)
                     engine.set_background_color(background)
                 elif Path(background).exists():
-                    self.logger.info(f"Background image exists, using: {background}")
+                    self.logger.info("Background image exists, using: %s", background)
                     engine.set_background_image(background)
                 else:
                     self.logger.warning(
@@ -288,7 +288,7 @@ class ThumbnailGenerator:
                     # Professional studio background: dark teal-gray
                     engine.set_background_color((0.25, 0.35, 0.40))
             elif isinstance(background, (tuple, list)) and len(background) == 3:
-                self.logger.debug(f"Background is RGB tuple: {background}")
+                self.logger.debug("Background is RGB tuple: %s", background)
                 engine.set_background_color(background)
             else:
                 self.logger.warning(
@@ -307,7 +307,7 @@ class ThumbnailGenerator:
             return success
 
         except Exception as e:
-            self.logger.error(f"Error rendering thumbnail: {e}", exc_info=True)
+            self.logger.error("Error rendering thumbnail: %s", e, exc_info=True)
             return False
         finally:
             if engine:
@@ -366,7 +366,7 @@ class ThumbnailGenerator:
                     polydata.SetPolys(triangles)
                     polydata.GetPointData().SetNormals(normals)
 
-                    self.logger.debug(f"Created polydata (fast path): {tri_count} triangles")
+                    self.logger.debug("Created polydata (fast path): %s triangles", tri_count)
                     return polydata
 
             # Fallback to triangle-by-triangle construction
@@ -406,11 +406,11 @@ class ThumbnailGenerator:
             polydata.SetPolys(triangles)
             polydata.GetPointData().SetNormals(normals)
 
-            self.logger.debug(f"Created polydata (slow path): {len(model.triangles)} triangles")
+            self.logger.debug("Created polydata (slow path): %s triangles", len(model.triangles))
             return polydata
 
         except Exception as e:
-            self.logger.error(f"Error creating polydata: {e}", exc_info=True)
+            self.logger.error("Error creating polydata: %s", e, exc_info=True)
             return None
 
     def _set_background(
@@ -441,17 +441,17 @@ class ThumbnailGenerator:
                     # Image file - use textured background
                     self._set_background_image(renderer, background)
                 else:
-                    self.logger.warning(f"Invalid background: {background}, using default")
+                    self.logger.warning("Invalid background: %s, using default", background)
                     renderer.SetBackground(0.95, 0.95, 0.95)
             elif isinstance(background, (tuple, list)) and len(background) == 3:
                 # RGB tuple
                 renderer.SetBackground(*background)
             else:
-                self.logger.warning(f"Unknown background type: {type(background)}, using default")
+                self.logger.warning("Unknown background type: %s, using default", type(background))
                 renderer.SetBackground(0.95, 0.95, 0.95)
 
         except Exception as e:
-            self.logger.error(f"Error setting background: {e}", exc_info=True)
+            self.logger.error("Error setting background: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
     def _set_background_image(self, renderer: vtk.vtkRenderer, image_path: str) -> None:
@@ -522,7 +522,7 @@ class ThumbnailGenerator:
             actor.GetProperty().SetRepresentationToSurface()
 
         except Exception as e:
-            self.logger.error(f"Error setting background image: {e}", exc_info=True)
+            self.logger.error("Error setting background image: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
     def _setup_lighting(self, renderer: vtk.vtkRenderer) -> None:
@@ -571,7 +571,7 @@ class ThumbnailGenerator:
             )
 
         except Exception as e:
-            self.logger.error(f"Error setting up lighting: {e}", exc_info=True)
+            self.logger.error("Error setting up lighting: %s", e, exc_info=True)
 
     def _hex_to_rgb(self, hex_color: str) -> Tuple[float, float, float]:
         """
@@ -610,7 +610,7 @@ class ThumbnailGenerator:
             texture_path = self.material_provider.get_material_texture_path(material_name)
 
             if texture_path is None or not texture_path.exists():
-                self.logger.warning(f"Material texture not found: {material_name}")
+                self.logger.warning("Material texture not found: %s", material_name)
                 return False
 
             self.logger.info(f"Applying texture '{material_name}' from: {texture_path}")
@@ -645,7 +645,7 @@ class ThumbnailGenerator:
             elif ext == ".bmp":
                 reader = vtk.vtkBMPReader()
             else:
-                self.logger.warning(f"Unsupported texture format: {ext}")
+                self.logger.warning("Unsupported texture format: %s", ext)
                 return False
 
             reader.SetFileName(str(texture_path))

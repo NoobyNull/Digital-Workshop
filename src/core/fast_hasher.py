@@ -234,7 +234,7 @@ class FastHasher:
 
         except PermissionError as e:
             error_msg = f"Permission denied: {file_path}"
-            self.logger.error(f"{error_msg}: {e}")
+            self.logger.error("%s: {e}", error_msg)
             return HashResult(
                 file_path=file_path,
                 hash_value=None,
@@ -246,7 +246,7 @@ class FastHasher:
 
         except Exception as e:
             error_msg = f"Failed to hash file: {e}"
-            self.logger.error(f"Error hashing {file_path}: {e}", exc_info=True)
+            self.logger.error("Error hashing %s: {e}", file_path, exc_info=True)
             return HashResult(
                 file_path=file_path,
                 hash_value=None,

@@ -93,7 +93,7 @@ class DWWExportManager:
                 for i, file_info in enumerate(files):
                     file_path = file_info.get("file_path")
                     if not file_path or not Path(file_path).exists():
-                        self.logger.warning(f"File not found: {file_path}")
+                        self.logger.warning("File not found: %s", file_path)
                         continue
 
                     try:
@@ -114,14 +114,14 @@ class DWWExportManager:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
                                     dww_archive.write(thumbnail_path, arcname=thumb_arcname)
                                 except Exception as e:
-                                    self.logger.debug(f"Failed to add thumbnail: {e}")
+                                    self.logger.debug("Failed to add thumbnail: %s", e)
 
                         if progress_callback:
                             progress = (i + 1) / total_items
                             progress_callback(progress, f"Exported {i + 1}/{total_items} files")
 
                     except Exception as e:
-                        self.logger.error(f"Failed to add file to archive: {file_path}: {e}")
+                        self.logger.error("Failed to add file to archive: %s: {e}", file_path)
                         continue
 
                 # Add metadata if requested
@@ -133,7 +133,7 @@ class DWWExportManager:
                 integrity_json = json.dumps(integrity_data, indent=2)
                 dww_archive.writestr("integrity.json", integrity_json)
 
-            self.logger.info(f"Successfully exported project to DWW: {output_path}")
+            self.logger.info("Successfully exported project to DWW: %s", output_path)
             return True, f"Project exported successfully to {output_file.name}"
 
         except Exception as e:
@@ -171,7 +171,7 @@ class DWWExportManager:
             dww_archive.writestr("metadata/files_metadata.json", metadata_json)
 
         except Exception as e:
-            self.logger.warning(f"Failed to add metadata to archive: {e}")
+            self.logger.warning("Failed to add metadata to archive: %s", e)
 
     def _create_manifest(self, project: Dict, files: List[Dict]) -> Dict:
         """Create project manifest."""

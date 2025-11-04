@@ -56,7 +56,7 @@ class FileMaintenanceWorker(QThread):
                 self.finished.emit(result)
 
         except Exception as e:
-            self.logger.error(f"Maintenance operation failed: {e}", exc_info=True)
+            self.logger.error("Maintenance operation failed: %s", e, exc_info=True)
             self.error.emit(f"Maintenance operation failed: {str(e)}")
 
     def _recalculate_hashes(self, db_manager, calculate_file_hash) -> dict:
@@ -78,7 +78,7 @@ class FileMaintenanceWorker(QThread):
 
                 try:
                     if not Path(file_path).exists():
-                        self.logger.warning(f"File not found: {file_path}")
+                        self.logger.warning("File not found: %s", file_path)
                         result["errors"] += 1
                         continue
 
@@ -90,13 +90,13 @@ class FileMaintenanceWorker(QThread):
                         result["errors"] += 1
 
                 except Exception as e:
-                    self.logger.error(f"Error hashing model {model_id}: {e}")
+                    self.logger.error("Error hashing model %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
         except Exception as e:
-            self.logger.error(f"Recalculate hashes failed: {e}")
+            self.logger.error("Recalculate hashes failed: %s", e)
             raise
 
         return result
@@ -121,7 +121,7 @@ class FileMaintenanceWorker(QThread):
 
                 try:
                     if not Path(file_path).exists():
-                        self.logger.warning(f"File not found: {file_path}")
+                        self.logger.warning("File not found: %s", file_path)
                         result["errors"] += 1
                         continue
 
@@ -131,13 +131,13 @@ class FileMaintenanceWorker(QThread):
                         result["updated"] += 1
 
                 except Exception as e:
-                    self.logger.error(f"Error matching model {model_id}: {e}")
+                    self.logger.error("Error matching model %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
         except Exception as e:
-            self.logger.error(f"Match files failed: {e}")
+            self.logger.error("Match files failed: %s", e)
             raise
 
         return result
@@ -176,7 +176,7 @@ class FileMaintenanceWorker(QThread):
 
                 try:
                     if not Path(file_path).exists():
-                        self.logger.warning(f"File not found: {file_path}")
+                        self.logger.warning("File not found: %s", file_path)
                         result["errors"] += 1
                         continue
 
@@ -203,13 +203,13 @@ class FileMaintenanceWorker(QThread):
                         result["errors"] += 1
 
                 except Exception as e:
-                    self.logger.error(f"Error generating thumbnail {model_id}: {e}")
+                    self.logger.error("Error generating thumbnail %s: {e}", model_id)
                     result["errors"] += 1
 
                 result["processed"] += 1
 
         except Exception as e:
-            self.logger.error(f"Regenerate thumbnails failed: {e}")
+            self.logger.error("Regenerate thumbnails failed: %s", e)
             raise
 
         return result

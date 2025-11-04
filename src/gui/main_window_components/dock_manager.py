@@ -106,7 +106,7 @@ class DockManager:
             logger.info("Metadata editor widget created successfully")
 
         except Exception as e:
-            logger.warning(f"Failed to create MetadataEditorWidget: {e}")
+            logger.warning("Failed to create MetadataEditorWidget: %s", e)
 
             # Fallback to placeholder
             metadata_widget = QTextEdit()
@@ -176,7 +176,7 @@ class DockManager:
             logger.info("Metadata Manager restored")
 
         except Exception as e:
-            logger.error(f"Failed to restore Metadata Manager: {e}")
+            logger.error("Failed to restore Metadata Manager: %s", e)
 
     @log_function_call(logger)
     def create_model_library_dock(self) -> None:
@@ -241,7 +241,7 @@ class DockManager:
             logger.info("Model Library widget created successfully")
 
         except Exception as e:
-            logger.warning(f"Failed to create ModelLibraryWidget: {e}")
+            logger.warning("Failed to create ModelLibraryWidget: %s", e)
 
             # Fallback widget
             lib_placeholder = QTextEdit()
@@ -311,7 +311,7 @@ class DockManager:
             logger.info("Model Library restored")
 
         except Exception as e:
-            logger.error(f"Failed to restore Model Library: {e}")
+            logger.error("Failed to restore Model Library: %s", e)
 
     def update_library_action_state(self) -> None:
         """Enable/disable 'Show Model Library' based on panel visibility."""

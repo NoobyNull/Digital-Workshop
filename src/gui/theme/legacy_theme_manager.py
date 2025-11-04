@@ -110,7 +110,7 @@ class LegacyThemeManager(QObject):
                 return success
 
             except Exception as e:
-                logger.error(f"Legacy apply_theme failed: {e}")
+                logger.error("Legacy apply_theme failed: %s", e)
                 self.error_occurred.emit(str(e))
                 return False
 
@@ -132,7 +132,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.get_color(color_name)
             except Exception as e:
-                logger.error(f"Legacy get_color failed for {color_name}: {e}")
+                logger.error("Legacy get_color failed for %s: {e}", color_name)
                 return "#1976D2"  # Fallback color
 
     def get_theme_colors(self) -> Dict[str, str]:
@@ -150,7 +150,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.get_theme_colors()
             except Exception as e:
-                logger.error(f"Legacy get_theme_colors failed: {e}")
+                logger.error("Legacy get_theme_colors failed: %s", e)
                 return {}
 
     def save_settings(self) -> bool:
@@ -168,7 +168,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.save_settings()
             except Exception as e:
-                logger.error(f"Legacy save_settings failed: {e}")
+                logger.error("Legacy save_settings failed: %s", e)
                 return False
 
     def load_settings(self) -> bool:
@@ -186,7 +186,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.load_settings()
             except Exception as e:
-                logger.error(f"Legacy load_settings failed: {e}")
+                logger.error("Legacy load_settings failed: %s", e)
                 return False
 
     def get_current_theme(self) -> Tuple[str, str]:
@@ -206,7 +206,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.get_current_theme()
             except Exception as e:
-                logger.error(f"Legacy get_current_theme failed: {e}")
+                logger.error("Legacy get_current_theme failed: %s", e)
                 return "dark", "blue"
 
     def reset_to_default(self) -> bool:
@@ -224,7 +224,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.reset_to_default()
             except Exception as e:
-                logger.error(f"Legacy reset_to_default failed: {e}")
+                logger.error("Legacy reset_to_default failed: %s", e)
                 return False
 
     def export_theme(self, file_path: str) -> bool:
@@ -245,7 +245,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.export_theme(file_path)
             except Exception as e:
-                logger.error(f"Legacy export_theme failed: {e}")
+                logger.error("Legacy export_theme failed: %s", e)
                 return False
 
     def import_theme(self, file_path: str) -> bool:
@@ -266,7 +266,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.import_theme(file_path)
             except Exception as e:
-                logger.error(f"Legacy import_theme failed: {e}")
+                logger.error("Legacy import_theme failed: %s", e)
                 return False
 
     def register_widget(self, widget, widget_name: str = None) -> bool:
@@ -288,7 +288,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.register_widget(widget, widget_name)
             except Exception as e:
-                logger.error(f"Legacy register_widget failed: {e}")
+                logger.error("Legacy register_widget failed: %s", e)
                 return False
 
     def unregister_widget(self, widget_name: str) -> bool:
@@ -311,7 +311,7 @@ class LegacyThemeManager(QObject):
             try:
                 return self._unified_manager.unregister_widget(widget_name)
             except Exception as e:
-                logger.error(f"Legacy unregister_widget failed: {e}")
+                logger.error("Legacy unregister_widget failed: %s", e)
                 return False
 
     def get_system_status(self) -> Dict[str, Any]:
@@ -342,7 +342,7 @@ class LegacyThemeManager(QObject):
                 return status
 
             except Exception as e:
-                logger.error(f"Legacy get_system_status failed: {e}")
+                logger.error("Legacy get_system_status failed: %s", e)
                 return {
                     "error": str(e),
                     "legacy_compatibility": {
@@ -366,7 +366,7 @@ class LegacyThemeManager(QObject):
             try:
                 self._unified_manager.cleanup_resources()
             except Exception as e:
-                logger.error(f"Legacy cleanup_resources failed: {e}")
+                logger.error("Legacy cleanup_resources failed: %s", e)
 
     def _connect_signals(self) -> None:
         """Connect to unified theme manager signals."""
@@ -383,7 +383,7 @@ class LegacyThemeManager(QObject):
             logger.debug("Legacy theme manager signals connected")
 
         except Exception as e:
-            logger.error(f"Failed to connect legacy signals: {e}")
+            logger.error("Failed to connect legacy signals: %s", e)
 
     def _log_migration_warning(self, method_name: str, new_method: str) -> None:
         """

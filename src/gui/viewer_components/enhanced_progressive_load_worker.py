@@ -53,7 +53,7 @@ class EnhancedProgressiveLoadWorker(QThread):
     def run(self) -> None:
         """Run the enhanced progressive loading process with accurate progress tracking."""
         try:
-            self.logger.info(f"Starting enhanced progressive loading: {self.file_path}")
+            self.logger.info("Starting enhanced progressive loading: %s", self.file_path)
 
             # Get model cache
             model_cache = get_model_cache()
@@ -75,7 +75,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             self._parse_model_with_progress(file_path_obj, model_cache)
 
         except Exception as e:
-            self.logger.error(f"Enhanced progressive loading failed: {str(e)}")
+            self.logger.error("Enhanced progressive loading failed: %s", str(e))
             self.error_occurred.emit(str(e))
 
     def _parse_model_with_progress(self, file_path: Path, model_cache) -> None:
@@ -138,7 +138,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             model_cache.put(str(file_path), CacheLevel.GEOMETRY_FULL, model)
 
             # Model is now ready for display
-            self.logger.info(f"Model parsing completed: {model.stats.triangle_count} triangles")
+            self.logger.info("Model parsing completed: %s triangles", model.stats.triangle_count)
             self.progress_updated.emit(
                 100, f"Model ready: {model.stats.triangle_count:,} triangles"
             )
@@ -150,7 +150,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             self.loading_complete.emit()
 
         except Exception as e:
-            self.logger.error(f"Model parsing failed: {str(e)}")
+            self.logger.error("Model parsing failed: %s", str(e))
             raise
 
     def cancel(self) -> None:

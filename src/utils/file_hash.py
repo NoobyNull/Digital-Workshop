@@ -36,7 +36,7 @@ def calculate_file_hash(file_path: str, chunk_size: int = 8192) -> Optional[str]
         result = _global_hasher.hash_file(file_path)
         return result.hash_value if result.success else None
     except Exception as e:
-        logger.error(f"Failed to calculate hash for {file_path}: {e}")
+        logger.error("Failed to calculate hash for %s: {e}", file_path)
         return None
 
 
@@ -54,5 +54,5 @@ def verify_file_hash(file_path: str, expected_hash: str) -> bool:
     try:
         return _global_hasher.verify_hash(file_path, expected_hash)
     except Exception as e:
-        logger.error(f"Failed to verify hash: {e}")
+        logger.error("Failed to verify hash: %s", e)
         return False

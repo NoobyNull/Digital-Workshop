@@ -42,21 +42,21 @@ class ThemeLoader:
         """Load themes from the JSON configuration file."""
         try:
             if not self.config_path.exists():
-                logger.error(f"Theme configuration file not found: {self.config_path}")
+                logger.error("Theme configuration file not found: %s", self.config_path)
                 self._themes_data = {"themes": {"light": {}, "dark": {}}}
                 return
 
             with open(self.config_path, "r", encoding="utf-8") as f:
                 self._themes_data = json.load(f)
 
-            logger.info(f"Successfully loaded themes from {self.config_path}")
+            logger.info("Successfully loaded themes from %s", self.config_path)
             self._validate_themes()
 
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in theme configuration file: {e}")
+            logger.error("Invalid JSON in theme configuration file: %s", e)
             self._themes_data = {"themes": {"light": {}, "dark": {}}}
         except Exception as e:
-            logger.error(f"Error loading theme configuration: {e}")
+            logger.error("Error loading theme configuration: %s", e)
             self._themes_data = {"themes": {"light": {}, "dark": {}}}
 
     def _validate_themes(self) -> None:
@@ -70,13 +70,13 @@ class ThemeLoader:
         for theme_type in ["light", "dark"]:
             if theme_type not in themes:
                 themes[theme_type] = {}
-                logger.warning(f"Missing {theme_type} themes section")
+                logger.warning("Missing %s themes section", theme_type)
                 continue
 
             # Validate each theme has required color properties
             for theme_name, theme_data in themes[theme_type].items():
                 if "colors" not in theme_data:
-                    logger.warning(f"Theme {theme_name} missing colors section")
+                    logger.warning("Theme %s missing colors section", theme_name)
                     themes[theme_type][theme_name] = self._create_default_theme(theme_name)
 
     def _create_default_theme(self, theme_name: str) -> Dict[str, Any]:
@@ -195,7 +195,7 @@ class ThemeLoader:
         """
         try:
             if theme_type not in ["light", "dark"]:
-                logger.error(f"Invalid theme type: {theme_type}")
+                logger.error("Invalid theme type: %s", theme_type)
                 return False
 
             if "colors" not in theme_data:
@@ -203,11 +203,11 @@ class ThemeLoader:
                 return False
 
             self._themes_data["themes"][theme_type][variant] = theme_data
-            logger.info(f"Added new theme: {theme_type}/{variant}")
+            logger.info("Added new theme: %s/{variant}", theme_type)
             return True
 
         except Exception as e:
-            logger.error(f"Error adding theme {theme_type}/{variant}: {e}")
+            logger.error("Error adding theme %s/{variant}: {e}", theme_type)
             return False
 
     def remove_theme(self, theme_type: str, variant: str) -> bool:
@@ -225,17 +225,17 @@ class ThemeLoader:
             if theme_type in self._themes_data["themes"]:
                 if variant in self._themes_data["themes"][theme_type]:
                     del self._themes_data["themes"][theme_type][variant]
-                    logger.info(f"Removed theme: {theme_type}/{variant}")
+                    logger.info("Removed theme: %s/{variant}", theme_type)
                     return True
                 else:
-                    logger.warning(f"Theme variant not found: {theme_type}/{variant}")
+                    logger.warning("Theme variant not found: %s/{variant}", theme_type)
                     return False
             else:
-                logger.warning(f"Theme type not found: {theme_type}")
+                logger.warning("Theme type not found: %s", theme_type)
                 return False
 
         except Exception as e:
-            logger.error(f"Error removing theme {theme_type}/{variant}: {e}")
+            logger.error("Error removing theme %s/{variant}: {e}", theme_type)
             return False
 
     def export_themes(self) -> Dict[str, Any]:

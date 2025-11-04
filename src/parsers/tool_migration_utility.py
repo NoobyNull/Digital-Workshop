@@ -58,7 +58,7 @@ class ToolMigrationUtility:
             if json_path.suffix.lower() != ".json":
                 raise ValueError(f"Not a JSON file: {json_file_path}")
 
-            self.logger.info(f"Starting migration from {json_file_path}")
+            self.logger.info("Starting migration from %s", json_file_path)
 
             # Load JSON data
             with open(json_path, "r", encoding="utf-8") as f:
@@ -106,11 +106,11 @@ class ToolMigrationUtility:
                     progress = (idx + 1) / len(tools)
                     progress_callback(progress, f"Migrated {success_count}/{len(tools)}")
 
-            self.logger.info(f"Migration complete: {success_count} successful, {fail_count} failed")
+            self.logger.info("Migration complete: %s successful, {fail_count} failed", success_count)
             return success_count, fail_count, errors
 
         except Exception as e:
-            self.logger.error(f"Migration failed: {e}")
+            self.logger.error("Migration failed: %s", e)
             raise
 
     def _extract_tools_from_json(self, json_data: dict) -> List[ToolData]:
@@ -140,7 +140,7 @@ class ToolMigrationUtility:
                 if tool:
                     tools.append(tool)
 
-        self.logger.info(f"Extracted {len(tools)} tools from JSON")
+        self.logger.info("Extracted %s tools from JSON", len(tools))
         return tools
 
     def _parse_json_tool_item(self, item: dict) -> Optional[ToolData]:
@@ -190,7 +190,7 @@ class ToolMigrationUtility:
             )
 
         except Exception as e:
-            self.logger.warning(f"Failed to parse JSON tool item: {e}")
+            self.logger.warning("Failed to parse JSON tool item: %s", e)
             return None
 
     def migrate_from_existing_json_library(
@@ -228,7 +228,7 @@ class ToolMigrationUtility:
             self.logger.error(error_msg)
             raise FileNotFoundError(error_msg)
 
-        self.logger.info(f"Found tool library at {json_path}")
+        self.logger.info("Found tool library at %s", json_path)
         return self.migrate_from_json(str(json_path), progress_callback=progress_callback)
 
     def get_migration_status(self) -> Dict[str, any]:
@@ -245,7 +245,7 @@ class ToolMigrationUtility:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get migration status: {e}")
+            self.logger.error("Failed to get migration status: %s", e)
             return {
                 "database_path": self.db_path,
                 "status": "error",

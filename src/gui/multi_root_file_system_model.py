@@ -108,7 +108,7 @@ class DirectoryIndexer(QThread):
                                     }
                                 )
                     except PermissionError:
-                        self.logger.warning(f"Permission denied accessing: {path}")
+                        self.logger.warning("Permission denied accessing: %s", path)
                         continue
 
                     # Sort: directories first, then files
@@ -116,7 +116,7 @@ class DirectoryIndexer(QThread):
                     indexed_data[dir_path] = children
 
             except Exception as e:
-                self.logger.error(f"Error indexing directory {dir_path}: {e}")
+                self.logger.error("Error indexing directory %s: {e}", dir_path)
 
         if not self._is_cancelled:
             self.indexing_complete.emit(indexed_data)
@@ -178,7 +178,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 root_folder=folder,
             )
             self.root_node.add_child(root_node)
-            self.logger.debug(f"Added root folder: {folder.display_name} ({folder.path})")
+            self.logger.debug("Added root folder: %s ({folder.path})", folder.display_name)
 
     def _get_node(self, index: QModelIndex) -> Optional[TreeNode]:
         """Get the TreeNode for a given model index."""
@@ -214,7 +214,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                         if not item.name.startswith("."):  # Skip hidden files
                             items.append(item)
                 except PermissionError:
-                    self.logger.warning(f"Permission denied accessing: {path}")
+                    self.logger.warning("Permission denied accessing: %s", path)
                     return
 
                 # Sort: directories first, then files
@@ -225,7 +225,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                     node.add_child(child_node)
 
         except Exception as e:
-            self.logger.error(f"Error loading children for {node.path}: {e}")
+            self.logger.error("Error loading children for %s: {e}", node.path)
 
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
         """Create a model index for the given row, column, and parent."""
@@ -437,7 +437,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
         self.indexer = DirectoryIndexer(root_paths)
         self.indexer.indexing_complete.connect(self._on_indexing_complete)
         self.indexer.start()
-        self.logger.debug(f"Started background indexing for {len(root_paths)} root directories")
+        self.logger.debug("Started background indexing for %s root directories", len(root_paths))
 
         # Emit signal for status update
         self.indexing_started.emit()
@@ -445,7 +445,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     def _on_indexing_complete(self, indexed_data: dict) -> None:
         """Handle completion of background indexing."""
         self.indexed_data.update(indexed_data)
-        self.logger.debug(f"Background indexing completed for {len(indexed_data)} directories")
+        self.logger.debug("Background indexing completed for %s directories", len(indexed_data))
 
         # Clean up indexer
         if self.indexer:

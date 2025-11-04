@@ -79,7 +79,7 @@ class MaterialValidationWorker(QThread):
     def run(self) -> None:
         """Run material validation."""
         try:
-            self.logger.info(f"Starting material validation: {self.material_name}")
+            self.logger.info("Starting material validation: %s", self.material_name)
 
             # Simulate validation steps
             validation_steps = [
@@ -105,14 +105,14 @@ class MaterialValidationWorker(QThread):
             self.validation_completed.emit(self.material_name, result)
 
             if result.is_valid:
-                self.logger.info(f"Material validation successful: {self.material_name}")
+                self.logger.info("Material validation successful: %s", self.material_name)
             else:
                 self.logger.warning(
                     f"Material validation failed: {self.material_name} - {result.error_message}"
                 )
 
         except Exception as e:
-            self.logger.error(f"Error during material validation: {e}", exc_info=True)
+            self.logger.error("Error during material validation: %s", e, exc_info=True)
             error_result = MaterialValidationResult(False, str(e), [], [])
             self.validation_completed.emit(self.material_name, error_result)
 
@@ -258,7 +258,7 @@ class MaterialService(IMaterialService):
             self.previews_directory.mkdir(exist_ok=True)
             self.templates_directory.mkdir(exist_ok=True)
         except Exception as e:
-            self.logger.error(f"Error creating material directories: {e}")
+            self.logger.error("Error creating material directories: %s", e)
 
     def _load_materials(self) -> None:
         """Load existing materials from storage."""
@@ -275,10 +275,10 @@ class MaterialService(IMaterialService):
             # Build category index
             self._build_category_index()
 
-            self.logger.info(f"Loaded {len(self.materials)} materials")
+            self.logger.info("Loaded %s materials", len(self.materials))
 
         except Exception as e:
-            self.logger.error(f"Error loading materials: {e}")
+            self.logger.error("Error loading materials: %s", e)
 
     def _build_category_index(self) -> None:
         """Build index of materials by category."""
@@ -314,7 +314,7 @@ class MaterialService(IMaterialService):
             return basic_valid, basic_error
 
         except Exception as e:
-            self.logger.error(f"Error validating material: {e}")
+            self.logger.error("Error validating material: %s", e)
             return False, f"Validation error: {e}"
 
     def _validate_material_basic(self, material_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -358,7 +358,7 @@ class MaterialService(IMaterialService):
                 return f.read()
 
         except Exception as e:
-            self.logger.error(f"Error getting material preview: {e}")
+            self.logger.error("Error getting material preview: %s", e)
             return None
 
     def _generate_material_preview(self, material_info: MaterialInfo) -> Optional[bytes]:
@@ -437,7 +437,7 @@ class MaterialService(IMaterialService):
             return bytes(byte_array)
 
         except Exception as e:
-            self.logger.error(f"Error generating material preview: {e}")
+            self.logger.error("Error generating material preview: %s", e)
             return None
 
     def create_material_from_template(
@@ -447,7 +447,7 @@ class MaterialService(IMaterialService):
         try:
             template_path = self.templates_directory / f"{template_name}.json"
             if not template_path.exists():
-                self.logger.error(f"Template not found: {template_path}")
+                self.logger.error("Template not found: %s", template_path)
                 return None
 
             # Load template
@@ -466,13 +466,13 @@ class MaterialService(IMaterialService):
             # Validate created material
             is_valid, error_message = self.validate_material(material_data)
             if not is_valid:
-                self.logger.error(f"Template material validation failed: {error_message}")
+                self.logger.error("Template material validation failed: %s", error_message)
                 return None
 
             return material_data
 
         except Exception as e:
-            self.logger.error(f"Error creating material from template: {e}")
+            self.logger.error("Error creating material from template: %s", e)
             return None
 
     def _generate_unique_material_name(self, base_name: str) -> str:
@@ -521,7 +521,7 @@ class MaterialService(IMaterialService):
             return sorted(results)
 
         except Exception as e:
-            self.logger.error(f"Error searching materials: {e}")
+            self.logger.error("Error searching materials: %s", e)
             return []
 
     def get_material_templates(self) -> List[str]:
@@ -533,7 +533,7 @@ class MaterialService(IMaterialService):
                     templates.append(template_file.stem)
             return sorted(templates)
         except Exception as e:
-            self.logger.error(f"Error getting material templates: {e}")
+            self.logger.error("Error getting material templates: %s", e)
             return []
 
     def save_material(self, material_data: Dict[str, Any]) -> bool:
@@ -547,7 +547,7 @@ class MaterialService(IMaterialService):
             # Validate before saving
             is_valid, error_message = self.validate_material(material_data)
             if not is_valid:
-                self.logger.error(f"Cannot save invalid material: {error_message}")
+                self.logger.error("Cannot save invalid material: %s", error_message)
                 return False
 
             # Save to file
@@ -561,11 +561,11 @@ class MaterialService(IMaterialService):
                 self.materials[material_name] = material_info
                 self._build_category_index()
 
-            self.logger.info(f"Material saved: {material_name}")
+            self.logger.info("Material saved: %s", material_name)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error saving material: {e}")
+            self.logger.error("Error saving material: %s", e)
             return False
 
     def _create_material_info(self, material_data: Dict[str, Any]) -> Optional[MaterialInfo]:
@@ -582,7 +582,7 @@ class MaterialService(IMaterialService):
                 version=material_data.get("version", "1.0"),
             )
         except Exception as e:
-            self.logger.error(f"Error creating material info: {e}")
+            self.logger.error("Error creating material info: %s", e)
             return None
 
     def _load_material_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
@@ -591,7 +591,7 @@ class MaterialService(IMaterialService):
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading material file {file_path}: {e}")
+            self.logger.error("Error loading material file %s: {e}", file_path)
             return None
 
     def _on_validation_completed(
@@ -612,11 +612,11 @@ class MaterialService(IMaterialService):
                 )
 
         except Exception as e:
-            self.logger.error(f"Error handling validation completion: {e}")
+            self.logger.error("Error handling validation completion: %s", e)
 
     def _on_validation_progress(self, material_name: str, progress: float) -> None:
         """Handle validation progress updates."""
         try:
-            self.logger.debug(f"Material validation progress: {material_name} - {progress:.1f}%")
+            self.logger.debug("Material validation progress: %s - {progress:.1f}%", material_name)
         except Exception as e:
-            self.logger.error(f"Error handling validation progress: {e}")
+            self.logger.error("Error handling validation progress: %s", e)

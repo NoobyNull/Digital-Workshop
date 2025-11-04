@@ -56,7 +56,7 @@ class LibraryFileBrowser:
                     )
 
         except Exception as e:
-            self.logger.error(f"Error importing from context menu: {e}")
+            self.logger.error("Error importing from context menu: %s", e)
             QMessageBox.critical(self.library_widget, "Import Error", f"Failed to import: {e}")
 
     def open_in_native_app(self, file_path: str) -> None:
@@ -74,7 +74,7 @@ class LibraryFileBrowser:
                 )
 
         except Exception as e:
-            self.logger.error(f"Error opening file in native app: {e}")
+            self.logger.error("Error opening file in native app: %s", e)
             QMessageBox.critical(self.library_widget, "Open File", f"Failed to open file: {e}")
 
     def remove_model(self, model_id: int) -> None:
@@ -82,7 +82,7 @@ class LibraryFileBrowser:
         try:
             model_info = self.library_widget.db_manager.get_model(model_id)
             if not model_info:
-                self.logger.warning(f"Model with ID {model_id} not found")
+                self.logger.warning("Model with ID %s not found", model_id)
                 return
 
             model_name = model_info.get("title") or model_info.get("filename", "Unknown")
@@ -111,10 +111,10 @@ class LibraryFileBrowser:
                     self.logger.info(f"Successfully removed model '{model_name}' (ID: {model_id})")
                 else:
                     self.library_widget.status_label.setText(f"Failed to remove '{model_name}'")
-                    self.logger.error(f"Failed to remove model with ID {model_id}")
+                    self.logger.error("Failed to remove model with ID %s", model_id)
 
         except Exception as e:
-            self.logger.error(f"Error removing model: {e}")
+            self.logger.error("Error removing model: %s", e)
             QMessageBox.warning(self.library_widget, "Error", f"Failed to remove model: {str(e)}")
 
     def refresh_models(self) -> None:
@@ -128,7 +128,7 @@ class LibraryFileBrowser:
             self.library_widget.status_label.setText("Indexing directories...")
             self.logger.info("Manual file browser refresh initiated")
         except Exception as e:
-            self.logger.error(f"Error refreshing file browser: {e}")
+            self.logger.error("Error refreshing file browser: %s", e)
             self.library_widget.status_label.setText("Error refreshing directories")
 
     def on_indexing_started(self) -> None:
@@ -162,10 +162,10 @@ class LibraryFileBrowser:
                     "You can update root folder settings in Preferences > Files.",
                 )
             else:
-                self.logger.debug(f"All {len(enabled_folders)} root folders are accessible")
+                self.logger.debug("All %s root folders are accessible", len(enabled_folders))
 
         except Exception as e:
-            self.logger.error(f"Error validating root folders: {e}")
+            self.logger.error("Error validating root folders: %s", e)
 
     def import_models(self) -> None:
         """Import models (stub for tests)."""
@@ -203,7 +203,7 @@ class LibraryFileBrowser:
                 )
 
         except Exception as e:
-            self.logger.error(f"Error importing selected files: {e}")
+            self.logger.error("Error importing selected files: %s", e)
             QMessageBox.critical(
                 self.library_widget, "Import Error", f"Failed to import files: {e}"
             )
@@ -243,7 +243,7 @@ class LibraryFileBrowser:
                 )
 
         except Exception as e:
-            self.logger.error(f"Error importing folder: {e}")
+            self.logger.error("Error importing folder: %s", e)
             QMessageBox.critical(
                 self.library_widget, "Import Error", f"Failed to import folder: {e}"
             )

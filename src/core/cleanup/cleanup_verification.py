@@ -194,7 +194,7 @@ class CleanupVerifier:
             return self.report
 
         except Exception as e:
-            self.logger.error(f"Verification failed: {e}", exc_info=True)
+            self.logger.error("Verification failed: %s", e, exc_info=True)
             result = VerificationResult(
                 check_name="Verification Process",
                 status=VerificationStatus.FAILED,

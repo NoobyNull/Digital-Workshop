@@ -119,7 +119,7 @@ class STLGPUParser(BaseParser):
                 return STLFormat.UNKNOWN
 
         except Exception as e:
-            self.logger.error(f"Error detecting STL format: {e}")
+            self.logger.error("Error detecting STL format: %s", e)
             raise STLParseError(f"Failed to detect STL format: {e}")
 
     @log_function_call
@@ -264,7 +264,7 @@ class STLGPUParser(BaseParser):
             )
 
         except Exception as e:
-            self.logger.error(f"GPU STL parsing failed: {e}")
+            self.logger.error("GPU STL parsing failed: %s", e)
             # Attempt CPU fallback
             try:
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
@@ -330,7 +330,7 @@ class STLGPUParser(BaseParser):
             return True
 
         except Exception as e:
-            self.logger.error(f"GPU kernel execution error: {e}")
+            self.logger.error("GPU kernel execution error: %s", e)
             return False
 
     def _execute_triangle_processing_kernel(
@@ -374,7 +374,7 @@ class STLGPUParser(BaseParser):
             return success
 
         except Exception as e:
-            self.logger.error(f"Triangle processing kernel error: {e}")
+            self.logger.error("Triangle processing kernel error: %s", e)
             return False
 
     def _transfer_results_from_gpu(
@@ -424,7 +424,7 @@ class STLGPUParser(BaseParser):
                 try:
                     self.memory_manager.free_buffer(buffer)
                 except Exception as e:
-                    self.logger.warning(f"Buffer cleanup error: {e}")
+                    self.logger.warning("Buffer cleanup error: %s", e)
 
     def _parse_binary_stl_cpu_fallback(
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None

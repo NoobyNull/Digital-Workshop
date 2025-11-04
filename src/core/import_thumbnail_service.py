@@ -174,7 +174,7 @@ class ImportThumbnailService:
         # Create directory if it doesn't exist
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-        self.logger.info(f"Thumbnail storage initialized: {storage_dir}")
+        self.logger.info("Thumbnail storage initialized: %s", storage_dir)
         return storage_dir
 
     def get_thumbnail_path(self, file_hash: str) -> Path:
@@ -332,7 +332,7 @@ class ImportThumbnailService:
                 )
             else:
                 error_msg = "Thumbnail generation returned None"
-                self.logger.error(f"{error_msg} for {model_name}")
+                self.logger.error("%s for {model_name}", error_msg)
 
                 return ThumbnailGenerationResult(
                     file_path=model_path,
@@ -347,7 +347,7 @@ class ImportThumbnailService:
             generation_time = time.time() - start_time
             error_msg = f"Thumbnail generation failed: {e}"
 
-            self.logger.error(f"{error_msg} for {model_name}", exc_info=True)
+            self.logger.error("%s for {model_name}", error_msg, exc_info=True)
             self._log_json(
                 "thumbnail_generation_failed",
                 {
@@ -503,7 +503,7 @@ class ImportThumbnailService:
                         kept_count += 1
 
                 except Exception as e:
-                    self.logger.warning(f"Error processing {thumbnail_path}: {e}")
+                    self.logger.warning("Error processing %s: {e}", thumbnail_path)
                     error_count += 1
 
             cleanup_time = time.time() - start_time
@@ -526,7 +526,7 @@ class ImportThumbnailService:
             }
 
         except Exception as e:
-            self.logger.error(f"Cleanup failed: {e}", exc_info=True)
+            self.logger.error("Cleanup failed: %s", e, exc_info=True)
             return {
                 "removed": removed_count,
                 "kept": kept_count,
@@ -626,20 +626,20 @@ class ImportThumbnailService:
         try:
             # Check if file is readable and not empty
             if thumbnail_path.stat().st_size == 0:
-                self.logger.warning(f"Thumbnail is empty: {thumbnail_path}")
+                self.logger.warning("Thumbnail is empty: %s", thumbnail_path)
                 return False
 
             # Basic PNG header validation
             with open(thumbnail_path, "rb") as f:
                 header = f.read(8)
                 if header != b"\x89PNG\r\n\x1a\n":
-                    self.logger.warning(f"Invalid PNG header: {thumbnail_path}")
+                    self.logger.warning("Invalid PNG header: %s", thumbnail_path)
                     return False
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Error verifying thumbnail {thumbnail_path}: {e}")
+            self.logger.error("Error verifying thumbnail %s: {e}", thumbnail_path)
             return False
 
     def get_thumbnail_by_size(self, file_hash: str, size: str = "xlarge") -> Optional[Path]:

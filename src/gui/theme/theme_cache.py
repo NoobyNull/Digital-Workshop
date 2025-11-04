@@ -152,11 +152,11 @@ class ThemeCache:
                 self._cache.move_to_end(key)
 
                 self._hits += 1
-                logger.debug(f"Cache hit for key: {key}")
+                logger.debug("Cache hit for key: %s", key)
                 return entry.data.copy()
 
             self._misses += 1
-            logger.debug(f"Cache miss for key: {key}")
+            logger.debug("Cache miss for key: %s", key)
             return None
 
     def put(self, key: str, data: Dict[str, Any], compress: bool = None) -> bool:
@@ -175,7 +175,7 @@ class ThemeCache:
             # Check if we need to evict entries
             if not self._can_accommodate(data):
                 if not self._evict_entries():
-                    logger.warning(f"Cannot accommodate new cache entry: {key}")
+                    logger.warning("Cannot accommodate new cache entry: %s", key)
                     return False
 
             # Determine compression
@@ -193,7 +193,7 @@ class ThemeCache:
             # Move to end (most recently used)
             self._cache.move_to_end(key)
 
-            logger.debug(f"Cached theme data: {key} (compressed={compress})")
+            logger.debug("Cached theme data: %s (compressed={compress})", key)
             return True
 
     def remove(self, key: str) -> bool:
@@ -212,7 +212,7 @@ class ThemeCache:
                 self._current_size -= 1
                 self._current_memory -= entry.memory_size
 
-                logger.debug(f"Removed cache entry: {key}")
+                logger.debug("Removed cache entry: %s", key)
                 return True
 
             return False
@@ -302,7 +302,7 @@ class ThemeCache:
             while self._current_size > self._max_size:
                 self._evict_lru()
 
-            logger.info(f"Cache resized to max_size={self._max_size}")
+            logger.info("Cache resized to max_size=%s", self._max_size)
 
     def enable_compression(self) -> None:
         """Enable cache compression."""
@@ -378,7 +378,7 @@ class ThemeCache:
         self._current_memory -= entry.memory_size
         self._evictions += 1
 
-        logger.debug(f"Evicted LRU entry: {key}")
+        logger.debug("Evicted LRU entry: %s", key)
         return True
 
     def _evict_under_pressure(self) -> bool:
@@ -409,7 +409,7 @@ class ThemeCache:
             self._current_memory -= entry.memory_size
             self._evictions += 1
 
-        logger.debug(f"Evicted {len(entries_to_evict)} entries under memory pressure")
+        logger.debug("Evicted %s entries under memory pressure", len(entries_to_evict))
         return True
 
     def _should_compress(self, data: Dict[str, Any]) -> bool:
@@ -508,7 +508,7 @@ class ThemeCache:
 
             if keys_to_remove:
                 self._cleanup_count += 1
-                logger.debug(f"Background cleanup removed {len(keys_to_remove)} old entries")
+                logger.debug("Background cleanup removed %s old entries", len(keys_to_remove))
 
             # Check memory pressure and cleanup if needed
             memory_usage_ratio = (
@@ -537,4 +537,4 @@ class ThemeCache:
                 self._current_size -= 1
                 self._current_memory -= entry.memory_size
 
-        logger.warning(f"Memory pressure cleanup removed {len(keys_to_remove)} entries")
+        logger.warning("Memory pressure cleanup removed %s entries", len(keys_to_remove))

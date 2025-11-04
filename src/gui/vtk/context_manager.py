@@ -87,7 +87,7 @@ class VTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"Windows context validation error: {e}")
+            self.logger.debug("Windows context validation error: %s", e)
             return ContextState.UNKNOWN
 
     def _linux_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -105,7 +105,7 @@ class VTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"Linux context validation error: {e}")
+            self.logger.debug("Linux context validation error: %s", e)
             return ContextState.UNKNOWN
 
     def _darwin_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -122,7 +122,7 @@ class VTKContextManager:
             return ContextState.VALID
 
         except Exception as e:
-            self.logger.debug(f"macOS context validation error: {e}")
+            self.logger.debug("macOS context validation error: %s", e)
             return ContextState.UNKNOWN
 
     def validate_context(
@@ -163,7 +163,7 @@ class VTKContextManager:
             is_valid = context_state == ContextState.VALID
 
             if not is_valid:
-                self.logger.debug(f"Context validation failed for {operation}: {context_state}")
+                self.logger.debug("Context validation failed for %s: {context_state}", operation)
                 if self.strict_mode:
                     self.error_handler.handle_error(
                         RuntimeError(f"Invalid context for {operation}: {context_state}"),
@@ -173,7 +173,7 @@ class VTKContextManager:
             return is_valid, context_state
 
         except Exception as e:
-            self.logger.debug(f"Context validation exception: {e}")
+            self.logger.debug("Context validation exception: %s", e)
             return False, ContextState.UNKNOWN
 
     def _generic_context_handler(self, render_window: vtk.vtkRenderWindow) -> ContextState:
@@ -219,7 +219,7 @@ class VTKContextManager:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Error checking cleanup safety: {e}")
+            self.logger.debug("Error checking cleanup safety: %s", e)
             return False
 
     @contextmanager
@@ -234,7 +234,7 @@ class VTKContextManager:
         is_valid, context_state = self.validate_context(render_window, operation)
 
         if not is_valid:
-            self.logger.debug(f"Skipping {operation} due to invalid context: {context_state}")
+            self.logger.debug("Skipping %s due to invalid context: {context_state}", operation)
             yield False  # Operation should be skipped
             return
 
@@ -256,7 +256,7 @@ class VTKContextManager:
         """
         cache_key = str(id(render_window))
         self.context_cache[cache_key] = ContextState.INVALID
-        self.logger.debug(f"Context invalidated for render window {cache_key}")
+        self.logger.debug("Context invalidated for render window %s", cache_key)
 
     def clear_context_cache(self) -> None:
         """Clear the context validation cache."""
@@ -317,7 +317,7 @@ class VTKContextManager:
             enabled: Whether to enable validation
         """
         self.validation_enabled = enabled
-        self.logger.info(f"Context validation {'enabled' if enabled else 'disabled'}")
+        self.logger.info("Context validation %s", 'enabled' if enabled else 'disabled')
 
     def set_strict_mode(self, strict: bool) -> None:
         """
@@ -330,7 +330,7 @@ class VTKContextManager:
             strict: Whether to enable strict mode
         """
         self.strict_mode = strict
-        self.logger.info(f"Strict mode {'enabled' if strict else 'disabled'}")
+        self.logger.info("Strict mode %s", 'enabled' if strict else 'disabled')
 
     def safe_render(self, render_window: vtk.vtkRenderWindow) -> bool:
         """
@@ -382,12 +382,12 @@ class VTKContextManager:
                     render_window.Finalize()
             except Exception as e:
                 # This is expected during shutdown
-                self.logger.debug(f"Expected cleanup error: {e}")
+                self.logger.debug("Expected cleanup error: %s", e)
 
             return True
 
         except Exception as e:
-            self.logger.debug(f"Cleanup error: {e}")
+            self.logger.debug("Cleanup error: %s", e)
             return False
 
     def get_diagnostic_info(self) -> Dict[str, Any]:

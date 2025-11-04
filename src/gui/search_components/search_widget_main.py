@@ -361,7 +361,7 @@ class SearchWidget(QWidget):
                     self.search_engine.save_search(name, query, filters)
                     self.refresh_saved_searches()
                 except Exception as e:
-                    logger.error(f"Failed to save search: {str(e)}")
+                    logger.error("Failed to save search: %s", str(e))
 
     def refresh_search_history(self):
         """Refresh the search history list."""
@@ -390,7 +390,7 @@ class SearchWidget(QWidget):
                 self.history_widget.addItem(list_item)
 
         except Exception as e:
-            logger.error(f"Failed to refresh search history: {str(e)}")
+            logger.error("Failed to refresh search history: %s", str(e))
 
     def refresh_saved_searches(self):
         """Refresh the saved searches list."""
@@ -420,7 +420,7 @@ class SearchWidget(QWidget):
                 self.saved_searches_widget.addItem(list_item)
 
         except Exception as e:
-            logger.error(f"Failed to refresh saved searches: {str(e)}")
+            logger.error("Failed to refresh saved searches: %s", str(e))
 
     def load_history_search(self, item: QListWidgetItem):
         """

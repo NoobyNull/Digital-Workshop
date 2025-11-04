@@ -120,9 +120,9 @@ class VTDBToolParser(BaseToolParser):
                         progress = min((i + 1) / total_tools, 1.0)
                         progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from VTDB file")
+            self.logger.info("Parsed %s tools from VTDB file", len(tools))
             return tools
 
         except Exception as e:
-            self.logger.error(f"Failed to parse VTDB file: {e}")
+            self.logger.error("Failed to parse VTDB file: %s", e)
             raise

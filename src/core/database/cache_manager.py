@@ -314,7 +314,7 @@ class DiskCache:
                     info = json.load(f)
                     self._current_size = info.get("total_size", 0)
             except Exception as e:
-                logger.warning(f"Failed to load cache info: {str(e)}")
+                logger.warning("Failed to load cache info: %s", str(e))
 
     def _save_cache_info(self) -> None:
         """Save cache information to disk."""
@@ -327,7 +327,7 @@ class DiskCache:
             with open(info_path, "w") as f:
                 json.dump(info, f)
         except Exception as e:
-            logger.warning(f"Failed to save cache info: {str(e)}")
+            logger.warning("Failed to save cache info: %s", str(e))
 
     def get(self, key: str) -> Optional[Any]:
         """
@@ -371,7 +371,7 @@ class DiskCache:
                 return pickle.loads(data)
 
         except Exception as e:
-            logger.warning(f"Failed to read cache file {cache_path}: {str(e)}")
+            logger.warning("Failed to read cache file %s: {str(e)}", cache_path)
             # Remove corrupted file
             try:
                 os.remove(cache_path)
@@ -446,7 +446,7 @@ class DiskCache:
             return True
 
         except Exception as e:
-            logger.warning(f"Failed to write cache file {cache_path}: {str(e)}")
+            logger.warning("Failed to write cache file %s: {str(e)}", cache_path)
             return False
 
     def _remove_cache_file(self, cache_path: str) -> None:
@@ -458,7 +458,7 @@ class DiskCache:
                 self._current_size -= file_size
                 self._save_cache_info()
         except Exception as e:
-            logger.warning(f"Failed to remove cache file {cache_path}: {str(e)}")
+            logger.warning("Failed to remove cache file %s: {str(e)}", cache_path)
 
     def _evict_cache_files(self, needed_size: int) -> None:
         """Evict cache files to make space."""
@@ -513,7 +513,7 @@ class DiskCache:
                             invalidated += 1
 
                 except Exception as e:
-                    logger.warning(f"Failed to check cache file {filepath}: {str(e)}")
+                    logger.warning("Failed to check cache file %s: {str(e)}", filepath)
                     # Remove corrupted file
                     try:
                         self._remove_cache_file(filepath)
@@ -538,7 +538,7 @@ class DiskCache:
                 self._save_cache_info()
 
         except Exception as e:
-            logger.warning(f"Failed to clear disk cache: {str(e)}")
+            logger.warning("Failed to clear disk cache: %s", str(e))
 
     def get_stats(self) -> CacheStats:
         """Get cache statistics."""
@@ -601,7 +601,7 @@ class DatabaseCacheManager:
                     self._cleanup_expired_entries()
                     time.sleep(300)  # Run every 5 minutes
                 except Exception as e:
-                    logger.error(f"Cache cleanup error: {str(e)}")
+                    logger.error("Cache cleanup error: %s", str(e))
 
         cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
         cleanup_thread.start()
@@ -953,10 +953,10 @@ class DatabaseCacheManager:
                 if thumbnail:
                     self.cache_thumbnail(model_id, thumbnail)
 
-            logger.info(f"Cache warm-up completed for {len(popular_models)} models")
+            logger.info("Cache warm-up completed for %s models", len(popular_models))
 
         except Exception as e:
-            logger.error(f"Cache warm-up failed: {str(e)}")
+            logger.error("Cache warm-up failed: %s", str(e))
 
     def optimize_cache_performance(self) -> Dict[str, Any]:
         """

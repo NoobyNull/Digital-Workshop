@@ -136,12 +136,12 @@ class RunModeSetupDialog(QDialog):
             if folder:
                 if self.run_mode_manager.set_storage_location(folder):
                     self.storage_path_input.setText(folder)
-                    logger.info(f"Storage location set to: {folder}")
+                    logger.info("Storage location set to: %s", folder)
                 else:
-                    logger.error(f"Failed to set storage location: {folder}")
+                    logger.error("Failed to set storage location: %s", folder)
 
         except Exception as e:
-            logger.error(f"Failed to browse storage location: {str(e)}")
+            logger.error("Failed to browse storage location: %s", str(e))
 
     def _finish_setup(self) -> None:
         """Finish setup and close dialog."""
@@ -153,7 +153,7 @@ class RunModeSetupDialog(QDialog):
             self.accept()
 
         except Exception as e:
-            logger.error(f"Failed to finish setup: {str(e)}")
+            logger.error("Failed to finish setup: %s", str(e))
             self.reject()
 
     def get_storage_location(self) -> str:

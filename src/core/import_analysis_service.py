@@ -159,7 +159,7 @@ class AnalysisWorker(QThread):
                     )
 
         except Exception as e:
-            self.logger.error(f"Worker thread error: {e}", exc_info=True)
+            self.logger.error("Worker thread error: %s", e, exc_info=True)
             self.analysis_failed.emit(self.model_id, str(e))
 
 
@@ -203,7 +203,7 @@ class BatchAnalysisWorker(QThread):
             self.batch_completed.emit(result)
 
         except Exception as e:
-            self.logger.error(f"Batch worker error: {e}", exc_info=True)
+            self.logger.error("Batch worker error: %s", e, exc_info=True)
 
 
 class ImportAnalysisService:
@@ -415,7 +415,7 @@ class ImportAnalysisService:
             analysis_time = time.time() - start_time
             error_msg = f"Analysis failed: {e}"
 
-            self.logger.error(f"{error_msg} for {file_name}", exc_info=True)
+            self.logger.error("%s for {file_name}", error_msg, exc_info=True)
             self._log_json(
                 "analysis_failed",
                 {
@@ -905,10 +905,10 @@ class ImportAnalysisService:
             # For now, just cache it
             self._results_cache[result.model_id] = result
 
-            self.logger.info(f"Stored analysis result for model {result.model_id}")
+            self.logger.info("Stored analysis result for model %s", result.model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to store analysis result: {e}", exc_info=True)
+            self.logger.error("Failed to store analysis result: %s", e, exc_info=True)
 
     def get_analysis_result(self, model_id: int) -> Optional[GeometryAnalysisResult]:
         """
@@ -947,7 +947,7 @@ class ImportAnalysisService:
         worker = self._active_workers.get(model_id)
         if worker and worker.isRunning():
             worker.cancellation_token.cancel()
-            self.logger.info(f"Requested cancellation for model {model_id}")
+            self.logger.info("Requested cancellation for model %s", model_id)
             return True
         return False
 
@@ -968,7 +968,7 @@ class ImportAnalysisService:
     def _on_analysis_failed(self, model_id: int, error_message: str) -> None:
         """Handle analysis failure."""
         self._stats["total_failed"] += 1
-        self.logger.error(f"Analysis failed for model {model_id}: {error_message}")
+        self.logger.error("Analysis failed for model %s: {error_message}", model_id)
 
     def _on_worker_finished(self, model_id: int) -> None:
         """Handle worker thread completion."""

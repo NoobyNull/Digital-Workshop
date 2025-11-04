@@ -51,7 +51,7 @@ class MaterialManager:
             all_species = list(set(db_species + texture_names))
             return sorted(all_species)
         except Exception as e:
-            self.logger.error(f"get_species_list failed: {e}")
+            self.logger.error("get_species_list failed: %s", e)
             return []
 
     def generate_wood_texture(
@@ -111,7 +111,7 @@ class MaterialManager:
                 f"MTL texture loading is mandatory - no procedural fallback available for '{species_name}'"
             )
         except Exception as e:
-            self.logger.error(f"generate_wood_texture error: {e}", exc_info=True)
+            self.logger.error("generate_wood_texture error: %s", e, exc_info=True)
             # No fallback - MTL texture loading is mandatory
             raise RuntimeError(f"MTL texture loading failed: {e}")
 
@@ -161,7 +161,7 @@ class MaterialManager:
             # Get material from material provider to check for texture
             material = self.material_provider.get_material_by_name(species_name)
             if material:
-                self.logger.debug(f"[STL_TEXTURE_DEBUG] Material found: {material}")
+                self.logger.debug("[STL_TEXTURE_DEBUG] Material found: %s", material)
                 texture_path = material.get("texture_path")
                 if texture_path:
                     self.logger.info(
@@ -196,7 +196,7 @@ class MaterialManager:
                     "specular": mtl_props.get("specular", (0.5, 0.5, 0.5))[0],
                     "shininess": mtl_props.get("shininess", 50.0) / 50.0,  # Normalize to [0,1]
                 }
-                self.logger.debug(f"[STL_TEXTURE_DEBUG] Created species from MTL: {species}")
+                self.logger.debug("[STL_TEXTURE_DEBUG] Created species from MTL: %s", species)
 
                 # Use the MTL texture directly instead of calling generate_wood_texture
                 # which would fall back to procedural generation
@@ -249,19 +249,19 @@ class MaterialManager:
                             texture.InterpolateOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
                         except Exception as e:
-                            self.logger.warning(f"Failed to enable texture interpolation: {e}")
+                            self.logger.warning("Failed to enable texture interpolation: %s", e)
 
                         try:
                             texture.MipmapOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
                         except Exception as e:
-                            self.logger.warning(f"Failed to enable texture mipmaps: {e}")
+                            self.logger.warning("Failed to enable texture mipmaps: %s", e)
 
                         try:
                             texture.RepeatOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
                         except Exception as e:
-                            self.logger.warning(f"Failed to enable texture repeat: {e}")
+                            self.logger.warning("Failed to enable texture repeat: %s", e)
 
                         # NEW DIAGNOSTIC: Check texture before assignment
                         self.logger.info(
@@ -626,7 +626,7 @@ class MaterialManager:
             else:
                 self._apply_classic_shading(prop, roughness, specular)
         except Exception as e:
-            self.logger.warning(f"_apply_material_properties failed: {e}")
+            self.logger.warning("_apply_material_properties failed: %s", e)
 
     def _apply_material_properties_for_texture(
         self, actor: vtk.vtkActor, species: Dict[str, Any]
@@ -678,7 +678,7 @@ class MaterialManager:
             )
 
         except Exception as e:
-            self.logger.warning(f"_apply_material_properties_for_texture failed: {e}")
+            self.logger.warning("_apply_material_properties_for_texture failed: %s", e)
 
     def _apply_classic_shading(
         self, prop: vtk.vtkProperty, roughness: float, specular: float
@@ -800,7 +800,7 @@ class MaterialManager:
                 return False
 
             num_points = points.GetNumberOfPoints()
-            self.logger.info(f"[STL_TEXTURE_DEBUG] Generating UVs for {num_points} points")
+            self.logger.info("[STL_TEXTURE_DEBUG] Generating UVs for %s points", num_points)
 
             # Create UV coordinates array
             uv_coords = vtk.vtkFloatArray()

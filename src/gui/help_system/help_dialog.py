@@ -105,9 +105,9 @@ class HelpDialog(QDialog):
         try:
             self.indexer.build_index()
             self.status_label.setText(f"Documentation indexed: {len(self.indexer.topics)} topics")
-            logger.info(f"Help system indexed {len(self.indexer.topics)} topics")
+            logger.info("Help system indexed %s topics", len(self.indexer.topics))
         except Exception as e:
-            logger.error(f"Error building documentation index: {e}")
+            logger.error("Error building documentation index: %s", e)
             self.status_label.setText(f"Error building index: {e}")
 
     def _on_search(self, query: str) -> None:
@@ -122,7 +122,7 @@ class HelpDialog(QDialog):
             self.current_results = self.indexer.search(query)
             self._display_results()
         except Exception as e:
-            logger.error(f"Error searching documentation: {e}")
+            logger.error("Error searching documentation: %s", e)
             self.status_label.setText(f"Search error: {e}")
 
     def _display_results(self) -> None:

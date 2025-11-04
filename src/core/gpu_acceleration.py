@@ -362,7 +362,7 @@ class GPUAccelerator:
                     )
                 )
         except Exception as e:
-            self.logger.debug(f"CUDA detection failed: {e}")
+            self.logger.debug("CUDA detection failed: %s", e)
 
         return devices
 
@@ -387,7 +387,7 @@ class GPUAccelerator:
                     )
                 )
         except Exception as e:
-            self.logger.debug(f"OpenCL detection failed: {e}")
+            self.logger.debug("OpenCL detection failed: %s", e)
 
         return devices
 

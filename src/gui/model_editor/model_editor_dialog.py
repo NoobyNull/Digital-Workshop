@@ -227,7 +227,7 @@ class ModelEditorDialog(QDialog):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to rotate model: {e}")
-            self.logger.error(f"Rotation failed: {e}")
+            self.logger.error("Rotation failed: %s", e)
 
     def _apply_auto_z_up_detection(self) -> None:
         """Apply automatic Z-up detection."""
@@ -359,7 +359,7 @@ class ModelEditorDialog(QDialog):
                 QMessageBox.critical(self, "Error", "Failed to write STL file")
 
         except Exception as e:
-            self.logger.error(f"Failed to save model: {e}")
+            self.logger.error("Failed to save model: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save model: {e}")
 
     def _update_info_display(self) -> None:

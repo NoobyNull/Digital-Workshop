@@ -67,7 +67,7 @@ class BatchScreenshotWorker(QThread):
                 self.finished_batch.emit()
                 return
 
-            self.logger.info(f"Processing {total} models")
+            self.logger.info("Processing %s models", total)
 
             # Process each model
             for idx, model in enumerate(models):
@@ -81,7 +81,7 @@ class BatchScreenshotWorker(QThread):
                     file_hash = model.get("file_hash")
 
                     if not file_path or not Path(file_path).exists():
-                        self.logger.warning(f"Model file not found: {file_path}")
+                        self.logger.warning("Model file not found: %s", file_path)
                         self.progress_updated.emit(idx + 1, total)
                         continue
 
@@ -94,22 +94,22 @@ class BatchScreenshotWorker(QThread):
                         # Update database with thumbnail path
                         self.db_manager.update_model_thumbnail(model_id, screenshot_path)
                         self.screenshot_generated.emit(model_id, screenshot_path)
-                        self.logger.info(f"Generated screenshot for model {model_id}")
+                        self.logger.info("Generated screenshot for model %s", model_id)
                     else:
-                        self.logger.warning(f"Failed to generate screenshot for model {model_id}")
+                        self.logger.warning("Failed to generate screenshot for model %s", model_id)
 
                     # Emit progress
                     self.progress_updated.emit(idx + 1, total)
 
                 except Exception as e:
-                    self.logger.error(f"Error processing model {model.get('id')}: {e}")
+                    self.logger.error("Error processing model %s: {e}", model.get('id'))
                     self.error_occurred.emit(f"Error processing model: {e}")
 
             self.logger.info("Batch screenshot generation completed")
             self.finished_batch.emit()
 
         except Exception as e:
-            self.logger.error(f"Batch screenshot generation failed: {e}", exc_info=True)
+            self.logger.error("Batch screenshot generation failed: %s", e, exc_info=True)
             self.error_occurred.emit(f"Batch generation failed: {e}")
 
     def _generate_screenshot_for_model(
@@ -150,7 +150,7 @@ class BatchScreenshotWorker(QThread):
             return screenshot_path
 
         except Exception as e:
-            self.logger.error(f"Failed to generate screenshot for model {model_id}: {e}")
+            self.logger.error("Failed to generate screenshot for model %s: {e}", model_id)
             return None
 
     def stop(self) -> None:

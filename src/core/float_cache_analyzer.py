@@ -129,7 +129,7 @@ class FloatCacheAnalyzer:
         if context["float_decode_start"]:
             decode_time = time.time() - context["float_decode_start"]
             context["float_decode_time"] = decode_time
-            self.logger.debug(f"Float decode completed in {decode_time:.3f}s")
+            self.logger.debug("Float decode completed in %ss", decode_time:.3f)
 
     def mark_struct_unpack_start(self, context: Dict[str, Any]) -> None:
         """Mark the start of struct unpack operations."""
@@ -140,7 +140,7 @@ class FloatCacheAnalyzer:
         if context["struct_unpack_start"]:
             unpack_time = time.time() - context["struct_unpack_start"]
             context["struct_unpack_time"] = unpack_time
-            self.logger.debug(f"Struct unpack completed in {unpack_time:.3f}s")
+            self.logger.debug("Struct unpack completed in %ss", unpack_time:.3f)
 
     def mark_object_creation_start(self, context: Dict[str, Any]) -> None:
         """Mark the start of Vector3D object creation."""
@@ -152,7 +152,7 @@ class FloatCacheAnalyzer:
             creation_time = time.time() - context["object_creation_start"]
             context["object_creation_time"] = creation_time
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"Object creation completed in {creation_time:.3f}s")
+                self.logger.debug("Object creation completed in %ss", creation_time:.3f)
 
     def mark_array_creation_start(self, context: Dict[str, Any]) -> None:
         """Mark the start of NumPy array creation."""
@@ -163,13 +163,13 @@ class FloatCacheAnalyzer:
         if context["array_creation_start"]:
             array_time = time.time() - context["array_creation_start"]
             context["array_creation_time"] = array_time
-            self.logger.debug(f"Array creation completed in {array_time:.3f}s")
+            self.logger.debug("Array creation completed in %ss", array_time:.3f)
 
     def mark_cache_hit(self, context: Dict[str, Any], load_time: float) -> None:
         """Mark a cache hit with load time."""
         context["cache_hit"] = True
         context["cache_load_time"] = load_time
-        self.logger.debug(f"Cache hit loaded in {load_time:.3f}s")
+        self.logger.debug("Cache hit loaded in %ss", load_time:.3f)
 
     def end_analysis(self, context: Dict[str, Any], triangle_count: int) -> FloatParsingMetrics:
         """

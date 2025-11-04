@@ -254,7 +254,7 @@ class ViewerUIManager:
             # Material Design theme is applied globally via ThemeService
             logger.debug("Theme applied")
         except Exception as e:
-            logger.error(f"Failed to apply theme: {e}")
+            logger.error("Failed to apply theme: %s", e)
 
     def get_vtk_widget(self) -> Optional[QVTKRenderWindowInteractor]:
         """Get the VTK widget."""

@@ -37,11 +37,11 @@ class RunModeManager:
                 return self.RUN_MODE_FIRST_TIME
 
             run_mode = self.settings.value("run_mode/mode", self.RUN_MODE_NORMAL)
-            logger.info(f"Run mode: {run_mode}")
+            logger.info("Run mode: %s", run_mode)
             return run_mode
 
         except Exception as e:
-            logger.error(f"Failed to get run mode: {str(e)}")
+            logger.error("Failed to get run mode: %s", str(e))
             return self.RUN_MODE_NORMAL
 
     @log_function_call(logger)
@@ -57,11 +57,11 @@ class RunModeManager:
 
             self.settings.setValue("run_mode/mode", mode)
             self.settings.setValue("run_mode/initialized", True)
-            logger.info(f"Set run mode: {mode}")
+            logger.info("Set run mode: %s", mode)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to set run mode: {str(e)}")
+            logger.error("Failed to set run mode: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -79,7 +79,7 @@ class RunModeManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to mark first run complete: {str(e)}")
+            logger.error("Failed to mark first run complete: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -93,11 +93,11 @@ class RunModeManager:
                 location = str(self.path_manager.get_data_directory())
                 self.set_storage_location(location)
 
-            logger.info(f"Storage location: {location}")
+            logger.info("Storage location: %s", location)
             return location
 
         except Exception as e:
-            logger.error(f"Failed to get storage location: {str(e)}")
+            logger.error("Failed to get storage location: %s", str(e))
             return str(self.path_manager.get_data_directory())
 
     @log_function_call(logger)
@@ -115,11 +115,11 @@ class RunModeManager:
             test_file.unlink()
 
             self.settings.setValue("storage/location", str(path))
-            logger.info(f"Set storage location: {location}")
+            logger.info("Set storage location: %s", location)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to set storage location: {str(e)}")
+            logger.error("Failed to set storage location: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -128,11 +128,11 @@ class RunModeManager:
         try:
             storage_location = self.get_storage_location()
             db_path = str(Path(storage_location) / "3dmm.db")
-            logger.info(f"Database path: {db_path}")
+            logger.info("Database path: %s", db_path)
             return db_path
 
         except Exception as e:
-            logger.error(f"Failed to get database path: {str(e)}")
+            logger.error("Failed to get database path: %s", str(e))
             return str(self.path_manager.get_data_directory() / "3dmm.db")
 
     @log_function_call(logger)
@@ -145,7 +145,7 @@ class RunModeManager:
             return projects_dir
 
         except Exception as e:
-            logger.error(f"Failed to get projects directory: {str(e)}")
+            logger.error("Failed to get projects directory: %s", str(e))
             return str(self.path_manager.get_data_dir() / "projects")
 
     @log_function_call(logger)
@@ -158,7 +158,7 @@ class RunModeManager:
             return imports_dir
 
         except Exception as e:
-            logger.error(f"Failed to get imports directory: {str(e)}")
+            logger.error("Failed to get imports directory: %s", str(e))
             return str(self.path_manager.get_data_directory() / "imports")
 
     def get_preference(self, key: str, default: Optional[str] = None) -> Optional[str]:
@@ -166,7 +166,7 @@ class RunModeManager:
         try:
             return self.settings.value(f"preferences/{key}", default)
         except Exception as e:
-            logger.error(f"Failed to get preference: {str(e)}")
+            logger.error("Failed to get preference: %s", str(e))
             return default
 
     def set_preference(self, key: str, value: str) -> bool:
@@ -175,7 +175,7 @@ class RunModeManager:
             self.settings.setValue(f"preferences/{key}", value)
             return True
         except Exception as e:
-            logger.error(f"Failed to set preference: {str(e)}")
+            logger.error("Failed to set preference: %s", str(e))
             return False
 
     def get_all_preferences(self) -> dict:
@@ -186,5 +186,5 @@ class RunModeManager:
             self.settings.endGroup()
             return prefs
         except Exception as e:
-            logger.error(f"Failed to get preferences: {str(e)}")
+            logger.error("Failed to get preferences: %s", str(e))
             return {}

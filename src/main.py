@@ -92,7 +92,7 @@ def main():
 
     args = parse_arguments()
     log_level = args.log_level if args.log_level is not None else "INFO"
-    logger.info(f"Log level set to: {log_level}")
+    logger.info("Log level set to: %s", log_level)
 
     # Set environment variable for in-memory database if --mem-only flag is used
     if args.mem_only:
@@ -126,7 +126,7 @@ def main():
         # Run the application
         logger.info("Application initialized successfully, starting main loop")
         exit_code = app.run()
-        logger.info(f"Application exited with code: {exit_code}")
+        logger.info("Application exited with code: %s", exit_code)
         return exit_code
 
     except KeyboardInterrupt:
@@ -134,18 +134,18 @@ def main():
         return 130  # Standard Unix exit code for Ctrl+C
 
     except (OSError, IOError) as e:
-        logger.error(f"File system error: {str(e)}")
+        logger.error("File system error: %s", str(e))
         exception_handler.handle_startup_error(e)
         return 1
 
     except ImportError as e:
-        logger.error(f"Missing dependency: {str(e)}")
+        logger.error("Missing dependency: %s", str(e))
         exception_handler.handle_startup_error(e)
         return 1
 
     except Exception as e:
         # Catch all other exceptions
-        logger.error(f"Application startup failed: {str(e)}", exc_info=True)
+        logger.error("Application startup failed: %s", str(e), exc_info=True)
         exception_handler.handle_startup_error(e)
         return 1
 
@@ -155,7 +155,7 @@ def main():
             try:
                 app.cleanup()
             except Exception as e:
-                logger.error(f"Cleanup failed: {str(e)}")
+                logger.error("Cleanup failed: %s", str(e))
 
 
 if __name__ == "__main__":

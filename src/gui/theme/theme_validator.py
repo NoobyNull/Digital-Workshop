@@ -176,7 +176,7 @@ class ThemeValidator:
                     f"Theme validation failed: {len(errors)} errors, {len(warnings)} warnings"
                 )
             elif warnings:
-                logger.info(f"Theme validation passed with {len(warnings)} warnings")
+                logger.info("Theme validation passed with %s warnings", len(warnings))
 
             return is_valid, errors, warnings
 
@@ -184,7 +184,7 @@ class ThemeValidator:
             elapsed = (time.time() - start_time) * 1000
             self._track_validation(False, elapsed)
 
-            logger.error(f"Theme validation exception: {e}", exc_info=True)
+            logger.error("Theme validation exception: %s", e, exc_info=True)
             return False, [f"Validation exception: {str(e)}"], []
 
     def validate_color_scheme(self, colors: Dict[str, str]) -> Tuple[bool, List[str], List[str]]:
@@ -220,7 +220,7 @@ class ThemeValidator:
             return len(errors) == 0, errors, warnings
 
         except Exception as e:
-            logger.error(f"Color scheme validation failed: {e}")
+            logger.error("Color scheme validation failed: %s", e)
             return False, [f"Color validation exception: {str(e)}"], []
 
     def generate_fallback_theme(self, original_errors: List[str]) -> Dict[str, Any]:
@@ -252,7 +252,7 @@ class ThemeValidator:
             "theme_version": "2.0.0",
         }
 
-        logger.warning(f"Generated fallback theme due to errors: {original_errors}")
+        logger.warning("Generated fallback theme due to errors: %s", original_errors)
         return fallback_theme
 
     def get_validation_report(self, theme_data: Dict[str, Any]) -> Dict[str, Any]:

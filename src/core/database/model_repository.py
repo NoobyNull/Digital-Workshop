@@ -96,7 +96,7 @@ class ModelRepository:
                 row = cursor.fetchone()
                 return dict(row) if row else None
         except sqlite3.Error as e:
-            logger.error(f"Failed to find model by hash: {e}")
+            logger.error("Failed to find model by hash: %s", e)
             return None
 
     @log_function_call(logger)
@@ -124,10 +124,10 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Updated file hash for model {model_id}")
+                    logger.info("Updated file hash for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to update file hash for model {model_id}: {e}")
+            logger.error("Failed to update file hash for model %s: {e}", model_id)
             return False
 
     @log_function_call(logger)
@@ -155,10 +155,10 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Linked duplicate model {duplicate_id} to {keep_id}")
+                    logger.info("Linked duplicate model %s to {keep_id}", duplicate_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to link duplicate model: {e}")
+            logger.error("Failed to link duplicate model: %s", e)
             return False
 
     @log_function_call(logger)
@@ -192,7 +192,7 @@ class ModelRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get model {model_id}: {str(e)}")
+            logger.error("Failed to get model %s: {str(e)}", model_id)
             return None
 
     @log_function_call(logger)
@@ -242,11 +242,11 @@ class ModelRepository:
                 rows = cursor.fetchall()
 
                 models = [dict(row) for row in rows]
-                logger.debug(f"Retrieved {len(models)} models")
+                logger.debug("Retrieved %s models", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get all models: {str(e)}")
+            logger.error("Failed to get all models: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -274,10 +274,10 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Updated thumbnail for model {model_id}")
+                    logger.info("Updated thumbnail for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to update thumbnail for model {model_id}: {e}")
+            logger.error("Failed to update thumbnail for model %s: {e}", model_id)
             return False
 
     @log_function_call(logger)
@@ -298,8 +298,8 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Deleted model {model_id}")
+                    logger.info("Deleted model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete model {model_id}: {e}")
+            logger.error("Failed to delete model %s: {e}", model_id)
             return False

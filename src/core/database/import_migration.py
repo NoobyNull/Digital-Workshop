@@ -81,21 +81,21 @@ def create_import_tables(connection: sqlite3.Connection) -> Tuple[bool, Optional
         # Get all schema statements
         statements = get_all_schema_statements()
 
-        logger.info(f"Executing {len(statements)} schema statements...")
+        logger.info("Executing %s schema statements...", len(statements))
 
         for statement in statements:
             try:
                 cursor.execute(statement)
-                logger.debug(f"Executed: {statement[:50]}...")
+                logger.debug("Executed: %s...", statement[:50])
             except sqlite3.OperationalError as e:
                 # Expected error: table/index might already exist
                 if "already exists" in str(e).lower():
-                    logger.debug(f"Schema object already exists: {e}")
+                    logger.debug("Schema object already exists: %s", e)
                 else:
-                    logger.warning(f"Operational error during schema creation: {e}")
+                    logger.warning("Operational error during schema creation: %s", e)
             except sqlite3.Error as e:
                 # Unexpected database error
-                logger.error(f"Unexpected database error during schema creation: {e}")
+                logger.error("Unexpected database error during schema creation: %s", e)
 
         connection.commit()
         logger.info("Import tables created successfully")
@@ -127,7 +127,7 @@ def extend_models_table(connection: sqlite3.Connection) -> Tuple[bool, Optional[
         cursor = connection.cursor()
         extensions = get_models_table_extensions()
 
-        logger.info(f"Extending models table with {len(extensions)} columns...")
+        logger.info("Extending models table with %s columns...", len(extensions))
 
         added_columns = 0
         for statement in extensions:
@@ -142,24 +142,24 @@ def extend_models_table(connection: sqlite3.Connection) -> Tuple[bool, Optional[
                     if not check_column_exists(connection, "models", column_name):
                         cursor.execute(statement)
                         added_columns += 1
-                        logger.debug(f"Added column: {column_name}")
+                        logger.debug("Added column: %s", column_name)
                     else:
-                        logger.debug(f"Column already exists: {column_name}")
+                        logger.debug("Column already exists: %s", column_name)
                 else:
-                    logger.warning(f"Could not extract column name from: {statement}")
+                    logger.warning("Could not extract column name from: %s", statement)
 
             except sqlite3.OperationalError as e:
                 # Expected error: column might already exist
                 if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-                    logger.debug(f"Column already exists: {e}")
+                    logger.debug("Column already exists: %s", e)
                 else:
-                    logger.warning(f"Operational error adding column: {e}")
+                    logger.warning("Operational error adding column: %s", e)
             except sqlite3.Error as e:
                 # Unexpected database error
-                logger.error(f"Unexpected database error adding column: {e}")
+                logger.error("Unexpected database error adding column: %s", e)
 
         connection.commit()
-        logger.info(f"Models table extended successfully ({added_columns} columns added)")
+        logger.info("Models table extended successfully (%s columns added)", added_columns)
 
         return True, None
 
@@ -191,7 +191,7 @@ def get_migration_version(connection: sqlite3.Connection) -> int:
         return result[0] if result and result[0] else 0
 
     except Exception as e:
-        logger.warning(f"Failed to get migration version: {e}")
+        logger.warning("Failed to get migration version: %s", e)
         return 0
 
 
@@ -235,7 +235,7 @@ def set_migration_version(connection: sqlite3.Connection, version: int) -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Failed to set migration version: {e}", exc_info=True)
+        logger.error("Failed to set migration version: %s", e, exc_info=True)
         return False
 
 
@@ -263,7 +263,7 @@ def migrate_import_schema(db_manager) -> Tuple[bool, Optional[str]]:
     target_version = 1  # Current import schema version
 
     if current_version >= target_version:
-        logger.info(f"Import schema already at version {current_version}")
+        logger.info("Import schema already at version %s", current_version)
         return True, None
 
     # Wrap all migration steps in a transaction
@@ -285,7 +285,7 @@ def migrate_import_schema(db_manager) -> Tuple[bool, Optional[str]]:
             connection.rollback()
             return False, "Failed to update migration version"
 
-        logger.info(f"Import schema migration completed successfully (v{target_version})")
+        logger.info("Import schema migration completed successfully (v%s)", target_version)
         return True, None
 
     except Exception as e:
@@ -316,14 +316,14 @@ def verify_import_schema(db_manager) -> Tuple[bool, list]:
                 missing_tables.append(table)
 
         if missing_tables:
-            logger.warning(f"Missing import tables: {missing_tables}")
+            logger.warning("Missing import tables: %s", missing_tables)
             return False, missing_tables
 
         logger.info("Import schema verification passed")
         return True, []
 
     except Exception as e:
-        logger.error(f"Schema verification failed: {e}", exc_info=True)
+        logger.error("Schema verification failed: %s", e, exc_info=True)
         return False, []
 
 

@@ -51,21 +51,21 @@ class BackgroundProvider:
                 # Check for image preference
                 bg_image = getattr(self.settings, "thumbnail_bg_image", None)
                 if bg_image and self._validate_image_path(bg_image):
-                    self.logger.debug(f"Using background image from settings: {bg_image}")
+                    self.logger.debug("Using background image from settings: %s", bg_image)
                     return bg_image
 
                 # Check for color preference
                 bg_color = getattr(self.settings, "thumbnail_bg_color", None)
                 if bg_color:
-                    self.logger.debug(f"Using background color from settings: {bg_color}")
+                    self.logger.debug("Using background color from settings: %s", bg_color)
                     return self._parse_color(bg_color)
 
             # Fall back to default
-            self.logger.debug(f"Using default background color: {self.DEFAULT_COLOR}")
+            self.logger.debug("Using default background color: %s", self.DEFAULT_COLOR)
             return self._parse_color(self.DEFAULT_COLOR)
 
         except Exception as e:
-            self.logger.error(f"Error getting background: {e}", exc_info=True)
+            self.logger.error("Error getting background: %s", e, exc_info=True)
             return self._parse_color(self.DEFAULT_COLOR)
 
     def get_default_backgrounds(self) -> List[Path]:
@@ -91,11 +91,11 @@ class BackgroundProvider:
                 if f.is_file() and f.suffix.lower() in image_extensions
             ]
 
-            self.logger.debug(f"Found {len(backgrounds)} default background images")
+            self.logger.debug("Found %s default background images", len(backgrounds))
             return sorted(backgrounds)
 
         except Exception as e:
-            self.logger.error(f"Error listing default backgrounds: {e}", exc_info=True)
+            self.logger.error("Error listing default backgrounds: %s", e, exc_info=True)
             return []
 
     def _validate_image_path(self, path: Union[str, Path]) -> bool:
@@ -112,23 +112,23 @@ class BackgroundProvider:
             path = Path(path)
 
             if not path.exists():
-                self.logger.warning(f"Background image not found: {path}")
+                self.logger.warning("Background image not found: %s", path)
                 return False
 
             if not path.is_file():
-                self.logger.warning(f"Background path is not a file: {path}")
+                self.logger.warning("Background path is not a file: %s", path)
                 return False
 
             # Check extension
             supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if path.suffix.lower() not in supported_extensions:
-                self.logger.warning(f"Unsupported background image format: {path.suffix}")
+                self.logger.warning("Unsupported background image format: %s", path.suffix)
                 return False
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Error validating image path: {e}", exc_info=True)
+            self.logger.error("Error validating image path: %s", e, exc_info=True)
             return False
 
     def _parse_color(self, color: Union[str, Tuple, List]) -> Tuple[float, float, float]:
@@ -160,7 +160,7 @@ class BackgroundProvider:
                 raise ValueError(f"Unsupported color format: {color}")
 
         except Exception as e:
-            self.logger.error(f"Error parsing color {color}: {e}", exc_info=True)
+            self.logger.error("Error parsing color %s: {e}", color, exc_info=True)
             # Return default gray
             return (0.96, 0.96, 0.96)
 
@@ -213,11 +213,11 @@ class BackgroundProvider:
             self.settings.thumbnail_bg_color = hex_color
             self.settings.thumbnail_bg_image = None  # Clear image when setting color
 
-            self.logger.info(f"Background color set to: {hex_color}")
+            self.logger.info("Background color set to: %s", hex_color)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error setting background color: {e}", exc_info=True)
+            self.logger.error("Error setting background color: %s", e, exc_info=True)
             return False
 
     def set_background_image(self, image_path: Union[str, Path]) -> bool:
@@ -242,11 +242,11 @@ class BackgroundProvider:
             # Update settings
             self.settings.thumbnail_bg_image = str(Path(image_path).resolve())
 
-            self.logger.info(f"Background image set to: {image_path}")
+            self.logger.info("Background image set to: %s", image_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error setting background image: {e}", exc_info=True)
+            self.logger.error("Error setting background image: %s", e, exc_info=True)
             return False
 
     def clear_background_image(self) -> bool:
@@ -266,7 +266,7 @@ class BackgroundProvider:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error clearing background image: {e}", exc_info=True)
+            self.logger.error("Error clearing background image: %s", e, exc_info=True)
             return False
 
     def _rgb_to_hex(self, rgb: Tuple[float, float, float]) -> str:

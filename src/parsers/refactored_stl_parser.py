@@ -549,7 +549,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 return result
 
         except Exception as e:
-            self.logger.error(f"Error in pure Python binary STL parse: {str(e)}")
+            self.logger.error("Error in pure Python binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (pure Python): {str(e)}")
 
     def _parse_binary_stl_arrays(
@@ -584,7 +584,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     raise STLParseError("Invalid binary STL: cannot read triangle count")
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
-                self.logger.info(f"Parsing binary STL with {triangle_count} triangles [array path]")
+                self.logger.info("Parsing binary STL with %s triangles [array path]", triangle_count)
 
                 if triangle_count <= 0:
                     raise STLParseError("Invalid triangle count in STL")
@@ -689,7 +689,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 return result
 
         except Exception as e:
-            self.logger.error(f"Error in array-based binary STL parse: {str(e)}")
+            self.logger.error("Error in array-based binary STL parse: %s", str(e))
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
     def _parse_ascii_stl(
@@ -862,7 +862,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 return result
 
         except Exception as e:
-            self.logger.error(f"Error parsing ASCII STL: {str(e)}")
+            self.logger.error("Error parsing ASCII STL: %s", str(e))
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
     def _get_model_info_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -903,7 +903,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get STL model info: {str(e)}")
+            self.logger.error("Failed to get STL model info: %s", str(e))
             raise ParseError(f"Failed to get model info: {str(e)}")
 
     def _validate_file_internal(self, file_path: Path) -> bool:
@@ -962,7 +962,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             return False
 
         except Exception as e:
-            self.logger.warning(f"STL validation error for {file_path}: {str(e)}")
+            self.logger.warning("STL validation error for %s: {str(e)}", file_path)
             return False
 
     def _parse_stream_internal(self, file_path: Path) -> Iterator[Dict[str, Any]]:
@@ -986,7 +986,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 raise STLParseError("Unable to determine STL format for streaming")
 
         except Exception as e:
-            self.logger.error(f"Error in STL streaming: {str(e)}")
+            self.logger.error("Error in STL streaming: %s", str(e))
             raise ParseError(f"Streaming failed: {str(e)}")
 
     def _stream_binary_stl(self, file_path: Path) -> Iterator[Dict[str, Any]]:
@@ -1078,7 +1078,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     self._current_progress = triangles_processed / triangle_count
 
         except Exception as e:
-            self.logger.error(f"Error streaming binary STL: {str(e)}")
+            self.logger.error("Error streaming binary STL: %s", str(e))
             raise ParseError(f"Binary STL streaming failed: {str(e)}")
 
     def _stream_ascii_stl(self, file_path: Path) -> Iterator[Dict[str, Any]]:
@@ -1194,7 +1194,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     }
 
         except Exception as e:
-            self.logger.error(f"Error streaming ASCII STL: {str(e)}")
+            self.logger.error("Error streaming ASCII STL: %s", str(e))
             raise ParseError(f"ASCII STL streaming failed: {str(e)}")
 
     def _validate_geometry_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -1275,7 +1275,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
         except Exception as e:
-            self.logger.error(f"Error validating STL geometry: {str(e)}")
+            self.logger.error("Error validating STL geometry: %s", str(e))
             return {
                 "is_valid": False,
                 "issues": [f"Validation error: {str(e)}"],
@@ -1316,7 +1316,7 @@ class RefactoredSTLParser(RefactoredBaseParser):
             return stats
 
         except Exception as e:
-            self.logger.error(f"Error getting STL geometry stats: {str(e)}")
+            self.logger.error("Error getting STL geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
     def _get_binary_triangle_count(self, file_path: Path) -> int:

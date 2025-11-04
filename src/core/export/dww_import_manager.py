@@ -126,7 +126,7 @@ class DWWImportManager:
                 except KeyError:
                     self.logger.debug("No metadata found in DWW file")
 
-            self.logger.info(f"Successfully imported project from DWW: {dww_path}")
+            self.logger.info("Successfully imported project from DWW: %s", dww_path)
             return True, "Project imported successfully", manifest
 
         except Exception as e:
@@ -151,7 +151,7 @@ class DWWImportManager:
                 return True, manifest
 
         except Exception as e:
-            self.logger.error(f"Failed to read DWW info: {str(e)}")
+            self.logger.error("Failed to read DWW info: %s", str(e))
             return False, None
 
     def _verify_dww_file(self, dww_path: str) -> Tuple[bool, str]:
@@ -212,5 +212,5 @@ class DWWImportManager:
                 return True, files
 
         except Exception as e:
-            self.logger.error(f"Failed to list DWW files: {str(e)}")
+            self.logger.error("Failed to list DWW files: %s", str(e))
             return False, None

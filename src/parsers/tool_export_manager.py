@@ -89,7 +89,7 @@ class ToolExportManager:
                         progress = min((i + 1) / len(tools), 1.0)
                         progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
 
-            self.logger.info(f"Exported {len(tools)} tools to CSV: {output_path}")
+            self.logger.info("Exported %s tools to CSV: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to CSV", len(tools)
 
         except Exception as e:
@@ -149,7 +149,7 @@ class ToolExportManager:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
 
-            self.logger.info(f"Exported {len(tools)} tools to JSON: {output_path}")
+            self.logger.info("Exported %s tools to JSON: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to JSON", len(tools)
 
         except Exception as e:
@@ -230,7 +230,7 @@ class ToolExportManager:
             conn.commit()
             conn.close()
 
-            self.logger.info(f"Exported {len(tools)} tools to external database: {output_path}")
+            self.logger.info("Exported %s tools to external database: {output_path}", len(tools))
             return (
                 True,
                 f"Successfully exported {len(tools)} tools to external database",
@@ -280,5 +280,5 @@ class ToolExportManager:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get export statistics: {e}")
+            self.logger.error("Failed to get export statistics: %s", e)
             return {"total_tools": 0, "error": str(e)}

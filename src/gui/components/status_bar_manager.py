@@ -166,7 +166,7 @@ class StatusBarManager:
             ]:
                 self.memory_label.setText("Memory: N/A (psutil not available)")
         except Exception as e:
-            self.logger.warning(f"Failed to update memory status: {str(e)}")
+            self.logger.warning("Failed to update memory status: %s", str(e))
             if self.status_label.text() not in [
                 "Applied main_window.css",
                 "Modern UI styling applied",
@@ -194,7 +194,7 @@ class StatusBarManager:
                 self.hash_indicator.setToolTip("Background hashing paused - Click to resume")
                 self.main_window.statusBar().showMessage("Background hashing paused", 2000)
         except Exception as e:
-            self.logger.error(f"Failed to toggle background hasher: {e}")
+            self.logger.error("Failed to toggle background hasher: %s", e)
 
     def _start_background_hasher(self) -> None:
         """Start the background hasher thread."""
@@ -219,7 +219,7 @@ class StatusBarManager:
 
             self.logger.info("Background hasher started")
         except Exception as e:
-            self.logger.error(f"Failed to start background hasher: {e}")
+            self.logger.error("Failed to start background hasher: %s", e)
 
     def _on_hash_progress(self, filename: str) -> None:
         """Handle hash progress update."""
@@ -231,7 +231,7 @@ class StatusBarManager:
     def _on_model_hashed(self, model_id: int, file_hash: str) -> None:
         """Handle model hashed successfully."""
         try:
-            self.logger.debug(f"Model {model_id} hashed: {file_hash[:16]}...")
+            self.logger.debug("Model %s hashed: {file_hash[:16]}...", model_id)
         except Exception:
             pass
 
@@ -271,7 +271,7 @@ class StatusBarManager:
                     db_manager.update_file_hash(new_model_id, existing["file_hash"])
 
         except Exception as e:
-            self.logger.error(f"Failed to handle duplicate: {e}")
+            self.logger.error("Failed to handle duplicate: %s", e)
 
     def _on_hashing_complete(self) -> None:
         """Handle all hashing complete."""
@@ -295,7 +295,7 @@ class StatusBarManager:
             else:
                 self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
         except Exception as e:
-            self.logger.warning(f"Failed to update layout edit mode indicator: {e}")
+            self.logger.warning("Failed to update layout edit mode indicator: %s", e)
 
     def _cycle_theme(self) -> None:
         """Handle cycle theme action."""
@@ -330,7 +330,7 @@ class StatusBarManager:
                 self.theme_button.setText(current_theme[0].upper())
 
         except Exception as e:
-            self.logger.warning(f"Failed to update theme icon: {e}")
+            self.logger.warning("Failed to update theme icon: %s", e)
 
 
 # Convenience function for easy status bar setup

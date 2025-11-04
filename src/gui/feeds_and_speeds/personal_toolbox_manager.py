@@ -36,16 +36,16 @@ class PersonalToolboxManager:
 
             # Check if tool already exists
             if any(t["guid"] == tool.guid for t in toolbox):
-                self.logger.info(f"Tool {tool.description} already in toolbox")
+                self.logger.info("Tool %s already in toolbox", tool.description)
                 return False
 
             toolbox.append(tool.to_dict())
             self._save_toolbox(toolbox)
-            self.logger.info(f"Added tool to toolbox: {tool.description}")
+            self.logger.info("Added tool to toolbox: %s", tool.description)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to add tool to toolbox: {e}")
+            self.logger.error("Failed to add tool to toolbox: %s", e)
             return False
 
     def remove_tool(self, tool_guid: str) -> bool:
@@ -62,11 +62,11 @@ class PersonalToolboxManager:
             toolbox = self._load_toolbox()
             toolbox = [t for t in toolbox if t["guid"] != tool_guid]
             self._save_toolbox(toolbox)
-            self.logger.info(f"Removed tool from toolbox: {tool_guid}")
+            self.logger.info("Removed tool from toolbox: %s", tool_guid)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to remove tool from toolbox: {e}")
+            self.logger.error("Failed to remove tool from toolbox: %s", e)
             return False
 
     def get_toolbox(self) -> List[Tool]:
@@ -75,7 +75,7 @@ class PersonalToolboxManager:
             toolbox_data = self._load_toolbox()
             return [Tool.from_dict(t) for t in toolbox_data]
         except Exception as e:
-            self.logger.error(f"Failed to load toolbox: {e}")
+            self.logger.error("Failed to load toolbox: %s", e)
             return []
 
     def has_tool(self, tool_guid: str) -> bool:
@@ -91,7 +91,7 @@ class PersonalToolboxManager:
             enabled: True to enable auto-conversion
         """
         self.settings.setValue(self.UNIT_CONVERSION_KEY, enabled)
-        self.logger.info(f"Auto-convert to metric: {enabled}")
+        self.logger.info("Auto-convert to metric: %s", enabled)
 
     def get_auto_convert_to_metric(self) -> bool:
         """Get auto-convert to metric setting."""
@@ -103,7 +103,7 @@ class PersonalToolboxManager:
             toolbox_json = self.settings.value(self.SETTINGS_KEY, "[]", type=str)
             return json.loads(toolbox_json)
         except Exception as e:
-            self.logger.debug(f"Failed to load toolbox from settings: {e}")
+            self.logger.debug("Failed to load toolbox from settings: %s", e)
             return []
 
     def _save_toolbox(self, toolbox: List[Dict[str, Any]]) -> None:
@@ -113,4 +113,4 @@ class PersonalToolboxManager:
             self.settings.setValue(self.SETTINGS_KEY, toolbox_json)
             self.settings.sync()
         except Exception as e:
-            self.logger.error(f"Failed to save toolbox to settings: {e}")
+            self.logger.error("Failed to save toolbox to settings: %s", e)
