@@ -5,7 +5,7 @@ Handles camera positioning, view management, and orientation preservation.
 """
 
 import math
-from typing import Optional, Tuple
+from typing import Optional
 
 import vtk
 
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class CameraController:
     """Manages camera positioning and view control."""
 
-    def __init__(self, renderer, render_window):
+    def __init__(self, renderer, render_window) -> None:
         """
         Initialize camera controller.
 
@@ -33,14 +33,15 @@ class CameraController:
         # Load camera settings from config
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             self.mouse_sensitivity = config.mouse_sensitivity
             self.fps_limit = config.fps_limit
             self.zoom_speed = config.zoom_speed
             self.pan_speed = config.pan_speed
             self.auto_fit_on_load = config.auto_fit_on_load
-        except Exception as e:
-            logger.warning(f"Failed to load camera settings from config: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load camera settings from config: %s", e)
             self.mouse_sensitivity = 1.0
             self.fps_limit = 0
             self.zoom_speed = 1.0
@@ -49,11 +50,12 @@ class CameraController:
 
     @log_function_call(logger)
     def fit_camera_to_model(
+        """TODO: Add docstring."""
         self,
         model: STLModel,
         actor: Optional[vtk.vtkActor],
         update_grid_callback=None,
-        update_ground_callback=None
+        update_ground_callback=None,
     ) -> None:
         """
         Fit camera to model bounds.
@@ -136,8 +138,8 @@ class CameraController:
                 f"radius={radius:.3f} distance={distance:.3f}"
             )
 
-        except Exception as e:
-            logger.warning(f"Fallback camera reset due to error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Fallback camera reset due to error: %s", e)
             try:
                 self.renderer.ResetCamera()
                 self.renderer.ResetCameraClippingRange()
@@ -147,9 +149,8 @@ class CameraController:
 
     @log_function_call(logger)
     def fit_camera_preserving_orientation(
-        self,
-        model: STLModel,
-        actor: Optional[vtk.vtkActor]
+        """TODO: Add docstring."""
+        self, model: STLModel, actor: Optional[vtk.vtkActor]
     ) -> None:
         """
         Fit camera to model while preserving orientation.
@@ -242,8 +243,8 @@ class CameraController:
                 f"radius={radius:.3f} distance={required_distance:.3f}"
             )
 
-        except Exception as e:
-            logger.error(f"Failed to fit camera preserving orientation: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to fit camera preserving orientation: %s", e)
             try:
                 self.renderer.ResetCamera()
                 self.renderer.ResetCameraClippingRange()
@@ -257,8 +258,8 @@ class CameraController:
             self.renderer.ResetCamera()
             self.render_window.Render()
             logger.debug("Camera view reset")
-        except Exception as e:
-            logger.error(f"Failed to reset view: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to reset view: %s", e)
 
     def rotate_around_view_axis(self, degrees: float) -> None:
         """
@@ -288,7 +289,7 @@ class CameraController:
             sin_a = math.sin(angle_rad)
 
             # Rodrigues' rotation formula
-            k_dot_v = (view_x * view_up[0] + view_y * view_up[1] + view_z * view_up[2])
+            k_dot_v = view_x * view_up[0] + view_y * view_up[1] + view_z * view_up[2]
             k_norm = (view_x**2 + view_y**2 + view_z**2) ** 0.5
 
             if k_norm < 1e-6:
@@ -299,26 +300,25 @@ class CameraController:
             k_z = view_z / k_norm
 
             new_up_x = (
-                view_up[0] * cos_a +
-                (k_y * view_up[2] - k_z * view_up[1]) * sin_a +
-                k_x * k_dot_v * (1 - cos_a)
+                view_up[0] * cos_a
+                + (k_y * view_up[2] - k_z * view_up[1]) * sin_a
+                + k_x * k_dot_v * (1 - cos_a)
             )
             new_up_y = (
-                view_up[1] * cos_a +
-                (k_z * view_up[0] - k_x * view_up[2]) * sin_a +
-                k_y * k_dot_v * (1 - cos_a)
+                view_up[1] * cos_a
+                + (k_z * view_up[0] - k_x * view_up[2]) * sin_a
+                + k_y * k_dot_v * (1 - cos_a)
             )
             new_up_z = (
-                view_up[2] * cos_a +
-                (k_x * view_up[1] - k_y * view_up[0]) * sin_a +
-                k_z * k_dot_v * (1 - cos_a)
+                view_up[2] * cos_a
+                + (k_x * view_up[1] - k_y * view_up[0]) * sin_a
+                + k_z * k_dot_v * (1 - cos_a)
             )
 
             camera.SetViewUp(new_up_x, new_up_y, new_up_z)
             self.render_window.Render()
 
-            logger.debug(f"View rotated by {degrees} degrees")
+            logger.debug("View rotated by %s degrees", degrees)
 
-        except Exception as e:
-            logger.error(f"Failed to rotate view: {e}")
-
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to rotate view: %s", e)

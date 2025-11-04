@@ -7,8 +7,13 @@ Handles UI layout, controls, and theme application.
 from typing import Callable, Optional
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar,
-    QLabel, QFrame
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QProgressBar,
+    QLabel,
+    QFrame,
 )
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
@@ -21,7 +26,7 @@ logger = get_logger(__name__)
 class ViewerUIManager:
     """Manages the viewer UI layout and controls."""
 
-    def __init__(self, parent_widget: QWidget):
+    def __init__(self, parent_widget: QWidget) -> None:
         """
         Initialize UI manager.
 
@@ -46,6 +51,7 @@ class ViewerUIManager:
 
     @log_function_call(logger)
     def setup_ui(
+        """TODO: Add docstring."""
         self,
         on_solid_clicked: Callable,
         on_material_clicked: Callable,
@@ -248,8 +254,8 @@ class ViewerUIManager:
         try:
             # Material Design theme is applied globally via ThemeService
             logger.debug("Theme applied")
-        except Exception as e:
-            logger.error(f"Failed to apply theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to apply theme: %s", e)
 
     def get_vtk_widget(self) -> Optional[QVTKRenderWindowInteractor]:
         """Get the VTK widget."""

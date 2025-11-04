@@ -6,7 +6,7 @@ Loads models in a separate thread with progress reporting.
 
 import gc
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
 from PySide6.QtCore import QThread, Signal
 
@@ -16,9 +16,12 @@ from src.core.performance_monitor import get_performance_monitor
 from src.parsers.format_detector import FormatDetector, ModelFormat
 from src.parsers.obj_parser import OBJParser
 from src.parsers.step_parser import STEPParser
-from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.parsers.stl_parser import STLParser
 from src.parsers.threemf_parser import ThreeMFParser
-from src.gui.components.detailed_progress_tracker import DetailedProgressTracker, LoadingStage
+from src.gui.components.detailed_progress_tracker import (
+    DetailedProgressTracker,
+    LoadingStage,
+)
 
 
 logger = get_logger(__name__)
@@ -32,7 +35,7 @@ class ModelLoadWorker(QThread):
     error_occurred = Signal(str)
     finished = Signal()
 
-    def __init__(self, file_paths: List[str]):
+    def __init__(self, file_paths: List[str]) -> None:
         """
         Initialize the worker.
 
@@ -52,7 +55,7 @@ class ModelLoadWorker(QThread):
 
     def run(self) -> None:
         """Load models in background thread with detailed progress tracking."""
-        self.logger.info(f"Starting to load {len(self.file_paths)} models")
+        self.logger.info("Starting to load %s models", len(self.file_paths))
         for i, file_path in enumerate(self.file_paths):
             if self._is_cancelled:
                 self.logger.info("Model loading cancelled")
@@ -67,6 +70,7 @@ class ModelLoadWorker(QThread):
 
                 # Set callback to emit progress
                 def emit_progress(progress: float, message: str) -> None:
+                    """TODO: Add docstring."""
                     # Adjust for multiple files
                     file_progress = (i / max(1, len(self.file_paths))) * 100.0
                     overall_progress = file_progress + (progress / len(self.file_paths))
@@ -75,7 +79,8 @@ class ModelLoadWorker(QThread):
                 tracker.set_progress_callback(emit_progress)
 
                 operation_id = self.performance_monitor.start_operation(
-                    "load_model_to_library", {"file_path": file_path, "filename": filename}
+                    "load_model_to_library",
+                    {"file_path": file_path, "filename": filename},
                 )
 
                 # Check cache first
@@ -114,8 +119,16 @@ class ModelLoadWorker(QThread):
                     "vertex_count": model.stats.vertex_count,
                     "dimensions": model.stats.get_dimensions(),
                     "parsing_time": model.stats.parsing_time_seconds,
-                    "min_bounds": (model.stats.min_bounds.x, model.stats.min_bounds.y, model.stats.min_bounds.z),
-                    "max_bounds": (model.stats.max_bounds.x, model.stats.max_bounds.y, model.stats.max_bounds.z),
+                    "min_bounds": (
+                        model.stats.min_bounds.x,
+                        model.stats.min_bounds.y,
+                        model.stats.min_bounds.z,
+                    ),
+                    "max_bounds": (
+                        model.stats.max_bounds.x,
+                        model.stats.max_bounds.y,
+                        model.stats.max_bounds.z,
+                    ),
                 }
 
                 self.model_loaded.emit(model_info)
@@ -124,11 +137,10 @@ class ModelLoadWorker(QThread):
                 if i % 10 == 0:
                     gc.collect()
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 msg = f"Failed to load {file_path}: {e}"
                 self.logger.error(msg)
                 self.error_occurred.emit(msg)
 
         self.finished.emit()
         self.logger.info("Model loading completed")
-

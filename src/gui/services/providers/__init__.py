@@ -10,25 +10,26 @@ from .gemini_provider import GeminiProvider
 from .anthropic_provider import AnthropicProvider
 
 __all__ = [
-    'BaseProvider',
-    'OpenAIProvider',
-    'OpenRouterProvider',
-    'GeminiProvider',
-    'AnthropicProvider',
-    'get_provider_class'
+    "BaseProvider",
+    "OpenAIProvider",
+    "OpenRouterProvider",
+    "GeminiProvider",
+    "AnthropicProvider",
+    "get_provider_class",
 ]
 
-def get_provider_class(provider_id: str):
+
+def get_provider_class(provider_id: str) -> None:
     """Get provider class by ID."""
     provider_mapping = {
-        'openai': OpenAIProvider,
-        'openrouter': OpenRouterProvider,
-        'anthropic': AnthropicProvider,
-        'gemini': GeminiProvider,
-        'xai': None,        # To be implemented
-        'zai': None,        # To be implemented
-        'perplexity': None, # To be implemented
-        'ollama': None,     # To be implemented
-        'ai_studio': None,  # To be implemented
+        "openai": OpenAIProvider,
+        "openrouter": OpenRouterProvider,
+        "anthropic": AnthropicProvider,
+        "gemini": GeminiProvider,
+        "xai": None,  # To be implemented
+        "zai": None,  # To be implemented
+        "perplexity": None,  # To be implemented
+        "ollama": None,  # To be implemented
+        "ai_studio": None,  # To be implemented
     }
     return provider_mapping.get(provider_id)

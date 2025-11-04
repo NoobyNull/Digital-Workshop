@@ -13,7 +13,7 @@ Single Responsibility: Unified theme management UI.
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QColorDialog,
@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..manager import ThemeManager, qcolor
+from ..manager import ThemeManager
 from ..service import ThemeService
 
 
@@ -48,7 +48,7 @@ class ThemeDialog(QDialog):
 
     theme_applied = Signal(str)  # Emitted when theme is applied
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme dialog.
 
@@ -70,11 +70,11 @@ class ThemeDialog(QDialog):
         try:
             self._setup_ui()
             self._load_current_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             from src.core.logging_config import get_logger
 
             logger = get_logger(__name__)
-            logger.error(f"Failed to initialize ThemeDialog: {e}", exc_info=True)
+            logger.error("Failed to initialize ThemeDialog: %s", e, exc_info=True)
             raise
 
     def _setup_ui(self) -> None:
@@ -173,17 +173,13 @@ class ThemeDialog(QDialog):
             col = 0
             for color_name in sorted(categories[category]):
                 # Label
-                label = QLabel(
-                    color_name.replace(f"{category}_", "").replace("_", " ").title()
-                )
+                label = QLabel(color_name.replace(f"{category}_", "").replace("_", " ").title())
                 group_layout.addWidget(label, col // 2, (col % 2) * 2)
 
                 # Color button
                 btn = QPushButton()
                 btn.setMaximumWidth(80)
-                btn.clicked.connect(
-                    lambda checked, cn=color_name: self._on_color_clicked(cn)
-                )
+                btn.clicked.connect(lambda checked, cn=color_name: self._on_color_clicked(cn))
                 self.color_buttons[color_name] = btn
                 group_layout.addWidget(btn, col // 2, (col % 2) * 2 + 1)
 
@@ -273,35 +269,29 @@ class ThemeDialog(QDialog):
         if color.isValid():
             hex_value = color.name()
             self.service.set_color(color_name, hex_value)
-            self.color_buttons[color_name].setStyleSheet(
-                f"background-color: {hex_value};"
-            )
+            self.color_buttons[color_name].setStyleSheet(f"background-color: {hex_value};")
             self.theme_applied.emit("custom")
 
     def _on_export(self) -> None:
         """Export theme to file."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Export Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.export_theme(Path(path))
                 QMessageBox.information(self, "Success", "Theme exported successfully")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to export theme: {e}")
 
     def _on_import(self) -> None:
         """Import theme from file."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import Theme", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Import Theme", "", "JSON Files (*.json)")
         if path:
             try:
                 self.service.import_theme(Path(path))
                 self._load_current_theme()
                 QMessageBox.information(self, "Success", "Theme imported successfully")
                 self.theme_applied.emit("custom")
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to import theme: {e}")
 
     def _on_reset(self) -> None:

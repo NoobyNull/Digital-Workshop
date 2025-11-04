@@ -8,17 +8,28 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget,
-    QListWidgetItem, QCheckBox, QFileDialog, QMessageBox,
-    QGroupBox, QInputDialog, QProgressBar, QComboBox,
-    QMenu
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QCheckBox,
+    QFileDialog,
+    QMessageBox,
+    QGroupBox,
+    QInputDialog,
+    QProgressBar,
+    QComboBox,
+    QMenu,
 )
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12
 from src.gui.files_components.file_maintenance_worker import FileMaintenanceWorker
-
+from src.gui.components.auto_close_message_box import show_auto_close_message
 
 
 class FilesTab(QWidget):
@@ -29,7 +40,8 @@ class FilesTab(QWidget):
     that are used by the file browser in the model library.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
@@ -139,9 +151,7 @@ class FilesTab(QWidget):
         # Buttons
         maintenance_buttons = QHBoxLayout()
         self.start_maintenance_button = QPushButton("Start Maintenance")
-        self.start_maintenance_button.setToolTip(
-            "Start the selected maintenance operation"
-        )
+        self.start_maintenance_button.setToolTip("Start the selected maintenance operation")
         maintenance_buttons.addWidget(self.start_maintenance_button)
 
         self.cancel_maintenance_button = QPushButton("Cancel")
@@ -221,7 +231,9 @@ class FilesTab(QWidget):
         self.folders_list.setItemWidget(item, widget)
 
         # Connect checkbox signal
-        enabled_cb.stateChanged.connect(lambda state, fid=folder.id: self._toggle_folder_enabled(fid, state))
+        enabled_cb.stateChanged.connect(
+            lambda state, fid=folder.id: self._toggle_folder_enabled(fid, state)
+        )
 
     def _is_folder_valid(self, folder: RootFolder) -> bool:
         """Check if a folder is valid (exists and accessible)."""
@@ -235,10 +247,7 @@ class FilesTab(QWidget):
         """Add a new root folder."""
         # Open folder selection dialog
         folder_path = QFileDialog.getExistingDirectory(
-            self,
-            "Select Root Folder",
-            str(Path.home()),
-            QFileDialog.ShowDirsOnly
+            self, "Select Root Folder", str(Path.home()), QFileDialog.ShowDirsOnly
         )
 
         if not folder_path:
@@ -250,7 +259,7 @@ class FilesTab(QWidget):
             self,
             "Folder Display Name",
             "Enter a display name for this folder:",
-            text=folder_name
+            text=folder_name,
         )
 
         if not ok or not display_name.strip():
@@ -259,9 +268,13 @@ class FilesTab(QWidget):
         # Add to manager
         if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
             self._load_folders()  # Refresh the list
-            QMessageBox.information(self, "Success", f"Added folder '{display_name}'")
+            show_auto_close_message(self, "Success", f"Added folder '{display_name}'", 5000)
         else:
-            QMessageBox.warning(self, "Error", "Failed to add folder. It may already exist or be inaccessible.")
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Failed to add folder. It may already exist or be inaccessible.",
+            )
 
     def _remove_folder(self) -> None:
         """Remove the selected folder."""
@@ -280,13 +293,15 @@ class FilesTab(QWidget):
             "Confirm Removal",
             f"Are you sure you want to remove '{folder.display_name}' from the root folders?",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
             if self.root_folder_manager.remove_folder(folder_id):
                 self._load_folders()  # Refresh the list
-                QMessageBox.information(self, "Success", f"Removed folder '{folder.display_name}'")
+                show_auto_close_message(
+                    self, "Success", f"Removed folder '{folder.display_name}'", 5000
+                )
             else:
                 QMessageBox.warning(self, "Error", "Failed to remove folder.")
 
@@ -306,13 +321,13 @@ class FilesTab(QWidget):
             self,
             "Edit Folder Name",
             "Enter new display name:",
-            text=folder.display_name
+            text=folder.display_name,
         )
 
         if ok and new_name.strip() and new_name.strip() != folder.display_name:
             if self.root_folder_manager.update_folder(folder_id, display_name=new_name.strip()):
                 self._load_folders()  # Refresh the list
-                QMessageBox.information(self, "Success", "Folder name updated.")
+                show_auto_close_message(self, "Success", "Folder name updated.", 5000)
             else:
                 QMessageBox.warning(self, "Error", "Failed to update folder name.")
 
@@ -333,26 +348,26 @@ class FilesTab(QWidget):
     def _show_context_menu(self, position: QPoint) -> None:
         """Show context menu for the folders list."""
         menu = QMenu(self)
-        
+
         # Add Root Folder action - always available
         add_action = menu.addAction("Add Root Folder")
         add_action.triggered.connect(self._add_folder)
-        
+
         # Get item at position
         item = self.folders_list.itemAt(position)
-        
+
         if item:
             # Add separator
             menu.addSeparator()
-            
+
             # Edit action for selected item
             edit_action = menu.addAction("Edit Folder Name")
             edit_action.triggered.connect(self._edit_folder)
-            
+
             # Remove action for selected item
             remove_action = menu.addAction("Remove Folder")
             remove_action.triggered.connect(self._remove_folder)
-        
+
         # Show menu at cursor position
         menu.exec(self.folders_list.mapToGlobal(position))
 
@@ -366,15 +381,21 @@ class FilesTab(QWidget):
 
         if invalid_count == 0:
             self.validation_status.setText(f"✓ All {valid_count} folders are accessible.")
-            QMessageBox.information(self, "Validation Complete", f"All {valid_count} folders are accessible.")
+            QMessageBox.information(
+                self,
+                "Validation Complete",
+                f"All {valid_count} folders are accessible.",
+            )
         else:
-            self.validation_status.setText(f"✗ {invalid_count} of {valid_count + invalid_count} folders have issues.")
+            self.validation_status.setText(
+                f"✗ {invalid_count} of {valid_count + invalid_count} folders have issues."
+            )
             invalid_list = "\n".join(f"• {path}" for path in results["invalid"])
             QMessageBox.warning(
                 self,
                 "Validation Issues",
                 f"The following folders are not accessible:\n\n{invalid_list}\n\n"
-                "Consider removing or fixing these folders."
+                "Consider removing or fixing these folders.",
             )
 
         # Refresh the list to update status indicators
@@ -392,7 +413,7 @@ class FilesTab(QWidget):
             f"Start '{operation_name}' operation?\n\n"
             "This may take some time depending on the number of models.",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply != QMessageBox.Yes:
@@ -415,7 +436,7 @@ class FilesTab(QWidget):
 
     def _cancel_maintenance(self) -> None:
         """Cancel the running maintenance operation."""
-        if hasattr(self, 'maintenance_worker') and self.maintenance_worker.isRunning():
+        if hasattr(self, "maintenance_worker") and self.maintenance_worker.isRunning():
             self.maintenance_worker.stop()
             self.maintenance_status.setText("Cancelling operation...")
 
@@ -452,4 +473,3 @@ class FilesTab(QWidget):
         self.operation_combo.setEnabled(True)
         self.maintenance_status.setText(f"Error: {error_message}")
         QMessageBox.critical(self, "Maintenance Error", error_message)
-

@@ -14,26 +14,23 @@ import os
 import time
 import threading
 import mmap
-import hashlib
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable, Iterator, Tuple, Union
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Callable, Tuple
+from dataclasses import dataclass
 from enum import Enum
 from concurrent.futures import ThreadPoolExecutor, Future
-from queue import Queue, Empty
-import weakref
+from queue import Queue
 
-from PySide6.QtCore import QObject, QThread, Signal, QTimer, QMutex
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QObject, Signal
 
 from .logging_config import get_logger, log_function_call
-from .memory_manager import get_memory_manager, memory_operation
+from .memory_manager import memory_operation
 
 logger = get_logger(__name__)
 
 
 class LoadingState(Enum):
     """File loading states."""
+
     PENDING = "pending"
     LOADING = "loading"
     PROGRESS = "progress"
@@ -44,6 +41,7 @@ class LoadingState(Enum):
 
 class LoadingPriority(Enum):
     """Loading priority levels."""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
@@ -52,15 +50,17 @@ class LoadingPriority(Enum):
 
 class HardwareCapability(Enum):
     """Hardware capability levels."""
-    MINIMAL = "minimal"      # 4GB RAM, 2-core CPU
-    STANDARD = "standard"    # 8GB RAM, 4-core CPU
-    HIGH = "high"           # 16GB RAM, 8-core CPU
-    EXTREME = "extreme"     # 32GB+ RAM, 16+ core CPU
+
+    MINIMAL = "minimal"  # 4GB RAM, 2-core CPU
+    STANDARD = "standard"  # 8GB RAM, 4-core CPU
+    HIGH = "high"  # 16GB RAM, 8-core CPU
+    EXTREME = "extreme"  # 32GB+ RAM, 16+ core CPU
 
 
 @dataclass
 class LoadingProgress:
     """Loading progress information."""
+
     file_path: str
     bytes_loaded: int
     total_bytes: int
@@ -76,6 +76,7 @@ class LoadingProgress:
 @dataclass
 class ChunkInfo:
     """File chunk information."""
+
     chunk_id: int
     start_offset: int
     end_offset: int
@@ -88,6 +89,7 @@ class ChunkInfo:
 @dataclass
 class LoadingConfig:
     """Loading configuration."""
+
     chunk_size_mb: int = 10
     max_concurrent_chunks: int = 4
     buffer_size_mb: int = 50
@@ -108,20 +110,20 @@ class HardwareDetector:
         """Detect system hardware capability level."""
         try:
             import psutil
-            
+
             # Get system memory
             memory_gb = psutil.virtual_memory().total / (1024**3)
-            
+
             # Get CPU count
             cpu_count = psutil.cpu_count()
-            
+
             # Get CPU frequency (if available)
             try:
                 cpu_freq = psutil.cpu_freq()
                 cpu_mhz = cpu_freq.max if cpu_freq else 2000
             except:
                 cpu_mhz = 2000  # Default assumption
-            
+
             # Determine capability level
             if memory_gb >= 32 and cpu_count >= 16 and cpu_mhz >= 3000:
                 return HardwareCapability.EXTREME
@@ -131,9 +133,9 @@ class HardwareDetector:
                 return HardwareCapability.STANDARD
             else:
                 return HardwareCapability.MINIMAL
-                
-        except Exception as e:
-            logger.warning(f"Hardware detection failed: {str(e)}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Hardware detection failed: %s", str(e))
             return HardwareCapability.STANDARD
 
     @staticmethod
@@ -145,35 +147,35 @@ class HardwareDetector:
                 max_concurrent_chunks=2,
                 buffer_size_mb=25,
                 max_memory_usage_mb=128,
-                use_memory_mapping=False
+                use_memory_mapping=False,
             ),
             HardwareCapability.STANDARD: LoadingConfig(
                 chunk_size_mb=10,
                 max_concurrent_chunks=4,
                 buffer_size_mb=50,
-                max_memory_usage_mb=256
+                max_memory_usage_mb=256,
             ),
             HardwareCapability.HIGH: LoadingConfig(
                 chunk_size_mb=20,
                 max_concurrent_chunks=8,
                 buffer_size_mb=100,
-                max_memory_usage_mb=512
+                max_memory_usage_mb=512,
             ),
             HardwareCapability.EXTREME: LoadingConfig(
                 chunk_size_mb=50,
                 max_concurrent_chunks=16,
                 buffer_size_mb=200,
-                max_memory_usage_mb=1024
-            )
+                max_memory_usage_mb=1024,
+            ),
         }
-        
+
         return configs.get(capability, configs[HardwareCapability.STANDARD])
 
 
 class FileChunker:
     """Efficient file chunking with multiple strategies."""
 
-    def __init__(self, config: LoadingConfig):
+    def __init__(self, config: LoadingConfig) -> None:
         """
         Initialize file chunker.
 
@@ -206,12 +208,12 @@ class FileChunker:
                 chunk_id=chunk_id,
                 start_offset=start_offset,
                 end_offset=end_offset,
-                size_bytes=chunk_size_bytes
+                size_bytes=chunk_size_bytes,
             )
             chunks.append(chunk)
             chunk_id += 1
 
-        logger.info(f"Created {len(chunks)} chunks for {file_path} ({file_size} bytes)")
+        logger.info("Created %s chunks for {file_path} ({file_size} bytes)", len(chunks))
         return chunks
 
     def read_chunk(self, file_path: str, chunk: ChunkInfo) -> bytes:
@@ -232,27 +234,27 @@ class FileChunker:
             else:
                 # Use regular file reading
                 return self._read_chunk_regular(file_path, chunk)
-        except Exception as e:
-            logger.error(f"Failed to read chunk {chunk.chunk_id}: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to read chunk %s: {str(e)}", chunk.chunk_id)
             raise
 
     def _read_chunk_regular(self, file_path: str, chunk: ChunkInfo) -> bytes:
         """Read chunk using regular file I/O."""
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             f.seek(chunk.start_offset)
             return f.read(chunk.size_bytes)
 
     def _read_chunk_mmap(self, file_path: str, chunk: ChunkInfo) -> bytes:
         """Read chunk using memory mapping."""
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
-                return mmapped_file[chunk.start_offset:chunk.end_offset]
+                return mmapped_file[chunk.start_offset : chunk.end_offset]
 
 
 class ProgressTracker:
     """Track loading progress with detailed metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize progress tracker."""
         self._progress_callbacks: List[Callable[[LoadingProgress], None]] = []
         self._current_progress: Optional[LoadingProgress] = None
@@ -272,7 +274,7 @@ class ProgressTracker:
                 total_chunks=0,
                 estimated_time_remaining=0.0,
                 current_speed_mbps=0.0,
-                state=LoadingState.PENDING
+                state=LoadingState.PENDING,
             )
 
     def update_progress(self, bytes_loaded: int, chunks_completed: int, total_chunks: int) -> None:
@@ -285,16 +287,20 @@ class ProgressTracker:
             progress.bytes_loaded = bytes_loaded
             progress.chunks_completed = chunks_completed
             progress.total_chunks = total_chunks
-            progress.percentage = (bytes_loaded / progress.total_bytes) * 100 if progress.total_bytes > 0 else 0
+            progress.percentage = (
+                (bytes_loaded / progress.total_bytes) * 100 if progress.total_bytes > 0 else 0
+            )
 
             # Calculate speed and ETA
             elapsed_time = time.time() - self._start_time
             if elapsed_time > 0:
                 progress.current_speed_mbps = (bytes_loaded / (1024 * 1024)) / elapsed_time
-                
+
                 if progress.current_speed_mbps > 0:
                     remaining_bytes = progress.total_bytes - bytes_loaded
-                    remaining_time_seconds = remaining_bytes / (progress.current_speed_mbps * 1024 * 1024)
+                    remaining_time_seconds = remaining_bytes / (
+                        progress.current_speed_mbps * 1024 * 1024
+                    )
                     progress.estimated_time_remaining = remaining_time_seconds
 
             # Notify callbacks
@@ -317,8 +323,8 @@ class ProgressTracker:
         for callback in self._progress_callbacks:
             try:
                 callback(progress)
-            except Exception as e:
-                logger.error(f"Progress callback failed: {str(e)}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Progress callback failed: %s", str(e))
 
     def get_current_progress(self) -> Optional[LoadingProgress]:
         """Get current progress."""
@@ -334,7 +340,7 @@ class LoadingWorker(QObject):
     loading_failed = Signal(str, str)  # file_path, error_message
     loading_cancelled = Signal(str)  # file_path
 
-    def __init__(self, worker_id: int, config: LoadingConfig):
+    def __init__(self, worker_id: int, config: LoadingConfig) -> None:
         """
         Initialize loading worker.
 
@@ -349,8 +355,10 @@ class LoadingWorker(QObject):
         self._cancelled = False
         self._current_task = None
 
-    def load_file_progressive(self, file_path: str, parser_func: Callable,
-                            progress_tracker: ProgressTracker) -> Any:
+    def load_file_progressive(
+        """TODO: Add docstring."""
+        self, file_path: str, parser_func: Callable, progress_tracker: ProgressTracker
+    ) -> Any:
         """
         Load file progressively.
 
@@ -365,7 +373,7 @@ class LoadingWorker(QObject):
         try:
             self._cancelled = False
             file_size = os.path.getsize(file_path)
-            
+
             # Start progress tracking
             progress_tracker.start_tracking(file_path, file_size)
             progress_tracker.set_state(LoadingState.LOADING)
@@ -397,8 +405,8 @@ class LoadingWorker(QObject):
                     bytes_loaded += chunk.size_bytes
                     progress_tracker.update_progress(bytes_loaded, i + 1, total_chunks)
 
-                except Exception as e:
-                    logger.error(f"Failed to process chunk {chunk.chunk_id}: {str(e)}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    logger.error("Failed to process chunk %s: {str(e)}", chunk.chunk_id)
                     chunk.error = str(e)
                     # Continue with other chunks
 
@@ -408,7 +416,7 @@ class LoadingWorker(QObject):
             progress_tracker.set_state(LoadingState.COMPLETED)
             return final_result
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to load file {file_path}: {str(e)}"
             logger.error(error_msg)
             progress_tracker.set_state(LoadingState.FAILED, error_msg)
@@ -436,7 +444,7 @@ class LoadingWorker(QObject):
 class ProgressiveLoader(QObject):
     """Main progressive loading manager."""
 
-    def __init__(self, max_workers: int = None):
+    def __init__(self, max_workers: int = None) -> None:
         """
         Initialize progressive loader.
 
@@ -444,11 +452,11 @@ class ProgressiveLoader(QObject):
             max_workers: Maximum number of worker threads
         """
         super().__init__()
-        
+
         # Detect hardware capabilities
         self.hardware_capability = HardwareDetector.detect_capability()
         self.config = HardwareDetector.get_optimal_config(self.hardware_capability)
-        
+
         # Override max_workers if specified
         if max_workers:
             self.config.max_concurrent_chunks = max_workers
@@ -461,12 +469,19 @@ class ProgressiveLoader(QObject):
         self._results_cache: Dict[str, Tuple[Any, float]] = {}  # (result, timestamp)
         self._lock = threading.Lock()
 
-        logger.info(f"Progressive loader initialized with {self.hardware_capability.value} capability")
+        logger.info(
+            f"Progressive loader initialized with {self.hardware_capability.value} capability"
+        )
 
     @log_function_call(logger)
-    def load_file(self, file_path: str, parser_func: Callable,
-                  progress_callback: Optional[Callable[[LoadingProgress], None]] = None,
-                  priority: LoadingPriority = LoadingPriority.NORMAL) -> Future:
+    def load_file(
+        """TODO: Add docstring."""
+        self,
+        file_path: str,
+        parser_func: Callable,
+        progress_callback: Optional[Callable[[LoadingProgress], None]] = None,
+        priority: LoadingPriority = LoadingPriority.NORMAL,
+    ) -> Future:
         """
         Load file progressively.
 
@@ -493,31 +508,32 @@ class ProgressiveLoader(QObject):
 
         # Create worker
         worker = LoadingWorker(len(self._active_loads), self.config)
-        
+
         with self._lock:
             self._active_loads[file_path] = worker
 
         # Submit to thread pool
-        future = self._executor.submit(
-            self._load_file_worker, file_path, parser_func, worker
-        )
+        future = self._executor.submit(self._load_file_worker, file_path, parser_func, worker)
 
         return future
 
-    def _load_file_worker(self, file_path: str, parser_func: Callable, worker: LoadingWorker) -> Any:
+    def _load_file_worker(
+        """TODO: Add docstring."""
+        self, file_path: str, parser_func: Callable, worker: LoadingWorker
+    ) -> Any:
         """Worker function for file loading."""
         try:
             with memory_operation(f"loading_{os.path.basename(file_path)}"):
                 result = worker.load_file_progressive(file_path, parser_func, self.progress_tracker)
-                
+
                 # Cache result if successful
                 if result and self.config.enable_caching:
                     self._cache_result(file_path, result)
-                
+
                 return result
-                
-        except Exception as e:
-            logger.error(f"File loading failed for {file_path}: {str(e)}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("File loading failed for %s: {str(e)}", file_path)
             raise
         finally:
             with self._lock:
@@ -538,7 +554,7 @@ class ProgressiveLoader(QObject):
             if worker:
                 worker.cancel()
                 self._active_loads.pop(file_path, None)
-                logger.info(f"Cancelled loading for {file_path}")
+                logger.info("Cancelled loading for %s", file_path)
                 return True
         return False
 
@@ -562,31 +578,31 @@ class ProgressiveLoader(QObject):
         try:
             current_time = time.time()
             self._results_cache[file_path] = (result, current_time)
-            
+
             # Clean old cache entries
             self._clean_cache()
-            
-        except Exception as e:
-            logger.warning(f"Failed to cache result for {file_path}: {str(e)}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to cache result for %s: {str(e)}", file_path)
 
     def _get_cached_result(self, file_path: str) -> Optional[Any]:
         """Get cached result if available and not expired."""
         try:
             if file_path not in self._results_cache:
                 return None
-            
+
             result, timestamp = self._results_cache[file_path]
-            
+
             # Check if cache entry is still valid
             if time.time() - timestamp > self.config.cache_ttl_seconds:
                 del self._results_cache[file_path]
                 return None
-            
-            logger.debug(f"Using cached result for {file_path}")
+
+            logger.debug("Using cached result for %s", file_path)
             return result
-            
-        except Exception as e:
-            logger.warning(f"Failed to get cached result for {file_path}: {str(e)}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to get cached result for %s: {str(e)}", file_path)
             return None
 
     def _clean_cache(self) -> None:
@@ -594,19 +610,19 @@ class ProgressiveLoader(QObject):
         try:
             current_time = time.time()
             expired_keys = []
-            
+
             for file_path, (result, timestamp) in self._results_cache.items():
                 if current_time - timestamp > self.config.cache_ttl_seconds:
                     expired_keys.append(file_path)
-            
+
             for key in expired_keys:
                 del self._results_cache[key]
-            
+
             if expired_keys:
-                logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
-                
-        except Exception as e:
-            logger.warning(f"Failed to clean cache: {str(e)}")
+                logger.debug("Cleaned %s expired cache entries", len(expired_keys))
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to clean cache: %s", str(e))
 
     def clear_cache(self) -> None:
         """Clear all cached results."""
@@ -618,15 +634,16 @@ class ProgressiveLoader(QObject):
         """Get cache statistics."""
         with self._lock:
             return {
-                'cached_entries': len(self._results_cache),
-                'cache_size_mb': sum(len(str(result)) for result, _ in self._results_cache.values()) / (1024 * 1024),
-                'hardware_capability': self.hardware_capability.value,
-                'config': {
-                    'chunk_size_mb': self.config.chunk_size_mb,
-                    'max_concurrent_chunks': self.config.max_concurrent_chunks,
-                    'buffer_size_mb': self.config.buffer_size_mb,
-                    'max_memory_usage_mb': self.config.max_memory_usage_mb
-                }
+                "cached_entries": len(self._results_cache),
+                "cache_size_mb": sum(len(str(result)) for result, _ in self._results_cache.values())
+                / (1024 * 1024),
+                "hardware_capability": self.hardware_capability.value,
+                "config": {
+                    "chunk_size_mb": self.config.chunk_size_mb,
+                    "max_concurrent_chunks": self.config.max_concurrent_chunks,
+                    "buffer_size_mb": self.config.buffer_size_mb,
+                    "max_memory_usage_mb": self.config.max_memory_usage_mb,
+                },
             }
 
     def shutdown(self) -> None:
@@ -636,14 +653,14 @@ class ProgressiveLoader(QObject):
             with self._lock:
                 for file_path in list(self._active_loads.keys()):
                     self.cancel_load(file_path)
-            
+
             # Shutdown executor
             self._executor.shutdown(wait=True)
-            
+
             logger.info("Progressive loader shutdown completed")
-            
-        except Exception as e:
-            logger.error(f"Error during progressive loader shutdown: {str(e)}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Error during progressive loader shutdown: %s", str(e))
 
 
 # Global progressive loader instance
@@ -658,8 +675,12 @@ def get_progressive_loader() -> ProgressiveLoader:
     return _progressive_loader
 
 
-def load_file_progressive(file_path: str, parser_func: Callable,
-                        progress_callback: Optional[Callable[[LoadingProgress], None]] = None) -> Future:
+def load_file_progressive(
+    """TODO: Add docstring."""
+    file_path: str,
+    parser_func: Callable,
+    progress_callback: Optional[Callable[[LoadingProgress], None]] = None,
+) -> Future:
     """
     Load file progressively with global loader.
 

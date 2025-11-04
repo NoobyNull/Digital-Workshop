@@ -8,4 +8,3 @@ Future enhancement: Phase 5 of theming system improvement.
 """
 
 # Placeholder for future qt-material integration
-

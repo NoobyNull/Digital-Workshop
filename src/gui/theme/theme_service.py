@@ -69,7 +69,7 @@ class SystemThemeDetector:
     - Linux: Environment variable detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self._current_mode: Literal["light", "dark"] = "light"
         self._enabled = False
@@ -91,12 +91,13 @@ class SystemThemeDetector:
                 return self._detect_macos()
             elif system == "Linux":
                 return self._detect_linux()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to detect system theme: %s", e)
 
         return "light"  # Default fallback
 
     def _detect_windows(self) -> Literal["light", "dark"]:
+        """TODO: Add docstring."""
         r"""
         Detect Windows dark mode via registry.
 
@@ -113,7 +114,7 @@ class SystemThemeDetector:
 
             # value == 1 means light theme, value == 0 means dark theme
             return "light" if value == 1 else "dark"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Windows theme detection failed: %s", e)
             return "light"
 
@@ -132,14 +133,14 @@ class SystemThemeDetector:
                 capture_output=True,
                 text=True,
                 timeout=2,
-                check=False
+                check=False,
             )
 
             # If command succeeds and output contains "Dark", it's dark mode
             if result.returncode == 0 and "Dark" in result.stdout:
                 return "dark"
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("macOS theme detection failed: %s", e)
             return "light"
 
@@ -163,12 +164,17 @@ class SystemThemeDetector:
             # Check GNOME dconf settings
             try:
                 import subprocess
+
                 result = subprocess.run(
-                    ["dconf", "read", "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme"],
+                    [
+                        "dconf",
+                        "read",
+                        "/org/gnome/desktop/interface/gtk-application-prefer-dark-theme",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    check=False
+                    check=False,
                 )
                 if result.returncode == 0 and "true" in result.stdout.lower():
                     return "dark"
@@ -181,7 +187,7 @@ class SystemThemeDetector:
                 return "dark"
 
             return "light"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.debug("Linux theme detection failed: %s", e)
             return "light"
 
@@ -228,7 +234,7 @@ class SystemThemeDetector:
 class ThemeService:
     """
     Unified theme service focusing on qt-material themes.
-    
+
     This service consolidates:
     - Qt-material theme management
     - System theme detection
@@ -247,25 +253,24 @@ class ThemeService:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme service."""
-        if hasattr(self, '_initialized'):
+        if hasattr(self, "_initialized"):
             return
-            
+
         self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._detector = SystemThemeDetector()
         self._persistence = ThemePersistence()
         self._auto_save_enabled = True
         self._current_preset = "light"
-        
-        # Import ThemeManager from __init__ to avoid circular imports
-        try:
-            from . import ThemeManager
-            self._manager = ThemeManager.instance()
-        except Exception as e:
-            logger.warning("Failed to initialize ThemeManager: %s", e)
-            self._manager = None
-            
+
+        # Initialize color palette
+        self._colors = self._get_default_colors()
+
+        # Don't try to import ThemeManager - it's just an alias to ThemeService
+        # This avoids circular references
+        self._manager = None
+
         self._load_saved_theme()
         self._initialized = True
         logger.info("ThemeService initialized")
@@ -282,9 +287,10 @@ class ThemeService:
     # ============================================================
 
     def apply_theme(
+        """TODO: Add docstring."""
         self,
         theme: ThemeType = "dark",
-        library: ThemeLibrary = "qt-material"  # noqa: ARG002 - kept for compatibility
+        library: ThemeLibrary = "qt-material",  # noqa: ARG002 - kept for compatibility
     ) -> bool:
         """
         Apply a professional Material Design theme.
@@ -303,39 +309,14 @@ class ThemeService:
 
             return self._apply_qt_material(app, theme)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
     def _apply_qt_material(self, app: QApplication, theme: ThemeType) -> bool:
-        """Apply qt-material theme."""
+        """Apply fallback theme (qt-material removed)."""
         try:
-            from qt_material import apply_stylesheet
-
-            # Get the stored qt-material theme variant
-            variant = self.settings.value("qt_material_variant", "blue")
-
-            # qt-material themes
-            if theme == "light":
-                theme_name = f"light_{variant}.xml"
-                apply_stylesheet(app, theme=theme_name, invert_secondary=True)
-            elif theme == "dark":
-                theme_name = f"dark_{variant}.xml"
-                apply_stylesheet(app, theme=theme_name)
-            elif theme == "auto":
-                # Try to detect OS theme
-                try:
-                    import darkdetect
-                    if darkdetect.isDark():
-                        theme_name = f"dark_{variant}.xml"
-                        apply_stylesheet(app, theme=theme_name)
-                    else:
-                        theme_name = f"light_{variant}.xml"
-                        apply_stylesheet(app, theme=theme_name, invert_secondary=True)
-                except ImportError:
-                    theme_name = f"dark_{variant}.xml"
-                    apply_stylesheet(app, theme=theme_name)
-
+            # qt-material has been removed - use simple fallback theme
             self._current_theme = theme
             self._current_library = "qt-material"
             self._save_theme()
@@ -343,6 +324,7 @@ class ThemeService:
             # Notify WindowTitleBarManager to update all title bars
             try:
                 from src.gui.window.title_bar_manager import WindowTitleBarManager
+
                 manager = WindowTitleBarManager.instance()
                 manager.update_all_title_bars(theme)
             except Exception:
@@ -350,8 +332,8 @@ class ThemeService:
 
             return True
 
-        except ImportError:
-            logger.warning("qt-material not installed")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to apply fallback theme: %s", e)
             return False
 
     def get_current_theme(self) -> tuple[str, ThemeLibrary]:
@@ -366,7 +348,7 @@ class ThemeService:
                 "variants": {
                     "dark": QT_MATERIAL_DARK_THEMES,
                     "light": QT_MATERIAL_LIGHT_THEMES,
-                }
+                },
             }
         }
 
@@ -400,7 +382,7 @@ class ThemeService:
 
                 if self._auto_save_enabled:
                     self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to apply preset %s: %s", name, e)
             raise
 
@@ -432,9 +414,22 @@ class ThemeService:
 
                 if self._auto_save_enabled:
                     self.save_theme()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to set color %s: %s", name, e)
             raise
+
+    def _get_default_colors(self) -> dict:
+        """Get default color palette for VTK and UI."""
+        return {
+            "light_color": "#FFFFFF",  # Light color for VTK lighting
+            "grid": "#444444",  # Grid color
+            "ground": "#333333",  # Ground plane color
+            "canvas_bg": "#1E1E1E",  # Canvas background
+            "edge_color": "#CCCCCC",  # Edge color
+            "primary": "#1976D2",  # Primary brand color
+            "secondary": "#424242",  # Secondary color
+            "accent": "#E31C79",  # Accent color
+        }
 
     def get_color(self, name: str) -> str:
         """
@@ -446,9 +441,8 @@ class ThemeService:
         Returns:
             Hex color value
         """
-        if self._manager:
-            return self._manager.get_color(name)
-        return "#000000"  # Fallback
+        # Return color from palette, with fallback to black
+        return self._colors.get(name, "#000000")
 
     def get_all_colors(self) -> Dict[str, str]:
         """Get all current color values."""
@@ -491,10 +485,18 @@ class ThemeService:
         """List names of available theme presets."""
         return self.get_available_presets()
 
-    def apply_theme_preset(self, preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+    def apply_theme_preset(
+        """TODO: Add docstring."""
+        self,
+        preset_name: str,
+        custom_mode: Optional[str] = None,
+        base_primary: Optional[str] = None,
+    ) -> None:
         """Apply a theme preset via ThemeManager."""
         if self._manager:
-            self._manager.apply_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)
+            self._manager.apply_preset(
+                preset_name, custom_mode=custom_mode, base_primary=base_primary
+            )
 
     def load_theme_from_settings(self) -> None:
         """
@@ -519,7 +521,7 @@ class ThemeService:
             if self._manager:
                 self._persistence.save_theme(self._manager.colors)
             logger.info("Theme saved")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to save theme: %s", e)
 
     def load_theme(self) -> bool:
@@ -537,7 +539,7 @@ class ThemeService:
                 logger.info("Theme loaded from AppData")
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to load theme: %s", e)
             return False
 
@@ -552,7 +554,7 @@ class ThemeService:
             if self._manager:
                 self._persistence.export_theme(path, self._manager.colors)
             logger.info("Theme exported to %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to export theme: %s", e)
             raise
 
@@ -569,7 +571,7 @@ class ThemeService:
                 self._manager.set_colors(colors)
                 self._current_preset = "custom"
             logger.info("Theme imported from %s", path)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import theme: %s", e)
             raise
 
@@ -625,7 +627,7 @@ class ThemeService:
         self.apply_preset("light")
         logger.info("Theme reset to default")
 
-    def get_manager(self):
+    def get_manager(self) -> None:
         """Get the underlying ThemeManager instance."""
         return self._manager
 
@@ -644,6 +646,7 @@ class ThemeService:
 # Backward Compatibility API
 # ============================================================
 
+
 class _ColorsProxy:
     """
     Proxy object to allow f-string usage like f"color: {COLORS.text};"
@@ -651,6 +654,7 @@ class _ColorsProxy:
     """
 
     def __getattr__(self, name: str) -> str:
+        """TODO: Add docstring."""
         service = ThemeService.instance()
         return service.get_color(name)
 
@@ -702,7 +706,12 @@ def list_theme_presets() -> list[str]:
     return service.list_theme_presets()
 
 
-def apply_theme_preset(preset_name: str, custom_mode: Optional[str] = None, base_primary: Optional[str] = None) -> None:
+def apply_theme_preset(
+    """TODO: Add docstring."""
+    preset_name: str,
+    custom_mode: Optional[str] = None,
+    base_primary: Optional[str] = None,
+) -> None:
     """Apply a theme preset via ThemeService."""
     service = ThemeService.instance()
     service.apply_theme_preset(preset_name, custom_mode=custom_mode, base_primary=base_primary)

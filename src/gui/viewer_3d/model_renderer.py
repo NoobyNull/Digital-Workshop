@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 class RenderMode(Enum):
     """Rendering modes for the 3D viewer."""
+
     SOLID = "solid"
     WIREFRAME = "wireframe"
     POINTS = "points"
@@ -28,7 +29,7 @@ class RenderMode(Enum):
 class ModelRenderer:
     """Handles model rendering and geometry creation."""
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """
         Initialize model renderer.
 
@@ -60,7 +61,7 @@ class ModelRenderer:
         Returns:
             vtk.vtkPolyData with the model geometry
         """
-        logger.info(f"Creating VTK polydata for {len(model.triangles)} triangles")
+        logger.info("Creating VTK polydata for %s triangles", len(model.triangles))
         self._emit_progress(0.0, "Creating VTK polydata...")
 
         # Create points
@@ -132,8 +133,6 @@ class ModelRenderer:
             if not hasattr(model, "is_array_based") or not model.is_array_based():
                 return self.create_vtk_polydata(model)  # type: ignore[arg-type]
 
-            import numpy as _np
-
             vertex_array = model.vertex_array  # type: ignore[assignment]
             normal_array = model.normal_array  # type: ignore[assignment]
 
@@ -184,8 +183,8 @@ class ModelRenderer:
 
             return polydata
 
-        except Exception as e:
-            logger.error(f"Failed to create polydata from arrays: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to create polydata from arrays: %s", e, exc_info=True)
             raise
 
     def _generate_uv_coordinates(self, polydata: vtk.vtkPolyData) -> None:
@@ -204,7 +203,7 @@ class ModelRenderer:
                 return
 
             num_points = points.GetNumberOfPoints()
-            logger.debug(f"Generating UV coordinates for {num_points} points")
+            logger.debug("Generating UV coordinates for %s points", num_points)
 
             # Find bounds
             bounds = polydata.GetBounds()
@@ -233,10 +232,10 @@ class ModelRenderer:
 
             # Add to polydata
             polydata.GetPointData().SetTCoords(uv_vtk)
-            logger.debug(f"Generated {num_points} UV coordinates")
+            logger.debug("Generated %s UV coordinates", num_points)
 
-        except Exception as e:
-            logger.error(f"Failed to generate UV coordinates: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to generate UV coordinates: %s", e, exc_info=True)
 
     def set_render_mode(self, mode: RenderMode) -> None:
         """
@@ -262,7 +261,7 @@ class ModelRenderer:
         elif self.render_mode == RenderMode.POINTS:
             prop.SetRepresentationToPoints()
 
-        logger.debug(f"Render mode set to {self.render_mode.value}")
+        logger.debug("Render mode set to %s", self.render_mode.value)
 
     def load_model(self, polydata: vtk.vtkPolyData) -> None:
         """
@@ -286,11 +285,11 @@ class ModelRenderer:
         # Set material properties for proper lighting
         prop = self.actor.GetProperty()
         prop.SetColor(0.8, 0.8, 0.8)
-        prop.SetAmbient(0.3)      # Ambient lighting
-        prop.SetDiffuse(0.7)      # Diffuse lighting
-        prop.SetSpecular(0.4)     # Specular highlights
-        prop.SetSpecularPower(20) # Shininess
-        prop.LightingOn()         # Enable lighting calculations
+        prop.SetAmbient(0.3)  # Ambient lighting
+        prop.SetDiffuse(0.7)  # Diffuse lighting
+        prop.SetSpecular(0.4)  # Specular highlights
+        prop.SetSpecularPower(20)  # Shininess
+        prop.LightingOn()  # Enable lighting calculations
 
         # Apply render mode
         self._apply_render_mode()
@@ -314,25 +313,25 @@ class ModelRenderer:
     def apply_material(self, material_name: str, material_manager) -> bool:
         """
         Apply material to the current actor using the material manager.
-        
+
         Args:
             material_name: Name of the material to apply
             material_manager: MaterialManager instance
-            
+
         Returns:
             True if material was applied successfully
         """
         if not self.actor:
             logger.warning("No actor available for material application")
             return False
-            
+
         try:
             logger.info(f"Applying material '{material_name}' to actor")
             success = material_manager.apply_material_to_actor(self.actor, material_name)
-            
+
             if success:
                 logger.info(f"Material '{material_name}' applied successfully")
-                
+
                 # CRITICAL FIX: Force mapper update and re-render to ensure texture is visible
                 # This is the same fix applied to screenshot generator for consistent behavior
                 mapper = self.actor.GetMapper()
@@ -342,39 +341,39 @@ class ModelRenderer:
                     if input_data:
                         mapper.SetInputData(input_data)
                         logger.debug("Mapper updated with latest data")
-                
+
                 # Force a render update
-                if hasattr(self.renderer, 'GetRenderWindow'):
+                if hasattr(self.renderer, "GetRenderWindow"):
                     self.renderer.GetRenderWindow().Render()
                     logger.debug("Forced render update after material application")
             else:
                 logger.warning(f"Failed to apply material '{material_name}'")
-                
+
             return success
-            
-        except Exception as e:
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
             return False
 
     def apply_default_material(self, material_manager) -> bool:
         """
         Apply the default material from preferences.
-        
+
         Args:
             material_manager: MaterialManager instance
-            
+
         Returns:
             True if default material was applied successfully
         """
         try:
             from PySide6.QtCore import QSettings
-            settings = QSettings()
-            default_material = settings.value('thumbnail/material', 'maple', type=str)
-            
-            logger.info(f"Applying default material: {default_material}")
-            return self.apply_material(default_material, material_manager)
-            
-        except Exception as e:
-            logger.error(f"Failed to apply default material: {e}", exc_info=True)
-            return False
 
+            settings = QSettings()
+            default_material = settings.value("thumbnail/material", "maple", type=str)
+
+            logger.info("Applying default material: %s", default_material)
+            return self.apply_material(default_material, material_manager)
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to apply default material: %s", e, exc_info=True)
+            return False

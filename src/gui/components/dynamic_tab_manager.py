@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class TabNameConfig:
     """Configuration for a tab with long and short names."""
 
-    def __init__(self, long_name: str, short_name: str):
+    def __init__(self, long_name: str, short_name: str) -> None:
         """
         Initialize tab name configuration.
 
@@ -49,7 +49,7 @@ class DynamicTabManager:
     # Minimum width to show long names
     MIN_WIDTH_FOR_LONG_NAMES = 800
 
-    def __init__(self, tab_widget: QTabWidget):
+    def __init__(self, tab_widget: QTabWidget) -> None:
         """
         Initialize dynamic tab manager.
 
@@ -128,24 +128,21 @@ class DynamicTabManager:
                 try:
                     # Determine if we should use short name
                     should_use_short = (
-                        available_width < 100
-                        or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
+                        available_width < 100 or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
                     )
 
-                    new_name = (
-                        config.short_name if should_use_short else config.long_name
-                    )
+                    new_name = config.short_name if should_use_short else config.long_name
 
                     # Only update if name changed
                     if new_name != config.current_name:
                         self.tab_widget.setTabText(index, new_name)
                         config.current_name = new_name
                         self.logger.debug(f"Tab {index}: '{config.current_name}'")
-                except Exception as e:
-                    self.logger.debug(f"Error updating tab {index}: {e}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.debug("Error updating tab %s: {e}", index)
 
-        except Exception as e:
-            self.logger.debug(f"Error updating tab names: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Error updating tab names: %s", e)
 
     def force_update(self) -> None:
         """Force immediate update of tab names."""

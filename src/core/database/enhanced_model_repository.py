@@ -19,12 +19,12 @@ logger = get_logger(__name__)
 class EnhancedModelRepository(IModelRepository):
     """
     Enhanced repository for model data access operations.
-    
+
     Fully implements IModelRepository interface with improved performance,
     transaction management, and comprehensive error handling.
     """
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize enhanced model repository.
 
@@ -48,37 +48,40 @@ class EnhancedModelRepository(IModelRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Validate required fields
-                required_fields = ['filename', 'format', 'file_path']
+                required_fields = ["filename", "format", "file_path"]
                 for field in required_fields:
                     if field not in model_data:
                         raise ValueError(f"Required field '{field}' missing from model_data")
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     INSERT INTO models (filename, format, file_path, file_size, file_hash, 
                                       thumbnail_path, last_modified)
                     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """, (
-                    model_data['filename'],
-                    model_data['format'],
-                    model_data['file_path'],
-                    model_data.get('file_size'),
-                    model_data.get('file_hash'),
-                    model_data.get('thumbnail_path')
-                ))
+                """,
+                    (
+                        model_data["filename"],
+                        model_data["format"],
+                        model_data["file_path"],
+                        model_data.get("file_size"),
+                        model_data.get("file_hash"),
+                        model_data.get("thumbnail_path"),
+                    ),
+                )
 
                 model_id = str(cursor.lastrowid)
                 conn.commit()
 
-                logger.info(f"Created model with ID: {model_id}")
+                logger.info("Created model with ID: %s", model_id)
                 return model_id
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to create model: {str(e)}")
+            logger.error("Failed to create model: %s", str(e))
             return None
         except ValueError as e:
-            logger.error(f"Invalid model data: {str(e)}")
+            logger.error("Invalid model data: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -96,22 +99,25 @@ class EnhancedModelRepository(IModelRepository):
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.id = ?
-                """, (model_id,))
-                
+                """,
+                    (model_id,),
+                )
+
                 row = cursor.fetchone()
                 if row:
                     return dict(row)
                 return None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to read model {model_id}: {str(e)}")
+            logger.error("Failed to read model %s: {str(e)}", model_id)
             return None
 
     @log_function_call(logger)
@@ -129,39 +135,48 @@ class EnhancedModelRepository(IModelRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Filter valid fields
-                valid_fields = {'filename', 'format', 'file_path', 'file_size', 
-                              'file_hash', 'thumbnail_path'}
+                valid_fields = {
+                    "filename",
+                    "format",
+                    "file_path",
+                    "file_size",
+                    "file_hash",
+                    "thumbnail_path",
+                }
                 updates = {k: v for k, v in model_data.items() if k in valid_fields}
-                
+
                 if not updates:
                     logger.warning("No valid fields provided for model update")
                     return False
-                
+
                 # Build update query
                 set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
                 values = list(updates.values())
                 values.extend([model_id])
-                
-                cursor.execute(f"""
+
+                cursor.execute(
+                    f"""
                     UPDATE models
                     SET {set_clause}, last_modified = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, values)
-                
+                """,
+                    values,
+                )
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
-                    logger.info(f"Updated model {model_id}")
+                    logger.info("Updated model %s", model_id)
                 else:
-                    logger.warning(f"Model {model_id} not found for update")
-                
+                    logger.warning("Model %s not found for update", model_id)
+
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to update model {model_id}: {str(e)}")
+            logger.error("Failed to update model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -178,25 +193,25 @@ class EnhancedModelRepository(IModelRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Delete related metadata first (due to foreign key constraints)
                 cursor.execute("DELETE FROM model_metadata WHERE model_id = ?", (model_id,))
-                
+
                 # Delete the model
                 cursor.execute("DELETE FROM models WHERE id = ?", (model_id,))
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
-                    logger.info(f"Deleted model {model_id}")
+                    logger.info("Deleted model %s", model_id)
                 else:
-                    logger.warning(f"Model {model_id} not found for deletion")
-                
+                    logger.warning("Model %s not found for deletion", model_id)
+
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete model {model_id}: {str(e)}")
+            logger.error("Failed to delete model %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -211,23 +226,25 @@ class EnhancedModelRepository(IModelRepository):
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     ORDER BY m.date_added DESC
-                """)
-                
+                """
+                )
+
                 rows = cursor.fetchall()
                 models = [dict(row) for row in rows]
-                
-                logger.debug(f"Retrieved {len(models)} models")
+
+                logger.debug("Retrieved %s models", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to list all models: {str(e)}")
+            logger.error("Failed to list all models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -244,7 +261,7 @@ class EnhancedModelRepository(IModelRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 sql = """
                     SELECT DISTINCT m.id
                     FROM models m
@@ -252,47 +269,47 @@ class EnhancedModelRepository(IModelRepository):
                     WHERE 1=1
                 """
                 params = []
-                
+
                 # Handle different search criteria
-                if 'filename' in criteria:
+                if "filename" in criteria:
                     sql += " AND m.filename LIKE ?"
                     params.append(f"%{criteria['filename']}%")
-                
-                if 'format' in criteria:
+
+                if "format" in criteria:
                     sql += " AND m.format = ?"
-                    params.append(criteria['format'])
-                
-                if 'category' in criteria:
+                    params.append(criteria["format"])
+
+                if "category" in criteria:
                     sql += " AND mm.category = ?"
-                    params.append(criteria['category'])
-                
-                if 'title' in criteria:
+                    params.append(criteria["category"])
+
+                if "title" in criteria:
                     sql += " AND mm.title LIKE ?"
                     params.append(f"%{criteria['title']}%")
-                
-                if 'keywords' in criteria:
+
+                if "keywords" in criteria:
                     sql += " AND mm.keywords LIKE ?"
                     params.append(f"%{criteria['keywords']}%")
-                
-                if 'min_file_size' in criteria:
+
+                if "min_file_size" in criteria:
                     sql += " AND m.file_size >= ?"
-                    params.append(criteria['min_file_size'])
-                
-                if 'max_file_size' in criteria:
+                    params.append(criteria["min_file_size"])
+
+                if "max_file_size" in criteria:
                     sql += " AND m.file_size <= ?"
-                    params.append(criteria['max_file_size'])
-                
+                    params.append(criteria["max_file_size"])
+
                 sql += " ORDER BY m.date_added DESC"
-                
+
                 cursor.execute(sql, params)
                 rows = cursor.fetchall()
-                
+
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Search returned {len(model_ids)} results for criteria: {criteria}")
+                logger.debug("Search returned %s results for criteria: {criteria}", len(model_ids))
                 return model_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search models: {str(e)}")
+            logger.error("Failed to search models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -314,7 +331,7 @@ class EnhancedModelRepository(IModelRepository):
                 return count > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to check model existence {model_id}: {str(e)}")
+            logger.error("Failed to check model existence %s: {str(e)}", model_id)
             return False
 
     @log_function_call(logger)
@@ -333,11 +350,11 @@ class EnhancedModelRepository(IModelRepository):
                 return count
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get model count: {str(e)}")
+            logger.error("Failed to get model count: %s", str(e))
             return 0
 
     # Additional enhanced methods for better performance and functionality
-    
+
     @log_function_call(logger)
     def get_models_paginated(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         """
@@ -354,24 +371,27 @@ class EnhancedModelRepository(IModelRepository):
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     ORDER BY m.date_added DESC
                     LIMIT ? OFFSET ?
-                """, (limit, offset))
-                
+                """,
+                    (limit, offset),
+                )
+
                 rows = cursor.fetchall()
                 models = [dict(row) for row in rows]
-                
-                logger.debug(f"Retrieved {len(models)} models (limit: {limit}, offset: {offset})")
+
+                logger.debug("Retrieved %s models (limit: {limit}, offset: {offset})", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get paginated models: {str(e)}")
+            logger.error("Failed to get paginated models: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -389,20 +409,23 @@ class EnhancedModelRepository(IModelRepository):
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.file_hash = ?
-                """, (file_hash,))
-                
+                """,
+                    (file_hash,),
+                )
+
                 row = cursor.fetchone()
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to find model by hash: {str(e)}")
+            logger.error("Failed to find model by hash: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -420,32 +443,35 @@ class EnhancedModelRepository(IModelRepository):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 for model_data in models_data:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO models (filename, format, file_path, file_size, file_hash, 
                                           thumbnail_path, last_modified)
                         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    """, (
-                        model_data['filename'],
-                        model_data['format'],
-                        model_data['file_path'],
-                        model_data.get('file_size'),
-                        model_data.get('file_hash'),
-                        model_data.get('thumbnail_path')
-                    ))
+                    """,
+                        (
+                            model_data["filename"],
+                            model_data["format"],
+                            model_data["file_path"],
+                            model_data.get("file_size"),
+                            model_data.get("file_hash"),
+                            model_data.get("thumbnail_path"),
+                        ),
+                    )
                     created_ids.append(str(cursor.lastrowid))
-                
+
                 conn.commit()
-                logger.info(f"Bulk created {len(created_ids)} models")
+                logger.info("Bulk created %s models", len(created_ids))
                 return created_ids
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to bulk create models: {str(e)}")
+            logger.error("Failed to bulk create models: %s", str(e))
             return []
 
     @contextmanager
-    def transaction(self):
+    def transaction(self) -> None:
         """
         Context manager for database transactions.
 

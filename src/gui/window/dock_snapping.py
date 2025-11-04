@@ -17,8 +17,6 @@ from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QFrame, QSizePolicy
 from PySide6.QtGui import QCursor
 
-from src.gui.theme import hex_to_rgb
-
 
 class SnapOverlayLayer(QWidget):
     """
@@ -28,7 +26,7 @@ class SnapOverlayLayer(QWidget):
     to when dragging them around the main window.
     """
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize the snap overlay layer.
 
@@ -110,7 +108,14 @@ class DockDragHandler(QObject):
 
     SNAP_MARGIN = 56  # px
 
-    def __init__(self, main_window: QMainWindow, dock: QDockWidget, overlay: SnapOverlayLayer, logger: logging.Logger):
+    def __init__(
+        """TODO: Add docstring."""
+        self,
+        main_window: QMainWindow,
+        dock: QDockWidget,
+        overlay: SnapOverlayLayer,
+        logger: logging.Logger,
+    ):
         """
         Initialize the dock drag handler.
 
@@ -178,9 +183,9 @@ class DockDragHandler(QObject):
 
             # Perform snap
             self._mw._snap_dock_to_edge(self._dock, edge)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
-                self._logger.warning(f"Snap finalize failed: {e}")
+                self._logger.warning("Snap finalize failed: %s", e)
             except Exception:
                 pass
 
@@ -196,13 +201,13 @@ class DockDragHandler(QObject):
                 self._mw.updateGeometry()
 
                 # If the central widget is a splitter or tab widget, ensure it resizes
-                if hasattr(central_widget, 'setSizePolicy'):
+                if hasattr(central_widget, "setSizePolicy"):
                     central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
                 self._logger.debug("Central widget resize ensured for right dock movement")
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
-                self._logger.debug(f"Failed to ensure central widget resize: {e}")
+                self._logger.debug("Failed to ensure central widget resize: %s", e)
             except Exception:
                 pass
 
@@ -213,7 +218,9 @@ class DockDragHandler(QObject):
         rect = self._mw.frameGeometry()
         if not rect.contains(pos):
             # Allow a small outside tolerance
-            grown = rect.adjusted(-self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN)
+            grown = rect.adjusted(
+                -self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN
+            )
             if not grown.contains(pos):
                 return None
         # distances
@@ -234,7 +241,10 @@ class DockDragHandler(QObject):
 
 
 # Convenience function for easy dock snapping setup
-def setup_dock_snapping(main_window: QMainWindow, logger: logging.Logger) -> tuple[SnapOverlayLayer, Dict[str, DockDragHandler]]:
+def setup_dock_snapping(
+    """TODO: Add docstring."""
+    main_window: QMainWindow, logger: logging.Logger
+) -> tuple[SnapOverlayLayer, Dict[str, DockDragHandler]]:
     """
     Convenience function to set up dock snapping for a main window.
 

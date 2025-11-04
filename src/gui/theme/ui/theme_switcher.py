@@ -26,7 +26,7 @@ class ThemeSwitcher(QComboBox):
 
     theme_changed = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the theme switcher.
 
@@ -78,7 +78,7 @@ class ThemeSwitcher(QComboBox):
             try:
                 self.service.apply_preset(preset_name)
                 self.theme_changed.emit(preset_name)
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # Revert to previous selection on error
                 current = self.service.get_current_preset()
                 index = self.findData(current)

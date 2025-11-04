@@ -17,7 +17,7 @@ class SimpleThemeSwitcher(QWidget):
 
     theme_changed = Signal(str)  # Emitted when theme changes
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize theme switcher.
 
@@ -101,5 +101,5 @@ class SimpleThemeSwitcher(QWidget):
 
             dialog = QtMaterialColorPicker(self)
             dialog.exec()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error opening color picker: {e}")

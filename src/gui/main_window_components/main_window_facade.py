@@ -4,9 +4,7 @@ Main window facade for modular component integration.
 Integrates layout, settings, dock, and event management components.
 """
 
-from typing import Optional
-
-from PySide6.QtWidgets import QMainWindow, QWidget
+from PySide6.QtWidgets import QMainWindow
 
 from src.core.logging_config import get_logger
 
@@ -22,7 +20,7 @@ logger = get_logger(__name__)
 class MainWindowFacade:
     """Facade for integrating main window components."""
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize the facade.
 
@@ -83,4 +81,3 @@ class MainWindowFacade:
         logger.info("Cleaning up main window components")
         self.save_layout()
         self.save_settings()
-

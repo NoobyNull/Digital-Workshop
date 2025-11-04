@@ -16,26 +16,29 @@ Key Features:
 import re
 import time
 import gc
-import os
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from src.parsers.refactored_base_parser import RefactoredBaseParser, StreamingProgressCallback
-from src.core.interfaces.parser_interfaces import ModelFormat, ParseError, FileNotSupportedError
+from src.parsers.refactored_base_parser import (
+    RefactoredBaseParser,
+    StreamingProgressCallback,
+)
+from src.core.interfaces.parser_interfaces import (
+    ModelFormat,
+    ParseError,
+)
 from src.core.logging_config import get_logger
 
 
 class STEPParseError(ParseError):
     """Custom exception for STEP parsing errors."""
-    pass
 
 
 @dataclass
 class STEPEntity:
     """STEP entity representation."""
+
     id: int
     type: str
     parameters: List[Union[str, int, float, Tuple, List]]
@@ -44,6 +47,7 @@ class STEPEntity:
 @dataclass
 class STEPCartesianPoint:
     """STEP cartesian point entity."""
+
     id: int
     coordinates: Tuple[float, float, float]
 
@@ -51,6 +55,7 @@ class STEPCartesianPoint:
 @dataclass
 class STEPDirection:
     """STEP direction entity."""
+
     id: int
     direction_ratios: Tuple[float, float, float]
 
@@ -58,6 +63,7 @@ class STEPDirection:
 @dataclass
 class STEPVector:
     """STEP vector entity."""
+
     id: int
     orientation: int  # Reference to direction entity
     magnitude: float
@@ -66,6 +72,7 @@ class STEPVector:
 @dataclass
 class STEPAxis2Placement3D:
     """STEP axis placement 3D entity."""
+
     id: int
     location: int  # Reference to cartesian point
     axis: Optional[int]  # Reference to direction entity
@@ -75,6 +82,7 @@ class STEPAxis2Placement3D:
 @dataclass
 class STEPAdvancedFace:
     """STEP advanced face entity."""
+
     id: int
     surface_geometry: int  # Reference to surface entity
     same_sense: bool
@@ -84,6 +92,7 @@ class STEPAdvancedFace:
 @dataclass
 class STEPFaceBound:
     """STEP face bound entity."""
+
     id: int
     bound: int  # Reference to edge loop entity
     orientation: bool
@@ -92,6 +101,7 @@ class STEPFaceBound:
 @dataclass
 class STEPEdgeLoop:
     """STEP edge loop entity."""
+
     id: int
     edge_list: List[int]  # References to oriented edge entities
 
@@ -99,6 +109,7 @@ class STEPEdgeLoop:
 @dataclass
 class STEPOrientedEdge:
     """STEP oriented edge entity."""
+
     id: int
     edge_element: int  # Reference to edge curve entity
     orientation: bool
@@ -107,6 +118,7 @@ class STEPOrientedEdge:
 @dataclass
 class STEPEdgeCurve:
     """STEP edge curve entity."""
+
     id: int
     edge_start: int  # Reference to vertex point entity
     edge_end: int  # Reference to vertex point entity
@@ -117,6 +129,7 @@ class STEPEdgeCurve:
 @dataclass
 class STEPVertexPoint:
     """STEP vertex point entity."""
+
     id: int
     vertex_geometry: int  # Reference to cartesian point entity
 
@@ -124,7 +137,7 @@ class STEPVertexPoint:
 class RefactoredSTEPParser(RefactoredBaseParser):
     """
     Refactored STEP parser implementing IParser interface with enhanced features.
-    
+
     Features:
     - Supports STEP/ISO 10303 format
     - Streaming support for large files
@@ -133,12 +146,9 @@ class RefactoredSTEPParser(RefactoredBaseParser):
     - Comprehensive error handling and logging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the refactored STEP parser."""
-        super().__init__(
-            parser_name="STEP",
-            supported_formats=[ModelFormat.STEP]
-        )
+        super().__init__(parser_name="STEP", supported_formats=[ModelFormat.STEP])
         self.logger = get_logger(self.__class__.__name__)
         self.entities: Dict[int, STEPEntity] = {}
         self.cartesian_points: Dict[int, STEPCartesianPoint] = {}
@@ -152,7 +162,12 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         self.edge_curves: Dict[int, STEPEdgeCurve] = {}
         self.vertex_points: Dict[int, STEPVertexPoint] = {}
 
-    def _parse_file_internal(self, file_path: Path, progress_callback: Optional[StreamingProgressCallback] = None) -> Dict[str, Any]:
+    def _parse_file_internal(
+        """TODO: Add docstring."""
+        self,
+        file_path: Path,
+        progress_callback: Optional[StreamingProgressCallback] = None,
+    ) -> Dict[str, Any]:
         """
         Internal method to parse a STEP file.
 
@@ -167,7 +182,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             STEPParseError: If parsing fails
             FileNotFoundError: If file doesn't exist
         """
-        self.logger.info(f"Starting STEP parsing: {file_path}")
+        self.logger.info("Starting STEP parsing: %s", file_path)
 
         try:
             # Parse STEP file
@@ -183,17 +198,17 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             file_size = file_path.stat().st_size
 
             result = {
-                'header': f"STEP model with {len(triangles)} triangles",
-                'triangles': triangles,
-                'format': ModelFormat.STEP,
-                'stats': {
-                    'entity_count': len(self.entities),
-                    'triangle_count': len(triangles),
-                    'cartesian_point_count': len(self.cartesian_points),
-                    'face_count': len(self.advanced_faces),
-                    'file_size_bytes': file_size,
-                    'parsing_time_seconds': parsing_time
-                }
+                "header": f"STEP model with {len(triangles)} triangles",
+                "triangles": triangles,
+                "format": ModelFormat.STEP,
+                "stats": {
+                    "entity_count": len(self.entities),
+                    "triangle_count": len(triangles),
+                    "cartesian_point_count": len(self.cartesian_points),
+                    "face_count": len(self.advanced_faces),
+                    "file_size_bytes": file_size,
+                    "parsing_time_seconds": parsing_time,
+                },
             }
 
             self._update_progress(100.0, "STEP parsing completed", progress_callback)
@@ -205,14 +220,15 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
             return result
 
-        except Exception as e:
-            self.logger.error(f"Failed to parse STEP file {file_path}: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to parse STEP file %s: {str(e)}", file_path)
             raise
 
     def _parse_step_file(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """
         Parse STEP file content with streaming support.
@@ -231,23 +247,24 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             else:
                 self._parse_step_file_standard(file_path, progress_callback)
 
-        except Exception as e:
-            self.logger.error(f"Error parsing STEP file: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error parsing STEP file: %s", str(e))
             raise STEPParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_step_file_standard(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """Standard parsing for smaller STEP files."""
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             content = file.read()
 
             self._update_progress(10.0, "Extracting DATA section", progress_callback)
 
             # Find DATA section
-            data_match = re.search(r'DATA;([\s\S]*?)ENDSEC;', content)
+            data_match = re.search(r"DATA;([\s\S]*?)ENDSEC;", content)
             if not data_match:
                 raise STEPParseError("Invalid STEP file: no DATA section found")
 
@@ -264,27 +281,32 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             self._process_entity_references()
 
     def _parse_step_file_streaming(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
-        progress_callback: Optional[StreamingProgressCallback] = None
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> None:
         """Streaming parsing for large STEP files."""
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             # First, find the DATA section boundaries
             self._update_progress(10.0, "Locating DATA section", progress_callback)
-            
+
             data_start = None
             data_end = None
-            
+
             for line_num, line in enumerate(file):
-                if 'DATA;' in line and data_start is None:
-                    data_start = file.tell() - len(line.encode('utf-8'))
-                elif 'ENDSEC;' in line and data_start is not None:
+                if "DATA;" in line and data_start is None:
+                    data_start = file.tell() - len(line.encode("utf-8"))
+                elif "ENDSEC;" in line and data_start is not None:
                     data_end = file.tell()
                     break
-                
+
                 if line_num % 10000 == 0:
-                    self._update_progress(10.0 + (line_num % 100000) / 1000.0, f"Scanning line {line_num}", progress_callback)
+                    self._update_progress(
+                        10.0 + (line_num % 100000) / 1000.0,
+                        f"Scanning line {line_num}",
+                        progress_callback,
+                    )
 
             if data_start is None or data_end is None:
                 raise STEPParseError("Invalid STEP file: DATA section not found")
@@ -293,32 +315,34 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             file.seek(data_start)
             chunk_size = 1024 * 1024  # 1MB chunks
             entities_parsed = 0
-            
+
             while file.tell() < data_end:
                 self._check_cancellation()
-                
+
                 chunk_start = file.tell()
                 chunk = file.read(chunk_size)
-                
+
                 if not chunk:
                     break
-                
+
                 # Find the last complete entity in the chunk
-                last_entity_end = chunk.rfind(';')
+                last_entity_end = chunk.rfind(";")
                 if last_entity_end == -1:
                     continue
-                
-                chunk = chunk[:last_entity_end + 1]
+
+                chunk = chunk[: last_entity_end + 1]
                 file.seek(chunk_start + last_entity_end + 1)
-                
+
                 # Parse entities in this chunk
                 entities_in_chunk = self._parse_entities_chunk(chunk)
                 entities_parsed += entities_in_chunk
-                
+
                 # Update progress
                 progress = 30.0 + (file.tell() - data_start) / (data_end - data_start) * 40.0
-                self._update_progress(progress, f"Parsed {entities_parsed} entities", progress_callback)
-                
+                self._update_progress(
+                    progress, f"Parsed {entities_parsed} entities", progress_callback
+                )
+
                 # Periodic garbage collection
                 if entities_parsed % 10000 == 0:
                     gc.collect()
@@ -339,7 +363,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             Number of entities parsed
         """
         # Regular expression to match STEP entities
-        entity_pattern = r'#(\d+)\s*=\s*([A-Z_0-9]+)\s*\((.*?)\);'
+        entity_pattern = r"#(\d+)\s*=\s*([A-Z_0-9]+)\s*\((.*?)\);"
 
         entities_parsed = 0
         for match in re.finditer(entity_pattern, chunk):
@@ -360,7 +384,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 entities_parsed += 1
 
             except (ValueError, IndexError) as e:
-                self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
+                self.logger.warning("Invalid entity: %s - {str(e)}", match.group(0))
                 continue
 
         return entities_parsed
@@ -373,7 +397,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             data_section: DATA section content
         """
         # Regular expression to match STEP entities
-        entity_pattern = r'#(\d+)\s*=\s*([A-Z_0-9]+)\s*\((.*?)\);'
+        entity_pattern = r"#(\d+)\s*=\s*([A-Z_0-9]+)\s*\((.*?)\);"
 
         for match in re.finditer(entity_pattern, data_section):
             try:
@@ -392,7 +416,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 self._store_specific_entity(entity)
 
             except (ValueError, IndexError) as e:
-                self.logger.warning(f"Invalid entity: {match.group(0)} - {str(e)}")
+                self.logger.warning("Invalid entity: %s - {str(e)}", match.group(0))
                 continue
 
     def _parse_parameters(self, parameters_str: str) -> List[Union[str, int, float, Tuple, List]]:
@@ -421,20 +445,20 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                 break
 
             # Handle different parameter types
-            if parameters_str[i] == '$':
+            if parameters_str[i] == "$":
                 # Unspecified parameter
                 parameters.append(None)
                 i += 1
-            elif parameters_str[i] == '*':
+            elif parameters_str[i] == "*":
                 # Unspecified parameter (alternative)
                 parameters.append(None)
                 i += 1
-            elif parameters_str[i] == '#':
+            elif parameters_str[i] == "#":
                 # Entity reference
                 j = i + 1
                 while j < n and parameters_str[j].isdigit():
                     j += 1
-                parameters.append(int(parameters_str[i+1:j]))
+                parameters.append(int(parameters_str[i + 1 : j]))
                 i = j
             elif parameters_str[i] == "'":
                 # String
@@ -444,34 +468,38 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                         j += 2  # Skip escaped character
                     else:
                         j += 1
-                parameters.append(parameters_str[i+1:j])
+                parameters.append(parameters_str[i + 1 : j])
                 i = j + 1
-            elif parameters_str[i] == '(':
+            elif parameters_str[i] == "(":
                 # List or tuple
                 j = i + 1
                 depth = 1
                 while j < n and depth > 0:
-                    if parameters_str[j] == '(':
+                    if parameters_str[j] == "(":
                         depth += 1
-                    elif parameters_str[j] == ')':
+                    elif parameters_str[j] == ")":
                         depth -= 1
                     j += 1
 
                 # Parse nested parameters
-                nested_str = parameters_str[i+1:j-1]
+                nested_str = parameters_str[i + 1 : j - 1]
                 nested_params = self._parse_parameters(nested_str)
                 parameters.append(nested_params)
                 i = j
             else:
                 # Number or identifier
                 j = i
-                while j < n and not parameters_str[j].isspace() and parameters_str[j] not in [',', ')']:
+                while (
+                    j < n
+                    and not parameters_str[j].isspace()
+                    and parameters_str[j] not in [",", ")"]
+                ):
                     j += 1
 
                 token = parameters_str[i:j]
                 try:
                     # Try to parse as number
-                    if '.' in token or 'e' in token.lower():
+                    if "." in token or "e" in token.lower():
                         parameters.append(float(token))
                     else:
                         parameters.append(int(token))
@@ -490,57 +518,61 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         Args:
             entity: STEP entity to store
         """
-        if entity.type == 'CARTESIAN_POINT':
+        if entity.type == "CARTESIAN_POINT":
             if len(entity.parameters) >= 1 and isinstance(entity.parameters[0], list):
                 coords = entity.parameters[0]
                 if len(coords) >= 3:
                     self.cartesian_points[entity.id] = STEPCartesianPoint(
-                        entity.id, (float(coords[0]), float(coords[1]), float(coords[2]))
+                        entity.id,
+                        (float(coords[0]), float(coords[1]), float(coords[2])),
                     )
 
-        elif entity.type == 'DIRECTION':
+        elif entity.type == "DIRECTION":
             if len(entity.parameters) >= 1 and isinstance(entity.parameters[0], list):
                 ratios = entity.parameters[0]
                 if len(ratios) >= 3:
                     self.directions[entity.id] = STEPDirection(
-                        entity.id, (float(ratios[0]), float(ratios[1]), float(ratios[2]))
+                        entity.id,
+                        (float(ratios[0]), float(ratios[1]), float(ratios[2])),
                     )
 
-        elif entity.type == 'VECTOR':
+        elif entity.type == "VECTOR":
             if len(entity.parameters) >= 2:
                 orientation_id = entity.parameters[0]
                 magnitude = float(entity.parameters[1])
                 if isinstance(orientation_id, int):
                     self.vectors[entity.id] = STEPVector(entity.id, orientation_id, magnitude)
 
-        elif entity.type == 'AXIS2_PLACEMENT_3D':
+        elif entity.type == "AXIS2_PLACEMENT_3D":
             if len(entity.parameters) >= 3:
                 location_id = entity.parameters[0]
                 axis_id = entity.parameters[1] if entity.parameters[1] is not None else None
-                ref_direction_id = entity.parameters[2] if entity.parameters[2] is not None else None
+                ref_direction_id = (
+                    entity.parameters[2] if entity.parameters[2] is not None else None
+                )
                 if isinstance(location_id, int):
                     self.axis_placements[entity.id] = STEPAxis2Placement3D(
                         entity.id, location_id, axis_id, ref_direction_id
                     )
 
-        elif entity.type == 'ADVANCED_FACE':
+        elif entity.type == "ADVANCED_FACE":
             if len(entity.parameters) >= 3:
                 surface_id = entity.parameters[0]
-                same_sense = entity.parameters[1] == '.T.'
+                same_sense = entity.parameters[1] == ".T."
                 face_bound_id = entity.parameters[2]
                 if isinstance(surface_id, int) and isinstance(face_bound_id, int):
                     self.advanced_faces[entity.id] = STEPAdvancedFace(
                         entity.id, surface_id, same_sense, face_bound_id
                     )
 
-        elif entity.type == 'FACE_BOUND':
+        elif entity.type == "FACE_BOUND":
             if len(entity.parameters) >= 2:
                 bound_id = entity.parameters[0]
-                orientation = entity.parameters[1] == '.T.'
+                orientation = entity.parameters[1] == ".T."
                 if isinstance(bound_id, int):
                     self.face_bounds[entity.id] = STEPFaceBound(entity.id, bound_id, orientation)
 
-        elif entity.type == 'EDGE_LOOP':
+        elif entity.type == "EDGE_LOOP":
             if len(entity.parameters) >= 1 and isinstance(entity.parameters[0], list):
                 edge_list = []
                 for edge_id in entity.parameters[0]:
@@ -548,40 +580,45 @@ class RefactoredSTEPParser(RefactoredBaseParser):
                         edge_list.append(edge_id)
                 self.edge_loops[entity.id] = STEPEdgeLoop(entity.id, edge_list)
 
-        elif entity.type == 'ORIENTED_EDGE':
+        elif entity.type == "ORIENTED_EDGE":
             if len(entity.parameters) >= 2:
                 edge_element_id = entity.parameters[0]
-                orientation = entity.parameters[1] == '.T.'
+                orientation = entity.parameters[1] == ".T."
                 if isinstance(edge_element_id, int):
                     self.oriented_edges[entity.id] = STEPOrientedEdge(
                         entity.id, edge_element_id, orientation
                     )
 
-        elif entity.type == 'EDGE_CURVE':
+        elif entity.type == "EDGE_CURVE":
             if len(entity.parameters) >= 4:
                 edge_start_id = entity.parameters[0]
                 edge_end_id = entity.parameters[1]
                 edge_geometry_id = entity.parameters[2]
-                same_sense = entity.parameters[3] == '.T.'
-                if (isinstance(edge_start_id, int) and isinstance(edge_end_id, int) and
-                    isinstance(edge_geometry_id, int)):
+                same_sense = entity.parameters[3] == ".T."
+                if (
+                    isinstance(edge_start_id, int)
+                    and isinstance(edge_end_id, int)
+                    and isinstance(edge_geometry_id, int)
+                ):
                     self.edge_curves[entity.id] = STEPEdgeCurve(
-                        entity.id, edge_start_id, edge_end_id, edge_geometry_id, same_sense
+                        entity.id,
+                        edge_start_id,
+                        edge_end_id,
+                        edge_geometry_id,
+                        same_sense,
                     )
 
-        elif entity.type == 'VERTEX_POINT':
+        elif entity.type == "VERTEX_POINT":
             if len(entity.parameters) >= 1:
                 vertex_geometry_id = entity.parameters[0]
                 if isinstance(vertex_geometry_id, int):
-                    self.vertex_points[entity.id] = STEPVertexPoint(
-                        entity.id, vertex_geometry_id
-                    )
+                    self.vertex_points[entity.id] = STEPVertexPoint(entity.id, vertex_geometry_id)
 
     def _process_entity_references(self) -> None:
         """Process entity references to build complete geometry."""
         # This is a simplified implementation
         # A full STEP parser would need to handle many more entity types and relationships
-        self.logger.info(f"Processed {len(self.entities)} entities")
+        self.logger.info("Processed %s entities", len(self.entities))
 
     def _process_geometry(self) -> List[Dict[str, Any]]:
         """
@@ -613,39 +650,54 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         """
         # Define cube vertices
         vertices = [
-            (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),  # Bottom
-            (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)   # Top
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),  # Bottom
+            (0, 0, 1),
+            (1, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),  # Top
         ]
 
         # Define cube faces (triangles)
         faces = [
             # Bottom face
-            (0, 1, 2), (0, 2, 3),
+            (0, 1, 2),
+            (0, 2, 3),
             # Top face
-            (4, 6, 5), (4, 7, 6),
+            (4, 6, 5),
+            (4, 7, 6),
             # Front face
-            (0, 4, 5), (0, 5, 1),
+            (0, 4, 5),
+            (0, 5, 1),
             # Back face
-            (2, 6, 7), (2, 7, 3),
+            (2, 6, 7),
+            (2, 7, 3),
             # Left face
-            (0, 3, 7), (0, 7, 4),
+            (0, 3, 7),
+            (0, 7, 4),
             # Right face
-            (1, 5, 6), (1, 6, 2)
+            (1, 5, 6),
+            (1, 6, 2),
         ]
 
         triangles = []
         for face in faces:
             v1, v2, v3 = vertices[face[0]], vertices[face[1]], vertices[face[2]]
             normal = self._calculate_face_normal(v1, v2, v3)
-            triangle = {
-                'normal': normal,
-                'vertices': [v1, v2, v3]
-            }
+            triangle = {"normal": normal, "vertices": [v1, v2, v3]}
             triangles.append(triangle)
 
         return triangles
 
-    def _calculate_face_normal(self, v1: Tuple[float, float, float], v2: Tuple[float, float, float], v3: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    def _calculate_face_normal(
+        """TODO: Add docstring."""
+        self,
+        v1: Tuple[float, float, float],
+        v2: Tuple[float, float, float],
+        v3: Tuple[float, float, float],
+    ) -> Tuple[float, float, float]:
         """
         Calculate face normal from three vertices.
 
@@ -669,7 +721,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         # Normalize
         length = (normal_x**2 + normal_y**2 + normal_z**2) ** 0.5
         if length > 0:
-            return (normal_x/length, normal_y/length, normal_z/length)
+            return (normal_x / length, normal_y / length, normal_z / length)
 
         return (0, 0, 1)  # Default normal
 
@@ -687,42 +739,38 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             # Basic validation first
             if not self._validate_file_internal(file_path):
                 return {
-                    'is_valid': False,
-                    'issues': ['File format validation failed'],
-                    'statistics': {}
+                    "is_valid": False,
+                    "issues": ["File format validation failed"],
+                    "statistics": {},
                 }
 
             issues = []
             stats = {}
 
             # Sample first few lines to check structure
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 content = file.read(2000).upper()
-                
+
                 # Check for STEP header
-                if 'ISO-10303-21' not in content:
-                    issues.append('Invalid STEP file: missing ISO-10303-21 header')
-                
+                if "ISO-10303-21" not in content:
+                    issues.append("Invalid STEP file: missing ISO-10303-21 header")
+
                 # Check for DATA section
-                if 'DATA;' not in content:
-                    issues.append('Invalid STEP file: missing DATA section')
+                if "DATA;" not in content:
+                    issues.append("Invalid STEP file: missing DATA section")
 
                 # Check for basic entity structure
-                if '=' not in content or ';' not in content:
-                    issues.append('Invalid STEP file: missing entity structure')
+                if "=" not in content or ";" not in content:
+                    issues.append("Invalid STEP file: missing entity structure")
 
-            return {
-                'is_valid': len(issues) == 0,
-                'issues': issues,
-                'statistics': stats
-            }
+            return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
 
-        except Exception as e:
-            self.logger.error(f"Error validating STEP geometry: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error validating STEP geometry: %s", str(e))
             return {
-                'is_valid': False,
-                'issues': [f'Validation error: {str(e)}'],
-                'statistics': {}
+                "is_valid": False,
+                "issues": [f"Validation error: {str(e)}"],
+                "statistics": {},
             }
 
     def _get_geometry_stats_internal(self, file_path: Path) -> Dict[str, Any]:
@@ -740,31 +788,31 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             cartesian_point_count = 0
             face_count = 0
 
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 for line in file:
                     line = line.strip().upper()
-                    if '=' in line and ';' in line:
+                    if "=" in line and ";" in line:
                         entity_count += 1
-                        if 'CARTESIAN_POINT' in line:
+                        if "CARTESIAN_POINT" in line:
                             cartesian_point_count += 1
-                        elif 'ADVANCED_FACE' in line:
+                        elif "ADVANCED_FACE" in line:
                             face_count += 1
 
             # Basic statistics
             stats = {
-                'vertex_count': cartesian_point_count,
-                'face_count': face_count,
-                'edge_count': face_count * 3,  # Approximation
-                'component_count': 1,  # Assume single component for now
-                'degeneracy_count': 0,  # Would need full parse to determine
-                'manifold': True,  # Assume manifold for STEP files
-                'entity_count': entity_count
+                "vertex_count": cartesian_point_count,
+                "face_count": face_count,
+                "edge_count": face_count * 3,  # Approximation
+                "component_count": 1,  # Assume single component for now
+                "degeneracy_count": 0,  # Would need full parse to determine
+                "manifold": True,  # Assume manifold for STEP files
+                "entity_count": entity_count,
             }
 
             return stats
 
-        except Exception as e:
-            self.logger.error(f"Error getting STEP geometry stats: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error getting STEP geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}")
 
     def get_parser_info(self) -> Dict[str, str]:
@@ -775,8 +823,8 @@ class RefactoredSTEPParser(RefactoredBaseParser):
             Dictionary containing parser information
         """
         return {
-            'name': 'Refactored STEP Parser',
-            'version': '2.0.0',
-            'author': 'Candy-Cadence Development Team',
-            'description': 'Enhanced STEP parser with streaming support and improved error handling'
+            "name": "Refactored STEP Parser",
+            "version": "2.0.0",
+            "author": "Candy-Cadence Development Team",
+            "description": "Enhanced STEP parser with streaming support and improved error handling",
         }

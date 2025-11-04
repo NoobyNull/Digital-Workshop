@@ -4,8 +4,6 @@ Settings management for main window.
 Handles lighting and metadata panel settings persistence.
 """
 
-from typing import Optional, Tuple
-
 from PySide6.QtCore import QSettings
 
 from src.core.logging_config import get_logger, log_function_call
@@ -17,7 +15,7 @@ logger = get_logger(__name__)
 class SettingsManager:
     """Manages application settings persistence."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         """
         Initialize settings manager.
 
@@ -42,8 +40,8 @@ class SettingsManager:
                 settings.setValue("lighting/intensity", float(props["intensity"]))
                 settings.setValue("lighting/cone_angle", float(props.get("cone_angle", 30.0)))
                 logger.debug("Lighting settings saved to QSettings")
-        except Exception as e:
-            logger.warning(f"Failed to save lighting settings: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save lighting settings: %s", e)
 
     @log_function_call(logger)
     def load_lighting_settings(self) -> None:
@@ -67,12 +65,18 @@ class SettingsManager:
                     "cone_angle": float(cone_angle),
                 }
 
-                if hasattr(self.main_window, "lighting_manager") and self.main_window.lighting_manager:
+                if (
+                    hasattr(self.main_window, "lighting_manager")
+                    and self.main_window.lighting_manager
+                ):
                     self.main_window.lighting_manager.apply_properties(props)
 
                 # Sync to lighting_panel without re-emitting
                 try:
-                    if hasattr(self.main_window, "lighting_panel") and self.main_window.lighting_panel:
+                    if (
+                        hasattr(self.main_window, "lighting_panel")
+                        and self.main_window.lighting_panel
+                    ):
                         self.main_window.lighting_panel.set_values(
                             position=props["position"],
                             color=props["color"],
@@ -84,12 +88,11 @@ class SettingsManager:
                     pass
 
                 logger.info("Lighting settings loaded from QSettings")
-        except Exception as e:
-            logger.warning(f"Failed to load lighting settings: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load lighting settings: %s", e)
 
     def save_lighting_panel_visibility(self) -> None:
         """Lighting panel is now a floating dialog, visibility is not persisted."""
-        pass
 
     def update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
@@ -97,7 +100,10 @@ class SettingsManager:
             visible = False
             if hasattr(self.main_window, "metadata_dock") and self.main_window.metadata_dock:
                 visible = bool(self.main_window.metadata_dock.isVisible())
-            if hasattr(self.main_window, "show_metadata_action") and self.main_window.show_metadata_action:
+            if (
+                hasattr(self.main_window, "show_metadata_action")
+                and self.main_window.show_metadata_action
+            ):
                 self.main_window.show_metadata_action.setEnabled(not visible)
         except Exception:
             pass
@@ -110,9 +116,9 @@ class SettingsManager:
                 settings = QSettings()
                 vis = bool(self.main_window.metadata_dock.isVisible())
                 settings.setValue("metadata_panel/visible", vis)
-                logger.debug(f"Saved metadata panel visibility: {vis}")
-        except Exception as e:
-            logger.warning(f"Failed to save metadata panel visibility: {e}")
+                logger.debug("Saved metadata panel visibility: %s", vis)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save metadata panel visibility: %s", e)
 
     @log_function_call(logger)
     def load_metadata_panel_visibility(self) -> bool:
@@ -123,10 +129,10 @@ class SettingsManager:
                 if settings.contains("metadata_panel/visible"):
                     vis = settings.value("metadata_panel/visible", True, type=bool)
                     self.main_window.metadata_dock.setVisible(vis)
-                    logger.debug(f"Restored metadata panel visibility: {vis}")
+                    logger.debug("Restored metadata panel visibility: %s", vis)
                     return True
-        except Exception as e:
-            logger.warning(f"Failed to load metadata panel visibility: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load metadata panel visibility: %s", e)
         return False
 
     def save_library_panel_visibility(self) -> None:
@@ -136,9 +142,9 @@ class SettingsManager:
                 settings = QSettings()
                 vis = bool(self.main_window.library_dock.isVisible())
                 settings.setValue("library_panel/visible", vis)
-                logger.debug(f"Saved library panel visibility: {vis}")
-        except Exception as e:
-            logger.warning(f"Failed to save library panel visibility: {e}")
+                logger.debug("Saved library panel visibility: %s", vis)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save library panel visibility: %s", e)
 
     def load_library_panel_visibility(self) -> bool:
         """Load and restore the library panel visibility state."""
@@ -148,10 +154,10 @@ class SettingsManager:
                 if settings.contains("library_panel/visible"):
                     vis = settings.value("library_panel/visible", True, type=bool)
                     self.main_window.library_dock.setVisible(vis)
-                    logger.debug(f"Restored library panel visibility: {vis}")
+                    logger.debug("Restored library panel visibility: %s", vis)
                     return True
-        except Exception as e:
-            logger.warning(f"Failed to load library panel visibility: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load library panel visibility: %s", e)
         return False
 
     @log_function_call(logger)
@@ -159,6 +165,7 @@ class SettingsManager:
         """Save 3D viewer settings (grid, ground, camera, lighting) to QSettings."""
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             settings = QSettings()
 
@@ -180,18 +187,25 @@ class SettingsManager:
             settings.setValue("viewer/auto_fit_on_load", config.auto_fit_on_load)
 
             logger.debug("Viewer settings saved to QSettings")
-        except Exception as e:
-            logger.warning(f"Failed to save viewer settings: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save viewer settings: %s", e)
 
     @log_function_call(logger)
     def save_window_settings(self) -> None:
-        """Save window settings (dimensions, startup behavior) to QSettings."""
+        """Save window settings (startup behavior) to QSettings.
+
+        NOTE: Actual window dimensions are saved by MainWindow._save_window_settings()
+        using saveGeometry() and explicit width/height values. This method only saves
+        configuration defaults and startup behavior, NOT the current window size.
+        """
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             settings = QSettings()
 
-            # Window dimensions
+            # Save configuration defaults (not current window size)
+            # Current window size is saved by MainWindow._save_window_settings()
             settings.setValue("window/default_width", int(config.default_window_width))
             settings.setValue("window/default_height", int(config.default_window_height))
             settings.setValue("window/minimum_width", int(config.minimum_window_width))
@@ -202,6 +216,5 @@ class SettingsManager:
             settings.setValue("window/remember_window_size", config.remember_window_size)
 
             logger.debug("Window settings saved to QSettings")
-        except Exception as e:
-            logger.warning(f"Failed to save window settings: {e}")
-
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save window settings: %s", e)

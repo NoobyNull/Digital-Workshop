@@ -23,7 +23,10 @@ from PySide6.QtCore import QEvent, QPointF, QTimer, QObject, QPoint
 from PySide6.QtWidgets import QWidget, QMainWindow, QDockWidget
 
 from src.core.logging_config import get_logger
-from src.gui.layout.snapping.coordinate_manager import CoordinateManager, CoordinateSystem
+from src.gui.layout.snapping.coordinate_manager import (
+    CoordinateManager,
+    CoordinateSystem,
+)
 from src.gui.layout.snapping.snap_engine import SnapEngine, SnapResult
 from src.gui.layout.snapping.snap_configuration import SnapConfiguration
 
@@ -34,6 +37,7 @@ class EventType(Enum):
 
     Defines different categories of events that can trigger snapping behavior.
     """
+
     MOUSE_PRESS = "mouse_press"
     MOUSE_MOVE = "mouse_move"
     MOUSE_RELEASE = "mouse_release"
@@ -60,6 +64,7 @@ class SnapEvent:
         original_event: Original Qt event object
         metadata: Additional event-specific data
     """
+
     event_type: EventType
     position: QPointF
     source_widget: Optional[QWidget]
@@ -68,7 +73,7 @@ class SnapEvent:
     original_event: Optional[QEvent] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snap event after initialization."""
         if self.timestamp < 0:
             raise ValueError(f"Timestamp must be non-negative, got {self.timestamp}")
@@ -82,7 +87,7 @@ class EventDebouncer:
     Uses time-based and movement-based debouncing strategies.
     """
 
-    def __init__(self, time_threshold_ms: int = 16, movement_threshold: int = 2):
+    def __init__(self, time_threshold_ms: int = 16, movement_threshold: int = 2) -> None:
         """
         Initialize the event debouncer.
 
@@ -118,7 +123,9 @@ class EventDebouncer:
 
         # Check movement threshold
         if self._last_position is not None:
-            distance = abs(event.position.x() - self._last_position.x()) + abs(event.position.y() - self._last_position.y())
+            distance = abs(event.position.x() - self._last_position.x()) + abs(
+                event.position.y() - self._last_position.y()
+            )
             if distance < self.movement_threshold:
                 return False
 
@@ -167,7 +174,7 @@ class EventFilter(QObject):
     Optimized to avoid conflicts with other event filters.
     """
 
-    def __init__(self, event_processor: 'EventProcessor'):
+    def __init__(self, event_processor: "EventProcessor") -> None:
         """
         Initialize the event filter.
 
@@ -205,8 +212,8 @@ class EventFilter(QObject):
             # Don't block the original event
             return False
 
-        except Exception as e:
-            self.logger.error(f"Error in event filter: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error in event filter: %s", e)
             return False
 
     def _convert_qt_event(self, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
@@ -239,22 +246,25 @@ class EventFilter(QObject):
 
             return None
 
-        except Exception as e:
-            self.logger.error(f"Failed to convert Qt event: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to convert Qt event: %s", e)
             return None
 
-    def _create_mouse_event(self, event_type: EventType, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
+    def _create_mouse_event(
+        """TODO: Add docstring."""
+        self, event_type: EventType, widget: QWidget, event: QEvent
+    ) -> Optional[SnapEvent]:
         """Create a mouse-related SnapEvent."""
         try:
             # Get mouse position in global coordinates
-            global_pos = event.pos() if hasattr(event, 'pos') else QPoint(0, 0)
+            global_pos = event.pos() if hasattr(event, "pos") else QPoint(0, 0)
 
             # Convert to unified coordinates
             unified_pos = self.event_processor.coordinate_manager.transform_point(
                 QPointF(global_pos),
                 CoordinateSystem.SCREEN,
                 CoordinateSystem.UNIFIED,
-                widget
+                widget,
             ).point
 
             return SnapEvent(
@@ -266,12 +276,14 @@ class EventFilter(QObject):
                 original_event=event,
                 metadata={
                     "global_position": global_pos,
-                    "mouse_buttons": int(event.buttons()) if hasattr(event, 'buttons') else 0,
-                    "keyboard_modifiers": int(event.modifiers()) if hasattr(event, 'modifiers') else 0
-                }
+                    "mouse_buttons": (int(event.buttons()) if hasattr(event, "buttons") else 0),
+                    "keyboard_modifiers": (
+                        int(event.modifiers()) if hasattr(event, "modifiers") else 0
+                    ),
+                },
             )
-        except Exception as e:
-            self.logger.error(f"Failed to create mouse event: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to create mouse event: %s", e)
             return None
 
     def _create_resize_event(self, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
@@ -282,10 +294,7 @@ class EventFilter(QObject):
 
             # Convert to unified coordinates
             unified_pos = self.event_processor.coordinate_manager.transform_point(
-                center_pos,
-                CoordinateSystem.WIDGET,
-                CoordinateSystem.UNIFIED,
-                widget
+                center_pos, CoordinateSystem.WIDGET, CoordinateSystem.UNIFIED, widget
             ).point
 
             return SnapEvent(
@@ -296,13 +305,13 @@ class EventFilter(QObject):
                 timestamp=time.time(),
                 original_event=event,
                 metadata={
-                    "old_size": getattr(event, 'oldSize', lambda: None)(),
+                    "old_size": getattr(event, "oldSize", lambda: None)(),
                     "new_size": widget.size(),
-                    "resize_handles": 0  # Could be enhanced to track which handles were used
-                }
+                    "resize_handles": 0,  # Could be enhanced to track which handles were used
+                },
             )
-        except Exception as e:
-            self.logger.error(f"Failed to create resize event: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to create resize event: %s", e)
             return None
 
     def _create_move_event(self, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
@@ -313,10 +322,7 @@ class EventFilter(QObject):
 
             # Convert to unified coordinates
             unified_pos = self.event_processor.coordinate_manager.transform_point(
-                widget_pos,
-                CoordinateSystem.WIDGET,
-                CoordinateSystem.UNIFIED,
-                widget
+                widget_pos, CoordinateSystem.WIDGET, CoordinateSystem.UNIFIED, widget
             ).point
 
             return SnapEvent(
@@ -327,12 +333,12 @@ class EventFilter(QObject):
                 timestamp=time.time(),
                 original_event=event,
                 metadata={
-                    "old_position": getattr(event, 'oldPos', lambda: None)(),
-                    "new_position": widget.pos()
-                }
+                    "old_position": getattr(event, "oldPos", lambda: None)(),
+                    "new_position": widget.pos(),
+                },
             )
-        except Exception as e:
-            self.logger.error(f"Failed to create move event: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to create move event: %s", e)
             return None
 
     def _find_target_widget(self, source_widget: QWidget) -> Optional[QWidget]:
@@ -388,11 +394,12 @@ class EventProcessor:
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         main_window: QMainWindow,
         config: SnapConfiguration,
         coordinate_manager: CoordinateManager,
-        snap_engine: SnapEngine
+        snap_engine: SnapEngine,
     ):
         """
         Initialize the event processor.
@@ -414,7 +421,7 @@ class EventProcessor:
         # Event processing components
         self.debouncer = EventDebouncer(
             time_threshold_ms=config.performance.update_debounce_ms,
-            movement_threshold=config.performance.hysteresis_threshold
+            movement_threshold=config.performance.hysteresis_threshold,
         )
         self.event_filter = EventFilter(self)
 
@@ -429,7 +436,7 @@ class EventProcessor:
             "processed_events": 0,
             "debounced_events": 0,
             "avg_processing_time_ms": 0.0,
-            "max_processing_time_ms": 0.0
+            "max_processing_time_ms": 0.0,
         }
 
         # Setup periodic cleanup
@@ -445,8 +452,8 @@ class EventProcessor:
             self._cleanup_timer.setInterval(5000)  # Clean up every 5 seconds
             self._cleanup_timer.timeout.connect(self._periodic_cleanup)
             self._cleanup_timer.start()
-        except Exception as e:
-            self.logger.error(f"Failed to setup cleanup timer: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to setup cleanup timer: %s", e)
 
     def _periodic_cleanup(self) -> None:
         """Periodic cleanup of resources and stale data."""
@@ -461,15 +468,15 @@ class EventProcessor:
                     "processed_events": 0,
                     "debounced_events": 0,
                     "avg_processing_time_ms": 0.0,
-                    "max_processing_time_ms": 0.0
+                    "max_processing_time_ms": 0.0,
                 }
 
             # Update coordinate systems if main window geometry changed
             if self.main_window:
                 self.coordinate_manager.update_main_window_geometry()
 
-        except Exception as e:
-            self.logger.error(f"Error in periodic cleanup: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error in periodic cleanup: %s", e)
 
     def install_event_filter(self, widget: QWidget) -> bool:
         """
@@ -493,14 +500,18 @@ class EventProcessor:
             success = widget.installEventFilter(self.event_filter)
             if success:
                 self._active_widgets[id(widget)] = widget
-                self.logger.debug(f"Installed event filter on widget {widget.objectName() or type(widget).__name__}")
+                self.logger.debug(
+                    f"Installed event filter on widget {widget.objectName() or type(widget).__name__}"
+                )
                 return True
             else:
-                self.logger.warning(f"Failed to install event filter on widget {widget.objectName() or type(widget).__name__}")
+                self.logger.warning(
+                    f"Failed to install event filter on widget {widget.objectName() or type(widget).__name__}"
+                )
                 return False
 
-        except Exception as e:
-            self.logger.error(f"Error installing event filter on widget: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error installing event filter on widget: %s", e)
             return False
 
     def remove_event_filter(self, widget: QWidget) -> bool:
@@ -525,14 +536,18 @@ class EventProcessor:
             # Remove event filter
             success = widget.removeEventFilter(self.event_filter)
             if success:
-                self.logger.debug(f"Removed event filter from widget {widget.objectName() or type(widget).__name__}")
+                self.logger.debug(
+                    f"Removed event filter from widget {widget.objectName() or type(widget).__name__}"
+                )
                 return True
             else:
-                self.logger.warning(f"Failed to remove event filter from widget {widget.objectName() or type(widget).__name__}")
+                self.logger.warning(
+                    f"Failed to remove event filter from widget {widget.objectName() or type(widget).__name__}"
+                )
                 return False
 
-        except Exception as e:
-            self.logger.error(f"Error removing event filter from widget: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error removing event filter from widget: %s", e)
             return False
 
     def process_event(self, event: SnapEvent) -> bool:
@@ -577,8 +592,8 @@ class EventProcessor:
 
             return processed
 
-        except Exception as e:
-            self.logger.error(f"Error processing event {event.event_type}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error processing event %s: {e}", event.event_type)
             return False
 
     def _process_event_immediate(self, event: SnapEvent) -> bool:
@@ -597,8 +612,8 @@ class EventProcessor:
                 for handler in self._event_handlers[event.event_type]:
                     try:
                         handler(event)
-                    except Exception as e:
-                        self.logger.error(f"Error in event handler for {event.event_type}: {e}")
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        self.logger.error("Error in event handler for %s: {e}", event.event_type)
 
             # Handle specific event types
             if event.event_type == EventType.MOUSE_MOVE:
@@ -616,8 +631,8 @@ class EventProcessor:
 
             return True  # Event was processed by handlers
 
-        except Exception as e:
-            self.logger.error(f"Error in immediate event processing: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error in immediate event processing: %s", e)
             return False
 
     def _handle_mouse_move(self, event: SnapEvent) -> bool:
@@ -632,9 +647,7 @@ class EventProcessor:
 
             # Calculate snap position
             snap_result = self.snap_engine.calculate_snap(
-                event.position,
-                CoordinateSystem.UNIFIED,
-                event.target_widget
+                event.position, CoordinateSystem.UNIFIED, event.target_widget
             )
 
             # Apply snap if applicable
@@ -642,8 +655,8 @@ class EventProcessor:
                 self._apply_snap_to_widget(event.target_widget, snap_result)
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling mouse move: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling mouse move: %s", e)
             return False
 
     def _handle_mouse_press(self, event: SnapEvent) -> bool:
@@ -657,8 +670,8 @@ class EventProcessor:
                 self._start_drag_tracking(event.target_widget)
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling mouse press: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling mouse press: %s", e)
             return False
 
     def _handle_mouse_release(self, event: SnapEvent) -> bool:
@@ -669,8 +682,8 @@ class EventProcessor:
                 self._end_drag_tracking(event.target_widget)
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling mouse release: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling mouse release: %s", e)
             return False
 
     def _handle_widget_resize(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
@@ -683,8 +696,8 @@ class EventProcessor:
             self.snap_engine.update_configuration()
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling widget resize: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling widget resize: %s", e)
             return False
 
     def _handle_widget_move(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
@@ -694,8 +707,8 @@ class EventProcessor:
             self.coordinate_manager.update_main_window_geometry()
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling widget move: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling widget move: %s", e)
             return False
 
     def _handle_layout_change(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
@@ -706,8 +719,8 @@ class EventProcessor:
             self.coordinate_manager.clear_cache()
 
             return True
-        except Exception as e:
-            self.logger.error(f"Error handling layout change: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error handling layout change: %s", e)
             return False
 
     def _apply_snap_to_widget(self, widget: QWidget, snap_result: SnapResult) -> None:
@@ -728,7 +741,7 @@ class EventProcessor:
                 snapped_global = self.coordinate_manager.transform_point(
                     snap_result.snapped_position,
                     CoordinateSystem.UNIFIED,
-                    CoordinateSystem.SCREEN
+                    CoordinateSystem.SCREEN,
                 ).point
 
                 # Apply the snap by moving the dock
@@ -739,9 +752,11 @@ class EventProcessor:
                 if abs(delta_x) > 1 or abs(delta_y) > 1:  # Only move if significant change
                     widget.move(widget.x() + int(delta_x), widget.y() + int(delta_y))
 
-            self.logger.debug(f"Applied snap to widget {widget.objectName() or type(widget).__name__}")
-        except Exception as e:
-            self.logger.error(f"Failed to apply snap to widget: {e}")
+            self.logger.debug(
+                f"Applied snap to widget {widget.objectName() or type(widget).__name__}"
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to apply snap to widget: %s", e)
 
     def _start_drag_tracking(self, widget: QWidget) -> None:
         """Start tracking a drag operation."""
@@ -749,9 +764,11 @@ class EventProcessor:
             # Mark widget as being dragged
             self._active_widgets[id(widget)] = widget
 
-            self.logger.debug(f"Started drag tracking for widget {widget.objectName() or type(widget).__name__}")
-        except Exception as e:
-            self.logger.error(f"Failed to start drag tracking: {e}")
+            self.logger.debug(
+                f"Started drag tracking for widget {widget.objectName() or type(widget).__name__}"
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to start drag tracking: %s", e)
 
     def _end_drag_tracking(self, widget: QWidget) -> None:
         """End tracking a drag operation."""
@@ -761,22 +778,25 @@ class EventProcessor:
             if widget_id in self._active_widgets:
                 del self._active_widgets[widget_id]
 
-            self.logger.debug(f"Ended drag tracking for widget {widget.objectName() or type(widget).__name__}")
-        except Exception as e:
-            self.logger.error(f"Failed to end drag tracking: {e}")
+            self.logger.debug(
+                f"Ended drag tracking for widget {widget.objectName() or type(widget).__name__}"
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to end drag tracking: %s", e)
 
     def _update_performance_timing(self, processing_time_ms: float) -> None:
         """Update performance timing statistics."""
         self._performance_stats["max_processing_time_ms"] = max(
-            self._performance_stats["max_processing_time_ms"],
-            processing_time_ms
+            self._performance_stats["max_processing_time_ms"], processing_time_ms
         )
 
         # Update average processing time
         total_events = self._performance_stats["processed_events"]
         if total_events > 0:
             total_time = self._performance_stats["avg_processing_time_ms"] * (total_events - 1)
-            self._performance_stats["avg_processing_time_ms"] = (total_time + processing_time_ms) / total_events
+            self._performance_stats["avg_processing_time_ms"] = (
+                total_time + processing_time_ms
+            ) / total_events
 
     def register_event_handler(self, event_type: EventType, handler: Callable) -> None:
         """
@@ -791,9 +811,9 @@ class EventProcessor:
                 self._event_handlers[event_type] = []
 
             self._event_handlers[event_type].append(handler)
-            self.logger.debug(f"Registered event handler for {event_type}")
-        except Exception as e:
-            self.logger.error(f"Failed to register event handler: {e}")
+            self.logger.debug("Registered event handler for %s", event_type)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to register event handler: %s", e)
 
     def unregister_event_handler(self, event_type: EventType, handler: Callable) -> None:
         """
@@ -807,9 +827,9 @@ class EventProcessor:
             if event_type in self._event_handlers:
                 if handler in self._event_handlers[event_type]:
                     self._event_handlers[event_type].remove(handler)
-                    self.logger.debug(f"Unregistered event handler for {event_type}")
-        except Exception as e:
-            self.logger.error(f"Failed to unregister event handler: {e}")
+                    self.logger.debug("Unregistered event handler for %s", event_type)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to unregister event handler: %s", e)
 
     def set_processing_enabled(self, enabled: bool) -> None:
         """
@@ -820,9 +840,9 @@ class EventProcessor:
         """
         try:
             self._processing_enabled = enabled
-            self.logger.info(f"Event processing {'enabled' if enabled else 'disabled'}")
-        except Exception as e:
-            self.logger.error(f"Failed to set processing enabled: {e}")
+            self.logger.info("Event processing %s", 'enabled' if enabled else 'disabled')
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to set processing enabled: %s", e)
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """
@@ -837,14 +857,16 @@ class EventProcessor:
                 "debouncer_stats": {
                     "pending_events": len(self.debouncer.get_pending_events()),
                     "time_threshold_ms": self.debouncer.time_threshold_ms,
-                    "movement_threshold": self.debouncer.movement_threshold
+                    "movement_threshold": self.debouncer.movement_threshold,
                 },
                 "active_widgets": len(self._active_widgets),
-                "registered_handlers": {et.name: len(handlers) for et, handlers in self._event_handlers.items()},
-                "processing_enabled": self._processing_enabled
+                "registered_handlers": {
+                    et.name: len(handlers) for et, handlers in self._event_handlers.items()
+                },
+                "processing_enabled": self._processing_enabled,
             }
-        except Exception as e:
-            self.logger.error(f"Failed to get performance stats: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
     def reset(self) -> None:
@@ -862,12 +884,12 @@ class EventProcessor:
                 "processed_events": 0,
                 "debounced_events": 0,
                 "avg_processing_time_ms": 0.0,
-                "max_processing_time_ms": 0.0
+                "max_processing_time_ms": 0.0,
             }
 
             self.logger.info("Event processor reset to initial state")
-        except Exception as e:
-            self.logger.error(f"Failed to reset event processor: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to reset event processor: %s", e)
             raise
 
     def cleanup(self) -> None:
@@ -878,7 +900,7 @@ class EventProcessor:
         """
         try:
             # Stop cleanup timer
-            if hasattr(self, '_cleanup_timer'):
+            if hasattr(self, "_cleanup_timer"):
                 self._cleanup_timer.stop()
 
             # Remove all event filters
@@ -889,5 +911,5 @@ class EventProcessor:
             self.reset()
 
             self.logger.info("Event processor cleanup completed")
-        except Exception as e:
-            self.logger.error(f"Error during event processor cleanup: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error during event processor cleanup: %s", e)

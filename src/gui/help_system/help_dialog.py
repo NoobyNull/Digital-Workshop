@@ -5,11 +5,17 @@ Provides keyword search across all documentation with results display.
 """
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QListWidget, QListWidgetItem, QTextEdit, QSplitter, QLabel
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QTextEdit,
+    QSplitter,
+    QLabel,
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt
 
 from src.core.logging_config import get_logger
 from src.gui.help_system.documentation_indexer import DocumentationIndexer
@@ -20,7 +26,7 @@ logger = get_logger(__name__)
 class HelpDialog(QDialog):
     """Searchable help dialog."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize help dialog."""
         super().__init__(parent)
         self.setWindowTitle("Help - Search Documentation")
@@ -74,6 +80,7 @@ class HelpDialog(QDialog):
 
         # Create widgets for splitter
         from PySide6.QtWidgets import QWidget
+
         results_container = QWidget()
         results_container.setLayout(results_layout)
 
@@ -97,12 +104,10 @@ class HelpDialog(QDialog):
         """Build documentation index."""
         try:
             self.indexer.build_index()
-            self.status_label.setText(
-                f"Documentation indexed: {len(self.indexer.topics)} topics"
-            )
-            logger.info(f"Help system indexed {len(self.indexer.topics)} topics")
-        except Exception as e:
-            logger.error(f"Error building documentation index: {e}")
+            self.status_label.setText(f"Documentation indexed: {len(self.indexer.topics)} topics")
+            logger.info("Help system indexed %s topics", len(self.indexer.topics))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Error building documentation index: %s", e)
             self.status_label.setText(f"Error building index: {e}")
 
     def _on_search(self, query: str) -> None:
@@ -116,8 +121,8 @@ class HelpDialog(QDialog):
         try:
             self.current_results = self.indexer.search(query)
             self._display_results()
-        except Exception as e:
-            logger.error(f"Error searching documentation: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Error searching documentation: %s", e)
             self.status_label.setText(f"Search error: {e}")
 
     def _display_results(self) -> None:
@@ -135,9 +140,7 @@ class HelpDialog(QDialog):
             item.setData(Qt.UserRole, topic)
             self.results_list.addItem(item)
 
-        self.status_label.setText(
-            f"Found {len(self.current_results)} results"
-        )
+        self.status_label.setText(f"Found {len(self.current_results)} results")
 
         # Auto-select first result
         if self.results_list.count() > 0:
@@ -159,4 +162,3 @@ class HelpDialog(QDialog):
 <p><b>Keywords:</b> {', '.join(topic.keywords)}</p>
 """
             self.content_display.setHtml(content)
-

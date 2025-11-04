@@ -9,7 +9,7 @@ from enum import Enum
 
 class RenderMode(Enum):
     """Rendering modes for the 3D viewer."""
+
     SOLID = "solid"
     WIREFRAME = "wireframe"
     POINTS = "points"
-

@@ -6,20 +6,20 @@ format characteristics, and system resources for optimal parallel processing.
 """
 
 import os
-import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from src.core.logging_config import get_logger, log_function_call
-from src.core.memory_manager import get_memory_manager, MemoryStats
+from src.core.memory_manager import get_memory_manager
 from src.core.performance_profiler import get_performance_profiler, PerformanceMetric
 from src.parsers.file_chunker import FileChunk, ChunkStrategy
 
 
 class FileFormat(Enum):
     """Supported 3D file formats."""
+
     STL_BINARY = "stl_binary"
     STL_ASCII = "stl_ascii"
     OBJ = "obj"
@@ -29,15 +29,17 @@ class FileFormat(Enum):
 
 class ChunkingStrategy(Enum):
     """Adaptive chunking strategies."""
-    FIXED_SIZE = "fixed_size"          # Fixed chunk sizes
-    ADAPTIVE_SIZE = "adaptive_size"    # Size adapts to memory/CPU
-    FORMAT_AWARE = "format_aware"      # Format-specific boundaries
+
+    FIXED_SIZE = "fixed_size"  # Fixed chunk sizes
+    ADAPTIVE_SIZE = "adaptive_size"  # Size adapts to memory/CPU
+    FORMAT_AWARE = "format_aware"  # Format-specific boundaries
     MEMORY_CONSTRAINED = "memory_constrained"  # Small chunks for low memory
 
 
 @dataclass
 class ChunkingParameters:
     """Parameters for adaptive chunking."""
+
     strategy: ChunkingStrategy
     base_chunk_size_mb: float
     max_concurrent_chunks: int
@@ -49,6 +51,7 @@ class ChunkingParameters:
 @dataclass
 class FileAnalysis:
     """Analysis results for a file."""
+
     format: FileFormat
     file_size_bytes: int
     estimated_triangles: int
@@ -69,35 +72,35 @@ class AdaptiveChunker:
             "bytes_per_triangle": 50,  # 12 floats + 2 bytes
             "boundary_alignment": 50,  # Must align to triangle boundaries
             "complexity": 0.2,  # Simple binary format
-            "variable_structure": False
+            "variable_structure": False,
         },
         FileFormat.STL_ASCII: {
             "bytes_per_triangle": 200,  # Rough estimate for ASCII
             "boundary_alignment": 1,  # Line-based, no strict alignment
             "complexity": 0.4,  # Text parsing overhead
-            "variable_structure": True
+            "variable_structure": True,
         },
         FileFormat.OBJ: {
             "bytes_per_triangle": 150,  # Variable due to materials/textures
             "boundary_alignment": 1,  # Line-based
             "complexity": 0.6,  # Material and texture handling
-            "variable_structure": True
+            "variable_structure": True,
         },
         FileFormat.STEP: {
             "bytes_per_triangle": 300,  # Complex geometric entities
             "boundary_alignment": 1,  # Entity-based
             "complexity": 0.8,  # Complex parsing logic
-            "variable_structure": True
+            "variable_structure": True,
         },
         FileFormat.THREE_MF: {
             "bytes_per_triangle": 250,  # XML + binary data
             "boundary_alignment": 1,  # XML structure
             "complexity": 0.7,  # XML parsing + binary data
-            "variable_structure": True
-        }
+            "variable_structure": True,
+        },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the adaptive chunker."""
         self.logger = get_logger(__name__)
         self.memory_manager = get_memory_manager()
@@ -116,6 +119,7 @@ class AdaptiveChunker:
         """Detect available system memory."""
         try:
             import psutil
+
             return psutil.virtual_memory().total / (1024**3)
         except ImportError:
             # Fallback estimation
@@ -123,10 +127,11 @@ class AdaptiveChunker:
 
     @log_function_call
     def create_adaptive_chunks(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         target_chunk_count: Optional[int] = None,
-        max_memory_usage_gb: Optional[float] = None
+        max_memory_usage_gb: Optional[float] = None,
     ) -> List[FileChunk]:
         """
         Create adaptive chunks for a file based on analysis and system resources.
@@ -198,7 +203,7 @@ class AdaptiveChunker:
             estimated_triangles=estimated_triangles,
             format_complexity=constants["complexity"],
             has_variable_structure=constants["variable_structure"],
-            recommended_strategy=recommended_strategy
+            recommended_strategy=recommended_strategy,
         )
 
     def _detect_format(self, file_path: Path) -> FileFormat:
@@ -212,19 +217,19 @@ class AdaptiveChunker:
             Detected FileFormat
         """
         # Read first few bytes to detect format
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             header = f.read(100)
 
         # Simple format detection
-        header_str = header.decode('utf-8', errors='ignore').lower()
+        header_str = header.decode("utf-8", errors="ignore").lower()
 
-        if header_str.startswith('solid'):
+        if header_str.startswith("solid"):
             return FileFormat.STL_ASCII
-        elif b'3mf' in header or b'<?xml' in header:
+        elif b"3mf" in header or b"<?xml" in header:
             return FileFormat.THREE_MF
-        elif b'ISO-10303-21' in header:
+        elif b"ISO-10303-21" in header:
             return FileFormat.STEP
-        elif len(header) >= 80 and header[0:5].decode('utf-8', errors='ignore').strip():
+        elif len(header) >= 80 and header[0:5].decode("utf-8", errors="ignore").strip():
             # Likely STL binary (has header text)
             return FileFormat.STL_BINARY
         else:
@@ -232,10 +237,8 @@ class AdaptiveChunker:
             return FileFormat.OBJ
 
     def _determine_optimal_strategy(
-        self,
-        format_type: FileFormat,
-        file_size: int,
-        triangle_count: int
+        """TODO: Add docstring."""
+        self, format_type: FileFormat, file_size: int, triangle_count: int
     ) -> ChunkingStrategy:
         """
         Determine the optimal chunking strategy based on file characteristics.
@@ -267,10 +270,11 @@ class AdaptiveChunker:
         return ChunkingStrategy.ADAPTIVE_SIZE
 
     def _calculate_chunking_parameters(
+        """TODO: Add docstring."""
         self,
         analysis: FileAnalysis,
         target_chunk_count: Optional[int],
-        max_memory_usage_gb: Optional[float]
+        max_memory_usage_gb: Optional[float],
     ) -> ChunkingParameters:
         """
         Calculate optimal chunking parameters.
@@ -304,7 +308,9 @@ class AdaptiveChunker:
 
         # Calculate target chunk count
         if target_chunk_count is None:
-            estimated_chunk_count = max(1, analysis.file_size_bytes // (base_chunk_size_mb * 1024 * 1024))
+            estimated_chunk_count = max(
+                1, analysis.file_size_bytes // (base_chunk_size_mb * 1024 * 1024)
+            )
             # Limit based on CPU cores
             target_chunk_count = min(estimated_chunk_count, self.cpu_count * 2)
 
@@ -314,14 +320,12 @@ class AdaptiveChunker:
             max_concurrent_chunks=min(target_chunk_count, self.cpu_count),
             format_specific_boundaries=analysis.has_variable_structure,
             memory_adaptive=True,
-            performance_target_ms=5000  # 5 second target per chunk
+            performance_target_ms=5000,  # 5 second target per chunk
         )
 
     def _create_format_aware_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create chunks with format-specific boundary alignment.
@@ -344,10 +348,8 @@ class AdaptiveChunker:
             return self._create_generic_format_chunks(file_path, analysis, params)
 
     def _create_stl_binary_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create chunks for STL binary files with triangle boundary alignment.
@@ -391,17 +393,15 @@ class AdaptiveChunker:
                 size=chunk_size,
                 triangle_start=start_triangle,
                 triangle_count=chunk_triangles,
-                strategy=ChunkStrategy.PARALLEL
+                strategy=ChunkStrategy.PARALLEL,
             )
             chunks.append(chunk)
 
         return chunks
 
     def _create_text_based_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create chunks for text-based formats (line-aware).
@@ -418,7 +418,7 @@ class AdaptiveChunker:
         chunks = []
         chunk_size_bytes = int(params.base_chunk_size_mb * 1024 * 1024)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             file_size = f.seek(0, 2)  # Seek to end
             f.seek(0)  # Back to start
 
@@ -433,7 +433,7 @@ class AdaptiveChunker:
                 if target_end < file_size:
                     f.seek(target_end)
                     # Read forward to find newline
-                    while f.read(1) != b'\n' and f.tell() < file_size:
+                    while f.read(1) != b"\n" and f.tell() < file_size:
                         pass
                     actual_end = f.tell()
                 else:
@@ -449,7 +449,7 @@ class AdaptiveChunker:
                     size=chunk_size,
                     triangle_start=0,  # Not applicable
                     triangle_count=0,  # Not applicable
-                    strategy=ChunkStrategy.PARALLEL
+                    strategy=ChunkStrategy.PARALLEL,
                 )
                 chunks.append(chunk)
 
@@ -459,10 +459,8 @@ class AdaptiveChunker:
         return chunks
 
     def _create_generic_format_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create generic format-aware chunks.
@@ -479,10 +477,8 @@ class AdaptiveChunker:
         return self._create_adaptive_size_chunks(file_path, analysis, params)
 
     def _create_memory_constrained_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create small chunks for memory-constrained systems.
@@ -498,15 +494,12 @@ class AdaptiveChunker:
         # Use smaller chunk sizes for memory-constrained systems
         small_chunk_size_mb = min(params.base_chunk_size_mb, 16)  # Max 16MB chunks
         return self._create_fixed_size_chunks(
-            file_path, analysis,
-            params._replace(base_chunk_size_mb=small_chunk_size_mb)
+            file_path, analysis, params._replace(base_chunk_size_mb=small_chunk_size_mb)
         )
 
     def _create_adaptive_size_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create chunks with adaptive sizing based on system resources.
@@ -526,7 +519,7 @@ class AdaptiveChunker:
         if memory_stats.is_memory_constrained:
             # Reduce chunk size when memory is constrained
             adjusted_size_mb = params.base_chunk_size_mb * 0.5
-        elif memory_stats.pressure_level.name == 'LOW':
+        elif memory_stats.pressure_level.name == "LOW":
             # Can use larger chunks when memory is plentiful
             adjusted_size_mb = params.base_chunk_size_mb * 1.5
         else:
@@ -536,15 +529,12 @@ class AdaptiveChunker:
         adjusted_size_mb = max(8, min(adjusted_size_mb, 256))  # 8MB to 256MB
 
         return self._create_fixed_size_chunks(
-            file_path, analysis,
-            params._replace(base_chunk_size_mb=adjusted_size_mb)
+            file_path, analysis, params._replace(base_chunk_size_mb=adjusted_size_mb)
         )
 
     def _create_fixed_size_chunks(
-        self,
-        file_path: Path,
-        analysis: FileAnalysis,
-        params: ChunkingParameters
+        """TODO: Add docstring."""
+        self, file_path: Path, analysis: FileAnalysis, params: ChunkingParameters
     ) -> List[FileChunk]:
         """
         Create chunks of fixed size.
@@ -575,7 +565,7 @@ class AdaptiveChunker:
                 size=current_chunk_size,
                 triangle_start=0,  # Not calculated for fixed size
                 triangle_count=0,  # Not calculated for fixed size
-                strategy=ChunkStrategy.PARALLEL
+                strategy=ChunkStrategy.PARALLEL,
             )
             chunks.append(chunk)
 
@@ -637,5 +627,5 @@ class AdaptiveChunker:
             "format_complexity": analysis.format_complexity,
             "variable_structure": analysis.has_variable_structure,
             "system_memory_gb": self.system_memory_gb,
-            "cpu_count": self.cpu_count
+            "cpu_count": self.cpu_count,
         }

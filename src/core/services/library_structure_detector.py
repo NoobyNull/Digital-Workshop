@@ -7,8 +7,8 @@ metadata files, and naming conventions. Calculates confidence score for organiza
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List
+from dataclasses import dataclass
 from collections import defaultdict
 
 from ..logging_config import get_logger, log_function_call
@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 @dataclass
 class LibraryStructureAnalysis:
     """Result of library structure analysis."""
+
     folder_path: str
     is_organized: bool
     confidence_score: float  # 0-100%
@@ -37,13 +38,54 @@ class LibraryStructureDetector:
     """Detects and analyzes library folder structures."""
 
     # File type categories
-    MODEL_EXTENSIONS = {'.stl', '.obj', '.step', '.stp', '.3mf', '.ply', '.fbx', '.dae', '.gltf', '.glb'}
-    DOCUMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt', '.ods'}
-    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.tif', '.webp', '.ico'}
-    METADATA_EXTENSIONS = {'.md', '.json', '.xml', '.yaml', '.yml', '.csv', '.tsv'}
-    METADATA_FILENAMES = {'readme', 'manifest', 'index', 'catalog', 'inventory', 'metadata'}
+    MODEL_EXTENSIONS = {
+        ".stl",
+        ".obj",
+        ".step",
+        ".stp",
+        ".3mf",
+        ".ply",
+        ".fbx",
+        ".dae",
+        ".gltf",
+        ".glb",
+    }
+    DOCUMENT_EXTENSIONS = {
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".txt",
+        ".rtf",
+        ".odt",
+        ".ods",
+    }
+    IMAGE_EXTENSIONS = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".svg",
+        ".tiff",
+        ".tif",
+        ".webp",
+        ".ico",
+    }
+    METADATA_EXTENSIONS = {".md", ".json", ".xml", ".yaml", ".yml", ".csv", ".tsv"}
+    METADATA_FILENAMES = {
+        "readme",
+        "manifest",
+        "index",
+        "catalog",
+        "inventory",
+        "metadata",
+    }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize library structure detector."""
         self.logger = logger
 
@@ -60,7 +102,7 @@ class LibraryStructureDetector:
         """
         try:
             folder_path = str(Path(folder_path).resolve())
-            
+
             if not os.path.isdir(folder_path):
                 raise ValueError(f"Folder not found: {folder_path}")
 
@@ -80,7 +122,7 @@ class LibraryStructureDetector:
                 for file in files:
                     file_path = os.path.join(root, file)
                     all_files.append(file_path)
-                    
+
                     # Categorize file
                     ext = Path(file).suffix.lower()
                     file_type = self._categorize_file(file, ext)
@@ -93,8 +135,11 @@ class LibraryStructureDetector:
             # Analyze structure
             structure_type = self._detect_structure_type(folder_path, all_files, all_folders)
             confidence_score = self._calculate_confidence(
-                file_type_grouping, len(all_files), len(all_folders), 
-                len(metadata_files), structure_type
+                file_type_grouping,
+                len(all_files),
+                len(all_folders),
+                len(metadata_files),
+                structure_type,
             )
             naming_patterns = self._detect_naming_patterns(all_folders)
 
@@ -115,14 +160,16 @@ class LibraryStructureDetector:
                 total_files=len(all_files),
                 total_folders=len(all_folders),
                 naming_patterns=naming_patterns,
-                recommendations=recommendations
+                recommendations=recommendations,
             )
 
-            logger.info(f"Library analysis complete: {folder_path} (confidence: {confidence_score:.1f}%)")
+            logger.info(
+                f"Library analysis complete: {folder_path} (confidence: {confidence_score:.1f}%)"
+            )
             return analysis
 
-        except Exception as e:
-            logger.error(f"Failed to analyze library structure: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to analyze library structure: %s", str(e))
             raise
 
     def _categorize_file(self, filename: str, ext: str) -> str:
@@ -141,9 +188,11 @@ class LibraryStructureDetector:
     def _is_metadata_file(self, filename: str, ext: str) -> bool:
         """Check if file is metadata."""
         name_lower = Path(filename).stem.lower()
-        return (ext in self.METADATA_EXTENSIONS or 
-                name_lower in self.METADATA_FILENAMES or
-                filename.lower() in {'readme', 'manifest', 'index', 'catalog'})
+        return (
+            ext in self.METADATA_EXTENSIONS
+            or name_lower in self.METADATA_FILENAMES
+            or filename.lower() in {"readme", "manifest", "index", "catalog"}
+        )
 
     def _detect_structure_type(self, folder_path: str, files: List[str], folders: set) -> str:
         """Detect structure type: flat, nested, or balanced."""
@@ -168,12 +217,13 @@ class LibraryStructureDetector:
             return "balanced"
 
     def _calculate_confidence(
+        """TODO: Add docstring."""
         self,
         file_type_grouping: Dict[str, int],
         total_files: int,
         total_folders: int,
         metadata_count: int,
-        structure_type: str
+        structure_type: str,
     ) -> float:
         """Calculate organization confidence score (0-100%)."""
         if total_files == 0:
@@ -207,25 +257,28 @@ class LibraryStructureDetector:
     def _detect_naming_patterns(self, folders: set) -> List[str]:
         """Detect naming patterns in folder names."""
         patterns = []
-        
+
         if not folders:
             return patterns
 
         # Check for common patterns
         folder_names = [f.lower() for f in folders]
-        
+
         # File type patterns
-        if any(name in folder_names for name in ['stl', 'obj', 'step', 'models', '3d']):
+        if any(name in folder_names for name in ["stl", "obj", "step", "models", "3d"]):
             patterns.append("File type grouping")
-        
+
         # Category patterns
-        if any(name in folder_names for name in ['characters', 'buildings', 'vehicles', 'nature', 'objects']):
+        if any(
+            name in folder_names
+            for name in ["characters", "buildings", "vehicles", "nature", "objects"]
+        ):
             patterns.append("Category organization")
-        
+
         # Date patterns
-        if any(name for name in folder_names if name.startswith('20') and len(name) == 4):
+        if any(name for name in folder_names if name.startswith("20") and len(name) == 4):
             patterns.append("Date-based organization")
-        
+
         # Numbered patterns
         if any(name[0].isdigit() for name in folder_names if name):
             patterns.append("Numbered organization")
@@ -233,26 +286,31 @@ class LibraryStructureDetector:
         return patterns
 
     def _generate_recommendations(
-        self,
-        structure_type: str,
-        confidence_score: float,
-        total_files: int
+        """TODO: Add docstring."""
+        self, structure_type: str, confidence_score: float, total_files: int
     ) -> List[str]:
         """Generate recommendations for import."""
         recommendations = []
 
         if confidence_score < 40:
-            recommendations.append("Library structure is not well organized. Consider reorganizing before import.")
+            recommendations.append(
+                "Library structure is not well organized. Consider reorganizing before import."
+            )
         elif confidence_score < 70:
-            recommendations.append("Library structure is moderately organized. Import will preserve existing structure.")
+            recommendations.append(
+                "Library structure is moderately organized. Import will preserve existing structure."
+            )
         else:
-            recommendations.append("Library structure is well organized. Import will preserve existing structure.")
+            recommendations.append(
+                "Library structure is well organized. Import will preserve existing structure."
+            )
 
         if structure_type == "flat" and total_files > 100:
-            recommendations.append("Consider organizing files into subdirectories for better management.")
+            recommendations.append(
+                "Consider organizing files into subdirectories for better management."
+            )
 
         if total_files > 1000:
             recommendations.append("Large library detected. Import may take some time.")
 
         return recommendations
-

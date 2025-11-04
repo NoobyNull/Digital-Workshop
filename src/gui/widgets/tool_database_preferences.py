@@ -5,11 +5,20 @@ Provides UI for setting and managing paths to external tool databases
 and other tool database system preferences.
 """
 
-from pathlib import Path
 from typing import Dict, Any
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QPushButton, QLineEdit,
-    QLabel, QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QAbstractItemView
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGroupBox,
+    QPushButton,
+    QLineEdit,
+    QLabel,
+    QFileDialog,
+    QMessageBox,
+    QListWidget,
+    QListWidgetItem,
+    QAbstractItemView,
 )
 from PySide6.QtCore import pyqtSignal
 
@@ -24,7 +33,7 @@ class ToolDatabasePreferencesDialog(QDialog):
 
     preferences_changed = pyqtSignal()
 
-    def __init__(self, db_path: str, parent=None):
+    def __init__(self, db_path: str, parent=None) -> None:
         """
         Initialize preferences dialog.
 
@@ -43,7 +52,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         self._init_ui()
         self._load_preferences()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize user interface."""
         layout = QVBoxLayout()
 
@@ -107,13 +116,11 @@ class ToolDatabasePreferencesDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def _load_preferences(self):
+    def _load_preferences(self) -> None:
         """Load preferences from repository."""
         try:
             # Load external database paths
-            paths = self.preferences_repo.get_preference(
-                "external_database_paths", []
-            )
+            paths = self.preferences_repo.get_preference("external_database_paths", [])
             self.paths_list.clear()
             for path in paths:
                 self.paths_list.addItem(QListWidgetItem(path))
@@ -125,53 +132,41 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.default_provider.setText(default_provider)
 
             # Load auto-import setting
-            auto_import = self.preferences_repo.get_preference(
-                "auto_import_enabled", False
-            )
+            auto_import = self.preferences_repo.get_preference("auto_import_enabled", False)
             self.auto_import_cb.setChecked(auto_import)
 
             self.logger.info("Preferences loaded successfully")
 
-        except Exception as e:
-            self.logger.error(f"Failed to load preferences: {e}")
-            QMessageBox.critical(
-                self, "Error", f"Failed to load preferences: {str(e)}"
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load preferences: %s", e)
+            QMessageBox.critical(self, "Error", f"Failed to load preferences: {str(e)}")
 
-    def _add_external_path(self):
+    def _add_external_path(self) -> None:
         """Add external database path."""
-        file_path = QFileDialog.getExistingDirectory(
-            self, "Select External Database Directory"
-        )
+        file_path = QFileDialog.getExistingDirectory(self, "Select External Database Directory")
 
         if file_path:
             if not any(
-                self.paths_list.item(i).text() == file_path
-                for i in range(self.paths_list.count())
+                self.paths_list.item(i).text() == file_path for i in range(self.paths_list.count())
             ):
                 self.paths_list.addItem(QListWidgetItem(file_path))
-                self.logger.info(f"Added external database path: {file_path}")
+                self.logger.info("Added external database path: %s", file_path)
             else:
                 QMessageBox.information(self, "Info", "Path already added")
 
-    def _remove_external_path(self):
+    def _remove_external_path(self) -> None:
         """Remove selected external database path."""
         current_item = self.paths_list.currentItem()
         if current_item:
             row = self.paths_list.row(current_item)
             removed_item = self.paths_list.takeItem(row)
-            self.logger.info(
-                f"Removed external database path: {removed_item.text()}"
-            )
+            self.logger.info("Removed external database path: %s", removed_item.text())
 
-    def _save_and_close(self):
+    def _save_and_close(self) -> None:
         """Save preferences and close dialog."""
         try:
             # Collect paths
-            paths = [
-                self.paths_list.item(i).text()
-                for i in range(self.paths_list.count())
-            ]
+            paths = [self.paths_list.item(i).text() for i in range(self.paths_list.count())]
 
             # Save preferences
             prefs: Dict[str, Any] = {
@@ -187,8 +182,6 @@ class ToolDatabasePreferencesDialog(QDialog):
             self.preferences_changed.emit()
             self.accept()
 
-        except Exception as e:
-            self.logger.error(f"Failed to save preferences: {e}")
-            QMessageBox.critical(
-                self, "Error", f"Failed to save preferences: {str(e)}"
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to save preferences: %s", e)
+            QMessageBox.critical(self, "Error", f"Failed to save preferences: {str(e)}")

@@ -18,22 +18,22 @@ class CancellationToken:
     execute cleanup callbacks when cancellation is requested.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cancellation token."""
         self._cancelled = False
         self._lock = threading.RLock()
         self._cleanup_callbacks: List[Callable[[], None]] = []
         self.logger = get_logger(__name__)
 
-    def __getstate__(self):
+    def __getstate__(self) -> None:
         """Support for pickling - exclude non-serializable objects."""
         state = self.__dict__.copy()
         # Remove the lock and logger as they can't be pickled
-        state.pop('_lock', None)
-        state.pop('logger', None)
+        state.pop("_lock", None)
+        state.pop("logger", None)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         """Support for unpickling - restore non-serializable objects."""
         self.__dict__.update(state)
         # Recreate the lock and logger
@@ -62,8 +62,8 @@ class CancellationToken:
         for callback in callbacks_to_run:
             try:
                 callback()
-            except Exception as e:
-                self.logger.warning(f"Cleanup callback failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.warning("Cleanup callback failed: %s", e)
 
         self.logger.debug("Cancellation completed")
 
@@ -95,8 +95,8 @@ class CancellationToken:
                 # If already cancelled, run callback immediately
                 try:
                     callback()
-                except Exception as e:
-                    self.logger.warning(f"Immediate cleanup callback failed: {e}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.warning("Immediate cleanup callback failed: %s", e)
             else:
                 self._cleanup_callbacks.append(callback)
 

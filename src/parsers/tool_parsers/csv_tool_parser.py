@@ -23,22 +23,28 @@ class CSVToolParser(BaseToolParser):
             if not path.exists():
                 return False, "File does not exist"
 
-            if path.suffix.lower() != '.csv':
+            if path.suffix.lower() != ".csv":
                 return False, "Not a CSV file"
 
             # Check if file has expected headers with flexible matching
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 reader = csv.reader(f)
                 headers = next(reader, [])
                 headers_lower = [h.lower().strip() for h in headers]
 
                 # Required field variations (matching _normalize_headers logic)
                 required_checks = {
-                    'description': ['description', 'name', 'tool_name', 'tool name'],
-                    'tool_type': ['tool_type', 'type', 'tool type', 'category'],
-                    'diameter': ['diameter', 'dia', 'dc', 'diameter (mm)', 'diameter (in)']
+                    "description": ["description", "name", "tool_name", "tool name"],
+                    "tool_type": ["tool_type", "type", "tool type", "category"],
+                    "diameter": [
+                        "diameter",
+                        "dia",
+                        "dc",
+                        "diameter (mm)",
+                        "diameter (in)",
+                    ],
                 }
-                
+
                 missing = []
                 for field, variations in required_checks.items():
                     # Check if any variation matches any header
@@ -59,58 +65,80 @@ class CSVToolParser(BaseToolParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def _normalize_headers(self, row: dict) -> dict:
         """Normalize CSV headers to handle case variations and common field name differences."""
         # Header mapping for common variations
         header_map = {
-            'guid': ['guid', 'GUID', 'id', 'ID', 'tool_id'],
-            'description': ['description', 'Description', 'DESCRIPTION', 'name', 'Name', 'tool_name'],
-            'tool_type': ['tool_type', 'Type', 'TYPE', 'type', 'tool type'],
-            'diameter': ['diameter', 'Diameter', 'DIAMETER', 'Diameter (mm)', 'Diameter (in)', 'DC'],
-            'vendor': ['vendor', 'Vendor', 'VENDOR', 'manufacturer', 'Manufacturer'],
-            'product_id': ['product_id', 'Product ID', 'PRODUCT_ID', 'sku', 'SKU'],
-            'unit': ['unit', 'Unit', 'UNIT', 'units', 'Units'],
-            'flute_length': ['flute_length', 'Flute Length', 'Flute Length (mm)', 'FL'],
-            'overall_length': ['overall_length', 'Overall Length', 'Overall Length (mm)', 'OAL'],
+            "guid": ["guid", "GUID", "id", "ID", "tool_id"],
+            "description": [
+                "description",
+                "Description",
+                "DESCRIPTION",
+                "name",
+                "Name",
+                "tool_name",
+            ],
+            "tool_type": ["tool_type", "Type", "TYPE", "type", "tool type"],
+            "diameter": [
+                "diameter",
+                "Diameter",
+                "DIAMETER",
+                "Diameter (mm)",
+                "Diameter (in)",
+                "DC",
+            ],
+            "vendor": ["vendor", "Vendor", "VENDOR", "manufacturer", "Manufacturer"],
+            "product_id": ["product_id", "Product ID", "PRODUCT_ID", "sku", "SKU"],
+            "unit": ["unit", "Unit", "UNIT", "units", "Units"],
+            "flute_length": ["flute_length", "Flute Length", "Flute Length (mm)", "FL"],
+            "overall_length": [
+                "overall_length",
+                "Overall Length",
+                "Overall Length (mm)",
+                "OAL",
+            ],
         }
-        
+
         normalized = {}
         # Create a lowercase version of the row for case-insensitive matching
         row_lower = {k.lower(): v for k, v in row.items()}
-        
+
         for standard_key, variations in header_map.items():
             for variation in variations:
                 if variation.lower() in row_lower:
                     normalized[standard_key] = row_lower[variation.lower()]
                     break
             if standard_key not in normalized:
-                normalized[standard_key] = ''
-        
+                normalized[standard_key] = ""
+
         # Keep all original keys that weren't normalized
         for key, value in row.items():
             if key not in normalized:
                 normalized[key] = value
-                
+
         return normalized
 
-    def parse(self, file_path: str, progress_callback: Optional[ProgressCallback] = None) -> List[ToolData]:
+    def parse(
+        """TODO: Add docstring."""
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
+    ) -> List[ToolData]:
         """Parse CSV tool database."""
         tools = []
 
         try:
             path = Path(file_path)
-            
+
             # Check if file exists
             if not path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return []
 
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
-                
+
                 # Convert to list to get total rows
                 rows = list(reader)
                 total_rows = len(rows)
@@ -121,18 +149,18 @@ class CSVToolParser(BaseToolParser):
 
                     # Normalize headers to handle case variations
                     normalized_row = self._normalize_headers(row)
-                    
+
                     # Parse tool data
                     tool = ToolData(
-                        guid=normalized_row.get('guid', ''),
-                        description=normalized_row.get('description', ''),
-                        tool_type=normalized_row.get('tool_type', ''),
-                        diameter=self._parse_float(normalized_row.get('diameter', 0)),
-                        vendor=normalized_row.get('vendor', 'IDC Woodcraft'),
-                        product_id=normalized_row.get('product_id', ''),
-                        unit=normalized_row.get('unit', 'inches'),
+                        guid=normalized_row.get("guid", ""),
+                        description=normalized_row.get("description", ""),
+                        tool_type=normalized_row.get("tool_type", ""),
+                        diameter=self._parse_float(normalized_row.get("diameter", 0)),
+                        vendor=normalized_row.get("vendor", "IDC Woodcraft"),
+                        product_id=normalized_row.get("product_id", ""),
+                        unit=normalized_row.get("unit", "inches"),
                         geometry=self._parse_geometry(normalized_row),
-                        start_values=self._parse_start_values(normalized_row)
+                        start_values=self._parse_start_values(normalized_row),
                     )
 
                     tools.append(tool)
@@ -142,20 +170,20 @@ class CSVToolParser(BaseToolParser):
                         progress = min(row_num / total_rows, 1.0)
                         progress_callback.report(progress, f"Parsing tool {row_num}/{total_rows}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from CSV file")
+            self.logger.info("Parsed %s tools from CSV file", len(tools))
             return tools
 
         except FileNotFoundError:
-            self.logger.warning(f"File not found: {file_path}")
+            self.logger.warning("File not found: %s", file_path)
             return []
-        except Exception as e:
-            self.logger.error(f"Failed to parse CSV file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to parse CSV file: %s", e)
             return []
 
     def _parse_float(self, value: str) -> float:
         """Parse float value from string."""
         try:
-            return float(str(value).replace(',', ''))
+            return float(str(value).replace(",", ""))
         except (ValueError, AttributeError):
             return 0.0
 
@@ -165,11 +193,11 @@ class CSVToolParser(BaseToolParser):
 
         # Common geometry fields
         geometry_fields = {
-            'DC': 'diameter',
-            'LB': 'length',
-            'NOF': 'number_of_flutes',
-            'OAL': 'overall_length',
-            'SHK': 'shank_diameter'
+            "DC": "diameter",
+            "LB": "length",
+            "NOF": "number_of_flutes",
+            "OAL": "overall_length",
+            "SHK": "shank_diameter",
         }
 
         for csv_field, prop_name in geometry_fields.items():
@@ -184,10 +212,10 @@ class CSVToolParser(BaseToolParser):
 
         # Common start value fields
         start_fields = {
-            'n': 'rpm',
-            'v_f': 'feed_rate',
-            'stepdown': 'stepdown',
-            'stepover': 'stepover'
+            "n": "rpm",
+            "v_f": "feed_rate",
+            "stepdown": "stepdown",
+            "stepover": "stepover",
         }
 
         for csv_field, prop_name in start_fields.items():

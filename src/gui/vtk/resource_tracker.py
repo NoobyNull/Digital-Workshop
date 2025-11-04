@@ -11,10 +11,9 @@ from typing import Dict, List, Any, Optional, Set, Callable
 from collections import defaultdict
 from enum import Enum
 
-import vtk
 
-from src.core.logging_config import get_logger, log_function_call
-from .error_handler import get_vtk_error_handler, VTKErrorCode
+from src.core.logging_config import get_logger
+from .error_handler import get_vtk_error_handler
 
 
 logger = get_logger(__name__)
@@ -55,7 +54,7 @@ class VTKResourceTracker:
     and cleanup status to ensure no resources are leaked during VTK operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource tracker."""
         self.logger = get_logger(__name__)
         self.error_handler = get_vtk_error_handler()
@@ -74,7 +73,7 @@ class VTKResourceTracker:
             "total_created": 0,
             "total_cleaned": 0,
             "total_leaked": 0,
-            "by_type": defaultdict(int)
+            "by_type": defaultdict(int),
         }
 
         # Register default cleanup callbacks
@@ -93,6 +92,7 @@ class VTKResourceTracker:
         try:
             # Actor cleanup
             def cleanup_actor(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "SetMapper"):
                         resource.SetMapper(None)
@@ -103,6 +103,7 @@ class VTKResourceTracker:
 
             # Mapper cleanup
             def cleanup_mapper(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "SetInput"):
                         resource.SetInput(None)
@@ -113,6 +114,7 @@ class VTKResourceTracker:
 
             # Polydata cleanup
             def cleanup_polydata(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "Reset"):
                         resource.Reset()
@@ -123,6 +125,7 @@ class VTKResourceTracker:
 
             # Renderer cleanup
             def cleanup_renderer(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "RemoveAllViewProps"):
                         resource.RemoveAllViewProps()
@@ -133,6 +136,7 @@ class VTKResourceTracker:
 
             # Render window cleanup
             def cleanup_render_window(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "Finalize"):
                         resource.Finalize()
@@ -143,6 +147,7 @@ class VTKResourceTracker:
 
             # Interactor cleanup
             def cleanup_interactor(resource: Any) -> None:
+                """TODO: Add docstring."""
                 try:
                     if hasattr(resource, "TerminateApp"):
                         resource.TerminateApp()
@@ -156,19 +161,23 @@ class VTKResourceTracker:
             self.register_cleanup_callback(ResourceType.MAPPER, cleanup_mapper)
             self.register_cleanup_callback(ResourceType.POLYDATA, cleanup_polydata)
             self.register_cleanup_callback(ResourceType.RENDERER, cleanup_renderer)
-            self.register_cleanup_callback(
-                ResourceType.RENDER_WINDOW, cleanup_render_window
-            )
+            self.register_cleanup_callback(ResourceType.RENDER_WINDOW, cleanup_render_window)
             self.register_cleanup_callback(ResourceType.INTERACTOR, cleanup_interactor)
 
             self.logger.debug("Default cleanup callbacks registered")
 
-        except Exception as e:
-            self.logger.warning(f"Error registering default cleanup callbacks: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Error registering default cleanup callbacks: %s", e)
 
-    def register_resource(self, resource: Any, resource_type: ResourceType,
-                         name: Optional[str] = None, parent_id: Optional[str] = None,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+    def register_resource(
+        """TODO: Add docstring."""
+        self,
+        resource: Any,
+        resource_type: ResourceType,
+        name: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Register a VTK resource for tracking.
 
@@ -199,7 +208,7 @@ class VTKResourceTracker:
                     "metadata": metadata or {},
                     "created_time": self._get_timestamp(),
                     "last_accessed": self._get_timestamp(),
-                    "cleanup_attempts": 0
+                    "cleanup_attempts": 0,
                 }
 
                 # Track relationships
@@ -211,12 +220,12 @@ class VTKResourceTracker:
                 self.stats["total_created"] += 1
                 self.stats["by_type"][resource_type.value] += 1
 
-                self.logger.debug(f"Registered VTK resource: {resource_id} ({resource_type.value})")
+                self.logger.debug("Registered VTK resource: %s ({resource_type.value})", resource_id)
 
                 return resource_id
 
-        except Exception as e:
-            self.logger.error(f"Error registering resource: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error registering resource: %s", e)
             return ""
 
     def _resource_finalized(self, resource_ref: weakref.ReferenceType) -> None:
@@ -227,17 +236,20 @@ class VTKResourceTracker:
                 for resource_id, resource_info in self.resources.items():
                     if resource_info["resource"] == resource_ref:
                         # Only log as leaked if it wasn't intentionally cleaned up
-                        if resource_info["state"] not in [ResourceState.CLEANED, ResourceState.DESTROYED]:
+                        if resource_info["state"] not in [
+                            ResourceState.CLEANED,
+                            ResourceState.DESTROYED,
+                        ]:
                             resource_info["state"] = ResourceState.LEAKED
                             self.stats["total_leaked"] += 1
-                            self.logger.debug(f"VTK resource finalized (not leaked): {resource_id}")
+                            self.logger.debug("VTK resource finalized (not leaked): %s", resource_id)
                         else:
                             # Resource was properly handled, just mark as destroyed
                             resource_info["state"] = ResourceState.DESTROYED
                         break
 
-        except Exception as e:
-            self.logger.debug(f"Error in resource finalization callback: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Error in resource finalization callback: %s", e)
 
     def unregister_resource(self, resource_id: str) -> bool:
         """
@@ -269,11 +281,11 @@ class VTKResourceTracker:
                 # Remove from main registry
                 del self.resources[resource_id]
 
-                self.logger.debug(f"Unregistered VTK resource: {resource_id}")
+                self.logger.debug("Unregistered VTK resource: %s", resource_id)
                 return True
 
-        except Exception as e:
-            self.logger.error(f"Error unregistering resource {resource_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error unregistering resource %s: {e}", resource_id)
             return False
 
     def get_resource(self, resource_id: str) -> Optional[Any]:
@@ -303,8 +315,8 @@ class VTKResourceTracker:
 
                 return resource
 
-        except Exception as e:
-            self.logger.debug(f"Error getting resource {resource_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Error getting resource %s: {e}", resource_id)
             return None
 
     def cleanup_resource(self, resource_id: str) -> bool:
@@ -320,7 +332,7 @@ class VTKResourceTracker:
         try:
             with self.lock:
                 if resource_id not in self.resources:
-                    self.logger.debug(f"Resource {resource_id} not found")
+                    self.logger.debug("Resource %s not found", resource_id)
                     return True
 
                 resource_info = self.resources[resource_id]
@@ -328,9 +340,7 @@ class VTKResourceTracker:
                 resource = resource_ref() if resource_ref else None
 
                 if not resource:
-                    self.logger.debug(
-                        f"Resource {resource_id} already destroyed"
-                    )
+                    self.logger.debug("Resource %s already destroyed", resource_id)
                     # Mark as cleaned before unregistering
                     resource_info["state"] = ResourceState.CLEANED
                     self.stats["total_cleaned"] += 1
@@ -341,10 +351,8 @@ class VTKResourceTracker:
                 if resource_type.value in self.cleanup_callbacks:
                     try:
                         self.cleanup_callbacks[resource_type.value](resource)
-                    except Exception as e:
-                        self.logger.debug(
-                            f"Error in cleanup callback for {resource_id}: {e}"
-                        )
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        self.logger.debug("Error in cleanup callback for %s: {e}", resource_id)
 
                 # Try generic cleanup
                 try:
@@ -354,10 +362,8 @@ class VTKResourceTracker:
                         resource.Finalize()
                     elif hasattr(resource, "TerminateApp"):
                         resource.TerminateApp()
-                except Exception as e:
-                    self.logger.debug(
-                        f"Error in generic cleanup for {resource_id}: {e}"
-                    )
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.debug("Error in generic cleanup for %s: {e}", resource_id)
 
                 # Mark as cleaned BEFORE unregistering to prevent false leak warnings
                 resource_info["state"] = ResourceState.CLEANED
@@ -366,8 +372,8 @@ class VTKResourceTracker:
 
             return self.unregister_resource(resource_id)
 
-        except Exception as e:
-            self.logger.error(f"Error cleaning up resource {resource_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error cleaning up resource %s: {e}", resource_id)
             return False
 
     def cleanup_all_resources(self) -> Dict[str, int]:
@@ -379,7 +385,7 @@ class VTKResourceTracker:
         """
         try:
             with self.lock:
-                self.logger.info(f"Cleaning up {len(self.resources)} tracked VTK resources")
+                self.logger.info("Cleaning up %s tracked VTK resources", len(self.resources))
 
                 success_count = 0
                 error_count = 0
@@ -393,19 +399,21 @@ class VTKResourceTracker:
                             success_count += 1
                         else:
                             error_count += 1
-                    except Exception as e:
-                        self.logger.debug(f"Error cleaning up {resource_id}: {e}")
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        self.logger.debug("Error cleaning up %s: {e}", resource_id)
                         error_count += 1
 
-                self.logger.info(f"Cleanup completed: {success_count} success, {error_count} errors")
+                self.logger.info(
+                    f"Cleanup completed: {success_count} success, {error_count} errors"
+                )
                 return {
                     "total": len(self.resources),
                     "success": success_count,
-                    "errors": error_count
+                    "errors": error_count,
                 }
 
-        except Exception as e:
-            self.logger.error(f"Error in cleanup_all_resources: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error in cleanup_all_resources: %s", e)
             return {"total": 0, "success": 0, "errors": 1}
 
     def _get_cleanup_order(self) -> List[str]:
@@ -426,8 +434,8 @@ class VTKResourceTracker:
 
             return cleanup_order
 
-        except Exception as e:
-            self.logger.debug(f"Error getting cleanup order: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Error getting cleanup order: %s", e)
             # Fallback: just return all resource IDs
             return list(self.resources.keys())
 
@@ -440,7 +448,7 @@ class VTKResourceTracker:
             callback: Function to call for cleanup (takes resource as argument)
         """
         self.cleanup_callbacks[resource_type.value] = callback
-        self.logger.debug(f"Registered cleanup callback for {resource_type.value}")
+        self.logger.debug("Registered cleanup callback for %s", resource_type.value)
 
     def get_resource_info(self, resource_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -463,8 +471,8 @@ class VTKResourceTracker:
 
                 return resource_info
 
-        except Exception as e:
-            self.logger.debug(f"Error getting resource info for {resource_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Error getting resource info for %s: {e}", resource_id)
             return None
 
     def get_all_resources(self) -> Dict[str, Dict[str, Any]]:
@@ -483,8 +491,8 @@ class VTKResourceTracker:
                         result[resource_id] = info
                 return result
 
-        except Exception as e:
-            self.logger.error(f"Error getting all resources: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error getting all resources: %s", e)
             return {}
 
     def find_leaked_resources(self) -> List[Dict[str, Any]]:
@@ -500,18 +508,20 @@ class VTKResourceTracker:
                 for resource_id, resource_info in self.resources.items():
                     resource_ref = resource_info["resource"]
                     if resource_ref() is None and resource_info["state"] != ResourceState.CLEANED:
-                        leaked.append({
-                            "resource_id": resource_id,
-                            "resource_type": resource_info["resource_type"].value,
-                            "name": resource_info["name"],
-                            "created_time": resource_info["created_time"],
-                            "cleanup_attempts": resource_info["cleanup_attempts"]
-                        })
+                        leaked.append(
+                            {
+                                "resource_id": resource_id,
+                                "resource_type": resource_info["resource_type"].value,
+                                "name": resource_info["name"],
+                                "created_time": resource_info["created_time"],
+                                "cleanup_attempts": resource_info["cleanup_attempts"],
+                            }
+                        )
 
                 return leaked
 
-        except Exception as e:
-            self.logger.error(f"Error finding leaked resources: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error finding leaked resources: %s", e)
             return []
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -539,16 +549,17 @@ class VTKResourceTracker:
                     "total_created": self.stats["total_created"],
                     "total_cleaned": self.stats["total_cleaned"],
                     "total_leaked": self.stats["total_leaked"],
-                    "cleanup_callbacks_registered": len(self.cleanup_callbacks)
+                    "cleanup_callbacks_registered": len(self.cleanup_callbacks),
                 }
 
-        except Exception as e:
-            self.logger.error(f"Error getting statistics: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error getting statistics: %s", e)
             return {}
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     def clear_tracking_data(self) -> None:
@@ -565,13 +576,13 @@ class VTKResourceTracker:
                     "total_created": 0,
                     "total_cleaned": 0,
                     "total_leaked": 0,
-                    "by_type": defaultdict(int)
+                    "by_type": defaultdict(int),
                 }
 
                 self.logger.info("Resource tracking data cleared")
 
-        except Exception as e:
-            self.logger.error(f"Error clearing tracking data: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error clearing tracking data: %s", e)
 
 
 # Global resource tracker instance
@@ -586,9 +597,14 @@ def get_vtk_resource_tracker() -> VTKResourceTracker:
     return _vtk_resource_tracker
 
 
-def register_vtk_resource(resource: Any, resource_type: ResourceType,
-                         name: Optional[str] = None, parent_id: Optional[str] = None,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+def register_vtk_resource(
+    """TODO: Add docstring."""
+    resource: Any,
+    resource_type: ResourceType,
+    name: Optional[str] = None,
+    parent_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> str:
     """
     Convenience function to register a VTK resource.
 
@@ -602,7 +618,9 @@ def register_vtk_resource(resource: Any, resource_type: ResourceType,
     Returns:
         Unique resource ID
     """
-    return get_vtk_resource_tracker().register_resource(resource, resource_type, name, parent_id, metadata)
+    return get_vtk_resource_tracker().register_resource(
+        resource, resource_type, name, parent_id, metadata
+    )
 
 
 def cleanup_vtk_resource(resource_id: str) -> bool:

@@ -42,6 +42,7 @@ class ThemeManager:
     VARIABLE_PATTERN = re.compile(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}")
 
     def __init__(self) -> None:
+        """TODO: Add docstring."""
         self._logger = logging.getLogger("gui.theme")
         self._colors: Dict[str, str] = {
             k: _normalize_hex(v) for k, v in asdict(ThemeDefaults()).items()
@@ -52,15 +53,14 @@ class ThemeManager:
         self._css_file_cache: Dict[str, Tuple[float, int, str]] = (
             {}
         )  # path -> (mtime, version, processed_css)
-        self._css_text_cache: Dict[str, Tuple[int, str]] = (
-            {}
-        )  # key -> (version, processed_css)
+        self._css_text_cache: Dict[str, Tuple[int, str]] = {}  # key -> (version, processed_css)
         # Widget registry: weak refs to (widget, css_path, css_text)
         self._widgets: "weakref.WeakSet[Any]" = weakref.WeakSet()
         self._widget_sources: Dict[int, Tuple[Optional[str], Optional[str]]] = {}
 
     @classmethod
     def instance(cls) -> "ThemeManager":
+        """TODO: Add docstring."""
         if cls._instance is None:
             cls._instance = ThemeManager()
         return cls._instance
@@ -114,6 +114,7 @@ class ThemeManager:
         return getattr(self, "_preset_name", "custom")
 
     def apply_preset(
+        """TODO: Add docstring."""
         self,
         preset_name: str,
         *,
@@ -126,9 +127,7 @@ class ThemeManager:
             preset_colors = PRESETS[name]
             primary = preset_colors.get("primary", ThemeDefaults.primary)
             mode = (
-                "dark"
-                if preset_colors.get("window_bg", "#ffffff").lower() == "#000000"
-                else "auto"
+                "dark" if preset_colors.get("window_bg", "#ffffff").lower() == "#000000" else "auto"
             )
             derived = derive_mode_palette(primary, mode=mode)
             merged = {**derived, **preset_colors}
@@ -148,14 +147,14 @@ class ThemeManager:
         derived = derive_mode_palette(seed, mode=mode)
         self.set_colors(derived)
         self._preset_name = "custom"
-        self._log_json(
-            logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed
-        )
+        self._log_json(logging.INFO, "theme_preset_applied", preset="custom", mode=mode, seed=seed)
 
     def qcolor(self, name: str) -> QColor:
+        """TODO: Add docstring."""
         return hex_to_qcolor(self.get_color(name, context="qcolor"))
 
     def vtk_rgb(self, name: str) -> Tuple[float, float, float]:
+        """TODO: Add docstring."""
         return hex_to_vtk_rgb(self.get_color(name, context="vtk_rgb"))
 
     def _strip_css_comments(self, text: str) -> str:
@@ -173,6 +172,7 @@ class ThemeManager:
             return cached[1]
 
         def replace(match: re.Match[str]) -> str:
+            """TODO: Add docstring."""
             var = match.group(1)
             value = self.get_color(var, context="css_template")
             return value if value else FALLBACK_COLOR
@@ -182,10 +182,8 @@ class ThemeManager:
             processed = re.sub(self.VARIABLE_PATTERN, replace, text)
             self._css_text_cache[key] = (self._version, processed)
             return processed
-        except Exception as exc:
-            self._log_json(
-                logging.ERROR, "css_template_processing_error", error=str(exc)
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            self._log_json(logging.ERROR, "css_template_processing_error", error=str(exc))
             return css_text
 
     def process_css_file(self, path: Union[str, Path]) -> str:
@@ -193,15 +191,13 @@ class ThemeManager:
         p = str(path)
         try:
             mtime = Path(p).stat().st_mtime
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "css_file_stat_error", path=p, error=str(exc))
             try:
                 text = Path(p).read_text(encoding="utf-8")
                 return self.process_css_template(text)
-            except Exception as exc2:
-                self._log_json(
-                    logging.ERROR, "css_file_read_error", path=p, error=str(exc2)
-                )
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc2:
+                self._log_json(logging.ERROR, "css_file_read_error", path=p, error=str(exc2))
                 return ""
 
         cached = self._css_file_cache.get(p)
@@ -213,13 +209,12 @@ class ThemeManager:
             processed = self.process_css_template(text)
             self._css_file_cache[p] = (mtime, self._version, processed)
             return processed
-        except Exception as exc:
-            self._log_json(
-                logging.ERROR, "css_file_processing_error", path=p, error=str(exc)
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            self._log_json(logging.ERROR, "css_file_processing_error", path=p, error=str(exc))
             return ""
 
     def register_widget(
+        """TODO: Add docstring."""
         self,
         widget: Any,
         *,
@@ -234,7 +229,7 @@ class ThemeManager:
                 str(css_path) if css_path is not None else None,
                 css_text,
             )
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "widget_register_error", error=str(exc))
 
     def apply_stylesheet(self, widget: Any) -> None:
@@ -260,7 +255,7 @@ class ThemeManager:
                     css_path=css_path or "",
                     css_text_len=len(css_text or ""),
                 )
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "stylesheet_apply_error", error=str(exc))
 
     def apply_to_registered(self) -> None:
@@ -291,7 +286,7 @@ class ThemeManager:
             path = self._settings_path()
             path.write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
             self._log_json(logging.INFO, "theme_saved", path=str(path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_save_error", error=str(exc))
 
     def load_from_settings(self) -> None:
@@ -304,20 +299,16 @@ class ThemeManager:
             if isinstance(data, dict):
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_loaded", path=str(path))
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self._log_json(logging.ERROR, "theme_load_error", error=str(exc))
 
     def export_theme(self, file_path: Union[str, Path]) -> None:
         """Export current theme to a JSON file at file_path."""
         try:
-            Path(file_path).write_text(
-                json.dumps(self.colors, indent=2), encoding="utf-8"
-            )
+            Path(file_path).write_text(json.dumps(self.colors, indent=2), encoding="utf-8")
             self._log_json(logging.INFO, "theme_exported", path=str(file_path))
-        except Exception as exc:
-            self._log_json(
-                logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc)
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            self._log_json(logging.ERROR, "theme_export_error", path=str(file_path), error=str(exc))
 
     def import_theme(self, file_path: Union[str, Path]) -> None:
         """Import a theme from a JSON file at file_path."""
@@ -326,7 +317,5 @@ class ThemeManager:
             if isinstance(data, dict):
                 self.set_colors({k: v for k, v in data.items() if k in self._colors})
                 self._log_json(logging.INFO, "theme_imported", path=str(file_path))
-        except Exception as exc:
-            self._log_json(
-                logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc)
-            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            self._log_json(logging.ERROR, "theme_import_error", path=str(file_path), error=str(exc))

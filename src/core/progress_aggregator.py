@@ -16,6 +16,7 @@ from src.core.logging_config import get_logger, log_function_call
 @dataclass
 class SubOperationProgress:
     """Progress information for a sub-operation within a chunk."""
+
     operation_id: str
     progress: float = 0.0  # 0-100
     status: str = "pending"
@@ -41,6 +42,7 @@ class SubOperationProgress:
 @dataclass
 class ChunkProgress:
     """Progress information for a single chunk."""
+
     chunk_id: str
     progress: float = 0.0  # 0-100
     status: str = "pending"
@@ -49,7 +51,8 @@ class ChunkProgress:
     error: Optional[str] = None
     sub_operations: Dict[str, SubOperationProgress] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.sub_operations is None:
             self.sub_operations = {}
 
@@ -77,8 +80,7 @@ class ChunkProgress:
             return self.progress
 
         weighted_progress = sum(
-            (op.progress / 100.0) * op.weight
-            for op in self.sub_operations.values()
+            (op.progress / 100.0) * op.weight for op in self.sub_operations.values()
         )
         return (weighted_progress / total_weight) * 100.0
 
@@ -91,7 +93,7 @@ class ProgressAggregator:
     calculates overall progress for display in the UI.
     """
 
-    def __init__(self, total_chunks: int):
+    def __init__(self, total_chunks: int) -> None:
         """
         Initialize the progress aggregator.
 
@@ -108,15 +110,16 @@ class ProgressAggregator:
             chunk_id = f"chunk_{i:03d}"
             self.chunks[chunk_id] = ChunkProgress(chunk_id=chunk_id)
 
-        self.logger.debug(f"Initialized progress aggregator for {total_chunks} chunks")
+        self.logger.debug("Initialized progress aggregator for %s chunks", total_chunks)
 
     @log_function_call
     def update_chunk_progress(
+        """TODO: Add docstring."""
         self,
         chunk_id: str,
         progress: float,
         status: Optional[str] = None,
-        error: Optional[str] = None
+        error: Optional[str] = None,
     ) -> None:
         """
         Update progress for a specific chunk.
@@ -129,7 +132,7 @@ class ProgressAggregator:
         """
         with self._lock:
             if chunk_id not in self.chunks:
-                self.logger.warning(f"Unknown chunk ID: {chunk_id}")
+                self.logger.warning("Unknown chunk ID: %s", chunk_id)
                 return
 
             chunk = self.chunks[chunk_id]
@@ -148,16 +151,17 @@ class ProgressAggregator:
             if error:
                 chunk.error = error
 
-            self.logger.debug(f"Updated chunk {chunk_id}: {progress:.1f}% - {status}")
+            self.logger.debug("Updated chunk %s: {progress:.1f}% - {status}", chunk_id)
 
     @log_function_call
     def update_sub_operation_progress(
+        """TODO: Add docstring."""
         self,
         chunk_id: str,
         operation_id: str,
         progress: float,
         status: Optional[str] = None,
-        weight: float = 1.0
+        weight: float = 1.0,
     ) -> None:
         """
         Update progress for a sub-operation within a chunk.
@@ -171,7 +175,7 @@ class ProgressAggregator:
         """
         with self._lock:
             if chunk_id not in self.chunks:
-                self.logger.warning(f"Unknown chunk ID: {chunk_id}")
+                self.logger.warning("Unknown chunk ID: %s", chunk_id)
                 return
 
             chunk = self.chunks[chunk_id]
@@ -179,8 +183,7 @@ class ProgressAggregator:
             # Get or create sub-operation
             if operation_id not in chunk.sub_operations:
                 chunk.sub_operations[operation_id] = SubOperationProgress(
-                    operation_id=operation_id,
-                    weight=weight
+                    operation_id=operation_id, weight=weight
                 )
 
             sub_op = chunk.sub_operations[operation_id]
@@ -200,7 +203,9 @@ class ProgressAggregator:
             # Update chunk progress based on weighted sub-operations
             chunk.progress = chunk.calculate_weighted_progress()
 
-            self.logger.debug(f"Updated sub-operation {chunk_id}.{operation_id}: {progress:.1f}% - {status}")
+            self.logger.debug(
+                f"Updated sub-operation {chunk_id}.{operation_id}: {progress:.1f}% - {status}"
+            )
 
     @log_function_call
     def get_chunk_progress(self, chunk_id: str) -> Optional[ChunkProgress]:
@@ -262,8 +267,11 @@ class ProgressAggregator:
             List of active chunk IDs
         """
         with self._lock:
-            return [chunk_id for chunk_id, chunk in self.chunks.items()
-                   if chunk.start_time and not chunk.is_completed and not chunk.error]
+            return [
+                chunk_id
+                for chunk_id, chunk in self.chunks.items()
+                if chunk.start_time and not chunk.is_completed and not chunk.error
+            ]
 
     @log_function_call
     def get_progress_summary(self) -> Dict:
@@ -282,7 +290,13 @@ class ProgressAggregator:
             # Calculate sub-operation statistics
             total_sub_ops = sum(len(chunk.sub_operations) for chunk in self.chunks.values())
             active_sub_ops = sum(
-                len([op for op in chunk.sub_operations.values() if op.start_time and not op.is_completed])
+                len(
+                    [
+                        op
+                        for op in chunk.sub_operations.values()
+                        if op.start_time and not op.is_completed
+                    ]
+                )
                 for chunk in self.chunks.values()
             )
 
@@ -295,7 +309,7 @@ class ProgressAggregator:
                 "overall_progress": self.calculate_overall_progress(),
                 "failed_chunks": self.get_failed_chunks(),
                 "total_sub_operations": total_sub_ops,
-                "active_sub_operations": active_sub_ops
+                "active_sub_operations": active_sub_ops,
             }
 
     @log_function_call
@@ -311,11 +325,13 @@ class ProgressAggregator:
     def __str__(self) -> str:
         """String representation of progress."""
         summary = self.get_progress_summary()
-        return (f"ProgressAggregator(total={summary['total_chunks']}, "
-                f"completed={summary['completed']}, "
-                f"active={summary['active']}, "
-                f"failed={summary['failed']}, "
-                f"progress={summary['overall_progress']:.1f}%)")
+        return (
+            f"ProgressAggregator(total={summary['total_chunks']}, "
+            f"completed={summary['completed']}, "
+            f"active={summary['active']}, "
+            f"failed={summary['failed']}, "
+            f"progress={summary['overall_progress']:.1f}%)"
+        )
 
     def __repr__(self) -> str:
         """Detailed string representation."""

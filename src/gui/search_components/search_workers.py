@@ -19,11 +19,18 @@ class SearchWorker(QThread):
     """
     Worker thread for performing search operations without blocking the UI.
     """
+
     search_completed = Signal(dict)
     search_failed = Signal(str)
 
-    def __init__(self, query: str, filters: Optional[Dict[str, Any]] = None,
-                 limit: int = 100, offset: int = 0):
+    def __init__(
+        """TODO: Add docstring."""
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ):
         """
         Initialize the search worker.
 
@@ -40,16 +47,14 @@ class SearchWorker(QThread):
         self.offset = offset
         self.search_engine = get_search_engine()
 
-    def run(self):
+    def run(self) -> None:
         """
         Execute the search operation.
         """
         try:
-            results = self.search_engine.search(
-                self.query, self.filters, self.limit, self.offset
-            )
+            results = self.search_engine.search(self.query, self.filters, self.limit, self.offset)
             self.search_completed.emit(results)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Search failed: {str(e)}"
             logger.error(error_msg)
             self.search_failed.emit(error_msg)
@@ -59,9 +64,10 @@ class SearchSuggestionWorker(QThread):
     """
     Worker thread for getting search suggestions.
     """
+
     suggestions_ready = Signal(list)
 
-    def __init__(self, query: str, limit: int = 10):
+    def __init__(self, query: str, limit: int = 10) -> None:
         """
         Initialize the suggestion worker.
 
@@ -74,14 +80,13 @@ class SearchSuggestionWorker(QThread):
         self.limit = limit
         self.search_engine = get_search_engine()
 
-    def run(self):
+    def run(self) -> None:
         """
         Get search suggestions.
         """
         try:
             suggestions = self.search_engine.get_search_suggestions(self.query, self.limit)
             self.suggestions_ready.emit(suggestions)
-        except Exception as e:
-            logger.error(f"Failed to get suggestions: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to get suggestions: %s", str(e))
             self.suggestions_ready.emit([])
-

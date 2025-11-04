@@ -6,12 +6,11 @@ No complexity, no qt-material dependencies, just straightforward styling.
 
 Usage:
     from src.gui.theme.qdarkstyle_service import QDarkStyleThemeService
-    
+
     service = QDarkStyleThemeService.instance()
     service.apply_theme("dark")  # or "light"
 """
 
-import logging
 from typing import Literal, Optional
 from PySide6.QtWidgets import QApplication
 from src.core.logging_config import get_logger
@@ -24,38 +23,39 @@ ThemeType = Literal["dark", "light", "auto"]
 class QDarkStyleThemeService:
     """
     Simple, clean QDarkStyleSheet theme service.
-    
+
     Features:
     - Single responsibility: Apply QDarkStyleSheet themes
     - No complexity: Just load and apply
     - Automatic fallback: If qdarkstyle unavailable, use Qt defaults
     - Thread-safe singleton pattern
     """
-    
+
     _instance: Optional["QDarkStyleThemeService"] = None
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialize the theme service."""
         self._current_theme: ThemeType = "dark"
         self._qdarkstyle_available = self._check_qdarkstyle()
-        
+
     @classmethod
     def instance(cls) -> "QDarkStyleThemeService":
         """Get singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
-    
+
     def _check_qdarkstyle(self) -> bool:
         """Check if qdarkstyle is available."""
         try:
             import qdarkstyle
-            logger.info(f"QDarkStyleSheet available: {qdarkstyle.__version__}")
+
+            logger.info("QDarkStyleSheet available: %s", qdarkstyle.__version__)
             return True
         except ImportError:
             logger.warning("QDarkStyleSheet not available, will use Qt defaults")
             return False
-    
+
     def apply_theme(self, theme: ThemeType = "dark") -> bool:
         """
         Apply a theme to the application.
@@ -79,7 +79,6 @@ class QDarkStyleThemeService:
                 return False
 
             import qdarkstyle
-            from qdarkstyle.palette import Palette
 
             # Determine which palette to use
             if theme == "auto":
@@ -94,41 +93,44 @@ class QDarkStyleThemeService:
             if palette_name == "dark":
                 # For dark theme, we need to use the dark palette
                 # The default Palette class is light, so we need to find the dark one
-                stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
+                stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6")
                 # Check if there's a dark palette available
                 try:
                     from qdarkstyle.palette.dark import DarkPalette
-                    stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6', palette=DarkPalette)
+
+                    stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6", palette=DarkPalette)
                 except ImportError:
                     # Fallback: use default (light) if dark not available
                     logger.warning("Dark palette not available, using default")
             else:
                 # Light theme (default)
-                stylesheet = qdarkstyle.load_stylesheet(qt_api='pyside6')
+                stylesheet = qdarkstyle.load_stylesheet(qt_api="pyside6")
 
             app.setStyleSheet(stylesheet)
 
-            logger.info(f"QDarkStyleSheet theme applied: {palette_name}")
+            logger.info("QDarkStyleSheet theme applied: %s", palette_name)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to apply theme: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
-    
+
     def _detect_system_theme(self) -> str:
         """
         Detect system theme preference.
-        
+
         Returns:
             "dark" or "light"
         """
         try:
             import platform
+
             system = platform.system()
-            
+
             if system == "Windows":
                 try:
                     import winreg
+
                     registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
                     registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
                     value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
@@ -136,32 +138,32 @@ class QDarkStyleThemeService:
                     return "light" if value == 1 else "dark"
                 except Exception:
                     return "dark"  # Default to dark
-            
+
             elif system == "Darwin":  # macOS
                 try:
                     import subprocess
+
                     result = subprocess.run(
                         ["defaults", "read", "-g", "AppleInterfaceStyle"],
                         capture_output=True,
                         text=True,
-                        timeout=1
+                        timeout=1,
                     )
                     return "dark" if "Dark" in result.stdout else "light"
                 except Exception:
                     return "light"  # Default to light
-            
+
             else:  # Linux and others
                 return "dark"  # Default to dark
-                
-        except Exception as e:
-            logger.debug(f"Failed to detect system theme: {e}")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Failed to detect system theme: %s", e)
             return "dark"  # Safe default
-    
+
     def get_current_theme(self) -> ThemeType:
         """Get the currently applied theme."""
         return self._current_theme
-    
+
     def is_available(self) -> bool:
         """Check if QDarkStyleSheet is available."""
         return self._qdarkstyle_available
-

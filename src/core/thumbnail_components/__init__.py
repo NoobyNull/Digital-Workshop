@@ -12,4 +12,3 @@ from .thumbnail_generator_main import ThumbnailGenerator
 __all__ = [
     "ThumbnailGenerator",
 ]
-

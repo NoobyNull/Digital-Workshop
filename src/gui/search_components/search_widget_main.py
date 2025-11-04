@@ -5,13 +5,23 @@ Provides the primary search interface with history and saved searches.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from PySide6.QtCore import Signal, Qt, QTimer, QStringListModel
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QProgressBar, QSplitter, QTabWidget, QListWidget, QListWidgetItem,
-    QLabel, QCompleter, QDialog
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QProgressBar,
+    QSplitter,
+    QTabWidget,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+    QCompleter,
+    QDialog,
 )
 from PySide6.QtGui import QFont
 
@@ -32,7 +42,7 @@ class SearchWidget(QWidget):
     search_requested = Signal(str, dict)
     model_selected = Signal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize the search widget.
 
@@ -48,7 +58,7 @@ class SearchWidget(QWidget):
         self.setup_search_history()
         self.apply_styling()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the search widget UI."""
         layout = QVBoxLayout(self)
 
@@ -151,18 +161,17 @@ class SearchWidget(QWidget):
         # Initially hide advanced search
         self.advanced_search.setVisible(False)
 
-    def apply_styling(self):
+    def apply_styling(self) -> None:
         """Apply Material Design theme to the search widget."""
         # Material Design theme is applied globally via ThemeService
         # No need to apply hardcoded stylesheets here
-        pass
 
-    def setup_search_history(self):
+    def setup_search_history(self) -> None:
         """Set up search history."""
         self.refresh_search_history()
         self.refresh_saved_searches()
 
-    def on_search_text_changed(self, text: str):
+    def on_search_text_changed(self, text: str) -> None:
         """
         Handle search text change for suggestions.
 
@@ -172,7 +181,7 @@ class SearchWidget(QWidget):
         # Start timer for delayed suggestions
         self.suggestion_timer.start(300)  # 300ms delay
 
-    def get_suggestions(self):
+    def get_suggestions(self) -> None:
         """Get search suggestions for current text."""
         query = self.search_edit.text().strip()
 
@@ -188,7 +197,7 @@ class SearchWidget(QWidget):
         self.suggestion_worker.suggestions_ready.connect(self.display_suggestions)
         self.suggestion_worker.start()
 
-    def display_suggestions(self, suggestions: List[str]):
+    def display_suggestions(self, suggestions: List[str]) -> None:
         """
         Display search suggestions.
 
@@ -202,7 +211,7 @@ class SearchWidget(QWidget):
         model = QStringListModel(suggestions)
         self.completer.setModel(model)
 
-    def toggle_advanced_search(self, checked: bool):
+    def toggle_advanced_search(self, checked: bool) -> None:
         """
         Toggle advanced search visibility.
 
@@ -211,7 +220,7 @@ class SearchWidget(QWidget):
         """
         self.advanced_search.setVisible(checked)
 
-    def perform_search(self):
+    def perform_search(self) -> None:
         """Perform the current search."""
         query = self.search_edit.text().strip()
         filters = self.advanced_search.get_current_filters()
@@ -233,7 +242,7 @@ class SearchWidget(QWidget):
         self.search_worker.search_failed.connect(self.search_failed)
         self.search_worker.start()
 
-    def display_results(self, results: Dict[str, Any]):
+    def display_results(self, results: Dict[str, Any]) -> None:
         """
         Display search results.
 
@@ -241,14 +250,12 @@ class SearchWidget(QWidget):
             results: Search results dictionary
         """
         self.progress_bar.setVisible(False)
-        self.current_results = results['results']
+        self.current_results = results["results"]
 
         # Update results header
-        total_count = results['total_count']
-        execution_time = results['execution_time']
-        self.results_header.setText(
-            f"Found {total_count} results in {execution_time:.3f} seconds"
-        )
+        total_count = results["total_count"]
+        execution_time = results["execution_time"]
+        self.results_header.setText(f"Found {total_count} results in {execution_time:.3f} seconds")
 
         # Clear and populate results list
         self.results_list.clear()
@@ -258,7 +265,7 @@ class SearchWidget(QWidget):
             self.results_list.addItem(item)
 
         # Emit search requested signal
-        self.search_requested.emit(results['query'], results['filters'])
+        self.search_requested.emit(results["query"], results["filters"])
 
     def create_result_item(self, result: Dict[str, Any]) -> QListWidgetItem:
         """
@@ -271,11 +278,11 @@ class SearchWidget(QWidget):
             QListWidgetItem with formatted result
         """
         # Get model information
-        title = result.get('title') or result.get('filename', 'Unknown')
-        description = result.get('description', '')
-        category = result.get('category', 'Uncategorized')
-        format_type = result.get('format', '').upper()
-        rating = result.get('rating', 0)
+        title = result.get("title") or result.get("filename", "Unknown")
+        description = result.get("description", "")
+        category = result.get("category", "Uncategorized")
+        format_type = result.get("format", "").upper()
+        rating = result.get("rating", 0)
 
         # Create item text
         item_text = f"<b>{title}</b>"
@@ -297,14 +304,14 @@ class SearchWidget(QWidget):
         # Create item
         item = QListWidgetItem()
         item.setText(item_text)
-        item.setData(Qt.UserRole, result['id'])  # Store model ID
+        item.setData(Qt.UserRole, result["id"])  # Store model ID
 
         # Enable rich text
         item.setTextFormat(Qt.RichText)
 
         return item
 
-    def search_failed(self, error_msg: str):
+    def search_failed(self, error_msg: str) -> None:
         """
         Handle search failure.
 
@@ -315,7 +322,7 @@ class SearchWidget(QWidget):
         self.results_header.setText(f"Search failed: {error_msg}")
         logger.error(error_msg)
 
-    def on_filters_changed(self, filters: Dict[str, Any]):
+    def on_filters_changed(self, filters: Dict[str, Any]) -> None:
         """
         Handle filter changes.
 
@@ -326,7 +333,7 @@ class SearchWidget(QWidget):
         if self.search_edit.text().strip():
             self.perform_search()
 
-    def on_result_selected(self, item: QListWidgetItem):
+    def on_result_selected(self, item: QListWidgetItem) -> None:
         """
         Handle result selection.
 
@@ -337,7 +344,7 @@ class SearchWidget(QWidget):
         if model_id:
             self.model_selected.emit(model_id)
 
-    def save_current_search(self):
+    def save_current_search(self) -> None:
         """Save the current search."""
         query = self.search_edit.text().strip()
         filters = self.advanced_search.get_current_filters()
@@ -353,10 +360,10 @@ class SearchWidget(QWidget):
                 try:
                     self.search_engine.save_search(name, query, filters)
                     self.refresh_saved_searches()
-                except Exception as e:
-                    logger.error(f"Failed to save search: {str(e)}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    logger.error("Failed to save search: %s", str(e))
 
-    def refresh_search_history(self):
+    def refresh_search_history(self) -> None:
         """Refresh the search history list."""
         try:
             history = self.search_engine.get_search_history()
@@ -365,8 +372,8 @@ class SearchWidget(QWidget):
 
             for item in history:
                 # Format history item
-                query = item['query']
-                timestamp = item['timestamp']
+                query = item["query"]
+                timestamp = item["timestamp"]
 
                 # Parse timestamp
                 dt = datetime.fromisoformat(timestamp)
@@ -382,10 +389,10 @@ class SearchWidget(QWidget):
                 list_item.setData(Qt.UserRole, item)
                 self.history_widget.addItem(list_item)
 
-        except Exception as e:
-            logger.error(f"Failed to refresh search history: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to refresh search history: %s", str(e))
 
-    def refresh_saved_searches(self):
+    def refresh_saved_searches(self) -> None:
         """Refresh the saved searches list."""
         try:
             saved = self.search_engine.get_saved_searches()
@@ -394,9 +401,9 @@ class SearchWidget(QWidget):
 
             for item in saved:
                 # Format saved search item
-                name = item['name']
-                query = item['query']
-                created_at = item['created_at']
+                name = item["name"]
+                query = item["query"]
+                created_at = item["created_at"]
 
                 # Parse timestamp
                 dt = datetime.fromisoformat(created_at)
@@ -412,10 +419,10 @@ class SearchWidget(QWidget):
                 list_item.setData(Qt.UserRole, item)
                 self.saved_searches_widget.addItem(list_item)
 
-        except Exception as e:
-            logger.error(f"Failed to refresh saved searches: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to refresh saved searches: %s", str(e))
 
-    def load_history_search(self, item: QListWidgetItem):
+    def load_history_search(self, item: QListWidgetItem) -> None:
         """
         Load a search from history.
 
@@ -427,10 +434,10 @@ class SearchWidget(QWidget):
             return
 
         # Set query
-        self.search_edit.setText(search_data['query'])
+        self.search_edit.setText(search_data["query"])
 
         # Set filters
-        filters = search_data.get('filters', {})
+        filters = search_data.get("filters", {})
         if filters:
             # Apply filters to advanced search widget
             self.advanced_search.set_filters(filters)
@@ -438,7 +445,7 @@ class SearchWidget(QWidget):
         # Perform search
         self.perform_search()
 
-    def load_saved_search(self, item: QListWidgetItem):
+    def load_saved_search(self, item: QListWidgetItem) -> None:
         """
         Load a saved search.
 
@@ -450,10 +457,10 @@ class SearchWidget(QWidget):
             return
 
         # Set query
-        self.search_edit.setText(search_data['query'])
+        self.search_edit.setText(search_data["query"])
 
         # Set filters
-        filters = search_data.get('filters', {})
+        filters = search_data.get("filters", {})
         if filters:
             # Apply filters to advanced search widget
             self.advanced_search.set_filters(filters)
@@ -461,14 +468,14 @@ class SearchWidget(QWidget):
         # Perform search
         self.perform_search()
 
-    def clear_search(self):
+    def clear_search(self) -> None:
         """Clear the current search."""
         self.search_edit.clear()
         self.results_list.clear()
         self.results_header.setText("Enter a search query to find models")
         self.current_results = []
 
-    def set_search_query(self, query: str):
+    def set_search_query(self, query: str) -> None:
         """
         Set the search query.
 
@@ -478,4 +485,3 @@ class SearchWidget(QWidget):
         self.search_edit.setText(query)
         if query:
             self.perform_search()
-

@@ -12,6 +12,6 @@ from src.gui.viewer_3d.viewer_widget_facade import Viewer3DWidget
 from src.gui.viewer_3d.model_renderer import RenderMode
 
 __all__ = [
-    'Viewer3DWidget',
-    'RenderMode',
+    "Viewer3DWidget",
+    "RenderMode",
 ]

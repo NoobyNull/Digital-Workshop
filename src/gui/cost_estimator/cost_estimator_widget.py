@@ -22,7 +22,6 @@ from src.core.logging_config import get_logger
 from .cost_calculator import (
     ProfessionalCostCalculator,
     CostEstimate,
-    PricingStrategy,
 )
 from .material_cost_manager import MaterialCostManager
 from src.core.services.tab_data_manager import TabDataManager
@@ -37,7 +36,7 @@ class CostEstimatorWidget(QWidget):
     # Signals
     cost_calculated = Signal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the cost estimator widget."""
         super().__init__(parent)
         self.logger = logger
@@ -317,13 +316,9 @@ class CostEstimatorWidget(QWidget):
             )
 
             # Get material cost
-            material = self.material_manager.get_material(
-                self.material_combo.currentText()
-            )
+            material = self.material_manager.get_material(self.material_combo.currentText())
             material_cost = (
-                self.material_quantity.value() * material.cost_per_unit
-                if material
-                else 0.0
+                self.material_quantity.value() * material.cost_per_unit if material else 0.0
             )
 
             # Generate estimate
@@ -350,8 +345,8 @@ class CostEstimatorWidget(QWidget):
 
             self.logger.info("Cost estimate calculated successfully")
 
-        except Exception as e:
-            self.logger.error(f"Error calculating estimate: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error calculating estimate: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to calculate estimate: {e}")
 
     def _update_displays(self) -> None:
@@ -360,21 +355,11 @@ class CostEstimatorWidget(QWidget):
             return
 
         # Update section displays
-        self.material_cost_display.setText(
-            f"${self.current_estimate.total_material_cost:.2f}"
-        )
-        self.machine_cost_display.setText(
-            f"${self.current_estimate.total_machine_cost:.2f}"
-        )
-        self.labor_cost_display.setText(
-            f"${self.current_estimate.total_labor_cost:.2f}"
-        )
-        self.shop_cost_display.setText(
-            f"${self.current_estimate.total_shop_operations_cost:.2f}"
-        )
-        self.tools_cost_display.setText(
-            f"${self.current_estimate.total_tool_cost:.2f}"
-        )
+        self.material_cost_display.setText(f"${self.current_estimate.total_material_cost:.2f}")
+        self.machine_cost_display.setText(f"${self.current_estimate.total_machine_cost:.2f}")
+        self.labor_cost_display.setText(f"${self.current_estimate.total_labor_cost:.2f}")
+        self.shop_cost_display.setText(f"${self.current_estimate.total_shop_operations_cost:.2f}")
+        self.tools_cost_display.setText(f"${self.current_estimate.total_tool_cost:.2f}")
 
         # Update summary display
         breakdown = self.current_estimate.get_cost_breakdown()
@@ -384,9 +369,7 @@ class CostEstimatorWidget(QWidget):
 
         summary_html += f"<br><b>FINAL QUOTE: ${self.current_estimate.final_quote_price:.2f}</b>"
         if self.current_estimate.quantity > 1:
-            summary_html += (
-                f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
-            )
+            summary_html += f"<br>Cost per unit: ${self.current_estimate.cost_per_unit:.2f}"
 
         self.summary_display.setText(summary_html)
 
@@ -405,17 +388,17 @@ class CostEstimatorWidget(QWidget):
 
         # Create data structure
         cost_estimate_data = {
-            'materials': materials_data,
-            'machine_setup_hours': self.machine_setup_hours.value(),
-            'machine_run_hours': self.machine_run_hours.value(),
-            'machine_hourly_rate': self.machine_hourly_rate.value(),
-            'labor_design_hours': self.labor_design_hours.value(),
-            'labor_setup_hours': self.labor_setup_hours.value(),
-            'labor_run_hours': self.labor_run_hours.value(),
-            'labor_hourly_rate': self.labor_hourly_rate.value(),
-            'quantity': self.quantity_spinbox.value(),
-            'pricing_strategy': self.pricing_strategy_combo.currentText(),
-            'profit_margin': self.profit_margin_spinbox.value()
+            "materials": materials_data,
+            "machine_setup_hours": self.machine_setup_hours.value(),
+            "machine_run_hours": self.machine_run_hours.value(),
+            "machine_hourly_rate": self.machine_hourly_rate.value(),
+            "labor_design_hours": self.labor_design_hours.value(),
+            "labor_setup_hours": self.labor_setup_hours.value(),
+            "labor_run_hours": self.labor_run_hours.value(),
+            "labor_hourly_rate": self.labor_hourly_rate.value(),
+            "quantity": self.quantity_spinbox.value(),
+            "pricing_strategy": self.pricing_strategy_combo.currentText(),
+            "profit_margin": self.profit_margin_spinbox.value(),
         }
 
         # Save to project
@@ -424,7 +407,7 @@ class CostEstimatorWidget(QWidget):
             tab_name="Project Cost Estimator",
             data=cost_estimate_data,
             filename="cost_estimate.json",
-            category="Cost Sheets"
+            category="Cost Sheets",
         )
 
         if success:
@@ -440,8 +423,7 @@ class CostEstimatorWidget(QWidget):
 
         # Load from project
         success, data, message = self.tab_data_manager.load_tab_data_from_project(
-            project_id=self.current_project_id,
-            filename="cost_estimate.json"
+            project_id=self.current_project_id, filename="cost_estimate.json"
         )
 
         if not success:
@@ -451,22 +433,22 @@ class CostEstimatorWidget(QWidget):
         # Restore data to UI
         try:
             # Restore machine time
-            self.machine_setup_hours.setValue(data.get('machine_setup_hours', 0.0))
-            self.machine_run_hours.setValue(data.get('machine_run_hours', 0.0))
-            self.machine_hourly_rate.setValue(data.get('machine_hourly_rate', 50.0))
+            self.machine_setup_hours.setValue(data.get("machine_setup_hours", 0.0))
+            self.machine_run_hours.setValue(data.get("machine_run_hours", 0.0))
+            self.machine_hourly_rate.setValue(data.get("machine_hourly_rate", 50.0))
 
             # Restore labor
-            self.labor_design_hours.setValue(data.get('labor_design_hours', 0.0))
-            self.labor_setup_hours.setValue(data.get('labor_setup_hours', 0.0))
-            self.labor_run_hours.setValue(data.get('labor_run_hours', 0.0))
-            self.labor_hourly_rate.setValue(data.get('labor_hourly_rate', 50.0))
+            self.labor_design_hours.setValue(data.get("labor_design_hours", 0.0))
+            self.labor_setup_hours.setValue(data.get("labor_setup_hours", 0.0))
+            self.labor_run_hours.setValue(data.get("labor_run_hours", 0.0))
+            self.labor_hourly_rate.setValue(data.get("labor_hourly_rate", 50.0))
 
             # Restore quantity and pricing
-            self.quantity_spinbox.setValue(data.get('quantity', 1))
-            self.profit_margin_spinbox.setValue(data.get('profit_margin', 30.0))
+            self.quantity_spinbox.setValue(data.get("quantity", 1))
+            self.profit_margin_spinbox.setValue(data.get("profit_margin", 30.0))
 
             # Restore pricing strategy
-            strategy = data.get('pricing_strategy', 'Markup')
+            strategy = data.get("pricing_strategy", "Markup")
             index = self.pricing_strategy_combo.findText(strategy)
             if index >= 0:
                 self.pricing_strategy_combo.setCurrentIndex(index)
@@ -475,5 +457,5 @@ class CostEstimatorWidget(QWidget):
             self._on_calculate()
 
             QMessageBox.information(self, "Success", message)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to restore data: {str(e)}")

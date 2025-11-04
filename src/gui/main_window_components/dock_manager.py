@@ -4,13 +4,10 @@ Dock management for main window.
 Handles creation and management of dock widgets (metadata, library).
 """
 
-from typing import Optional
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDockWidget, QTextEdit, QTabWidget
 
 from src.core.logging_config import get_logger, log_function_call
-from src.gui.theme import QtMaterialThemeService
 
 
 logger = get_logger(__name__)
@@ -19,7 +16,7 @@ logger = get_logger(__name__)
 class DockManager:
     """Manages dock widgets in the main window."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         """
         Initialize dock manager.
 
@@ -108,8 +105,8 @@ class DockManager:
 
             logger.info("Metadata editor widget created successfully")
 
-        except Exception as e:
-            logger.warning(f"Failed to create MetadataEditorWidget: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to create MetadataEditorWidget: %s", e)
 
             # Fallback to placeholder
             metadata_widget = QTextEdit()
@@ -136,7 +133,10 @@ class DockManager:
         """Restore and show the Metadata Manager panel if it was closed or missing."""
         try:
             # Create or recreate the dock as needed
-            if not hasattr(self.main_window, "metadata_dock") or self.main_window.metadata_dock is None:
+            if (
+                not hasattr(self.main_window, "metadata_dock")
+                or self.main_window.metadata_dock is None
+            ):
                 self.create_metadata_dock()
             else:
                 # Ensure it has a widget
@@ -175,14 +175,17 @@ class DockManager:
 
             logger.info("Metadata Manager restored")
 
-        except Exception as e:
-            logger.error(f"Failed to restore Metadata Manager: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to restore Metadata Manager: %s", e)
 
     @log_function_call(logger)
     def create_model_library_dock(self) -> None:
         """Create the Model Library dock and integrate it into the UI."""
         try:
-            if hasattr(self.main_window, "model_library_dock") and self.main_window.model_library_dock:
+            if (
+                hasattr(self.main_window, "model_library_dock")
+                and self.main_window.model_library_dock
+            ):
                 return
         except Exception:
             pass
@@ -237,8 +240,8 @@ class DockManager:
 
             logger.info("Model Library widget created successfully")
 
-        except Exception as e:
-            logger.warning(f"Failed to create ModelLibraryWidget: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to create ModelLibraryWidget: %s", e)
 
             # Fallback widget
             lib_placeholder = QTextEdit()
@@ -264,7 +267,10 @@ class DockManager:
         try:
             # Create or recreate the dock as needed
             recreate = False
-            if not hasattr(self.main_window, "model_library_dock") or self.main_window.model_library_dock is None:
+            if (
+                not hasattr(self.main_window, "model_library_dock")
+                or self.main_window.model_library_dock is None
+            ):
                 recreate = True
             else:
                 try:
@@ -304,19 +310,24 @@ class DockManager:
 
             logger.info("Model Library restored")
 
-        except Exception as e:
-            logger.error(f"Failed to restore Model Library: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to restore Model Library: %s", e)
 
     def update_library_action_state(self) -> None:
         """Enable/disable 'Show Model Library' based on panel visibility."""
         try:
             visible = False
-            if hasattr(self.main_window, "model_library_dock") and self.main_window.model_library_dock:
+            if (
+                hasattr(self.main_window, "model_library_dock")
+                and self.main_window.model_library_dock
+            ):
                 visible = bool(self.main_window.model_library_dock.isVisible())
 
-            if hasattr(self.main_window, "show_library_action") and self.main_window.show_library_action:
+            if (
+                hasattr(self.main_window, "show_library_action")
+                and self.main_window.show_library_action
+            ):
                 self.main_window.show_library_action.setEnabled(not visible)
 
         except Exception:
             pass
-

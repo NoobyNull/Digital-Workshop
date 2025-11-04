@@ -36,6 +36,7 @@ class SnapZone:
         priority: Priority level for overlapping zones (higher = more priority)
         enabled: Whether this snap zone is active
     """
+
     name: str
     area: QRect
     magnetism: float = 0.8
@@ -43,7 +44,7 @@ class SnapZone:
     priority: int = 1
     enabled: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if not 0.0 <= self.magnetism <= 1.0:
             raise ValueError(f"Magnetism must be between 0.0 and 1.0, got {self.magnetism}")
@@ -71,26 +72,43 @@ class VisualSettings:
         fade_in_duration: Duration of fade-in effect (milliseconds)
         fade_out_duration: Duration of fade-out effect (milliseconds)
     """
+
     show_guides: bool = True
-    guide_color: Tuple[int, int, int, int] = (0, 120, 212, 180)  # Default blue with alpha
+    guide_color: Tuple[int, int, int, int] = (
+        0,
+        120,
+        212,
+        180,
+    )  # Default blue with alpha
     guide_width: int = 2
     guide_style: str = "dashed"
-    highlight_color: Tuple[int, int, int, int] = (0, 120, 212, 100)  # Lighter blue with alpha
+    highlight_color: Tuple[int, int, int, int] = (
+        0,
+        120,
+        212,
+        100,
+    )  # Lighter blue with alpha
     highlight_opacity: float = 0.3
     animation_duration: int = 150
     fade_in_duration: int = 100
     fade_out_duration: int = 200
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate visual settings after initialization."""
         if not 0.0 <= self.highlight_opacity <= 1.0:
-            raise ValueError(f"Highlight opacity must be between 0.0 and 1.0, got {self.highlight_opacity}")
+            raise ValueError(
+                f"Highlight opacity must be between 0.0 and 1.0, got {self.highlight_opacity}"
+            )
         if self.guide_width < 1:
             raise ValueError(f"Guide width must be at least 1, got {self.guide_width}")
-        if self.guide_style not in ['solid', 'dashed', 'dotted']:
-            raise ValueError(f"Invalid guide style '{self.guide_style}', must be 'solid', 'dashed', or 'dotted'")
+        if self.guide_style not in ["solid", "dashed", "dotted"]:
+            raise ValueError(
+                f"Invalid guide style '{self.guide_style}', must be 'solid', 'dashed', or 'dotted'"
+            )
         if self.animation_duration < 0:
-            raise ValueError(f"Animation duration must be non-negative, got {self.animation_duration}")
+            raise ValueError(
+                f"Animation duration must be non-negative, got {self.animation_duration}"
+            )
 
 
 @dataclass
@@ -109,6 +127,7 @@ class PerformanceSettings:
         enable_hardware_acceleration: Whether to use hardware acceleration for rendering
         max_memory_usage_mb: Maximum memory usage for snap system (MB)
     """
+
     max_snap_calculations_per_frame: int = 100
     spatial_index_enabled: bool = True
     cache_size: int = 1000
@@ -117,18 +136,24 @@ class PerformanceSettings:
     enable_hardware_acceleration: bool = True
     max_memory_usage_mb: int = 50
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate performance settings after initialization."""
         if self.max_snap_calculations_per_frame < 1:
-            raise ValueError(f"Max snap calculations must be at least 1, got {self.max_snap_calculations_per_frame}")
+            raise ValueError(
+                f"Max snap calculations must be at least 1, got {self.max_snap_calculations_per_frame}"
+            )
         if self.cache_size < 1:
             raise ValueError(f"Cache size must be at least 1, got {self.cache_size}")
         if self.hysteresis_threshold < 0:
-            raise ValueError(f"Hysteresis threshold must be non-negative, got {self.hysteresis_threshold}")
+            raise ValueError(
+                f"Hysteresis threshold must be non-negative, got {self.hysteresis_threshold}"
+            )
         if self.update_debounce_ms < 1:
             raise ValueError(f"Update debounce must be at least 1ms, got {self.update_debounce_ms}")
         if self.max_memory_usage_mb < 1:
-            raise ValueError(f"Max memory usage must be at least 1MB, got {self.max_memory_usage_mb}")
+            raise ValueError(
+                f"Max memory usage must be at least 1MB, got {self.max_memory_usage_mb}"
+            )
 
 
 class SnapConfiguration:
@@ -151,7 +176,7 @@ class SnapConfiguration:
 
     DEFAULT_CONFIG_FILE = "snap_configuration.json"
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         Initialize the snap configuration system.
 
@@ -177,9 +202,9 @@ class SnapConfiguration:
         if self.config_file and self.config_file.exists():
             try:
                 self.load_from_file()
-                self.logger.info(f"Loaded snap configuration from {self.config_file}")
-            except Exception as e:
-                self.logger.warning(f"Failed to load configuration file, using defaults: {e}")
+                self.logger.info("Loaded snap configuration from %s", self.config_file)
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.warning("Failed to load configuration file, using defaults: %s", e)
         else:
             self.logger.info("Using default snap configuration")
 
@@ -193,17 +218,27 @@ class SnapConfiguration:
             # Default snap zones for main window edges
             default_zones = [
                 SnapZone("left_edge", QRect(0, 0, 48, 1000), magnetism=0.8, snap_threshold=56),
-                SnapZone("right_edge", QRect(1000, 0, 48, 1000), magnetism=0.8, snap_threshold=56),
+                SnapZone(
+                    "right_edge",
+                    QRect(1000, 0, 48, 1000),
+                    magnetism=0.8,
+                    snap_threshold=56,
+                ),
                 SnapZone("top_edge", QRect(0, 0, 1000, 48), magnetism=0.8, snap_threshold=56),
-                SnapZone("bottom_edge", QRect(0, 1000, 1000, 48), magnetism=0.8, snap_threshold=56),
+                SnapZone(
+                    "bottom_edge",
+                    QRect(0, 1000, 1000, 48),
+                    magnetism=0.8,
+                    snap_threshold=56,
+                ),
             ]
 
             for zone in default_zones:
                 self.snap_zones[zone.name] = zone
 
-            self.logger.debug(f"Initialized {len(default_zones)} default snap zones")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize default snap zones: {e}")
+            self.logger.debug("Initialized %s default snap zones", len(default_zones))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to initialize default snap zones: %s", e)
             raise
 
     def add_snap_zone(self, zone: SnapZone) -> None:
@@ -224,8 +259,10 @@ class SnapConfiguration:
             zone.__post_init__()
 
             self.snap_zones[zone.name] = zone
-            self.logger.info(f"Added snap zone '{zone.name}' with threshold {zone.snap_threshold}px")
-        except Exception as e:
+            self.logger.info(
+                f"Added snap zone '{zone.name}' with threshold {zone.snap_threshold}px"
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to add snap zone '{zone.name}': {e}")
             raise
 
@@ -247,7 +284,7 @@ class SnapConfiguration:
             del self.snap_zones[zone_name]
             self.logger.info(f"Removed snap zone '{zone_name}'")
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to remove snap zone '{zone_name}': {e}")
             return False
 
@@ -293,7 +330,7 @@ class SnapConfiguration:
 
             self.logger.debug(f"Updated snap zone '{zone_name}': {kwargs}")
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Failed to update snap zone '{zone_name}': {e}")
             return False
 
@@ -308,8 +345,8 @@ class SnapConfiguration:
             active_zones = [zone for zone in self.snap_zones.values() if zone.enabled]
             active_zones.sort(key=lambda z: z.priority, reverse=True)
             return active_zones
-        except Exception as e:
-            self.logger.error(f"Failed to get active snap zones: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to get active snap zones: %s", e)
             return []
 
     def set_enabled(self, enabled: bool) -> None:
@@ -322,9 +359,9 @@ class SnapConfiguration:
         try:
             old_state = self.enabled
             self.enabled = enabled
-            self.logger.info(f"Snapping system {'enabled' if enabled else 'disabled'}")
-        except Exception as e:
-            self.logger.error(f"Failed to set snapping enabled state: {e}")
+            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to set snapping enabled state: %s", e)
             self.enabled = old_state  # Restore previous state
 
     def to_dict(self) -> Dict[str, Any]:
@@ -343,12 +380,12 @@ class SnapConfiguration:
                         "x": zone.area.x(),
                         "y": zone.area.y(),
                         "width": zone.area.width(),
-                        "height": zone.area.height()
+                        "height": zone.area.height(),
                     },
                     "magnetism": zone.magnetism,
                     "snap_threshold": zone.snap_threshold,
                     "priority": zone.priority,
-                    "enabled": zone.enabled
+                    "enabled": zone.enabled,
                 }
 
             return {
@@ -362,7 +399,7 @@ class SnapConfiguration:
                     "highlight_opacity": self.visual.highlight_opacity,
                     "animation_duration": self.visual.animation_duration,
                     "fade_in_duration": self.visual.fade_in_duration,
-                    "fade_out_duration": self.visual.fade_out_duration
+                    "fade_out_duration": self.visual.fade_out_duration,
                 },
                 "performance": {
                     "max_snap_calculations_per_frame": self.performance.max_snap_calculations_per_frame,
@@ -371,12 +408,12 @@ class SnapConfiguration:
                     "hysteresis_threshold": self.performance.hysteresis_threshold,
                     "update_debounce_ms": self.performance.update_debounce_ms,
                     "enable_hardware_acceleration": self.performance.enable_hardware_acceleration,
-                    "max_memory_usage_mb": self.performance.max_memory_usage_mb
+                    "max_memory_usage_mb": self.performance.max_memory_usage_mb,
                 },
-                "snap_zones": zones_data
+                "snap_zones": zones_data,
             }
-        except Exception as e:
-            self.logger.error(f"Failed to convert configuration to dictionary: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to convert configuration to dictionary: %s", e)
             return {}
 
     def from_dict(self, data: Dict[str, Any]) -> bool:
@@ -405,20 +442,24 @@ class SnapConfiguration:
                     highlight_opacity=visual_data.get("highlight_opacity", 0.3),
                     animation_duration=visual_data.get("animation_duration", 150),
                     fade_in_duration=visual_data.get("fade_in_duration", 100),
-                    fade_out_duration=visual_data.get("fade_out_duration", 200)
+                    fade_out_duration=visual_data.get("fade_out_duration", 200),
                 )
 
             # Load performance settings
             if "performance" in data:
                 perf_data = data["performance"]
                 self.performance = PerformanceSettings(
-                    max_snap_calculations_per_frame=perf_data.get("max_snap_calculations_per_frame", 100),
+                    max_snap_calculations_per_frame=perf_data.get(
+                        "max_snap_calculations_per_frame", 100
+                    ),
                     spatial_index_enabled=perf_data.get("spatial_index_enabled", True),
                     cache_size=perf_data.get("cache_size", 1000),
                     hysteresis_threshold=perf_data.get("hysteresis_threshold", 2),
                     update_debounce_ms=perf_data.get("update_debounce_ms", 16),
-                    enable_hardware_acceleration=perf_data.get("enable_hardware_acceleration", True),
-                    max_memory_usage_mb=perf_data.get("max_memory_usage_mb", 50)
+                    enable_hardware_acceleration=perf_data.get(
+                        "enable_hardware_acceleration", True
+                    ),
+                    max_memory_usage_mb=perf_data.get("max_memory_usage_mb", 50),
                 )
 
             # Load snap zones
@@ -427,24 +468,31 @@ class SnapConfiguration:
                 for name, zone_data in data["snap_zones"].items():
                     try:
                         area_data = zone_data["area"]
-                        area = QRect(area_data["x"], area_data["y"], area_data["width"], area_data["height"])
+                        area = QRect(
+                            area_data["x"],
+                            area_data["y"],
+                            area_data["width"],
+                            area_data["height"],
+                        )
                         zone = SnapZone(
                             name=zone_data["name"],
                             area=area,
                             magnetism=zone_data.get("magnetism", 0.8),
                             snap_threshold=zone_data.get("snap_threshold", 56),
                             priority=zone_data.get("priority", 1),
-                            enabled=zone_data.get("enabled", True)
+                            enabled=zone_data.get("enabled", True),
                         )
                         self.snap_zones[name] = zone
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                         self.logger.warning(f"Failed to load snap zone '{name}': {e}")
                         continue
 
-            self.logger.info(f"Loaded configuration from dictionary with {len(self.snap_zones)} snap zones")
+            self.logger.info(
+                f"Loaded configuration from dictionary with {len(self.snap_zones)} snap zones"
+            )
             return True
-        except Exception as e:
-            self.logger.error(f"Failed to load configuration from dictionary: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load configuration from dictionary: %s", e)
             return False
 
     def save_to_file(self, file_path: Optional[str] = None) -> bool:
@@ -468,13 +516,13 @@ class SnapConfiguration:
             # Convert to dictionary and save
             config_dict = self.to_dict()
 
-            with open(save_path, 'w', encoding='utf-8') as f:
+            with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
-            self.logger.info(f"Saved snap configuration to {save_path}")
+            self.logger.info("Saved snap configuration to %s", save_path)
             return True
-        except Exception as e:
-            self.logger.error(f"Failed to save configuration to file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to save configuration to file: %s", e)
             return False
 
     def load_from_file(self, file_path: Optional[str] = None) -> bool:
@@ -493,18 +541,18 @@ class SnapConfiguration:
                 load_path = Path(self.DEFAULT_CONFIG_FILE)
 
             if not load_path.exists():
-                self.logger.warning(f"Configuration file does not exist: {load_path}")
+                self.logger.warning("Configuration file does not exist: %s", load_path)
                 return False
 
-            with open(load_path, 'r', encoding='utf-8') as f:
+            with open(load_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             success = self.from_dict(data)
             if success:
-                self.logger.info(f"Loaded snap configuration from {load_path}")
+                self.logger.info("Loaded snap configuration from %s", load_path)
             return success
-        except Exception as e:
-            self.logger.error(f"Failed to load configuration from file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load configuration from file: %s", e)
             return False
 
     def reset_to_defaults(self) -> None:
@@ -521,8 +569,8 @@ class SnapConfiguration:
             self._initialize_default_zones()
 
             self.logger.info("Reset snap configuration to defaults")
-        except Exception as e:
-            self.logger.error(f"Failed to reset configuration to defaults: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to reset configuration to defaults: %s", e)
             raise
 
     def validate_configuration(self) -> List[str]:
@@ -568,8 +616,8 @@ class SnapConfiguration:
                     errors.append(f"Snap zone '{name}' validation error: {e}")
 
             return errors
-        except Exception as e:
-            self.logger.error(f"Configuration validation failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Configuration validation failed: %s", e)
             return [f"Validation error: {e}"]
 
     def get_memory_usage(self) -> int:
@@ -594,6 +642,6 @@ class SnapConfiguration:
             memory += 64
 
             return memory
-        except Exception as e:
-            self.logger.error(f"Failed to calculate memory usage: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to calculate memory usage: %s", e)
             return 0

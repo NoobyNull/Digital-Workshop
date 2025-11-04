@@ -6,7 +6,6 @@ and cleanup mechanisms to ensure stable memory usage during large file processin
 """
 
 import gc
-import os
 import psutil
 import threading
 import time
@@ -20,6 +19,7 @@ from src.core.logging_config import get_logger, log_function_call
 
 class MemoryPressure(Enum):
     """Memory pressure levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -29,6 +29,7 @@ class MemoryPressure(Enum):
 @dataclass
 class MemoryStats:
     """Memory usage statistics."""
+
     total_memory_gb: float
     available_memory_gb: float
     used_memory_gb: float
@@ -56,7 +57,7 @@ class MemoryPool:
     and improve memory locality.
     """
 
-    def __init__(self, block_size_mb: int = 64, max_blocks: int = 10):
+    def __init__(self, block_size_mb: int = 64, max_blocks: int = 10) -> None:
         """
         Initialize memory pool.
 
@@ -105,7 +106,7 @@ class MemoryPool:
         with self._lock:
             if block in self.allocated_blocks and block not in self.available_blocks:
                 # Clear the block for reuse
-                block[:] = b'\x00'
+                block[:] = b"\x00"
                 self.available_blocks.append(block)
 
     def cleanup(self) -> None:
@@ -123,7 +124,7 @@ class MemoryMonitor:
     for adaptive resource management.
     """
 
-    def __init__(self, update_interval_seconds: float = 1.0):
+    def __init__(self, update_interval_seconds: float = 1.0) -> None:
         """
         Initialize memory monitor.
 
@@ -146,9 +147,7 @@ class MemoryMonitor:
 
             self._monitoring = True
             self._monitor_thread = threading.Thread(
-                target=self._monitor_loop,
-                name="MemoryMonitor",
-                daemon=True
+                target=self._monitor_loop, name="MemoryMonitor", daemon=True
             )
             self._monitor_thread.start()
             self.logger.info("Memory monitoring started")
@@ -173,11 +172,11 @@ class MemoryMonitor:
                 for callback in self._callbacks:
                     try:
                         callback(self._stats)
-                    except Exception as e:
-                        self.logger.warning(f"Memory monitor callback failed: {e}")
+                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        self.logger.warning("Memory monitor callback failed: %s", e)
 
-            except Exception as e:
-                self.logger.error(f"Memory monitoring error: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Memory monitoring error: %s", e)
 
             time.sleep(self.update_interval)
 
@@ -202,8 +201,8 @@ class MemoryMonitor:
                 else:
                     self._stats.pressure_level = MemoryPressure.LOW
 
-        except Exception as e:
-            self.logger.warning(f"Failed to update memory stats: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to update memory stats: %s", e)
 
     def _check_pressure_levels(self) -> None:
         """Check and log memory pressure levels."""
@@ -236,7 +235,7 @@ class MemoryMonitor:
                 memory_percent=self._stats.memory_percent,
                 gpu_memory_used_gb=self._stats.gpu_memory_used_gb,
                 gpu_memory_total_gb=self._stats.gpu_memory_total_gb,
-                pressure_level=self._stats.pressure_level
+                pressure_level=self._stats.pressure_level,
             )
 
     def add_pressure_callback(self, callback: Callable[[MemoryStats], None]) -> None:
@@ -271,7 +270,7 @@ class MemoryManager:
     Provides adaptive memory management based on system resources and usage patterns.
     """
 
-    def __init__(self, max_memory_gb: float = 2.0):
+    def __init__(self, max_memory_gb: float = 2.0) -> None:
         """
         Initialize memory manager.
 
@@ -295,7 +294,7 @@ class MemoryManager:
         # Register cleanup callback
         self.monitor.add_pressure_callback(self._on_memory_pressure)
 
-        self.logger.info(f"MemoryManager initialized with {max_memory_gb}GB limit")
+        self.logger.info("MemoryManager initialized with %sGB limit", max_memory_gb)
 
     def _on_memory_pressure(self, stats: MemoryStats) -> None:
         """
@@ -339,17 +338,17 @@ class MemoryManager:
             block = self.memory_pool.allocate(size_bytes)
             if block:
                 self.allocation_tracking[owner].append(len(block))
-                self.logger.debug(f"Allocated {len(block)} bytes from pool for {owner}")
+                self.logger.debug("Allocated %s bytes from pool for {owner}", len(block))
                 return block
 
             # Fallback to direct allocation if pool fails
             try:
                 block = bytearray(size_bytes)
                 self.allocation_tracking[owner].append(len(block))
-                self.logger.debug(f"Direct allocated {len(block)} bytes for {owner}")
+                self.logger.debug("Direct allocated %s bytes for {owner}", len(block))
                 return block
             except MemoryError:
-                self.logger.error(f"Memory allocation failed for {owner}: {size_bytes} bytes")
+                self.logger.error("Memory allocation failed for %s: {size_bytes} bytes", owner)
                 return None
 
     @log_function_call
@@ -365,9 +364,9 @@ class MemoryManager:
             try:
                 # Try to return to pool
                 self.memory_pool.free(block)
-                self.logger.debug(f"Returned {len(block)} bytes to pool for {owner}")
-            except Exception as e:
-                self.logger.warning(f"Failed to return block to pool: {e}")
+                self.logger.debug("Returned %s bytes to pool for {owner}", len(block))
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.warning("Failed to return block to pool: %s", e)
 
             # Remove from tracking
             if owner in self.allocation_tracking:
@@ -385,16 +384,14 @@ class MemoryManager:
             Dictionary with allocation summary
         """
         with self._lock:
-            total_allocated = sum(
-                sum(sizes) for sizes in self.allocation_tracking.values()
-            )
+            total_allocated = sum(sum(sizes) for sizes in self.allocation_tracking.values())
 
             return {
                 "total_allocated_bytes": total_allocated,
                 "total_allocated_gb": total_allocated / (1024**3),
                 "allocation_count": sum(len(sizes) for sizes in self.allocation_tracking.values()),
                 "owners": dict(self.allocation_tracking),
-                "memory_stats": self.monitor.get_memory_stats().__dict__
+                "memory_stats": self.monitor.get_memory_stats().__dict__,
             }
 
     @log_function_call
@@ -410,7 +407,7 @@ class MemoryManager:
         # Force garbage collection
         collected = gc.collect()
         if collected > 0:
-            self.logger.debug(f"Garbage collection freed {collected} objects")
+            self.logger.debug("Garbage collection freed %s objects", collected)
             cleanup_count += 1
 
         # Clean up memory pool
@@ -441,7 +438,7 @@ class MemoryManager:
         # releasing GPU memory, etc.
 
         if cleanup_count > 0:
-            self.logger.info(f"Force cleanup completed: {cleanup_count} operations")
+            self.logger.info("Force cleanup completed: %s operations", cleanup_count)
 
         return cleanup_count
 
@@ -461,7 +458,7 @@ class MemoryManager:
 
         return projected_usage <= self.max_memory_gb
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup on destruction."""
         try:
             self.monitor.stop_monitoring()

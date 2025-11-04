@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class CameraParameters:
     """Camera parameters for thumbnail generation."""
+
     position: Tuple[float, float, float]
     focal_point: Tuple[float, float, float]
     view_up: Tuple[float, float, float]
@@ -32,14 +33,15 @@ class ViewOptimizer:
     and selects the best view based on visible surface area and balance.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the view optimizer."""
         self.logger = get_logger(__name__)
 
     def find_best_orthogonal_view(
+        """TODO: Add docstring."""
         self,
         bounds: Tuple[float, float, float, float, float, float],
-        prefer_front: bool = True
+        prefer_front: bool = True,
     ) -> CameraParameters:
         """
         Find the best orthogonal viewing angle for a 3D model.
@@ -65,7 +67,7 @@ class ViewOptimizer:
             dz = max(1e-6, zmax - zmin)
 
             # Calculate radius for camera distance
-            radius = math.sqrt(dx*dx + dy*dy + dz*dz) * 0.5
+            radius = math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5
 
             # Define orthogonal views (0°, 90°, 180°, 270°) with Z-up
             views = self._get_orthogonal_views(center, radius)
@@ -82,14 +84,16 @@ class ViewOptimizer:
                     f"(dimensions: X={dx:.2f}, Y={dy:.2f}, Z={dz:.2f})"
                 )
 
-                if score > best_score or (score == best_score and prefer_front and view_name == 'front'):
+                if score > best_score or (
+                    score == best_score and prefer_front and view_name == "front"
+                ):
                     best_score = score
                     best_view = camera_params
 
             if best_view is None:
                 # Fallback to front view
                 self.logger.warning("No valid view found, using front view as fallback")
-                best_view = views['front']
+                best_view = views["front"]
 
             self.logger.info(
                 f"Selected '{best_view.view_name}' view with score {best_score:.3f} "
@@ -98,15 +102,14 @@ class ViewOptimizer:
 
             return best_view
 
-        except Exception as e:
-            self.logger.error(f"Error finding optimal view: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error finding optimal view: %s", e, exc_info=True)
             # Return safe default view
             return self._get_default_view(bounds)
 
     def _get_orthogonal_views(
-        self,
-        center: Tuple[float, float, float],
-        radius: float
+        """TODO: Add docstring."""
+        self, center: Tuple[float, float, float], radius: float
     ) -> Dict[str, CameraParameters]:
         """
         Get all orthogonal viewing angles with Z-up orientation.
@@ -127,54 +130,48 @@ class ViewOptimizer:
 
         return {
             # Front view (0°) - looking along +Y axis
-            'front': CameraParameters(
+            "front": CameraParameters(
                 position=(cx, cy - distance, cz),
                 focal_point=center,
                 view_up=view_up,
                 distance=distance,
-                view_name='front'
+                view_name="front",
             ),
             # Right view (90°) - looking along +X axis
-            'right': CameraParameters(
+            "right": CameraParameters(
                 position=(cx + distance, cy, cz),
                 focal_point=center,
                 view_up=view_up,
                 distance=distance,
-                view_name='right'
+                view_name="right",
             ),
             # Back view (180°) - looking along -Y axis
-            'back': CameraParameters(
+            "back": CameraParameters(
                 position=(cx, cy + distance, cz),
                 focal_point=center,
                 view_up=view_up,
                 distance=distance,
-                view_name='back'
+                view_name="back",
             ),
             # Left view (270°) - looking along -X axis
-            'left': CameraParameters(
+            "left": CameraParameters(
                 position=(cx - distance, cy, cz),
                 focal_point=center,
                 view_up=view_up,
                 distance=distance,
-                view_name='left'
+                view_name="left",
             ),
             # Top view - looking down along -Z axis
-            'top': CameraParameters(
+            "top": CameraParameters(
                 position=(cx, cy, cz + distance),
                 focal_point=center,
                 view_up=(0.0, 1.0, 0.0),  # Y-up for top view
                 distance=distance,
-                view_name='top'
-            )
+                view_name="top",
+            ),
         }
 
-    def _score_view(
-        self,
-        view_name: str,
-        dx: float,
-        dy: float,
-        dz: float
-    ) -> float:
+    def _score_view(self, view_name: str, dx: float, dy: float, dz: float) -> float:
         """
         Score a view based on model dimensions and view characteristics.
 
@@ -195,15 +192,15 @@ class ViewOptimizer:
         score = 0.0
 
         # Calculate visible area for each view
-        if view_name == 'front' or view_name == 'back':
+        if view_name == "front" or view_name == "back":
             # Shows XZ plane
             visible_area = dx * dz
             aspect_ratio = dx / dz if dz > 0 else 1.0
-        elif view_name == 'right' or view_name == 'left':
+        elif view_name == "right" or view_name == "left":
             # Shows YZ plane
             visible_area = dy * dz
             aspect_ratio = dy / dz if dz > 0 else 1.0
-        elif view_name == 'top':
+        elif view_name == "top":
             # Shows XY plane
             visible_area = dx * dy
             aspect_ratio = dx / dy if dy > 0 else 1.0
@@ -218,20 +215,20 @@ class ViewOptimizer:
         if aspect_ratio > 1.0:
             aspect_penalty = 1.0 / (1.0 + abs(aspect_ratio - 1.0))
         else:
-            aspect_penalty = 1.0 / (1.0 + abs(1.0/aspect_ratio - 1.0))
+            aspect_penalty = 1.0 / (1.0 + abs(1.0 / aspect_ratio - 1.0))
         score *= aspect_penalty
 
         # Slight preference bonus for front and right views (consistency)
-        if view_name == 'front':
+        if view_name == "front":
             score *= 1.05
-        elif view_name == 'right':
+        elif view_name == "right":
             score *= 1.03
 
         return score
 
     def _get_default_view(
-        self,
-        bounds: Tuple[float, float, float, float, float, float]
+        """TODO: Add docstring."""
+        self, bounds: Tuple[float, float, float, float, float, float]
     ) -> CameraParameters:
         """
         Get default fallback view (front view with Z-up).
@@ -252,7 +249,7 @@ class ViewOptimizer:
         dx = max(1e-6, xmax - xmin)
         dy = max(1e-6, ymax - ymin)
         dz = max(1e-6, zmax - zmin)
-        radius = math.sqrt(dx*dx + dy*dy + dz*dz) * 0.5
+        radius = math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5
         distance = radius * 2.5
 
         return CameraParameters(
@@ -260,5 +257,5 @@ class ViewOptimizer:
             focal_point=center,
             view_up=(0.0, 0.0, 1.0),
             distance=distance,
-            view_name='front'
+            view_name="front",
         )

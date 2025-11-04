@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class ModelRepository:
     """Repository for model data access operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize model repository.
 
@@ -27,12 +27,13 @@ class ModelRepository:
 
     @log_function_call(logger)
     def add_model(
+        """TODO: Add docstring."""
         self,
         filename: str,
         format: str,
         file_path: str,
         file_size: Optional[int] = None,
-        file_hash: Optional[str] = None
+        file_hash: Optional[str] = None,
     ) -> int:
         """
         Add a new model to the database.
@@ -50,10 +51,13 @@ class ModelRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO models (filename, format, file_path, file_size, file_hash, last_modified)
                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """, (filename, format, file_path, file_size, file_hash))
+                """,
+                    (filename, format, file_path, file_size, file_hash),
+                )
 
                 model_id = cursor.lastrowid
                 conn.commit()
@@ -80,17 +84,20 @@ class ModelRepository:
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.file_hash = ?
-                """, (file_hash,))
+                """,
+                    (file_hash,),
+                )
                 row = cursor.fetchone()
                 return dict(row) if row else None
         except sqlite3.Error as e:
-            logger.error(f"Failed to find model by hash: {e}")
+            logger.error("Failed to find model by hash: %s", e)
             return None
 
     @log_function_call(logger)
@@ -108,17 +115,20 @@ class ModelRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE models SET file_hash = ?, last_modified = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, (file_hash, model_id))
+                """,
+                    (file_hash, model_id),
+                )
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Updated file hash for model {model_id}")
+                    logger.info("Updated file hash for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to update file hash for model {model_id}: {e}")
+            logger.error("Failed to update file hash for model %s: {e}", model_id)
             return False
 
     @log_function_call(logger)
@@ -136,17 +146,20 @@ class ModelRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE models SET linked_model_id = ?
                     WHERE id = ?
-                """, (keep_id, duplicate_id))
+                """,
+                    (keep_id, duplicate_id),
+                )
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Linked duplicate model {duplicate_id} to {keep_id}")
+                    logger.info("Linked duplicate model %s to {keep_id}", duplicate_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to link duplicate model: {e}")
+            logger.error("Failed to link duplicate model: %s", e)
             return False
 
     @log_function_call(logger)
@@ -165,27 +178,31 @@ class ModelRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.id = ?
-                """, (model_id,))
+                """,
+                    (model_id,),
+                )
 
                 row = cursor.fetchone()
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get model {model_id}: {str(e)}")
+            logger.error("Failed to get model %s: {str(e)}", model_id)
             return None
 
     @log_function_call(logger)
     def get_all_models(
+        """TODO: Add docstring."""
         self,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        exclude_duplicates: bool = True
+        exclude_duplicates: bool = True,
     ) -> List[Dict[str, Any]]:
         """
         Get all models from the database.
@@ -227,11 +244,11 @@ class ModelRepository:
                 rows = cursor.fetchall()
 
                 models = [dict(row) for row in rows]
-                logger.debug(f"Retrieved {len(models)} models")
+                logger.debug("Retrieved %s models", len(models))
                 return models
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get all models: {str(e)}")
+            logger.error("Failed to get all models: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -249,17 +266,20 @@ class ModelRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE models SET thumbnail_path = ?, last_modified = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, (thumbnail_path, model_id))
+                """,
+                    (thumbnail_path, model_id),
+                )
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Updated thumbnail for model {model_id}")
+                    logger.info("Updated thumbnail for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to update thumbnail for model {model_id}: {e}")
+            logger.error("Failed to update thumbnail for model %s: {e}", model_id)
             return False
 
     @log_function_call(logger)
@@ -280,9 +300,8 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Deleted model {model_id}")
+                    logger.info("Deleted model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete model {model_id}: {e}")
+            logger.error("Failed to delete model %s: {e}", model_id)
             return False
-

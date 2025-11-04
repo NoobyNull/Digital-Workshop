@@ -37,7 +37,7 @@ class CacheEntry:
     for intelligent cache management decisions.
     """
 
-    def __init__(self, key: str, data: Dict[str, Any], compressed: bool = False):
+    def __init__(self, key: str, data: Dict[str, Any], compressed: bool = False) -> None:
         """
         Initialize cache entry.
 
@@ -58,6 +58,7 @@ class CacheEntry:
         """Calculate approximate memory size of cached data."""
         try:
             import sys
+
             return sys.getsizeof(str(self.data))
         except Exception:
             return 1024  # Default estimate
@@ -94,7 +95,7 @@ class ThemeCache:
     - Background cleanup to prevent fragmentation
     """
 
-    def __init__(self, max_size: int = None):
+    def __init__(self, max_size: int = None) -> None:
         """
         Initialize theme cache.
 
@@ -128,7 +129,9 @@ class ThemeCache:
         # Compression support
         self._compression_enabled = True
 
-        logger.info(f"ThemeCache initialized: max_size={self._max_size}, memory_limit={self._memory_limit} bytes")
+        logger.info(
+            f"ThemeCache initialized: max_size={self._max_size}, memory_limit={self._memory_limit} bytes"
+        )
 
     def get(self, key: str) -> Optional[Dict[str, Any]]:
         """
@@ -149,11 +152,11 @@ class ThemeCache:
                 self._cache.move_to_end(key)
 
                 self._hits += 1
-                logger.debug(f"Cache hit for key: {key}")
+                logger.debug("Cache hit for key: %s", key)
                 return entry.data.copy()
 
             self._misses += 1
-            logger.debug(f"Cache miss for key: {key}")
+            logger.debug("Cache miss for key: %s", key)
             return None
 
     def put(self, key: str, data: Dict[str, Any], compress: bool = None) -> bool:
@@ -172,7 +175,7 @@ class ThemeCache:
             # Check if we need to evict entries
             if not self._can_accommodate(data):
                 if not self._evict_entries():
-                    logger.warning(f"Cannot accommodate new cache entry: {key}")
+                    logger.warning("Cannot accommodate new cache entry: %s", key)
                     return False
 
             # Determine compression
@@ -190,7 +193,7 @@ class ThemeCache:
             # Move to end (most recently used)
             self._cache.move_to_end(key)
 
-            logger.debug(f"Cached theme data: {key} (compressed={compress})")
+            logger.debug("Cached theme data: %s (compressed={compress})", key)
             return True
 
     def remove(self, key: str) -> bool:
@@ -209,7 +212,7 @@ class ThemeCache:
                 self._current_size -= 1
                 self._current_memory -= entry.memory_size
 
-                logger.debug(f"Removed cache entry: {key}")
+                logger.debug("Removed cache entry: %s", key)
                 return True
 
             return False
@@ -272,7 +275,9 @@ class ThemeCache:
                 "max_size": self._max_size,
                 "memory_usage_bytes": self._current_memory,
                 "memory_limit_bytes": self._memory_limit,
-                "memory_usage_percent": (self._current_memory / self._memory_limit) if self._memory_limit > 0 else 0,
+                "memory_usage_percent": (
+                    (self._current_memory / self._memory_limit) if self._memory_limit > 0 else 0
+                ),
                 "hits": self._hits,
                 "misses": self._misses,
                 "hit_ratio": hit_ratio,
@@ -280,7 +285,7 @@ class ThemeCache:
                 "cleanup_count": self._cleanup_count,
                 "compression_enabled": self._compression_enabled,
                 "oldest_entry_age": self._get_oldest_entry_age(),
-                "newest_entry_age": self._get_newest_entry_age()
+                "newest_entry_age": self._get_newest_entry_age(),
             }
 
     def resize(self, new_max_size: int) -> None:
@@ -297,7 +302,7 @@ class ThemeCache:
             while self._current_size > self._max_size:
                 self._evict_lru()
 
-            logger.info(f"Cache resized to max_size={self._max_size}")
+            logger.info("Cache resized to max_size=%s", self._max_size)
 
     def enable_compression(self) -> None:
         """Enable cache compression."""
@@ -373,7 +378,7 @@ class ThemeCache:
         self._current_memory -= entry.memory_size
         self._evictions += 1
 
-        logger.debug(f"Evicted LRU entry: {key}")
+        logger.debug("Evicted LRU entry: %s", key)
         return True
 
     def _evict_under_pressure(self) -> bool:
@@ -404,7 +409,7 @@ class ThemeCache:
             self._current_memory -= entry.memory_size
             self._evictions += 1
 
-        logger.debug(f"Evicted {len(entries_to_evict)} entries under memory pressure")
+        logger.debug("Evicted %s entries under memory pressure", len(entries_to_evict))
         return True
 
     def _should_compress(self, data: Dict[str, Any]) -> bool:
@@ -433,15 +438,16 @@ class ThemeCache:
         """
         try:
             import psutil
+
             memory_gb = psutil.virtual_memory().total / (1024**3)
 
             # Adaptive sizing based on available memory
             if memory_gb >= 8:
                 return 100  # Large cache for systems with 8GB+
             elif memory_gb >= 4:
-                return 50   # Medium cache for systems with 4GB+
+                return 50  # Medium cache for systems with 4GB+
             else:
-                return 25   # Small cache for systems with <4GB
+                return 25  # Small cache for systems with <4GB
 
         except ImportError:
             # Fallback if psutil not available
@@ -456,6 +462,7 @@ class ThemeCache:
         """
         try:
             import psutil
+
             available_memory = psutil.virtual_memory().available
 
             # Use up to 1% of available memory for cache
@@ -501,10 +508,12 @@ class ThemeCache:
 
             if keys_to_remove:
                 self._cleanup_count += 1
-                logger.debug(f"Background cleanup removed {len(keys_to_remove)} old entries")
+                logger.debug("Background cleanup removed %s old entries", len(keys_to_remove))
 
             # Check memory pressure and cleanup if needed
-            memory_usage_ratio = self._current_memory / self._memory_limit if self._memory_limit > 0 else 0
+            memory_usage_ratio = (
+                self._current_memory / self._memory_limit if self._memory_limit > 0 else 0
+            )
             if memory_usage_ratio > self._memory_pressure_threshold:
                 self._handle_memory_pressure()
 
@@ -528,4 +537,4 @@ class ThemeCache:
                 self._current_size -= 1
                 self._current_memory -= entry.memory_size
 
-        logger.warning(f"Memory pressure cleanup removed {len(keys_to_remove)} entries")
+        logger.warning("Memory pressure cleanup removed %s entries", len(keys_to_remove))

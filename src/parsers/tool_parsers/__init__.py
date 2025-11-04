@@ -9,11 +9,11 @@ from .vtdb_tool_parser import VTDBToolParser
 from .tdb_tool_parser import TDBToolParser
 
 __all__ = [
-    'BaseToolParser',
-    'ToolData',
-    'ProgressCallback',
-    'CSVToolParser',
-    'JSONToolParser',
-    'VTDBToolParser',
-    'TDBToolParser'
+    "BaseToolParser",
+    "ToolData",
+    "ProgressCallback",
+    "CSVToolParser",
+    "JSONToolParser",
+    "VTDBToolParser",
+    "TDBToolParser",
 ]

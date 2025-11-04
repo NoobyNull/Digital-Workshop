@@ -25,7 +25,7 @@ class StarRatingWidget(QWidget):
     # Signal emitted when rating changes
     rating_changed = Signal(int)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the star rating widget.
 
@@ -47,14 +47,14 @@ class StarRatingWidget(QWidget):
         self.star_count = 5
 
         # Star colors (from theme)
-        self.filled_color = get_theme_color('star_filled')
-        self.empty_color = get_theme_color('star_empty')
-        self.hover_color = get_theme_color('star_hover')
+        self.filled_color = get_theme_color("star_filled")
+        self.empty_color = get_theme_color("star_empty")
+        self.hover_color = get_theme_color("star_hover")
 
         # Set widget size
         self.setFixedSize(
             self.star_count * (self.star_size + self.star_spacing) - self.star_spacing,
-            self.star_size
+            self.star_size,
         )
 
         # Enable mouse tracking for hover effects
@@ -73,7 +73,7 @@ class StarRatingWidget(QWidget):
             self.current_rating = rating
             self.update()
             self.rating_changed.emit(rating)
-            self.logger.debug(f"Rating set to: {rating}")
+            self.logger.debug("Rating set to: %s", rating)
 
     def get_rating(self) -> int:
         """
@@ -182,4 +182,3 @@ class StarRatingWidget(QWidget):
         """
         rating = (x // (self.star_size + self.star_spacing)) + 1
         return max(0, min(rating, self.star_count))
-

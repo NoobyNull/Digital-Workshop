@@ -52,19 +52,22 @@ class JSONToolParser(BaseToolParser):
 
         except json.JSONDecodeError as e:
             return False, f"Invalid JSON: {str(e)}"
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
-    def parse(self, file_path: str, progress_callback: Optional[ProgressCallback] = None) -> List[ToolData]:
+    def parse(
+        """TODO: Add docstring."""
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
+    ) -> List[ToolData]:
         """Parse JSON tool database."""
         tools = []
 
         try:
             path = Path(file_path)
-            
+
             # Check if file exists
             if not path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return []
 
             with open(path, "r", encoding="utf-8") as f:
@@ -98,15 +101,15 @@ class JSONToolParser(BaseToolParser):
                     progress = min((i + 1) / total_tools, 1.0)
                     progress_callback.report(progress, f"Parsing tool {i + 1}/{total_tools}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from JSON file")
+            self.logger.info("Parsed %s tools from JSON file", len(tools))
             return tools
 
         except FileNotFoundError:
-            self.logger.warning(f"File not found: {file_path}")
+            self.logger.warning("File not found: %s", file_path)
             return []
         except json.JSONDecodeError as e:
-            self.logger.error(f"Invalid JSON format: {e}")
+            self.logger.error("Invalid JSON format: %s", e)
             return []
-        except Exception as e:
-            self.logger.error(f"Failed to parse JSON file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to parse JSON file: %s", e)
             return []

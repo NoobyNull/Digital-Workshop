@@ -15,6 +15,7 @@ import time
 
 class LoadingStage(Enum):
     """Stages of model loading process."""
+
     IDLE = "idle"
     METADATA = "metadata"
     IO_READ = "io_read"
@@ -26,10 +27,10 @@ class LoadingStage(Enum):
 class DetailedProgressTracker:
     """Tracks detailed progress through model loading stages."""
 
-    def __init__(self, triangle_count: int = 0, file_size_mb: float = 0.0):
+    def __init__(self, triangle_count: int = 0, file_size_mb: float = 0.0) -> None:
         """
         Initialize progress tracker.
-        
+
         Args:
             triangle_count: Number of triangles in model
             file_size_mb: File size in MB
@@ -39,7 +40,7 @@ class DetailedProgressTracker:
         self.current_stage = LoadingStage.IDLE
         self.stage_start_time = time.time()
         self.overall_start_time = time.time()
-        
+
         # Stage progress ranges (percentage)
         self.stage_ranges = {
             LoadingStage.METADATA: (0, 5),
@@ -47,7 +48,7 @@ class DetailedProgressTracker:
             LoadingStage.PARSING: (25, 85),
             LoadingStage.RENDERING: (85, 100),
         }
-        
+
         # Estimated times (in seconds) based on typical performance
         self.estimated_times = {
             LoadingStage.METADATA: 0.1,
@@ -55,7 +56,7 @@ class DetailedProgressTracker:
             LoadingStage.PARSING: self._estimate_parse_time(),
             LoadingStage.RENDERING: self._estimate_render_time(),
         }
-        
+
         self.progress_callback: Optional[Callable[[float, str], None]] = None
 
     def _estimate_io_time(self) -> float:
@@ -87,19 +88,19 @@ class DetailedProgressTracker:
         """Start a new loading stage."""
         self.current_stage = stage
         self.stage_start_time = time.time()
-        
+
         stage_range = self.stage_ranges.get(stage, (0, 100))
         progress = stage_range[0]
-        
+
         if not message:
             message = f"Starting {stage.value}..."
-        
+
         self._emit_progress(progress, message)
 
     def update_stage_progress(self, current: int, total: int, message: str = "") -> None:
         """
         Update progress within current stage.
-        
+
         Args:
             current: Current item count
             total: Total items
@@ -107,29 +108,29 @@ class DetailedProgressTracker:
         """
         if total == 0:
             return
-        
+
         stage_range = self.stage_ranges.get(self.current_stage, (0, 100))
         stage_start, stage_end = stage_range
         stage_width = stage_end - stage_start
-        
+
         # Calculate progress within stage
         stage_progress = (current / total) * stage_width
         overall_progress = stage_start + stage_progress
-        
+
         if not message:
             message = f"{self.current_stage.value}: {current:,}/{total:,}"
-        
+
         self._emit_progress(overall_progress, message)
 
     def complete_stage(self, message: str = "") -> None:
         """Complete current stage and move to next."""
         stage_range = self.stage_ranges.get(self.current_stage, (0, 100))
         progress = stage_range[1]
-        
+
         if not message:
             elapsed = time.time() - self.stage_start_time
             message = f"{self.current_stage.value} completed in {elapsed:.2f}s"
-        
+
         self._emit_progress(progress, message)
 
     def _emit_progress(self, progress: float, message: str) -> None:
@@ -145,4 +146,3 @@ class DetailedProgressTracker:
     def get_elapsed_time(self) -> float:
         """Get elapsed time since start."""
         return time.time() - self.overall_start_time
-

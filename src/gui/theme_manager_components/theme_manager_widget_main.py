@@ -5,7 +5,6 @@ Comprehensive theme editor with left-side color controls, right-side live previe
 and bottom action buttons. Integrates with ThemeManager singleton.
 """
 
-import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, Optional
@@ -13,14 +12,30 @@ from typing import Dict, Optional
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QScrollArea, QGroupBox, QPushButton, QLabel, QColorDialog,
-    QFileDialog, QLineEdit, QComboBox, QMessageBox, QApplication
+    QDialog,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QSplitter,
+    QScrollArea,
+    QGroupBox,
+    QPushButton,
+    QLabel,
+    QColorDialog,
+    QFileDialog,
+    QLineEdit,
+    QComboBox,
+    QMessageBox,
+    QApplication,
 )
 
 from src.gui.theme import (
-    ThemeManager, FALLBACK_COLOR, ThemeDefaults,
-    SPACING_8, SPACING_12, hex_to_rgb
+    ThemeManager,
+    FALLBACK_COLOR,
+    ThemeDefaults,
+    SPACING_8,
+    SPACING_12,
+    hex_to_rgb,
 )
 from src.core.logging_config import get_logger
 
@@ -41,6 +56,7 @@ class ThemeManagerWidget(QDialog):
     themeApplied = Signal(dict)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Theme Manager")
         self.resize(1100, 730)
@@ -54,8 +70,16 @@ class ThemeManagerWidget(QDialog):
         self._pending_overrides: Dict[str, str] = {}
 
         # Preset UI state
-        self._preset_key_by_label = {"Modern": "modern", "High Contrast": "high_contrast", "Custom": "custom"}
-        self._custom_mode_key_by_label = {"Auto": "auto", "Light": "light", "Dark": "dark"}
+        self._preset_key_by_label = {
+            "Modern": "modern",
+            "High Contrast": "high_contrast",
+            "Custom": "custom",
+        }
+        self._custom_mode_key_by_label = {
+            "Auto": "auto",
+            "Light": "light",
+            "Dark": "dark",
+        }
         self._custom_seed_hex = self.tm.get_color("primary", context="ThemeManagerWidget.init")
 
         # Layout: Splitter (left controls, right preview)
@@ -132,7 +156,14 @@ class ThemeManagerWidget(QDialog):
 
         self.btn_apply.setDefault(True)
 
-        for b in (self.btn_save, self.btn_load, self.btn_export, self.btn_import, self.btn_apply, self.btn_reset):
+        for b in (
+            self.btn_save,
+            self.btn_load,
+            self.btn_export,
+            self.btn_import,
+            self.btn_apply,
+            self.btn_reset,
+        ):
             btn_row.addWidget(b)
         btn_row.addStretch(1)
         btn_row.addWidget(self.btn_close)
@@ -164,7 +195,12 @@ class ThemeManagerWidget(QDialog):
 
             for var_name in names:
                 default_hex = self.defaults.get(var_name, FALLBACK_COLOR)
-                row = ColorRow(var_name, default_hex, on_changed=self._on_color_changed, parent=group)
+                row = ColorRow(
+                    var_name,
+                    default_hex,
+                    on_changed=self._on_color_changed,
+                    parent=group,
+                )
                 self._rows[var_name] = row
                 lay.addWidget(row)
 
@@ -176,7 +212,10 @@ class ThemeManagerWidget(QDialog):
     def _init_presets_ui(self) -> None:
         """Initialize preset combo selection and wire events."""
         current = getattr(self.tm, "current_preset", "custom")
-        label = next((lbl for lbl, key in self._preset_key_by_label.items() if key == current), "Custom")
+        label = next(
+            (lbl for lbl, key in self._preset_key_by_label.items() if key == current),
+            "Custom",
+        )
         idx = self.preset_combo.findText(label)
         if idx >= 0:
             self.preset_combo.setCurrentIndex(idx)
@@ -236,15 +275,19 @@ class ThemeManagerWidget(QDialog):
             self._pending_overrides[var_name] = hex_val
             self.tm.set_colors({var_name: hex_val})
             self.refresh_preview()
-        except Exception as exc:
-            QMessageBox.warning(self, "Theme Update Error", f"Failed to apply color for {var_name}:\n{exc}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            QMessageBox.warning(
+                self,
+                "Theme Update Error",
+                f"Failed to apply color for {var_name}:\n{exc}",
+            )
 
     def _on_save(self) -> None:
         """Save theme to settings."""
         try:
             self.tm.save_to_settings()
             QMessageBox.information(self, "Theme", "Theme saved to AppData.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Save Failed", f"Failed to save theme:\n{exc}")
 
     def _on_load(self) -> None:
@@ -254,12 +297,14 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Theme loaded from AppData.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Load Failed", f"Failed to load theme:\n{exc}")
 
     def _on_export(self) -> None:
         """Export theme to JSON file."""
-        fn, _ = QFileDialog.getSaveFileName(self, "Export Theme", filter="JSON Files (*.json);;All Files (*.*)")
+        fn, _ = QFileDialog.getSaveFileName(
+            self, "Export Theme", filter="JSON Files (*.json);;All Files (*.*)"
+        )
         if not fn:
             return
         try:
@@ -268,12 +313,14 @@ class ThemeManagerWidget(QDialog):
                 p = p.with_suffix(".json")
             self.tm.export_theme(p)
             QMessageBox.information(self, "Theme", f"Theme exported to:\n{p}")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Export Failed", f"Failed to export theme:\n{exc}")
 
     def _on_import(self) -> None:
         """Import theme from JSON file."""
-        fn, _ = QFileDialog.getOpenFileName(self, "Import Theme", filter="JSON Files (*.json);;All Files (*.*)")
+        fn, _ = QFileDialog.getOpenFileName(
+            self, "Import Theme", filter="JSON Files (*.json);;All Files (*.*)"
+        )
         if not fn:
             return
         try:
@@ -281,7 +328,7 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Theme imported successfully.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Import Failed", f"Failed to import theme:\n{exc}")
 
     def _on_apply(self) -> None:
@@ -290,7 +337,7 @@ class ThemeManagerWidget(QDialog):
             self.tm.apply_to_registered()
             self.themeApplied.emit(self.tm.colors)
             QMessageBox.information(self, "Theme", "Theme applied to application.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Apply Failed", f"Failed to apply theme:\n{exc}")
 
     def _on_reset_defaults(self) -> None:
@@ -300,7 +347,7 @@ class ThemeManagerWidget(QDialog):
             self._sync_rows_from_theme()
             self.refresh_preview()
             QMessageBox.information(self, "Theme", "Reset to default theme.")
-        except Exception as exc:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset theme:\n{exc}")
 
     def refresh_preview(self) -> None:
@@ -348,8 +395,8 @@ class ThemeManagerWidget(QDialog):
 
 if __name__ == "__main__":
     import sys
+
     app = QApplication(sys.argv)
     w = ThemeManagerWidget()
     w.show()
     sys.exit(app.exec())
-

@@ -2,6 +2,7 @@
 TDB tool database parser for IDC-Woodcraft-Carveco-Tool-Database.tdb format.
 TDB files are binary files with UTF-16 encoding.
 """
+
 # pylint: disable=unused-variable
 
 import struct
@@ -38,10 +39,11 @@ class TDBToolParser(BaseToolParser):
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def parse(
+        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> List[ToolData]:
         """Parse TDB tool database."""
@@ -78,15 +80,13 @@ class TDBToolParser(BaseToolParser):
                     # Report progress
                     if progress_callback and tool_count > 0:
                         progress = min((i + 1) / tool_count, 1.0)
-                        progress_callback.report(
-                            progress, f"Parsing tool {i + 1}/{tool_count}"
-                        )
+                        progress_callback.report(progress, f"Parsing tool {i + 1}/{tool_count}")
 
-            self.logger.info(f"Parsed {len(tools)} tools from TDB file")
+            self.logger.info("Parsed %s tools from TDB file", len(tools))
             return tools
 
-        except Exception as e:
-            self.logger.error(f"Failed to parse TDB file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to parse TDB file: %s", e)
             raise
 
     def _parse_tdb_tool(self, data: bytes) -> ToolData:

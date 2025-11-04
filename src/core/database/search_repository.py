@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class SearchRepository:
     """Repository for model search and filtering operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize search repository.
 
@@ -27,12 +27,13 @@ class SearchRepository:
 
     @log_function_call(logger)
     def search_models(
+        """TODO: Add docstring."""
         self,
         query: str = "",
         category: Optional[str] = None,
         file_format: Optional[str] = None,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for models by query and filters.
@@ -100,7 +101,7 @@ class SearchRepository:
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search models: {e}")
+            logger.error("Failed to search models: %s", e)
             raise
 
     @log_function_call(logger)
@@ -119,14 +120,17 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
                     WHERE m.filename LIKE ?
                     ORDER BY m.filename ASC
-                """, (f"%{filename}%",))
+                """,
+                    (f"%{filename}%",),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
@@ -134,15 +138,16 @@ class SearchRepository:
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by filename: {e}")
+            logger.error("Failed to search by filename: %s", e)
             raise
 
     @log_function_call(logger)
     def search_by_metadata(
+        """TODO: Add docstring."""
         self,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        keywords: Optional[str] = None
+        keywords: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search models by metadata fields.
@@ -187,11 +192,11 @@ class SearchRepository:
                 rows = cursor.fetchall()
 
                 results = [dict(row) for row in rows]
-                logger.debug(f"Metadata search returned {len(results)} results")
+                logger.debug("Metadata search returned %s results", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to search by metadata: {e}")
+            logger.error("Failed to search by metadata: %s", e)
             raise
 
     @log_function_call(logger)
@@ -211,7 +216,8 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
@@ -219,15 +225,19 @@ class SearchRepository:
                     WHERE m.date_added >= datetime('now', '-{} days')
                     ORDER BY m.date_added DESC
                     LIMIT ?
-                """.format(days), (limit,))
+                """.format(
+                        days
+                    ),
+                    (limit,),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(f"Found {len(results)} models from last {days} days")
+                logger.debug("Found %s models from last {days} days", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get recent models: {e}")
+            logger.error("Failed to get recent models: %s", e)
             raise
 
     @log_function_call(logger)
@@ -246,7 +256,8 @@ class SearchRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
                            mm.source, mm.rating, mm.view_count, mm.last_viewed
                     FROM models m
@@ -254,13 +265,15 @@ class SearchRepository:
                     WHERE mm.view_count > 0
                     ORDER BY mm.view_count DESC, mm.last_viewed DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
                 rows = cursor.fetchall()
                 results = [dict(row) for row in rows]
-                logger.debug(f"Found {len(results)} popular models")
+                logger.debug("Found %s popular models", len(results))
                 return results
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get popular models: {e}")
+            logger.error("Failed to get popular models: %s", e)
             raise

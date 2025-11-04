@@ -38,7 +38,6 @@ Usage:
     snapping_system.render(painter, target_rect)
 """
 
-import logging
 from typing import Optional, Dict, Any
 
 from PySide6.QtWidgets import QMainWindow
@@ -48,30 +47,30 @@ from src.gui.layout.snapping.snap_configuration import (
     SnapConfiguration,
     SnapZone,
     VisualSettings,
-    PerformanceSettings
+    PerformanceSettings,
 )
 from src.gui.layout.snapping.coordinate_manager import (
     CoordinateManager,
     CoordinateSystem,
-    TransformationResult
+    TransformationResult,
 )
 from src.gui.layout.snapping.snap_engine import (
     SnapEngine,
     SnapResult,
     SnapCandidate,
-    SnapType
+    SnapType,
 )
 from src.gui.layout.snapping.event_processor import (
     EventProcessor,
     SnapEvent,
     EventType,
-    EventFilter
+    EventFilter,
 )
 from src.gui.layout.snapping.snap_guide_renderer import (
     SnapGuideRenderer,
     SnapGuide,
     GuideType,
-    AnimationState
+    AnimationState,
 )
 
 
@@ -96,7 +95,7 @@ class SnappingSystem:
         _initialized: Whether the system has been properly initialized
     """
 
-    def __init__(self, main_window: QMainWindow, config_file: Optional[str] = None):
+    def __init__(self, main_window: QMainWindow, config_file: Optional[str] = None) -> None:
         """
         Initialize the complete snapping system.
 
@@ -128,8 +127,8 @@ class SnappingSystem:
             self._initialized = True
             self.logger.info("Widget snapping system initialized successfully")
 
-        except Exception as e:
-            self.logger.error(f"Failed to initialize snapping system: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to initialize snapping system: %s", e)
             raise
 
     def _setup_component_integration(self) -> None:
@@ -140,13 +139,12 @@ class SnappingSystem:
 
             # Setup event handlers for snap results
             self.event_processor.register_event_handler(
-                EventType.SNAP_REQUEST,
-                self._handle_snap_request
+                EventType.SNAP_REQUEST, self._handle_snap_request
             )
 
             self.logger.debug("Component integration setup completed")
-        except Exception as e:
-            self.logger.error(f"Failed to setup component integration: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to setup component integration: %s", e)
             raise
 
     def _handle_snap_request(self, event: SnapEvent) -> None:
@@ -159,17 +157,15 @@ class SnappingSystem:
         try:
             # Calculate snap position
             snap_result = self.snap_engine.calculate_snap(
-                event.position,
-                CoordinateSystem.UNIFIED,
-                event.source_widget
+                event.position, CoordinateSystem.UNIFIED, event.source_widget
             )
 
             # Render visual feedback
             if snap_result.snap_applied:
                 self.guide_renderer.render_snap_result(snap_result, event.source_widget)
 
-        except Exception as e:
-            self.logger.error(f"Failed to handle snap request: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to handle snap request: %s", e)
 
     def add_snap_zone(self, zone: SnapZone) -> bool:
         """
@@ -187,8 +183,8 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.info(f"Added snap zone '{zone.name}'")
             return success
-        except Exception as e:
-            self.logger.error(f"Failed to add snap zone: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to add snap zone: %s", e)
             return False
 
     def remove_snap_zone(self, zone_name: str) -> bool:
@@ -207,8 +203,8 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.info(f"Removed snap zone '{zone_name}'")
             return success
-        except Exception as e:
-            self.logger.error(f"Failed to remove snap zone: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to remove snap zone: %s", e)
             return False
 
     def update_snap_zone(self, zone_name: str, **kwargs) -> bool:
@@ -228,8 +224,8 @@ class SnappingSystem:
                 self.snap_engine.update_configuration()
                 self.logger.debug(f"Updated snap zone '{zone_name}': {kwargs}")
             return success
-        except Exception as e:
-            self.logger.error(f"Failed to update snap zone: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to update snap zone: %s", e)
             return False
 
     def install_event_filter(self, widget: QWidget) -> bool:
@@ -269,10 +265,11 @@ class SnappingSystem:
         return self.event_processor.process_event(event)
 
     def calculate_snap(
+        """TODO: Add docstring."""
         self,
         position: QPointF,
         source_system: CoordinateSystem = CoordinateSystem.CLIENT,
-        context_widget: Optional[QWidget] = None
+        context_widget: Optional[QWidget] = None,
     ) -> SnapResult:
         """
         Calculate snap position for a given point.
@@ -311,9 +308,9 @@ class SnappingSystem:
             if not enabled:
                 self.guide_renderer.clear_guides()
 
-            self.logger.info(f"Snapping system {'enabled' if enabled else 'disabled'}")
-        except Exception as e:
-            self.logger.error(f"Failed to set snapping enabled: {e}")
+            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to set snapping enabled: %s", e)
 
     def is_enabled(self) -> bool:
         """
@@ -371,8 +368,8 @@ class SnappingSystem:
                 self.guide_renderer.update_configuration()
                 self.logger.info("Configuration loaded and applied")
             return success
-        except Exception as e:
-            self.logger.error(f"Failed to load configuration: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load configuration: %s", e)
             return False
 
     def reset_to_defaults(self) -> None:
@@ -385,8 +382,8 @@ class SnappingSystem:
             self.coordinate_manager.reset()
 
             self.logger.info("Snapping system reset to defaults")
-        except Exception as e:
-            self.logger.error(f"Failed to reset to defaults: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to reset to defaults: %s", e)
             raise
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -405,10 +402,10 @@ class SnappingSystem:
                 "snap_engine_stats": self.snap_engine.get_performance_stats(),
                 "event_processor_stats": self.event_processor.get_performance_stats(),
                 "guide_renderer_stats": self.guide_renderer.get_performance_stats(),
-                "configuration_memory_usage": self.config.get_memory_usage()
+                "configuration_memory_usage": self.config.get_memory_usage(),
             }
-        except Exception as e:
-            self.logger.error(f"Failed to get performance stats: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to get performance stats: %s", e)
             return {"error": str(e)}
 
     def validate_configuration(self) -> List[str]:
@@ -441,20 +438,23 @@ class SnappingSystem:
             self.config.snap_zones.clear()
 
             self.logger.info("Snapping system cleanup completed")
-        except Exception as e:
-            self.logger.error(f"Error during system cleanup: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error during system cleanup: %s", e)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         self.cleanup()
 
 
 # Convenience function for easy system setup
-def create_snapping_system(main_window: QMainWindow, config_file: Optional[str] = None) -> SnappingSystem:
+def create_snapping_system(
+    """TODO: Add docstring."""
+    main_window: QMainWindow, config_file: Optional[str] = None
+) -> SnappingSystem:
     """
     Create and initialize a complete snapping system.
 
@@ -475,47 +475,42 @@ def create_snapping_system(main_window: QMainWindow, config_file: Optional[str] 
         errors = system.validate_configuration()
         if errors:
             logger = get_logger(__name__)
-            logger.warning(f"Configuration validation issues: {errors}")
+            logger.warning("Configuration validation issues: %s", errors)
 
         return system
-    except Exception as e:
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger = get_logger(__name__)
-        logger.error(f"Failed to create snapping system: {e}")
+        logger.error("Failed to create snapping system: %s", e)
         raise RuntimeError(f"Snapping system initialization failed: {e}") from e
 
 
 # Export main classes and types for easy importing
 __all__ = [
     # Main system
-    'SnappingSystem',
-    'create_snapping_system',
-
+    "SnappingSystem",
+    "create_snapping_system",
     # Configuration
-    'SnapConfiguration',
-    'SnapZone',
-    'VisualSettings',
-    'PerformanceSettings',
-
+    "SnapConfiguration",
+    "SnapZone",
+    "VisualSettings",
+    "PerformanceSettings",
     # Coordinate management
-    'CoordinateManager',
-    'CoordinateSystem',
-    'TransformationResult',
-
+    "CoordinateManager",
+    "CoordinateSystem",
+    "TransformationResult",
     # Snap engine
-    'SnapEngine',
-    'SnapResult',
-    'SnapCandidate',
-    'SnapType',
-
+    "SnapEngine",
+    "SnapResult",
+    "SnapCandidate",
+    "SnapType",
     # Event processing
-    'EventProcessor',
-    'SnapEvent',
-    'EventType',
-    'EventFilter',
-
+    "EventProcessor",
+    "SnapEvent",
+    "EventType",
+    "EventFilter",
     # Visual rendering
-    'SnapGuideRenderer',
-    'SnapGuide',
-    'GuideType',
-    'AnimationState',
+    "SnapGuideRenderer",
+    "SnapGuide",
+    "GuideType",
+    "AnimationState",
 ]

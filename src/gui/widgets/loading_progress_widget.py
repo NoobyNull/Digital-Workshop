@@ -11,8 +11,13 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, QTimer, QSize
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QProgressBar,
-    QPushButton, QSizePolicy
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QSizePolicy,
 )
 
 from src.core.logging_config import get_logger
@@ -29,7 +34,7 @@ class LoadingProgressWidget(QWidget):
     # Signals
     cancel_requested = Signal()  # Emitted when user clicks cancel button
 
-    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the loading progress widget.
 
@@ -119,7 +124,10 @@ class LoadingProgressWidget(QWidget):
         """Connect widget signals."""
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
 
-    def start_loading(self, job_id: str, file_path: str, initial_message: str = "Initializing...") -> None:
+    def start_loading(
+        """TODO: Add docstring."""
+        self, job_id: str, file_path: str, initial_message: str = "Initializing..."
+    ) -> None:
         """
         Start displaying loading progress for a job.
 
@@ -153,10 +161,10 @@ class LoadingProgressWidget(QWidget):
             # Show the widget
             self.setVisible(True)
 
-            self.logger.debug(f"Started loading display for job {job_id}: {file_path}")
+            self.logger.debug("Started loading display for job %s: {file_path}", job_id)
 
-        except Exception as e:
-            self.logger.error(f"Failed to start loading display: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to start loading display: %s", e)
 
     def update_progress(self, progress: float, message: str) -> None:
         """
@@ -197,8 +205,8 @@ class LoadingProgressWidget(QWidget):
 
             self.last_progress_update = current_time
 
-        except Exception as e:
-            self.logger.error(f"Failed to update progress: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to update progress: %s", e)
 
     def _animate_progress(self, from_value: int, to_value: int) -> None:
         """
@@ -213,7 +221,8 @@ class LoadingProgressWidget(QWidget):
             steps = max(1, abs(to_value - from_value) // 2)  # 2-3 steps for small changes
             step_size = (to_value - from_value) / steps
 
-            def animate_step(current_step: int = 0):
+            def animate_step(current_step: int = 0) -> None:
+                """TODO: Add docstring."""
                 if current_step >= steps:
                     self.progress_bar.setValue(to_value)
                     return
@@ -226,9 +235,9 @@ class LoadingProgressWidget(QWidget):
 
             animate_step()
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Fallback to direct update if animation fails
-            self.logger.debug(f"Progress animation failed, using direct update: {e}")
+            self.logger.debug("Progress animation failed, using direct update: %s", e)
             self.progress_bar.setValue(to_value)
 
     def finish_loading(self, success: bool = True, final_message: str = "Completed") -> None:
@@ -257,10 +266,10 @@ class LoadingProgressWidget(QWidget):
             # Keep widget visible briefly, then hide
             QTimer.singleShot(3000, self._hide_widget)
 
-            self.logger.debug(f"Finished loading display for job {self.current_job_id}")
+            self.logger.debug("Finished loading display for job %s", self.current_job_id)
 
-        except Exception as e:
-            self.logger.error(f"Failed to finish loading display: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to finish loading display: %s", e)
 
     def cancel_loading(self) -> None:
         """Cancel the current loading operation."""
@@ -277,10 +286,10 @@ class LoadingProgressWidget(QWidget):
             # Emit cancel signal
             self.cancel_requested.emit()
 
-            self.logger.debug(f"Cancelled loading for job {self.current_job_id}")
+            self.logger.debug("Cancelled loading for job %s", self.current_job_id)
 
-        except Exception as e:
-            self.logger.error(f"Failed to cancel loading: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to cancel loading: %s", e)
 
     def _update_time_estimate(self, current_time: float, progress: float) -> None:
         """
@@ -318,8 +327,8 @@ class LoadingProgressWidget(QWidget):
             else:
                 self.time_label.setText("")
 
-        except Exception as e:
-            self.logger.debug(f"Failed to update time estimate: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Failed to update time estimate: %s", e)
             self.time_label.setText("")
 
     def _on_cancel_clicked(self) -> None:
@@ -332,12 +341,13 @@ class LoadingProgressWidget(QWidget):
         try:
             self.setVisible(False)
             self.current_job_id = None
-        except Exception as e:
-            self.logger.error(f"Failed to hide widget: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to hide widget: %s", e)
 
     def _get_current_time(self) -> float:
         """Get current time in seconds."""
         import time
+
         return time.time()
 
     def sizeHint(self) -> QSize:

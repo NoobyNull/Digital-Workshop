@@ -7,23 +7,25 @@ with adaptive allocation, memory monitoring, and automatic cleanup.
 
 import threading
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from enum import Enum
 
 from src.core.logging_config import get_logger, log_function_call
-from src.core.gpu_acceleration import get_gpu_accelerator, GPUAccelerator, GPUBuffer
+from src.core.gpu_acceleration import get_gpu_accelerator, GPUBuffer
 
 
 class MemoryStrategy(Enum):
     """Memory allocation strategies for different file sizes."""
+
     CONSERVATIVE = "conservative"  # Small chunks, frequent sync
-    BALANCED = "balanced"         # Medium chunks, balanced throughput
-    AGGRESSIVE = "aggressive"     # Large chunks, maximum throughput
+    BALANCED = "balanced"  # Medium chunks, balanced throughput
+    AGGRESSIVE = "aggressive"  # Large chunks, maximum throughput
 
 
 @dataclass
 class MemoryStats:
     """GPU memory usage statistics."""
+
     allocated_bytes: int = 0
     peak_usage_bytes: int = 0
     available_bytes: int = 0
@@ -42,7 +44,7 @@ class GPUMemoryManager:
     - Memory-efficient data streaming for large files
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU memory manager."""
         self.logger = get_logger(__name__)
         self.gpu_accelerator = get_gpu_accelerator()
@@ -71,7 +73,9 @@ class GPUMemoryManager:
                 self.allocation_strategy = MemoryStrategy.CONSERVATIVE
 
             self.memory_stats.available_bytes = int(memory_gb * 1024 * 1024 * 1024)
-            self.logger.info(f"GPU memory manager configured for {memory_gb}GB GPU (strategy: {self.allocation_strategy.value})")
+            self.logger.info(
+                f"GPU memory manager configured for {memory_gb}GB GPU (strategy: {self.allocation_strategy.value})"
+            )
         else:
             self.allocation_strategy = MemoryStrategy.CONSERVATIVE
             self.memory_stats.available_bytes = 2 * 1024 * 1024 * 1024  # 2GB CPU fallback
@@ -96,7 +100,9 @@ class GPUMemoryManager:
 
                 # Check memory limits
                 if not self._can_allocate(size_bytes):
-                    self.logger.warning(f"Cannot allocate {size_bytes} bytes, would exceed memory limits")
+                    self.logger.warning(
+                        f"Cannot allocate {size_bytes} bytes, would exceed memory limits"
+                    )
                     return None
 
                 # Allocate buffer
@@ -108,17 +114,17 @@ class GPUMemoryManager:
                     self.memory_stats.allocation_count += 1
                     self.memory_stats.peak_usage_bytes = max(
                         self.memory_stats.peak_usage_bytes,
-                        self.memory_stats.allocated_bytes
+                        self.memory_stats.allocated_bytes,
                     )
 
-                    self.logger.debug(f"Allocated STL buffer: {buffer_id} ({size_bytes} bytes)")
+                    self.logger.debug("Allocated STL buffer: %s ({size_bytes} bytes)", buffer_id)
                     return buffer
                 else:
-                    self.logger.error(f"GPU buffer allocation failed for {size_bytes} bytes")
+                    self.logger.error("GPU buffer allocation failed for %s bytes", size_bytes)
                     return None
 
-            except Exception as e:
-                self.logger.error(f"Error allocating STL buffer: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Error allocating STL buffer: %s", e)
                 return None
 
     def _calculate_buffer_size(self, triangle_count: int, buffer_type: str) -> int:
@@ -183,10 +189,11 @@ class GPUMemoryManager:
 
     @log_function_call
     def stream_file_to_gpu(
+        """TODO: Add docstring."""
         self,
         file_path: str,
         triangle_count: int,
-        progress_callback: Optional[Any] = None
+        progress_callback: Optional[Any] = None,
     ) -> Optional[GPUBuffer]:
         """
         Stream large STL file to GPU memory in chunks.
@@ -201,8 +208,7 @@ class GPUMemoryManager:
         """
         try:
             chunk_size = self.get_optimal_chunk_size(
-                triangle_count * 50,  # Estimate file size
-                triangle_count
+                triangle_count * 50, triangle_count  # Estimate file size
             )
 
             # Allocate output buffer
@@ -211,7 +217,7 @@ class GPUMemoryManager:
                 return None
 
             # Process file in chunks
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 # Skip header (80 bytes)
                 file.seek(80)
 
@@ -227,14 +233,14 @@ class GPUMemoryManager:
                     # Read chunk data
                     chunk_bytes = file.read(current_chunk_size * 50)
                     if len(chunk_bytes) != current_chunk_size * 50:
-                        self.logger.error(f"Incomplete read at chunk {chunk_idx}")
+                        self.logger.error("Incomplete read at chunk %s", chunk_idx)
                         self.free_buffer(output_buffer)
                         return None
 
                     # Upload to GPU
                     offset = total_processed * 50
                     if not output_buffer.copy_to_device(chunk_bytes, offset):
-                        self.logger.error(f"GPU upload failed at chunk {chunk_idx}")
+                        self.logger.error("GPU upload failed at chunk %s", chunk_idx)
                         self.free_buffer(output_buffer)
                         return None
 
@@ -246,11 +252,11 @@ class GPUMemoryManager:
                         progress = total_processed / triangle_count
                         progress_callback.report(progress * 100, f"Streaming chunk {chunk_idx}")
 
-            self.logger.info(f"Successfully streamed {triangle_count} triangles to GPU")
+            self.logger.info("Successfully streamed %s triangles to GPU", triangle_count)
             return output_buffer
 
-        except Exception as e:
-            self.logger.error(f"Error streaming file to GPU: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error streaming file to GPU: %s", e)
             return None
 
     @log_function_call
@@ -280,10 +286,10 @@ class GPUMemoryManager:
                 # Free GPU memory
                 buffer.free()
 
-                self.logger.debug(f"Freed GPU buffer: {buffer_id} ({buffer.size_bytes} bytes)")
+                self.logger.debug("Freed GPU buffer: %s ({buffer.size_bytes} bytes)", buffer_id)
 
-            except Exception as e:
-                self.logger.error(f"Error freeing GPU buffer: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Error freeing GPU buffer: %s", e)
 
     @log_function_call
     def get_memory_stats(self) -> MemoryStats:
@@ -296,16 +302,20 @@ class GPUMemoryManager:
         with self._lock:
             # Calculate fragmentation (simplified)
             if self.memory_stats.allocation_count > 0:
-                avg_allocation = self.memory_stats.allocated_bytes / self.memory_stats.allocation_count
+                avg_allocation = (
+                    self.memory_stats.allocated_bytes / self.memory_stats.allocation_count
+                )
                 # Fragmentation estimate based on allocation variance
-                self.memory_stats.fragmentation_ratio = min(1.0, avg_allocation / (1024 * 1024))  # Rough estimate
+                self.memory_stats.fragmentation_ratio = min(
+                    1.0, avg_allocation / (1024 * 1024)
+                )  # Rough estimate
 
             return MemoryStats(
                 allocated_bytes=self.memory_stats.allocated_bytes,
                 peak_usage_bytes=self.memory_stats.peak_usage_bytes,
                 available_bytes=self.memory_stats.available_bytes,
                 fragmentation_ratio=self.memory_stats.fragmentation_ratio,
-                allocation_count=self.memory_stats.allocation_count
+                allocation_count=self.memory_stats.allocation_count,
             )
 
     @log_function_call
@@ -319,7 +329,7 @@ class GPUMemoryManager:
             self.memory_stats = MemoryStats()
             self.logger.info("GPU memory manager cleanup completed")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor - ensure cleanup."""
         self.cleanup()
 

@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class DatabaseMaintenance:
     """Handles database maintenance and statistics operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize database maintenance.
 
@@ -41,22 +41,26 @@ class DatabaseMaintenance:
                 model_count = cursor.fetchone()[0]
 
                 # Get category counts
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT mm.category, COUNT(*) as count
                     FROM model_metadata mm
                     WHERE mm.category IS NOT NULL
                     GROUP BY mm.category
                     ORDER BY count DESC
-                """)
+                """
+                )
                 category_counts = dict(cursor.fetchall())
 
                 # Get format counts
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT format, COUNT(*) as count
                     FROM models
                     GROUP BY format
                     ORDER BY count DESC
-                """)
+                """
+                )
                 format_counts = dict(cursor.fetchall())
 
                 # Get total file size
@@ -68,14 +72,14 @@ class DatabaseMaintenance:
                     "category_counts": category_counts,
                     "format_counts": format_counts,
                     "total_size_bytes": total_size,
-                    "total_size_mb": round(total_size / (1024 * 1024), 2)
+                    "total_size_mb": round(total_size / (1024 * 1024), 2),
                 }
 
-                logger.debug(f"Retrieved database stats: {stats}")
+                logger.debug("Retrieved database stats: %s", stats)
                 return stats
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get database stats: {str(e)}")
+            logger.error("Failed to get database stats: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -89,7 +93,7 @@ class DatabaseMaintenance:
                 logger.info("Database vacuum completed successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to vacuum database: {str(e)}")
+            logger.error("Failed to vacuum database: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -103,6 +107,5 @@ class DatabaseMaintenance:
                 logger.info("Database analysis completed successfully")
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to analyze database: {str(e)}")
+            logger.error("Failed to analyze database: %s", str(e))
             raise
-

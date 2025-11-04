@@ -5,6 +5,7 @@ Generates and caches thumbnails for various 3D model formats.
 """
 
 import gc
+import math
 import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
@@ -14,6 +15,7 @@ from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger
 from src.core.view_optimizer import ViewOptimizer
+from src.core.vtk_rendering_engine import VTKRenderingEngine
 from src.parsers.stl_parser import STLParser
 from src.core.data_structures import Model
 from src.core.material_provider import MaterialProvider
@@ -24,7 +26,7 @@ class ThumbnailGenerator:
     Generate high-quality thumbnails for 3D models using VTK offscreen rendering.
 
     Features:
-    - 1080x1080 resolution for high quality
+    - 1280x1280 resolution for high quality
     - Offscreen rendering (no UI window)
     - Customizable backgrounds (solid colors or images)
     - Hash-based file naming
@@ -32,7 +34,7 @@ class ThumbnailGenerator:
     - Memory-efficient cleanup
     """
 
-    def __init__(self, settings_manager=None):
+    def __init__(self, settings_manager=None) -> None:
         """
         Initialize the thumbnail generator.
 
@@ -52,17 +54,19 @@ class ThumbnailGenerator:
         try:
             from src.gui.material_manager import MaterialManager
             from src.core.database_manager import get_database_manager
+
             self.material_manager = MaterialManager(get_database_manager())
             self.logger.debug("MaterialManager initialized for thumbnail generation")
-        except Exception as e:
-            self.logger.warning(f"Could not initialize MaterialManager for thumbnails: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Could not initialize MaterialManager for thumbnails: %s", e)
 
-        # Default thumbnail size
-        self.thumbnail_size = (1080, 1080)
+        # Default thumbnail size (1280x1280 for high quality with auto-downscaling)
+        self.thumbnail_size = (1280, 1280)
 
         self.logger.info("ThumbnailGenerator initialized with MaterialProvider")
 
     def generate_thumbnail(
+        """TODO: Add docstring."""
         self,
         model_path: str,
         file_hash: str,
@@ -70,7 +74,7 @@ class ThumbnailGenerator:
         background: Optional[Union[str, Tuple[float, float, float]]] = None,
         size: Optional[Tuple[int, int]] = None,
         material: Optional[str] = None,
-        force_regenerate: bool = False
+        force_regenerate: bool = False,
     ) -> Optional[Path]:
         """
         Generate a thumbnail for a 3D model.
@@ -80,7 +84,7 @@ class ThumbnailGenerator:
             file_hash: BLAKE2 hash of the model (used for filename)
             output_dir: Directory to save thumbnail
             background: Background color (R,G,B tuple 0-1) or image path, or None for settings
-            size: Output size as (width, height), or None for default 1080x1080
+            size: Output size as (width, height), or None for default 1280x1280
             material: Optional wood species name to apply material texture (e.g., 'Oak', 'Walnut')
             force_regenerate: If True, regenerate even if thumbnail already exists
 
@@ -99,23 +103,25 @@ class ThumbnailGenerator:
 
             # Check if thumbnail already exists (unless forced)
             if thumbnail_path.exists() and not force_regenerate:
-                self.logger.info(f"Thumbnail already exists: {thumbnail_path}")
+                self.logger.info("Thumbnail already exists: %s", thumbnail_path)
                 return thumbnail_path
 
             # If force regenerating, remove the old thumbnail
             if force_regenerate and thumbnail_path.exists():
                 try:
                     thumbnail_path.unlink()
-                    self.logger.info(f"Removed existing thumbnail for regeneration: {thumbnail_path}")
-                except Exception as e:
-                    self.logger.warning(f"Failed to remove existing thumbnail: {e}")
+                    self.logger.info(
+                        f"Removed existing thumbnail for regeneration: {thumbnail_path}"
+                    )
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.warning("Failed to remove existing thumbnail: %s", e)
 
-            self.logger.info(f"Generating thumbnail for: {model_path}")
+            self.logger.info("Generating thumbnail for: %s", model_path)
 
             # Load model
             model = self._load_model(model_path)
             if model is None:
-                self.logger.error(f"Failed to load model: {model_path}")
+                self.logger.error("Failed to load model: %s", model_path)
                 return None
 
             # Set thumbnail size
@@ -128,7 +134,7 @@ class ThumbnailGenerator:
                 output_path=thumbnail_path,
                 background=background,
                 size=size,
-                material=material
+                material=material,
             )
 
             if success:
@@ -141,11 +147,10 @@ class ThumbnailGenerator:
                 self.logger.error("Thumbnail rendering failed")
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = time.time() - start_time
             self.logger.error(
-                f"Failed to generate thumbnail after {elapsed:.2f}s: {e}",
-                exc_info=True
+                f"Failed to generate thumbnail after {elapsed:.2f}s: {e}", exc_info=True
             )
             return None
         finally:
@@ -169,7 +174,7 @@ class ThumbnailGenerator:
             model = parser.parse_file(model_path, lazy_loading=False)
 
             if model is None:
-                self.logger.error(f"Parser returned None for: {model_path}")
+                self.logger.error("Parser returned None for: %s", model_path)
                 return None
 
             self.logger.debug(
@@ -179,17 +184,18 @@ class ThumbnailGenerator:
 
             return model
 
-        except Exception as e:
-            self.logger.error(f"Error loading model {model_path}: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error loading model %s: {e}", model_path, exc_info=True)
             return None
 
     def _render_thumbnail(
+        """TODO: Add docstring."""
         self,
         model: Model,
         output_path: Path,
         background: Optional[Union[str, Tuple[float, float, float]]],
         size: Tuple[int, int],
-        material: Optional[str] = None
+        material: Optional[str] = None,
     ) -> bool:
         """
         Render a model to a PNG thumbnail using VTK offscreen rendering.
@@ -204,18 +210,12 @@ class ThumbnailGenerator:
         Returns:
             True if successful, False otherwise
         """
+        engine = None
         try:
-            # Create offscreen render window
-            render_window = vtk.vtkRenderWindow()
-            render_window.SetOffScreenRendering(1)
-            render_window.SetSize(size[0], size[1])
-
-            # Create renderer
-            renderer = vtk.vtkRenderer()
-            render_window.AddRenderer(renderer)
-
-            # Set background
-            self._set_background(renderer, background)
+            # Create rendering engine
+            engine = VTKRenderingEngine(width=size[0], height=size[1])
+            if not engine.setup_render_window():
+                return False
 
             # Create polydata from model
             polydata = self._create_polydata(model)
@@ -234,14 +234,17 @@ class ThumbnailGenerator:
             # Apply material texture if specified
             if material:
                 # Use MaterialManager for consistent material application
-                # (same code used for runtime material application)
                 if self.material_manager:
                     success = self.material_manager.apply_material_to_actor(actor, material)
                     if not success:
-                        self.logger.warning(f"Failed to apply material '{material}' using MaterialManager, using fallback")
+                        self.logger.warning(
+                            f"Failed to apply material '{material}' using MaterialManager, using fallback"
+                        )
                         self._apply_texture_material_fallback(actor, material)
                 else:
-                    self.logger.debug("MaterialManager not available, using fallback material application")
+                    self.logger.debug(
+                        "MaterialManager not available, using fallback material application"
+                    )
                     self._apply_texture_material_fallback(actor, material)
             else:
                 # Default appearance without material
@@ -252,55 +255,65 @@ class ThumbnailGenerator:
                 prop.SetSpecular(0.3)
                 prop.SetSpecularPower(20.0)
 
-            renderer.AddActor(actor)
+            engine.renderer.AddActor(actor)
 
             # Get model bounds and find optimal view
             bounds = actor.GetBounds()
             camera_params = self.view_optimizer.find_best_orthogonal_view(bounds)
 
-            # Set up camera
-            camera = renderer.GetActiveCamera()
-            camera.SetPosition(*camera_params.position)
-            camera.SetFocalPoint(*camera_params.focal_point)
-            camera.SetViewUp(*camera_params.view_up)
+            # Set up camera with optimal view
+            engine.camera.SetPosition(*camera_params.position)
+            engine.camera.SetFocalPoint(*camera_params.focal_point)
+            engine.camera.SetViewUp(*camera_params.view_up)
 
-            # Add lighting for better appearance
-            self._setup_lighting(renderer)
+            # Setup lighting and camera
+            engine.setup_lighting()
+            engine.setup_camera(bounds, zoom_factor=1.05)
 
-            # Reset camera to ensure model is fully visible
-            renderer.ResetCamera()
-            renderer.ResetCameraClippingRange()
+            # Set background AFTER model and camera are set up
+            if background is None:
+                # Professional studio background: dark teal-gray
+                self.logger.debug("Background is None, using default color")
+                engine.set_background_color((0.25, 0.35, 0.40))
+            elif isinstance(background, str):
+                self.logger.debug("Background is string: %s", background)
+                if background.startswith("#"):
+                    self.logger.debug("Background is hex color: %s", background)
+                    engine.set_background_color(background)
+                elif Path(background).exists():
+                    self.logger.info("Background image exists, using: %s", background)
+                    engine.set_background_image(background)
+                else:
+                    self.logger.warning(
+                        f"Background path does not exist: {background}, using default color"
+                    )
+                    # Professional studio background: dark teal-gray
+                    engine.set_background_color((0.25, 0.35, 0.40))
+            elif isinstance(background, (tuple, list)) and len(background) == 3:
+                self.logger.debug("Background is RGB tuple: %s", background)
+                engine.set_background_color(background)
+            else:
+                self.logger.warning(
+                    f"Unknown background type: {type(background)}, using default color"
+                )
+                engine.set_background_color((0.25, 0.35, 0.40))
 
-            # Render
-            render_window.Render()
-
-            # Capture image
-            window_to_image = vtk.vtkWindowToImageFilter()
-            window_to_image.SetInput(render_window)
-            window_to_image.SetScale(1)  # Full resolution
-            window_to_image.SetInputBufferTypeToRGB()
-            window_to_image.ReadFrontBufferOff()
-            window_to_image.Update()
-
-            # Write PNG
-            writer = vtk.vtkPNGWriter()
-            writer.SetFileName(str(output_path))
-            writer.SetInputConnection(window_to_image.GetOutputPort())
-            writer.Write()
-
-            # Cleanup VTK objects
-            render_window.Finalize()
-            del render_window, renderer, mapper, actor, camera, window_to_image, writer
+            # Render and capture
+            engine.render()
+            success = engine.capture_screenshot(str(output_path))
 
             self.logger.debug(
                 f"Thumbnail rendered with {camera_params.view_name} view at {size[0]}x{size[1]}"
             )
 
-            return True
+            return success
 
-        except Exception as e:
-            self.logger.error(f"Error rendering thumbnail: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error rendering thumbnail: %s", e, exc_info=True)
             return False
+        finally:
+            if engine:
+                engine.cleanup()
 
     def _create_polydata(self, model: Model) -> Optional[vtk.vtkPolyData]:
         """
@@ -314,7 +327,7 @@ class ThumbnailGenerator:
         """
         try:
             # Try array-based fast path first
-            if hasattr(model, 'is_array_based') and model.is_array_based():
+            if hasattr(model, "is_array_based") and model.is_array_based():
                 import numpy as np
 
                 vertex_array = model.vertex_array
@@ -355,7 +368,7 @@ class ThumbnailGenerator:
                     polydata.SetPolys(triangles)
                     polydata.GetPointData().SetNormals(normals)
 
-                    self.logger.debug(f"Created polydata (fast path): {tri_count} triangles")
+                    self.logger.debug("Created polydata (fast path): %s triangles", tri_count)
                     return polydata
 
             # Fallback to triangle-by-triangle construction
@@ -367,9 +380,15 @@ class ThumbnailGenerator:
 
             for triangle in model.triangles:
                 # Add vertices
-                p1 = points.InsertNextPoint(triangle.vertex1.x, triangle.vertex1.y, triangle.vertex1.z)
-                p2 = points.InsertNextPoint(triangle.vertex2.x, triangle.vertex2.y, triangle.vertex2.z)
-                p3 = points.InsertNextPoint(triangle.vertex3.x, triangle.vertex3.y, triangle.vertex3.z)
+                p1 = points.InsertNextPoint(
+                    triangle.vertex1.x, triangle.vertex1.y, triangle.vertex1.z
+                )
+                p2 = points.InsertNextPoint(
+                    triangle.vertex2.x, triangle.vertex2.y, triangle.vertex2.z
+                )
+                p3 = points.InsertNextPoint(
+                    triangle.vertex3.x, triangle.vertex3.y, triangle.vertex3.z
+                )
 
                 # Add triangle
                 tri = vtk.vtkTriangle()
@@ -389,17 +408,18 @@ class ThumbnailGenerator:
             polydata.SetPolys(triangles)
             polydata.GetPointData().SetNormals(normals)
 
-            self.logger.debug(f"Created polydata (slow path): {len(model.triangles)} triangles")
+            self.logger.debug("Created polydata (slow path): %s triangles", len(model.triangles))
             return polydata
 
-        except Exception as e:
-            self.logger.error(f"Error creating polydata: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error creating polydata: %s", e, exc_info=True)
             return None
 
     def _set_background(
+        """TODO: Add docstring."""
         self,
         renderer: vtk.vtkRenderer,
-        background: Optional[Union[str, Tuple[float, float, float]]]
+        background: Optional[Union[str, Tuple[float, float, float]]],
     ) -> None:
         """
         Set renderer background color or image.
@@ -416,7 +436,7 @@ class ThumbnailGenerator:
 
             if isinstance(background, str):
                 # Check if it's a hex color or file path
-                if background.startswith('#'):
+                if background.startswith("#"):
                     # Hex color
                     rgb = self._hex_to_rgb(background)
                     renderer.SetBackground(*rgb)
@@ -424,22 +444,25 @@ class ThumbnailGenerator:
                     # Image file - use textured background
                     self._set_background_image(renderer, background)
                 else:
-                    self.logger.warning(f"Invalid background: {background}, using default")
+                    self.logger.warning("Invalid background: %s, using default", background)
                     renderer.SetBackground(0.95, 0.95, 0.95)
             elif isinstance(background, (tuple, list)) and len(background) == 3:
                 # RGB tuple
                 renderer.SetBackground(*background)
             else:
-                self.logger.warning(f"Unknown background type: {type(background)}, using default")
+                self.logger.warning("Unknown background type: %s, using default", type(background))
                 renderer.SetBackground(0.95, 0.95, 0.95)
 
-        except Exception as e:
-            self.logger.error(f"Error setting background: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error setting background: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
     def _set_background_image(self, renderer: vtk.vtkRenderer, image_path: str) -> None:
         """
         Set a background image for the renderer.
+
+        Uses a plane-based approach to fill the entire viewport with the background image,
+        positioned far behind the model to ensure proper depth ordering and full coverage.
 
         Args:
             renderer: VTK renderer
@@ -448,31 +471,49 @@ class ThumbnailGenerator:
         try:
             # Read image
             reader = vtk.vtkPNGReader()
-            if image_path.lower().endswith('.jpg') or image_path.lower().endswith('.jpeg'):
+            if image_path.lower().endswith(".jpg") or image_path.lower().endswith(".jpeg"):
                 reader = vtk.vtkJPEGReader()
 
             reader.SetFileName(image_path)
             reader.Update()
 
-            # Create texture
+            # Create texture with interpolation and edge clamping
             texture = vtk.vtkTexture()
             texture.SetInputConnection(reader.GetOutputPort())
             texture.InterpolateOn()  # Enable interpolation for better quality
+            texture.EdgeClampOn()  # Prevent edge artifacts during scaling
+            texture.RepeatOn()  # Allow texture to repeat if needed
 
-            # Create background actor with proper positioning
+            # Get camera to position background plane behind it
+            camera = renderer.GetActiveCamera()
+            cam_pos = camera.GetPosition()
+            cam_focal = camera.GetFocalPoint()
+
+            # Calculate distance from camera to focal point
+            dx = cam_pos[0] - cam_focal[0]
+            dy = cam_pos[1] - cam_focal[1]
+            dz = cam_pos[2] - cam_focal[2]
+            distance = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+            # Position background plane far behind focal point (beyond camera)
+            # Use a large scale factor to ensure full viewport coverage
+            scale = max(distance * 2.0, 500.0)  # At least 500 units
+
+            # Create large background plane positioned far behind the model to fill viewport
             plane = vtk.vtkPlaneSource()
-            plane.SetOrigin(-1, -1, -1)  # Position behind the model
-            plane.SetPoint1(1, -1, -1)
-            plane.SetPoint2(-1, 1, -1)
+            plane.SetOrigin(-scale, -scale, cam_focal[2] - distance * 1.5)
+            plane.SetPoint1(scale, -scale, cam_focal[2] - distance * 1.5)
+            plane.SetPoint2(-scale, scale, cam_focal[2] - distance * 1.5)
+            plane.SetResolution(1, 1)  # Single quad for efficiency
 
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputConnection(plane.GetOutputPort())
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
-            actor.SetTexture(texture)
+            actor.GetProperty().SetTexture("map_ka", texture)
 
-            # Disable lighting for background
+            # Disable lighting for background to preserve image colors
             actor.GetProperty().LightingOff()
             actor.GetProperty().SetOpacity(1.0)
 
@@ -483,8 +524,8 @@ class ThumbnailGenerator:
             # Ensure the background is rendered behind all other actors
             actor.GetProperty().SetRepresentationToSurface()
 
-        except Exception as e:
-            self.logger.error(f"Error setting background image: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error setting background image: %s", e, exc_info=True)
             renderer.SetBackground(0.95, 0.95, 0.95)
 
     def _setup_lighting(self, renderer: vtk.vtkRenderer) -> None:
@@ -528,10 +569,12 @@ class ThumbnailGenerator:
             fill_light.SetConeAngle(100)  # Wide cone for shadow softening
             renderer.AddLight(fill_light)
 
-            self.logger.debug("Bright studio lighting setup: ambient headlight + 2 directional point lights")
+            self.logger.debug(
+                "Bright studio lighting setup: ambient headlight + 2 directional point lights"
+            )
 
-        except Exception as e:
-            self.logger.error(f"Error setting up lighting: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error setting up lighting: %s", e, exc_info=True)
 
     def _hex_to_rgb(self, hex_color: str) -> Tuple[float, float, float]:
         """
@@ -543,11 +586,12 @@ class ThumbnailGenerator:
         Returns:
             RGB tuple with values 0-1
         """
-        hex_color = hex_color.lstrip('#')
+        hex_color = hex_color.lstrip("#")
         r = int(hex_color[0:2], 16) / 255.0
         g = int(hex_color[2:4], 16) / 255.0
         b = int(hex_color[4:6], 16) / 255.0
         return (r, g, b)
+
     def _apply_texture_material_fallback(self, actor: vtk.vtkActor, material_name: str) -> bool:
         """
         Fallback method to apply texture material to actor using texture images from materials folder.
@@ -569,7 +613,7 @@ class ThumbnailGenerator:
             texture_path = self.material_provider.get_material_texture_path(material_name)
 
             if texture_path is None or not texture_path.exists():
-                self.logger.warning(f"Material texture not found: {material_name}")
+                self.logger.warning("Material texture not found: %s", material_name)
                 return False
 
             self.logger.info(f"Applying texture '{material_name}' from: {texture_path}")
@@ -597,14 +641,14 @@ class ThumbnailGenerator:
             # Load texture image based on file type
             ext = texture_path.suffix.lower()
 
-            if ext == '.png':
+            if ext == ".png":
                 reader = vtk.vtkPNGReader()
-            elif ext in {'.jpg', '.jpeg'}:
+            elif ext in {".jpg", ".jpeg"}:
                 reader = vtk.vtkJPEGReader()
-            elif ext == '.bmp':
+            elif ext == ".bmp":
                 reader = vtk.vtkBMPReader()
             else:
-                self.logger.warning(f"Unsupported texture format: {ext}")
+                self.logger.warning("Unsupported texture format: %s", ext)
                 return False
 
             reader.SetFileName(str(texture_path))
@@ -630,21 +674,21 @@ class ThumbnailGenerator:
 
             # Get MTL properties if available
             material_info = self.material_provider.get_material_by_name(material_name)
-            if material_info and 'properties' in material_info:
-                props = material_info['properties']
+            if material_info and "properties" in material_info:
+                props = material_info["properties"]
 
-                if 'shininess' in props:
-                    actor_prop.SetSpecularPower(props['shininess'])
-                if 'specular' in props:
-                    spec_val = sum(props['specular']) / 3.0
+                if "shininess" in props:
+                    actor_prop.SetSpecularPower(props["shininess"])
+                if "specular" in props:
+                    spec_val = sum(props["specular"]) / 3.0
                     actor_prop.SetSpecular(spec_val)
-                if 'ambient' in props:
-                    amb_val = sum(props['ambient']) / 3.0
+                if "ambient" in props:
+                    amb_val = sum(props["ambient"]) / 3.0
                     actor_prop.SetAmbient(max(0.4, amb_val))  # Ensure visible
                 else:
                     actor_prop.SetAmbient(0.5)  # Higher for texture visibility
-                if 'diffuse' in props:
-                    diff_val = sum(props['diffuse']) / 3.0
+                if "diffuse" in props:
+                    diff_val = sum(props["diffuse"]) / 3.0
                     actor_prop.SetDiffuse(diff_val)
                 else:
                     actor_prop.SetDiffuse(0.8)  # Higher for brightness
@@ -660,6 +704,6 @@ class ThumbnailGenerator:
             self.logger.info(f"Texture '{material_name}' applied with UV mapping")
             return True
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error(f"Error applying texture '{material_name}': {e}", exc_info=True)
             return False

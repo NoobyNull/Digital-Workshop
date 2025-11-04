@@ -11,12 +11,18 @@ Provides:
 from typing import Optional
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QPushButton, QLabel,
-    QSpinBox, QComboBox, QMessageBox, QProgressBar, QTextEdit, QFrame
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGroupBox,
+    QPushButton,
+    QLabel,
+    QSpinBox,
+    QMessageBox,
+    QTextEdit,
 )
-from PySide6.QtGui import QIcon
 
 from src.core.logging_config import get_logger
 from src.parsers.stl_parser import STLModel
@@ -35,7 +41,7 @@ class ModelEditorDialog(QDialog):
 
     model_saved = Signal(str)  # Emitted with path to saved model
 
-    def __init__(self, model: STLModel, parent=None):
+    def __init__(self, model: STLModel, parent=None) -> None:
         """
         Initialize model editor dialog.
 
@@ -85,7 +91,7 @@ class ModelEditorDialog(QDialog):
 
         # Action Buttons
         button_layout = QHBoxLayout()
-        
+
         reset_btn = QPushButton("Reset to Original")
         reset_btn.clicked.connect(self._reset_model)
         button_layout.addWidget(reset_btn)
@@ -219,9 +225,9 @@ class ModelEditorDialog(QDialog):
             self._update_info_display()
             QMessageBox.information(self, "Success", f"Rotated {degrees}° around {axis.value} axis")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to rotate model: {e}")
-            self.logger.error(f"Rotation failed: {e}")
+            self.logger.error("Rotation failed: %s", e)
 
     def _apply_auto_z_up_detection(self) -> None:
         """Apply automatic Z-up detection."""
@@ -230,12 +236,15 @@ class ModelEditorDialog(QDialog):
             if degrees != 0:
                 self.editor.rotate_model(RotationAxis[axis], degrees)
                 self._update_info_display()
-                QMessageBox.information(self, "Z-Up Applied", 
-                                      f"Applied {degrees}° rotation around {axis} axis")
+                QMessageBox.information(
+                    self,
+                    "Z-Up Applied",
+                    f"Applied {degrees}° rotation around {axis} axis",
+                )
             else:
                 QMessageBox.information(self, "Already Z-Up", "Model is already oriented with Z-up")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to detect Z-up: {e}")
 
     def _add_solid_plane(self) -> None:
@@ -245,7 +254,7 @@ class ModelEditorDialog(QDialog):
             self._update_info_display()
             QMessageBox.information(self, "Success", "Solid plane added at Z=0")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to add solid plane: {e}")
 
     def _manual_verify(self) -> None:
@@ -257,7 +266,7 @@ class ModelEditorDialog(QDialog):
             else:
                 QMessageBox.warning(self, "Verification Failed", message)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Verification failed: {e}")
 
     def _auto_verify(self) -> None:
@@ -269,14 +278,17 @@ class ModelEditorDialog(QDialog):
             else:
                 QMessageBox.warning(self, "Auto Verification Failed", message)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Auto verification failed: {e}")
 
     def _reset_model(self) -> None:
         """Reset model to original state."""
-        reply = QMessageBox.question(self, "Reset Model", 
-                                    "Reset all changes and return to original model?",
-                                    QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(
+            self,
+            "Reset Model",
+            "Reset all changes and return to original model?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
         if reply == QMessageBox.Yes:
             self.editor.reset_to_original()
             self.x_spin.setValue(0)
@@ -311,9 +323,10 @@ class ModelEditorDialog(QDialog):
                             preview_text += f"- {fix_type}: {count}\n"
 
                     reply = QMessageBox.question(
-                        self, "Preview Fixes",
+                        self,
+                        "Preview Fixes",
                         f"{preview_text}\nSave with these fixes?",
-                        QMessageBox.Yes | QMessageBox.No
+                        QMessageBox.Yes | QMessageBox.No,
                     )
                     if reply != QMessageBox.Yes:
                         return
@@ -327,11 +340,15 @@ class ModelEditorDialog(QDialog):
                 use_fixed_suffix = False
 
             # Generate output path
-            original_path = Path(self.model.header) if hasattr(self.model, 'header') else Path("model.stl")
+            original_path = (
+                Path(self.model.header) if hasattr(self.model, "header") else Path("model.stl")
+            )
             output_path = original_path.parent / f"{original_path.stem}_edited.stl"
 
             # Save model using STL writer
-            success = STLWriter.write(model_to_save, str(output_path), binary=True, fixed=use_fixed_suffix)
+            success = STLWriter.write(
+                model_to_save, str(output_path), binary=True, fixed=use_fixed_suffix
+            )
 
             if success:
                 self.saved_path = str(output_path)
@@ -341,8 +358,8 @@ class ModelEditorDialog(QDialog):
             else:
                 QMessageBox.critical(self, "Error", "Failed to write STL file")
 
-        except Exception as e:
-            self.logger.error(f"Failed to save model: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to save model: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save model: {e}")
 
     def _update_info_display(self) -> None:
@@ -361,4 +378,3 @@ Model Status:
 - Current triangles: {len(self.editor.current_model.triangles)}
         """
         self.info_text.setText(info.strip())
-

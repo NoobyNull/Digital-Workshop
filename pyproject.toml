@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "code-quality-validator"
-version = "1.0.0"
+version = "0.1.5"
 description = "Code Formatting and Linting Validation System"
 authors = [
     {name = "Development Team", email = "dev@example.com"}
@@ -60,6 +60,11 @@ extend-exclude = '''
 )/
 '''
 
+[tool.pylint.MASTER]
+ignore-patterns = [
+    "^.*_ui\\.py$",
+]
+
 [tool.pylint.messages_control]
 disable = [
     "C0114",  # missing-module-docstring
@@ -78,7 +83,7 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
-ignore-long-lines = "^\s*(# )?<?https?://\S+>?$"
+ignore-long-lines = "^\\s*(# )?<?https?://\\S+>?$"
 single-line-if-stmt = "no"
 
 [tool.pylint.design]

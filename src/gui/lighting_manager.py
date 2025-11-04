@@ -19,7 +19,8 @@ from src.core.logging_config import get_logger, log_function_call
 
 
 class LightingManager:
-    def __init__(self, renderer):
+    """TODO: Add docstring."""
+    def __init__(self, renderer) -> None:
         """Initialize with VTK renderer reference"""
         self.renderer = renderer
         self.light = None
@@ -28,23 +29,24 @@ class LightingManager:
         # Load lighting settings from config
         try:
             from src.core.application_config import ApplicationConfig
+
             config = ApplicationConfig.get_default()
             self.position = [
                 config.default_light_position_x,
                 config.default_light_position_y,
-                config.default_light_position_z
+                config.default_light_position_z,
             ]
             self.color = [
                 config.default_light_color_r,
                 config.default_light_color_g,
-                config.default_light_color_b
+                config.default_light_color_b,
             ]
             self.intensity = config.default_light_intensity
             self.cone_angle = config.default_light_cone_angle
             self.enable_fill_light = config.enable_fill_light
             self.fill_light_intensity = config.fill_light_intensity
-        except Exception as e:
-            self.logger.warning(f"Failed to load lighting settings from config: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to load lighting settings from config: %s", e)
             # Default light properties
             self.position = [90.0, 90.0, 180.0]  # X, Y, Z
             self.color = [1.0, 1.0, 1.0]  # RGB normalized
@@ -133,7 +135,9 @@ class LightingManager:
                 if self.renderer:
                     self.renderer.AddLight(self.light)
                     self.renderer.AddLight(fill_light)
-                    self.logger.info("LightingManager created key and fill lights and added to renderer")
+                    self.logger.info(
+                        "LightingManager created key and fill lights and added to renderer"
+                    )
             else:
                 # Add only key light if fill light is disabled
                 if self.renderer:
@@ -144,10 +148,10 @@ class LightingManager:
             self._render_now()
 
             dt_ms = (time.perf_counter() - t0) * 1000.0
-            self.logger.debug(f"create_light completed in {dt_ms:.2f} ms")
+            self.logger.debug("create_light completed in %s ms", dt_ms:.2f)
             return True
-        except Exception as e:
-            self.logger.error(f"Failed to create/add light: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to create/add light: %s", e)
             return False
 
     def update_position(self, x: float, y: float, z: float) -> None:
@@ -161,8 +165,8 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_position took {dt_ms:.2f} ms")
-        except Exception as e:
-            self.logger.error(f"update_position error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("update_position error: %s", e)
 
     def update_color(self, r: float, g: float, b: float) -> None:
         """Update light color (normalized 0-1)."""
@@ -178,8 +182,8 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_color took {dt_ms:.2f} ms")
-        except Exception as e:
-            self.logger.error(f"update_color error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("update_color error: %s", e)
 
     def update_intensity(self, value: float) -> None:
         """Update intensity (0-2.0 range)."""
@@ -193,8 +197,8 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_intensity took {dt_ms:.2f} ms")
-        except Exception as e:
-            self.logger.error(f"update_intensity error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("update_intensity error: %s", e)
 
     def update_cone_angle(self, angle: float) -> None:
         """Update spotlight cone angle (1-90 degrees)."""
@@ -208,8 +212,8 @@ class LightingManager:
             dt_ms = (time.perf_counter() - t0) * 1000.0
             level = "warning" if dt_ms > 16.0 else "debug"
             getattr(self.logger, level)(f"update_cone_angle took {dt_ms:.2f} ms")
-        except Exception as e:
-            self.logger.error(f"update_cone_angle error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("update_cone_angle error: %s", e)
 
     def get_properties(self) -> Dict[str, Any]:
         """Return current light properties as dict."""
@@ -231,12 +235,21 @@ class LightingManager:
                 except Exception:
                     pass
             cone = float(self.cone_angle)
-            props = {"position": pos, "color": col, "intensity": inten, "cone_angle": cone}
-            self.logger.debug(f"get_properties -> {props}")
+            props = {
+                "position": pos,
+                "color": col,
+                "intensity": inten,
+                "cone_angle": cone,
+            }
+            self.logger.debug("get_properties -> %s", props)
             return props
-        except Exception as e:
-            self.logger.error(f"get_properties error: {e}")
-            return {"position": list(self.position), "color": list(self.color), "intensity": float(self.intensity)}
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("get_properties error: %s", e)
+            return {
+                "position": list(self.position),
+                "color": list(self.color),
+                "intensity": float(self.intensity),
+            }
 
     def apply_properties(self, props: Dict[str, Any]) -> None:
         """Set all properties from dict."""
@@ -255,5 +268,5 @@ class LightingManager:
                 self.update_intensity(props["intensity"])
             if "cone_angle" in props and props["cone_angle"] is not None:
                 self.update_cone_angle(props["cone_angle"])
-        except Exception as e:
-            self.logger.error(f"apply_properties error: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("apply_properties error: %s", e)

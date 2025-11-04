@@ -8,7 +8,7 @@ to external databases in various formats (CSV, JSON, VTDB, TDB).
 import csv
 import json
 import sqlite3
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 
 from src.core.logging_config import get_logger
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 class ToolExportManager:
     """Manager for exporting tools to external database formats."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         """Initialize export manager with database path."""
         self.db_path = db_path
         self.logger = logger
@@ -30,6 +30,7 @@ class ToolExportManager:
         self.provider_repo = ProviderRepository(db_path)
 
     def export_to_csv(
+        """TODO: Add docstring."""
         self,
         output_path: str,
         provider_id: Optional[int] = None,
@@ -87,21 +88,18 @@ class ToolExportManager:
 
                     if progress_callback and tools:
                         progress = min((i + 1) / len(tools), 1.0)
-                        progress_callback.report(
-                            progress, f"Exported {i + 1}/{len(tools)} tools"
-                        )
+                        progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
 
-            self.logger.info(
-                f"Exported {len(tools)} tools to CSV: {output_path}"
-            )
+            self.logger.info("Exported %s tools to CSV: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to CSV", len(tools)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to CSV: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
 
     def export_to_json(
+        """TODO: Add docstring."""
         self,
         output_path: str,
         provider_id: Optional[int] = None,
@@ -142,32 +140,27 @@ class ToolExportManager:
                     "vendor": tool["vendor"],
                     "geometry": tool["geometry"],
                     "start_values": tool["start_values"],
-                    "custom_properties": json.loads(
-                        tool["custom_properties"] or "{}"
-                    ),
+                    "custom_properties": json.loads(tool["custom_properties"] or "{}"),
                 }
                 export_data["tools"].append(tool_entry)
 
                 if progress_callback and tools:
                     progress = min((i + 1) / len(tools), 1.0)
-                    progress_callback.report(
-                        progress, f"Exported {i + 1}/{len(tools)} tools"
-                    )
+                    progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
 
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
 
-            self.logger.info(
-                f"Exported {len(tools)} tools to JSON: {output_path}"
-            )
+            self.logger.info("Exported %s tools to JSON: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to JSON", len(tools)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to JSON: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
 
     def export_to_external_database(
+        """TODO: Add docstring."""
         self,
         output_path: str,
         provider_id: Optional[int] = None,
@@ -235,30 +228,24 @@ class ToolExportManager:
 
                 if progress_callback and tools:
                     progress = min((i + 1) / len(tools), 1.0)
-                    progress_callback.report(
-                        progress, f"Exported {i + 1}/{len(tools)} tools"
-                    )
+                    progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
 
             conn.commit()
             conn.close()
 
-            self.logger.info(
-                f"Exported {len(tools)} tools to external database: {output_path}"
-            )
+            self.logger.info("Exported %s tools to external database: {output_path}", len(tools))
             return (
                 True,
                 f"Successfully exported {len(tools)} tools to external database",
                 len(tools),
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Failed to export tools to external database: {e}"
             self.logger.error(error_msg)
             return False, error_msg, 0
 
-    def get_export_statistics(
-        self, provider_id: Optional[int] = None
-    ) -> dict:
+    def get_export_statistics(self, provider_id: Optional[int] = None) -> dict:
         """
         Get statistics about available tools for export.
 
@@ -295,6 +282,6 @@ class ToolExportManager:
                 "vendors": sorted(list(vendors)),
             }
 
-        except Exception as e:
-            self.logger.error(f"Failed to get export statistics: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to get export statistics: %s", e)
             return {"total_tools": 0, "error": str(e)}

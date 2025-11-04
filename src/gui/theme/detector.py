@@ -24,7 +24,7 @@ class SystemThemeDetector:
     - Linux: Environment variable detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self._current_mode: Literal["light", "dark"] = "light"
         self._enabled = False
@@ -46,12 +46,13 @@ class SystemThemeDetector:
                 return self._detect_macos()
             elif system == "Linux":
                 return self._detect_linux()
-        except Exception as e:
-            logger.warning(f"Failed to detect system theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to detect system theme: %s", e)
 
         return "light"  # Default fallback
 
     def _detect_windows(self) -> Literal["light", "dark"]:
+        """TODO: Add docstring."""
         r"""
         Detect Windows dark mode via registry.
 
@@ -61,17 +62,15 @@ class SystemThemeDetector:
         try:
             import winreg
 
-            registry_path = (
-                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-            )
+            registry_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
             registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path)
             value, _ = winreg.QueryValueEx(registry_key, "AppsUseLightTheme")
             winreg.CloseKey(registry_key)
 
             # value == 1 means light theme, value == 0 means dark theme
             return "light" if value == 1 else "dark"
-        except Exception as e:
-            logger.debug(f"Windows theme detection failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Windows theme detection failed: %s", e)
             return "light"
 
     def _detect_macos(self) -> Literal["light", "dark"]:
@@ -95,8 +94,8 @@ class SystemThemeDetector:
             if result.returncode == 0 and "Dark" in result.stdout:
                 return "dark"
             return "light"
-        except Exception as e:
-            logger.debug(f"macOS theme detection failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("macOS theme detection failed: %s", e)
             return "light"
 
     def _detect_linux(self) -> Literal["light", "dark"]:
@@ -141,14 +140,14 @@ class SystemThemeDetector:
                 return "dark"
 
             return "light"
-        except Exception as e:
-            logger.debug(f"Linux theme detection failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Linux theme detection failed: %s", e)
             return "light"
 
     def _detect_system_theme(self) -> None:
         """Detect and cache current system theme."""
         self._current_mode = self.detect()
-        logger.info(f"System theme detected: {self._current_mode}")
+        logger.info("System theme detected: %s", self._current_mode)
 
     def get_current_mode(self) -> Literal["light", "dark"]:
         """Get the currently detected system theme mode."""
@@ -180,6 +179,6 @@ class SystemThemeDetector:
         self._detect_system_theme()
 
         if old_mode != self._current_mode:
-            logger.info(f"System theme changed: {old_mode} -> {self._current_mode}")
+            logger.info("System theme changed: %s -> {self._current_mode}", old_mode)
 
         return self._current_mode

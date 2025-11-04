@@ -11,13 +11,14 @@ Detects various mesh errors:
 
 from dataclasses import dataclass
 from typing import List, Set, Tuple, Dict
-from src.core.data_structures import Triangle, Vector3D
+from src.core.data_structures import Vector3D
 from src.parsers.stl_parser import STLModel
 
 
 @dataclass
 class MeshError:
     """Represents a detected mesh error."""
+
     error_type: str  # "non_manifold", "hollow", "hole", "overlap", "self_intersect"
     count: int
     description: str
@@ -28,7 +29,7 @@ class MeshError:
 class ModelErrorDetector:
     """Detects various mesh errors in 3D models."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """Initialize error detector with a model."""
         self.model = model
         self.triangles = model.triangles
@@ -87,13 +88,15 @@ class ModelErrorDetector:
                 affected_triangles.update(tri_list)
 
         if non_manifold_edges:
-            self.errors.append(MeshError(
-                error_type="non_manifold",
-                count=len(non_manifold_edges),
-                description=f"Found {len(non_manifold_edges)} non-manifold edges (shared by >2 triangles)",
-                severity="critical",
-                affected_triangles=list(affected_triangles)
-            ))
+            self.errors.append(
+                MeshError(
+                    error_type="non_manifold",
+                    count=len(non_manifold_edges),
+                    description=f"Found {len(non_manifold_edges)} non-manifold edges (shared by >2 triangles)",
+                    severity="critical",
+                    affected_triangles=list(affected_triangles),
+                )
+            )
 
     def _detect_holes(self) -> None:
         """Detect holes (open edges shared by only 1 triangle)."""
@@ -114,13 +117,15 @@ class ModelErrorDetector:
         open_edges = [edge for edge, count in edge_count.items() if count == 1]
 
         if open_edges:
-            self.errors.append(MeshError(
-                error_type="hole",
-                count=len(open_edges),
-                description=f"Found {len(open_edges)} open edges (holes in mesh)",
-                severity="critical",
-                affected_triangles=[]
-            ))
+            self.errors.append(
+                MeshError(
+                    error_type="hole",
+                    count=len(open_edges),
+                    description=f"Found {len(open_edges)} open edges (holes in mesh)",
+                    severity="critical",
+                    affected_triangles=[],
+                )
+            )
 
     def _detect_overlapping_triangles(self) -> None:
         """Detect overlapping/duplicate triangles (exact same vertices)."""
@@ -131,9 +136,7 @@ class ModelErrorDetector:
         for tri_idx, triangle in enumerate(self.triangles):
             vertices = triangle.get_vertices()
             # Create a normalized representation (sorted vertices)
-            tri_key = tuple(sorted([
-                self._vertex_to_tuple(v) for v in vertices
-            ]))
+            tri_key = tuple(sorted([self._vertex_to_tuple(v) for v in vertices]))
 
             if tri_key in seen_triangles:
                 duplicates += 1
@@ -143,35 +146,39 @@ class ModelErrorDetector:
                 seen_triangles[tri_key] = tri_idx
 
         if duplicates > 0:
-            self.errors.append(MeshError(
-                error_type="overlap",
-                count=duplicates,
-                description=f"Found {duplicates} duplicate triangles with identical vertices",
-                severity="warning",
-                affected_triangles=list(affected_triangles)
-            ))
+            self.errors.append(
+                MeshError(
+                    error_type="overlap",
+                    count=duplicates,
+                    description=f"Found {duplicates} duplicate triangles with identical vertices",
+                    severity="warning",
+                    affected_triangles=list(affected_triangles),
+                )
+            )
 
     def _detect_self_intersecting(self) -> None:
         """Detect self-intersecting triangles (basic check)."""
         degenerate = 0
         affected_triangles: Set[int] = set()
-        
+
         for tri_idx, triangle in enumerate(self.triangles):
             vertices = triangle.get_vertices()
-            
+
             # Check if triangle is degenerate (area ~0)
             if self._is_degenerate_triangle(vertices):
                 degenerate += 1
                 affected_triangles.add(tri_idx)
-        
+
         if degenerate > 0:
-            self.errors.append(MeshError(
-                error_type="self_intersect",
-                count=degenerate,
-                description=f"Found {degenerate} degenerate/self-intersecting triangles",
-                severity="critical",
-                affected_triangles=list(affected_triangles)
-            ))
+            self.errors.append(
+                MeshError(
+                    error_type="self_intersect",
+                    count=degenerate,
+                    description=f"Found {degenerate} degenerate/self-intersecting triangles",
+                    severity="critical",
+                    affected_triangles=list(affected_triangles),
+                )
+            )
 
     def _detect_hollow_areas(self) -> None:
         """Detect hollow areas (faces with inconsistent normals or inward-facing)."""
@@ -206,13 +213,15 @@ class ModelErrorDetector:
             to_tri = Vector3D(
                 tri_center_x - center.x,
                 tri_center_y - center.y,
-                tri_center_z - center.z
+                tri_center_z - center.z,
             )
 
             # Dot product with normal
-            dot = (triangle.normal.x * to_tri.x +
-                   triangle.normal.y * to_tri.y +
-                   triangle.normal.z * to_tri.z)
+            dot = (
+                triangle.normal.x * to_tri.x
+                + triangle.normal.y * to_tri.y
+                + triangle.normal.z * to_tri.z
+            )
 
             # If dot product is negative, normal points inward (hollow)
             if dot < 0:
@@ -220,13 +229,15 @@ class ModelErrorDetector:
                 affected_triangles.add(tri_idx)
 
         if inward_facing > 0:
-            self.errors.append(MeshError(
-                error_type="hollow",
-                count=inward_facing,
-                description=f"Found {inward_facing} inward-facing normals (hollow areas)",
-                severity="warning",
-                affected_triangles=list(affected_triangles)
-            ))
+            self.errors.append(
+                MeshError(
+                    error_type="hollow",
+                    count=inward_facing,
+                    description=f"Found {inward_facing} inward-facing normals (hollow areas)",
+                    severity="warning",
+                    affected_triangles=list(affected_triangles),
+                )
+            )
 
     @staticmethod
     def _normalize_edge(v1: Vector3D, v2: Vector3D) -> Tuple:
@@ -238,30 +249,26 @@ class ModelErrorDetector:
     @staticmethod
     def _vertex_to_tuple(v: Vector3D, precision: int = 6) -> Tuple:
         """Convert vertex to tuple with precision."""
-        return (
-            round(v.x, precision),
-            round(v.y, precision),
-            round(v.z, precision)
-        )
+        return (round(v.x, precision), round(v.y, precision), round(v.z, precision))
 
     @staticmethod
     def _is_degenerate_triangle(vertices: List[Vector3D]) -> bool:
         """Check if triangle is degenerate (area ~0)."""
         if len(vertices) != 3:
             return True
-        
+
         v1, v2, v3 = vertices
-        
+
         # Calculate cross product
         edge1 = Vector3D(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z)
         edge2 = Vector3D(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z)
-        
+
         cross = Vector3D(
             edge1.y * edge2.z - edge1.z * edge2.y,
             edge1.z * edge2.x - edge1.x * edge2.z,
-            edge1.x * edge2.y - edge1.y * edge2.x
+            edge1.x * edge2.y - edge1.y * edge2.x,
         )
-        
+
         magnitude = (cross.x**2 + cross.y**2 + cross.z**2) ** 0.5
         return magnitude < 1e-6
 
@@ -269,10 +276,9 @@ class ModelErrorDetector:
         """Get a human-readable summary of all errors."""
         if not self.errors:
             return "No errors detected. Model is valid."
-        
+
         summary = f"Found {len(self.errors)} error type(s):\n\n"
         for error in self.errors:
             summary += f"• {error.description}\n"
-        
-        return summary
 
+        return summary

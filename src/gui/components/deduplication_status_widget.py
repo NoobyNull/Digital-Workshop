@@ -4,11 +4,8 @@ Deduplication status widget for status bar.
 Shows hashing progress and duplicate count with clickable indicator.
 """
 
-from typing import Optional
-
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
-from PySide6.QtGui import QFont, QColor
 
 # Import theme system for proper theming
 try:
@@ -29,7 +26,7 @@ class DeduplicationStatusWidget(QWidget):
 
     duplicate_clicked = Signal()  # Emitted when duplicate indicator is clicked
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize deduplication status widget.
 
@@ -95,17 +92,17 @@ class DeduplicationStatusWidget(QWidget):
         if count > 0:
             self.duplicate_btn.setVisible(True)
             self.duplicate_btn.setText(f"⚠️ {count} Duplicates")
-            
+
             # Apply theme-aware styling
             try:
                 if COLORS:
-                    warning_color = getattr(COLORS, 'warning', '#FF6B6B')
-                    text_color = getattr(COLORS, 'text', '#ffffff')
+                    warning_color = getattr(COLORS, "warning", "#FF6B6B")
+                    text_color = getattr(COLORS, "text", "#ffffff")
                 else:
                     # Fallback colors
-                    warning_color = '#FF6B6B'
-                    text_color = '#ffffff'
-                
+                    warning_color = "#FF6B6B"
+                    text_color = "#ffffff"
+
                 self.duplicate_btn.setStyleSheet(
                     f"background-color: {warning_color}; color: {text_color}; font-weight: bold; "
                     "border-radius: 3px; padding: 2px 8px;"
@@ -126,4 +123,3 @@ class DeduplicationStatusWidget(QWidget):
     def is_currently_hashing(self) -> bool:
         """Check if currently hashing."""
         return self.is_hashing
-

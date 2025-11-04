@@ -98,8 +98,8 @@ class ThumbnailGenerator:
 
             painter.end()
             return pixmap
-        except Exception as e:
-            self.logger.error(f"Failed to generate thumbnail: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to generate thumbnail: %s", e)
             px = QPixmap(self.size)
             px.fill(Qt.lightGray)
             p = QPainter(px)
@@ -108,4 +108,3 @@ class ThumbnailGenerator:
             p.drawLine(self.size.width() - 10, 10, 10, self.size.height() - 10)
             p.end()
             return px
-

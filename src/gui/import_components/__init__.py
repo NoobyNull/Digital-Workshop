@@ -11,4 +11,4 @@ This package provides user interface components for importing 3D models with:
 
 from src.gui.import_components.import_dialog import ImportDialog
 
-__all__ = ['ImportDialog']
+__all__ = ["ImportDialog"]

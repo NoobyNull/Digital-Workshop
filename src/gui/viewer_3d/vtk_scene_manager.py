@@ -6,7 +6,6 @@ like grid, ground plane, and orientation widget.
 """
 
 import multiprocessing as _mp
-from typing import Optional
 
 import vtk
 
@@ -20,7 +19,7 @@ logger = get_logger(__name__)
 class VTKSceneManager:
     """Manages VTK scene setup and configuration."""
 
-    def __init__(self, vtk_widget):
+    def __init__(self, vtk_widget) -> None:
         """
         Initialize VTK scene manager.
 
@@ -45,26 +44,38 @@ class VTKSceneManager:
             settings = QSettings()
 
             # Grid settings - load from QSettings with fallback to config
-            self.grid_visible = settings.value("viewer/grid_visible", config.grid_visible, type=bool)
+            self.grid_visible = settings.value(
+                "viewer/grid_visible", config.grid_visible, type=bool
+            )
             self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
             self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
 
             # Ground settings
-            self.ground_visible = settings.value("viewer/ground_visible", config.ground_visible, type=bool)
+            self.ground_visible = settings.value(
+                "viewer/ground_visible", config.ground_visible, type=bool
+            )
             self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
-            self.ground_offset = settings.value("viewer/ground_offset", config.ground_offset, type=float)
+            self.ground_offset = settings.value(
+                "viewer/ground_offset", config.ground_offset, type=float
+            )
 
             # Gradient settings - load from QSettings with fallback to config
-            self.gradient_top_color = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
-            self.gradient_bottom_color = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
-            self.enable_gradient = settings.value("viewer/enable_gradient", config.enable_gradient, type=bool)
-        except Exception as e:
-            logger.warning(f"Failed to load grid/ground/gradient settings from QSettings: {e}")
+            self.gradient_top_color = settings.value(
+                "viewer/gradient_top_color", config.gradient_top_color, type=str
+            )
+            self.gradient_bottom_color = settings.value(
+                "viewer/gradient_bottom_color", config.gradient_bottom_color, type=str
+            )
+            self.enable_gradient = settings.value(
+                "viewer/enable_gradient", config.enable_gradient, type=bool
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load grid/ground/gradient settings from QSettings: %s", e)
             self.grid_visible = True
-            self.grid_color = vtk_rgb('grid')
+            self.grid_color = vtk_rgb("grid")
             self.grid_size = 10.0
             self.ground_visible = True
-            self.ground_color = vtk_rgb('ground')
+            self.ground_color = vtk_rgb("ground")
             self.ground_offset = 0.5
 
             # Default gradient settings
@@ -75,6 +86,9 @@ class VTKSceneManager:
     @log_function_call(logger)
     def setup_scene(self) -> None:
         """Set up the VTK scene with renderer and interactor."""
+        # Suppress vtkOutputWindow to prevent white window from appearing during rendering
+        self._suppress_vtk_output_window()
+
         self._setup_renderer()
         self._setup_render_window()
         self._setup_interactor()
@@ -83,53 +97,102 @@ class VTKSceneManager:
         self._setup_camera()
         logger.debug("VTK scene setup completed")
 
+    def _suppress_vtk_output_window(self) -> None:
+        """Suppress the vtkOutputWindow to prevent white window from appearing."""
+        try:
+            # Disable VTK warnings and errors display
+            vtk.vtkObject.GlobalWarningDisplayOff()
+            vtk.vtkObject.SetGlobalWarningDisplay(0)
+
+            # Try to suppress the output window display
+            try:
+                output_window = vtk.vtkOutputWindow.GetInstance()
+                if output_window:
+                    # Set display mode to never show the window (0 = Never)
+                    output_window.SetDisplayMode(0)
+                    logger.debug("VTK output window display mode set to never")
+            except Exception:
+                # If GetInstance fails, just continue - the warnings are already suppressed
+                pass
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Could not fully suppress vtkOutputWindow: %s", e)
+
     def _setup_renderer(self) -> None:
         """Set up the VTK renderer with lighting."""
         self.renderer = vtk.vtkRenderer()
-        
+
         # Configure gradient based on settings
         if self.enable_gradient:
             self.renderer.GradientBackgroundOn()
-            
+
             # Convert hex colors to RGB tuples
             top_rgb = self._hex_to_rgb(self.gradient_top_color)
             bottom_rgb = self._hex_to_rgb(self.gradient_bottom_color)
-            
-            self.renderer.SetBackground2(*top_rgb)    # Top of gradient
+
+            self.renderer.SetBackground2(*top_rgb)  # Top of gradient
             self.renderer.SetBackground(*bottom_rgb)  # Bottom of gradient
-            
-            logger.debug(f"Applied gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}")
+
+            logger.debug(
+                f"Applied gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}"
+            )
         else:
             self.renderer.GradientBackgroundOff()
             # Use solid background color from theme
-            bg_rgb = vtk_rgb('canvas_bg')
+            bg_rgb = vtk_rgb("canvas_bg")
             self.renderer.SetBackground(*bg_rgb)
-            logger.debug(f"Applied solid background color: {bg_rgb}")
+            logger.debug("Applied solid background color: %s", bg_rgb)
 
-        # Configure multi-threading
+        # Configure multi-threading respecting resource limits
         try:
-            threads = max(2, (_mp.cpu_count() or 2))
+            from src.core.application_config import ApplicationConfig
+
+            config = ApplicationConfig.get_default()
+            total_cpu_count = _mp.cpu_count() or 2
+
+            # Calculate thread count based on resource limit
+            # If manual override is enabled, use 80% of CPU cores
+            # Otherwise use conservative approach (50% of cores, minimum 2)
+            if config.use_manual_memory_override:
+                # Use 80% of available cores for VTK
+                threads = max(2, int(total_cpu_count * 0.8))
+                logger.info(
+                    f"VTK thread count set to {threads} (80% of {total_cpu_count} cores, respecting resource limit)"
+                )
+            else:
+                # Conservative approach: use 50% of cores
+                threads = max(2, int(total_cpu_count * 0.5))
+                logger.info(
+                    f"VTK thread count set to {threads} (50% of {total_cpu_count} cores, conservative)"
+                )
+
             vtk.vtkMultiThreader.SetGlobalDefaultNumberOfThreads(threads)
             if hasattr(vtk, "vtkSMPTools"):
                 try:
                     vtk.vtkSMPTools.SetNumberOfThreads(threads)
                 except Exception:
                     pass
-            logger.info(f"VTK thread count set to {threads}")
-        except Exception:
-            pass
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to configure VTK thread count: %s", e)
+            # Fallback to conservative default
+            try:
+                threads = max(2, int((_mp.cpu_count() or 2) * 0.5))
+                vtk.vtkMultiThreader.SetGlobalDefaultNumberOfThreads(threads)
+                logger.info("VTK thread count set to %s (fallback conservative)", threads)
+            except Exception:
+                pass
 
         # Add lighting
         light1 = vtk.vtkLight()
         light1.SetPosition(100, 100, 100)
         light1.SetIntensity(0.8)
-        light1.SetColor(*vtk_rgb('light_color'))
+        light1.SetColor(*vtk_rgb("light_color"))
         self.renderer.AddLight(light1)
 
         light2 = vtk.vtkLight()
         light2.SetPosition(-100, -100, 100)
         light2.SetIntensity(0.5)
-        light2.SetColor(*vtk_rgb('light_color'))
+        light2.SetColor(*vtk_rgb("light_color"))
         self.renderer.AddLight(light2)
 
     def _setup_render_window(self) -> None:
@@ -165,9 +228,7 @@ class VTKSceneManager:
                 self.camera_widget.SetParentRenderer(self.renderer)
 
                 try:
-                    self.camera_widget.SetViewportCorner(
-                        vtk.vtkCameraOrientationWidget.UpperRight
-                    )
+                    self.camera_widget.SetViewportCorner(vtk.vtkCameraOrientationWidget.UpperRight)
                 except Exception:
                     pass
 
@@ -201,7 +262,7 @@ class VTKSceneManager:
                 pass
 
             try:
-                c = vtk_rgb('edge_color')
+                c = vtk_rgb("edge_color")
                 cube.GetTextEdgesProperty().SetColor(*c)
                 cube.GetXPlusFaceProperty().SetColor(0.85, 0.25, 0.25)
                 cube.GetXMinusFaceProperty().SetColor(0.60, 0.15, 0.15)
@@ -224,18 +285,20 @@ class VTKSceneManager:
     def _setup_grid_and_ground(self) -> None:
         """Set up grid and ground plane using config settings."""
         try:
-            logger.info(f"Creating initial grid and ground with grid_visible={self.grid_visible}, ground_visible={self.ground_visible}")
+            logger.info(
+                f"Creating initial grid and ground with grid_visible={self.grid_visible}, ground_visible={self.ground_visible}"
+            )
             self.update_grid(radius=100.0, center_x=0.0, center_y=0.0)
             self.create_ground_plane(radius=100.0, center_x=0.0, center_y=0.0)
 
             if self.grid_actor:
                 self.grid_actor.SetVisibility(self.grid_visible)
-                logger.info(f"Grid actor visibility set to {self.grid_visible}")
+                logger.info("Grid actor visibility set to %s", self.grid_visible)
             if self.ground_actor:
                 self.ground_actor.SetVisibility(self.ground_visible)
-                logger.info(f"Ground actor visibility set to {self.ground_visible}")
-        except Exception as e:
-            logger.error(f"Failed to create initial grid/ground: {e}", exc_info=True)
+                logger.info("Ground actor visibility set to %s", self.ground_visible)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to create initial grid/ground: %s", e, exc_info=True)
 
     def _setup_camera(self) -> None:
         """Set up default camera."""
@@ -247,14 +310,14 @@ class VTKSceneManager:
         self.grid_visible = not self.grid_visible
         if self.grid_actor:
             self.grid_actor.SetVisibility(self.grid_visible)
-            logger.debug(f"Grid visibility toggled to {self.grid_visible}")
+            logger.debug("Grid visibility toggled to %s", self.grid_visible)
 
     def toggle_ground_plane(self) -> None:
         """Toggle ground plane visibility."""
         self.ground_visible = not self.ground_visible
         if self.ground_actor:
             self.ground_actor.SetVisibility(self.ground_visible)
-            logger.debug(f"Ground plane visibility toggled to {self.ground_visible}")
+            logger.debug("Ground plane visibility toggled to %s", self.ground_visible)
 
     def update_grid(self, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> None:
         """Update grid visualization using config settings."""
@@ -281,7 +344,7 @@ class VTKSceneManager:
         if isinstance(self.grid_color, str):
             if self.grid_color.lower() == "theme":
                 # Use theme system color
-                grid_rgb = vtk_rgb('grid')
+                grid_rgb = vtk_rgb("grid")
                 self.grid_actor.GetProperty().SetColor(*grid_rgb)
             else:
                 # Hex string from config - convert to RGB
@@ -290,18 +353,19 @@ class VTKSceneManager:
         else:
             # RGB tuple from vtk_rgb() - use directly
             self.grid_actor.GetProperty().SetColor(*self.grid_color)
-        
+
         self.grid_actor.GetProperty().SetRepresentationToWireframe()
         self.grid_actor.SetVisibility(self.grid_visible)
 
         self.renderer.AddActor(self.grid_actor)
 
     def create_ground_plane(
+        """TODO: Add docstring."""
         self,
         radius: float,
         center_x: float = 0.0,
         center_y: float = 0.0,
-        z_position: float = -0.1
+        z_position: float = -0.1,
     ) -> None:
         """Create ground plane using config settings."""
         # Remove existing ground if present
@@ -325,7 +389,7 @@ class VTKSceneManager:
         if isinstance(self.ground_color, str):
             if self.ground_color.lower() == "theme":
                 # Use theme system color
-                ground_rgb = vtk_rgb('ground')
+                ground_rgb = vtk_rgb("ground")
                 self.ground_actor.GetProperty().SetColor(*ground_rgb)
             else:
                 # Hex string from config - convert to RGB
@@ -334,7 +398,7 @@ class VTKSceneManager:
         else:
             # RGB tuple from vtk_rgb() - use directly
             self.ground_actor.GetProperty().SetColor(*self.ground_color)
-        
+
         self.ground_actor.GetProperty().SetOpacity(0.3)
         self.ground_actor.SetVisibility(self.ground_visible)
 
@@ -343,8 +407,8 @@ class VTKSceneManager:
     @staticmethod
     def _hex_to_rgb(hex_color: str) -> tuple:
         """Convert hex color to RGB (0-1 range)."""
-        hex_color = hex_color.lstrip('#')
-        return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        return tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
     def render(self) -> None:
         """Trigger a render with enhanced error handling."""
@@ -352,14 +416,15 @@ class VTKSceneManager:
             try:
                 # Use fallback renderer for safe rendering
                 from src.gui.vtk import get_vtk_fallback_renderer
+
                 fallback_renderer = get_vtk_fallback_renderer()
 
                 success = fallback_renderer.render_with_fallback(self.render_window)
                 if not success:
                     logger.debug("Fallback render failed, continuing anyway")
 
-            except Exception as e:
-                logger.debug(f"Render error: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.debug("Render error: %s", e)
                 # Continue silently - errors are handled by the fallback renderer
 
     def reset_camera(self) -> None:
@@ -383,7 +448,7 @@ class VTKSceneManager:
             cleanup_success = cleanup_coordinator.coordinate_cleanup(
                 render_window=self.render_window,
                 renderer=self.renderer,
-                interactor=self.interactor
+                interactor=self.interactor,
             )
 
             if cleanup_success:
@@ -400,8 +465,8 @@ class VTKSceneManager:
             self.render_window = None
             self.renderer = None
 
-        except Exception as e:
-            logger.warning(f"Error during enhanced VTK cleanup: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Error during enhanced VTK cleanup: %s", e)
             # Fallback to basic cleanup
             self._basic_cleanup()
 
@@ -414,20 +479,20 @@ class VTKSceneManager:
             try:
                 if self.render_window:
                     self.render_window.Finalize()
-            except Exception as e:
-                logger.debug(f"Basic render window cleanup error: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.debug("Basic render window cleanup error: %s", e)
 
             try:
                 if self.interactor:
                     self.interactor.TerminateApp()
-            except Exception as e:
-                logger.debug(f"Basic interactor cleanup error: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.debug("Basic interactor cleanup error: %s", e)
 
             try:
                 if self.renderer:
                     self.renderer.RemoveAllViewProps()
-            except Exception as e:
-                logger.debug(f"Basic renderer cleanup error: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.debug("Basic renderer cleanup error: %s", e)
 
             # Clear references
             self.grid_actor = None
@@ -440,8 +505,8 @@ class VTKSceneManager:
 
             logger.info("Basic VTK cleanup completed")
 
-        except Exception as e:
-            logger.error(f"Error during basic cleanup: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Error during basic cleanup: %s", e)
 
     def reload_settings_from_qsettings(self) -> None:
         """
@@ -451,49 +516,67 @@ class VTKSceneManager:
         try:
             from PySide6.QtCore import QSettings
             from src.core.application_config import ApplicationConfig
-            
+
             config = ApplicationConfig.get_default()
             settings = QSettings()
-            
+
             # Reload grid settings
-            self.grid_visible = settings.value("viewer/grid_visible", config.grid_visible, type=bool)
+            self.grid_visible = settings.value(
+                "viewer/grid_visible", config.grid_visible, type=bool
+            )
             self.grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
             self.grid_size = settings.value("viewer/grid_size", config.grid_size, type=float)
-            
+
             # Reload ground settings
-            self.ground_visible = settings.value("viewer/ground_visible", config.ground_visible, type=bool)
+            self.ground_visible = settings.value(
+                "viewer/ground_visible", config.ground_visible, type=bool
+            )
             self.ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
-            self.ground_offset = settings.value("viewer/ground_offset", config.ground_offset, type=float)
-            
+            self.ground_offset = settings.value(
+                "viewer/ground_offset", config.ground_offset, type=float
+            )
+
             # Reload gradient settings
-            self.gradient_top_color = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
-            self.gradient_bottom_color = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
-            self.enable_gradient = settings.value("viewer/enable_gradient", config.enable_gradient, type=bool)
-            
+            self.gradient_top_color = settings.value(
+                "viewer/gradient_top_color", config.gradient_top_color, type=str
+            )
+            self.gradient_bottom_color = settings.value(
+                "viewer/gradient_bottom_color", config.gradient_bottom_color, type=str
+            )
+            self.enable_gradient = settings.value(
+                "viewer/enable_gradient", config.enable_gradient, type=bool
+            )
+
             # Apply gradient changes
             self.update_gradient_colors()
-            
+
             # Apply grid/ground changes
             if self.grid_actor:
                 self.grid_actor.SetVisibility(self.grid_visible)
                 grid_rgb = self._hex_to_rgb(self.grid_color)
                 self.grid_actor.GetProperty().SetColor(*grid_rgb)
-            
+
             if self.ground_actor:
                 self.ground_actor.SetVisibility(self.ground_visible)
                 ground_rgb = self._hex_to_rgb(self.ground_color)
                 self.ground_actor.GetProperty().SetColor(*ground_rgb)
-            
+
             self.render()
             logger.info("Viewer settings reloaded from QSettings and applied")
-            
-        except Exception as e:
-            logger.error(f"Failed to reload settings from QSettings: {e}", exc_info=True)
-    
-    def update_gradient_colors(self, top_color: str = None, bottom_color: str = None, enable_gradient: bool = None) -> None:
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to reload settings from QSettings: %s", e, exc_info=True)
+
+    def update_gradient_colors(
+        """TODO: Add docstring."""
+        self,
+        top_color: str = None,
+        bottom_color: str = None,
+        enable_gradient: bool = None,
+    ) -> None:
         """
         Update the background gradient colors and settings.
-        
+
         Args:
             top_color: Hex color string for top of gradient (optional)
             bottom_color: Hex color string for bottom of gradient (optional)
@@ -507,29 +590,30 @@ class VTKSceneManager:
                 self.gradient_bottom_color = bottom_color
             if enable_gradient is not None:
                 self.enable_gradient = enable_gradient
-            
+
             # Reconfigure renderer background
             if self.enable_gradient:
                 self.renderer.GradientBackgroundOn()
-                
+
                 # Convert hex colors to RGB tuples
                 top_rgb = self._hex_to_rgb(self.gradient_top_color)
                 bottom_rgb = self._hex_to_rgb(self.gradient_bottom_color)
-                
+
                 self.renderer.SetBackground2(*top_rgb)
                 self.renderer.SetBackground(*bottom_rgb)
-                
-                logger.info(f"Updated gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}")
+
+                logger.info(
+                    f"Updated gradient background: top={self.gradient_top_color}, bottom={self.gradient_bottom_color}"
+                )
             else:
                 self.renderer.GradientBackgroundOff()
                 # Use solid background color from theme
-                bg_rgb = vtk_rgb('canvas_bg')
+                bg_rgb = vtk_rgb("canvas_bg")
                 self.renderer.SetBackground(*bg_rgb)
                 logger.info("Updated to solid background color")
-            
+
             # Trigger re-render
             self.render()
-            
-        except Exception as e:
-            logger.error(f"Failed to update gradient colors: {e}", exc_info=True)
 
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to update gradient colors: %s", e, exc_info=True)

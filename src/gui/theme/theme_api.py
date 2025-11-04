@@ -19,6 +19,7 @@ class _ColorsProxy:
     """
 
     def __getattr__(self, name: str) -> str:
+        """TODO: Add docstring."""
         return ThemeManager.instance().get_color(name, context="COLORS_proxy")
 
 
@@ -64,6 +65,7 @@ def list_theme_presets() -> list[str]:
 
 
 def apply_theme_preset(
+    """TODO: Add docstring."""
     preset_name: str,
     custom_mode: Optional[str] = None,
     base_primary: Optional[str] = None,
@@ -93,6 +95,7 @@ def save_theme_to_settings() -> None:
 
 
 def qss_button_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QPushButton {{"
         f"  background-color: {COLORS.surface};"
@@ -126,6 +129,7 @@ def qss_button_base() -> str:
 
 
 def qss_progress_bar() -> str:
+    """TODO: Add docstring."""
     return (
         f"QProgressBar {{"
         f"  border: 1px solid {COLORS.border};"
@@ -142,6 +146,7 @@ def qss_progress_bar() -> str:
 
 
 def qss_inputs_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QLineEdit, QTextEdit, QComboBox, QSpinBox, QDateEdit {{"
         f"  border: 1px solid {COLORS.border};"
@@ -163,6 +168,7 @@ def qss_inputs_base() -> str:
 
 
 def qss_tabs_lists_labels() -> str:
+    """TODO: Add docstring."""
     return (
         f"QTabWidget::pane {{"
         f"  border: 1px solid {COLORS.border};"
@@ -207,6 +213,7 @@ def qss_tabs_lists_labels() -> str:
 
 
 def qss_groupbox_base() -> str:
+    """TODO: Add docstring."""
     return (
         f"QGroupBox {{"
         f"  font-weight: bold;"

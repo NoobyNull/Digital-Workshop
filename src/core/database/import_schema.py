@@ -159,38 +159,38 @@ GROUP BY s.id;
 """
 
 
-def get_all_schema_statements():
+def get_all_schema_statements() -> None:
     """
     Get all schema creation statements in order.
-    
+
     Returns:
         List of SQL statements to create the complete schema
     """
     statements = []
-    
+
     # Tables
     statements.append(CREATE_IMPORT_SESSIONS_TABLE)
     statements.append(CREATE_IMPORT_FILES_TABLE)
     statements.append(CREATE_MODEL_ANALYSIS_TABLE)
-    
+
     # Indexes
     statements.extend(CREATE_IMPORT_SESSIONS_INDEXES)
     statements.extend(CREATE_IMPORT_FILES_INDEXES)
     statements.extend(CREATE_MODEL_ANALYSIS_INDEXES)
-    
+
     # Views
     statements.append(CREATE_IMPORT_SUMMARY_VIEW)
-    
+
     return statements
 
 
-def get_models_table_extensions():
+def get_models_table_extensions() -> None:
     """
     Get ALTER TABLE statements for extending models table.
-    
+
     Returns:
         List of ALTER TABLE SQL statements
-        
+
     Note:
         These should be executed with error handling as columns may already exist
     """
@@ -198,9 +198,9 @@ def get_models_table_extensions():
 
 
 __all__ = [
-    'CREATE_IMPORT_SESSIONS_TABLE',
-    'CREATE_IMPORT_FILES_TABLE',
-    'CREATE_MODEL_ANALYSIS_TABLE',
-    'get_all_schema_statements',
-    'get_models_table_extensions'
+    "CREATE_IMPORT_SESSIONS_TABLE",
+    "CREATE_IMPORT_FILES_TABLE",
+    "CREATE_MODEL_ANALYSIS_TABLE",
+    "get_all_schema_statements",
+    "get_models_table_extensions",
 ]

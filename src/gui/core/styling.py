@@ -19,30 +19,29 @@ class StylingManager:
     This class is kept for backward compatibility but does nothing.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """Initialize the styling manager (no-op)."""
         self.main_window = main_window
         self.logger = logger or logging.getLogger(__name__)
 
     def init_ui(self) -> None:
         """Initialize basic UI properties (no-op - qt-material handles this)."""
-        pass
 
     def apply_theme_styles(self) -> None:
         """Apply theme (no-op - qt-material handles this)."""
-        pass
 
     def apply_bar_palettes(self) -> None:
         """Apply bar palettes (no-op - qt-material handles this)."""
-        pass
 
     def load_external_stylesheet(self) -> None:
         """Load external stylesheet (no-op - qt-material handles this)."""
-        pass
 
 
 # Convenience function for easy styling application
-def apply_main_window_styling(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> StylingManager:
+def apply_main_window_styling(
+    """TODO: Add docstring."""
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> StylingManager:
     """
     Convenience function to apply styling to a main window.
 

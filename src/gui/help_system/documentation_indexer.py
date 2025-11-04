@@ -5,10 +5,9 @@ Scans all markdown files in the project and builds a searchable index
 of documentation content with keywords and sections.
 """
 
-import os
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from dataclasses import dataclass
 
 from src.core.logging_config import get_logger
@@ -19,6 +18,7 @@ logger = get_logger(__name__)
 @dataclass
 class HelpTopic:
     """Represents a searchable help topic."""
+
     title: str
     content: str
     file_path: str
@@ -26,7 +26,8 @@ class HelpTopic:
     keywords: List[str] = None
     category: str = "General"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.keywords is None:
             self.keywords = []
 
@@ -63,7 +64,7 @@ class DocumentationIndexer:
         "troubleshooting": ["troubleshoot", "error", "fix", "issue"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the indexer."""
         self.topics: List[HelpTopic] = []
         self.project_root = Path(__file__).parent.parent.parent.parent
@@ -85,7 +86,7 @@ class DocumentationIndexer:
             if file_path.exists():
                 self._index_file(file_path)
 
-        logger.info(f"Documentation index built: {len(self.topics)} topics")
+        logger.info("Documentation index built: %s topics", len(self.topics))
         return self.topics
 
     def _scan_directory(self, directory: Path) -> None:
@@ -93,8 +94,8 @@ class DocumentationIndexer:
         try:
             for md_file in directory.rglob("*.md"):
                 self._index_file(md_file)
-        except Exception as e:
-            logger.warning(f"Error scanning directory {directory}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Error scanning directory %s: {e}", directory)
 
     def _index_file(self, file_path: Path) -> None:
         """Index a single markdown file."""
@@ -106,8 +107,8 @@ class DocumentationIndexer:
             sections = self._extract_sections(content, file_path)
             self.topics.extend(sections)
 
-        except Exception as e:
-            logger.warning(f"Error indexing file {file_path}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Error indexing file %s: {e}", file_path)
 
     def _extract_sections(self, content: str, file_path: Path) -> List[HelpTopic]:
         """Extract sections from markdown content."""
@@ -130,9 +131,7 @@ class DocumentationIndexer:
                 if current_heading:
                     section_content = "\n".join(current_content).strip()
                     if section_content:
-                        keywords = self._extract_keywords(
-                            current_heading + " " + section_content
-                        )
+                        keywords = self._extract_keywords(current_heading + " " + section_content)
                         topic = HelpTopic(
                             title=current_heading,
                             content=section_content[:500],  # First 500 chars
@@ -154,9 +153,7 @@ class DocumentationIndexer:
         if current_heading:
             section_content = "\n".join(current_content).strip()
             if section_content:
-                keywords = self._extract_keywords(
-                    current_heading + " " + section_content
-                )
+                keywords = self._extract_keywords(current_heading + " " + section_content)
                 topic = HelpTopic(
                     title=current_heading,
                     content=section_content[:500],
@@ -223,4 +220,3 @@ class DocumentationIndexer:
         # Sort by relevance score
         results.sort(key=lambda x: x[1], reverse=True)
         return results
-

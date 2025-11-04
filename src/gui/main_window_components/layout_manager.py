@@ -7,7 +7,7 @@ Handles dock layout persistence, snapping, and restoration.
 import base64
 import json
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 from PySide6.QtCore import QTimer, QStandardPaths
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QSplitter, QTabWidget
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class LayoutManager:
     """Manages window layout persistence and dock snapping."""
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: QMainWindow) -> None:
         """
         Initialize layout manager.
 
@@ -138,8 +138,8 @@ class LayoutManager:
             self._write_settings_json(settings)
             logger.debug("Layout autosaved")
 
-        except Exception as e:
-            logger.warning(f"Failed to save current layout: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to save current layout: %s", e)
 
     @log_function_call(logger)
     def load_saved_layout(self) -> bool:
@@ -199,8 +199,8 @@ class LayoutManager:
             logger.debug("Layout restored from settings")
             return True
 
-        except Exception as e:
-            logger.warning(f"Failed to load saved layout: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to load saved layout: %s", e)
             return False
 
     def connect_layout_autosave(self, dock: QDockWidget) -> None:
@@ -208,8 +208,8 @@ class LayoutManager:
         try:
             dock.topLevelChanged.connect(self.schedule_layout_save)
             dock.visibilityChanged.connect(self.schedule_layout_save)
-        except Exception as e:
-            logger.warning(f"Failed to connect layout autosave: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.warning("Failed to connect layout autosave: %s", e)
 
     def iter_docks(self) -> List[QDockWidget]:
         """Iterate over all dock widgets."""
@@ -227,6 +227,5 @@ class LayoutManager:
             self.save_current_layout()
             logger.debug("Dock layout reset to default")
 
-        except Exception as e:
-            logger.error(f"Failed to reset dock layout: {e}")
-
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to reset dock layout: %s", e)

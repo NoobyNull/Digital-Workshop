@@ -25,7 +25,7 @@ class DeduplicationService(QObject):
     duplicates_found = Signal(int)  # duplicate_count
     deduplication_complete = Signal()
 
-    def __init__(self, db_manager, parent=None):
+    def __init__(self, db_manager, parent=None) -> None:
         """
         Initialize deduplication service.
 
@@ -65,7 +65,7 @@ class DeduplicationService(QObject):
         if duplicate_count > 0:
             self.pending_duplicates = duplicates
             self.duplicates_found.emit(duplicate_count)
-            self.logger.info(f"Found {duplicate_count} duplicate models")
+            self.logger.info("Found %s duplicate models", duplicate_count)
         else:
             self.logger.info("No duplicates found")
 
@@ -108,9 +108,7 @@ class DeduplicationService(QObject):
         models = self.pending_duplicates[file_hash]
 
         try:
-            keep_id, delete_ids = self.dedup_manager.deduplicate_group(
-                models, keep_strategy
-            )
+            keep_id, delete_ids = self.dedup_manager.deduplicate_group(models, keep_strategy)
 
             if keep_id is None:
                 return False
@@ -118,15 +116,15 @@ class DeduplicationService(QObject):
             # Delete the duplicate models
             for delete_id in delete_ids:
                 self.db_manager.delete_model(delete_id)
-                self.logger.info(f"Deleted duplicate model {delete_id}")
+                self.logger.info("Deleted duplicate model %s", delete_id)
 
             # Remove from pending
             del self.pending_duplicates[file_hash]
 
             return True
 
-        except Exception as e:
-            self.logger.error(f"Failed to deduplicate group: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to deduplicate group: %s", e)
             return False
 
     def deduplicate_all(self, keep_strategy: str) -> int:
@@ -158,4 +156,3 @@ class DeduplicationService(QObject):
     def get_pending_duplicate_groups(self) -> Dict[str, List[Dict]]:
         """Get all pending duplicate groups."""
         return self.pending_duplicates.copy()
-

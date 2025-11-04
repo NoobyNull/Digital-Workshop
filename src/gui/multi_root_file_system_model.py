@@ -6,13 +6,18 @@ with filtering and navigation capabilities.
 """
 
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Any
 from dataclasses import dataclass
 
 from PySide6.QtCore import (
-    Qt, QAbstractItemModel, QModelIndex, QFileInfo, QMimeData, QThread, Signal
+    Qt,
+    QAbstractItemModel,
+    QModelIndex,
+    QFileInfo,
+    QMimeData,
+    QThread,
+    Signal,
 )
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStyle
 
 from src.core.logging_config import get_logger
@@ -22,23 +27,25 @@ from src.core.root_folder_manager import RootFolderManager, RootFolder
 @dataclass
 class TreeNode:
     """Represents a node in the multi-root file tree."""
+
     name: str
     path: Optional[str] = None  # None for root nodes
     is_dir: bool = True
-    parent: Optional['TreeNode'] = None
-    children: List['TreeNode'] = None
+    parent: Optional["TreeNode"] = None
+    children: List["TreeNode"] = None
     root_folder: Optional[RootFolder] = None  # Reference to root folder for root nodes
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.children is None:
             self.children = []
 
-    def add_child(self, child: 'TreeNode') -> None:
+    def add_child(self, child: "TreeNode") -> None:
         """Add a child node."""
         child.parent = self
         self.children.append(child)
 
-    def get_child(self, name: str) -> Optional['TreeNode']:
+    def get_child(self, name: str) -> Optional["TreeNode"]:
         """Get child by name."""
         for child in self.children:
             if child.name == name:
@@ -64,18 +71,21 @@ class DirectoryIndexer(QThread):
     """
     Background thread for indexing directory contents to prevent UI freezing.
     """
+
     indexing_complete = Signal(dict)  # {node_path: [child_nodes]}
 
-    def __init__(self, directories_to_index: List[str]):
+    def __init__(self, directories_to_index: List[str]) -> None:
+        """TODO: Add docstring."""
         super().__init__()
         self.directories_to_index = directories_to_index
         self.logger = get_logger(__name__)
         self._is_cancelled = False
 
-    def cancel(self):
+    def cancel(self) -> None:
+        """TODO: Add docstring."""
         self._is_cancelled = True
 
-    def run(self):
+    def run(self) -> None:
         """Index directory contents in background."""
         indexed_data = {}
 
@@ -92,22 +102,24 @@ class DirectoryIndexer(QThread):
                             if self._is_cancelled:
                                 break
                             # Skip hidden files
-                            if not item.name.startswith('.'):
-                                children.append({
-                                    'name': item.name,
-                                    'path': str(item),
-                                    'is_dir': item.is_dir()
-                                })
+                            if not item.name.startswith("."):
+                                children.append(
+                                    {
+                                        "name": item.name,
+                                        "path": str(item),
+                                        "is_dir": item.is_dir(),
+                                    }
+                                )
                     except PermissionError:
-                        self.logger.warning(f"Permission denied accessing: {path}")
+                        self.logger.warning("Permission denied accessing: %s", path)
                         continue
 
                     # Sort: directories first, then files
-                    children.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+                    children.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
                     indexed_data[dir_path] = children
 
-            except Exception as e:
-                self.logger.error(f"Error indexing directory {dir_path}: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Error indexing directory %s: {e}", dir_path)
 
         if not self._is_cancelled:
             self.indexing_complete.emit(indexed_data)
@@ -124,7 +136,8 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     indexing_started = Signal()
     indexing_completed = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
@@ -166,10 +179,10 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 name=folder.display_name,
                 path=folder.path,
                 is_dir=True,
-                root_folder=folder
+                root_folder=folder,
             )
             self.root_node.add_child(root_node)
-            self.logger.debug(f"Added root folder: {folder.display_name} ({folder.path})")
+            self.logger.debug("Added root folder: %s ({folder.path})", folder.display_name)
 
     def _get_node(self, index: QModelIndex) -> Optional[TreeNode]:
         """Get the TreeNode for a given model index."""
@@ -187,9 +200,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
             # Use pre-indexed data
             for child_data in self.indexed_data[node.path]:
                 child_node = TreeNode(
-                    name=child_data['name'],
-                    path=child_data['path'],
-                    is_dir=child_data['is_dir']
+                    name=child_data["name"],
+                    path=child_data["path"],
+                    is_dir=child_data["is_dir"],
                 )
                 node.add_child(child_node)
             return
@@ -202,25 +215,21 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 items = []
                 try:
                     for item in path.iterdir():
-                        if not item.name.startswith('.'):  # Skip hidden files
+                        if not item.name.startswith("."):  # Skip hidden files
                             items.append(item)
                 except PermissionError:
-                    self.logger.warning(f"Permission denied accessing: {path}")
+                    self.logger.warning("Permission denied accessing: %s", path)
                     return
 
                 # Sort: directories first, then files
                 items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
 
                 for item in items:
-                    child_node = TreeNode(
-                        name=item.name,
-                        path=str(item),
-                        is_dir=item.is_dir()
-                    )
+                    child_node = TreeNode(name=item.name, path=str(item), is_dir=item.is_dir())
                     node.add_child(child_node)
 
-        except Exception as e:
-            self.logger.error(f"Error loading children for {node.path}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error loading children for %s: {e}", node.path)
 
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
         """Create a model index for the given row, column, and parent."""
@@ -381,6 +390,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 node = self._get_node(index)
                 if node and node.path and not node.is_dir:
                     from PySide6.QtCore import QUrl
+
                     urls.append(QUrl.fromLocalFile(node.path))
 
         if urls:
@@ -431,7 +441,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
         self.indexer = DirectoryIndexer(root_paths)
         self.indexer.indexing_complete.connect(self._on_indexing_complete)
         self.indexer.start()
-        self.logger.debug(f"Started background indexing for {len(root_paths)} root directories")
+        self.logger.debug("Started background indexing for %s root directories", len(root_paths))
 
         # Emit signal for status update
         self.indexing_started.emit()
@@ -439,7 +449,7 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     def _on_indexing_complete(self, indexed_data: dict) -> None:
         """Handle completion of background indexing."""
         self.indexed_data.update(indexed_data)
-        self.logger.debug(f"Background indexing completed for {len(indexed_data)} directories")
+        self.logger.debug("Background indexing completed for %s directories", len(indexed_data))
 
         # Clean up indexer
         if self.indexer:

@@ -16,17 +16,19 @@ from src.core.logging_config import get_logger, log_function_call
 
 class ChunkStrategy(Enum):
     """Strategies for chunking files."""
+
     SEQUENTIAL = "sequential"  # Process chunks one after another
-    PARALLEL = "parallel"      # Process chunks in parallel
+    PARALLEL = "parallel"  # Process chunks in parallel
 
 
 @dataclass
 class FileChunk:
     """Represents a chunk of an STL file for processing."""
+
     id: str
     file_path: Path
     start_offset: int  # Byte offset in the file
-    size: int          # Size of chunk in bytes
+    size: int  # Size of chunk in bytes
     triangle_start: int  # Starting triangle index
     triangle_count: int  # Number of triangles in this chunk
     strategy: ChunkStrategy
@@ -55,16 +57,17 @@ class FileChunker:
     BINARY_TRIANGLE_COUNT_SIZE = 4
     BINARY_TRIANGLE_SIZE = 50  # 12 floats (48 bytes) + 2 bytes attribute
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the file chunker."""
         self.logger = get_logger(__name__)
 
     @log_function_call
     def create_chunks(
+        """TODO: Add docstring."""
         self,
         file_path: Path,
         target_chunk_size_mb: int = 50,
-        max_chunks: Optional[int] = None
+        max_chunks: Optional[int] = None,
     ) -> List[FileChunk]:
         """
         Create chunks from an STL file.
@@ -104,9 +107,7 @@ class FileChunker:
         )
 
         # Create chunks
-        chunks = self._create_binary_chunks(
-            file_path, triangle_count, chunk_params
-        )
+        chunks = self._create_binary_chunks(file_path, triangle_count, chunk_params)
 
         self.logger.info(
             f"Created {len(chunks)} chunks for {file_path.name} "
@@ -144,15 +145,11 @@ class FileChunker:
                 "chunk_count": chunk_params["count"],
                 "chunk_size_mb": chunk_params["size_bytes"] / (1024 * 1024),
                 "strategy": chunk_params["strategy"].value,
-                "can_chunk": format_type == "binary" and triangle_count > 1000
+                "can_chunk": format_type == "binary" and triangle_count > 1000,
             }
-        except Exception as e:
-            self.logger.error(f"Failed to get chunk metadata for {file_path}: {e}")
-            return {
-                "file_path": str(file_path),
-                "error": str(e),
-                "can_chunk": False
-            }
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to get chunk metadata for %s: {e}", file_path)
+            return {"file_path": str(file_path), "error": str(e), "can_chunk": False}
 
     def _analyze_file(self, file_path: Path) -> Tuple[str, int]:
         """
@@ -167,17 +164,17 @@ class FileChunker:
         Raises:
             ValueError: If file format is invalid
         """
-        with open(file_path, 'rb') as file:
+        with open(file_path, "rb") as file:
             # Read header
             header = file.read(self.BINARY_HEADER_SIZE)
             if len(header) != self.BINARY_HEADER_SIZE:
                 raise ValueError("Invalid STL file: header too short")
 
             # Try to detect format
-            header_text = header.decode('utf-8', errors='ignore').lower().strip()
+            header_text = header.decode("utf-8", errors="ignore").lower().strip()
 
             # Check for ASCII indicators
-            if 'solid' in header_text and header_text.count('\x00') < 5:
+            if "solid" in header_text and header_text.count("\x00") < 5:
                 # Likely ASCII - count triangles by scanning
                 triangle_count = self._count_ascii_triangles(file_path)
                 return "ascii", triangle_count
@@ -187,13 +184,13 @@ class FileChunker:
             if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
                 raise ValueError("Invalid binary STL: cannot read triangle count")
 
-            triangle_count = struct.unpack('<I', count_bytes)[0]
+            triangle_count = struct.unpack("<I", count_bytes)[0]
 
             # Validate file size
             expected_size = (
-                self.BINARY_HEADER_SIZE +
-                self.BINARY_TRIANGLE_COUNT_SIZE +
-                (triangle_count * self.BINARY_TRIANGLE_SIZE)
+                self.BINARY_HEADER_SIZE
+                + self.BINARY_TRIANGLE_COUNT_SIZE
+                + (triangle_count * self.BINARY_TRIANGLE_SIZE)
             )
 
             file.seek(0, 2)  # Seek to end
@@ -218,18 +215,19 @@ class FileChunker:
             Number of triangles
         """
         count = 0
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             for line in file:
-                if line.strip().lower().startswith('facet normal'):
+                if line.strip().lower().startswith("facet normal"):
                     count += 1
         return count
 
     def _calculate_chunk_parameters(
+        """TODO: Add docstring."""
         self,
         file_size: int,
         triangle_count: int,
         target_chunk_size_bytes: int,
-        max_chunks: Optional[int] = None
+        max_chunks: Optional[int] = None,
     ) -> dict:
         """
         Calculate optimal chunking parameters.
@@ -269,14 +267,12 @@ class FileChunker:
             "count": chunk_count,
             "size_bytes": int(chunk_size_bytes),
             "triangles_per_chunk": triangles_per_chunk,
-            "strategy": strategy
+            "strategy": strategy,
         }
 
     def _create_binary_chunks(
-        self,
-        file_path: Path,
-        triangle_count: int,
-        chunk_params: dict
+        """TODO: Add docstring."""
+        self, file_path: Path, triangle_count: int, chunk_params: dict
     ) -> List[FileChunk]:
         """
         Create chunks for binary STL file.
@@ -313,7 +309,7 @@ class FileChunker:
                 size=size,
                 triangle_start=triangle_start,
                 triangle_count=chunk_triangle_count,
-                strategy=strategy
+                strategy=strategy,
             )
 
             chunks.append(chunk)

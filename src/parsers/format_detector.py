@@ -7,7 +7,7 @@ file extension and content analysis.
 
 import zipfile
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 import struct
 
 from .base_parser import ModelFormat
@@ -25,17 +25,17 @@ class FormatDetector:
     - Comprehensive error handling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the format detector."""
         self.logger = get_logger(__name__)
 
         # Mapping of file extensions to formats
         self.extension_map = {
-            '.stl': ModelFormat.STL,
-            '.obj': ModelFormat.OBJ,
-            '.3mf': ModelFormat.THREE_MF,
-            '.step': ModelFormat.STEP,
-            '.stp': ModelFormat.STEP,
+            ".stl": ModelFormat.STL,
+            ".obj": ModelFormat.OBJ,
+            ".3mf": ModelFormat.THREE_MF,
+            ".step": ModelFormat.STEP,
+            ".stp": ModelFormat.STEP,
         }
 
     def detect_format(self, file_path: Path) -> ModelFormat:
@@ -55,22 +55,22 @@ class FormatDetector:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        self.logger.info(f"Detecting format for: {file_path.name}")
+        self.logger.info("Detecting format for: %s", file_path.name)
 
         # First try detection by extension
         format_by_extension = self._detect_by_extension(file_path)
-        self.logger.debug(f"Extension detection result: {format_by_extension}")
+        self.logger.debug("Extension detection result: %s", format_by_extension)
 
         if format_by_extension != ModelFormat.UNKNOWN:
             # Verify with content analysis for certain formats
             if format_by_extension == ModelFormat.STL:
                 verified_format = self._verify_stl_format(file_path)
-                self.logger.debug(f"STL verification result: {verified_format}")
+                self.logger.debug("STL verification result: %s", verified_format)
                 if verified_format != ModelFormat.UNKNOWN:
                     return verified_format
             elif format_by_extension == ModelFormat.OBJ:
                 obj_verified = self._verify_obj_format(file_path)
-                self.logger.debug(f"OBJ verification result: {obj_verified}")
+                self.logger.debug("OBJ verification result: %s", obj_verified)
                 if obj_verified:
                     return ModelFormat.OBJ
             elif format_by_extension == ModelFormat.THREE_MF:
@@ -80,7 +80,9 @@ class FormatDetector:
                 if self._verify_step_format(file_path):
                     return ModelFormat.STEP
 
-            self.logger.debug(f"Content verification failed, using extension result: {format_by_extension}")
+            self.logger.debug(
+                f"Content verification failed, using extension result: {format_by_extension}"
+            )
             return format_by_extension
 
         # If extension detection fails, try content-based detection
@@ -111,24 +113,24 @@ class FormatDetector:
             STL format type or UNKNOWN if invalid
         """
         try:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 # Read first 80 bytes (header)
                 header = file.read(80)
 
                 # Check if header contains ASCII indicators
-                header_text = header.decode('utf-8', errors='ignore').lower()
-                if 'solid' in header_text and header_text.count('\x00') < 5:
+                header_text = header.decode("utf-8", errors="ignore").lower()
+                if "solid" in header_text and header_text.count("\x00") < 5:
                     # Likely ASCII, but verify by checking for "facet normal" keyword
                     file.seek(0)
-                    first_line = file.readline().decode('utf-8', errors='ignore').strip()
-                    if first_line.lower().startswith('solid'):
+                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
+                    if first_line.lower().startswith("solid"):
                         return ModelFormat.STL
 
                 # Check if it's valid binary by attempting to read triangle count
                 file.seek(80)
                 count_bytes = file.read(4)
                 if len(count_bytes) == 4:
-                    triangle_count = struct.unpack('<I', count_bytes)[0]
+                    triangle_count = struct.unpack("<I", count_bytes)[0]
 
                     # Verify file size matches expected binary format size
                     file.seek(0, 2)  # Seek to end
@@ -140,8 +142,8 @@ class FormatDetector:
 
                 return ModelFormat.UNKNOWN
 
-        except Exception as e:
-            self.logger.warning(f"Error verifying STL format: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Error verifying STL format: %s", str(e))
             return ModelFormat.UNKNOWN
 
     def _verify_obj_format(self, file_path: Path) -> bool:
@@ -155,33 +157,37 @@ class FormatDetector:
             True if valid OBJ format, False otherwise
         """
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 # Check for at least one vertex or face
                 content = file.read(1000).lower()
-                
+
                 # First, check if this looks like an STL file (negative check)
-                if 'solid ' in content or 'facet normal' in content or 'endfacet' in content:
-                    self.logger.debug(f"OBJ verification: File {file_path.name} rejected - contains STL keywords")
+                if "solid " in content or "facet normal" in content or "endfacet" in content:
+                    self.logger.debug(
+                        f"OBJ verification: File {file_path.name} rejected - contains STL keywords"
+                    )
                     return False
-                
+
                 # OBJ files typically have 'v ' (vertex) or 'f ' (face) commands
                 # but we need to be more specific to avoid false positives
-                has_vertices = 'v ' in content
-                has_faces = 'f ' in content
-                
+                has_vertices = "v " in content
+                has_faces = "f " in content
+
                 # OBJ files should have more structure than just random 'v' or 'f'
                 # Check for common OBJ keywords
-                obj_keywords = ['vt ', 'vn ', 'usemtl ', 'mtllib ', 'o ', 'g ']
+                obj_keywords = ["vt ", "vn ", "usemtl ", "mtllib ", "o ", "g "]
                 has_obj_structure = any(keyword in content for keyword in obj_keywords)
-                
+
                 result = has_vertices and (has_faces or has_obj_structure)
-                
-                self.logger.debug(f"OBJ verification for {file_path.name}: vertices={has_vertices}, faces={has_faces}, obj_structure={has_obj_structure}, result={result}")
-                
+
+                self.logger.debug(
+                    f"OBJ verification for {file_path.name}: vertices={has_vertices}, faces={has_faces}, obj_structure={has_obj_structure}, result={result}"
+                )
+
                 return result
 
-        except Exception as e:
-            self.logger.warning(f"Error verifying OBJ format: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Error verifying OBJ format: %s", str(e))
             return False
 
     def _verify_3mf_format(self, file_path: Path) -> bool:
@@ -196,18 +202,18 @@ class FormatDetector:
         """
         try:
             # Check if it's a valid ZIP file
-            with zipfile.ZipFile(file_path, 'r') as zip_file:
+            with zipfile.ZipFile(file_path, "r") as zip_file:
                 # Check for required 3MF files
-                if '3D/3dmodel.model' not in zip_file.namelist():
+                if "3D/3dmodel.model" not in zip_file.namelist():
                     return False
 
                 # Check if we can read the model file
-                with zip_file.open('3D/3dmodel.model') as model_file:
-                    content = model_file.read(1000).decode('utf-8')
-                    return '<?xml' in content.lower() and 'model' in content.lower()
+                with zip_file.open("3D/3dmodel.model") as model_file:
+                    content = model_file.read(1000).decode("utf-8")
+                    return "<?xml" in content.lower() and "model" in content.lower()
 
-        except Exception as e:
-            self.logger.warning(f"Error verifying 3MF format: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Error verifying 3MF format: %s", str(e))
             return False
 
     def _verify_step_format(self, file_path: Path) -> bool:
@@ -221,13 +227,13 @@ class FormatDetector:
             True if valid STEP format, False otherwise
         """
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 # Check for STEP header
                 content = file.read(2000).upper()
-                return 'ISO-10303-21' in content and 'DATA;' in content
+                return "ISO-10303-21" in content and "DATA;" in content
 
-        except Exception as e:
-            self.logger.warning(f"Error verifying STEP format: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Error verifying STEP format: %s", str(e))
             return False
 
     def _detect_by_content(self, file_path: Path) -> ModelFormat:
@@ -260,8 +266,8 @@ class FormatDetector:
 
             return ModelFormat.UNKNOWN
 
-        except Exception as e:
-            self.logger.error(f"Error detecting format by content: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error detecting format by content: %s", str(e))
             return ModelFormat.UNKNOWN
 
     def is_supported_format(self, file_path: Path) -> bool:
@@ -313,5 +319,5 @@ class FormatDetector:
 
             return True, ""
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"

@@ -17,7 +17,7 @@ from .settings_migration import migrate_on_startup
 class ApplicationBootstrap:
     """Handles application service initialization and bootstrap sequence."""
 
-    def __init__(self, config: ApplicationConfig):
+    def __init__(self, config: ApplicationConfig) -> None:
         """Initialize the ApplicationBootstrap with configuration.
 
         Args:
@@ -80,45 +80,31 @@ class ApplicationBootstrap:
         try:
             self.logger.debug("Loading theme settings")
 
-            # Initialize consolidated theme system using QtMaterialThemeService
+            # Initialize theme system using ThemeService
             try:
-                from src.gui.theme import QtMaterialThemeService
-                service = QtMaterialThemeService.instance()
+                from src.gui.theme import ThemeService
 
-                # Apply default dark theme with blue variant
+                service = ThemeService.instance()
+
+                # Apply default dark theme
                 try:
-                    result = service.apply_theme("dark", "blue")
+                    result = service.apply_theme("dark")
                     if result:
-                        self.logger.info("QtMaterialThemeService theme applied successfully")
+                        self.logger.debug("Theme applied successfully")
                     else:
-                        self.logger.warning("Theme application returned False, but continuing")
-                except Exception as theme_error:
-                    self.logger.warning("Failed to apply theme: %s", theme_error)
-
-                # Check if qt-material is available
-                if hasattr(service, 'qtmaterial') and service.qtmaterial is not None:
-                    self.logger.info("QtMaterialThemeService theme system initialized successfully")
-                else:
-                    self.logger.info("Qt-material not available, using fallback theme system")
+                        self.logger.debug("Theme application returned False, but continuing")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as theme_error:
+                    self.logger.debug("Failed to apply theme: %s", theme_error)
 
                 return True
 
-            except ImportError as import_error:
-                self.logger.error("Failed to import QtMaterialThemeService: %s", import_error)
-                # Try fallback to ThemeService
-                try:
-                    from src.gui.theme import ThemeService
-                    service = ThemeService.instance()
-                    service.apply_theme("dark")
-                    self.logger.info("ThemeService (fallback) applied successfully")
-                    return True
-                except Exception as fallback_error:
-                    self.logger.error("Fallback theme service also failed: %s", fallback_error)
-                    # Continue without theme system - not critical for startup
-                    return True
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+                self.logger.debug("Theme initialization: %s", error)
+                # Continue without theme system - not critical for startup
+                return True
 
-        except Exception as e:
-            self.logger.error("Theme initialization failed: %s", e, exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.debug("Theme initialization: %s", e)
             # Continue without theme system - not critical for startup
             return True
 
@@ -152,7 +138,7 @@ class ApplicationBootstrap:
             self.logger.warning("Hardware acceleration detection failed: %s", str(e))
             return False
 
-    def get_hardware_acceleration_manager(self):
+    def get_hardware_acceleration_manager(self) -> None:
         """Get the hardware acceleration manager instance.
 
         Returns:

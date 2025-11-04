@@ -7,9 +7,7 @@ Provides a row with label, color preview, pick button, and reset button.
 from typing import Callable, Optional
 
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QColorDialog
-)
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QColorDialog
 
 from src.gui.theme import ThemeManager, COLORS, SPACING_8, hex_to_rgb
 from .theme_manager_helpers import contrasting_text_color, pretty_label
@@ -25,6 +23,7 @@ class ColorRow(QWidget):
     """
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         var_name: str,
         default_hex: str,
@@ -95,4 +94,3 @@ class ColorRow(QWidget):
         """Reset color to default."""
         self._apply_button_style(self._default_hex)
         self._on_changed(self.var_name, self._default_hex)
-

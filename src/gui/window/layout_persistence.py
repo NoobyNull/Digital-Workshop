@@ -28,7 +28,7 @@ class LayoutPersistenceManager:
     user experience across application sessions.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the layout persistence manager.
 
@@ -107,13 +107,17 @@ class LayoutPersistenceManager:
                     "default_window_geometry": base64.b64encode(geom).decode("ascii"),
                     "default_window_state": base64.b64encode(state).decode("ascii"),
                     "default_layout_version": 1,
-                    "default_saved": True
+                    "default_saved": True,
                 }
 
                 # Also save active hero tab index as default
                 try:
-                    if hasattr(self.main_window, "hero_tabs") and isinstance(self.main_window.hero_tabs, QTabWidget):
-                        default_payload["default_hero_tab_index"] = int(self.main_window.hero_tabs.currentIndex())
+                    if hasattr(self.main_window, "hero_tabs") and isinstance(
+                        self.main_window.hero_tabs, QTabWidget
+                    ):
+                        default_payload["default_hero_tab_index"] = int(
+                            self.main_window.hero_tabs.currentIndex()
+                        )
                 except Exception:
                     pass
 
@@ -125,8 +129,8 @@ class LayoutPersistenceManager:
                 # Mark that default has been saved
                 settings.setValue("layout/default_saved", True)
                 self.logger.info("Saved current layout as default for fresh installations")
-        except Exception as e:
-            self.logger.warning(f"Failed to save current layout as default: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to save current layout as default: %s", e)
 
     def reset_dock_layout(self) -> None:
         """Restore dock widgets to their default docking layout."""
@@ -142,15 +146,20 @@ class LayoutPersistenceManager:
                     state = base64.b64decode(default_state)
                     # Validate geometry for multi-monitor setups
                     geom = self._validate_geometry_for_screens(geom)
-                    restored = self.main_window.restoreGeometry(geom) and self.main_window.restoreState(state)
+                    restored = self.main_window.restoreGeometry(
+                        geom
+                    ) and self.main_window.restoreState(state)
                     if restored:
                         self.logger.info("Restored default layout from saved defaults")
                         # Restore default hero tab if available
                         try:
                             default_hero_idx = settings.get("default_hero_tab_index")
-                            if (isinstance(default_hero_idx, int) and hasattr(self.main_window, "hero_tabs") and
-                                isinstance(self.main_window.hero_tabs, QTabWidget) and
-                                0 <= default_hero_idx < self.main_window.hero_tabs.count()):
+                            if (
+                                isinstance(default_hero_idx, int)
+                                and hasattr(self.main_window, "hero_tabs")
+                                and isinstance(self.main_window.hero_tabs, QTabWidget)
+                                and 0 <= default_hero_idx < self.main_window.hero_tabs.count()
+                            ):
                                 self.main_window.hero_tabs.setCurrentIndex(default_hero_idx)
                         except Exception:
                             pass
@@ -180,15 +189,21 @@ class LayoutPersistenceManager:
         try:
             if hasattr(self.main_window, "model_library_dock"):
                 self.main_window.model_library_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.main_window.model_library_dock)
+                self.main_window.addDockWidget(
+                    Qt.LeftDockWidgetArea, self.main_window.model_library_dock
+                )
             if hasattr(self.main_window, "properties_dock"):
                 self.main_window.properties_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.properties_dock)
+                self.main_window.addDockWidget(
+                    Qt.RightDockWidgetArea, self.main_window.properties_dock
+                )
             if hasattr(self.main_window, "metadata_dock"):
                 self.main_window.metadata_dock.setFloating(False)
-                self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.metadata_dock)
-        except Exception as e:
-            self.logger.warning(f"Failed to re-dock widgets: {str(e)}")
+                self.main_window.addDockWidget(
+                    Qt.RightDockWidgetArea, self.main_window.metadata_dock
+                )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to re-dock widgets: %s", str(e))
 
     def settings_json_path(self) -> Path:
         """Return AppData settings.json path."""
@@ -260,21 +275,33 @@ class LayoutPersistenceManager:
 
             # Persist active main tab index if available
             try:
-                if hasattr(self.main_window, "main_tabs") and isinstance(self.main_window.main_tabs, QTabWidget):
-                    payload["active_main_tab_index"] = int(self.main_window.main_tabs.currentIndex())
+                if hasattr(self.main_window, "main_tabs") and isinstance(
+                    self.main_window.main_tabs, QTabWidget
+                ):
+                    payload["active_main_tab_index"] = int(
+                        self.main_window.main_tabs.currentIndex()
+                    )
             except Exception:
                 pass
 
             # Persist active center tab index (inside "3d Model") if available
             try:
-                if hasattr(self.main_window, "center_tabs") and isinstance(self.main_window.center_tabs, QTabWidget):
-                    payload["active_center_tab_index"] = int(self.main_window.center_tabs.currentIndex())
+                if hasattr(self.main_window, "center_tabs") and isinstance(
+                    self.main_window.center_tabs, QTabWidget
+                ):
+                    payload["active_center_tab_index"] = int(
+                        self.main_window.center_tabs.currentIndex()
+                    )
             except Exception:
                 pass
             # Persist active hero tab index if available
             try:
-                if hasattr(self.main_window, "hero_tabs") and isinstance(self.main_window.hero_tabs, QTabWidget):
-                    payload["active_hero_tab_index"] = int(self.main_window.hero_tabs.currentIndex())
+                if hasattr(self.main_window, "hero_tabs") and isinstance(
+                    self.main_window.hero_tabs, QTabWidget
+                ):
+                    payload["active_hero_tab_index"] = int(
+                        self.main_window.hero_tabs.currentIndex()
+                    )
             except Exception:
                 pass
 
@@ -282,8 +309,8 @@ class LayoutPersistenceManager:
             settings.update(payload)
             self.write_settings_json(settings)
             self.logger.debug("Layout autosaved")
-        except Exception as e:
-            self.logger.warning(f"Failed to save current layout: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to save current layout: %s", e)
 
     def load_saved_layout(self) -> bool:
         """Restore previously saved layout from settings.json. Returns True if successful."""
@@ -320,8 +347,8 @@ class LayoutPersistenceManager:
             if ok_any:
                 self.logger.info("Restored window layout from saved settings")
             return ok_any
-        except Exception as e:
-            self.logger.warning(f"Failed to load saved layout: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to load saved layout: %s", e)
             return False
 
     def connect_layout_autosave(self, dock: QDockWidget) -> None:
@@ -337,7 +364,10 @@ class LayoutPersistenceManager:
 
 
 # Convenience function for easy layout persistence setup
-def setup_layout_persistence(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> LayoutPersistenceManager:
+def setup_layout_persistence(
+    """TODO: Add docstring."""
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> LayoutPersistenceManager:
     """
     Convenience function to set up layout persistence for a main window.
 

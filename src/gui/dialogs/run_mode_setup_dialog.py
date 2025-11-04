@@ -4,12 +4,18 @@ Run Mode Setup Dialog for first-run configuration.
 Displays run mode explanation and allows storage location customization.
 """
 
-from pathlib import Path
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QFileDialog, QGroupBox, QTextEdit
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+    QFileDialog,
+    QGroupBox,
+    QTextEdit,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 
 from ...core.services.run_mode_manager import RunModeManager
 from ...core.logging_config import get_logger
@@ -22,7 +28,7 @@ class RunModeSetupDialog(QDialog):
 
     setup_complete = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """
         Initialize run mode setup dialog.
 
@@ -66,17 +72,13 @@ class RunModeSetupDialog(QDialog):
         storage_group = QGroupBox("Storage Location")
         storage_layout = QVBoxLayout()
 
-        storage_label = QLabel(
-            "Choose where to store your projects and model files:"
-        )
+        storage_label = QLabel("Choose where to store your projects and model files:")
         storage_layout.addWidget(storage_label)
 
         # Storage path input
         path_layout = QHBoxLayout()
         self.storage_path_input = QLineEdit()
-        self.storage_path_input.setText(
-            self.run_mode_manager.get_storage_location()
-        )
+        self.storage_path_input.setText(self.run_mode_manager.get_storage_location())
         self.storage_path_input.setReadOnly(True)
         path_layout.addWidget(self.storage_path_input)
 
@@ -128,21 +130,18 @@ class RunModeSetupDialog(QDialog):
         try:
             current_path = self.storage_path_input.text()
             folder = QFileDialog.getExistingDirectory(
-                self,
-                "Select Storage Location",
-                current_path,
-                QFileDialog.ShowDirsOnly
+                self, "Select Storage Location", current_path, QFileDialog.ShowDirsOnly
             )
 
             if folder:
                 if self.run_mode_manager.set_storage_location(folder):
                     self.storage_path_input.setText(folder)
-                    logger.info(f"Storage location set to: {folder}")
+                    logger.info("Storage location set to: %s", folder)
                 else:
-                    logger.error(f"Failed to set storage location: {folder}")
+                    logger.error("Failed to set storage location: %s", folder)
 
-        except Exception as e:
-            logger.error(f"Failed to browse storage location: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to browse storage location: %s", str(e))
 
     def _finish_setup(self) -> None:
         """Finish setup and close dialog."""
@@ -153,11 +152,10 @@ class RunModeSetupDialog(QDialog):
             self.setup_complete.emit()
             self.accept()
 
-        except Exception as e:
-            logger.error(f"Failed to finish setup: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to finish setup: %s", str(e))
             self.reject()
 
     def get_storage_location(self) -> str:
         """Get configured storage location."""
         return self.storage_path_input.text()
-

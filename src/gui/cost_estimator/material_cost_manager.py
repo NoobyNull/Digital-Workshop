@@ -31,16 +31,14 @@ class Material:
 class MaterialCostManager:
     """Manages material costs and library."""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """
         Initialize the material cost manager.
 
         Args:
             db_path: Path to store material library (optional)
         """
-        self.db_path = db_path or str(
-            Path.home() / ".digital_workshop" / "materials.json"
-        )
+        self.db_path = db_path or str(Path.home() / ".digital_workshop" / "materials.json")
         self.materials: Dict[str, Material] = {}
         self._load_materials()
 
@@ -56,7 +54,7 @@ class MaterialCostManager:
                 # Create default materials
                 self._create_default_materials()
                 self._save_materials()
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error loading materials: {e}")
             self._create_default_materials()
 
@@ -127,12 +125,9 @@ class MaterialCostManager:
         try:
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
             with open(self.db_path, "w") as f:
-                data = {
-                    name: material.to_dict()
-                    for name, material in self.materials.items()
-                }
+                data = {name: material.to_dict() for name, material in self.materials.items()}
                 json.dump(data, f, indent=2)
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error saving materials: {e}")
 
     def add_material(self, material: Material) -> bool:
@@ -149,7 +144,7 @@ class MaterialCostManager:
             self.materials[material.name] = material
             self._save_materials()
             return True
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error adding material: {e}")
             return False
 
@@ -169,7 +164,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error removing material: {e}")
             return False
 
@@ -220,7 +215,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error updating material cost: {e}")
             return False
 
@@ -241,7 +236,7 @@ class MaterialCostManager:
                 self._save_materials()
                 return True
             return False
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error updating material waste: {e}")
             return False
 

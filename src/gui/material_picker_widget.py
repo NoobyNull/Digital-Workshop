@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPixmap
@@ -27,8 +27,6 @@ from src.core.logging_config import get_logger
 from src.gui.material_manager import MaterialManager
 
 
-
-
 class MaterialPickerWidget(QDialog):
     """Dialog for selecting wood materials"""
 
@@ -36,6 +34,7 @@ class MaterialPickerWidget(QDialog):
     material_selected = Signal(str)  # species name
 
     def __init__(
+        """TODO: Add docstring."""
         self,
         db_manager=None,
         material_manager: Optional[MaterialManager] = None,
@@ -80,6 +79,7 @@ class MaterialPickerWidget(QDialog):
 
     # ---- UI construction ----
     def _build_ui(self) -> None:
+        """TODO: Add docstring."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
@@ -140,10 +140,6 @@ class MaterialPickerWidget(QDialog):
         layout.addWidget(self.info_group)
         layout.addWidget(self.buttons)
 
-
-
-
-
     # ---- Data loading and updates ----
     def _load_species(self) -> None:
         """Load only MTL file-based materials, not database wood species."""
@@ -162,9 +158,9 @@ class MaterialPickerWidget(QDialog):
 
             valid_materials = 0
             for material in mtl_materials:
-                name = material['name']
-                texture_path = material.get('texture_path')
-                mtl_path = material.get('mtl_path')
+                name = material["name"]
+                texture_path = material.get("texture_path")
+                mtl_path = material.get("mtl_path")
 
                 # Only show materials that have both MTL file and texture
                 if mtl_path and texture_path and mtl_path.exists() and texture_path.exists():
@@ -172,22 +168,27 @@ class MaterialPickerWidget(QDialog):
                     self.species_combo.addItem(name, userData=name)
                     self._species_records[name] = material
                     valid_materials += 1
-                    self.logger.debug(f"Added MTL material '{name}' with texture {texture_path.name}")
+                    self.logger.debug(
+                        f"Added MTL material '{name}' with texture {texture_path.name}"
+                    )
                 else:
                     self.logger.debug(f"Skipping material '{name}' - missing MTL or texture file")
 
-            self.logger.info(f"Loaded {valid_materials} valid MTL materials (from {len(mtl_materials)} total)")
+            self.logger.info(
+                f"Loaded {valid_materials} valid MTL materials (from {len(mtl_materials)} total)"
+            )
 
             if valid_materials == 0:
                 self.species_combo.addItem("No valid MTL materials found", userData=None)
 
-        except Exception as e:
-            self.logger.error(f"Failed to load MTL materials: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load MTL materials: %s", e)
             self.species_combo.addItem("Error loading materials", userData=None)
 
         self.species_combo.blockSignals(False)
 
     def _current_species_name(self) -> Optional[str]:
+        """TODO: Add docstring."""
         idx = self.species_combo.currentIndex()
         if idx < 0:
             return None
@@ -198,6 +199,7 @@ class MaterialPickerWidget(QDialog):
         return self._current_species_name()
 
     def _update_preview_and_properties(self) -> None:
+        """TODO: Add docstring."""
         name = self._current_species_name()
         if not name:
             self.preview_label.clear()
@@ -212,8 +214,8 @@ class MaterialPickerWidget(QDialog):
                 if self.model_format == ModelFormat.STL:
                     # STL files: Show MTL material properties
                     material = self._species_records.get(name)
-                    if material and material.get('mtl_path'):
-                        mtl_path = material['mtl_path']
+                    if material and material.get("mtl_path"):
+                        mtl_path = material["mtl_path"]
                         # Parse MTL to show properties
                         mtl_props = self._parse_mtl_for_display(mtl_path)
 
@@ -236,9 +238,9 @@ class MaterialPickerWidget(QDialog):
                 else:
                     # OBJ files: Show MTL texture information
                     material = self._species_records.get(name)
-                    if material and material.get('texture_path'):
-                        texture_path = material['texture_path']
-                        mtl_path = material.get('mtl_path', 'N/A')
+                    if material and material.get("texture_path"):
+                        texture_path = material["texture_path"]
+                        mtl_path = material.get("mtl_path", "N/A")
 
                         info_text = f"""
                         <b>Material:</b> {name}<br>
@@ -271,7 +273,7 @@ class MaterialPickerWidget(QDialog):
             pix = QPixmap.fromImage(qimg)
             self.preview_label.setPixmap(pix)
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.preview_label.clear()
             error_text = f"""
             <b>Material:</b> {name}<br>
@@ -283,10 +285,10 @@ class MaterialPickerWidget(QDialog):
     def _parse_mtl_for_display(self, mtl_path) -> dict:
         """Parse MTL file to extract properties for display in the UI."""
         material = {
-            "Kd": (0.8, 0.8, 0.8),   # diffuse color default
-            "Ks": (0.0, 0.0, 0.0),   # specular color default
-            "Ns": 10.0,              # shininess default
-            "d": 1.0                 # opacity default
+            "Kd": (0.8, 0.8, 0.8),  # diffuse color default
+            "Ks": (0.0, 0.0, 0.0),  # specular color default
+            "Ns": 10.0,  # shininess default
+            "d": 1.0,  # opacity default
         }
 
         try:
@@ -308,18 +310,19 @@ class MaterialPickerWidget(QDialog):
                         parts = line.split()
                         if len(parts) >= 2:
                             material["Ns"] = float(parts[1])
-                    elif line.startswith("d "):   # opacity
+                    elif line.startswith("d "):  # opacity
                         parts = line.split()
                         if len(parts) >= 2:
                             material["d"] = float(parts[1])
 
-        except Exception as e:
-            self.logger.warning(f"Failed to parse MTL file for display {mtl_path}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to parse MTL file for display %s: {e}", mtl_path)
 
         return material
 
     # ---- Actions ----
     def _on_apply(self) -> None:
+        """TODO: Add docstring."""
         name = self._current_species_name()
         if not name:
             QMessageBox.information(self, "No Selection", "Please select a material species.")
@@ -328,6 +331,7 @@ class MaterialPickerWidget(QDialog):
         self.accept()
 
     def _open_add_custom_dialog(self) -> None:
+        """TODO: Add docstring."""
         dlg = QDialog(self)
         dlg.setWindowTitle("Add Custom Species")
         v = QVBoxLayout(dlg)
@@ -341,13 +345,15 @@ class MaterialPickerWidget(QDialog):
         base_color = QColor(193, 154, 107)  # Oak-ish default
         grain_color = QColor(139, 115, 85)
 
-        def _pick_base():
+        def _pick_base() -> None:
+            """TODO: Add docstring."""
             nonlocal base_color
             c = QColorDialog.getColor(base_color, self, "Pick Base Color")
             if c.isValid():
                 base_color = c
 
-        def _pick_grain():
+        def _pick_grain() -> None:
+            """TODO: Add docstring."""
             nonlocal grain_color
             c = QColorDialog.getColor(grain_color, self, "Pick Grain Color")
             if c.isValid():
@@ -391,7 +397,8 @@ class MaterialPickerWidget(QDialog):
         self._style_button(cancel_btn)
         v.addWidget(btns)
 
-        def _save():
+        def _save() -> None:
+            """TODO: Add docstring."""
             name = name_edit.text().strip()
             if not name:
                 QMessageBox.warning(dlg, "Validation", "Species name is required.")
@@ -422,7 +429,7 @@ class MaterialPickerWidget(QDialog):
                         break
                 self._update_preview_and_properties()
                 dlg.accept()
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 QMessageBox.warning(dlg, "Save Failed", f"Could not save species:\n{e}")
 
         btns.accepted.connect(_save)
@@ -433,9 +440,7 @@ class MaterialPickerWidget(QDialog):
     def _style_button(self, button: QPushButton) -> None:
         """Apply qt-material styling to a button."""
         # Qt-material handles styling automatically, no custom stylesheet needed
-        pass
 
     def _apply_theme_styles(self) -> None:
         """Apply theme styles to the dialog."""
         # Qt-material handles all styling automatically
-        pass

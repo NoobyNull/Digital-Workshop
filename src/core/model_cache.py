@@ -11,27 +11,28 @@ import sqlite3
 import threading
 import time
 import xxhash
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
-import weakref
+from typing import Dict, Optional, Any
 
 from .logging_config import get_logger
 from .performance_monitor import get_performance_monitor, PerformanceLevel
-from .data_structures import Model, ModelFormat
+from .data_structures import Model
 
 
 class CacheLevel(Enum):
     """Cache levels for different model representations."""
-    METADATA = "metadata"          # Just file metadata and statistics
+
+    METADATA = "metadata"  # Just file metadata and statistics
     GEOMETRY_LOW = "geometry_low"  # Low-resolution geometry
-    GEOMETRY_FULL = "geometry_full" # Full-resolution geometry
+    GEOMETRY_FULL = "geometry_full"  # Full-resolution geometry
 
 
 @dataclass
 class CacheEntry:
     """Entry in the model cache."""
+
     file_path: str
     file_hash: str
     cache_level: CacheLevel
@@ -51,6 +52,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """Cache statistics."""
+
     total_entries: int = 0
     total_size_bytes: int = 0
     memory_entries: int = 0
@@ -75,7 +77,7 @@ class ModelCache:
     - Thread-safe operations
     """
 
-    def __init__(self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None):
+    def __init__(self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None) -> None:
         """
         Initialize the model cache.
 
@@ -94,8 +96,10 @@ class ModelCache:
         if cache_dir == "cache":
             # Default to user local app data directory
             import os
-            app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+
+            app_data = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
             from .path_manager import get_cache_directory
+
             self.cache_dir = get_cache_directory()
         else:
             self.cache_dir = Path(cache_dir)
@@ -107,12 +111,15 @@ class ModelCache:
             try:
                 import psutil
                 from .application_config import ApplicationConfig
+
                 config = ApplicationConfig.get_default()
 
                 if config.use_manual_memory_override:
                     # Calculate cache limit as percentage of total system RAM
-                    total_system_memory_mb = int(psutil.virtual_memory().total / (1024 ** 2))
-                    cache_limit_mb = int(total_system_memory_mb * (config.manual_cache_limit_percent / 100))
+                    total_system_memory_mb = int(psutil.virtual_memory().total / (1024**2))
+                    cache_limit_mb = int(
+                        total_system_memory_mb * (config.manual_cache_limit_percent / 100)
+                    )
                     self.max_memory_bytes = cache_limit_mb * 1024 * 1024
                     self.logger.info(
                         f"Using manual cache limit: {config.manual_cache_limit_percent}% of "
@@ -121,8 +128,8 @@ class ModelCache:
                 else:
                     # Use adaptive cache size from performance profile
                     self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
-            except Exception as e:
-                self.logger.warning(f"Failed to check config override, using adaptive: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.warning("Failed to check config override, using adaptive: %s", e)
                 self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
         else:
             self.max_memory_bytes = max_memory_mb * 1024 * 1024
@@ -156,7 +163,8 @@ class ModelCache:
         """Initialize the disk cache database."""
         try:
             with sqlite3.connect(self.disk_cache_db) as conn:
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS cache_entries (
                         file_path TEXT PRIMARY KEY,
                         file_hash TEXT NOT NULL,
@@ -167,20 +175,25 @@ class ModelCache:
                         last_access_time REAL NOT NULL,
                         creation_time REAL NOT NULL
                     )
-                """)
+                """
+                )
 
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_file_hash ON cache_entries(file_hash)
-                """)
+                """
+                )
 
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_cache_level ON cache_entries(cache_level)
-                """)
+                """
+                )
 
                 conn.commit()
 
-        except Exception as e:
-            self.logger.error(f"Failed to initialize disk cache: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to initialize disk cache: %s", str(e))
             raise
 
     def _generate_file_hash(self, file_path: str) -> str:
@@ -207,8 +220,8 @@ class ModelCache:
             hasher.update(hash_input.encode())
             return hasher.hexdigest()
 
-        except Exception as e:
-            self.logger.error(f"Failed to generate file hash: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to generate file hash: %s", str(e))
             hasher = xxhash.xxh128()
             hasher.update(file_path.encode())
             return hasher.hexdigest()
@@ -239,7 +252,9 @@ class ModelCache:
                         else:
                             # Fallback: approximate via size * itemsize if available
                             try:
-                                size += int(getattr(arr, "size", 0)) * int(getattr(arr, "itemsize", 4))
+                                size += int(getattr(arr, "size", 0)) * int(
+                                    getattr(arr, "itemsize", 4)
+                                )
                             except Exception:
                                 pass
                 return size
@@ -267,8 +282,8 @@ class ModelCache:
             else:
                 return pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
 
-        except Exception as e:
-            self.logger.error(f"Failed to serialize data: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to serialize data: %s", str(e))
             raise
 
     def _deserialize_data(self, data: bytes) -> Any:
@@ -284,8 +299,8 @@ class ModelCache:
         try:
             return pickle.loads(data)
 
-        except Exception as e:
-            self.logger.error(f"Failed to deserialize data: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to deserialize data: %s", str(e))
             raise
 
     def _evict_memory_entries(self, required_bytes: int) -> None:
@@ -299,10 +314,7 @@ class ModelCache:
         entries_to_evict = []
 
         # Sort by last access time (LRU)
-        sorted_entries = sorted(
-            self.memory_cache.items(),
-            key=lambda x: x[1].last_access_time
-        )
+        sorted_entries = sorted(self.memory_cache.items(), key=lambda x: x[1].last_access_time)
 
         for key, entry in sorted_entries:
             if bytes_freed >= required_bytes:
@@ -333,7 +345,7 @@ class ModelCache:
             self.stats.eviction_count += 1
 
         if entries_to_evict:
-            self.logger.debug(f"Evicted {len(entries_to_evict)} entries, freed {bytes_freed} bytes")
+            self.logger.debug("Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict))
 
     def _store_to_disk_cache(self, key: str, entry: CacheEntry) -> None:
         """
@@ -362,15 +374,18 @@ class ModelCache:
                         entry.size_bytes,
                         entry.access_count,
                         entry.last_access_time,
-                        entry.creation_time
-                    )
+                        entry.creation_time,
+                    ),
                 )
                 conn.commit()
 
-        except Exception as e:
-            self.logger.error(f"Failed to store to disk cache: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to store to disk cache: %s", str(e))
 
-    def _load_from_disk_cache(self, file_path: str, cache_level: CacheLevel) -> Optional[CacheEntry]:
+    def _load_from_disk_cache(
+        """TODO: Add docstring."""
+        self, file_path: str, cache_level: CacheLevel
+    ) -> Optional[CacheEntry]:
         """
         Load entry from disk cache.
 
@@ -390,13 +405,19 @@ class ModelCache:
                     FROM cache_entries
                     WHERE file_path = ? AND cache_level = ?
                     """,
-                    (file_path, cache_level.value)
+                    (file_path, cache_level.value),
                 )
 
                 row = cursor.fetchone()
                 if row:
-                    (file_hash, data, size_bytes, access_count,
-                     last_access_time, creation_time) = row
+                    (
+                        file_hash,
+                        data,
+                        size_bytes,
+                        access_count,
+                        last_access_time,
+                        creation_time,
+                    ) = row
 
                     deserialized_data = self._deserialize_data(data)
 
@@ -409,13 +430,13 @@ class ModelCache:
                         access_count=access_count,
                         last_access_time=last_access_time,
                         creation_time=creation_time,
-                        memory_only=False
+                        memory_only=False,
                     )
 
                 return None
 
-        except Exception as e:
-            self.logger.error(f"Failed to load from disk cache: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load from disk cache: %s", str(e))
             return None
 
     def _make_space_in_memory(self, required_bytes: int) -> bool:
@@ -463,7 +484,7 @@ class ModelCache:
                 self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug(f"Cache hit (memory): {file_path} [{cache_level.value}]")
+                self.logger.debug("Cache hit (memory): %s [{cache_level.value}]", file_path)
                 return entry.data
 
             # Check disk cache
@@ -481,16 +502,22 @@ class ModelCache:
                     self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug(f"Cache hit (disk): {file_path} [{cache_level.value}]")
+                self.logger.debug("Cache hit (disk): %s [{cache_level.value}]", file_path)
                 return entry.data
 
             # Cache miss
             self.stats.miss_count += 1
-            self.logger.debug(f"Cache miss: {file_path} [{cache_level.value}]")
+            self.logger.debug("Cache miss: %s [{cache_level.value}]", file_path)
             return None
 
-    def put(self, file_path: str, cache_level: CacheLevel, data: Any,
-            memory_only: bool = False) -> bool:
+    def put(
+        """TODO: Add docstring."""
+        self,
+        file_path: str,
+        cache_level: CacheLevel,
+        data: Any,
+        memory_only: bool = False,
+    ) -> bool:
         """
         Store data in cache.
 
@@ -530,7 +557,7 @@ class ModelCache:
                 access_count=1,
                 last_access_time=current_time,
                 creation_time=current_time,
-                memory_only=memory_only
+                memory_only=memory_only,
             )
 
             # Store in memory cache
@@ -550,7 +577,7 @@ class ModelCache:
             # Update statistics
             self._update_stats()
 
-            self.logger.debug(f"Cached: {file_path} [{cache_level.value}] ({data_size} bytes)")
+            self.logger.debug("Cached: %s [{cache_level.value}] ({data_size} bytes)", file_path)
             return True
 
     def remove(self, file_path: str, cache_level: Optional[CacheLevel] = None) -> bool:
@@ -588,18 +615,18 @@ class ModelCache:
                     with sqlite3.connect(self.disk_cache_db) as conn:
                         cursor = conn.execute(
                             "DELETE FROM cache_entries WHERE file_path = ? AND cache_level = ?",
-                            (file_path, level.value)
+                            (file_path, level.value),
                         )
                         if cursor.rowcount > 0:
                             removed = True
                         conn.commit()
 
-                except Exception as e:
-                    self.logger.error(f"Failed to remove from disk cache: {str(e)}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.error("Failed to remove from disk cache: %s", str(e))
 
             if removed:
                 self._update_stats()
-                self.logger.debug(f"Removed from cache: {file_path}")
+                self.logger.debug("Removed from cache: %s", file_path)
 
             return removed
 
@@ -623,8 +650,8 @@ class ModelCache:
                         conn.execute("DELETE FROM cache_entries")
                         conn.commit()
 
-                except Exception as e:
-                    self.logger.error(f"Failed to clear disk cache: {str(e)}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.error("Failed to clear disk cache: %s", str(e))
 
             # Reset statistics
             self.stats = CacheStats()
@@ -632,7 +659,7 @@ class ModelCache:
             # Force garbage collection
             gc.collect()
 
-            self.logger.info(f"Cache cleared (memory_only={memory_only})")
+            self.logger.info("Cache cleared (memory_only=%s)", memory_only)
 
     def _update_stats(self) -> None:
         """Update cache statistics."""
@@ -642,9 +669,7 @@ class ModelCache:
 
         try:
             with sqlite3.connect(self.disk_cache_db) as conn:
-                cursor = conn.execute(
-                    "SELECT COUNT(*), SUM(size_bytes) FROM cache_entries"
-                )
+                cursor = conn.execute("SELECT COUNT(*), SUM(size_bytes) FROM cache_entries")
                 row = cursor.fetchone()
                 if row:
                     self.stats.disk_entries = row[0] or 0
@@ -652,8 +677,8 @@ class ModelCache:
 
                 self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
 
-        except Exception as e:
-            self.logger.error(f"Failed to update statistics: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to update statistics: %s", str(e))
 
     def get_stats(self) -> CacheStats:
         """
@@ -696,7 +721,7 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info(f"High memory usage ({memory_usage_ratio:.1%}), evicting entries")
+                self.logger.info("High memory usage (%s), evicting entries", memory_usage_ratio:.1%)
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries
@@ -709,15 +734,15 @@ class ModelCache:
                         DELETE FROM cache_entries
                         WHERE last_access_time < ? AND access_count < 3
                         """,
-                        (cutoff_time,)
+                        (cutoff_time,),
                     )
                     deleted_count = cursor.rowcount
                     if deleted_count > 0:
-                        self.logger.info(f"Cleaned up {deleted_count} old disk cache entries")
+                        self.logger.info("Cleaned up %s old disk cache entries", deleted_count)
                     conn.commit()
 
-            except Exception as e:
-                self.logger.error(f"Failed to optimize disk cache: {str(e)}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Failed to optimize disk cache: %s", str(e))
 
     def cleanup(self) -> None:
         """Clean up cache resources."""

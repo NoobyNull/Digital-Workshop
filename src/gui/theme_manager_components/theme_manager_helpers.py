@@ -16,7 +16,7 @@ def contrasting_text_color(hex_color: str) -> str:
     """
     try:
         r, g, b = hex_to_rgb(hex_color)
-        brightness = (0.299 * r + 0.587 * g + 0.114 * b)
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
         return "#000000" if brightness >= 128 else "#ffffff"
     except Exception:
         return COLORS.text
@@ -66,11 +66,17 @@ def build_category_map() -> Dict[str, List[str]]:
     }
 
     def add(cat: str, name: str) -> bool:
+        """TODO: Add docstring."""
         categories[cat].append(name)
         return True
 
     for k in keys:
-        if k.startswith("window_") or k.startswith("text_") or k.startswith("disabled_") or k.startswith("menubar_"):
+        if (
+            k.startswith("window_")
+            or k.startswith("text_")
+            or k.startswith("disabled_")
+            or k.startswith("menubar_")
+        ):
             add("Window & UI", k)
         elif k.startswith("surface_"):
             add("Surfaces", k)
@@ -124,4 +130,3 @@ def build_category_map() -> Dict[str, List[str]]:
             add("Other", k)
 
     return categories
-

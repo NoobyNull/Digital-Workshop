@@ -12,7 +12,6 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
 
 
 class SimpleFormatter(logging.Formatter):
@@ -36,11 +35,43 @@ class SimpleFormatter(logging.Formatter):
         return f"[{timestamp}] {record.getMessage()}"
 
 
+class HumanReadableFormatter(logging.Formatter):
+    """
+    Human-readable formatter for logs.
+
+    Formats log records as readable text with timestamp, level, logger, and message.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format a log record as human-readable text.
+
+        Args:
+            record: The log record to format
+
+        Returns:
+            Human-readable formatted log entry as string
+        """
+        timestamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S")
+        level = record.levelname.ljust(8)
+        logger = record.name.split(".")[-1]  # Get last part of logger name
+
+        # Format the message
+        msg = record.getMessage()
+
+        # Add exception info if present
+        if record.exc_info:
+            msg += "\n" + "".join(traceback.format_exception(*record.exc_info))
+
+        return f"[{timestamp}] {level} | {logger:20s} | {msg}"
+
+
 class JSONFormatter(logging.Formatter):
     """
     Custom JSON formatter that creates structured log entries.
 
     Formats log records as JSON with timestamp, level, logger, function, line, and message.
+    Excludes taskname field to avoid null values.
     """
 
     def format(self, record: logging.LogRecord) -> str:
@@ -63,7 +94,7 @@ class JSONFormatter(logging.Formatter):
             "message": record.getMessage(),
             "module": record.module,
             "thread": record.thread,
-            "process": record.process
+            "process": record.process,
         }
 
         # Add exception information if present
@@ -71,16 +102,35 @@ class JSONFormatter(logging.Formatter):
             log_entry["exception"] = {
                 "type": record.exc_info[0].__name__,
                 "message": str(record.exc_info[1]),
-                "traceback": traceback.format_exception(*record.exc_info)
+                "traceback": traceback.format_exception(*record.exc_info),
             }
 
-        # Add extra fields if present
+        # Add extra fields if present (excluding taskname and other standard fields)
         for key, value in record.__dict__.items():
             if key not in {
-                'name', 'msg', 'args', 'levelname', 'levelno', 'pathname', 'filename',
-                'module', 'lineno', 'funcName', 'created', 'msecs', 'relativeCreated',
-                'thread', 'threadName', 'processName', 'process', 'getMessage',
-                'exc_info', 'exc_text', 'stack_info'
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
+                "getMessage",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "taskname",
+                "taskName",  # Exclude taskname variants
             }:
                 log_entry[key] = value
 
@@ -94,8 +144,13 @@ class TimestampRotatingFileHandler(logging.Handler):
     Creates new log files with format: "Log - MMDDYY-HH-MM-SS <Level>.txt"
     """
 
-    def __init__(self, log_dir: str = "logs", max_bytes: int = 10*1024*1024,
-                 backup_count: int = 5):
+    def __init__(
+        """TODO: Add docstring."""
+        self,
+        log_dir: str = "logs",
+        max_bytes: int = 10 * 1024 * 1024,
+        backup_count: int = 5,
+    ):
         """
         Initialize the timestamp rotating file handler.
 
@@ -162,7 +217,7 @@ class TimestampRotatingFileHandler(logging.Handler):
         # Create new log file
         filename = self._get_log_filename(self.current_level)
         self.current_file = self.log_dir / filename
-        self.stream = open(self.current_file, 'w', encoding='utf-8')
+        self.stream = open(self.current_file, "w", encoding="utf-8")
 
     def _cleanup_old_logs(self) -> None:
         """
@@ -172,7 +227,7 @@ class TimestampRotatingFileHandler(logging.Handler):
         log_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
         # Keep only the most recent files
-        for log_file in log_files[self.backup_count:]:
+        for log_file in log_files[self.backup_count :]:
             try:
                 log_file.unlink()
             except OSError:
@@ -195,7 +250,7 @@ class TimestampRotatingFileHandler(logging.Handler):
 
             # Format and write the log entry
             msg = self.format(record)
-            self.stream.write(msg + '\n')
+            self.stream.write(msg + "\n")
             self.stream.flush()
 
         except Exception:
@@ -212,14 +267,16 @@ class TimestampRotatingFileHandler(logging.Handler):
 
 
 def setup_logging(
+    """TODO: Add docstring."""
     log_level: str = "INFO",
     log_dir: str = "logs",
     enable_console: bool = False,
-    max_bytes: int = 10*1024*1024,
-    backup_count: int = 5
+    max_bytes: int = 10 * 1024 * 1024,
+    backup_count: int = 5,
+    human_readable: bool = False,
 ) -> logging.Logger:
     """
-    Set up JSON logging with rotation for the application.
+    Set up logging with rotation for the application.
 
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -227,6 +284,7 @@ def setup_logging(
         enable_console: Whether to enable console logging (default: False, logs go to file only)
         max_bytes: Maximum bytes before rotation
         backup_count: Number of backup files to keep
+        human_readable: Whether to use human-readable format instead of JSON (default: False)
 
     Returns:
         Configured logger instance
@@ -234,32 +292,35 @@ def setup_logging(
     # Use installation-type aware log directory if default is used
     if log_dir == "logs":
         from .path_manager import get_log_directory
+
         log_dir = str(get_log_directory())
 
     # Create the application logger
     from .version_manager import get_logger_name
+
     logger = logging.getLogger(get_logger_name())
     logger.setLevel(getattr(logging, log_level.upper()))
 
     # Clear any existing handlers
     logger.handlers.clear()
 
-    # Create JSON formatter
-    json_formatter = JSONFormatter()
+    # Create appropriate formatter
+    if human_readable:
+        formatter = HumanReadableFormatter()
+    else:
+        formatter = JSONFormatter()
 
     # Add timestamp rotating file handler
     file_handler = TimestampRotatingFileHandler(
-        log_dir=log_dir,
-        max_bytes=max_bytes,
-        backup_count=backup_count
+        log_dir=log_dir, max_bytes=max_bytes, backup_count=backup_count
     )
-    file_handler.setFormatter(json_formatter)
+    file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
     # Add console handler if requested
     if enable_console:
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(json_formatter)
+        console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
     return logger
@@ -276,6 +337,7 @@ def get_logger(name: str) -> logging.Logger:
         Logger instance
     """
     from .version_manager import get_logger_name
+
     logger_name = get_logger_name()
     return logging.getLogger(f"{logger_name}.{name}")
 
@@ -294,6 +356,7 @@ def get_activity_logger(name: str) -> logging.Logger:
         Activity logger instance
     """
     from .version_manager import get_logger_name
+
     logger_name = get_logger_name()
     logger = logging.getLogger(f"{logger_name}.Activity.{name}")
 
@@ -314,7 +377,7 @@ def get_activity_logger(name: str) -> logging.Logger:
     return logger
 
 
-def log_function_call(logger: logging.Logger, enable_logging: bool = False):
+def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> None:
     """
     Decorator to automatically log function calls with parameters and return values.
 
@@ -325,8 +388,11 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
     Returns:
         Decorator function
     """
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+
+    def decorator(func) -> None:
+        """TODO: Add docstring."""
+        def wrapper(*args, **kwargs) -> None:
+            """TODO: Add docstring."""
             # Only log if explicitly enabled
             if enable_logging:
                 try:
@@ -335,8 +401,8 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                         extra={
                             "custom_function": func.__name__,
                             "custom_args": str(args),
-                            "custom_kwargs": str(kwargs)
-                        }
+                            "custom_kwargs": str(kwargs),
+                        },
                     )
                 except:
                     # If logging fails, continue with the function
@@ -350,14 +416,14 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                             f"Completed {func.__name__}",
                             extra={
                                 "custom_function": func.__name__,
-                                "custom_result": str(result)[:100]  # Limit result length
-                            }
+                                "custom_result": str(result)[:100],  # Limit result length
+                            },
                         )
                     except:
                         # If logging fails, continue with the function
                         pass
                 return result
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 # Always log errors regardless of enable_logging setting
                 try:
                     logger.error(
@@ -365,12 +431,14 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                         extra={
                             "custom_function": func.__name__,
                             "custom_error_type": type(e).__name__,
-                            "custom_error_message": str(e)
-                        }
+                            "custom_error_message": str(e),
+                        },
                     )
                 except:
                     # If logging fails, continue with the exception
                     pass
                 raise
+
         return wrapper
+
     return decorator

@@ -8,6 +8,7 @@ This module provides database operations for managing 3D models, metadata,
 and categories with proper error handling and logging integration.
 """
 
+import os
 import threading
 from pathlib import Path
 from typing import Optional
@@ -32,21 +33,25 @@ def _get_default_db_path() -> str:
     This ensures the database is always in the same location regardless
     of the current working directory.
 
+    In memory-only mode (--mem-only), paths are automatically redirected to temp
+    by the path manager, so no special handling is needed here.
+
     Returns:
         Absolute path to the database file
     """
     try:
         from .path_manager import get_data_directory
+
         data_dir = get_data_directory()
         return str(data_dir / "3dmm.db")
-    except Exception as e:
-        logger.warning(f"Failed to get data directory: {e}, falling back to user data path")
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.warning("Failed to get data directory: %s, falling back to user data path", e)
         # Fallback to user-specific directory
-        import os
-        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+        app_data = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
         from .version_manager import get_app_name
+
         app_name = get_app_name()
-        db_dir = app_data / app_name / 'data'
+        db_dir = app_data / app_name / "data"
         db_dir.mkdir(parents=True, exist_ok=True)
         return str(db_dir / "3dmm.db")
 
@@ -86,7 +91,7 @@ def close_database_manager() -> None:
 
 
 __all__ = [
-    'DatabaseManager',
-    'get_database_manager',
-    'close_database_manager',
+    "DatabaseManager",
+    "get_database_manager",
+    "close_database_manager",
 ]

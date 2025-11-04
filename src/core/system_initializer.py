@@ -21,7 +21,7 @@ from .logging_config import setup_logging, get_logger
 class SystemInitializer:
     """Handles system-level initialization for the application."""
 
-    def __init__(self, config: ApplicationConfig):
+    def __init__(self, config: ApplicationConfig) -> None:
         """Initialize the SystemInitializer with application configuration.
 
         Args:
@@ -48,10 +48,14 @@ class SystemInitializer:
             return False
 
     def _setup_application_metadata(self) -> None:
-        """Set application metadata in QApplication."""
-        QApplication.setApplicationName(self.config.name)
+        """Set application metadata in QApplication.
+
+        NOTE: Organization name and application name are already set in
+        Application._create_qt_application() to ensure QSettings consistency.
+        Only set version and domain here.
+        """
+        # Only set version and domain - org/app names already set during QApplication creation
         QApplication.setApplicationVersion(self.config.version)
-        QApplication.setOrganizationName(self.config.organization_name)
         QApplication.setOrganizationDomain(self.config.organization_domain)
 
     def _setup_high_dpi_support(self) -> None:
@@ -59,6 +63,7 @@ class SystemInitializer:
         if self.config.enable_high_dpi:
             # Note: These are deprecated in PySide6 but kept for compatibility
             from PySide6.QtCore import Qt
+
             QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
             QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
@@ -72,36 +77,49 @@ class SystemInitializer:
         setup_logging(
             log_level=self.config.log_level,
             log_dir=log_dir,
-            enable_console=self.config.enable_console_logging
+            enable_console=self.config.enable_console_logging,
+            human_readable=self.config.log_human_readable,
         )
 
         self.logger = get_logger(__name__)
         self.logger.info("Logging system initialized")
 
     def _create_directories(self) -> None:
-        """Create necessary directories for the application."""
-        app_data_path = QStandardPaths.writableLocation(
-            QStandardPaths.AppDataLocation
-        )
+        """Create necessary directories for the application.
+
+        Only prints messages for newly created directories, not for existing ones.
+        Uses Path for consistent cross-platform path handling.
+        """
+        # Get app data path and normalize it
+        app_data_path = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
 
         # Define required directories
         app_dirs = [
             app_data_path,
-            os.path.join(app_data_path, "models"),
-            os.path.join(app_data_path, "logs"),
-            os.path.join(app_data_path, "temp"),
-            os.path.join(app_data_path, "cache"),
-            os.path.join(app_data_path, "themes"),
+            app_data_path / "models",
+            app_data_path / "logs",
+            app_data_path / "temp",
+            app_data_path / "cache",
+            app_data_path / "themes",
         ]
 
-        # Create directories
+        # Create directories - only print for newly created ones
+        created_count = 0
         for dir_path in app_dirs:
-            if QDir().mkpath(dir_path):
-                print(f"Created directory: {dir_path}")
-            else:
-                print(f"Directory already exists: {dir_path}")
+            # Check if directory already exists
+            if dir_path.exists() and dir_path.is_dir():
+                # Directory already exists, skip
+                continue
 
-        print("Application directories created")
+            # Try to create the directory
+            if QDir().mkpath(str(dir_path)):
+                print(f"Created directory: {dir_path}")
+                created_count += 1
+            else:
+                print(f"Failed to create directory: {dir_path}")
+
+        if created_count > 0:
+            print(f"Application directories initialized ({created_count} new directories created)")
 
     def get_app_data_path(self) -> Path:
         """Get the application data directory path.
@@ -109,9 +127,7 @@ class SystemInitializer:
         Returns:
             Path to the application data directory
         """
-        return Path(
-            QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        )
+        return Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
 
     def get_cache_path(self) -> Path:
         """Get the cache directory path.
@@ -154,6 +170,7 @@ class SystemInitializer:
 
                 # Remove old temp files (older than 1 day)
                 import time
+
                 current_time = time.time()
                 one_day_ago = current_time - 86400  # 24 hours in seconds
 

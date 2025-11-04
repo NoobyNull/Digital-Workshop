@@ -41,9 +41,10 @@ class ThemePersistence:
     - Performance monitoring for debugging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme persistence manager."""
         from src.core.version_manager import get_settings_names
+
         org_name, app_name = get_settings_names()
         self.settings = QSettings(org_name, app_name)
         self._mutex = QMutex()
@@ -67,7 +68,7 @@ class ThemePersistence:
             "custom_colors": {},
             "system_theme_detection": False,
             "auto_save_enabled": True,
-            "theme_version": "2.0.0"
+            "theme_version": "2.0.0",
         }
 
         logger.info("ThemePersistence initialized with QSettings-only architecture")
@@ -101,12 +102,12 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("save", elapsed)
 
-                logger.debug(f"Theme saved successfully in {elapsed:.2f}ms")
+                logger.debug("Theme saved successfully in %sms", elapsed:.2f)
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
-                logger.error(f"Failed to save theme: {e}", exc_info=True)
+                logger.error("Failed to save theme: %s", e, exc_info=True)
                 self._track_operation("save_error", elapsed)
                 return False
 
@@ -142,12 +143,12 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("load", elapsed)
 
-                logger.debug(f"Theme loaded successfully in {elapsed:.2f}ms")
+                logger.debug("Theme loaded successfully in %sms", elapsed:.2f)
                 return complete_data
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
-                logger.error(f"Failed to load theme: {e}", exc_info=True)
+                logger.error("Failed to load theme: %s", e, exc_info=True)
                 self._track_operation("load_error", elapsed)
 
                 # Return default theme on error
@@ -187,25 +188,25 @@ class ThemePersistence:
                     elapsed = (time.time() - start_time) * 1000
                     self._track_operation("atomic_save", elapsed)
 
-                    logger.debug(f"Theme saved atomically in {elapsed:.2f}ms")
+                    logger.debug("Theme saved atomically in %sms", elapsed:.2f)
                     return True
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     # Rollback on any error
-                    logger.error(f"Atomic save failed, rolling back: {e}")
+                    logger.error("Atomic save failed, rolling back: %s", e)
                     if backup_data:
                         try:
                             self._atomic_save(backup_data)
-                        except Exception as rollback_error:
-                            logger.error(f"Rollback failed: {rollback_error}")
+                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as rollback_error:
+                            logger.error("Rollback failed: %s", rollback_error)
 
                     elapsed = (time.time() - start_time) * 1000
                     self._track_operation("atomic_save_error", elapsed)
                     return False
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
-                logger.error(f"Atomic save operation failed: {e}", exc_info=True)
+                logger.error("Atomic save operation failed: %s", e, exc_info=True)
                 self._track_operation("atomic_save_error", elapsed)
                 return False
 
@@ -238,12 +239,12 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("clear", elapsed)
 
-                logger.info(f"Theme settings cleared in {elapsed:.2f}ms")
+                logger.info("Theme settings cleared in %sms", elapsed:.2f)
                 return True
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 elapsed = (time.time() - start_time) * 1000
-                logger.error(f"Failed to clear theme settings: {e}", exc_info=True)
+                logger.error("Failed to clear theme settings: %s", e, exc_info=True)
                 self._track_operation("clear_error", elapsed)
                 return False
 
@@ -260,14 +261,14 @@ class ThemePersistence:
         try:
             theme_data = self.load_theme()
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(theme_data, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"Theme exported to {file_path}")
+            logger.info("Theme exported to %s", file_path)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to export theme: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to export theme: %s", e, exc_info=True)
             return False
 
     def import_theme(self, file_path: str) -> bool:
@@ -281,7 +282,7 @@ class ThemePersistence:
             True if import was successful
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 theme_data = json.load(f)
 
             # Validate imported data
@@ -292,8 +293,8 @@ class ThemePersistence:
             # Save imported theme
             return self.save_theme(theme_data)
 
-        except Exception as e:
-            logger.error(f"Failed to import theme: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to import theme: %s", e, exc_info=True)
             return False
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -309,11 +310,12 @@ class ThemePersistence:
                 "total_operation_time_ms": self._total_operation_time,
                 "average_operation_time_ms": (
                     self._total_operation_time / self._operation_count
-                    if self._operation_count > 0 else 0
+                    if self._operation_count > 0
+                    else 0
                 ),
                 "last_operation_time_ms": self._last_operation_time,
                 "cache_enabled": self._cache_enabled,
-                "cache_size": len(self._settings_cache) if self._cache_enabled else 0
+                "cache_size": len(self._settings_cache) if self._cache_enabled else 0,
             }
 
     def enable_cache(self) -> None:
@@ -355,9 +357,17 @@ class ThemePersistence:
                 # Save theme data with proper structure
                 self.settings.setValue("theme_name", theme_data.get("theme_name", "dark"))
                 self.settings.setValue("theme_variant", theme_data.get("theme_variant", "blue"))
-                self.settings.setValue("qt_material_available", theme_data.get("qt_material_available", False))
-                self.settings.setValue("system_theme_detection", theme_data.get("system_theme_detection", False))
-                self.settings.setValue("auto_save_enabled", theme_data.get("auto_save_enabled", True))
+                self.settings.setValue(
+                    "qt_material_available",
+                    theme_data.get("qt_material_available", False),
+                )
+                self.settings.setValue(
+                    "system_theme_detection",
+                    theme_data.get("system_theme_detection", False),
+                )
+                self.settings.setValue(
+                    "auto_save_enabled", theme_data.get("auto_save_enabled", True)
+                )
                 self.settings.setValue("theme_version", theme_data.get("theme_version", "2.0.0"))
 
                 # Save custom colors as JSON string
@@ -376,8 +386,8 @@ class ThemePersistence:
 
             return True
 
-        except Exception as e:
-            logger.error(f"Atomic save operation failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Atomic save operation failed: %s", e)
             return False
 
     def _load_from_settings(self) -> Dict[str, Any]:
@@ -394,9 +404,15 @@ class ThemePersistence:
             # Load basic theme settings
             theme_data["theme_name"] = self.settings.value("theme_name", "dark")
             theme_data["theme_variant"] = self.settings.value("theme_variant", "blue")
-            theme_data["qt_material_available"] = self.settings.value("qt_material_available", False, type=bool)
-            theme_data["system_theme_detection"] = self.settings.value("system_theme_detection", False, type=bool)
-            theme_data["auto_save_enabled"] = self.settings.value("auto_save_enabled", True, type=bool)
+            theme_data["qt_material_available"] = self.settings.value(
+                "qt_material_available", False, type=bool
+            )
+            theme_data["system_theme_detection"] = self.settings.value(
+                "system_theme_detection", False, type=bool
+            )
+            theme_data["auto_save_enabled"] = self.settings.value(
+                "auto_save_enabled", True, type=bool
+            )
             theme_data["theme_version"] = self.settings.value("theme_version", "2.0.0")
 
             # Load custom colors from JSON string
@@ -445,19 +461,19 @@ class ThemePersistence:
             required_keys = ["theme_name", "theme_variant"]
             for key in required_keys:
                 if key not in theme_data:
-                    logger.warning(f"Missing required theme key: {key}")
+                    logger.warning("Missing required theme key: %s", key)
                     return False
 
             # Validate theme name
             valid_themes = ["dark", "light", "auto"]
             if theme_data["theme_name"] not in valid_themes:
-                logger.warning(f"Invalid theme name: {theme_data['theme_name']}")
+                logger.warning("Invalid theme name: %s", theme_data['theme_name'])
                 return False
 
             # Validate theme variant
             valid_variants = ["blue", "amber", "cyan", "red", "green", "purple"]
             if theme_data["theme_variant"] not in valid_variants:
-                logger.warning(f"Invalid theme variant: {theme_data['theme_variant']}")
+                logger.warning("Invalid theme variant: %s", theme_data['theme_variant'])
                 return False
 
             # Validate custom colors if present
@@ -465,22 +481,22 @@ class ThemePersistence:
             if custom_colors:
                 for color_name, color_value in custom_colors.items():
                     if not isinstance(color_name, str) or not isinstance(color_value, str):
-                        logger.warning(f"Invalid custom color format: {color_name}={color_value}")
+                        logger.warning("Invalid custom color format: %s={color_value}", color_name)
                         return False
 
                     # Basic hex color validation
-                    if not (color_value.startswith('#') and len(color_value) == 7):
+                    if not (color_value.startswith("#") and len(color_value) == 7):
                         try:
                             # Try to parse as hex
                             int(color_value, 16)
                         except ValueError:
-                            logger.warning(f"Invalid color value: {color_value}")
+                            logger.warning("Invalid color value: %s", color_value)
                             return False
 
             return True
 
-        except Exception as e:
-            logger.error(f"Theme data validation failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Theme data validation failed: %s", e)
             return False
 
     def _update_cache(self, theme_data: Dict[str, Any]) -> None:
@@ -514,4 +530,6 @@ class ThemePersistence:
 
         # Log slow operations
         if elapsed_ms > 100:  # More than 100ms is slow
-            logger.warning(f"Slow theme persistence operation: {operation_type} took {elapsed_ms:.2f}ms")
+            logger.warning(
+                f"Slow theme persistence operation: {operation_type} took {elapsed_ms:.2f}ms"
+            )

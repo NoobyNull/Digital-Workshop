@@ -23,6 +23,7 @@ logger = get_logger(__name__)
 @dataclass
 class Face:
     """Represents a face of the model."""
+
     triangles: List[Triangle]
     normal: Vector3D
     center: Vector3D
@@ -33,7 +34,7 @@ class Face:
 class ModelGeometryAnalyzer:
     """Analyzes model geometry to detect orientation and hollow sides."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """
         Initialize analyzer with a model.
 
@@ -51,9 +52,11 @@ class ModelGeometryAnalyzer:
         try:
             self._group_triangles_into_faces()
             self._detect_hollow_faces()
-            self.logger.info(f"Analyzed model: {len(self.faces)} faces, {len(self.triangles)} triangles")
-        except Exception as e:
-            self.logger.error(f"Failed to analyze model: {e}")
+            self.logger.info(
+                f"Analyzed model: {len(self.faces)} faces, {len(self.triangles)} triangles"
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to analyze model: %s", e)
 
     def _group_triangles_into_faces(self) -> None:
         """Group triangles into faces based on normal direction."""
@@ -72,10 +75,10 @@ class ModelGeometryAnalyzer:
                 if group_triangles:
                     ref_normal = group_triangles[0].normal
                     # Calculate dot product
-                    dot = (normal.x * ref_normal.x + 
-                           normal.y * ref_normal.y + 
-                           normal.z * ref_normal.z)
-                    
+                    dot = (
+                        normal.x * ref_normal.x + normal.y * ref_normal.y + normal.z * ref_normal.z
+                    )
+
                     if dot > normal_threshold:
                         group_triangles.append(triangle)
                         found_group = True
@@ -94,12 +97,12 @@ class ModelGeometryAnalyzer:
         """Create a Face object from triangles."""
         # Use first triangle's normal
         normal = triangles[0].normal
-        
+
         # Calculate center
         all_vertices = []
         for tri in triangles:
             all_vertices.extend(tri.get_vertices())
-        
+
         if all_vertices:
             center_x = sum(v.x for v in all_vertices) / len(all_vertices)
             center_y = sum(v.y for v in all_vertices) / len(all_vertices)
@@ -124,11 +127,7 @@ class ModelGeometryAnalyzer:
         b = Vector3D(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z)
 
         # Cross product
-        cross = Vector3D(
-            a.y * b.z - a.z * b.y,
-            a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x
-        )
+        cross = Vector3D(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 
         # Magnitude
         magnitude = math.sqrt(cross.x**2 + cross.y**2 + cross.z**2)
@@ -149,10 +148,7 @@ class ModelGeometryAnalyzer:
             for edge in edges:
                 # Normalize edge (smaller vertex first)
                 v1, v2 = edge
-                key = tuple(sorted([
-                    (v1.x, v1.y, v1.z),
-                    (v2.x, v2.y, v2.z)
-                ]))
+                key = tuple(sorted([(v1.x, v1.y, v1.z), (v2.x, v2.y, v2.z)]))
                 edge_count[key] = edge_count.get(key, 0) + 1
 
         # Mark faces with unshared edges as hollow
@@ -166,10 +162,7 @@ class ModelGeometryAnalyzer:
                 ]
                 for edge in edges:
                     v1, v2 = edge
-                    key = tuple(sorted([
-                        (v1.x, v1.y, v1.z),
-                        (v2.x, v2.y, v2.z)
-                    ]))
+                    key = tuple(sorted([(v1.x, v1.y, v1.z), (v2.x, v2.y, v2.z)]))
                     if edge_count.get(key, 0) == 1:
                         unshared_edges += 1
 
@@ -242,4 +235,3 @@ class ModelGeometryAnalyzer:
             return ("Y", 90)
 
         return ("Z", 0)
-

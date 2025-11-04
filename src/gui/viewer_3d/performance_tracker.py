@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import QTimer
 
-from src.core.logging_config import get_logger, log_function_call
+from src.core.logging_config import get_logger
 
 
 logger = get_logger(__name__)
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class PerformanceTracker:
     """Tracks performance metrics like FPS."""
 
-    def __init__(self, update_callback: Optional[Callable[[float], None]] = None):
+    def __init__(self, update_callback: Optional[Callable[[float], None]] = None) -> None:
         """
         Initialize performance tracker.
 
@@ -40,12 +40,12 @@ class PerformanceTracker:
     def stop(self) -> None:
         """Stop performance monitoring."""
         try:
-            if hasattr(self, 'performance_timer') and self.performance_timer:
+            if hasattr(self, "performance_timer") and self.performance_timer:
                 self.performance_timer.stop()
                 logger.debug("Performance monitoring stopped")
         except (RuntimeError, AttributeError) as e:
             # Timer may already be deleted
-            logger.debug(f"Performance monitoring stop failed (timer deleted): {e}")
+            logger.debug("Performance monitoring stop failed (timer deleted): %s", e)
 
     def frame_rendered(self) -> None:
         """Call this when a frame is rendered."""
@@ -67,10 +67,12 @@ class PerformanceTracker:
                 except RuntimeError as e:
                     # Widget has been deleted, stop the timer
                     if "already deleted" in str(e):
-                        logger.debug("Performance tracker callback failed - widget deleted, stopping timer")
+                        logger.debug(
+                            "Performance tracker callback failed - widget deleted, stopping timer"
+                        )
                         self.stop()
                     else:
-                        logger.warning(f"Performance tracker callback failed: {e}")
+                        logger.warning("Performance tracker callback failed: %s", e)
 
     def get_fps(self) -> float:
         """Get current FPS."""
@@ -79,7 +81,7 @@ class PerformanceTracker:
     def cleanup(self) -> None:
         """Clean up resources."""
         try:
-            if hasattr(self, 'performance_timer') and self.performance_timer:
+            if hasattr(self, "performance_timer") and self.performance_timer:
                 self.stop()
                 # Disconnect the signal to prevent callbacks after cleanup
                 try:
@@ -87,6 +89,5 @@ class PerformanceTracker:
                 except (TypeError, RuntimeError):
                     # Signal may already be disconnected or timer deleted
                     pass
-        except Exception as e:
-            logger.debug(f"Error during performance tracker cleanup: {e}")
-
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Error during performance tracker cleanup: %s", e)

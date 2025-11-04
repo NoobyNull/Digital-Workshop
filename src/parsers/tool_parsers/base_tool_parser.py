@@ -5,7 +5,6 @@ Base class for all tool parsers.
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from src.core.logging_config import get_logger
 
@@ -13,6 +12,7 @@ from src.core.logging_config import get_logger
 @dataclass
 class ToolData:
     """Data structure for a parsed tool."""
+
     guid: str
     description: str
     tool_type: str
@@ -26,7 +26,7 @@ class ToolData:
     properties: Dict[str, Any] = field(default_factory=dict)
     custom_properties: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-initialization to handle geometry_data alias."""
         if self.geometry_data and not self.geometry:
             self.geometry = self.geometry_data
@@ -37,7 +37,7 @@ class ToolData:
 class ProgressCallback:
     """Callback for progress reporting during parsing."""
 
-    def __init__(self, callback: Optional[Callable[[float, str], None]] = None):
+    def __init__(self, callback: Optional[Callable[[float, str], None]] = None) -> None:
         """Initialize progress callback."""
         self.callback = callback
         self.last_report = 0.0
@@ -52,13 +52,16 @@ class ProgressCallback:
 class BaseToolParser(ABC):
     """Abstract base class for tool parsers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize parser."""
         self.logger = get_logger(self.__class__.__name__)
         self._cancelled = False
 
     @abstractmethod
-    def parse(self, file_path: str, progress_callback: Optional[ProgressCallback] = None) -> List[ToolData]:
+    def parse(
+        """TODO: Add docstring."""
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
+    ) -> List[ToolData]:
         """
         Parse a tool database file.
 
@@ -69,7 +72,6 @@ class BaseToolParser(ABC):
         Returns:
             List of parsed tools
         """
-        pass
 
     @abstractmethod
     def validate_file(self, file_path: str) -> tuple:
@@ -82,12 +84,10 @@ class BaseToolParser(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def get_format_name(self) -> str:
         """Get the format name this parser handles."""
-        pass
 
     def cancel(self) -> None:
         """Cancel the parsing operation."""

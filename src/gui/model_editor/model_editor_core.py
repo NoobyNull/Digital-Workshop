@@ -9,16 +9,14 @@ Provides functionality for:
 """
 
 from enum import Enum
-from typing import Optional, Tuple
-from pathlib import Path
+from typing import Tuple
 import math
 
 import vtk
-from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger
 from src.core.data_structures import Triangle, Vector3D
-from src.parsers.stl_parser import STLModel, STLParser
+from src.parsers.stl_parser import STLModel
 from .model_geometry_analyzer import ModelGeometryAnalyzer
 
 
@@ -27,6 +25,7 @@ logger = get_logger(__name__)
 
 class RotationAxis(Enum):
     """Rotation axes for model transformation."""
+
     X = "X"
     Y = "Y"
     Z = "Z"
@@ -35,7 +34,7 @@ class RotationAxis(Enum):
 class ModelEditor:
     """VTK-based model editor for rotation and transformation."""
 
-    def __init__(self, model: STLModel):
+    def __init__(self, model: STLModel) -> None:
         """
         Initialize model editor.
 
@@ -63,10 +62,10 @@ class ModelEditor:
         try:
             # Normalize to 90-degree increments
             normalized_degrees = round(degrees / 90) * 90
-            
+
             # Create VTK transformation
             transform = vtk.vtkTransform()
-            
+
             if axis == RotationAxis.X:
                 transform.RotateX(normalized_degrees)
             elif axis == RotationAxis.Y:
@@ -84,18 +83,18 @@ class ModelEditor:
             self.current_model = STLModel(
                 header=self.current_model.header,
                 triangles=rotated_triangles,
-                stats=self.current_model.stats
+                stats=self.current_model.stats,
             )
 
             # Track rotation
             self.total_rotation[axis.value] += normalized_degrees
             self.rotation_history.append((axis.value, normalized_degrees))
 
-            self.logger.info(f"Rotated model {normalized_degrees}° around {axis.value} axis")
+            self.logger.info("Rotated model %s° around {axis.value} axis", normalized_degrees)
             return self.current_model
 
-        except Exception as e:
-            self.logger.error(f"Failed to rotate model: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to rotate model: %s", e)
             return self.current_model
 
     def _transform_triangle(self, triangle: Triangle, transform: vtk.vtkTransform) -> Triangle:
@@ -129,8 +128,9 @@ class ModelEditor:
         """
         try:
             # Find all triangles with Z < 0 (bottom side)
-            bottom_triangles = [t for t in self.current_model.triangles if 
-                              min(t.v1.z, t.v2.z, t.v3.z) < 0]
+            bottom_triangles = [
+                t for t in self.current_model.triangles if min(t.v1.z, t.v2.z, t.v3.z) < 0
+            ]
 
             if not bottom_triangles:
                 self.logger.warning("No triangles found below Z=0")
@@ -157,18 +157,20 @@ class ModelEditor:
             self.current_model = STLModel(
                 header=self.current_model.header,
                 triangles=new_triangles,
-                stats=self.current_model.stats
+                stats=self.current_model.stats,
             )
 
-            self.logger.info(f"Added solid plane with {len(plane_triangles)} triangles")
+            self.logger.info("Added solid plane with %s triangles", len(plane_triangles))
             return self.current_model
 
-        except Exception as e:
-            self.logger.error(f"Failed to add solid plane: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to add solid plane: %s", e)
             return self.current_model
 
-    def _create_plane_triangles(self, min_x: float, max_x: float, 
-                               min_y: float, max_y: float) -> list:
+    def _create_plane_triangles(
+        """TODO: Add docstring."""
+        self, min_x: float, max_x: float, min_y: float, max_y: float
+    ) -> list:
         """Create triangles for a plane at Z=0."""
         # Create 4 corners
         v1 = Vector3D(min_x, min_y, 0)
@@ -219,23 +221,28 @@ class ModelEditor:
 
             return True, "Model integrity verified"
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Verification failed: {e}"
 
     def _is_degenerate_triangle(self, triangle: Triangle) -> bool:
         """Check if triangle is degenerate (zero area)."""
         # Calculate area using cross product
-        a = (triangle.v2.x - triangle.v1.x, 
-             triangle.v2.y - triangle.v1.y, 
-             triangle.v2.z - triangle.v1.z)
-        b = (triangle.v3.x - triangle.v1.x, 
-             triangle.v3.y - triangle.v1.y, 
-             triangle.v3.z - triangle.v1.z)
+        a = (
+            triangle.v2.x - triangle.v1.x,
+            triangle.v2.y - triangle.v1.y,
+            triangle.v2.z - triangle.v1.z,
+        )
+        b = (
+            triangle.v3.x - triangle.v1.x,
+            triangle.v3.y - triangle.v1.y,
+            triangle.v3.z - triangle.v1.z,
+        )
 
-        cross = (a[1]*b[2] - a[2]*b[1],
-                 a[2]*b[0] - a[0]*b[2],
-                 a[0]*b[1] - a[1]*b[0])
+        cross = (
+            a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0],
+        )
 
-        magnitude = math.sqrt(cross[0]**2 + cross[1]**2 + cross[2]**2)
+        magnitude = math.sqrt(cross[0] ** 2 + cross[1] ** 2 + cross[2] ** 2)
         return magnitude < 1e-6
-

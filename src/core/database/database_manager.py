@@ -27,7 +27,7 @@ class DatabaseManager:
     Delegates to specialized modules for models, metadata, maintenance, and operations.
     """
 
-    def __init__(self, db_path: str = "data/3dmm.db"):
+    def __init__(self, db_path: str = "data/3dmm.db") -> None:
         """
         Initialize the database manager.
 
@@ -37,7 +37,7 @@ class DatabaseManager:
         self.db_path = Path(db_path)
         self._lock = threading.Lock()
 
-        logger.info(f"Initializing database manager with path: {self.db_path}")
+        logger.info("Initializing database manager with path: %s", self.db_path)
 
         # Initialize specialized modules
         self._db_ops = DatabaseOperations(str(self.db_path))
@@ -53,12 +53,13 @@ class DatabaseManager:
     # ===== Model Operations (delegated to ModelRepository) =====
 
     def add_model(
+        """TODO: Add docstring."""
         self,
         filename: str,
         format: str,
         file_path: str,
         file_size: Optional[int] = None,
-        file_hash: Optional[str] = None
+        file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
         return self._model_repo.add_model(filename, format, file_path, file_size, file_hash)
@@ -80,9 +81,8 @@ class DatabaseManager:
         return self._model_repo.get_model(model_id)
 
     def get_all_models(
-        self,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None
+        """TODO: Add docstring."""
+        self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get all models from the database."""
         return self._model_repo.get_all_models(limit, offset)
@@ -166,7 +166,7 @@ class DatabaseManager:
                 cursor = conn.cursor()
 
                 # Filter valid fields
-                valid_fields = {'filename', 'format', 'file_path', 'file_size'}
+                valid_fields = {"filename", "format", "file_path", "file_size"}
                 updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
                 if not updates:
@@ -177,29 +177,33 @@ class DatabaseManager:
                 values = list(updates.values())
                 values.append(model_id)
 
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE models
                     SET {set_clause}, last_modified = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, values)
+                """,
+                    values,
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated model {model_id}")
+                    logger.info("Updated model %s", model_id)
 
                 return success
 
-        except Exception as e:
-            logger.error(f"Failed to update model {model_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to update model %s: {e}", model_id)
             return False
 
     def search_models(
+        """TODO: Add docstring."""
         self,
         query: str = "",
         category: Optional[str] = None,
-        format: Optional[str] = None
+        format: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for models by query and filters.
@@ -249,8 +253,8 @@ class DatabaseManager:
 
                 return [dict(row) for row in rows]
 
-        except Exception as e:
-            logger.error(f"Failed to search models: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to search models: %s", e)
             return []
 
     def update_category(self, category_id: int, **kwargs) -> bool:
@@ -269,7 +273,7 @@ class DatabaseManager:
                 cursor = conn.cursor()
 
                 # Filter valid fields
-                valid_fields = {'name', 'color'}
+                valid_fields = {"name", "color"}
                 updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
                 if not updates:
@@ -280,33 +284,37 @@ class DatabaseManager:
                 values = list(updates.values())
                 values.append(category_id)
 
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE categories
                     SET {set_clause}
                     WHERE id = ?
-                """, values)
+                """,
+                    values,
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated category {category_id}")
+                    logger.info("Updated category %s", category_id)
 
                 return success
 
-        except Exception as e:
-            logger.error(f"Failed to update category {category_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to update category %s: {e}", category_id)
             return False
 
     # ===== Project Operations (delegated to ProjectRepository) =====
 
     def create_project(
+        """TODO: Add docstring."""
         self,
         name: str,
         base_path: Optional[str] = None,
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
-        structure_type: Optional[str] = None
+        structure_type: Optional[str] = None,
     ) -> str:
         """Create a new project."""
         return self._project_repo.create_project(
@@ -344,6 +352,7 @@ class DatabaseManager:
     # ===== File Operations (delegated to FileRepository) =====
 
     def add_file(
+        """TODO: Add docstring."""
         self,
         project_id: str,
         file_path: str,
@@ -352,12 +361,18 @@ class DatabaseManager:
         file_hash: Optional[str] = None,
         status: str = "pending",
         link_type: Optional[str] = None,
-        original_path: Optional[str] = None
+        original_path: Optional[str] = None,
     ) -> int:
         """Add a file to a project."""
         return self._file_repo.add_file(
-            project_id, file_path, file_name, file_size, file_hash,
-            status, link_type, original_path
+            project_id,
+            file_path,
+            file_name,
+            file_size,
+            file_hash,
+            status,
+            link_type,
+            original_path,
         )
 
     def get_file(self, file_id: int) -> Optional[Dict[str, Any]]:
@@ -398,4 +413,3 @@ class DatabaseManager:
     def close(self) -> None:
         """Close the database connection."""
         logger.info("Database manager closed")
-

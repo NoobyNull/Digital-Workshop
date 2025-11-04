@@ -1,6 +1,6 @@
 """Background G-code file loader with progressive rendering."""
 
-from typing import List, Optional
+from typing import List
 from PySide6.QtCore import QThread, Signal
 from src.core.logging_config import get_logger
 from .gcode_parser import GcodeParser, GcodeMove
@@ -15,7 +15,7 @@ class GcodeLoaderThread(QThread):
     finished_loading = Signal(list)  # Emits all moves when complete
     error_occurred = Signal(str)  # Emits error message
 
-    def __init__(self, filepath: str, batch_size: int = 5000):
+    def __init__(self, filepath: str, batch_size: int = 5000) -> None:
         """
         Initialize the loader thread.
 
@@ -34,11 +34,11 @@ class GcodeLoaderThread(QThread):
     def run(self) -> None:
         """Run the loader in background thread."""
         try:
-            with open(self.filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
             total_lines = len(lines)
-            self.logger.info(f"Starting to load {total_lines:,} lines from {self.filepath}")
+            self.logger.info("Starting to load %s lines from {self.filepath}", total_lines:,)
 
             # Parse lines and emit batches
             batch = []
@@ -50,12 +50,12 @@ class GcodeLoaderThread(QThread):
                 line = line.strip()
 
                 # Skip empty lines and comments
-                if not line or line.startswith(';') or line.startswith('%'):
+                if not line or line.startswith(";") or line.startswith("%"):
                     continue
 
                 # Remove inline comments
-                if ';' in line:
-                    line = line.split(';')[0].strip()
+                if ";" in line:
+                    line = line.split(";")[0].strip()
 
                 move = self.parser._parse_line(line, line_num)
                 if move:
@@ -78,13 +78,12 @@ class GcodeLoaderThread(QThread):
 
             # Emit completion signal with all moves
             self.finished_loading.emit(self.all_moves)
-            self.logger.info(f"Finished loading {len(self.all_moves):,} moves")
+            self.logger.info("Finished loading %s moves", len(self.all_moves):,)
 
-        except Exception as e:
-            self.logger.error(f"Error loading G-code file: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error loading G-code file: %s", e)
             self.error_occurred.emit(str(e))
 
     def stop(self) -> None:
         """Request the loader to stop."""
         self._stop_requested = True
-

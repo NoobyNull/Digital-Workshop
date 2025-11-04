@@ -56,7 +56,7 @@ class ThemeService:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme service."""
         self.settings = QSettings("Digital Workshop", "Digital Workshop")
         self._load_saved_theme()
@@ -69,9 +69,10 @@ class ThemeService:
         return cls._instance
 
     def apply_theme(
+        """TODO: Add docstring."""
         self,
         theme: ThemeType = "dark",
-        library: ThemeLibrary = "qdarkstyle"  # noqa: ARG002 - kept for compatibility
+        library: ThemeLibrary = "qdarkstyle",  # noqa: ARG002 - kept for compatibility
     ) -> bool:
         """
         Apply a professional theme using built-in PySide6 styling.
@@ -92,8 +93,8 @@ class ThemeService:
             self._apply_fallback_theme(app, theme)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to apply theme: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to apply theme: %s", e, exc_info=True)
             return False
 
     def _apply_fallback_theme(self, app: QApplication, theme: str) -> bool:
@@ -125,6 +126,7 @@ class ThemeService:
             if theme == "auto":
                 try:
                     import darkdetect
+
                     effective_theme = "dark" if darkdetect.isDark() else "light"
                 except ImportError:
                     effective_theme = "dark"  # Default to dark if detection fails
@@ -187,11 +189,11 @@ class ThemeService:
             self._current_library = "builtin"
             self._save_theme()
 
-            logger.info(f"Applied fallback theme: {theme} (effective: {effective_theme})")
+            logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to apply fallback theme: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to apply fallback theme: %s", e, exc_info=True)
             return False
 
     # Old qt-material implementation removed - use built-in styling instead
@@ -300,7 +302,7 @@ class ThemeService:
     #     self._current_library = "fallback"
     #     self._save_theme()
     #
-    #     logger.info(f"Applied fallback theme: {theme} (effective: {effective_theme})")
+    #     logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
 
     # DEPRECATED: Old qt-material methods - kept for reference only
     # def get_available_themes(self) -> dict:
@@ -332,4 +334,3 @@ class ThemeService:
         """Load saved theme from settings."""
         self._current_theme = self.settings.value("theme", "dark")
         self._current_library = self.settings.value("theme_library", "builtin")
-

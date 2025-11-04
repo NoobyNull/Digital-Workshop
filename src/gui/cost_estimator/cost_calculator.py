@@ -93,7 +93,7 @@ class CostEstimate:
 class CostCalculator:
     """Main cost calculator for projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cost calculator."""
         self.material_cost_per_unit = 0.0
         self.machine_hourly_rate = 0.0
@@ -153,6 +153,7 @@ class CostCalculator:
         return subtotal * (percentage / 100.0)
 
     def estimate_total_cost(
+        """TODO: Add docstring."""
         self,
         material_cost: float,
         machine_time_cost: float,
@@ -192,7 +193,7 @@ class CostCalculator:
 class ProfessionalCostCalculator:
     """Professional cost calculator for CNC woodworking projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the calculator with default rates."""
         # Hourly rates
         self.labor_hourly_rate = 25.0
@@ -213,6 +214,7 @@ class ProfessionalCostCalculator:
         self.tax_percentage = 0.0
 
     def generate_estimate(
+        """TODO: Add docstring."""
         self,
         material_cost: float,
         waste_percentage: float = 0.0,
@@ -253,9 +255,7 @@ class ProfessionalCostCalculator:
         tool_total = tool_wear_cost + consumables_cost
 
         # Subtotal before overhead
-        subtotal_before_overhead = (
-            mat_total + mach_total + labor_total + shop_total + tool_total
-        )
+        subtotal_before_overhead = mat_total + mach_total + labor_total + shop_total + tool_total
 
         # Calculate overhead
         overhead = subtotal_before_overhead * (self.overhead_percentage / 100.0)
@@ -316,8 +316,8 @@ class ProfessionalCostCalculator:
             pricing_strategy=self.pricing_strategy.value,
         )
 
-
     def set_hourly_rates(
+        """TODO: Add docstring."""
         self,
         labor_rate: float = None,
         design_rate: float = None,
@@ -341,6 +341,7 @@ class ProfessionalCostCalculator:
             self.assembly_hourly_rate = assembly_rate
 
     def set_overhead_and_margins(
+        """TODO: Add docstring."""
         self,
         overhead_pct: float = None,
         profit_margin_pct: float = None,

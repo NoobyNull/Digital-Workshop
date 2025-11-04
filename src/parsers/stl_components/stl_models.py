@@ -9,12 +9,17 @@ from enum import Enum
 from typing import List
 
 from src.parsers.base_parser import (
-    Triangle, Vector3D, ModelStats, ParseError, ProgressCallback
+    Triangle,
+    Vector3D,
+    ModelStats,
+    ParseError,
+    ProgressCallback,
 )
 
 
 class STLFormat(Enum):
     """STL file format types."""
+
     BINARY = "binary"
     ASCII = "ascii"
     UNKNOWN = "unknown"
@@ -23,6 +28,7 @@ class STLFormat(Enum):
 @dataclass
 class STLModel:
     """Complete 3D model representation with geometry and statistics."""
+
     header: str
     triangles: List[Triangle]
     stats: ModelStats
@@ -37,18 +43,15 @@ class STLModel:
     def get_memory_usage(self) -> int:
         """Estimate memory usage in bytes."""
         return (
-            len(self.header.encode('utf-8')) +
-            len(self.triangles) * (50 + 4 * 9) +  # Rough estimate
-            100  # Stats and other data
+            len(self.header.encode("utf-8"))
+            + len(self.triangles) * (50 + 4 * 9)  # Rough estimate
+            + 100  # Stats and other data
         )
 
 
 class STLParseError(ParseError):
     """Custom exception for STL parsing errors."""
-    pass
 
 
 class STLProgressCallback(ProgressCallback):
     """Callback interface for progress reporting during parsing."""
-    pass
-

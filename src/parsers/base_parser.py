@@ -8,27 +8,31 @@ must implement. It ensures consistent behavior across different format parsers.
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from typing import List, Optional, Tuple, Union
 import gc
 
 from src.core.logging_config import get_logger
-from src.core.performance_monitor import get_performance_monitor, monitor_operation
+from src.core.performance_monitor import get_performance_monitor
 from src.core.data_structures import (
-    Model, ModelFormat, Triangle, Vector3D, ModelStats,
-    LoadingState
+    Model,
+    ModelFormat,
+    Triangle,
+    Vector3D,
+    ModelStats,
+    LoadingState,
 )
+
 # Import model_cache lazily to avoid circular imports
 
 
 class ParseError(Exception):
     """Custom exception for parsing errors."""
-    pass
 
 
 class ProgressCallback:
     """Callback interface for progress reporting during parsing."""
 
-    def __init__(self, callback_func=None):
+    def __init__(self, callback_func=None) -> None:
         """
         Initialize progress callback.
 
@@ -63,7 +67,7 @@ class BaseParser(ABC):
     This ensures consistent behavior and interface across all parsers.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the parser."""
         self.logger = get_logger(self.__class__.__name__)
         self._cancel_parsing = False
@@ -71,18 +75,20 @@ class BaseParser(ABC):
         self._model_cache = None  # Lazy initialization
 
     @property
-    def model_cache(self):
+    def model_cache(self) -> None:
         """Lazy initialization of model_cache to avoid circular imports."""
         if self._model_cache is None:
             from src.core.model_cache import get_model_cache
+
             self._model_cache = get_model_cache()
         return self._model_cache
 
     def parse_file(
+        """TODO: Add docstring."""
         self,
         file_path: Union[str, Path],
         progress_callback: Optional[ProgressCallback] = None,
-        lazy_loading: bool = True
+        lazy_loading: bool = True,
     ) -> Model:
         """
         Parse a 3D model file with optional lazy loading.
@@ -104,7 +110,7 @@ class BaseParser(ABC):
         # Start performance monitoring
         operation_id = self.performance_monitor.start_operation(
             f"parse_{self.__class__.__name__}",
-            {"file_path": file_path, "lazy_loading": lazy_loading}
+            {"file_path": file_path, "lazy_loading": lazy_loading},
         )
 
         try:
@@ -113,16 +119,17 @@ class BaseParser(ABC):
                 # Try to get cached model
                 # Import CacheLevel lazily to avoid circular imports
                 from src.core.model_cache import CacheLevel
+
                 cached_model = self.model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
                 if cached_model:
-                    self.logger.info(f"Loaded model from cache: {file_path}")
+                    self.logger.info("Loaded model from cache: %s", file_path)
                     self.performance_monitor.end_operation(operation_id, success=True)
                     return cached_model
 
                 # Try to get cached metadata
                 cached_metadata = self.model_cache.get(file_path, CacheLevel.METADATA)
                 if cached_metadata:
-                    self.logger.info(f"Loaded metadata from cache: {file_path}")
+                    self.logger.info("Loaded metadata from cache: %s", file_path)
                     # Load full geometry in background if needed
                     if cached_metadata.needs_geometry_loading():
                         self._load_geometry_async(cached_metadata, progress_callback)
@@ -142,15 +149,16 @@ class BaseParser(ABC):
             self.performance_monitor.end_operation(operation_id, success=True)
             return model
 
-        except Exception as e:
-            self.performance_monitor.end_operation(operation_id, success=False, error_message=str(e))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.performance_monitor.end_operation(
+                operation_id, success=False, error_message=str(e)
+            )
             raise
 
     @abstractmethod
     def _parse_file_internal(
-        self,
-        file_path: str,
-        progress_callback: Optional[ProgressCallback] = None
+        """TODO: Add docstring."""
+        self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
         Internal method to parse a 3D model file.
@@ -165,7 +173,6 @@ class BaseParser(ABC):
         Raises:
             ParseError: If parsing fails
         """
-        pass
 
     def parse_metadata_only(self, file_path: Union[str, Path]) -> Model:
         """
@@ -182,6 +189,7 @@ class BaseParser(ABC):
         # Check cache first
         # Import CacheLevel lazily to avoid circular imports
         from src.core.model_cache import CacheLevel
+
         cached_metadata = self.model_cache.get(file_path, CacheLevel.METADATA)
         if cached_metadata:
             return cached_metadata
@@ -205,7 +213,6 @@ class BaseParser(ABC):
         Returns:
             Model with metadata only
         """
-        pass
 
     def _create_metadata_model(self, model: Model) -> Model:
         """
@@ -223,11 +230,15 @@ class BaseParser(ABC):
             stats=model.stats,
             format_type=model.format_type,
             loading_state=LoadingState.METADATA_ONLY,
-            file_path=model.file_path
+            file_path=model.file_path,
         )
 
-    def _load_geometry_async(self, metadata_model: Model,
-                           progress_callback: Optional[ProgressCallback] = None) -> None:
+    def _load_geometry_async(
+        """TODO: Add docstring."""
+        self,
+        metadata_model: Model,
+        progress_callback: Optional[ProgressCallback] = None,
+    ) -> None:
         """
         Load geometry asynchronously for a metadata-only model.
 
@@ -241,19 +252,30 @@ class BaseParser(ABC):
             try:
                 # Lazy import to avoid NameError during async geometry load
                 from src.core.model_cache import CacheLevel
+
                 full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
 
                 # Merge geometry into the metadata model
                 try:
                     # Prefer array-based path if available
                     is_array_based = False
-                    if hasattr(full_model, "is_array_based") and callable(getattr(full_model, "is_array_based")):
+                    if hasattr(full_model, "is_array_based") and callable(
+                        getattr(full_model, "is_array_based")
+                    ):
                         is_array_based = bool(full_model.is_array_based())  # type: ignore[attr-defined]
 
                     if is_array_based:
                         # Copy arrays and mark state
-                        setattr(metadata_model, "vertex_array", getattr(full_model, "vertex_array", None))
-                        setattr(metadata_model, "normal_array", getattr(full_model, "normal_array", None))
+                        setattr(
+                            metadata_model,
+                            "vertex_array",
+                            getattr(full_model, "vertex_array", None),
+                        )
+                        setattr(
+                            metadata_model,
+                            "normal_array",
+                            getattr(full_model, "normal_array", None),
+                        )
                         metadata_model.triangles = []  # ensure no legacy triangles
                         metadata_model.loading_state = LoadingState.ARRAY_GEOMETRY
                     else:
@@ -264,17 +286,21 @@ class BaseParser(ABC):
                     # Always copy stats and format (in case improved precision)
                     metadata_model.stats = full_model.stats
                     metadata_model.format_type = full_model.format_type
-                except Exception as merge_err:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as merge_err:
                     # Fallback to legacy triangles only to avoid blank view
-                    self.logger.warning(f"Geometry merge fallback (triangles only) due to: {merge_err}")
+                    self.logger.warning(
+                        f"Geometry merge fallback (triangles only) due to: {merge_err}"
+                    )
                     metadata_model.triangles = full_model.triangles
                     metadata_model.loading_state = LoadingState.FULL_GEOMETRY
 
                 # Cache the full model (may be skipped if too large per cache limits)
                 self.model_cache.put(metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model)
 
-            except Exception as e:
-                self.logger.error(f"Failed to load geometry for {metadata_model.file_path}: {str(e)}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error(
+                    f"Failed to load geometry for {metadata_model.file_path}: {str(e)}"
+                )
 
     @abstractmethod
     def validate_file(self, file_path: Union[str, Path]) -> Tuple[bool, str]:
@@ -287,7 +313,6 @@ class BaseParser(ABC):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        pass
 
     @abstractmethod
     def get_supported_extensions(self) -> List[str]:
@@ -297,7 +322,6 @@ class BaseParser(ABC):
         Returns:
             List of supported file extensions (including the dot)
         """
-        pass
 
     def cancel_parsing(self) -> None:
         """Cancel the current parsing operation."""
@@ -321,8 +345,8 @@ class BaseParser(ABC):
         if not triangles:
             return Vector3D(0, 0, 0), Vector3D(0, 0, 0)
 
-        min_x = min_y = min_z = float('inf')
-        max_x = max_y = max_z = float('-inf')
+        min_x = min_y = min_z = float("inf")
+        max_x = max_y = max_z = float("-inf")
 
         for triangle in triangles:
             for vertex in triangle.get_vertices():
@@ -371,11 +395,12 @@ class BaseParser(ABC):
         return file_path
 
     def _create_model_stats(
+        """TODO: Add docstring."""
         self,
         triangles: List[Triangle],
         file_size: int,
         format_type: ModelFormat,
-        start_time: float
+        start_time: float,
     ) -> ModelStats:
         """
         Create model statistics.
@@ -399,5 +424,5 @@ class BaseParser(ABC):
             max_bounds=max_bounds,
             file_size_bytes=file_size,
             format_type=format_type,
-            parsing_time_seconds=parsing_time
+            parsing_time_seconds=parsing_time,
         )

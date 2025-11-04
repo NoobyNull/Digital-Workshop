@@ -24,7 +24,7 @@ class EventCoordinator:
     proper resource management throughout the application lifecycle.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None):
+    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the event coordinator.
 
@@ -39,7 +39,7 @@ class EventCoordinator:
         """Handle window resize events."""
         try:
             # Autosave geometry changes on resize (debounced)
-            if hasattr(self.main_window, '_schedule_layout_save'):
+            if hasattr(self.main_window, "_schedule_layout_save"):
                 self.main_window._schedule_layout_save()
         except Exception:
             pass
@@ -52,20 +52,20 @@ class EventCoordinator:
             pass
 
         # Call original resize event
-        if hasattr(super(), 'resizeEvent'):
+        if hasattr(super(), "resizeEvent"):
             super(self.main_window.__class__, self.main_window).resizeEvent(event)
 
     def handle_move_event(self, event) -> None:
         """Handle window move events."""
         try:
             # Autosave geometry changes on move (debounced)
-            if hasattr(self.main_window, '_schedule_layout_save'):
+            if hasattr(self.main_window, "_schedule_layout_save"):
                 self.main_window._schedule_layout_save()
         except Exception:
             pass
 
         # Call original move event
-        if hasattr(super(), 'moveEvent'):
+        if hasattr(super(), "moveEvent"):
             super(self.main_window.__class__, self.main_window).moveEvent(event)
 
     def handle_close_event(self, event) -> None:
@@ -73,54 +73,54 @@ class EventCoordinator:
         self.logger.info("Application closing")
 
         # Stop background hasher if running
-        if hasattr(self.main_window, 'background_hasher') and self.main_window.background_hasher:
+        if hasattr(self.main_window, "background_hasher") and self.main_window.background_hasher:
             if self.main_window.background_hasher.isRunning():
                 try:
                     self.logger.info("Stopping background hasher...")
                     self.main_window.background_hasher.stop()
                     self.main_window.background_hasher.wait(3000)  # Wait up to 3 seconds
                     self.logger.info("Background hasher stopped")
-                except Exception as e:
-                    self.logger.warning(f"Failed to stop background hasher cleanly: {e}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.warning("Failed to stop background hasher cleanly: %s", e)
 
         # Safety: Ensure layout edit mode is locked before closing
         try:
-            if hasattr(self.main_window, 'layout_edit_mode') and self.main_window.layout_edit_mode:
+            if hasattr(self.main_window, "layout_edit_mode") and self.main_window.layout_edit_mode:
                 self.logger.info("Locking layout edit mode before application close")
-                if hasattr(self.main_window, '_set_layout_edit_mode'):
+                if hasattr(self.main_window, "_set_layout_edit_mode"):
                     # Don't show message during close
                     self.main_window._set_layout_edit_mode(False, show_message=False)
-                if hasattr(self.main_window, 'toggle_layout_edit_action'):
+                if hasattr(self.main_window, "toggle_layout_edit_action"):
                     self.main_window.toggle_layout_edit_action.setChecked(False)
                 # Persist the locked state
                 settings = QSettings()
                 settings.setValue("ui/layout_edit_mode", False)
                 self.logger.info("Layout edit mode locked for safety on close")
-        except Exception as e:
-            self.logger.warning(f"Failed to lock layout edit mode on close: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to lock layout edit mode on close: %s", e)
 
         # Clean up resources
-        if hasattr(self.main_window, 'status_timer'):
+        if hasattr(self.main_window, "status_timer"):
             self.main_window.status_timer.stop()
 
         # Clean up widgets
-        if hasattr(self.main_window, 'metadata_editor'):
+        if hasattr(self.main_window, "metadata_editor"):
             self.main_window.metadata_editor.cleanup()
 
-        if hasattr(self.main_window, 'model_library_widget'):
+        if hasattr(self.main_window, "model_library_widget"):
             self.main_window.model_library_widget.cleanup()
 
         # Memory cleanup: clear material texture cache
         try:
-            if hasattr(self.main_window, 'material_manager') and self.main_window.material_manager:
+            if hasattr(self.main_window, "material_manager") and self.main_window.material_manager:
                 self.main_window.material_manager.clear_texture_cache()
                 self.logger.info("Cleared MaterialManager texture cache on close")
-        except Exception as e:
-            self.logger.warning(f"Failed to clear material texture cache: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to clear material texture cache: %s", e)
 
         # Persist final lighting settings on close
         try:
-            if hasattr(self.main_window, '_save_lighting_settings'):
+            if hasattr(self.main_window, "_save_lighting_settings"):
                 self.main_window._save_lighting_settings()
         except Exception:
             pass
@@ -132,7 +132,10 @@ class EventCoordinator:
 
 
 # Convenience function for easy event coordination setup
-def setup_event_coordination(main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> EventCoordinator:
+def setup_event_coordination(
+    """TODO: Add docstring."""
+    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+) -> EventCoordinator:
     """
     Convenience function to set up event coordination for a main window.
 

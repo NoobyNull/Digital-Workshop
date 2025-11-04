@@ -5,7 +5,7 @@ Loads, validates, and manages IFT configuration from QSettings.
 Provides access to IFT definitions and validation.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from PySide6.QtCore import QSettings
 
@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class IFTDefinition:
     """Definition of an Interaction File Type."""
+
     name: str
     extension: str
     description: str
@@ -34,41 +35,41 @@ class IFTService:
             name="STL Model",
             extension=".stl",
             description="Stereolithography 3D model file",
-            color="#FF6B6B"
+            color="#FF6B6B",
         ),
         "obj": IFTDefinition(
             name="OBJ Model",
             extension=".obj",
             description="Wavefront OBJ 3D model file",
-            color="#4ECDC4"
+            color="#4ECDC4",
         ),
         "step": IFTDefinition(
             name="STEP Model",
             extension=".step",
             description="STEP 3D model file",
-            color="#45B7D1"
+            color="#45B7D1",
         ),
         "pdf": IFTDefinition(
             name="PDF Document",
             extension=".pdf",
             description="Portable Document Format",
-            color="#FFA07A"
+            color="#FFA07A",
         ),
         "png": IFTDefinition(
             name="PNG Image",
             extension=".png",
             description="Portable Network Graphics image",
-            color="#98D8C8"
+            color="#98D8C8",
         ),
         "jpg": IFTDefinition(
             name="JPEG Image",
             extension=".jpg",
             description="JPEG image file",
-            color="#F7DC6F"
+            color="#F7DC6F",
         ),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize IFT service."""
         self.logger = logger
         self.settings = QSettings("DigitalWorkshop", "DigitalWorkshop")
@@ -82,7 +83,7 @@ class IFTService:
             # Check if IFTs are stored in settings
             self.settings.beginGroup("IFT")
             keys = self.settings.childKeys()
-            
+
             if keys:
                 # Load from settings
                 for key in keys:
@@ -93,12 +94,12 @@ class IFTService:
                 # Use defaults and save
                 self.ifts = self.DEFAULT_IFTS.copy()
                 self._save_ifts()
-            
-            self.settings.endGroup()
-            logger.info(f"Loaded {len(self.ifts)} IFT definitions")
 
-        except Exception as e:
-            logger.error(f"Failed to load IFTs: {str(e)}")
+            self.settings.endGroup()
+            logger.info("Loaded %s IFT definitions", len(self.ifts))
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to load IFTs: %s", str(e))
             self.ifts = self.DEFAULT_IFTS.copy()
 
     @log_function_call(logger)
@@ -107,23 +108,23 @@ class IFTService:
         try:
             self.settings.beginGroup("IFT")
             self.settings.remove("")  # Clear existing
-            
+
             for key, ift in self.ifts.items():
                 data = {
-                    'name': ift.name,
-                    'extension': ift.extension,
-                    'description': ift.description,
-                    'icon': ift.icon,
-                    'color': ift.color,
-                    'enabled': ift.enabled
+                    "name": ift.name,
+                    "extension": ift.extension,
+                    "description": ift.description,
+                    "icon": ift.icon,
+                    "color": ift.color,
+                    "enabled": ift.enabled,
                 }
                 self.settings.setValue(key, data)
-            
-            self.settings.endGroup()
-            logger.info(f"Saved {len(self.ifts)} IFT definitions")
 
-        except Exception as e:
-            logger.error(f"Failed to save IFTs: {str(e)}")
+            self.settings.endGroup()
+            logger.info("Saved %s IFT definitions", len(self.ifts))
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to save IFTs: %s", str(e))
 
     def get_ift(self, key: str) -> Optional[IFTDefinition]:
         """Get IFT definition by key."""
@@ -149,10 +150,10 @@ class IFTService:
         try:
             self.ifts[key] = ift
             self._save_ifts()
-            logger.info(f"Added IFT: {key}")
+            logger.info("Added IFT: %s", key)
             return True
-        except Exception as e:
-            logger.error(f"Failed to add IFT: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to add IFT: %s", str(e))
             return False
 
     def remove_ift(self, key: str) -> bool:
@@ -161,11 +162,11 @@ class IFTService:
             if key in self.ifts:
                 del self.ifts[key]
                 self._save_ifts()
-                logger.info(f"Removed IFT: {key}")
+                logger.info("Removed IFT: %s", key)
                 return True
             return False
-        except Exception as e:
-            logger.error(f"Failed to remove IFT: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to remove IFT: %s", str(e))
             return False
 
     def enable_ift(self, key: str) -> bool:
@@ -176,8 +177,8 @@ class IFTService:
                 self._save_ifts()
                 return True
             return False
-        except Exception as e:
-            logger.error(f"Failed to enable IFT: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to enable IFT: %s", str(e))
             return False
 
     def disable_ift(self, key: str) -> bool:
@@ -188,8 +189,8 @@ class IFTService:
                 self._save_ifts()
                 return True
             return False
-        except Exception as e:
-            logger.error(f"Failed to disable IFT: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to disable IFT: %s", str(e))
             return False
 
     def reset_to_defaults(self) -> bool:
@@ -199,15 +200,15 @@ class IFTService:
             self._save_ifts()
             logger.info("Reset IFTs to defaults")
             return True
-        except Exception as e:
-            logger.error(f"Failed to reset IFTs: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to reset IFTs: %s", str(e))
             return False
 
     def validate_ift(self, ift: IFTDefinition) -> bool:
         """Validate IFT definition."""
         if not ift.name or not ift.extension:
             return False
-        if not ift.extension.startswith('.'):
+        if not ift.extension.startswith("."):
             return False
         return True
 
@@ -218,4 +219,3 @@ class IFTService:
     def get_enabled_ift_count(self) -> int:
         """Get number of enabled IFT definitions."""
         return sum(1 for ift in self.ifts.values() if ift.enabled)
-

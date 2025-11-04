@@ -10,7 +10,6 @@ from .dww_export_manager import DWWExportManager
 from .dww_import_manager import DWWImportManager
 
 __all__ = [
-    'DWWExportManager',
-    'DWWImportManager',
+    "DWWExportManager",
+    "DWWImportManager",
 ]
-

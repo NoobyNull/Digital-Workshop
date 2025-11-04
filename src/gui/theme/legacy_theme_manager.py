@@ -19,13 +19,12 @@ Migration Strategy:
 3. Eventually phase out legacy usage once all components are migrated
 """
 
-import time
 import threading
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Tuple
 from PySide6.QtCore import QObject, Signal
 
 from src.core.logging_config import get_logger
-from .unified_theme_manager import UnifiedThemeManager, get_unified_theme_manager
+from .unified_theme_manager import get_unified_theme_manager
 
 logger = get_logger(__name__)
 
@@ -43,10 +42,10 @@ class LegacyThemeManager(QObject):
 
     # Signals for backward compatibility
     theme_changed = Signal(str, str)  # theme, variant
-    colors_updated = Signal(dict)     # color_dict
-    error_occurred = Signal(str)      # error_message
+    colors_updated = Signal(dict)  # color_dict
+    error_occurred = Signal(str)  # error_message
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize legacy theme manager with backward compatibility."""
         super().__init__()
 
@@ -67,14 +66,14 @@ class LegacyThemeManager(QObject):
         logger.info("LegacyThemeManager initialized with backward compatibility")
 
     @classmethod
-    def instance(cls) -> 'LegacyThemeManager':
+    def instance(cls) -> "LegacyThemeManager":
         """
         Get singleton instance (backward compatibility method).
 
         Returns:
             LegacyThemeManager: Singleton instance
         """
-        if not hasattr(cls, '_instance') or cls._instance is None:
+        if not hasattr(cls, "_instance") or cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
@@ -110,8 +109,8 @@ class LegacyThemeManager(QObject):
 
                 return success
 
-            except Exception as e:
-                logger.error(f"Legacy apply_theme failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy apply_theme failed: %s", e)
                 self.error_occurred.emit(str(e))
                 return False
 
@@ -132,8 +131,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.get_color(color_name)
-            except Exception as e:
-                logger.error(f"Legacy get_color failed for {color_name}: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy get_color failed for %s: {e}", color_name)
                 return "#1976D2"  # Fallback color
 
     def get_theme_colors(self) -> Dict[str, str]:
@@ -150,8 +149,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.get_theme_colors()
-            except Exception as e:
-                logger.error(f"Legacy get_theme_colors failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy get_theme_colors failed: %s", e)
                 return {}
 
     def save_settings(self) -> bool:
@@ -168,8 +167,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.save_settings()
-            except Exception as e:
-                logger.error(f"Legacy save_settings failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy save_settings failed: %s", e)
                 return False
 
     def load_settings(self) -> bool:
@@ -186,8 +185,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.load_settings()
-            except Exception as e:
-                logger.error(f"Legacy load_settings failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy load_settings failed: %s", e)
                 return False
 
     def get_current_theme(self) -> Tuple[str, str]:
@@ -200,12 +199,14 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("get_current_theme", "UnifiedThemeManager.get_current_theme")
+            self._log_migration_warning(
+                "get_current_theme", "UnifiedThemeManager.get_current_theme"
+            )
 
             try:
                 return self._unified_manager.get_current_theme()
-            except Exception as e:
-                logger.error(f"Legacy get_current_theme failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy get_current_theme failed: %s", e)
                 return "dark", "blue"
 
     def reset_to_default(self) -> bool:
@@ -222,8 +223,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.reset_to_default()
-            except Exception as e:
-                logger.error(f"Legacy reset_to_default failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy reset_to_default failed: %s", e)
                 return False
 
     def export_theme(self, file_path: str) -> bool:
@@ -243,8 +244,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.export_theme(file_path)
-            except Exception as e:
-                logger.error(f"Legacy export_theme failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy export_theme failed: %s", e)
                 return False
 
     def import_theme(self, file_path: str) -> bool:
@@ -264,8 +265,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.import_theme(file_path)
-            except Exception as e:
-                logger.error(f"Legacy import_theme failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy import_theme failed: %s", e)
                 return False
 
     def register_widget(self, widget, widget_name: str = None) -> bool:
@@ -286,8 +287,8 @@ class LegacyThemeManager(QObject):
 
             try:
                 return self._unified_manager.register_widget(widget, widget_name)
-            except Exception as e:
-                logger.error(f"Legacy register_widget failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy register_widget failed: %s", e)
                 return False
 
     def unregister_widget(self, widget_name: str) -> bool:
@@ -303,12 +304,14 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("unregister_widget", "UnifiedThemeManager.unregister_widget")
+            self._log_migration_warning(
+                "unregister_widget", "UnifiedThemeManager.unregister_widget"
+            )
 
             try:
                 return self._unified_manager.unregister_widget(widget_name)
-            except Exception as e:
-                logger.error(f"Legacy unregister_widget failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy unregister_widget failed: %s", e)
                 return False
 
     def get_system_status(self) -> Dict[str, Any]:
@@ -321,30 +324,32 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("get_system_status", "UnifiedThemeManager.get_system_status")
+            self._log_migration_warning(
+                "get_system_status", "UnifiedThemeManager.get_system_status"
+            )
 
             try:
                 status = self._unified_manager.get_system_status()
 
                 # Add legacy compatibility information
-                status['legacy_compatibility'] = {
-                    'enabled': True,
-                    'operation_count': self._operation_count,
-                    'deprecated_operations': self._deprecated_operations,
-                    'migration_warnings_shown': len(self._migration_warnings_shown)
+                status["legacy_compatibility"] = {
+                    "enabled": True,
+                    "operation_count": self._operation_count,
+                    "deprecated_operations": self._deprecated_operations,
+                    "migration_warnings_shown": len(self._migration_warnings_shown),
                 }
 
                 return status
 
-            except Exception as e:
-                logger.error(f"Legacy get_system_status failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy get_system_status failed: %s", e)
                 return {
-                    'error': str(e),
-                    'legacy_compatibility': {
-                        'enabled': True,
-                        'operation_count': self._operation_count,
-                        'deprecated_operations': self._deprecated_operations
-                    }
+                    "error": str(e),
+                    "legacy_compatibility": {
+                        "enabled": True,
+                        "operation_count": self._operation_count,
+                        "deprecated_operations": self._deprecated_operations,
+                    },
                 }
 
     def cleanup_resources(self) -> None:
@@ -354,12 +359,14 @@ class LegacyThemeManager(QObject):
         with self._lock:
             self._operation_count += 1
 
-            self._log_migration_warning("cleanup_resources", "UnifiedThemeManager.cleanup_resources")
+            self._log_migration_warning(
+                "cleanup_resources", "UnifiedThemeManager.cleanup_resources"
+            )
 
             try:
                 self._unified_manager.cleanup_resources()
-            except Exception as e:
-                logger.error(f"Legacy cleanup_resources failed: {e}")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.error("Legacy cleanup_resources failed: %s", e)
 
     def _connect_signals(self) -> None:
         """Connect to unified theme manager signals."""
@@ -375,8 +382,8 @@ class LegacyThemeManager(QObject):
 
             logger.debug("Legacy theme manager signals connected")
 
-        except Exception as e:
-            logger.error(f"Failed to connect legacy signals: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to connect legacy signals: %s", e)
 
     def _log_migration_warning(self, method_name: str, new_method: str) -> None:
         """
@@ -405,18 +412,18 @@ class LegacyThemeManager(QObject):
         """
         with self._lock:
             return {
-                'legacy_operations': self._operation_count,
-                'deprecated_operations': self._deprecated_operations,
-                'migration_warnings_shown': len(self._migration_warnings_shown),
-                'warnings_list': list(self._migration_warnings_shown),
-                'recommendations': [
+                "legacy_operations": self._operation_count,
+                "deprecated_operations": self._deprecated_operations,
+                "migration_warnings_shown": len(self._migration_warnings_shown),
+                "warnings_list": list(self._migration_warnings_shown),
+                "recommendations": [
                     "Migrate to UnifiedThemeManager for better performance",
                     "Use qt-material color variables instead of hardcoded colors",
                     "Consider using theme signals for dynamic updates",
-                    "Review setStyleSheet() calls for qt-material compatibility"
+                    "Review setStyleSheet() calls for qt-material compatibility",
                 ],
-                'compatibility_status': 'active',
-                'estimated_migration_effort': self._estimate_migration_effort()
+                "compatibility_status": "active",
+                "estimated_migration_effort": self._estimate_migration_effort(),
             }
 
     def _estimate_migration_effort(self) -> str:
@@ -427,11 +434,11 @@ class LegacyThemeManager(QObject):
             String describing migration effort level
         """
         if self._deprecated_operations > 100:
-            return 'high'
+            return "high"
         elif self._deprecated_operations > 20:
-            return 'medium'
+            return "medium"
         else:
-            return 'low'
+            return "low"
 
 
 # Create singleton instance

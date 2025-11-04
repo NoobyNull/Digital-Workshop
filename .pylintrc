@@ -19,7 +19,7 @@ ignore-paths=
 # regex matches against base names, not paths. The default value is
 # file or directory names that do not begin with a '.' and that do
 # not end with a '_pb2.py'.
-ignore-patterns=
+ignore-patterns=^.*_ui\.py$
 
 # List of module names for which member attributes should not be
 # checked (useful for modules/projects where namespaces are
@@ -64,7 +64,6 @@ disable=
     # Handled by other tools
     line-too-long,
     trailing-whitespace,
-    trailing-newline,
     missing-final-newline,
 
 [REPORTS]
@@ -136,7 +135,7 @@ docstring-min-length=-1
 max-line-length=100
 
 # Regexp for a line that is allowed to be longer than the limit.
-long-line-comment-only=no
+# long-line-comment-only=no
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -179,5 +178,5 @@ init-import=no
 
 # List of qualified module names which can have objects that can change
 # sys.modules content.
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtins.Exception
 

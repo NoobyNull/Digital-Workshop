@@ -2,7 +2,6 @@
 
 from typing import Optional
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame
-from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QMouseEvent, QWheelEvent
 
 from .gcode_renderer import GcodeRenderer
@@ -16,14 +15,17 @@ QVTKRenderWindowInteractor = None
 class VTKWidget(QWidget):
     """Qt widget for VTK rendering with advanced camera controls."""
 
-    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None):
+    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None) -> None:
         """Initialize the VTK widget."""
         super().__init__(parent)
 
         global vtk, QVTKRenderWindowInteractor
         if vtk is None:
             import vtk as vtk_module
-            from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor as QVTKInteractor
+            from vtk.qt.QVTKRenderWindowInteractor import (
+                QVTKRenderWindowInteractor as QVTKInteractor,
+            )
+
             vtk = vtk_module
             QVTKRenderWindowInteractor = QVTKInteractor
 
@@ -157,4 +159,3 @@ class VTKWidget(QWidget):
         """Set camera to isometric view."""
         self.camera_controller.set_view_isometric()
         self.update_render()
-

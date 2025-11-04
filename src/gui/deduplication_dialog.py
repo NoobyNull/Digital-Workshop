@@ -12,16 +12,23 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton,
-    QButtonGroup, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QRadioButton,
+    QButtonGroup,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QMessageBox,
 )
 from PySide6.QtGui import QFont
 
 from src.core.logging_config import get_logger
-from src.gui.theme_core import get_theme_color
 
 logger = get_logger(__name__)
 
@@ -31,7 +38,7 @@ class DeduplicationDialog(QDialog):
 
     deduplication_confirmed = Signal(str)  # keep_strategy
 
-    def __init__(self, duplicate_models: List[Dict], parent=None):
+    def __init__(self, duplicate_models: List[Dict], parent=None) -> None:
         """
         Initialize deduplication dialog.
 
@@ -118,20 +125,18 @@ class DeduplicationDialog(QDialog):
         """Setup models table."""
         self.models_table = QTableWidget()
         self.models_table.setColumnCount(4)
-        self.models_table.setHorizontalHeaderLabels(
-            ["Filename", "Size (MB)", "Modified", "Path"]
-        )
+        self.models_table.setHorizontalHeaderLabels(["Filename", "Size (MB)", "Modified", "Path"])
 
         for i, model in enumerate(self.duplicate_models):
             self.models_table.insertRow(i)
 
             # Filename
-            filename = Path(model['file_path']).name
+            filename = Path(model["file_path"]).name
             self.models_table.setItem(i, 0, QTableWidgetItem(filename))
 
             # Size
             try:
-                size_mb = Path(model['file_path']).stat().st_size / (1024 * 1024)
+                size_mb = Path(model["file_path"]).stat().st_size / (1024 * 1024)
                 size_text = f"{size_mb:.2f}"
             except:
                 size_text = "N/A"
@@ -139,14 +144,14 @@ class DeduplicationDialog(QDialog):
 
             # Modified
             try:
-                mtime = Path(model['file_path']).stat().st_mtime
+                mtime = Path(model["file_path"]).stat().st_mtime
                 modified = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
             except:
                 modified = "N/A"
             self.models_table.setItem(i, 2, QTableWidgetItem(modified))
 
             # Path
-            self.models_table.setItem(i, 3, QTableWidgetItem(model['file_path']))
+            self.models_table.setItem(i, 3, QTableWidgetItem(model["file_path"]))
 
         # Resize columns
         header = self.models_table.horizontalHeader()
@@ -168,4 +173,3 @@ class DeduplicationDialog(QDialog):
     def get_keep_strategy(self) -> Optional[str]:
         """Get selected keep strategy."""
         return self.keep_strategy
-

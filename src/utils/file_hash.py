@@ -7,7 +7,6 @@ xxHash provides excellent collision resistance and performance for file identifi
 This module now wraps the FastHasher class for backward compatibility.
 """
 
-from pathlib import Path
 from typing import Optional
 
 from src.core.logging_config import get_logger
@@ -36,8 +35,8 @@ def calculate_file_hash(file_path: str, chunk_size: int = 8192) -> Optional[str]
     try:
         result = _global_hasher.hash_file(file_path)
         return result.hash_value if result.success else None
-    except Exception as e:
-        logger.error(f"Failed to calculate hash for {file_path}: {e}")
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error("Failed to calculate hash for %s: {e}", file_path)
         return None
 
 
@@ -54,6 +53,6 @@ def verify_file_hash(file_path: str, expected_hash: str) -> bool:
     """
     try:
         return _global_hasher.verify_hash(file_path, expected_hash)
-    except Exception as e:
-        logger.error(f"Failed to verify hash: {e}")
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error("Failed to verify hash: %s", e)
         return False

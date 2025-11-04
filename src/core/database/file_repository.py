@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class FileRepository:
     """Repository for file management operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize file repository.
 
@@ -27,6 +27,7 @@ class FileRepository:
 
     @log_function_call(logger)
     def add_file(
+        """TODO: Add docstring."""
         self,
         project_id: str,
         file_path: str,
@@ -35,7 +36,7 @@ class FileRepository:
         file_hash: Optional[str] = None,
         status: str = "pending",
         link_type: Optional[str] = None,
-        original_path: Optional[str] = None
+        original_path: Optional[str] = None,
     ) -> int:
         """
         Add a file to a project.
@@ -61,23 +62,34 @@ class FileRepository:
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO files (
                         project_id, file_path, file_name, file_size, file_hash,
                         status, link_type, original_path, created_at, updated_at
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    project_id, file_path, file_name, file_size, file_hash,
-                    status, link_type, original_path, now, now
-                ))
+                """,
+                    (
+                        project_id,
+                        file_path,
+                        file_name,
+                        file_size,
+                        file_hash,
+                        status,
+                        link_type,
+                        original_path,
+                        now,
+                        now,
+                    ),
+                )
                 conn.commit()
 
-            logger.info(f"File added to project {project_id}: {file_name}")
+            logger.info("File added to project %s: {file_name}", project_id)
             return cursor.lastrowid
 
         except sqlite3.Error as e:
-            logger.error(f"Database error adding file: {str(e)}")
+            logger.error("Database error adding file: %s", str(e))
             raise
 
     @log_function_call(logger)
@@ -100,7 +112,7 @@ class FileRepository:
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving file: {str(e)}")
+            logger.error("Database error retrieving file: %s", str(e))
             return None
 
     @log_function_call(logger)
@@ -120,13 +132,13 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? ORDER BY created_at DESC",
-                    (project_id,)
+                    (project_id,),
                 )
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving files: {str(e)}")
+            logger.error("Database error retrieving files: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -147,13 +159,13 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? AND status = ? ORDER BY created_at DESC",
-                    (project_id, status)
+                    (project_id, status),
                 )
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
 
         except sqlite3.Error as e:
-            logger.error(f"Database error retrieving files by status: {str(e)}")
+            logger.error("Database error retrieving files by status: %s", str(e))
             return []
 
     @log_function_call(logger)
@@ -175,15 +187,15 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "UPDATE files SET status = ?, updated_at = ? WHERE id = ?",
-                    (status, now, file_id)
+                    (status, now, file_id),
                 )
                 conn.commit()
 
-            logger.info(f"File status updated: {file_id} -> {status}")
+            logger.info("File status updated: %s -> {status}", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error updating file status: {str(e)}")
+            logger.error("Database error updating file status: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -200,32 +212,34 @@ class FileRepository:
         """
         try:
             allowed_fields = {
-                'file_path', 'file_name', 'file_size', 'file_hash',
-                'status', 'link_type', 'original_path'
+                "file_path",
+                "file_name",
+                "file_size",
+                "file_hash",
+                "status",
+                "link_type",
+                "original_path",
             }
-            
+
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
             if not update_fields:
                 return False
 
-            update_fields['updated_at'] = datetime.now().isoformat()
-            
+            update_fields["updated_at"] = datetime.now().isoformat()
+
             set_clause = ", ".join([f"{k} = ?" for k in update_fields.keys()])
             values = list(update_fields.values()) + [file_id]
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    f"UPDATE files SET {set_clause} WHERE id = ?",
-                    values
-                )
+                cursor.execute(f"UPDATE files SET {set_clause} WHERE id = ?", values)
                 conn.commit()
 
-            logger.info(f"File updated: {file_id}")
+            logger.info("File updated: %s", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error updating file: {str(e)}")
+            logger.error("Database error updating file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -245,11 +259,11 @@ class FileRepository:
                 cursor.execute("DELETE FROM files WHERE id = ?", (file_id,))
                 conn.commit()
 
-            logger.info(f"File deleted: {file_id}")
+            logger.info("File deleted: %s", file_id)
             return cursor.rowcount > 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error deleting file: {str(e)}")
+            logger.error("Database error deleting file: %s", str(e))
             return False
 
     @log_function_call(logger)
@@ -271,7 +285,7 @@ class FileRepository:
                 return result[0] if result else 0
 
         except sqlite3.Error as e:
-            logger.error(f"Database error counting files: {str(e)}")
+            logger.error("Database error counting files: %s", str(e))
             return 0
 
     @log_function_call(logger)
@@ -292,12 +306,11 @@ class FileRepository:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT * FROM files WHERE project_id = ? AND file_hash = ? LIMIT 1",
-                    (project_id, file_hash)
+                    (project_id, file_hash),
                 )
                 row = cursor.fetchone()
                 return dict(row) if row else None
 
         except sqlite3.Error as e:
-            logger.error(f"Database error finding duplicate: {str(e)}")
+            logger.error("Database error finding duplicate: %s", str(e))
             return None
-

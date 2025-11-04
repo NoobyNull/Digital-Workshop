@@ -6,10 +6,10 @@ when the theme changes.
 """
 
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from weakref import WeakSet
 
-from PySide6.QtWidgets import QMainWindow, QDialog, QWidget
+from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QObject, Signal
 
 from src.gui.window.custom_title_bar import CustomTitleBar
@@ -18,7 +18,7 @@ from src.gui.window.custom_title_bar import CustomTitleBar
 class WindowTitleBarManager(QObject):
     """
     Centralized manager for custom title bars across all application windows.
-    
+
     Tracks all windows and updates their title bars when theme changes.
     Uses weak references to avoid memory leaks.
     """
@@ -37,7 +37,7 @@ class WindowTitleBarManager(QObject):
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the manager."""
         if self._initialized:
             return
@@ -57,6 +57,7 @@ class WindowTitleBarManager(QObject):
     def _get_logger() -> logging.Logger:
         """Get logger instance."""
         from src.core.logging_config import get_logger
+
         return get_logger(__name__)
 
     def register_window(self, window: QWidget, title_bar: Optional[CustomTitleBar] = None) -> None:
@@ -71,9 +72,9 @@ class WindowTitleBarManager(QObject):
             self._windows.add(window)
             if title_bar:
                 self._title_bars[id(window)] = title_bar
-            self.logger.debug(f"Registered window: {window.__class__.__name__}")
-        except Exception as e:
-            self.logger.warning(f"Failed to register window: {e}")
+            self.logger.debug("Registered window: %s", window.__class__.__name__)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to register window: %s", e)
 
     def unregister_window(self, window: QWidget) -> None:
         """
@@ -86,9 +87,9 @@ class WindowTitleBarManager(QObject):
             window_id = id(window)
             if window_id in self._title_bars:
                 del self._title_bars[window_id]
-            self.logger.debug(f"Unregistered window: {window.__class__.__name__}")
-        except Exception as e:
-            self.logger.warning(f"Failed to unregister window: {e}")
+            self.logger.debug("Unregistered window: %s", window.__class__.__name__)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to unregister window: %s", e)
 
     def update_all_title_bars(self, theme: str) -> None:
         """
@@ -101,16 +102,16 @@ class WindowTitleBarManager(QObject):
             updated_count = 0
             for window_id, title_bar in list(self._title_bars.items()):
                 try:
-                    if title_bar and hasattr(title_bar, 'update_theme'):
+                    if title_bar and hasattr(title_bar, "update_theme"):
                         title_bar.update_theme()
                         updated_count += 1
-                except Exception as e:
-                    self.logger.debug(f"Failed to update title bar: {e}")
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.debug("Failed to update title bar: %s", e)
 
-            self.logger.debug(f"Updated {updated_count} title bars for theme: {theme}")
+            self.logger.debug("Updated %s title bars for theme: {theme}", updated_count)
             self.theme_changed.emit(theme)
-        except Exception as e:
-            self.logger.error(f"Failed to update all title bars: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to update all title bars: %s", e)
 
     def get_registered_windows_count(self) -> int:
         """Get count of registered windows."""
@@ -126,13 +127,13 @@ class WindowTitleBarManager(QObject):
             # WeakSet automatically removes dead references
             # This method is here for explicit cleanup if needed
             dead_ids = [
-                wid for wid in self._title_bars.keys()
+                wid
+                for wid in self._title_bars.keys()
                 if not any(id(w) == wid for w in self._windows)
             ]
             for wid in dead_ids:
                 del self._title_bars[wid]
             if dead_ids:
-                self.logger.debug(f"Cleaned up {len(dead_ids)} dead references")
-        except Exception as e:
-            self.logger.warning(f"Failed to clean dead references: {e}")
-
+                self.logger.debug("Cleaned up %s dead references", len(dead_ids))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to clean dead references: %s", e)

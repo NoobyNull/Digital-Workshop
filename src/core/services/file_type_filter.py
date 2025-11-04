@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class FileTypeFilterResult:
     """Result of file type filtering."""
+
     file_path: str
     file_name: str
     extension: str
@@ -31,64 +32,184 @@ class FileTypeFilter:
     # Supported file types (whitelist)
     SUPPORTED_EXTENSIONS = {
         # 3D Models
-        '.stl', '.obj', '.step', '.stp', '.3mf', '.ply', '.fbx', '.dae', '.gltf', '.glb',
-        '.blend', '.max', '.ma', '.mb', '.c4d', '.lwo', '.lw', '.xsi', '.iges', '.igs',
-        '.brep', '.sat', '.asm', '.prt', '.sldprt', '.sldasm',
-        
+        ".stl",
+        ".obj",
+        ".step",
+        ".stp",
+        ".3mf",
+        ".ply",
+        ".fbx",
+        ".dae",
+        ".gltf",
+        ".glb",
+        ".blend",
+        ".max",
+        ".ma",
+        ".mb",
+        ".c4d",
+        ".lwo",
+        ".lw",
+        ".xsi",
+        ".iges",
+        ".igs",
+        ".brep",
+        ".sat",
+        ".asm",
+        ".prt",
+        ".sldprt",
+        ".sldasm",
         # Documents
-        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt',
-        '.ods', '.odp', '.pages', '.numbers', '.keynote',
-        
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".txt",
+        ".rtf",
+        ".odt",
+        ".ods",
+        ".odp",
+        ".pages",
+        ".numbers",
+        ".keynote",
         # Images
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.tif', '.webp', '.ico',
-        '.psd', '.ai', '.eps', '.heic', '.raw',
-        
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".svg",
+        ".tiff",
+        ".tif",
+        ".webp",
+        ".ico",
+        ".psd",
+        ".ai",
+        ".eps",
+        ".heic",
+        ".raw",
         # Metadata & Config
-        '.json', '.xml', '.yaml', '.yml', '.csv', '.tsv', '.md', '.markdown', '.txt',
-        '.ini', '.conf', '.config', '.properties',
-        
+        ".json",
+        ".xml",
+        ".yaml",
+        ".yml",
+        ".csv",
+        ".tsv",
+        ".md",
+        ".markdown",
+        ".txt",
+        ".ini",
+        ".conf",
+        ".config",
+        ".properties",
         # Archives (for reference)
-        '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2',
-        
+        ".zip",
+        ".rar",
+        ".7z",
+        ".tar",
+        ".gz",
+        ".bz2",
         # Video (for reference)
-        '.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm',
-        
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".mkv",
+        ".flv",
+        ".wmv",
+        ".webm",
         # Audio (for reference)
-        '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a',
+        ".mp3",
+        ".wav",
+        ".flac",
+        ".aac",
+        ".ogg",
+        ".m4a",
     }
 
     # Blocked file types (blacklist) - potentially harmful
     BLOCKED_EXTENSIONS = {
         # Executables
-        '.exe', '.com', '.bat', '.cmd', '.scr', '.vbs', '.js', '.jse', '.ws', '.wsf',
-        '.msi', '.app', '.deb', '.rpm', '.dmg', '.pkg',
-        
+        ".exe",
+        ".com",
+        ".bat",
+        ".cmd",
+        ".scr",
+        ".vbs",
+        ".js",
+        ".jse",
+        ".ws",
+        ".wsf",
+        ".msi",
+        ".app",
+        ".deb",
+        ".rpm",
+        ".dmg",
+        ".pkg",
         # System files
-        '.sys', '.dll', '.so', '.dylib', '.drv', '.device',
-        
+        ".sys",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".drv",
+        ".device",
         # Scripts (potentially harmful)
-        '.ps1', '.ps2', '.psc1', '.psc2', '.msh', '.msh1', '.msh2', '.mshxml', '.msh1xml', '.msh2xml',
-        '.sh', '.bash', '.zsh', '.ksh', '.csh', '.tcsh',
-        '.pl', '.py', '.rb', '.php', '.asp', '.aspx', '.jsp', '.jspx',
-        
+        ".ps1",
+        ".ps2",
+        ".psc1",
+        ".psc2",
+        ".msh",
+        ".msh1",
+        ".msh2",
+        ".mshxml",
+        ".msh1xml",
+        ".msh2xml",
+        ".sh",
+        ".bash",
+        ".zsh",
+        ".ksh",
+        ".csh",
+        ".tcsh",
+        ".pl",
+        ".py",
+        ".rb",
+        ".php",
+        ".asp",
+        ".aspx",
+        ".jsp",
+        ".jspx",
         # Shortcuts
-        '.lnk', '.url', '.desktop',
-        
+        ".lnk",
+        ".url",
+        ".desktop",
         # Compressed with scripts
-        '.jar', '.class',
-        
+        ".jar",
+        ".class",
         # Macro-enabled documents
-        '.xlsm', '.docm', '.pptm',
+        ".xlsm",
+        ".docm",
+        ".pptm",
     }
 
     # Blocked filenames (case-insensitive)
     BLOCKED_FILENAMES = {
-        'autorun.inf', 'boot.ini', 'config.sys', 'io.sys', 'msdos.sys',
-        'ntldr', 'ntdetect.com', 'hal.dll', 'kernel32.dll',
-        'thumbs.db', 'desktop.ini', 'system.ini', 'win.ini',
+        "autorun.inf",
+        "boot.ini",
+        "config.sys",
+        "io.sys",
+        "msdos.sys",
+        "ntldr",
+        "ntdetect.com",
+        "hal.dll",
+        "kernel32.dll",
+        "thumbs.db",
+        "desktop.ini",
+        "system.ini",
+        "win.ini",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize file type filter."""
         self.logger = logger
 
@@ -116,7 +237,7 @@ class FileTypeFilter:
                     extension=extension,
                     is_allowed=False,
                     reason="Blocked system filename",
-                    category="System"
+                    category="System",
                 )
 
             # Check blocked extensions
@@ -127,7 +248,7 @@ class FileTypeFilter:
                     extension=extension,
                     is_allowed=False,
                     reason=f"Blocked file type: {extension}",
-                    category="Blocked"
+                    category="Blocked",
                 )
 
             # Check supported extensions
@@ -139,7 +260,7 @@ class FileTypeFilter:
                     extension=extension,
                     is_allowed=True,
                     reason="Supported file type",
-                    category=category
+                    category=category,
                 )
 
             # Unknown extension - allow by default
@@ -149,15 +270,18 @@ class FileTypeFilter:
                 extension=extension,
                 is_allowed=True,
                 reason="Unknown file type (allowed)",
-                category="Other"
+                category="Other",
             )
 
-        except Exception as e:
-            logger.error(f"Failed to filter file: {str(e)}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to filter file: %s", str(e))
             raise
 
     @log_function_call(logger)
-    def filter_files(self, file_paths: List[str]) -> Tuple[List[FileTypeFilterResult], List[FileTypeFilterResult]]:
+    def filter_files(
+        """TODO: Add docstring."""
+        self, file_paths: List[str]
+    ) -> Tuple[List[FileTypeFilterResult], List[FileTypeFilterResult]]:
         """
         Filter multiple files.
 
@@ -177,31 +301,100 @@ class FileTypeFilter:
             else:
                 blocked.append(result)
 
-        logger.info(f"Filtered {len(file_paths)} files: {len(allowed)} allowed, {len(blocked)} blocked")
+        logger.info(
+            f"Filtered {len(file_paths)} files: {len(allowed)} allowed, {len(blocked)} blocked"
+        )
         return allowed, blocked
 
     def _categorize_file(self, extension: str) -> str:
         """Categorize file by extension."""
         extension = extension.lower()
 
-        if extension in {'.stl', '.obj', '.step', '.stp', '.3mf', '.ply', '.fbx', '.dae', '.gltf', '.glb',
-                        '.blend', '.max', '.ma', '.mb', '.c4d', '.lwo', '.lw', '.xsi', '.iges', '.igs',
-                        '.brep', '.sat', '.asm', '.prt', '.sldprt', '.sldasm'}:
+        if extension in {
+            ".stl",
+            ".obj",
+            ".step",
+            ".stp",
+            ".3mf",
+            ".ply",
+            ".fbx",
+            ".dae",
+            ".gltf",
+            ".glb",
+            ".blend",
+            ".max",
+            ".ma",
+            ".mb",
+            ".c4d",
+            ".lwo",
+            ".lw",
+            ".xsi",
+            ".iges",
+            ".igs",
+            ".brep",
+            ".sat",
+            ".asm",
+            ".prt",
+            ".sldprt",
+            ".sldasm",
+        }:
             return "3D Models"
-        elif extension in {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt',
-                          '.ods', '.odp', '.pages', '.numbers', '.keynote'}:
+        elif extension in {
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".txt",
+            ".rtf",
+            ".odt",
+            ".ods",
+            ".odp",
+            ".pages",
+            ".numbers",
+            ".keynote",
+        }:
             return "Documents"
-        elif extension in {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.tif', '.webp', '.ico',
-                          '.psd', '.ai', '.eps', '.heic', '.raw'}:
+        elif extension in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".svg",
+            ".tiff",
+            ".tif",
+            ".webp",
+            ".ico",
+            ".psd",
+            ".ai",
+            ".eps",
+            ".heic",
+            ".raw",
+        }:
             return "Images"
-        elif extension in {'.json', '.xml', '.yaml', '.yml', '.csv', '.tsv', '.md', '.markdown',
-                          '.ini', '.conf', '.config', '.properties'}:
+        elif extension in {
+            ".json",
+            ".xml",
+            ".yaml",
+            ".yml",
+            ".csv",
+            ".tsv",
+            ".md",
+            ".markdown",
+            ".ini",
+            ".conf",
+            ".config",
+            ".properties",
+        }:
             return "Metadata"
-        elif extension in {'.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'}:
+        elif extension in {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"}:
             return "Archives"
-        elif extension in {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm'}:
+        elif extension in {".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"}:
             return "Video"
-        elif extension in {'.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a'}:
+        elif extension in {".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"}:
             return "Audio"
         else:
             return "Other"
@@ -223,4 +416,3 @@ class FileTypeFilter:
     def get_blocked_extensions(self) -> Set[str]:
         """Get set of blocked extensions."""
         return self.BLOCKED_EXTENSIONS.copy()
-

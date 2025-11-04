@@ -68,7 +68,7 @@ class UnifiedThemeManager(QObject):
     theme_validation_failed = Signal(str, list)  # error_message, error_list
     system_ready = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize unified theme manager."""
         super().__init__()
 
@@ -99,14 +99,14 @@ class UnifiedThemeManager(QObject):
         logger.info("UnifiedThemeManager initialized as single theme coordinator")
 
     @classmethod
-    def instance(cls) -> 'UnifiedThemeManager':
+    def instance(cls) -> "UnifiedThemeManager":
         """
         Get singleton instance of unified theme manager.
 
         Returns:
             UnifiedThemeManager instance
         """
-        if not hasattr(cls, '_instance') or cls._instance is None:
+        if not hasattr(cls, "_instance") or cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
@@ -125,7 +125,7 @@ class UnifiedThemeManager(QObject):
         operation_id = f"apply_{theme}_{variant}_{start_time}"
 
         try:
-            logger.info(f"Applying theme: {theme}/{variant}")
+            logger.info("Applying theme: %s/{variant}", theme)
 
             # Validate theme request
             if not self._validate_theme_request(theme, variant):
@@ -148,14 +148,14 @@ class UnifiedThemeManager(QObject):
 
             # Log warnings if any
             if warnings:
-                logger.warning(f"Theme validation warnings: {warnings}")
+                logger.warning("Theme validation warnings: %s", warnings)
 
             # Check cache first
             cache_key = f"{theme}_{variant}"
             cached_data = self._cache.get(cache_key)
             if cached_data:
                 theme_data = cached_data
-                logger.debug(f"Using cached theme data: {cache_key}")
+                logger.debug("Using cached theme data: %s", cache_key)
             else:
                 # Cache the validated theme data
                 self._cache.put(cache_key, theme_data)
@@ -179,7 +179,7 @@ class UnifiedThemeManager(QObject):
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation(True, elapsed, operation_id)
 
-                logger.info(f"Theme {theme}/{variant} applied successfully in {elapsed:.2f}ms")
+                logger.info("Theme %s/{variant} applied successfully in {elapsed:.2f}ms", theme)
                 return True
             else:
                 error_msg = f"Theme application failed: {theme}/{variant}"
@@ -191,11 +191,11 @@ class UnifiedThemeManager(QObject):
 
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = (time.time() - start_time) * 1000
             self._track_operation(False, elapsed, operation_id)
 
-            logger.error(f"Theme application exception: {e}", exc_info=True)
+            logger.error("Theme application exception: %s", e, exc_info=True)
             self.theme_applied.emit(False, f"Theme application failed: {str(e)}")
             return False
 
@@ -217,11 +217,7 @@ class UnifiedThemeManager(QObject):
         """
         # Dynamic theme system - all variants available for all themes
         variants = ["blue", "amber", "cyan", "red", "green", "purple", "teal"]
-        return {
-            "dark": variants,
-            "light": variants,
-            "auto": variants
-        }
+        return {"dark": variants, "light": variants, "auto": variants}
 
     def get_theme_colors(self) -> Dict[str, str]:
         """
@@ -256,8 +252,8 @@ class UnifiedThemeManager(QObject):
         try:
             theme_data = self._create_theme_data(self._current_theme, self._current_variant)
             return self._persistence.save_theme(theme_data)
-        except Exception as e:
-            logger.error(f"Failed to save theme settings: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to save theme settings: %s", e)
             return False
 
     def load_settings(self) -> bool:
@@ -273,9 +269,9 @@ class UnifiedThemeManager(QObject):
             # Validate loaded data
             is_valid, errors, warnings = self._validator.validate_theme(theme_data)
             if not is_valid:
-                logger.warning(f"Loaded theme data has validation issues: {errors}")
+                logger.warning("Loaded theme data has validation issues: %s", errors)
                 if warnings:
-                    logger.info(f"Loaded theme warnings: {warnings}")
+                    logger.info("Loaded theme warnings: %s", warnings)
 
             # Apply loaded theme
             theme = theme_data.get("theme_name", "dark")
@@ -283,8 +279,8 @@ class UnifiedThemeManager(QObject):
 
             return self.apply_theme(theme, variant)
 
-        except Exception as e:
-            logger.error(f"Failed to load theme settings: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to load theme settings: %s", e)
             return False
 
     def reset_to_default(self) -> bool:
@@ -308,8 +304,8 @@ class UnifiedThemeManager(QObject):
         """
         try:
             return self._persistence.export_theme(file_path)
-        except Exception as e:
-            logger.error(f"Failed to export theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to export theme: %s", e)
             return False
 
     def import_theme(self, file_path: str) -> bool:
@@ -328,8 +324,8 @@ class UnifiedThemeManager(QObject):
                 # Reload settings after import
                 return self.load_settings()
             return False
-        except Exception as e:
-            logger.error(f"Failed to import theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to import theme: %s", e)
             return False
 
     def get_system_status(self) -> Dict[str, Any]:
@@ -352,8 +348,8 @@ class UnifiedThemeManager(QObject):
                 "validator": self._validator.get_performance_stats(),
                 "cache": self._cache.get_stats(),
                 "registry": self._registry.get_registry_stats(),
-                "application": self._application.get_application_stats()
-            }
+                "application": self._application.get_application_stats(),
+            },
         }
 
     def register_widget(self, widget, widget_name: str = None) -> bool:
@@ -390,8 +386,8 @@ class UnifiedThemeManager(QObject):
         try:
             self._registry.cleanup_dead_widgets()
             logger.debug("Theme system resources cleaned up")
-        except Exception as e:
-            logger.error(f"Resource cleanup failed: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Resource cleanup failed: %s", e)
 
     def _connect_signals(self) -> None:
         """Connect component signals."""
@@ -407,8 +403,8 @@ class UnifiedThemeManager(QObject):
 
             logger.debug("Theme manager signals connected")
 
-        except Exception as e:
-            logger.error(f"Failed to connect signals: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to connect signals: %s", e)
 
     def _initialize_system(self) -> None:
         """Initialize the theme system."""
@@ -430,8 +426,8 @@ class UnifiedThemeManager(QObject):
 
             logger.info("Unified theme system initialized successfully")
 
-        except Exception as e:
-            logger.error(f"Theme system initialization failed: {e}", exc_info=True)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Theme system initialization failed: %s", e, exc_info=True)
             self._initialized = False
             self._system_ready = False
 
@@ -450,11 +446,11 @@ class UnifiedThemeManager(QObject):
         valid_variants = ["blue", "amber", "cyan", "red", "green", "purple", "teal"]
 
         if theme not in valid_themes:
-            logger.error(f"Invalid theme: {theme}")
+            logger.error("Invalid theme: %s", theme)
             return False
 
         if variant not in valid_variants:
-            logger.error(f"Invalid variant: {variant}")
+            logger.error("Invalid variant: %s", variant)
             return False
 
         return True
@@ -480,7 +476,7 @@ class UnifiedThemeManager(QObject):
             "custom_colors": colors,
             "system_theme_detection": False,
             "auto_save_enabled": True,
-            "theme_version": "2.0.0"
+            "theme_version": "2.0.0",
         }
 
     def _generate_dynamic_colors(self, theme: str, variant: str) -> Dict[str, str]:
@@ -538,13 +534,13 @@ class UnifiedThemeManager(QObject):
         """
         # Map variants to hue ranges
         hue_map = {
-            "blue": 220,    # Blue range
-            "amber": 45,    # Yellow/Orange range
-            "cyan": 180,    # Cyan range
-            "red": 0,       # Red range
-            "green": 120,   # Green range
+            "blue": 220,  # Blue range
+            "amber": 45,  # Yellow/Orange range
+            "cyan": 180,  # Cyan range
+            "red": 0,  # Red range
+            "green": 120,  # Green range
             "purple": 270,  # Purple range
-            "teal": 180     # Teal range (same as cyan)
+            "teal": 180,  # Teal range (same as cyan)
         }
 
         base_hue = hue_map.get(variant, 220)  # Default to blue
@@ -612,8 +608,8 @@ class UnifiedThemeManager(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and lighten
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -626,8 +622,8 @@ class UnifiedThemeManager(QObject):
         import colorsys
 
         # Convert hex to RGB
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
         # Convert to HSV and darken
         hsv = colorsys.rgb_to_hsv(*rgb)
@@ -640,13 +636,9 @@ class UnifiedThemeManager(QObject):
         Check if Qt-material library is available.
 
         Returns:
-            True if Qt-material is available
+            False - qt-material has been removed
         """
-        try:
-            import qt_material
-            return True
-        except ImportError:
-            return False
+        return False
 
     def _track_operation(self, success: bool, elapsed_ms: float, operation_id: str) -> None:
         """Track operation performance and statistics."""
@@ -657,30 +649,30 @@ class UnifiedThemeManager(QObject):
 
         # Log slow operations
         if elapsed_ms > 1000:  # More than 1 second
-            logger.warning(f"Slow theme operation: {operation_id} took {elapsed_ms:.2f}ms")
+            logger.warning("Slow theme operation: %s took {elapsed_ms:.2f}ms", operation_id)
 
     def _on_application_started(self, theme: str, variant: str) -> None:
         """Handle theme application started signal."""
-        logger.debug(f"Theme application started: {theme}/{variant}")
+        logger.debug("Theme application started: %s/{variant}", theme)
 
     def _on_application_completed(self, success: bool, message: str) -> None:
         """Handle theme application completed signal."""
         if success:
-            logger.debug(f"Theme application completed: {message}")
+            logger.debug("Theme application completed: %s", message)
         else:
-            logger.error(f"Theme application failed: {message}")
+            logger.error("Theme application failed: %s", message)
 
     def _on_application_failed(self, error_message: str, component: str) -> None:
         """Handle theme application failed signal."""
-        logger.error(f"Theme application failed in {component}: {error_message}")
+        logger.error("Theme application failed in %s: {error_message}", component)
 
     def _on_widget_registered(self, widget_name: str) -> None:
         """Handle widget registered signal."""
-        logger.debug(f"Widget registered for theme updates: {widget_name}")
+        logger.debug("Widget registered for theme updates: %s", widget_name)
 
     def _on_widget_unregistered(self, widget_name: str) -> None:
         """Handle widget unregistered signal."""
-        logger.debug(f"Widget unregistered from theme updates: {widget_name}")
+        logger.debug("Widget unregistered from theme updates: %s", widget_name)
 
     # Dynamic theme methods - no backward compatibility
 

@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QMessageBox, QWidget
 class ExceptionHandler:
     """Centralized exception handling for the application."""
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """Initialize the ExceptionHandler.
 
         Args:
@@ -73,8 +73,8 @@ class ExceptionHandler:
                 "exception_message": str(exc_value),
                 "exception_traceback": "".join(
                     traceback.format_exception(exc_type, exc_value, exc_traceback)
-                )
-            }
+                ),
+            },
         )
 
     def _show_error_dialog(self, exc_type, exc_value, exc_traceback) -> None:
@@ -93,9 +93,7 @@ class ExceptionHandler:
             msg_box.setInformativeText(f"Error: {str(exc_value)}")
 
             # Add detailed traceback
-            detailed_text = "".join(
-                traceback.format_exception(exc_type, exc_value, exc_traceback)
-            )
+            detailed_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             msg_box.setDetailedText(detailed_text)
 
             # Set parent if available
@@ -105,9 +103,7 @@ class ExceptionHandler:
             msg_box.exec_()
         except RuntimeError as dialog_error:
             # If dialog creation fails, log it
-            self.logger.error(
-                "Failed to create error dialog: %s", str(dialog_error)
-            )
+            self.logger.error("Failed to create error dialog: %s", str(dialog_error))
             # Fallback to console
             self._console_error_output(exc_type, exc_value, exc_traceback)
 
@@ -134,6 +130,7 @@ class ExceptionHandler:
         # Try to show a dialog if possible
         try:
             from PySide6.QtWidgets import QApplication
+
             if not QApplication.instance():
                 QApplication([])
 
@@ -154,9 +151,7 @@ class ExceptionHandler:
             error: Optional exception that caused the shutdown
         """
         if error:
-            self.logger.error(
-                "Graceful shutdown due to error: %s", str(error)
-            )
+            self.logger.error("Graceful shutdown due to error: %s", str(error))
         else:
             self.logger.info("Graceful shutdown initiated")
 

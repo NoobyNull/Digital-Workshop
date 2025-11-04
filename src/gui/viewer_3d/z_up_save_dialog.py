@@ -8,13 +8,16 @@ Provides options to:
 """
 
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QRadioButton, QButtonGroup, QMessageBox
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QRadioButton,
+    QButtonGroup,
 )
-from PySide6.QtCore import Qt
 
 from src.core.logging_config import get_logger
 
@@ -28,7 +31,7 @@ class ZUpSaveDialog(QDialog):
     SAVE_AND_REPLACE = 1
     SAVE_AS_NEW = 2
 
-    def __init__(self, model_filename: str, parent=None):
+    def __init__(self, model_filename: str, parent=None) -> None:
         """
         Initialize Z-up save dialog.
 
@@ -128,4 +131,3 @@ class ZUpSaveDialog(QDialog):
     def get_new_filepath(self) -> str:
         """Get the new file path for save as new option."""
         return self._get_new_filename()
-

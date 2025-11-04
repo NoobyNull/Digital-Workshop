@@ -27,7 +27,7 @@ class ThemePersistence:
 
     THEME_FILENAME = "theme.json"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize persistence handler."""
         self._app_data_path = self._get_app_data_path()
 
@@ -62,9 +62,9 @@ class ThemePersistence:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(colors, f, indent=2)
 
-            logger.info(f"Theme saved to {path}")
-        except Exception as e:
-            logger.error(f"Failed to save theme: {e}")
+            logger.info("Theme saved to %s", path)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to save theme: %s", e)
             raise
 
     def load_theme(self) -> Optional[Dict[str, str]]:
@@ -78,23 +78,23 @@ class ThemePersistence:
             path = self._get_theme_file_path()
 
             if not path.exists():
-                logger.debug(f"Theme file not found: {path}")
+                logger.debug("Theme file not found: %s", path)
                 return None
 
             with open(path, "r", encoding="utf-8") as f:
                 colors = json.load(f)
 
             if not isinstance(colors, dict):
-                logger.warning(f"Theme file contains invalid data: {path}")
+                logger.warning("Theme file contains invalid data: %s", path)
                 return None
 
-            logger.info(f"Theme loaded from {path}")
+            logger.info("Theme loaded from %s", path)
             return colors
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse theme file: {e}")
+            logger.error("Failed to parse theme file: %s", e)
             return None
-        except Exception as e:
-            logger.error(f"Failed to load theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to load theme: %s", e)
             return None
 
     def export_theme(self, path: Path, colors: Dict[str, str]) -> None:
@@ -120,9 +120,9 @@ class ThemePersistence:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(colors, f, indent=2)
 
-            logger.info(f"Theme exported to {path}")
-        except Exception as e:
-            logger.error(f"Failed to export theme: {e}")
+            logger.info("Theme exported to %s", path)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to export theme: %s", e)
             raise
 
     def import_theme(self, path: Path) -> Optional[Dict[str, str]]:
@@ -146,16 +146,16 @@ class ThemePersistence:
                 colors = json.load(f)
 
             if not isinstance(colors, dict):
-                logger.warning(f"Theme file contains invalid data: {path}")
+                logger.warning("Theme file contains invalid data: %s", path)
                 return None
 
-            logger.info(f"Theme imported from {path}")
+            logger.info("Theme imported from %s", path)
             return colors
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse theme file: {e}")
+            logger.error("Failed to parse theme file: %s", e)
             raise
-        except Exception as e:
-            logger.error(f"Failed to import theme: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to import theme: %s", e)
             raise
 
     def theme_exists(self) -> bool:

@@ -18,12 +18,14 @@ from PySide6.QtCore import QSettings
 @dataclass
 class RootFolder:
     """Represents a configured root folder."""
+
     path: str
     display_name: str
     enabled: bool = True
     id: Optional[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """TODO: Add docstring."""
         if self.id is None:
             # Generate a simple ID based on path hash for uniqueness
             self.id = hash(self.path) & 0xFFFFFFFF
@@ -43,7 +45,8 @@ class RootFolderManager(QObject):
 
     _instance = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
+        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.settings = QSettings()
@@ -63,6 +66,7 @@ class RootFolderManager(QObject):
             folders_data_str = self.settings.value("root_folders", "")
             if folders_data_str:
                 import json
+
                 folders_data = json.loads(folders_data_str)
             else:
                 folders_data = []
@@ -75,31 +79,27 @@ class RootFolderManager(QObject):
                         path=folder_data.get("path", ""),
                         display_name=folder_data.get("display_name", ""),
                         enabled=folder_data.get("enabled", True),
-                        id=folder_data.get("id")
+                        id=folder_data.get("id"),
                     )
                     if self._validate_folder(folder):
                         self._folders.append(folder)
                     else:
-                        self.logger.warning(f"Skipping invalid root folder: {folder.path}")
+                        self.logger.warning("Skipping invalid root folder: %s", folder.path)
 
             # If no folders configured, add default user home
             if not self._folders:
                 self._add_default_folders()
 
-            self.logger.info(f"Loaded {len(self._folders)} root folders")
+            self.logger.info("Loaded %s root folders", len(self._folders))
 
-        except Exception as e:
-            self.logger.error(f"Failed to load root folders: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to load root folders: %s", e)
             self._add_default_folders()
 
     def _add_default_folders(self) -> None:
         """Add default root folders when none are configured."""
         home_path = str(Path.home())
-        home_folder = RootFolder(
-            path=home_path,
-            display_name="Home",
-            enabled=True
-        )
+        home_folder = RootFolder(path=home_path, display_name="Home", enabled=True)
         self._folders = [home_folder]
         self._save_folders()
 
@@ -107,32 +107,33 @@ class RootFolderManager(QObject):
         """Save root folders to application settings."""
         try:
             import json
+
             folders_data = [asdict(folder) for folder in self._folders]
             folders_data_str = json.dumps(folders_data)
             self.settings.setValue("root_folders", folders_data_str)
-            self.logger.debug(f"Saved {len(self._folders)} root folders")
-        except Exception as e:
-            self.logger.error(f"Failed to save root folders: {e}")
+            self.logger.debug("Saved %s root folders", len(self._folders))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to save root folders: %s", e)
 
     def _validate_folder(self, folder: RootFolder) -> bool:
         """Validate that a root folder is accessible and valid."""
         try:
             path = Path(folder.path)
             if not path.exists():
-                self.logger.warning(f"Root folder path does not exist: {folder.path}")
+                self.logger.warning("Root folder path does not exist: %s", folder.path)
                 return False
             if not path.is_dir():
-                self.logger.warning(f"Root folder path is not a directory: {folder.path}")
+                self.logger.warning("Root folder path is not a directory: %s", folder.path)
                 return False
             # Check if we can list the directory (basic permission check)
             try:
                 list(path.iterdir())
             except PermissionError:
-                self.logger.warning(f"No permission to access root folder: {folder.path}")
+                self.logger.warning("No permission to access root folder: %s", folder.path)
                 return False
             return True
-        except Exception as e:
-            self.logger.error(f"Error validating root folder {folder.path}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error validating root folder %s: {e}", folder.path)
             return False
 
     def get_folders(self, enabled_only: bool = False) -> List[RootFolder]:
@@ -154,18 +155,14 @@ class RootFolderManager(QObject):
             # Check if folder already exists
             for folder in self._folders:
                 if Path(folder.path).resolve() == path_obj:
-                    self.logger.warning(f"Root folder already exists: {path_str}")
+                    self.logger.warning("Root folder already exists: %s", path_str)
                     return False
 
             # Generate display name if not provided
             if not display_name:
                 display_name = path_obj.name or path_str
 
-            folder = RootFolder(
-                path=path_str,
-                display_name=display_name,
-                enabled=True
-            )
+            folder = RootFolder(path=path_str, display_name=display_name, enabled=True)
 
             if not self._validate_folder(folder):
                 return False
@@ -173,11 +170,11 @@ class RootFolderManager(QObject):
             self._folders.append(folder)
             self._save_folders()
             self.folders_changed.emit()
-            self.logger.info(f"Added root folder: {display_name} ({path_str})")
+            self.logger.info("Added root folder: %s ({path_str})", display_name)
             return True
 
-        except Exception as e:
-            self.logger.error(f"Failed to add root folder {path}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to add root folder %s: {e}", path)
             return False
 
     def remove_folder(self, folder_id: int) -> bool:
@@ -188,18 +185,24 @@ class RootFolderManager(QObject):
                     removed_folder = self._folders.pop(i)
                     self._save_folders()
                     self.folders_changed.emit()
-                    self.logger.info(f"Removed root folder: {removed_folder.display_name}")
+                    self.logger.info("Removed root folder: %s", removed_folder.display_name)
                     return True
 
-            self.logger.warning(f"Root folder with ID {folder_id} not found")
+            self.logger.warning("Root folder with ID %s not found", folder_id)
             return False
 
-        except Exception as e:
-            self.logger.error(f"Failed to remove root folder {folder_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to remove root folder %s: {e}", folder_id)
             return False
 
-    def update_folder(self, folder_id: int, path: Optional[str] = None,
-                     display_name: Optional[str] = None, enabled: Optional[bool] = None) -> bool:
+    def update_folder(
+        """TODO: Add docstring."""
+        self,
+        folder_id: int,
+        path: Optional[str] = None,
+        display_name: Optional[str] = None,
+        enabled: Optional[bool] = None,
+    ) -> bool:
         """Update properties of a root folder."""
         try:
             for folder in self._folders:
@@ -216,14 +219,14 @@ class RootFolderManager(QObject):
 
                     self._save_folders()
                     self.folders_changed.emit()
-                    self.logger.info(f"Updated root folder: {folder.display_name}")
+                    self.logger.info("Updated root folder: %s", folder.display_name)
                     return True
 
-            self.logger.warning(f"Root folder with ID {folder_id} not found")
+            self.logger.warning("Root folder with ID %s not found", folder_id)
             return False
 
-        except Exception as e:
-            self.logger.error(f"Failed to update root folder {folder_id}: {e}")
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to update root folder %s: {e}", folder_id)
             return False
 
     def get_folder_by_id(self, folder_id: int) -> Optional[RootFolder]:
@@ -240,10 +243,7 @@ class RootFolderManager(QObject):
 
     def validate_all_folders(self) -> Dict[str, List[str]]:
         """Validate all configured folders and return results."""
-        results = {
-            "valid": [],
-            "invalid": []
-        }
+        results = {"valid": [], "invalid": []}
 
         for folder in self._folders:
             if self._validate_folder(folder):
@@ -263,7 +263,9 @@ class RootFolderManager(QObject):
                 valid_folders.append(folder)
             else:
                 removed_count += 1
-                self.logger.info(f"Removing invalid root folder: {folder.display_name} ({folder.path})")
+                self.logger.info(
+                    f"Removing invalid root folder: {folder.display_name} ({folder.path})"
+                )
 
         if removed_count > 0:
             self._folders = valid_folders

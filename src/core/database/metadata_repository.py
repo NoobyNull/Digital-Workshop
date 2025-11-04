@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class MetadataRepository:
     """Repository for metadata and category data access operations."""
 
-    def __init__(self, get_connection_func):
+    def __init__(self, get_connection_func) -> None:
         """
         Initialize metadata repository.
 
@@ -39,27 +39,30 @@ class MetadataRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO model_metadata (model_id, title, description, keywords, category, source, rating)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    model_id,
-                    kwargs.get('title'),
-                    kwargs.get('description'),
-                    kwargs.get('keywords'),
-                    kwargs.get('category'),
-                    kwargs.get('source'),
-                    kwargs.get('rating', 0)
-                ))
+                """,
+                    (
+                        model_id,
+                        kwargs.get("title"),
+                        kwargs.get("description"),
+                        kwargs.get("keywords"),
+                        kwargs.get("category"),
+                        kwargs.get("source"),
+                        kwargs.get("rating", 0),
+                    ),
+                )
 
                 metadata_id = cursor.lastrowid
                 conn.commit()
 
-                logger.info(f"Added metadata for model {model_id}")
+                logger.info("Added metadata for model %s", model_id)
                 return metadata_id
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to add metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to add metadata for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -79,7 +82,14 @@ class MetadataRepository:
             return False
 
         # Filter valid fields
-        valid_fields = {'title', 'description', 'keywords', 'category', 'source', 'rating'}
+        valid_fields = {
+            "title",
+            "description",
+            "keywords",
+            "category",
+            "source",
+            "rating",
+        }
         metadata_updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
         if not metadata_updates:
@@ -95,22 +105,25 @@ class MetadataRepository:
                 values = list(metadata_updates.values())
                 values.append(model_id)
 
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE model_metadata
                     SET {set_clause}
                     WHERE model_id = ?
-                """, values)
+                """,
+                    values,
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
 
                 if success:
-                    logger.info(f"Updated metadata for model {model_id}")
+                    logger.info("Updated metadata for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to update metadata for model {model_id}: {str(e)}")
+            logger.error("Failed to update metadata for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -128,25 +141,34 @@ class MetadataRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE model_metadata
                     SET camera_position_x = ?, camera_position_y = ?, camera_position_z = ?,
                         camera_focal_x = ?, camera_focal_y = ?, camera_focal_z = ?,
                         camera_view_up_x = ?, camera_view_up_y = ?, camera_view_up_z = ?
                     WHERE model_id = ?
-                """, (
-                    camera_data.get('position_x'), camera_data.get('position_y'), camera_data.get('position_z'),
-                    camera_data.get('focal_x'), camera_data.get('focal_y'), camera_data.get('focal_z'),
-                    camera_data.get('view_up_x'), camera_data.get('view_up_y'), camera_data.get('view_up_z'),
-                    model_id
-                ))
+                """,
+                    (
+                        camera_data.get("position_x"),
+                        camera_data.get("position_y"),
+                        camera_data.get("position_z"),
+                        camera_data.get("focal_x"),
+                        camera_data.get("focal_y"),
+                        camera_data.get("focal_z"),
+                        camera_data.get("view_up_x"),
+                        camera_data.get("view_up_y"),
+                        camera_data.get("view_up_z"),
+                        model_id,
+                    ),
+                )
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Saved camera orientation for model {model_id}")
+                    logger.info("Saved camera orientation for model %s", model_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to save camera orientation: {e}")
+            logger.error("Failed to save camera orientation: %s", e)
             return False
 
     @log_function_call(logger)
@@ -164,18 +186,21 @@ class MetadataRepository:
             with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT camera_position_x, camera_position_y, camera_position_z,
                            camera_focal_x, camera_focal_y, camera_focal_z,
                            camera_view_up_x, camera_view_up_y, camera_view_up_z
                     FROM model_metadata WHERE model_id = ?
-                """, (model_id,))
+                """,
+                    (model_id,),
+                )
                 row = cursor.fetchone()
-                if row and row['camera_position_x'] is not None:
+                if row and row["camera_position_x"] is not None:
                     return dict(row)
                 return None
         except sqlite3.Error as e:
-            logger.error(f"Failed to get camera orientation: {e}")
+            logger.error("Failed to get camera orientation: %s", e)
             return None
 
     @log_function_call(logger)
@@ -192,22 +217,25 @@ class MetadataRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE model_metadata
                     SET view_count = view_count + 1, last_viewed = CURRENT_TIMESTAMP
                     WHERE model_id = ?
-                """, (model_id,))
+                """,
+                    (model_id,),
+                )
 
                 success = cursor.rowcount > 0
                 conn.commit()
 
                 if success:
-                    logger.debug(f"Incremented view count for model {model_id}")
+                    logger.debug("Incremented view count for model %s", model_id)
 
                 return success
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to increment view count for model {model_id}: {str(e)}")
+            logger.error("Failed to increment view count for model %s: {str(e)}", model_id)
             raise
 
     @log_function_call(logger)
@@ -223,28 +251,25 @@ class MetadataRepository:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM categories
                     ORDER BY name ASC
-                """)
+                """
+                )
 
                 rows = cursor.fetchall()
                 categories = [dict(row) for row in rows]
 
-                logger.debug(f"Retrieved {len(categories)} categories")
+                logger.debug("Retrieved %s categories", len(categories))
                 return categories
 
         except sqlite3.Error as e:
-            logger.error(f"Failed to get categories: {str(e)}")
+            logger.error("Failed to get categories: %s", str(e))
             raise
 
     @log_function_call(logger)
-    def add_category(
-        self,
-        name: str,
-        color: str = "#CCCCCC",
-        sort_order: int = 0
-    ) -> int:
+    def add_category(self, name: str, color: str = "#CCCCCC", sort_order: int = 0) -> int:
         """
         Add a new category.
 
@@ -259,10 +284,13 @@ class MetadataRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO categories (name, color, sort_order)
                     VALUES (?, ?, ?)
-                """, (name, color, sort_order))
+                """,
+                    (name, color, sort_order),
+                )
 
                 category_id = cursor.lastrowid
                 conn.commit()
@@ -292,9 +320,8 @@ class MetadataRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info(f"Deleted category {category_id}")
+                    logger.info("Deleted category %s", category_id)
                 return success
         except sqlite3.Error as e:
-            logger.error(f"Failed to delete category {category_id}: {e}")
+            logger.error("Failed to delete category %s: {e}", category_id)
             return False
-
