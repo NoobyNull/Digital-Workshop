@@ -10,6 +10,7 @@ from .security_event_logger import SecurityEventLogger, SecurityEventType
 from .temp_file_manager import TempFileManager
 from .credentials_manager import CredentialsManager
 from .data_encryptor import DataEncryptor
+from .keychain_manager import KeychainManager
 
 __all__ = [
     "PathValidator",
@@ -18,4 +19,5 @@ __all__ = [
     "TempFileManager",
     "CredentialsManager",
     "DataEncryptor",
+    "KeychainManager",
 ]
