@@ -124,6 +124,56 @@ class ModelLibraryWidget(QWidget):
 
         self.logger.info("ModelLibraryWidget cleanup complete")
 
+    # ==================== Internal Methods (Delegation) ====================
+
+    def _on_indexing_started(self) -> None:
+        """Handle file system indexing started."""
+        self.facade.file_browser.on_indexing_started()
+
+    def _on_indexing_completed(self) -> None:
+        """Handle file system indexing completed."""
+        self.facade.file_browser.on_indexing_completed()
+
+    def _refresh_file_browser(self) -> None:
+        """Refresh the file browser."""
+        self.facade.file_browser.refresh_file_browser()
+
+    def _apply_filters(self) -> None:
+        """Apply search filters."""
+        self.facade.event_handler.apply_filters()
+
+    def _load_models_from_database(self) -> None:
+        """Load models from database."""
+        self.facade.model_manager.load_models_from_database()
+
+    def _load_models(self, file_paths: List[str]) -> None:
+        """Load models from file paths."""
+        self.facade.model_manager.load_models(file_paths)
+
+    def _import_selected_files(self) -> None:
+        """Import selected files from file browser."""
+        self.facade.file_browser.import_selected_files()
+
+    def _import_selected_folder(self) -> None:
+        """Import selected folder from file browser."""
+        self.facade.file_browser.import_selected_folder()
+
+    def _remove_model(self, model_id: int) -> None:
+        """Remove a model."""
+        self.facade.event_handler.remove_model(model_id)
+
+    def _import_from_context_menu(self) -> None:
+        """Import from context menu."""
+        self.facade.file_browser.import_selected_files()
+
+    def _open_in_native_app(self, file_path: str) -> None:
+        """Open file in native application."""
+        self.facade.file_browser.open_in_native_app(file_path)
+
+    def _refresh_model_display(self) -> None:
+        """Refresh model display."""
+        self.facade.model_manager.update_model_view()
+
     # ==================== Event Handlers ====================
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
