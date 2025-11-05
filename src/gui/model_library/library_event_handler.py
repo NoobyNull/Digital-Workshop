@@ -10,7 +10,7 @@ from typing import List
 
 from PySide6.QtCore import Qt, QModelIndex, QRegularExpression
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog
+from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog, QDialog
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager
@@ -168,13 +168,32 @@ class LibraryEventHandler:
             if not model_id:
                 return
 
+            # Get model data for file path
+            from src.core.database_manager import get_database_manager
+
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(model_id)
+
+            if not model_data:
+                return
+
             menu = QMenu(self.library_widget)
-            generate_preview_action = menu.addAction("Generate Preview")
+
+            # Model operations
+            analyze_action = menu.addAction("🔍 Analyze & Fix Errors")
+            open_native_action = menu.addAction("📂 Open in Native App")
             menu.addSeparator()
-            remove_action = menu.addAction("Remove from Library")
+            generate_preview_action = menu.addAction("🖼️ Generate Preview")
+            menu.addSeparator()
+            remove_action = menu.addAction("🗑️ Remove from Library")
+
             action = menu.exec(self.library_widget.list_view.mapToGlobal(position))
 
-            if action == generate_preview_action:
+            if action == analyze_action:
+                self._analyze_model(model_id, model_data)
+            elif action == open_native_action:
+                self._open_model_in_native_app(model_data)
+            elif action == generate_preview_action:
                 self._generate_preview(model_id)
             elif action == remove_action:
                 self.library_widget._remove_model(model_id)
@@ -397,5 +416,89 @@ class LibraryEventHandler:
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self.library_widget, "Error", error_msg)
+
+    def _analyze_model(self, model_id: int, model_data: dict) -> None:
+        """
+        Analyze model for errors and offer fixing.
+
+        Args:
+            model_id: ID of the model to analyze
+            model_data: Model data dictionary from database
+        """
+        try:
+            file_path = model_data.get("file_path")
+            if not file_path or not Path(file_path).exists():
+                QMessageBox.warning(
+                    self.library_widget,
+                    "File Not Found",
+                    f"Model file not found: {file_path}",
+                )
+                return
+
+            # Load the model
+            from src.parsers.stl_parser import STLParser
+
+            self.logger.info("Loading model for analysis: %s", file_path)
+            parser = STLParser()
+            model = parser.parse(file_path)
+
+            if not model or not model.triangles or len(model.triangles) == 0:
+                QMessageBox.warning(
+                    self.library_widget,
+                    "Invalid Model",
+                    "Model has no triangles to analyze.",
+                )
+                return
+
+            # Open analyzer dialog
+            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
+
+            dialog = ModelAnalyzerDialog(model, file_path, self.library_widget)
+
+            if dialog.exec() == QDialog.Accepted:
+                # Model was fixed and saved, refresh the library
+                self.logger.info("Model analyzed and fixed: %s", model_id)
+                self.library_widget._refresh_model_display(model_id)
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            error_msg = f"Failed to analyze model: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self.library_widget, "Error", error_msg)
+
+    def _open_model_in_native_app(self, model_data: dict) -> None:
+        """
+        Open model file in the system's default application.
+
+        Args:
+            model_data: Model data dictionary from database
+        """
+        try:
+            file_path = model_data.get("file_path")
+            if not file_path or not Path(file_path).exists():
+                QMessageBox.warning(
+                    self.library_widget,
+                    "File Not Found",
+                    f"Model file not found: {file_path}",
+                )
+                return
+
+            # Use Qt's QDesktopServices to open the file
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QDesktopServices
+
+            url = QUrl.fromLocalFile(file_path)
+            if not QDesktopServices.openUrl(url):
+                QMessageBox.warning(
+                    self.library_widget,
+                    "Open File",
+                    f"Could not open file in native application:\n{file_path}",
+                )
+            else:
+                self.logger.info("Opened model in native app: %s", file_path)
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            error_msg = f"Failed to open file in native app: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self.library_widget, "Error", error_msg)
