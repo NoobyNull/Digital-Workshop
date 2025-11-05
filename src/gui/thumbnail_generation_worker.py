@@ -74,6 +74,29 @@ class ThumbnailGenerationWorker(QThread):
                     if result.success and result.thumbnail_path:
                         self.logger.info("✓ Thumbnail generated: %s", file_name)
                         self.thumbnail_generated.emit(model_path, str(result.thumbnail_path))
+
+                        # Save camera parameters to database if available
+                        if result.camera_params:
+                            try:
+                                from src.core.database_manager import get_database_manager
+                                db_manager = get_database_manager()
+
+                                # Find model by hash
+                                model = db_manager.find_model_by_hash(file_hash)
+                                if model:
+                                    model_id = model.get("id")
+                                    db_manager.update_model_camera_view(
+                                        model_id=model_id,
+                                        camera_position=result.camera_params.position,
+                                        camera_focal_point=result.camera_params.focal_point,
+                                        camera_view_up=result.camera_params.view_up,
+                                        camera_view_name=result.camera_params.view_name,
+                                    )
+                                    self.logger.debug(
+                                        f"Saved camera view '{result.camera_params.view_name}' for model {model_id}"
+                                    )
+                            except Exception as e:
+                                self.logger.warning(f"Failed to save camera parameters: {e}")
                     else:
                         error_msg = result.error or "Unknown error"
                         self.logger.warning(

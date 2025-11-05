@@ -169,6 +169,8 @@ class LibraryUIManager:
         self.library_widget.list_view.setModel(self.library_widget.proxy_model)
         self.library_widget.list_view.setSortingEnabled(True)
         self.library_widget.list_view.setSelectionBehavior(QTableView.SelectRows)
+        # Set icon size for thumbnails in list view
+        self.library_widget.list_view.setIconSize(QSize(64, 64))
         # Removed setAlternatingRowColors(True) - qt-material handles alternating row colors via theme
         header = self.library_widget.list_view.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -182,6 +184,8 @@ class LibraryUIManager:
         self.library_widget.grid_view.setSpacing(10)
         self.library_widget.grid_view.setUniformItemSizes(True)
         self.library_widget.grid_view.setModel(self.library_widget.proxy_model)
+        # Set icon size for thumbnails in grid view
+        self.library_widget.grid_view.setIconSize(QSize(128, 128))
 
         # Use custom delegate to hide filenames in grid view
         grid_delegate = GridIconDelegate(self.library_widget.grid_view)

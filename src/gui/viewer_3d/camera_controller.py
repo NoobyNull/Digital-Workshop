@@ -19,16 +19,18 @@ logger = get_logger(__name__)
 class CameraController:
     """Manages camera positioning and view control."""
 
-    def __init__(self, renderer, render_window) -> None:
+    def __init__(self, renderer, render_window, ui_manager=None) -> None:
         """
         Initialize camera controller.
 
         Args:
             renderer: VTK renderer
             render_window: VTK render window
+            ui_manager: Optional UI manager for controlling button visibility
         """
         self.renderer = renderer
         self.render_window = render_window
+        self.ui_manager = ui_manager
 
         # Load camera settings from config
         try:
@@ -48,6 +50,92 @@ class CameraController:
             self.pan_speed = 1.0
             self.auto_fit_on_load = True
 
+    def _apply_saved_camera_view(self, model_id: int, bounds: tuple) -> bool:
+        """
+        Apply saved camera view parameters if available.
+
+        Args:
+            model_id: Model ID to load camera view for
+            bounds: Model bounds for clipping range calculation
+
+        Returns:
+            True if saved view was applied, False otherwise
+        """
+        try:
+            from src.core.database_manager import get_database_manager
+
+            db_manager = get_database_manager()
+            model_data = db_manager.get_model(model_id)
+
+            if not model_data:
+                return False
+
+            # Check if camera parameters are saved
+            if model_data.get("camera_position_x") is None:
+                return False
+
+            # Get camera
+            cam = self.renderer.GetActiveCamera()
+
+            # Apply saved camera parameters
+            cam.SetPosition(
+                model_data["camera_position_x"],
+                model_data["camera_position_y"],
+                model_data["camera_position_z"],
+            )
+            cam.SetFocalPoint(
+                model_data["camera_focal_point_x"],
+                model_data["camera_focal_point_y"],
+                model_data["camera_focal_point_z"],
+            )
+            cam.SetViewUp(
+                model_data["camera_view_up_x"],
+                model_data["camera_view_up_y"],
+                model_data["camera_view_up_z"],
+            )
+
+            # Calculate clipping range based on bounds
+            xmin, xmax, ymin, ymax, zmin, zmax = bounds
+            cx = (xmin + xmax) / 2.0
+            cy = (ymin + ymax) / 2.0
+            cz = (zmin + zmax) / 2.0
+
+            dx = xmax - xmin
+            dy = ymax - ymin
+            dz = zmax - zmin
+            radius = math.sqrt(dx * dx + dy * dy + dz * dz) / 2.0
+
+            # Calculate distance from camera to focal point
+            pos = cam.GetPosition()
+            fp = cam.GetFocalPoint()
+            distance = math.sqrt(
+                (pos[0] - fp[0]) ** 2 + (pos[1] - fp[1]) ** 2 + (pos[2] - fp[2]) ** 2
+            )
+
+            # Set clipping range
+            near = max(0.001, distance - (radius * 4.0))
+            far = distance + (radius * 4.0)
+            if far <= near:
+                far = near * 10.0
+            cam.SetClippingRange(near, far)
+
+            # Reset clipping range and render
+            self.renderer.ResetCameraClippingRange()
+            self.render_window.Render()
+
+            # Hide coordinate rotation buttons when using saved optimal view
+            if self.ui_manager and hasattr(self.ui_manager, "set_coordinate_rotation_buttons_visible"):
+                self.ui_manager.set_coordinate_rotation_buttons_visible(False)
+
+            logger.info(
+                f"Applied saved camera view '{model_data.get('camera_view_name', 'unknown')}' for model {model_id}"
+            )
+            return True
+
+        except Exception as e:
+            logger.warning(f"Failed to apply saved camera view: {e}")
+            return False
+
     @log_function_call(logger)
     def fit_camera_to_model(
         self,
@@ -55,15 +143,17 @@ class CameraController:
         actor: Optional[vtk.vtkActor],
         update_grid_callback=None,
         update_ground_callback=None,
+        model_id: Optional[int] = None,
     ) -> None:
         """
-        Fit camera to model bounds.
+        Fit camera to model bounds, using saved optimal view if available.
 
         Args:
             model: The model to fit
             actor: The VTK actor
             update_grid_callback: Optional callback to update grid
             update_ground_callback: Optional callback to update ground
+            model_id: Optional model ID to load saved camera view
         """
         try:
             if not model or not actor:
@@ -81,6 +171,12 @@ class CameraController:
                 self.render_window.Render()
                 logger.debug("Camera reset (no bounds)")
                 return
+
+            # Try to load saved camera view if model_id is provided
+            if model_id is not None:
+                if self._apply_saved_camera_view(model_id, bounds):
+                    logger.info(f"Applied saved camera view for model {model_id}")
+                    return
 
             xmin, xmax, ymin, ymax, zmin, zmax = bounds
             cx = (xmin + xmax) * 0.5

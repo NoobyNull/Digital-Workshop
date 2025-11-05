@@ -89,6 +89,19 @@ class DatabaseManager:
         """Update thumbnail path for a model."""
         return self._model_repo.update_model_thumbnail(model_id, thumbnail_path)
 
+    def update_model_camera_view(
+        self,
+        model_id: int,
+        camera_position: tuple,
+        camera_focal_point: tuple,
+        camera_view_up: tuple,
+        camera_view_name: str,
+    ) -> bool:
+        """Update optimal camera view parameters for a model."""
+        return self._model_repo.update_model_camera_view(
+            model_id, camera_position, camera_focal_point, camera_view_up, camera_view_name
+        )
+
     def delete_model(self, model_id: int) -> bool:
         """Delete a model from the database."""
         return self._model_repo.delete_model(model_id)

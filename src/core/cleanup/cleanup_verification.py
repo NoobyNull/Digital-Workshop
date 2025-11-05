@@ -104,6 +104,31 @@ class CleanupVerificationReport:
         """Check if verification was successful (no failures)."""
         return self.failed_checks == 0
 
+    def _format_value(self, value: Any) -> str:
+        """
+        Format a value for display in logs.
+
+        Args:
+            value: The value to format
+
+        Returns:
+            Formatted string representation
+        """
+        if isinstance(value, dict):
+            # Format dictionaries with proper indentation
+            if not value:
+                return "{}"
+            items = [f"{k}={v}" for k, v in value.items()]
+            return "{" + ", ".join(items) + "}"
+        elif isinstance(value, (list, tuple)):
+            # Format lists/tuples
+            if not value:
+                return "[]" if isinstance(value, list) else "()"
+            return str(value)
+        else:
+            # For simple types, just convert to string
+            return str(value)
+
     def get_summary(self) -> str:
         """Get a summary of verification results."""
         lines = [
@@ -126,13 +151,13 @@ class CleanupVerificationReport:
         if self.memory_stats:
             lines.append("Memory Statistics:")
             for key, value in self.memory_stats.items():
-                lines.append(f"  {key}: {value}")
+                lines.append(f"  {key}: {self._format_value(value)}")
             lines.append("")
 
         if self.resource_stats:
             lines.append("Resource Statistics:")
             for key, value in self.resource_stats.items():
-                lines.append(f"  {key}: {value}")
+                lines.append(f"  {key}: {self._format_value(value)}")
             lines.append("")
 
         status = "VERIFICATION PASSED ✓" if self.is_successful() else "VERIFICATION FAILED ✗"

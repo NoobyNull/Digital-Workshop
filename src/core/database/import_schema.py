@@ -142,6 +142,46 @@ MODELS_TABLE_EXTENSIONS = [
     ALTER TABLE models
     ADD COLUMN paired_image_path TEXT;
     """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_name TEXT;
+    """,
 ]
 
 # Views for convenience

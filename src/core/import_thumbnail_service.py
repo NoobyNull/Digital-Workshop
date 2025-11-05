@@ -29,6 +29,7 @@ from src.core.thumbnail_components import ThumbnailGenerator
 from src.core.thumbnail_components.thumbnail_resizer import ThumbnailResizer
 from src.core.fast_hasher import FastHasher
 from src.core.cancellation_token import CancellationToken
+from src.core.view_optimizer import CameraParameters
 
 
 class StorageLocation(Enum):
@@ -49,6 +50,7 @@ class ThumbnailGenerationResult:
     success: bool
     error: Optional[str] = None
     cached: bool = False
+    camera_params: Optional[CameraParameters] = None
 
 
 @dataclass
@@ -285,7 +287,7 @@ class ImportThumbnailService:
 
             # Always generate at 1280x1280 (high quality)
             # Then resize to other sizes using Pillow
-            thumbnail_path = self.thumbnail_generator.generate_thumbnail(
+            thumbnail_path, camera_params = self.thumbnail_generator.generate_thumbnail(
                 model_path=model_path,
                 file_hash=file_hash,
                 output_dir=self._storage_dir,
@@ -329,6 +331,7 @@ class ImportThumbnailService:
                     generation_time=generation_time,
                     success=True,
                     cached=False,
+                    camera_params=camera_params,
                 )
             else:
                 error_msg = "Thumbnail generation returned None"

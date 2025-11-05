@@ -6,7 +6,7 @@ and search functionality.
 """
 
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..logging_config import get_logger, log_function_call
 
@@ -278,6 +278,64 @@ class ModelRepository:
                 return success
         except sqlite3.Error as e:
             logger.error("Failed to update thumbnail for model %s: {e}", model_id)
+            return False
+
+    @log_function_call(logger)
+    def update_model_camera_view(
+        self,
+        model_id: int,
+        camera_position: Tuple[float, float, float],
+        camera_focal_point: Tuple[float, float, float],
+        camera_view_up: Tuple[float, float, float],
+        camera_view_name: str,
+    ) -> bool:
+        """
+        Update optimal camera view parameters for a model.
+
+        Args:
+            model_id: Model ID
+            camera_position: Camera position (x, y, z)
+            camera_focal_point: Camera focal point (x, y, z)
+            camera_view_up: Camera view up vector (x, y, z)
+            camera_view_name: Name of the view (front, right, back, left, top)
+
+        Returns:
+            True if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    UPDATE models
+                    SET camera_position_x = ?, camera_position_y = ?, camera_position_z = ?,
+                        camera_focal_point_x = ?, camera_focal_point_y = ?, camera_focal_point_z = ?,
+                        camera_view_up_x = ?, camera_view_up_y = ?, camera_view_up_z = ?,
+                        camera_view_name = ?,
+                        last_modified = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """,
+                    (
+                        camera_position[0],
+                        camera_position[1],
+                        camera_position[2],
+                        camera_focal_point[0],
+                        camera_focal_point[1],
+                        camera_focal_point[2],
+                        camera_view_up[0],
+                        camera_view_up[1],
+                        camera_view_up[2],
+                        camera_view_name,
+                        model_id,
+                    ),
+                )
+                success = cursor.rowcount > 0
+                conn.commit()
+                if success:
+                    logger.info("Updated camera view for model %s to '%s'", model_id, camera_view_name)
+                return success
+        except sqlite3.Error as e:
+            logger.error("Failed to update camera view for model %s: {e}", model_id)
             return False
 
     @log_function_call(logger)
