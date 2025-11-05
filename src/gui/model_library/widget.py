@@ -263,7 +263,7 @@ class ModelLibraryWidget(QWidget):
 
     def eventFilter(self, obj, event: QEvent) -> bool:
         """
-        Event filter to catch wheel events on list view viewport.
+        Event filter to catch wheel events on list/grid view viewports.
 
         Args:
             obj: Object that received the event
@@ -278,19 +278,39 @@ class ModelLibraryWidget(QWidget):
                 # Handle the wheel event for zoom
                 delta = event.angleDelta().y()
 
-                self.logger.debug(f"EventFilter wheel: delta={delta}, current_height={self.current_row_height}")
+                # Determine which view is active
+                is_grid_view = (obj == self.grid_view.viewport())
 
-                # Calculate new row height
-                if delta > 0:
-                    step = 8  # Scroll up = zoom in
+                if is_grid_view:
+                    # Grid view zoom
+                    self.logger.debug(f"EventFilter wheel (grid): delta={delta}, current_size={self.current_grid_icon_size}")
+
+                    # Calculate new icon size (larger steps for grid)
+                    if delta > 0:
+                        step = 16  # Scroll up = zoom in
+                    else:
+                        step = -16  # Scroll down = zoom out
+
+                    new_size = self.current_grid_icon_size + step
+                    self.logger.debug(f"EventFilter new grid size: {new_size}")
+
+                    # Update grid icon size
+                    self.facade.ui_manager.set_grid_icon_size(new_size)
                 else:
-                    step = -8  # Scroll down = zoom out
+                    # List view zoom
+                    self.logger.debug(f"EventFilter wheel (list): delta={delta}, current_height={self.current_row_height}")
 
-                new_height = self.current_row_height + step
-                self.logger.debug(f"EventFilter new height: {new_height}")
+                    # Calculate new row height
+                    if delta > 0:
+                        step = 8  # Scroll up = zoom in
+                    else:
+                        step = -8  # Scroll down = zoom out
 
-                # Update row height
-                self.facade.ui_manager.set_row_height(new_height)
+                    new_height = self.current_row_height + step
+                    self.logger.debug(f"EventFilter new row height: {new_height}")
+
+                    # Update row height
+                    self.facade.ui_manager.set_row_height(new_height)
 
                 # Event handled
                 return True

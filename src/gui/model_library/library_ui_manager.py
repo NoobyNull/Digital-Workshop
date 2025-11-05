@@ -159,6 +159,8 @@ class LibraryUIManager:
         # Initialize row height from settings or default
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
         self.library_widget.current_row_height = settings.value("row_height", 64, type=int)
+        # Initialize grid icon size from settings or default
+        self.library_widget.current_grid_icon_size = settings.value("grid_icon_size", 128, type=int)
 
         self.library_widget.view_tabs = QTabWidget()
 
@@ -227,15 +229,23 @@ class LibraryUIManager:
         self.library_widget.grid_view.setSpacing(10)
         self.library_widget.grid_view.setUniformItemSizes(True)
         self.library_widget.grid_view.setModel(self.library_widget.proxy_model)
-        # Set icon size for thumbnails in grid view
-        self.library_widget.grid_view.setIconSize(QSize(128, 128))
+
+        # Install event filter on grid view to catch Ctrl+Scroll wheel events
+        self.library_widget.grid_view.viewport().installEventFilter(self.library_widget)
+
+        # Apply initial grid icon size from settings
+        initial_grid_size = self.library_widget.current_grid_icon_size
+        self.library_widget.grid_view.setIconSize(QSize(initial_grid_size, initial_grid_size))
 
         # Use custom delegate to hide filenames in grid view
         self.library_widget.grid_delegate = GridIconDelegate(self.library_widget.grid_view)
-        self.library_widget.grid_delegate.set_icon_size(QSize(128, 128))
+        self.library_widget.grid_delegate.set_icon_size(QSize(initial_grid_size, initial_grid_size))
         self.library_widget.grid_view.setItemDelegate(self.library_widget.grid_delegate)
 
         self.library_widget.view_tabs.addTab(self.library_widget.grid_view, "Grid")
+
+        # Connect tab change to enable/disable thumbnail filtering
+        self.library_widget.view_tabs.currentChanged.connect(self._on_view_tab_changed)
 
         layout.addWidget(self.library_widget.view_tabs)
         parent_layout.addWidget(group)
@@ -290,6 +300,53 @@ class LibraryUIManager:
 
         # Force refresh to apply changes
         self.library_widget.list_view.viewport().update()
+
+    def set_grid_icon_size(self, value: int) -> None:
+        """
+        Set the icon size for the grid view.
+
+        Args:
+            value: New icon size value (clamped to 64-512 range)
+        """
+        # Clamp value to valid range
+        old_value = value
+        value = max(64, min(512, value))
+
+        logger.debug(f"set_grid_icon_size: requested={old_value}, clamped={value}, current={self.library_widget.current_grid_icon_size}")
+
+        # Store current size
+        self.library_widget.current_grid_icon_size = value
+
+        # Save to settings
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        settings.setValue("grid_icon_size", value)
+        logger.debug(f"Saved grid_icon_size to settings: {value}")
+
+        # Update icon size for grid view
+        icon_size = QSize(value, value)
+        self.library_widget.grid_view.setIconSize(icon_size)
+
+        # Update delegate icon size
+        self.library_widget.grid_delegate.set_icon_size(icon_size)
+
+        # Force refresh to apply changes
+        self.library_widget.grid_view.viewport().update()
+
+    def _on_view_tab_changed(self, index: int) -> None:
+        """
+        Handle view tab change to enable/disable thumbnail filtering.
+
+        Args:
+            index: Tab index (0=List, 1=Grid)
+        """
+        # Enable thumbnail filtering for grid view (index 1), disable for list view (index 0)
+        is_grid_view = (index == 1)
+        self.library_widget.proxy_model.filter_no_thumbnails = is_grid_view
+
+        # Invalidate filter to reapply with new settings
+        self.library_widget.proxy_model.invalidateFilter()
+
+        logger.debug(f"View tab changed to {'Grid' if is_grid_view else 'List'}, thumbnail filtering={'enabled' if is_grid_view else 'disabled'}")
 
     def _save_column_size(self, column: int, old_size: int, new_size: int) -> None:
         """
