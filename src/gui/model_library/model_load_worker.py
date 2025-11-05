@@ -71,7 +71,13 @@ class ModelLoadWorker(QThread):
                 )
 
                 # Set callback to emit progress
-                def emit_progress(progress: float, message: str) -> None:
+                # Use default arguments to capture loop variables (avoids cell-var-from-loop)
+                def emit_progress(
+                    progress: float,
+                    message: str,
+                    idx: int = i,
+                    fname: str = filename
+                ) -> None:
                     """
                     Emit progress updates for the current file being loaded.
 
@@ -81,13 +87,13 @@ class ModelLoadWorker(QThread):
                     Args:
                         progress: Progress percentage for current file (0-100)
                         message: Status message describing current operation
+                        idx: File index (captured from loop)
+                        fname: Filename (captured from loop)
                     """
                     # Adjust for multiple files
-                    file_progress = (i / max(1, len(self.file_paths))) * 100.0
+                    file_progress = (idx / max(1, len(self.file_paths))) * 100.0
                     overall_progress = file_progress + (progress / len(self.file_paths))
-                    self.progress_updated.emit(
-                        overall_progress, f"{filename}: {message}"
-                    )
+                    self.progress_updated.emit(overall_progress, f"{fname}: {message}")
 
                 tracker.set_progress_callback(emit_progress)
 
@@ -106,7 +112,7 @@ class ModelLoadWorker(QThread):
                     tracker.complete_stage("Loaded from cache")
                 else:
                     # Try Trimesh first for fast background loading
-                    from src.parsers.trimesh_loader import get_trimesh_loader
+                    from src.parsers.trimesh_loader import get_trimesh_loader  # pylint: disable=import-outside-toplevel
 
                     trimesh_loader = get_trimesh_loader()
                     model = None
@@ -122,6 +128,7 @@ class ModelLoadWorker(QThread):
                     if model is None:
                         # Detect format
                         fmt = FormatDetector().detect_format(Path(file_path))
+                        # pylint: disable=abstract-class-instantiated
                         if fmt == ModelFormat.STL:
                             parser = STLParser()
                         elif fmt == ModelFormat.OBJ:
@@ -131,7 +138,7 @@ class ModelLoadWorker(QThread):
                         elif fmt == ModelFormat.STEP:
                             parser = STEPParser()
                         else:
-                            raise Exception(f"Unsupported model format: {fmt}")
+                            raise ValueError(f"Unsupported model format: {fmt}")
 
                         # Parse with progress tracking
                         tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")

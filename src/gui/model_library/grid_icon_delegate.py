@@ -63,7 +63,7 @@ class GridIconDelegate(QStyledItemDelegate):
 
         painter.drawPixmap(x, y, pixmap)
 
-    def sizeHint(self, option, index) -> QSize:
+    def sizeHint(self, option, index) -> QSize:  # pylint: disable=unused-argument
         """
         Return the size hint for an item.
 
