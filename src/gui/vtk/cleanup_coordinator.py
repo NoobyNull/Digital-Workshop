@@ -626,7 +626,7 @@ class VTKCleanupCoordinator:
             start_time = time.time()
             gc.collect()
             gc_time = time.time() - start_time
-            self.logger.debug("CRITICAL FIX: Garbage collection completed in %ss", gc_time:.3f)
+            self.logger.debug("CRITICAL FIX: Garbage collection completed in %.3fs", gc_time)
 
             self.logger.info("CRITICAL FIX: Final cleanup phase completed successfully")
             return True

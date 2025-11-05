@@ -488,7 +488,7 @@ class DatabaseHealthMonitor:
                     f"Critical slow query detected: {execution_time:.2f}s - {query[:100]}"
                 )
             elif execution_time > self._thresholds["query_time_warning"]:
-                logger.warning("Slow query detected: %ss - {query[:100]}", execution_time:.2f)
+                logger.warning("Slow query detected: %.2fs - {query[:100]}", execution_time)
 
     def get_current_health_status(self) -> HealthStatus:
         """

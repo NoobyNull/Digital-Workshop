@@ -24,6 +24,13 @@ Pillow>=10.0.0
 opencv-python>=4.7.0,<4.8.0
 numpy>=1.24.0,<2.0.0
 
+# Optional: Fast 3D model loading (up to 1000x faster than VTK)
+# Trimesh provides ultra-fast loading for STL, OBJ, PLY, 3MF, GLB, GLTF
+# Falls back to standard parsers if not installed
+# scipy is required by Trimesh for efficient vertex normal calculations
+trimesh>=4.0.0
+scipy>=1.10.0
+
 # Optional: XML parsing for advanced formats
 lxml>=4.6.0
 

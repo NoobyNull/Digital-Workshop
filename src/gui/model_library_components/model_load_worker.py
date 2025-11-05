@@ -90,23 +90,37 @@ class ModelLoadWorker(QThread):
                     model = cached_model
                     tracker.complete_stage("Loaded from cache")
                 else:
-                    # Detect format
-                    fmt = FormatDetector().detect_format(Path(file_path))
-                    if fmt == ModelFormat.STL:
-                        parser = STLParser()
-                    elif fmt == ModelFormat.OBJ:
-                        parser = OBJParser()
-                    elif fmt == ModelFormat.THREE_MF:
-                        parser = ThreeMFParser()
-                    elif fmt == ModelFormat.STEP:
-                        parser = STEPParser()
-                    else:
-                        raise Exception(f"Unsupported model format: {fmt}")
+                    # Try Trimesh first for fast background loading
+                    from src.parsers.trimesh_loader import get_trimesh_loader
 
-                    # Parse with progress tracking
-                    tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")
-                    model = parser.parse_metadata_only(file_path)
-                    tracker.complete_stage(f"Parsed {model.stats.triangle_count:,} triangles")
+                    trimesh_loader = get_trimesh_loader()
+                    model = None
+
+                    if trimesh_loader.is_trimesh_available():
+                        tracker.start_stage(LoadingStage.PARSING, f"Loading {filename} with Trimesh (fast)...")
+                        model = trimesh_loader.load_model(file_path, tracker)
+
+                    # Fallback to standard parsers if Trimesh failed or unavailable
+                    if model is None:
+                        # Detect format
+                        fmt = FormatDetector().detect_format(Path(file_path))
+                        if fmt == ModelFormat.STL:
+                            parser = STLParser()
+                        elif fmt == ModelFormat.OBJ:
+                            parser = OBJParser()
+                        elif fmt == ModelFormat.THREE_MF:
+                            parser = ThreeMFParser()
+                        elif fmt == ModelFormat.STEP:
+                            parser = STEPParser()
+                        else:
+                            raise Exception(f"Unsupported model format: {fmt}")
+
+                        # Parse with progress tracking
+                        tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")
+                        model = parser.parse_metadata_only(file_path)
+                        tracker.complete_stage(f"Parsed {model.stats.triangle_count:,} triangles")
+
+                    # Cache the model
                     self.model_cache.put(file_path, CacheLevel.METADATA, model)
 
                 model_info = {

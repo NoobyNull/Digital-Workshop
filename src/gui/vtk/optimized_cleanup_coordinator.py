@@ -452,7 +452,7 @@ class OptimizedVTKCleanupCoordinator:
                 # Record VTK cleanup end time
                 self.vtk_cleanup_end_time = time.time()
                 vtk_cleanup_duration = self.vtk_cleanup_end_time - self.vtk_cleanup_start_time
-                self.logger.info("VTK cleanup completed in %ss", vtk_cleanup_duration:.3f)
+                self.logger.info("VTK cleanup completed in %.3fs", vtk_cleanup_duration)
 
                 # Finalize the render window
                 if hasattr(render_window, "Finalize"):
@@ -489,7 +489,7 @@ class OptimizedVTKCleanupCoordinator:
             # Ensure VTK cleanup is complete before proceeding
             if self.vtk_cleanup_end_time > 0:
                 transition_delay = self.opengl_cleanup_start_time - self.vtk_cleanup_end_time
-                self.logger.info("Context transition delay: %ss", transition_delay:.3f)
+                self.logger.info("Context transition delay: %.3fs", transition_delay)
 
             # Use the enhanced context manager for coordination
             coordination_success = self.context_manager.coordinate_cleanup_sequence(render_window)
@@ -507,11 +507,11 @@ class OptimizedVTKCleanupCoordinator:
             # Record OpenGL cleanup end time
             self.opengl_cleanup_end_time = time.time()
             opengl_cleanup_duration = self.opengl_cleanup_end_time - self.opengl_cleanup_start_time
-            self.logger.info("OpenGL cleanup completed in %ss", opengl_cleanup_duration:.3f)
+            self.logger.info("OpenGL cleanup completed in %.3fs", opengl_cleanup_duration)
 
             # Calculate total cleanup time
             total_cleanup_time = self.opengl_cleanup_end_time - self.vtk_cleanup_start_time
-            self.logger.info("Total cleanup time: %ss", total_cleanup_time:.3f)
+            self.logger.info("Total cleanup time: %.3fs", total_cleanup_time)
 
             return True
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

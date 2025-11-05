@@ -93,15 +93,12 @@ class ModelLoader:
 
     def load_stl_model(self, file_path: str) -> None:
         """
-        Load an STL model using the STL parser and display it in the viewer.
+        Load an STL model using standard STL parser.
 
         Args:
             file_path: Path to the STL file to load
         """
         try:
-            # Create STL parser
-            parser = STLParser()
-
             # Create progress callback for parsing stage
             progress_callback = STLProgressCallback(
                 callback_func=lambda progress, message: self.update_loading_progress(
@@ -109,7 +106,9 @@ class ModelLoader:
                 )
             )
 
-            # Parse the file
+            # Use standard STL parser for foreground loading
+            self.update_loading_progress(0.0, "Loading model...")
+            parser = STLParser()
             model = parser.parse_file(file_path, progress_callback)
 
             # Load model into viewer if available

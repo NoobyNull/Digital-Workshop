@@ -298,7 +298,7 @@ class UnifiedCleanupCoordinator:
             self.logger.info("  Completed: %s", self._stats.completed_phases)
             self.logger.info("  Failed: %s", self._stats.failed_phases)
             self.logger.info("  Skipped: %s", self._stats.skipped_phases)
-            self.logger.info("  Duration: %ss", self._stats.total_duration:.3f)
+            self.logger.info("  Duration: %.3fs", self._stats.total_duration)
 
             if self._stats.handler_stats:
                 self.logger.info("\nHandler Statistics:")

@@ -218,7 +218,7 @@ class BackgroundLoadingManager:
             # Ensure cancellation response time is under 500ms
             elapsed = time.time() - start_time
             if elapsed > 0.5:
-                self.logger.warning("Cancellation response time exceeded 500ms: %ss", elapsed:.3f)
+                self.logger.warning("Cancellation response time exceeded 500ms: %.3fs", elapsed)
 
             return True
 

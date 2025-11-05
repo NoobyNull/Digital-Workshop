@@ -148,7 +148,7 @@ class LightingManager:
             self._render_now()
 
             dt_ms = (time.perf_counter() - t0) * 1000.0
-            self.logger.debug("create_light completed in %s ms", dt_ms:.2f)
+            self.logger.debug("create_light completed in %.2f ms", dt_ms)
             return True
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to create/add light: %s", e)
