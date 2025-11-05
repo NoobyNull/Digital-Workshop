@@ -422,7 +422,6 @@ Return ONLY valid JSON, no additional text.""",
         return False
 
     def configure_provider(
-        """TODO: Add docstring."""
         self, provider_name: str, api_key: str, model: str = "", base_url: str = ""
     ) -> bool:
         """Configure an AI provider."""
@@ -481,7 +480,6 @@ Return ONLY valid JSON, no additional text.""",
             return False
 
     def analyze_image(
-        """TODO: Add docstring."""
         self,
         image_path: str,
         prompt: Optional[str] = None,

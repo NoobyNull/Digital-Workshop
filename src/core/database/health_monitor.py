@@ -296,7 +296,6 @@ class DatabaseHealthMonitor:
             logger.error("Failed to collect database metrics: %s", str(e))
 
     def _record_metric(
-        """TODO: Add docstring."""
         self,
         name: str,
         value: float,
@@ -424,7 +423,6 @@ class DatabaseHealthMonitor:
         return conn
 
     def record_query_execution(
-        """TODO: Add docstring."""
         self,
         query: str,
         execution_time: float,
@@ -490,7 +488,7 @@ class DatabaseHealthMonitor:
                     f"Critical slow query detected: {execution_time:.2f}s - {query[:100]}"
                 )
             elif execution_time > self._thresholds["query_time_warning"]:
-                logger.warning("Slow query detected: %ss - {query[:100]}", execution_time:.2f)
+                logger.warning("Slow query detected: %.2fs - {query[:100]}", execution_time)
 
     def get_current_health_status(self) -> HealthStatus:
         """
@@ -524,7 +522,6 @@ class DatabaseHealthMonitor:
             return HealthStatus.HEALTHY
 
     def get_health_metrics(
-        """TODO: Add docstring."""
         self, metric_name: Optional[str] = None, time_range: Optional[timedelta] = None
     ) -> List[HealthMetric]:
         """
@@ -673,7 +670,6 @@ class DatabaseHealthMonitor:
             )
 
     def _generate_recommendations(
-        """TODO: Add docstring."""
         self,
         metrics: Dict[str, HealthMetric],
         alerts: List[HealthAlert],

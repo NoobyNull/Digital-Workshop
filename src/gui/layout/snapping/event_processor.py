@@ -251,7 +251,6 @@ class EventFilter(QObject):
             return None
 
     def _create_mouse_event(
-        """TODO: Add docstring."""
         self, event_type: EventType, widget: QWidget, event: QEvent
     ) -> Optional[SnapEvent]:
         """Create a mouse-related SnapEvent."""
@@ -394,7 +393,6 @@ class EventProcessor:
     """
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         main_window: QMainWindow,
         config: SnapConfiguration,

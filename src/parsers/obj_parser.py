@@ -77,7 +77,6 @@ class OBJParser(BaseParser):
         return [".obj"]
 
     def parse_file(
-        """TODO: Add docstring."""
         self,
         file_path: Union[str, Path],
         progress_callback: Optional[ProgressCallback] = None,
@@ -136,7 +135,6 @@ class OBJParser(BaseParser):
             raise ParseError(f"Failed to parse OBJ file: {str(e)}")
 
     def _parse_obj_file(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Tuple[
         List[Vector3D],
@@ -297,7 +295,6 @@ class OBJParser(BaseParser):
         )
 
     def _convert_faces_to_triangles(
-        """TODO: Add docstring."""
         self,
         vertices: List[Vector3D],
         normals: List[Vector3D],

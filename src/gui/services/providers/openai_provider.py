@@ -14,7 +14,6 @@ class OpenAIProvider(BaseProvider):
     """OpenAI GPT-4 Vision provider."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         api_key: Optional[str] = None,
         model: str = "gpt-4-vision-preview",

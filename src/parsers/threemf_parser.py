@@ -75,7 +75,6 @@ class ThreeMFParser(BaseParser):
         return [".3mf"]
 
     def parse_file(
-        """TODO: Add docstring."""
         self,
         file_path: Union[str, Path],
         progress_callback: Optional[ProgressCallback] = None,
@@ -128,7 +127,6 @@ class ThreeMFParser(BaseParser):
             raise ParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_3mf_file(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> List[Triangle]:
         """
@@ -445,7 +443,6 @@ class ThreeMFParser(BaseParser):
         return triangles
 
     def _generate_triangles_for_component(
-        """TODO: Add docstring."""
         self, component: ThreeMFComponent, parent_transform: List[float]
     ) -> List[Triangle]:
         """

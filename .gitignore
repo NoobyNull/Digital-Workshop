@@ -414,6 +414,12 @@ docs/build/
 site/
 
 # =============================================================================
+# DEPRECATED DOCUMENTATION
+# =============================================================================
+# Deprecated documents folder - contains outdated/redundant documentation
+docs/deprecated/
+
+# =============================================================================
 # SECURITY AUDIT FINDINGS
 # =============================================================================
 # Files that should never be committed based on audit findings

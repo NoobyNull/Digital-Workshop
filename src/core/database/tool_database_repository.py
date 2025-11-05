@@ -24,7 +24,6 @@ class ToolDatabaseRepository:
         self.schema.initialize_database()
 
     def add_tool(
-        """TODO: Add docstring."""
         self,
         provider_id: int,
         guid: str = "",
@@ -269,7 +268,6 @@ class ToolDatabaseRepository:
         return self.get_tools_by_provider(provider_id)
 
     def search_tools(
-        """TODO: Add docstring."""
         self, tool_type: str = None, vendor: str = None, **kwargs
     ) -> List[Dict[str, Any]]:
         """Search tools by type or vendor."""
@@ -311,7 +309,6 @@ class ToolDatabaseRepository:
             return []
 
     def filter_by_diameter(
-        """TODO: Add docstring."""
         self, min_diameter: float = 0.0, max_diameter: float = float("inf")
     ) -> List[Dict[str, Any]]:
         """Filter tools by diameter range."""

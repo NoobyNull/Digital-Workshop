@@ -192,7 +192,6 @@ class ToolbarManager:
 
 # Convenience function for easy toolbar setup
 def setup_main_window_toolbar(
-    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> ToolbarManager:
     """

@@ -203,7 +203,6 @@ class DatabaseErrorHandler:
                 logger.debug("Cleaned up old error history")
 
     def _log_error(
-        """TODO: Add docstring."""
         self,
         error_type: DatabaseErrorType,
         message: str,
@@ -259,7 +258,6 @@ class DatabaseErrorHandler:
         return error
 
     def handle_sqlite_error(
-        """TODO: Add docstring."""
         self, error: sqlite3.Error, context: Dict[str, Any] = None
     ) -> DatabaseError:
         """
@@ -320,7 +318,6 @@ class DatabaseErrorHandler:
         )
 
     def handle_connection_error(
-        """TODO: Add docstring."""
         self, error: Exception, context: Dict[str, Any] = None
     ) -> DatabaseError:
         """
@@ -349,7 +346,6 @@ class DatabaseErrorHandler:
         )
 
     def handle_transaction_error(
-        """TODO: Add docstring."""
         self, error: Exception, context: Dict[str, Any] = None
     ) -> DatabaseError:
         """
@@ -378,7 +374,6 @@ class DatabaseErrorHandler:
         )
 
     def handle_timeout_error(
-        """TODO: Add docstring."""
         self, operation: str, timeout_duration: float, context: Dict[str, Any] = None
     ) -> DatabaseError:
         """

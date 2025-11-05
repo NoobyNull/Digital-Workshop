@@ -114,7 +114,6 @@ class ThemeManager:
         return getattr(self, "_preset_name", "custom")
 
     def apply_preset(
-        """TODO: Add docstring."""
         self,
         preset_name: str,
         *,
@@ -214,7 +213,6 @@ class ThemeManager:
             return ""
 
     def register_widget(
-        """TODO: Add docstring."""
         self,
         widget: Any,
         *,

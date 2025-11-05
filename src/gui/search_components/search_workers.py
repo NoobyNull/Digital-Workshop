@@ -24,7 +24,6 @@ class SearchWorker(QThread):
     search_failed = Signal(str)
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         query: str,
         filters: Optional[Dict[str, Any]] = None,

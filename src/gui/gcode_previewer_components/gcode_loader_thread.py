@@ -38,7 +38,7 @@ class GcodeLoaderThread(QThread):
                 lines = f.readlines()
 
             total_lines = len(lines)
-            self.logger.info("Starting to load %s lines from {self.filepath}", total_lines:,)
+            self.logger.info("Starting to load %s lines from %s", f"{total_lines:,}", self.filepath)
 
             # Parse lines and emit batches
             batch = []
@@ -78,7 +78,7 @@ class GcodeLoaderThread(QThread):
 
             # Emit completion signal with all moves
             self.finished_loading.emit(self.all_moves)
-            self.logger.info("Finished loading %s moves", len(self.all_moves):,)
+            self.logger.info("Finished loading %s moves", f"{len(self.all_moves):,}")
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading G-code file: %s", e)

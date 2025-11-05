@@ -499,7 +499,7 @@ class Viewer3DWidget(QWidget):
             dy = abs(ymax - ymin)
             dz = abs(zmax - zmin)
 
-            self.logger.info("Model dimensions - X: %s, Y: {dy:.2f}, Z: {dz:.2f}", dx:.2f)
+            self.logger.info("Model dimensions - X: %.2f, Y: %.2f, Z: %.2f", dx, dy, dz)
 
             # Threshold for considering dimensions equal (avoid rotation for nearly-cubic models)
             equal_threshold = 0.1  # 10% difference

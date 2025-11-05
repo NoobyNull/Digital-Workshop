@@ -43,7 +43,6 @@ class TDBToolParser(BaseToolParser):
             return False, f"Validation error: {str(e)}"
 
     def parse(
-        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> List[ToolData]:
         """Parse TDB tool database."""

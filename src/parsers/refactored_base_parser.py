@@ -159,7 +159,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             return False
 
     def parse(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[float], None]] = None,
@@ -421,7 +420,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
 
     @abstractmethod
     def _parse_file_internal(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -536,7 +534,6 @@ class RefactoredBaseParser(IParser, IStreamingParser, IValidationParser, ABC):
             self.logging_service.log_debug(f"Performed garbage collection at count {count}")
 
     def _update_progress(
-        """TODO: Add docstring."""
         self,
         progress: float,
         message: str = "",

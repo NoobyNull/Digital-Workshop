@@ -114,7 +114,6 @@ class ProgressAggregator:
 
     @log_function_call
     def update_chunk_progress(
-        """TODO: Add docstring."""
         self,
         chunk_id: str,
         progress: float,
@@ -155,7 +154,6 @@ class ProgressAggregator:
 
     @log_function_call
     def update_sub_operation_progress(
-        """TODO: Add docstring."""
         self,
         chunk_id: str,
         operation_id: str,

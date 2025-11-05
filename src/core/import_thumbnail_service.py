@@ -97,7 +97,6 @@ class ImportThumbnailService:
     }
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         storage_location: StorageLocation = StorageLocation.APPDATA,
         custom_storage_path: Optional[str] = None,
@@ -222,7 +221,6 @@ class ImportThumbnailService:
         return False
 
     def generate_thumbnail(
-        """TODO: Add docstring."""
         self,
         model_path: str,
         file_hash: str,
@@ -373,7 +371,6 @@ class ImportThumbnailService:
             gc.collect()
 
     def generate_thumbnails_batch(
-        """TODO: Add docstring."""
         self,
         file_info_list: List[Tuple[str, str]],
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
@@ -584,7 +581,6 @@ class ImportThumbnailService:
         return self._storage_dir
 
     def set_storage_directory(
-        """TODO: Add docstring."""
         self, storage_location: StorageLocation, custom_path: Optional[str] = None
     ) -> None:
         """

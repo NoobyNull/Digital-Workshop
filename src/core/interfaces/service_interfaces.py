@@ -97,7 +97,6 @@ class IModelService(ABC):
 
     @abstractmethod
     def load_model(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[float], None]] = None,

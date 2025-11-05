@@ -27,7 +27,6 @@ class ModelRepository:
 
     @log_function_call(logger)
     def add_model(
-        """TODO: Add docstring."""
         self,
         filename: str,
         format: str,
@@ -198,7 +197,6 @@ class ModelRepository:
 
     @log_function_call(logger)
     def get_all_models(
-        """TODO: Add docstring."""
         self,
         limit: Optional[int] = None,
         offset: Optional[int] = None,

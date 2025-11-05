@@ -109,7 +109,6 @@ class DockDragHandler(QObject):
     SNAP_MARGIN = 56  # px
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         main_window: QMainWindow,
         dock: QDockWidget,
@@ -242,7 +241,6 @@ class DockDragHandler(QObject):
 
 # Convenience function for easy dock snapping setup
 def setup_dock_snapping(
-    """TODO: Add docstring."""
     main_window: QMainWindow, logger: logging.Logger
 ) -> tuple[SnapOverlayLayer, Dict[str, DockDragHandler]]:
     """

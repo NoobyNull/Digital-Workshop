@@ -335,7 +335,6 @@ class TransactionManager:
                 self.connection_pool.return_connection(conn)
 
     def execute_transaction(
-        """TODO: Add docstring."""
         self, operations: List[Dict[str, Any]], transaction_id: str = None
     ) -> List[Any]:
         """

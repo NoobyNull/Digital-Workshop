@@ -56,7 +56,6 @@ class MaterialManager:
             return []
 
     def generate_wood_texture(
-        """TODO: Add docstring."""
         self, species_name: str, size: Tuple[int, int] = (512, 512)
     ) -> np.ndarray:
         """
@@ -437,7 +436,6 @@ class MaterialManager:
         }
 
     def _generate_wood_texture_impl(
-        """TODO: Add docstring."""
         self, species: Dict[str, Any], size: Tuple[int, int]
     ) -> np.ndarray:
         """
@@ -512,7 +510,6 @@ class MaterialManager:
         return img_u8
 
     def _fbm_value_noise(
-        """TODO: Add docstring."""
         self,
         h: int,
         w: int,
@@ -633,7 +630,6 @@ class MaterialManager:
             self.logger.warning("_apply_material_properties failed: %s", e)
 
     def _apply_material_properties_for_texture(
-        """TODO: Add docstring."""
         self, actor: vtk.vtkActor, species: Dict[str, Any]
     ) -> None:
         """
@@ -686,7 +682,6 @@ class MaterialManager:
             self.logger.warning("_apply_material_properties_for_texture failed: %s", e)
 
     def _apply_classic_shading(
-        """TODO: Add docstring."""
         self, prop: vtk.vtkProperty, roughness: float, specular: float
     ) -> None:
         """

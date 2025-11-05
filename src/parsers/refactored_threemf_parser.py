@@ -84,7 +84,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         self.build_items: List[ThreeMFBuildItem] = []
 
     def _parse_file_internal(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -145,7 +144,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             raise
 
     def _parse_3mf_file(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -172,7 +170,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
             raise ThreeMFParseError(f"Failed to parse 3MF file: {str(e)}")
 
     def _parse_3mf_file_standard(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -199,7 +196,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
                 self._parse_build_items(root)
 
     def _parse_3mf_file_streaming(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[StreamingProgressCallback] = None,
@@ -520,7 +516,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         return triangles
 
     def _generate_triangles_for_component(
-        """TODO: Add docstring."""
         self, component: ThreeMFComponent, parent_transform: List[float]
     ) -> List[Dict[str, Any]]:
         """
@@ -601,7 +596,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         return result
 
     def _apply_transform(
-        """TODO: Add docstring."""
         self, vertices: List[Tuple[float, float, float]], transform: List[float]
     ) -> List[Tuple[float, float, float]]:
         """
@@ -638,7 +632,6 @@ class RefactoredThreeMFParser(RefactoredBaseParser):
         return transformed
 
     def _calculate_face_normal(
-        """TODO: Add docstring."""
         self,
         v1: Tuple[float, float, float],
         v2: Tuple[float, float, float],

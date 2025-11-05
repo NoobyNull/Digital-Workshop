@@ -192,7 +192,6 @@ class SearchEngine:
 
     @log_function_call(logger)
     def search(
-        """TODO: Add docstring."""
         self,
         query: str,
         filters: Optional[Dict[str, Any]] = None,
@@ -252,7 +251,7 @@ class SearchEngine:
                 # Calculate execution time
                 execution_time = (datetime.now() - start_time).total_seconds()
 
-                logger.info("Search completed in %ss: {len(results)} results", execution_time:.3f)
+                logger.info("Search completed in %.3fs: %d results", execution_time, len(results))
 
                 return {
                     "results": results,
@@ -268,7 +267,6 @@ class SearchEngine:
 
     @log_function_call(logger)
     def _build_search_query(
-        """TODO: Add docstring."""
         self, query: str, filters: Optional[Dict[str, Any]]
     ) -> Tuple[str, List]:
         """
@@ -455,7 +453,6 @@ class SearchEngine:
 
     @log_function_call(logger)
     def _record_search(
-        """TODO: Add docstring."""
         self, query: str, filters: Optional[Dict[str, Any]], result_count: int
     ) -> None:
         """

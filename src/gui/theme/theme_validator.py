@@ -380,7 +380,6 @@ class ThemeValidator:
         return len(errors) == 0, errors, warnings
 
     def _validate_qt_material(
-        """TODO: Add docstring."""
         self, theme_data: Dict[str, Any]
     ) -> Tuple[bool, List[str], List[str]]:
         """
@@ -484,7 +483,6 @@ class ThemeValidator:
         return False
 
     def _check_color_accessibility(
-        """TODO: Add docstring."""
         self, color_name: str, color_value: str, _all_colors: Dict[str, str]
     ) -> List[str]:
         """

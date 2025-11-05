@@ -196,7 +196,6 @@ class RootFolderManager(QObject):
             return False
 
     def update_folder(
-        """TODO: Add docstring."""
         self,
         folder_id: int,
         path: Optional[str] = None,

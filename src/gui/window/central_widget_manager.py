@@ -385,7 +385,6 @@ class CentralWidgetManager:
 
 # Convenience function for easy central widget setup
 def setup_central_widget(
-    """TODO: Add docstring."""
     main_window: QMainWindow, logger: Optional[logging.Logger] = None
 ) -> CentralWidgetManager:
     """
