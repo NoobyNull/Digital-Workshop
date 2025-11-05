@@ -59,6 +59,7 @@ from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
 from src.gui.window.dock_snapping import SnapOverlayLayer, DockDragHandler
 from src.gui.project_details_widget import ProjectDetailsWidget
+from src.gui.theme import MIN_WIDGET_SIZE
 
 
 class MainWindow(QMainWindow):
@@ -134,7 +135,7 @@ class MainWindow(QMainWindow):
             self.maximize_on_startup = False
             self.remember_window_size = True
 
-        self.setMinimumSize(min_width, min_height)
+        self.setMinimumSize(MIN_WIDGET_SIZE, MIN_WIDGET_SIZE)
 
         # CRITICAL FIX: Restore window geometry during initialization, not in showEvent
         # This ensures proper timing coordination between window creation and state restoration
@@ -325,6 +326,9 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
+        # Apply dock tab positions from settings
+        self._apply_dock_tab_positions()
+
         # Set up individual dock widgets using native Qt
         self._setup_model_library_dock()
         self._setup_project_manager_dock()
@@ -354,9 +358,8 @@ class MainWindow(QMainWindow):
                 | Qt.TopDockWidgetArea
                 | Qt.BottomDockWidgetArea
             )
-            self.model_library_dock.setFeatures(
-                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
-            )
+            # Start with layout locked (only closable, not movable)
+            self.model_library_dock.setFeatures(QDockWidget.DockWidgetClosable)
 
             # Create model library widget
             try:
@@ -414,9 +417,8 @@ class MainWindow(QMainWindow):
                 | Qt.TopDockWidgetArea
                 | Qt.BottomDockWidgetArea
             )
-            self.project_manager_dock.setFeatures(
-                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
-            )
+            # Start with layout locked (only closable, not movable)
+            self.project_manager_dock.setFeatures(QDockWidget.DockWidgetClosable)
 
             # Create project manager widget
             try:
@@ -453,8 +455,19 @@ class MainWindow(QMainWindow):
             # Add to main window using native Qt dock system
             self.addDockWidget(Qt.LeftDockWidgetArea, self.project_manager_dock)
 
-            # Remove any minimum width constraint to allow free resizing
-            self.project_manager_dock.setMinimumWidth(0)
+            # Tabify with model library dock using native Qt
+            # This ensures they start tabbed together, preventing the "jump" effect
+            try:
+                if hasattr(self, "model_library_dock") and self.model_library_dock:
+                    self.tabifyDockWidget(self.model_library_dock, self.project_manager_dock)
+                    self.logger.info(
+                        "Model Library and Project Manager docks tabified using native Qt"
+                    )
+            except Exception as e:
+                self.logger.debug(f"Could not tabify docks: {e}")
+
+            # Set minimum width to prevent zero-width widgets
+            self.project_manager_dock.setMinimumWidth(MIN_WIDGET_SIZE)
 
             # Register for snapping functionality
             try:
@@ -483,9 +496,8 @@ class MainWindow(QMainWindow):
                 | Qt.TopDockWidgetArea
                 | Qt.BottomDockWidgetArea
             )
-            self.properties_dock.setFeatures(
-                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
-            )
+            # Start with layout locked (only closable, not movable)
+            self.properties_dock.setFeatures(QDockWidget.DockWidgetClosable)
 
             # Create project details widget
             self.project_details_widget = ProjectDetailsWidget(self)
@@ -500,8 +512,8 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.logger.debug(f"Failed to register dock for snapping: {e}")
 
-            # Set minimum width for proper native layout
-            self.properties_dock.setMinimumWidth(250)
+            # Set minimum width to prevent zero-width widgets
+            self.properties_dock.setMinimumWidth(MIN_WIDGET_SIZE)
             self.properties_dock.setSizePolicy(
                 QSizePolicy.Preferred, QSizePolicy.Expanding
             )
@@ -522,9 +534,8 @@ class MainWindow(QMainWindow):
                 | Qt.TopDockWidgetArea
                 | Qt.BottomDockWidgetArea
             )
-            self.metadata_dock.setFeatures(
-                QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
-            )
+            # Start with layout locked (only closable, not movable)
+            self.metadata_dock.setFeatures(QDockWidget.DockWidgetClosable)
 
             # Create metadata widget using native Qt
             try:
@@ -588,8 +599,8 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.logger.debug(f"Could not tabify docks: {e}")
 
-            # Set size constraints for native layout
-            self.metadata_dock.setMinimumWidth(300)
+            # Set minimum width to prevent zero-width widgets
+            self.metadata_dock.setMinimumWidth(MIN_WIDGET_SIZE)
             self.metadata_dock.setMaximumWidth(500)
             self.metadata_dock.setSizePolicy(
                 QSizePolicy.Preferred, QSizePolicy.Expanding
@@ -898,7 +909,7 @@ class MainWindow(QMainWindow):
                         | QDockWidget.DockWidgetClosable
                     )
                 else:
-                    # Lock docks but keep closable for hiding
+                    # Layout locked - only allow closing, no moving or floating
                     dock.setFeatures(QDockWidget.DockWidgetClosable)
 
             # Persist state for next launch
@@ -1065,6 +1076,41 @@ class MainWindow(QMainWindow):
                 )
         except Exception as e:
             self.logger.error(f"Failed to apply material species '{species_name}': {e}")
+
+    def _apply_dock_tab_positions(self) -> None:
+        """Apply dock tab positions from settings."""
+        try:
+            from PySide6.QtCore import QSettings
+            from PySide6.QtWidgets import QTabWidget
+
+            settings = QSettings()
+
+            # Get tab position settings
+            left_pos = settings.value("dock_tabs/left_position", "bottom", type=str)
+            right_pos = settings.value("dock_tabs/right_position", "bottom", type=str)
+
+            # Convert to Qt enum
+            left_tab_pos = (
+                QTabWidget.TabPosition.North
+                if left_pos == "top"
+                else QTabWidget.TabPosition.South
+            )
+            right_tab_pos = (
+                QTabWidget.TabPosition.North
+                if right_pos == "top"
+                else QTabWidget.TabPosition.South
+            )
+
+            # Apply tab positions
+            self.setTabPosition(Qt.LeftDockWidgetArea, left_tab_pos)
+            self.setTabPosition(Qt.RightDockWidgetArea, right_tab_pos)
+
+            self.logger.debug(
+                f"Applied dock tab positions: Left={left_pos}, Right={right_pos}"
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Failed to apply dock tab positions: {e}")
 
     def _reset_dock_layout_and_save(self) -> None:
         """Reset dock layout to default positions and save settings."""
@@ -1435,10 +1481,11 @@ class MainWindow(QMainWindow):
 
                 # CRITICAL FIX: Defer BOTH geometry and dock layout restoration to next event loop
                 # This ensures the window is fully visible before we try to restore its state
+                # Use 0ms delay to minimize visible flash while still deferring to event loop
                 from PySide6.QtCore import QTimer
 
-                QTimer.singleShot(50, self._deferred_geometry_restoration)
-                QTimer.singleShot(100, self._deferred_dock_layout_restoration)
+                QTimer.singleShot(0, self._deferred_geometry_restoration)
+                QTimer.singleShot(0, self._deferred_dock_layout_restoration)
             else:
                 self.logger.debug("FIX: Window show event (not first show)")
 

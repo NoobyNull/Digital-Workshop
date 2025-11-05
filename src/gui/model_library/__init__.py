@@ -24,6 +24,14 @@ from .library_model_manager import LibraryModelManager
 from .library_file_browser import LibraryFileBrowser
 from .library_event_handler import LibraryEventHandler, ViewMode
 from .model_library_facade import ModelLibraryFacade
+from .numeric_sort_proxy import NumericSortProxyModel
+from .async_tasks import (
+    CombinedModelProcessingTask,
+    DatabaseInsertTask,
+    ThumbnailGenerationTask,
+    TaskSignals,
+)
+from .progress_throttler import BatchProgressTracker, ProgressThrottler
 
 __all__ = [
     # Main widget (primary export)
@@ -38,4 +46,12 @@ __all__ = [
     "LibraryEventHandler",
     "ViewMode",
     "ModelLibraryFacade",
+    "NumericSortProxyModel",
+    # Async processing
+    "CombinedModelProcessingTask",
+    "DatabaseInsertTask",
+    "ThumbnailGenerationTask",
+    "TaskSignals",
+    "BatchProgressTracker",
+    "ProgressThrottler",
 ]

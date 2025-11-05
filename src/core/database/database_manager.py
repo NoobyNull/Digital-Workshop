@@ -106,6 +106,20 @@ class DatabaseManager:
         """Delete a model from the database."""
         return self._model_repo.delete_model(model_id)
 
+    def add_model_analysis(
+        self,
+        model_id: int,
+        triangle_count: Optional[int] = None,
+        vertex_count: Optional[int] = None,
+        min_bounds: Optional[tuple] = None,
+        max_bounds: Optional[tuple] = None,
+        **kwargs
+    ) -> int:
+        """Add analysis data for a model."""
+        return self._model_repo.add_model_analysis(
+            model_id, triangle_count, vertex_count, min_bounds, max_bounds, **kwargs
+        )
+
     # ===== Metadata Operations (delegated to MetadataRepository) =====
 
     def add_metadata(self, model_id: int, **kwargs) -> int:

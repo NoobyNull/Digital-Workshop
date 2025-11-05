@@ -6,15 +6,16 @@ This is a thin coordinator that delegates to specialized components via the faca
 
 from typing import Optional, List, Dict, Any
 
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QCloseEvent
+from PySide6.QtCore import Signal, Qt, QEvent
+from PySide6.QtWidgets import QWidget, QSizePolicy
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QCloseEvent, QWheelEvent
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache
 from src.core.root_folder_manager import RootFolderManager
+from src.gui.theme import MIN_WIDGET_SIZE
 
 from .model_library_facade import ModelLibraryFacade
 from .library_event_handler import ViewMode
@@ -57,6 +58,11 @@ class ModelLibraryWidget(QWidget):
         """
         super().__init__(parent)
 
+        # Set flexible size policy to allow shrinking when tabbed with other widgets
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        # Set minimum size to prevent zero-width/zero-height widgets
+        self.setMinimumSize(MIN_WIDGET_SIZE, MIN_WIDGET_SIZE)
+
         # Core services
         self.logger = get_logger(__name__)
         self.db_manager = get_database_manager()
@@ -80,7 +86,53 @@ class ModelLibraryWidget(QWidget):
         # Initialize UI and load data
         self.facade.initialize()
 
+        # Schedule column visibility restoration after a delay to ensure dock layout is restored first
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(200, self.restore_column_visibility)
+
     # ==================== Public API ====================
+
+    def restore_column_visibility(self) -> None:
+        """Restore column visibility and order from settings (called after dock layout restoration)."""
+        from PySide6.QtCore import QSettings
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+
+        print("DEBUG: [DELAYED] Restoring column visibility from settings...")
+        for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
+            # Get visibility setting - default to True (visible)
+            visible_value = settings.value(f"column_{col}_visible", True)
+            # Convert to bool explicitly (QSettings may return string "true"/"false")
+            if isinstance(visible_value, str):
+                visible = visible_value.lower() in ('true', '1', 'yes')
+            else:
+                visible = bool(visible_value)
+            print(f"DEBUG: [DELAYED] Restoring column {col} visibility: raw={visible_value}, converted={visible}")
+            self.list_view.setColumnHidden(col, not visible)
+
+        # Restore column order
+        column_order = settings.value("column_order")
+        if column_order:
+            print(f"DEBUG: [DELAYED] Restoring column order: {column_order}")
+            header = self.list_view.horizontalHeader()
+            # Convert to list of ints if needed
+            if isinstance(column_order, str):
+                # QSettings might return as string, try to parse
+                try:
+                    import ast
+                    column_order = ast.literal_eval(column_order)
+                except:
+                    column_order = None
+
+            if column_order and isinstance(column_order, list):
+                # Restore the visual order
+                for logical_index, visual_index in enumerate(column_order):
+                    if isinstance(visual_index, int):
+                        header.moveSection(header.visualIndex(logical_index), visual_index)
+                print(f"DEBUG: [DELAYED] Column order restored successfully")
+            else:
+                print(f"DEBUG: [DELAYED] Invalid column order format: {column_order}")
+        else:
+            print("DEBUG: [DELAYED] No saved column order found")
 
     def get_selected_model_id(self) -> Optional[int]:
         """
@@ -209,6 +261,43 @@ class ModelLibraryWidget(QWidget):
 
     # ==================== Event Handlers ====================
 
+    def eventFilter(self, obj, event: QEvent) -> bool:
+        """
+        Event filter to catch wheel events on list view viewport.
+
+        Args:
+            obj: Object that received the event
+            event: Event to filter
+
+        Returns:
+            True if event was handled, False otherwise
+        """
+        if event.type() == QEvent.Wheel and isinstance(event, QWheelEvent):
+            # Check if Ctrl is pressed
+            if event.modifiers() & Qt.ControlModifier:
+                # Handle the wheel event for zoom
+                delta = event.angleDelta().y()
+
+                self.logger.debug(f"EventFilter wheel: delta={delta}, current_height={self.current_row_height}")
+
+                # Calculate new row height
+                if delta > 0:
+                    step = 8  # Scroll up = zoom in
+                else:
+                    step = -8  # Scroll down = zoom out
+
+                new_height = self.current_row_height + step
+                self.logger.debug(f"EventFilter new height: {new_height}")
+
+                # Update row height
+                self.facade.ui_manager.set_row_height(new_height)
+
+                # Event handled
+                return True
+
+        # Pass event to parent
+        return super().eventFilter(obj, event)
+
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """
         Handle drag enter events.
@@ -226,6 +315,40 @@ class ModelLibraryWidget(QWidget):
             event: Drop event
         """
         self.facade.event_handler.drop_event(event)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        """
+        Handle mouse wheel events for row height zoom (Ctrl+Scroll).
+
+        Args:
+            event: Wheel event
+        """
+        # Only handle if Ctrl is pressed
+        if event.modifiers() & Qt.ControlModifier:
+            # Get scroll delta (positive = scroll up, negative = scroll down)
+            delta = event.angleDelta().y()
+
+            # Debug logging
+            self.logger.debug(f"Wheel event: delta={delta}, current_height={self.current_row_height}")
+
+            # Calculate new row height (scroll up = increase, scroll down = decrease)
+            # Use step size of 8 pixels per scroll notch
+            if delta > 0:
+                step = 8  # Scroll up = zoom in
+            else:
+                step = -8  # Scroll down = zoom out
+
+            new_height = self.current_row_height + step
+            self.logger.debug(f"New height: {new_height}")
+
+            # Update row height through UI manager
+            self.facade.ui_manager.set_row_height(new_height)
+
+            # Accept event to prevent propagation
+            event.accept()
+        else:
+            # Pass to parent for normal scrolling
+            super().wheelEvent(event)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

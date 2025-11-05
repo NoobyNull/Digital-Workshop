@@ -220,9 +220,11 @@ class ModelRepository:
 
                 query = """
                     SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
-                           mm.source, mm.rating, mm.view_count, mm.last_viewed
+                           mm.source, mm.rating, mm.view_count, mm.last_viewed,
+                           ma.triangle_count, ma.vertex_count
                     FROM models m
                     LEFT JOIN model_metadata mm ON m.id = mm.model_id
+                    LEFT JOIN model_analysis ma ON m.id = ma.model_id
                 """
 
                 if exclude_duplicates:
@@ -337,6 +339,79 @@ class ModelRepository:
         except sqlite3.Error as e:
             logger.error("Failed to update camera view for model %s: {e}", model_id)
             return False
+
+    @log_function_call(logger)
+    def add_model_analysis(
+        self,
+        model_id: int,
+        triangle_count: Optional[int] = None,
+        vertex_count: Optional[int] = None,
+        min_bounds: Optional[Tuple[float, float, float]] = None,
+        max_bounds: Optional[Tuple[float, float, float]] = None,
+        **kwargs
+    ) -> int:
+        """
+        Add analysis data for a model.
+
+        Args:
+            model_id: Model ID
+            triangle_count: Number of triangles
+            vertex_count: Number of vertices
+            min_bounds: Minimum bounding box coordinates (x, y, z)
+            max_bounds: Maximum bounding box coordinates (x, y, z)
+            **kwargs: Additional analysis fields
+
+        Returns:
+            ID of the inserted analysis record
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+
+                # Calculate bounding box dimensions if bounds provided
+                width = height = depth = None
+                if min_bounds and max_bounds:
+                    width = max_bounds[0] - min_bounds[0]
+                    height = max_bounds[1] - min_bounds[1]
+                    depth = max_bounds[2] - min_bounds[2]
+
+                cursor.execute(
+                    """
+                    INSERT INTO model_analysis (
+                        model_id, triangle_count, vertex_count,
+                        bounding_box_min_x, bounding_box_min_y, bounding_box_min_z,
+                        bounding_box_max_x, bounding_box_max_y, bounding_box_max_z,
+                        bounding_box_width, bounding_box_height, bounding_box_depth,
+                        analysis_time_seconds
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                        model_id,
+                        triangle_count,
+                        vertex_count,
+                        min_bounds[0] if min_bounds else None,
+                        min_bounds[1] if min_bounds else None,
+                        min_bounds[2] if min_bounds else None,
+                        max_bounds[0] if max_bounds else None,
+                        max_bounds[1] if max_bounds else None,
+                        max_bounds[2] if max_bounds else None,
+                        width,
+                        height,
+                        depth,
+                        kwargs.get("analysis_time_seconds"),
+                    ),
+                )
+
+                analysis_id = cursor.lastrowid
+                conn.commit()
+
+                logger.info("Added analysis for model %s", model_id)
+                return analysis_id
+
+        except sqlite3.Error as e:
+            logger.error("Failed to add model analysis for model %s: %s", model_id, e)
+            raise
 
     @log_function_call(logger)
     def delete_model(self, model_id: int) -> bool:

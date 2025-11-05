@@ -6,13 +6,16 @@ Handles model loading, database integration, and view updates.
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import threading
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThreadPool
 from PySide6.QtGui import QIcon, QStandardItem
 from PySide6.QtWidgets import QMessageBox
 
 from src.core.logging_config import get_logger, log_function_call
 from src.core.performance_monitor import monitor_operation
+from .async_tasks import CombinedModelProcessingTask
+from .progress_throttler import BatchProgressTracker
 
 logger = get_logger(__name__)
 
@@ -29,6 +32,21 @@ class LibraryModelManager:
         """
         self.library_widget = library_widget
         self.logger = get_logger(__name__)
+
+        # Thread pool for async operations
+        self.thread_pool = QThreadPool.globalInstance()
+        self.logger.info(
+            "Using global thread pool with %d threads", self.thread_pool.maxThreadCount()
+        )
+
+        # Progress tracking
+        self.progress_tracker: Optional[BatchProgressTracker] = None
+
+        # Pending models waiting for async processing to complete
+        self._pending_models: List[Dict[str, Any]] = []
+        self._pending_lock = threading.Lock()
+        self._completed_count = 0
+        self._total_expected = 0
 
     @log_function_call(logger)
     def load_models_from_database(self) -> None:
@@ -51,20 +69,19 @@ class LibraryModelManager:
         """Populate list/grid views from current_models."""
         self.library_widget.list_model.clear()
         self.library_widget.list_model.setHorizontalHeaderLabels(
-            ["Name", "Format", "Size", "Triangles", "Category", "Added Date"]
+            ["Thumbnail", "Name", "Format", "Size", "Triangles", "Category", "Added Date"]
         )
         for model in self.library_widget.current_models:
-            name_item = QStandardItem(
-                model.get("title") or model.get("filename", "Unknown")
-            )
-            name_item.setData(model.get("id"), Qt.UserRole)
+            # Create thumbnail item (first column)
+            thumbnail_item = QStandardItem()
+            thumbnail_item.setData(model.get("id"), Qt.UserRole)
 
             # Set icon from thumbnail if available
             thumbnail_path = model.get("thumbnail_path")
             if thumbnail_path and Path(thumbnail_path).exists():
                 try:
                     icon = QIcon(thumbnail_path)
-                    name_item.setIcon(icon)
+                    thumbnail_item.setIcon(icon)
                 except (
                     OSError,
                     IOError,
@@ -75,9 +92,19 @@ class LibraryModelManager:
                 ) as e:
                     self.logger.warning("Failed to load thumbnail icon: %s", e)
 
+            # Thumbnail item should not be editable
+            thumbnail_item.setEditable(False)
+
+            # Create name item (second column)
+            name_item = QStandardItem(
+                model.get("title") or model.get("filename", "Unknown")
+            )
+            name_item.setData(model.get("id"), Qt.UserRole)
+
             fmt = (model.get("format") or "Unknown").upper()
             format_item = QStandardItem(fmt)
 
+            # Size column - store numeric value for proper sorting
             size_bytes = model.get("file_size", 0) or 0
             if size_bytes > 1024 * 1024:
                 size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
@@ -86,13 +113,19 @@ class LibraryModelManager:
             else:
                 size_str = f"{size_bytes} B"
             size_item = QStandardItem(size_str)
+            size_item.setData(size_bytes, Qt.UserRole)  # Store numeric value for sorting
 
-            triangles_item = QStandardItem(f"{model.get('triangle_count', 0):,}")
+            # Triangles column - store numeric value for proper sorting
+            triangle_count = model.get("triangle_count", 0) or 0
+            triangles_item = QStandardItem(f"{triangle_count:,}")
+            triangles_item.setData(triangle_count, Qt.UserRole)  # Store numeric value for sorting
+
             category_item = QStandardItem(model.get("category", "Uncategorized"))
             date_item = QStandardItem(str(model.get("date_added", "Unknown")))
 
             self.library_widget.list_model.appendRow(
                 [
+                    thumbnail_item,
                     name_item,
                     format_item,
                     size_item,
@@ -160,6 +193,23 @@ class LibraryModelManager:
         self.library_widget.progress_bar.setRange(0, 0)
         self.library_widget.status_label.setText("Loading models...")
 
+        # Initialize async processing state
+        with self._pending_lock:
+            self._completed_count = 0
+            self._total_expected = len(file_paths)
+            self._pending_models.clear()
+
+        # Initialize progress tracker with throttling
+        self.progress_tracker = BatchProgressTracker(
+            total_items=len(file_paths),
+            progress_callback=self._on_progress_update,
+            throttle_ms=100.0,  # Update UI at most every 100ms
+        )
+
+        self.logger.info(
+            "Starting batch load of %d models with async processing", len(file_paths)
+        )
+
         from .model_load_worker import ModelLoadWorker
 
         self.library_widget.model_loader = ModelLoadWorker(file_paths)
@@ -171,28 +221,141 @@ class LibraryModelManager:
         self.library_widget._load_operation_id = op_id
 
     def on_model_loaded(self, model_info: Dict[str, Any]) -> None:
-        """Handle model loaded event."""
+        """
+        Handle model loaded event - dispatch async processing task.
+
+        This method now runs on the main thread but immediately dispatches
+        the database and thumbnail operations to a thread pool worker,
+        preventing UI blocking.
+        """
         if self.library_widget._disposed or self.library_widget.model_loader is None:
             return
+
         try:
-            model_id = self.library_widget.db_manager.add_model(
-                filename=model_info["filename"],
-                format=model_info["format"],
-                file_path=model_info["file_path"],
-                file_size=model_info["file_size"],
-                file_hash=None,
+            # Create async task for database insert and thumbnail generation
+            task = CombinedModelProcessingTask(
+                model_info=model_info,
+                db_manager=self.library_widget.db_manager,
+                thumbnail_generator=self.library_widget.thumbnail_generator,
+                task_index=self._completed_count,
+                total_tasks=self._total_expected,
             )
-            self.library_widget.db_manager.add_model_metadata(
-                model_id=model_id, title=model_info["filename"], description=""
+
+            # Connect signals
+            task.signals.database_completed.connect(self._on_async_task_completed)
+            task.signals.database_failed.connect(self._on_async_task_failed)
+
+            # Dispatch to thread pool (non-blocking)
+            self.thread_pool.start(task)
+
+            self.logger.debug(
+                "Dispatched async task for %s (active threads: %d)",
+                model_info.get("filename", "unknown"),
+                self.thread_pool.activeThreadCount(),
             )
-            thumb = self.library_widget.thumbnail_generator.generate_thumbnail(
-                model_info
+
+        except Exception as e:
+            self.logger.error(
+                "Failed to dispatch async task for %s: %s",
+                model_info.get("filename", "unknown"),
+                e,
+                exc_info=True,
             )
-            model_info["id"] = model_id
-            model_info["thumbnail"] = thumb
-            self.library_widget.current_models.append(model_info)
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to save model to database: %s", e)
+
+    def _on_async_task_completed(self, model_info: Dict[str, Any]) -> None:
+        """
+        Handle completion of async processing task.
+
+        This runs on the main thread (via Qt signal/slot) but only performs
+        lightweight UI updates.
+        """
+        try:
+            with self._pending_lock:
+                # Add to current models list
+                self.library_widget.current_models.append(model_info)
+                self._completed_count += 1
+
+                # Update progress
+                if self.progress_tracker:
+                    self.progress_tracker.increment(
+                        f"Processed {model_info.get('filename', 'unknown')}"
+                    )
+
+                self.logger.debug(
+                    "Async task completed for %s (ID: %d) - %d/%d complete",
+                    model_info.get("filename", "unknown"),
+                    model_info.get("id", -1),
+                    self._completed_count,
+                    self._total_expected,
+                )
+
+                # Check if all tasks are complete
+                if self._completed_count >= self._total_expected:
+                    self.logger.info(
+                        "All async tasks completed (%d/%d)",
+                        self._completed_count,
+                        self._total_expected,
+                    )
+                    # Trigger final UI update
+                    self._finalize_batch_load()
+
+        except Exception as e:
+            self.logger.error("Error handling async task completion: %s", e, exc_info=True)
+
+    def _on_async_task_failed(self, file_path: str, error_message: str) -> None:
+        """Handle failure of async processing task."""
+        self.logger.error("Async task failed for %s: %s", file_path, error_message)
+
+        with self._pending_lock:
+            self._completed_count += 1
+
+            if self.progress_tracker:
+                self.progress_tracker.increment_failed(error_message)
+
+            # Check if all tasks are complete (including failures)
+            if self._completed_count >= self._total_expected:
+                self._finalize_batch_load()
+
+    def _finalize_batch_load(self) -> None:
+        """Finalize batch loading - update UI with all loaded models."""
+        try:
+            # Finish progress tracking
+            if self.progress_tracker:
+                self.progress_tracker.finish("All models processed")
+                self.progress_tracker = None
+
+            # Refresh the view with all models
+            self.update_model_view()
+
+            self.logger.info(
+                "Batch load finalized: %d models loaded", len(self.library_widget.current_models)
+            )
+
+        except Exception as e:
+            self.logger.error("Error finalizing batch load: %s", e, exc_info=True)
+
+    def _on_progress_update(self, current: int, total: int, message: str) -> None:
+        """
+        Handle throttled progress updates.
+
+        This is called by the progress tracker at most every 100ms.
+        """
+        try:
+            if self.library_widget._disposed:
+                return
+
+            # Update progress bar
+            if total > 0:
+                progress_percent = int((current / total) * 100)
+                self.library_widget.progress_bar.setRange(0, 100)
+                self.library_widget.progress_bar.setValue(progress_percent)
+
+            # Update status label
+            status_text = f"Processing models: {current}/{total} ({message})"
+            self.library_widget.status_label.setText(status_text)
+
+        except Exception as e:
+            self.logger.error("Error updating progress: %s", e, exc_info=True)
 
     def on_load_progress(self, progress_percent: float, message: str) -> None:
         """Handle load progress update."""

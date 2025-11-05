@@ -58,6 +58,7 @@ from .theme_constants import (
     SPACING_12,
     SPACING_16,
     SPACING_24,
+    MIN_WIDGET_SIZE,
 )
 
 # Import VTK color function
@@ -86,6 +87,7 @@ __all__ = [
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
+    "MIN_WIDGET_SIZE",
     # VTK integration
     "vtk_rgb",
 ]

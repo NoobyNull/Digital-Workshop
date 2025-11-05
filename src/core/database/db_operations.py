@@ -164,11 +164,47 @@ class DatabaseOperations:
                 """
                 )
 
+                # Create model_analysis table
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_analysis (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        model_id INTEGER NOT NULL,
+                        triangle_count INTEGER,
+                        vertex_count INTEGER,
+                        face_count INTEGER,
+                        edge_count INTEGER,
+                        unique_vertex_count INTEGER,
+                        volume REAL,
+                        surface_area REAL,
+                        bounding_box_min_x REAL,
+                        bounding_box_min_y REAL,
+                        bounding_box_min_z REAL,
+                        bounding_box_max_x REAL,
+                        bounding_box_max_y REAL,
+                        bounding_box_max_z REAL,
+                        bounding_box_width REAL,
+                        bounding_box_height REAL,
+                        bounding_box_depth REAL,
+                        non_manifold_edges INTEGER DEFAULT 0,
+                        duplicate_vertices INTEGER DEFAULT 0,
+                        degenerate_triangles INTEGER DEFAULT 0,
+                        analysis_time_seconds REAL,
+                        analysis_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        analysis_version TEXT DEFAULT '1.0',
+                        FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+                    )
+                """
+                )
+
                 # Create indexes
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_model_analysis_model_id ON model_analysis(model_id)"
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_models_thumbnail_path ON models(thumbnail_path)"

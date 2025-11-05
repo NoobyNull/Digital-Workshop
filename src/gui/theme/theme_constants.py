@@ -24,3 +24,11 @@ SPACING_8 = 8
 SPACING_12 = 12
 SPACING_16 = 16
 SPACING_24 = 24
+
+# ============================================================
+# Widget size constraints (px)
+# ============================================================
+
+# Minimum widget size to prevent zero-width/zero-height widgets
+# This protects against layout issues and ensures widgets remain visible
+MIN_WIDGET_SIZE = 25

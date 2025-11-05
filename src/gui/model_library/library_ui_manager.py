@@ -4,8 +4,8 @@ UI management for model library.
 Handles UI creation, layout, and styling.
 """
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QSize
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtCore import Qt, QSize, QSettings
+from PySide6.QtGui import QStandardItemModel, QAction
 from PySide6.QtWidgets import (
     QFrame,
     QGroupBox,
@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QWidget,
     QTreeView,
+    QMenu,
 )
 
 from src.core.logging_config import get_logger
@@ -29,6 +30,7 @@ from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 
 from .file_system_proxy import FileSystemProxyModel
 from .grid_icon_delegate import GridIconDelegate
+from .numeric_sort_proxy import NumericSortProxyModel
 
 
 logger = get_logger(__name__)
@@ -153,15 +155,21 @@ class LibraryUIManager:
         group = QGroupBox("Models")
         layout = QVBoxLayout(group)
 
+        # Row height zoom controlled by Ctrl+Scroll (no slider UI)
+        # Initialize row height from settings or default
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        self.library_widget.current_row_height = settings.value("row_height", 64, type=int)
+
         self.library_widget.view_tabs = QTabWidget()
 
         self.library_widget.list_view = QTableView()
         self.library_widget.list_model = QStandardItemModel()
         self.library_widget.list_model.setHorizontalHeaderLabels(
-            ["Name", "Format", "Size", "Triangles", "Category", "Added Date"]
+            ["Thumbnail", "Name", "Format", "Size", "Triangles", "Category", "Added Date"]
         )
 
-        self.library_widget.proxy_model = QSortFilterProxyModel()
+        # Use custom numeric sort proxy model for proper sorting
+        self.library_widget.proxy_model = NumericSortProxyModel()
         self.library_widget.proxy_model.setSourceModel(self.library_widget.list_model)
         self.library_widget.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.library_widget.proxy_model.setFilterKeyColumn(-1)
@@ -169,13 +177,48 @@ class LibraryUIManager:
         self.library_widget.list_view.setModel(self.library_widget.proxy_model)
         self.library_widget.list_view.setSortingEnabled(True)
         self.library_widget.list_view.setSelectionBehavior(QTableView.SelectRows)
-        # Set icon size for thumbnails in list view
-        self.library_widget.list_view.setIconSize(QSize(64, 64))
+
+        # Install event filter on list view to catch Ctrl+Scroll wheel events
+        self.library_widget.list_view.viewport().installEventFilter(self.library_widget)
+
+        # Apply initial row height from settings
+        initial_height = self.library_widget.current_row_height
+        self.library_widget.list_view.setIconSize(QSize(initial_height, initial_height))
+        self.library_widget.list_view.verticalHeader().setDefaultSectionSize(initial_height)
+
         # Removed setAlternatingRowColors(True) - qt-material handles alternating row colors via theme
         header = self.library_widget.list_view.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        for col in range(1, 6):
-            header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+
+        # Enable column reordering
+        header.setSectionsMovable(True)
+
+        # Restore column sizes from settings
+        for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
+            width = settings.value(f"column_{col}_width", type=int)
+            if width:
+                header.resizeSection(col, width)
+
+        # Set default resize modes
+        # Thumbnail column: fixed width
+        header.setSectionResizeMode(0, QHeaderView.Interactive)
+        # Name column: stretch to fill available space
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        # Other columns: interactive (user can resize)
+        for col in range(2, 7):
+            header.setSectionResizeMode(col, QHeaderView.Interactive)
+
+        # Save column sizes when they change
+        header.sectionResized.connect(self._save_column_size)
+
+        # Save column order when it changes
+        header.sectionMoved.connect(self._save_column_order)
+
+        # Enable context menu for column visibility
+        header.setContextMenuPolicy(Qt.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._show_column_menu)
+
+        # Column visibility and order will be restored after dock layout restoration (see widget.py)
+
         self.library_widget.view_tabs.addTab(self.library_widget.list_view, "List")
 
         self.library_widget.grid_view = QListView()
@@ -188,9 +231,9 @@ class LibraryUIManager:
         self.library_widget.grid_view.setIconSize(QSize(128, 128))
 
         # Use custom delegate to hide filenames in grid view
-        grid_delegate = GridIconDelegate(self.library_widget.grid_view)
-        grid_delegate.set_icon_size(QSize(128, 128))
-        self.library_widget.grid_view.setItemDelegate(grid_delegate)
+        self.library_widget.grid_delegate = GridIconDelegate(self.library_widget.grid_view)
+        self.library_widget.grid_delegate.set_icon_size(QSize(128, 128))
+        self.library_widget.grid_view.setItemDelegate(self.library_widget.grid_delegate)
 
         self.library_widget.view_tabs.addTab(self.library_widget.grid_view, "Grid")
 
@@ -215,6 +258,121 @@ class LibraryUIManager:
         status_layout.addWidget(self.library_widget.progress_bar)
 
         parent_layout.addWidget(status_frame)
+
+    def set_row_height(self, value: int) -> None:
+        """
+        Set the row height for the list view.
+
+        Args:
+            value: New row height value (clamped to 32-256 range)
+        """
+        # Clamp value to valid range
+        old_value = value
+        value = max(32, min(256, value))
+
+        logger.debug(f"set_row_height: requested={old_value}, clamped={value}, current={self.library_widget.current_row_height}")
+
+        # Store current height
+        self.library_widget.current_row_height = value
+
+        # Save to settings
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        settings.setValue("row_height", value)
+        logger.debug(f"Saved row_height to settings: {value}")
+
+        # Update icon size for list view (thumbnails scale with row height)
+        icon_size = QSize(value, value)
+        self.library_widget.list_view.setIconSize(icon_size)
+
+        # Update vertical header (row height) for list view
+        vertical_header = self.library_widget.list_view.verticalHeader()
+        vertical_header.setDefaultSectionSize(value)
+
+        # Force refresh to apply changes
+        self.library_widget.list_view.viewport().update()
+
+    def _save_column_size(self, column: int, old_size: int, new_size: int) -> None:
+        """
+        Save column size to settings.
+
+        Args:
+            column: Column index
+            old_size: Previous size (unused)
+            new_size: New size
+        """
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        settings.setValue(f"column_{column}_width", new_size)
+
+    def _save_column_order(self, logical_index: int, old_visual_index: int, new_visual_index: int) -> None:
+        """
+        Save column order to settings when columns are reordered.
+
+        Args:
+            logical_index: The logical index of the column being moved
+            old_visual_index: The old visual position
+            new_visual_index: The new visual position
+        """
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        header = self.library_widget.list_view.horizontalHeader()
+
+        # Save the complete visual order
+        visual_order = []
+        for logical in range(header.count()):
+            visual_order.append(header.visualIndex(logical))
+
+        settings.setValue("column_order", visual_order)
+        print(f"DEBUG: Saved column order: {visual_order}")
+        logger.debug(f"Saved column order: {visual_order}")
+
+    def _show_column_menu(self, position):
+        """Show context menu for column visibility control."""
+        header = self.library_widget.list_view.horizontalHeader()
+        menu = QMenu()
+
+        # Get column names
+        column_names = []
+        for col in range(self.library_widget.list_model.columnCount()):
+            column_names.append(self.library_widget.list_model.headerData(col, Qt.Horizontal))
+
+        # Create actions for each column
+        def make_toggle_handler(column_index):
+            """Create a handler that captures the column index."""
+            def handler(checked):
+                self._toggle_column_visibility(column_index, checked)
+            return handler
+
+        for col, name in enumerate(column_names):
+            action = QAction(name, menu)
+            action.setCheckable(True)
+            action.setChecked(not self.library_widget.list_view.isColumnHidden(col))
+            # Don't allow hiding Thumbnail (col 0) or Name (col 1) columns
+            if col in (0, 1):
+                action.setEnabled(False)
+            # Connect to handler that properly captures column index and checked state
+            action.triggered.connect(make_toggle_handler(col))
+            menu.addAction(action)
+
+        # Show menu at cursor position
+        menu.exec_(header.mapToGlobal(position))
+
+    def _toggle_column_visibility(self, column: int, checked: bool) -> None:
+        """
+        Toggle column visibility and save to settings.
+
+        Args:
+            column: Column index
+            checked: Whether column should be visible
+        """
+        print(f"DEBUG: Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})")
+        logger.info(f"Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})")
+        self.library_widget.list_view.setColumnHidden(column, not checked)
+        settings = QSettings("DigitalWorkshop", "ModelLibrary")
+        settings.setValue(f"column_{column}_visible", checked)
+        settings.sync()  # Force write to disk
+        # Verify it was saved
+        saved_value = settings.value(f"column_{column}_visible")
+        print(f"DEBUG: Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}")
+        logger.info(f"Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}")
 
     def apply_styling(self) -> None:
         """Apply CSS styling (no-op - qt-material handles this)."""
