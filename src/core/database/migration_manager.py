@@ -388,7 +388,6 @@ class MigrationManager:
 
     @log_function_call(logger)
     def migrate_to_version(
-        """TODO: Add docstring."""
         self, target_version: str, create_backup: bool = True
     ) -> List[MigrationResult]:
         """
@@ -633,7 +632,6 @@ class MigrationManager:
 
     @log_function_call(logger)
     def create_migration(
-        """TODO: Add docstring."""
         self,
         version: str,
         name: str,

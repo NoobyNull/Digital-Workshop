@@ -134,7 +134,6 @@ class STLGPUParser(BaseParser):
 
     @log_function_call
     def _parse_binary_stl_gpu(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
@@ -275,7 +274,6 @@ class STLGPUParser(BaseParser):
                 )
 
     def _execute_gpu_kernels(
-        """TODO: Add docstring."""
         self,
         raw_buffer: Any,
         vertex_buffer: Any,
@@ -336,7 +334,6 @@ class STLGPUParser(BaseParser):
             return False
 
     def _execute_triangle_processing_kernel(
-        """TODO: Add docstring."""
         self,
         raw_buffer: Any,
         vertex_buffer: Any,
@@ -381,7 +378,6 @@ class STLGPUParser(BaseParser):
             return False
 
     def _transfer_results_from_gpu(
-        """TODO: Add docstring."""
         self, vertex_buffer: Any, normal_buffer: Any, triangle_count: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Transfer processed results from GPU to CPU memory."""
@@ -431,7 +427,6 @@ class STLGPUParser(BaseParser):
                     self.logger.warning("Buffer cleanup error: %s", e)
 
     def _parse_binary_stl_cpu_fallback(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """CPU fallback parsing when GPU is unavailable."""
@@ -458,7 +453,6 @@ class STLGPUParser(BaseParser):
 
     @log_function_call
     def _parse_file_internal(
-        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """Internal parsing method with GPU acceleration."""

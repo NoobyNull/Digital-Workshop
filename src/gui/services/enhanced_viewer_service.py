@@ -31,7 +31,6 @@ class ModelLoadingWorker(QThread):
     error_occurred = Signal(str, str)  # error_type, message
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         viewer_widget: Viewer3DWidget,
@@ -205,7 +204,6 @@ class EnhancedViewerService(IEnhancedViewerService):
         )
 
     def load_model_async(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         progress_callback: Optional[Callable[[ProgressInfo], None]] = None,

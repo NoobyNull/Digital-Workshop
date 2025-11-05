@@ -66,7 +66,6 @@ class ThumbnailGenerator:
         self.logger.info("ThumbnailGenerator initialized with MaterialProvider")
 
     def generate_thumbnail(
-        """TODO: Add docstring."""
         self,
         model_path: str,
         file_hash: str,
@@ -159,7 +158,7 @@ class ThumbnailGenerator:
 
     def _load_model(self, model_path: str) -> Optional[Model]:
         """
-        Load a 3D model from file.
+        Load a 3D model from file using Trimesh (fast) with fallback.
 
         Args:
             model_path: Path to model file
@@ -168,10 +167,19 @@ class ThumbnailGenerator:
             Loaded Model object or None on failure
         """
         try:
-            # Currently supports STL files
-            # TODO: Add support for other formats (OBJ, STEP, 3MF)
-            parser = STLParser()
-            model = parser.parse_file(model_path, lazy_loading=False)
+            # Try Trimesh first for fast loading
+            from src.parsers.trimesh_loader import get_trimesh_loader
+
+            trimesh_loader = get_trimesh_loader()
+            model = None
+
+            if trimesh_loader.is_trimesh_available():
+                model = trimesh_loader.load_model(model_path)
+
+            # Fallback to standard parser if Trimesh failed or unavailable
+            if model is None:
+                parser = STLParser()
+                model = parser.parse_file(model_path, lazy_loading=False)
 
             if model is None:
                 self.logger.error("Parser returned None for: %s", model_path)
@@ -189,7 +197,6 @@ class ThumbnailGenerator:
             return None
 
     def _render_thumbnail(
-        """TODO: Add docstring."""
         self,
         model: Model,
         output_path: Path,
@@ -416,7 +423,6 @@ class ThumbnailGenerator:
             return None
 
     def _set_background(
-        """TODO: Add docstring."""
         self,
         renderer: vtk.vtkRenderer,
         background: Optional[Union[str, Tuple[float, float, float]]],

@@ -153,7 +153,6 @@ class CostCalculator:
         return subtotal * (percentage / 100.0)
 
     def estimate_total_cost(
-        """TODO: Add docstring."""
         self,
         material_cost: float,
         machine_time_cost: float,
@@ -214,7 +213,6 @@ class ProfessionalCostCalculator:
         self.tax_percentage = 0.0
 
     def generate_estimate(
-        """TODO: Add docstring."""
         self,
         material_cost: float,
         waste_percentage: float = 0.0,
@@ -317,7 +315,6 @@ class ProfessionalCostCalculator:
         )
 
     def set_hourly_rates(
-        """TODO: Add docstring."""
         self,
         labor_rate: float = None,
         design_rate: float = None,
@@ -341,7 +338,6 @@ class ProfessionalCostCalculator:
             self.assembly_hourly_rate = assembly_rate
 
     def set_overhead_and_margins(
-        """TODO: Add docstring."""
         self,
         overhead_pct: float = None,
         profit_margin_pct: float = None,

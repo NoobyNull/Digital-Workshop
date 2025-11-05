@@ -65,7 +65,6 @@ def list_theme_presets() -> list[str]:
 
 
 def apply_theme_preset(
-    """TODO: Add docstring."""
     preset_name: str,
     custom_mode: Optional[str] = None,
     base_primary: Optional[str] = None,

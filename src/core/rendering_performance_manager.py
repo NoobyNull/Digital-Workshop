@@ -217,7 +217,6 @@ class HardwareDetector:
 
     @staticmethod
     def _determine_hardware_tier(
-        """TODO: Add docstring."""
         cpu_cores: int, cpu_freq: float, memory_gb: float, gpu_memory_gb: float
     ) -> HardwareTier:
         """Determine hardware tier based on specifications."""
@@ -236,7 +235,6 @@ class HardwareDetector:
 
     @staticmethod
     def _determine_recommended_quality(
-        """TODO: Add docstring."""
         hardware_tier: HardwareTier, gpu_memory_gb: float
     ) -> RenderingQuality:
         """Determine recommended rendering quality."""
@@ -262,7 +260,6 @@ class HardwareDetector:
 
     @staticmethod
     def _calculate_limits(
-        """TODO: Add docstring."""
         hardware_tier: HardwareTier, gpu_memory_gb: float, system_memory_gb: float
     ) -> Tuple[int, int]:
         """Calculate rendering limits based on hardware."""
@@ -313,7 +310,6 @@ class LevelOfDetailManager:
         self._lock = threading.Lock()
 
     def create_lod_levels(
-        """TODO: Add docstring."""
         self, model_id: str, high_detail_mesh: Any, triangle_count: int
     ) -> List[Any]:
         """
@@ -640,7 +636,6 @@ class RenderingPerformanceManager:
         )
 
     def register_quality_change_callback(
-        """TODO: Add docstring."""
         self, callback: Callable[[RenderingQuality], None]
     ) -> None:
         """Register callback for quality level changes."""
@@ -651,7 +646,6 @@ class RenderingPerformanceManager:
         self._performance_alert_callbacks.append(callback)
 
     def update_rendering_metrics(
-        """TODO: Add docstring."""
         self, triangles_rendered: int = 0, vertices_rendered: int = 0
     ) -> RenderingMetrics:
         """

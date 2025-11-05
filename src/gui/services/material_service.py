@@ -441,7 +441,6 @@ class MaterialService(IMaterialService):
             return None
 
     def create_material_from_template(
-        """TODO: Add docstring."""
         self, template_name: str, custom_params: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """Create a new material from a template."""
@@ -596,7 +595,6 @@ class MaterialService(IMaterialService):
             return None
 
     def _on_validation_completed(
-        """TODO: Add docstring."""
         self, material_name: str, result: MaterialValidationResult
     ) -> None:
         """Handle validation completion."""

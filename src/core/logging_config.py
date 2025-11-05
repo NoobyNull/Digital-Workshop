@@ -12,6 +12,7 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict
 
 
 class SimpleFormatter(logging.Formatter):
@@ -145,7 +146,6 @@ class TimestampRotatingFileHandler(logging.Handler):
     """
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         log_dir: str = "logs",
         max_bytes: int = 10 * 1024 * 1024,
@@ -267,7 +267,6 @@ class TimestampRotatingFileHandler(logging.Handler):
 
 
 def setup_logging(
-    """TODO: Add docstring."""
     log_level: str = "INFO",
     log_dir: str = "logs",
     enable_console: bool = False,
@@ -377,7 +376,7 @@ def get_activity_logger(name: str) -> logging.Logger:
     return logger
 
 
-def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> None:
+def log_function_call(logger: logging.Logger, enable_logging: bool = False):
     """
     Decorator to automatically log function calls with parameters and return values.
 
@@ -389,10 +388,8 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> N
         Decorator function
     """
 
-    def decorator(func) -> None:
-        """TODO: Add docstring."""
-        def wrapper(*args, **kwargs) -> None:
-            """TODO: Add docstring."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
             # Only log if explicitly enabled
             if enable_logging:
                 try:
@@ -416,14 +413,16 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False) -> N
                             f"Completed {func.__name__}",
                             extra={
                                 "custom_function": func.__name__,
-                                "custom_result": str(result)[:100],  # Limit result length
+                                "custom_result": str(result)[
+                                    :100
+                                ],  # Limit result length
                             },
                         )
                     except:
                         # If logging fails, continue with the function
                         pass
                 return result
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except Exception as e:
                 # Always log errors regardless of enable_logging setting
                 try:
                     logger.error(

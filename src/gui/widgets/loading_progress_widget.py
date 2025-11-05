@@ -125,7 +125,6 @@ class LoadingProgressWidget(QWidget):
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
 
     def start_loading(
-        """TODO: Add docstring."""
         self, job_id: str, file_path: str, initial_message: str = "Initializing..."
     ) -> None:
         """

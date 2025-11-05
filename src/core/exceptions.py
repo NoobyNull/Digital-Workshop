@@ -12,7 +12,6 @@ class CandyCadenceException(Exception):
     """Base exception for all Candy-Cadence application errors."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         message: str,
         user_message: str = None,
@@ -66,7 +65,6 @@ class UnsupportedFormatError(ParsingException):
     """Raised when a file format is not supported by the parser."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         format_type: str,
@@ -378,7 +376,6 @@ class TimeoutException(PerformanceException):
     """Raised when an operation takes too long."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         operation: str,
         timeout_duration: float,

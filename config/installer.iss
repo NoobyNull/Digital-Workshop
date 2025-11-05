@@ -6,7 +6,7 @@
 #define MyAppPublisher "Digital Workshop Development Team"
 #define MyAppURL "https://github.com/NoobyNull/Digital-Workshop"
 #define MyAppExeName "Digital Workshop.exe"
-#define SourceDir "dist"
+#define SourceDir "..\dist"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -20,17 +20,18 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=resources\license.txt
-; Compression is turned off
-Compression=lz4
+LicenseFile=..\resources\license.txt
+; Use a supported compression method
+Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64
 ArchitecturesAllowed=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
-SetupIconFile=resources\icons\app.ico
-WizardSmallImageFile=resources\icons\wizard_small.bmp
-WizardLargeImageFile=resources\icons\wizard_large.bmp
+; Icon files are optional - comment out if missing
+; SetupIconFile=resources\icons\app.ico
+; WizardSmallImageFile=resources\icons\wizard_small.bmp
+; WizardImageFile=resources\icons\wizard_large.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -41,7 +42,6 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 
 [Files]
 Source: "{#SourceDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourceDir}\build_report.json"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

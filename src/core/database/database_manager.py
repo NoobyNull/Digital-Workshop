@@ -53,7 +53,6 @@ class DatabaseManager:
     # ===== Model Operations (delegated to ModelRepository) =====
 
     def add_model(
-        """TODO: Add docstring."""
         self,
         filename: str,
         format: str,
@@ -81,7 +80,6 @@ class DatabaseManager:
         return self._model_repo.get_model(model_id)
 
     def get_all_models(
-        """TODO: Add docstring."""
         self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get all models from the database."""
@@ -199,7 +197,6 @@ class DatabaseManager:
             return False
 
     def search_models(
-        """TODO: Add docstring."""
         self,
         query: str = "",
         category: Optional[str] = None,
@@ -308,7 +305,6 @@ class DatabaseManager:
     # ===== Project Operations (delegated to ProjectRepository) =====
 
     def create_project(
-        """TODO: Add docstring."""
         self,
         name: str,
         base_path: Optional[str] = None,
@@ -352,7 +348,6 @@ class DatabaseManager:
     # ===== File Operations (delegated to FileRepository) =====
 
     def add_file(
-        """TODO: Add docstring."""
         self,
         project_id: str,
         file_path: str,

@@ -154,7 +154,6 @@ class STEPParser(BaseParser):
         return [".step", ".stp"]
 
     def parse_file(
-        """TODO: Add docstring."""
         self,
         file_path: Union[str, Path],
         progress_callback: Optional[ProgressCallback] = None,
@@ -216,7 +215,6 @@ class STEPParser(BaseParser):
             raise ParseError(f"Failed to parse STEP file: {str(e)}")
 
     def _parse_step_file(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[ProgressCallback] = None
     ) -> None:
         """

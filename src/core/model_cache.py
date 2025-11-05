@@ -383,7 +383,6 @@ class ModelCache:
             self.logger.error("Failed to store to disk cache: %s", str(e))
 
     def _load_from_disk_cache(
-        """TODO: Add docstring."""
         self, file_path: str, cache_level: CacheLevel
     ) -> Optional[CacheEntry]:
         """
@@ -511,7 +510,6 @@ class ModelCache:
             return None
 
     def put(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         cache_level: CacheLevel,
@@ -721,7 +719,7 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info("High memory usage (%s), evicting entries", memory_usage_ratio:.1%)
+                self.logger.info("High memory usage (%.1f%%), evicting entries", memory_usage_ratio * 100)
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries

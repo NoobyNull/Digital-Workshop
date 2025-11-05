@@ -699,7 +699,7 @@ class GcodePreviewerWidget(QWidget):
         self.vtk_widget.update_render()
 
         self.gcode_loaded.emit(self.current_file)
-        self.logger.info("Finished loading G-code: %s moves", len(self.moves):,)
+        self.logger.info("Finished loading G-code: %s moves", f"{len(self.moves):,}")
         self.progress_bar.setVisible(False)
 
     def _on_loader_error(self, error_msg: str) -> None:
@@ -765,7 +765,7 @@ class GcodePreviewerWidget(QWidget):
         self.vtk_widget.update_render()
 
         self.gcode_loaded.emit(self.current_file)
-        self.logger.info("Interactive loader finished: %s moves", len(self.moves):,)
+        self.logger.info("Interactive loader finished: %s moves", f"{len(self.moves):,}")
 
     def _on_interactive_loader_chunk_loaded(self, chunk_moves: list) -> None:
         """Handle chunk loaded from interactive loader."""

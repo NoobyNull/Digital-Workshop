@@ -433,7 +433,6 @@ class PerformanceMonitor:
             return MemoryStats(0, 0, 0, 0, 0)
 
     def start_operation(
-        """TODO: Add docstring."""
         self, operation_name: str, metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         """
@@ -463,7 +462,6 @@ class PerformanceMonitor:
         return operation_id
 
     def end_operation(
-        """TODO: Add docstring."""
         self,
         operation_id: str,
         success: bool = True,
@@ -637,7 +635,6 @@ class PerformanceMonitor:
             }
 
     def get_operation_metrics(
-        """TODO: Add docstring."""
         self, operation_name: Optional[str] = None, limit: int = 100
     ) -> List[OperationMetrics]:
         """
@@ -719,7 +716,7 @@ class PerformanceMonitor:
 
         freed_mb = memory_before - memory_after
         if freed_mb > 1.0:  # Only log if significant
-            self.logger.info("Garbage collection freed %sMB", freed_mb:.1f)
+            self.logger.info("Garbage collection freed %.1fMB", freed_mb)
 
     def export_performance_report(self, file_path: str) -> None:
         """

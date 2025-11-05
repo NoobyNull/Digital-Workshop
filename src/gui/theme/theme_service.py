@@ -287,7 +287,6 @@ class ThemeService:
     # ============================================================
 
     def apply_theme(
-        """TODO: Add docstring."""
         self,
         theme: ThemeType = "dark",
         library: ThemeLibrary = "qt-material",  # noqa: ARG002 - kept for compatibility
@@ -486,7 +485,6 @@ class ThemeService:
         return self.get_available_presets()
 
     def apply_theme_preset(
-        """TODO: Add docstring."""
         self,
         preset_name: str,
         custom_mode: Optional[str] = None,
@@ -707,7 +705,6 @@ def list_theme_presets() -> list[str]:
 
 
 def apply_theme_preset(
-    """TODO: Add docstring."""
     preset_name: str,
     custom_mode: Optional[str] = None,
     base_primary: Optional[str] = None,

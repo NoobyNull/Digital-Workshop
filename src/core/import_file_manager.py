@@ -140,7 +140,6 @@ class ImportFileManager:
         return f"import_{int(time.time() * 1000)}"
 
     def validate_root_directory(
-        """TODO: Add docstring."""
         self, root_directory: str, mode: FileManagementMode
     ) -> Tuple[bool, Optional[str]]:
         """
@@ -219,7 +218,6 @@ class ImportFileManager:
         return self.ORGANIZED_SUBDIRS.get(ext, self.ORGANIZED_SUBDIRS["other"])
 
     def _create_organized_path(
-        """TODO: Add docstring."""
         self, root_directory: str, file_path: str, file_hash: Optional[str] = None
     ) -> Path:
         """
@@ -263,7 +261,6 @@ class ImportFileManager:
         return target_path
 
     def _copy_file_with_progress(
-        """TODO: Add docstring."""
         self,
         source: Path,
         destination: Path,
@@ -298,7 +295,6 @@ class ImportFileManager:
                     progress_callback(percent)
 
     def start_import_session(
-        """TODO: Add docstring."""
         self,
         file_paths: List[str],
         mode: FileManagementMode,
@@ -387,7 +383,6 @@ class ImportFileManager:
         return True, None, session
 
     def process_file(
-        """TODO: Add docstring."""
         self,
         file_info: ImportFileInfo,
         session: ImportSession,
@@ -624,7 +619,6 @@ class ImportFileManager:
         return self._active_session
 
     def check_duplicate(
-        """TODO: Add docstring."""
         self, file_hash: str, existing_hashes: Dict[str, Any]
     ) -> Tuple[bool, Optional[Any]]:
         """

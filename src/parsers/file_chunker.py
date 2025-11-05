@@ -63,7 +63,6 @@ class FileChunker:
 
     @log_function_call
     def create_chunks(
-        """TODO: Add docstring."""
         self,
         file_path: Path,
         target_chunk_size_mb: int = 50,
@@ -222,7 +221,6 @@ class FileChunker:
         return count
 
     def _calculate_chunk_parameters(
-        """TODO: Add docstring."""
         self,
         file_size: int,
         triangle_count: int,
@@ -271,7 +269,6 @@ class FileChunker:
         }
 
     def _create_binary_chunks(
-        """TODO: Add docstring."""
         self, file_path: Path, triangle_count: int, chunk_params: dict
     ) -> List[FileChunk]:
         """

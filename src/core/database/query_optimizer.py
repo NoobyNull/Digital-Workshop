@@ -316,7 +316,6 @@ class QueryOptimizer:
 
     @log_function_call(logger)
     def execute_optimal_query(
-        """TODO: Add docstring."""
         self, query: str, params: tuple = None, use_cache: bool = True
     ) -> List[tuple]:
         """
@@ -350,7 +349,7 @@ class QueryOptimizer:
                     self.query_cache.put(query, params, results)
 
                 execution_time = time.time() - start_time
-                logger.debug("Query executed in %ss: {query[:50]}...", execution_time:.3f)
+                logger.debug("Query executed in %.3fs: {query[:50]}...", execution_time)
 
                 return results
 
@@ -848,4 +847,4 @@ def query_performance_monitor(optimizer: QueryOptimizer, query: str) -> None:
     finally:
         execution_time = time.time() - start_time
         if execution_time > 0.1:  # Log slow queries
-            logger.warning("Slow query detected: %ss - {query[:100]}...", execution_time:.3f)
+            logger.warning("Slow query detected: %.3fs - {query[:100]}...", execution_time)

@@ -27,7 +27,6 @@ class SpecificErrorHandler:
     """
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         context: ErrorContext,
         expected_errors: Optional[Union[Type[Exception], tuple]] = None,
@@ -193,7 +192,6 @@ class FileIOErrorHandler(SpecificErrorHandler):
     """Specialized handler for file I/O operations."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         operation: str,
         file_path: Optional[Path] = None,
@@ -267,7 +265,6 @@ def handle_vtk_errors(operation: str, context_info: Optional[Dict[str, Any]] = N
 
 @contextmanager
 def handle_file_io_errors(
-    """TODO: Add docstring."""
     operation: str,
     file_path: Optional[Path] = None,
     context_info: Optional[Dict[str, Any]] = None,
@@ -302,7 +299,6 @@ def handle_memory_errors(operation: str, context_info: Optional[Dict[str, Any]] 
 
 # Decorators for function-level error handling
 def specific_error_handler(
-    """TODO: Add docstring."""
     context: ErrorContext,
     expected_errors: Optional[Union[Type[Exception], tuple]] = None,
     recovery_strategy: Optional[ErrorRecoveryStrategy] = None,

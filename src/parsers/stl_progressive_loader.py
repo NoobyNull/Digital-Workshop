@@ -117,7 +117,6 @@ class ProgressiveSTLLoader:
     """
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         config: Optional[LODConfig] = None,
         gpu_config: Optional[GPUParseConfig] = None,
@@ -139,7 +138,6 @@ class ProgressiveSTLLoader:
 
     @log_function_call
     def load_progressive(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         progress_callback: Optional[ProgressCallback] = None,
@@ -275,7 +273,6 @@ class ProgressiveSTLLoader:
         return min(target_count, max_count)
 
     def _load_lod_level(
-        """TODO: Add docstring."""
         self, file_path: Path, lod_level: LODLevel, target_count: int, total_count: int
     ) -> Model:
         """Load a specific LOD level."""
@@ -341,7 +338,6 @@ class ProgressiveSTLLoader:
         return indices[:target_count]
 
     def _create_sampled_model_from_triangles(
-        """TODO: Add docstring."""
         self, full_model: Model, target_count: int, total_count: int
     ) -> Model:
         """Create sampled model from Triangle objects (fallback)."""
@@ -377,7 +373,6 @@ class ProgressiveSTLLoader:
 
     @log_function_call
     def preload_lod_level(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         lod_level: LODLevel,

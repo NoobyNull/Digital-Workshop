@@ -159,14 +159,12 @@ class LightingControlPanel(QDockWidget):
 
     # ---- Public API ----
     def values(
-        """TODO: Add docstring."""
         self,
     ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], float]:
         """Return (position(x,y,z), color(r,g,b normalized), intensity)"""
         return (self._pos_x, self._pos_y, self._pos_z), self._color, self._intensity
 
     def set_values(
-        """TODO: Add docstring."""
         self,
         position: Tuple[float, float, float] | None = None,
         color: Tuple[float, float, float] | None = None,
@@ -212,7 +210,6 @@ class LightingControlPanel(QDockWidget):
 
     # ---- Internals ----
     def _make_pos_slider(
-        """TODO: Add docstring."""
         self, name: str, min_val: float, max_val: float, initial: float
     ) -> QSlider:
         """Create a position slider with proper range and styling."""

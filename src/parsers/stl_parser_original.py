@@ -180,7 +180,6 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to detect STL format: {str(e)}")
 
     def _parse_binary_stl(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> STLModel:
         """
@@ -359,7 +358,7 @@ class STLParser(BaseParser):
                     min_xyz = verts.reshape(-1, 3).min(axis=0)
                     max_xyz = verts.reshape(-1, 3).max(axis=0)
                     t_bnd1 = time.time()
-                    self.logger.info("Bounds computed in %ss", t_bnd1 - t_bnd0:.2f)
+                    self.logger.info("Bounds computed in %.2fs", t_bnd1 - t_bnd0)
 
                     # Build Triangle dataclasses using multiple processes for large datasets
                     if progress_callback:
@@ -407,7 +406,7 @@ class STLParser(BaseParser):
 
                     # Finalize build timing
                     t_bld1 = time.time()
-                    self.logger.info("Triangle build completed in %ss", t_bld1 - t_bld0:.2f)
+                    self.logger.info("Triangle build completed in %.2fs", t_bld1 - t_bld0)
                     # Final GC to release worker-side memory sooner
                     gc.collect()
                     # Memory snapshot (best-effort)
@@ -415,7 +414,7 @@ class STLParser(BaseParser):
                         import psutil  # type: ignore
 
                         rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
-                        self.logger.info("Process RSS after vectorized parse: %s MB", rss_mb:.0f)
+                        self.logger.info("Process RSS after vectorized parse: %.0f MB", rss_mb)
                     except Exception:
                         pass
 
@@ -523,7 +522,6 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse binary STL: {str(e)}")
 
     def _parse_binary_stl_arrays(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> Model:
         """
@@ -623,7 +621,7 @@ class STLParser(BaseParser):
                 min_xyz = flat.min(axis=0)
                 max_xyz = flat.max(axis=0)
                 t_bnd1 = time.time()
-                self.logger.info("Bounds computed in %ss", t_bnd1 - t_bnd0:.2f)
+                self.logger.info("Bounds computed in %.2fs", t_bnd1 - t_bnd0)
 
                 # free large temps early
                 del verts
@@ -634,7 +632,7 @@ class STLParser(BaseParser):
                     import psutil  # type: ignore
 
                     rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
-                    self.logger.info("Process RSS after array parse: %s MB", rss_mb:.0f)
+                    self.logger.info("Process RSS after array parse: %.0f MB", rss_mb)
                 except Exception:
                     pass
 
@@ -675,7 +673,6 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse binary STL (array): {str(e)}")
 
     def _parse_ascii_stl(
-        """TODO: Add docstring."""
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
     ) -> STLModel:
         """
@@ -844,7 +841,6 @@ class STLParser(BaseParser):
             raise STLParseError(f"Failed to parse ASCII STL: {str(e)}")
 
     def _parse_file_internal(
-        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """
@@ -873,7 +869,7 @@ class STLParser(BaseParser):
         if file_size == 0:
             raise STLParseError("STL file is empty")
 
-        self.logger.info("Starting STL parsing: %s ({file_size} bytes)", file_path)
+        self.logger.info("Starting STL parsing: %s (%d bytes)", file_path, file_size)
 
         try:
             # Detect format
@@ -948,7 +944,7 @@ class STLParser(BaseParser):
                 file_path=str(file_path),
             )
 
-            self.logger.info("Parsed STL metadata: %s ({triangle_count} triangles)", file_path)
+            self.logger.info("Parsed STL metadata: %s (%d triangles)", file_path, stats.triangle_count)
             return model
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -997,7 +993,6 @@ class STLParser(BaseParser):
         return triangle_count
 
     def _load_low_res_geometry(
-        """TODO: Add docstring."""
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
     ) -> Model:
         """

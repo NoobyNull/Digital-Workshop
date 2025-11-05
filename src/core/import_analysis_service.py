@@ -120,7 +120,6 @@ class AnalysisWorker(QThread):
     batch_completed = Signal(object)  # BatchAnalysisResult
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         model_id: int,
@@ -174,7 +173,6 @@ class BatchAnalysisWorker(QThread):
     batch_completed = Signal(object)  # BatchAnalysisResult
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         file_model_pairs: List[Tuple[str, int]],
         service,
@@ -272,7 +270,6 @@ class ImportAnalysisService:
         self.logger.debug(json.dumps(log_entry))
 
     def start_analysis(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         model_id: int,
@@ -316,7 +313,6 @@ class ImportAnalysisService:
         worker.start()
 
     def start_batch_analysis(
-        """TODO: Add docstring."""
         self,
         file_model_pairs: List[Tuple[str, int]],
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
@@ -352,7 +348,6 @@ class ImportAnalysisService:
         worker.start()
 
     def _analyze_single_model(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         model_id: int,
@@ -453,7 +448,6 @@ class ImportAnalysisService:
             )
 
     def _load_model(
-        """TODO: Add docstring."""
         self,
         file_path: str,
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
@@ -501,7 +495,6 @@ class ImportAnalysisService:
             raise ValueError(f"Unsupported file format: {file_ext}")
 
     def _perform_geometry_analysis(
-        """TODO: Add docstring."""
         self,
         model: Model,
         model_id: int,
@@ -804,7 +797,6 @@ class ImportAnalysisService:
         return abs(volume)
 
     def _create_cancelled_result(
-        """TODO: Add docstring."""
         self, model_id: int, file_path: str, start_time: float
     ) -> GeometryAnalysisResult:
         """Create a cancelled result."""
@@ -840,7 +832,6 @@ class ImportAnalysisService:
         )
 
     def _analyze_batch_internal(
-        """TODO: Add docstring."""
         self,
         file_model_pairs: List[Tuple[str, int]],
         progress_callback: Optional[Callable[[int, int, str], None]] = None,

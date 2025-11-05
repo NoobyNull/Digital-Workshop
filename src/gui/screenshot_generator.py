@@ -21,7 +21,6 @@ class ScreenshotGenerator:
     """Generate screenshots of 3D models with applied materials."""
 
     def __init__(
-        """TODO: Add docstring."""
         self,
         width: int = 256,
         height: int = 256,
@@ -44,7 +43,6 @@ class ScreenshotGenerator:
         self.default_material_name = material_name
 
     def capture_model_screenshot(
-        """TODO: Add docstring."""
         self,
         model_path: str,
         output_path: Optional[str] = None,

@@ -69,7 +69,6 @@ class ThemeService:
         return cls._instance
 
     def apply_theme(
-        """TODO: Add docstring."""
         self,
         theme: ThemeType = "dark",
         library: ThemeLibrary = "qdarkstyle",  # noqa: ARG002 - kept for compatibility

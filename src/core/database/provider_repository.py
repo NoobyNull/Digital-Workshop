@@ -33,7 +33,6 @@ class ProviderRepository:
                 self.logger.warning("Error closing connection: %s", e)
 
     def add_provider(
-        """TODO: Add docstring."""
         self,
         name: str,
         description: str = "",

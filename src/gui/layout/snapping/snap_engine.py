@@ -349,7 +349,6 @@ class SnapEngine:
             self.logger.error("Failed to rebuild spatial index: %s", e)
 
     def calculate_snap(
-        """TODO: Add docstring."""
         self,
         position: QPointF,
         source_system: CoordinateSystem = CoordinateSystem.CLIENT,
@@ -469,7 +468,6 @@ class SnapEngine:
         return distance < hysteresis_threshold
 
     def _generate_snap_candidates(
-        """TODO: Add docstring."""
         self,
         position: QPointF,
         zones: List[SnapZone],
@@ -510,7 +508,6 @@ class SnapEngine:
         return candidates
 
     def _create_snap_candidate(
-        """TODO: Add docstring."""
         self,
         position: QPointF,
         zone: SnapZone,
@@ -586,7 +583,6 @@ class SnapEngine:
         return QPointF(snap_x, snap_y)
 
     def _calculate_center_snap(
-        """TODO: Add docstring."""
         self, position: QPointF, zone: SnapZone
     ) -> QPointF:  # pylint: disable=unused-argument
         """Calculate center snap position."""
@@ -615,7 +611,6 @@ class SnapEngine:
         return nearest_corner
 
     def _calculate_candidate_score(
-        """TODO: Add docstring."""
         self, distance: float, zone: SnapZone, snap_type: SnapType
     ) -> float:
         """
@@ -675,7 +670,6 @@ class SnapEngine:
         return min(1.0, base_confidence * (0.5 + 0.5 * distance_factor))
 
     def _select_best_candidate(
-        """TODO: Add docstring."""
         self, candidates: List[SnapCandidate], max_candidates: int
     ) -> Optional[SnapCandidate]:
         """

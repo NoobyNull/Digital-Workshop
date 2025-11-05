@@ -102,7 +102,7 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("save", elapsed)
 
-                logger.debug("Theme saved successfully in %sms", elapsed:.2f)
+                logger.debug("Theme saved successfully in %.2fms", elapsed)
                 return True
 
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -143,7 +143,7 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("load", elapsed)
 
-                logger.debug("Theme loaded successfully in %sms", elapsed:.2f)
+                logger.debug("Theme loaded successfully in %.2fms", elapsed)
                 return complete_data
 
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -188,7 +188,7 @@ class ThemePersistence:
                     elapsed = (time.time() - start_time) * 1000
                     self._track_operation("atomic_save", elapsed)
 
-                    logger.debug("Theme saved atomically in %sms", elapsed:.2f)
+                    logger.debug("Theme saved atomically in %.2fms", elapsed)
                     return True
 
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -239,7 +239,7 @@ class ThemePersistence:
                 elapsed = (time.time() - start_time) * 1000
                 self._track_operation("clear", elapsed)
 
-                logger.info("Theme settings cleared in %sms", elapsed:.2f)
+                logger.info("Theme settings cleared in %.2fms", elapsed)
                 return True
 
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

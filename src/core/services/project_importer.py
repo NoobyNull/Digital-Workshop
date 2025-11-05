@@ -51,7 +51,6 @@ class ProjectImporter:
 
     @log_function_call(logger)
     def import_project(
-        """TODO: Add docstring."""
         self,
         folder_path: str,
         project_name: str,
