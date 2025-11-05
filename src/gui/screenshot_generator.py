@@ -96,7 +96,9 @@ class ScreenshotGenerator:
             if material_manager and mat_to_apply:
                 try:
                     self.logger.info(f"Applying material '{mat_to_apply}' to actor...")
-                    success = material_manager.apply_material_to_actor(actor, mat_to_apply)
+                    success = material_manager.apply_material_to_actor(
+                        actor, mat_to_apply
+                    )
                     if success:
                         self.logger.info(
                             f"Successfully applied material '{mat_to_apply}' to screenshot"
@@ -113,8 +115,17 @@ class ScreenshotGenerator:
                                 mapper.SetInputData(input_data)
                                 self.logger.debug("Mapper updated with latest data")
                     else:
-                        self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        self.logger.warning(
+                            f"Failed to apply material '{mat_to_apply}'"
+                        )
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to apply material: %s", e)
 
             # Setup lighting and camera
@@ -163,12 +174,40 @@ class ScreenshotGenerator:
                 engine.cleanup()
 
     def _load_model(self, model_path: str) -> Optional[STLModel]:
-        """Load a model from file."""
+        """
+        Load a model from file using Trimesh (fast) with fallback.
+
+        For screenshot generation, we prioritize speed:
+        1. Try Trimesh first (fastest, optimized for rendering)
+        2. Fallback to STL parser with lazy loading
+
+        Args:
+            model_path: Path to model file
+
+        Returns:
+            Loaded Model object or None on failure
+        """
         try:
+            # Try Trimesh first for fast loading (PREFERRED for screenshots)
+            from src.parsers.trimesh_loader import get_trimesh_loader
+
+            trimesh_loader = get_trimesh_loader()
+
+            if trimesh_loader.is_trimesh_available():
+                model = trimesh_loader.load_model(model_path)
+                if model:
+                    self.logger.debug(
+                        "Loaded model via Trimesh: %s triangles",
+                        len(model.triangles) if hasattr(model, "triangles") else 0,
+                    )
+                    return model
+
+            # Fallback to standard parser with lazy loading for speed
+            self.logger.debug("Trimesh unavailable, using STL parser with lazy loading")
             parser = STLParser()
-            # Force full geometry loading for screenshots (disable lazy loading)
-            model = parser.parse_file(model_path, lazy_loading=False)
+            model = parser.parse_file(model_path, lazy_loading=True)
             return model
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load model %s: {e}", model_path)
             return None
@@ -176,7 +215,9 @@ class ScreenshotGenerator:
     def _create_actor_from_model(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from a model."""
         try:
-            self.logger.info("Creating actor from model with %s triangles", len(model.triangles))
+            self.logger.info(
+                "Creating actor from model with %s triangles", len(model.triangles)
+            )
 
             # Check if model is array-based (using the same logic as ModelRenderer)
             if hasattr(model, "is_array_based") and model.is_array_based():
@@ -207,7 +248,9 @@ class ScreenshotGenerator:
             self.logger.debug("Processing %s triangles...", len(model.triangles))
             for i, triangle in enumerate(model.triangles):
                 if i % 1000 == 0:  # Log progress for large models
-                    self.logger.debug("Processing triangle %s/{len(model.triangles)}", i)
+                    self.logger.debug(
+                        "Processing triangle %s/{len(model.triangles)}", i
+                    )
 
                 try:
                     # Add vertices using direct access (following working pattern)
@@ -234,16 +277,27 @@ class ScreenshotGenerator:
                     normals.InsertNextTuple(normal)
                     normals.InsertNextTuple(normal)
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as tri_error:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as tri_error:
                     self.logger.warning("Error processing triangle %s: {tri_error}", i)
                     continue
 
             point_count = points.GetNumberOfPoints()
             cell_count = cells.GetNumberOfCells()
-            self.logger.info("Created polydata: %s points, {cell_count} cells", point_count)
+            self.logger.info(
+                "Created polydata: %s points, {cell_count} cells", point_count
+            )
 
             if point_count == 0 or cell_count == 0:
-                self.logger.error("No points or cells created - model may be empty or invalid")
+                self.logger.error(
+                    "No points or cells created - model may be empty or invalid"
+                )
                 return None
 
             # Create polydata with points, cells, and normals
@@ -271,17 +325,23 @@ class ScreenshotGenerator:
             prop.SetSpecularPower(20)  # Shininess
             prop.LightingOn()  # Enable lighting calculations
 
-            self.logger.info("Actor created successfully with bounds: %s", actor.GetBounds())
+            self.logger.info(
+                "Actor created successfully with bounds: %s", actor.GetBounds()
+            )
             return actor
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to create actor from triangles: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to create actor from triangles: %s", e, exc_info=True
+            )
             return None
 
     def _create_actor_from_arrays(self, model: STLModel) -> Optional[vtk.vtkActor]:
         """Create a VTK actor from array-based model (following ModelRenderer pattern)."""
         try:
             if not hasattr(model, "is_array_based") or not model.is_array_based():
-                self.logger.warning("Model is not array-based, falling back to triangle creation")
+                self.logger.warning(
+                    "Model is not array-based, falling back to triangle creation"
+                )
                 return self._create_actor_from_triangles(model)
 
             vertex_array = getattr(model, "vertex_array", None)
@@ -295,7 +355,9 @@ class ScreenshotGenerator:
 
             total_vertices = int(vertex_array.shape[0])
             if total_vertices % 3 != 0:
-                self.logger.warning("Vertex array length is not multiple of 3; falling back")
+                self.logger.warning(
+                    "Vertex array length is not multiple of 3; falling back"
+                )
                 return self._create_actor_from_triangles(model)
 
             self.logger.info("Creating actor from arrays: %s vertices", total_vertices)
@@ -352,7 +414,9 @@ class ScreenshotGenerator:
             )
             return actor
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to create actor from arrays: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to create actor from arrays: %s", e, exc_info=True
+            )
             return None
 
     def _get_temp_screenshot_path(self) -> str:

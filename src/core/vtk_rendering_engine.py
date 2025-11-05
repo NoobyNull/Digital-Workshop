@@ -41,6 +41,11 @@ class VTKRenderingEngine:
         self.renderer = None
         self.camera = None
 
+        # Background image caching to avoid reloading same image multiple times
+        self._cached_bg_image_path = None
+        self._cached_bg_texture = None
+        self._cached_bg_actor = None
+
     def setup_render_window(self) -> bool:
         """
         Create and configure offscreen render window.
@@ -64,7 +69,9 @@ class VTKRenderingEngine:
             self.logger.error("Failed to setup render window: %s", e)
             return False
 
-    def set_background_color(self, color: Union[str, Tuple[float, float, float]]) -> None:
+    def set_background_color(
+        self, color: Union[str, Tuple[float, float, float]]
+    ) -> None:
         """
         Set solid background color.
 
@@ -75,7 +82,9 @@ class VTKRenderingEngine:
             if isinstance(color, str) and color.startswith("#"):
                 # Convert hex to RGB
                 hex_color = color.lstrip("#")
-                r, g, b = tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
+                r, g, b = tuple(
+                    int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4)
+                )
                 self.renderer.SetBackground(r, g, b)
             elif isinstance(color, (tuple, list)) and len(color) == 3:
                 self.renderer.SetBackground(*color)
@@ -89,7 +98,10 @@ class VTKRenderingEngine:
 
     def set_background_image(self, image_path: str) -> None:
         """
-        Set background image with dynamic plane sizing.
+        Set background image with dynamic plane sizing and caching.
+
+        Caches the loaded texture to avoid reloading the same image multiple times
+        during batch thumbnail generation, significantly improving performance.
 
         Args:
             image_path: Path to background image file
@@ -99,20 +111,37 @@ class VTKRenderingEngine:
                 self.logger.warning("Background image not found: %s", image_path)
                 return
 
-            # Read image
-            reader = vtk.vtkPNGReader()
-            if image_path.lower().endswith((".jpg", ".jpeg")):
-                reader = vtk.vtkJPEGReader()
+            # Check if we can reuse cached texture
+            if self._cached_bg_image_path == image_path and self._cached_bg_texture:
+                self.logger.debug("Reusing cached background image: %s", image_path)
+                texture = self._cached_bg_texture
+            else:
+                # Load and cache new texture
+                self.logger.debug(
+                    "Loading and caching background image: %s", image_path
+                )
+                reader = vtk.vtkPNGReader()
+                if image_path.lower().endswith((".jpg", ".jpeg")):
+                    reader = vtk.vtkJPEGReader()
 
-            reader.SetFileName(image_path)
-            reader.Update()
+                reader.SetFileName(image_path)
+                reader.Update()
 
-            # Create texture
-            texture = vtk.vtkTexture()
-            texture.SetInputConnection(reader.GetOutputPort())
-            texture.InterpolateOn()
-            texture.EdgeClampOn()
-            texture.RepeatOn()
+                # Create texture
+                texture = vtk.vtkTexture()
+                texture.SetInputConnection(reader.GetOutputPort())
+                texture.InterpolateOn()
+                texture.EdgeClampOn()
+                texture.RepeatOn()
+
+                # Cache the texture
+                self._cached_bg_image_path = image_path
+                self._cached_bg_texture = texture
+
+            # Remove old background actor if exists
+            if self._cached_bg_actor and self.renderer:
+                self.renderer.RemoveActor(self._cached_bg_actor)
+                self._cached_bg_actor = None
 
             # Calculate dynamic plane size based on camera distance
             cam_pos = self.camera.GetPosition()
@@ -142,6 +171,9 @@ class VTKRenderingEngine:
             actor.GetProperty().SetTexture("map_d", texture)
             actor.GetProperty().LightingOff()
             actor.GetProperty().SetOpacity(1.0)
+
+            # Cache the actor for cleanup
+            self._cached_bg_actor = actor
 
             self.renderer.AddActor(actor)
             self.logger.debug("Background image set: %s", image_path)
@@ -246,11 +278,22 @@ class VTKRenderingEngine:
             return False
 
     def cleanup(self) -> None:
-        """Cleanup VTK resources."""
+        """Cleanup VTK resources including cached background image."""
         try:
+            # Remove cached background actor from renderer
+            if self._cached_bg_actor and self.renderer:
+                self.renderer.RemoveActor(self._cached_bg_actor)
+
+            # Clear background image cache
+            self._cached_bg_image_path = None
+            self._cached_bg_texture = None
+            self._cached_bg_actor = None
+
+            # Cleanup render window
             if self.render_window:
                 self.render_window.Finalize()
                 self.render_window = None
+
             self.renderer = None
             self.camera = None
             self.logger.debug("Cleanup complete")

@@ -59,6 +59,7 @@ from src.core.import_analysis_service import (
     BatchAnalysisResult,
 )
 from src.core.database_manager import get_database_manager
+from src.core.services.image_pairing_service import get_image_pairing_service
 
 
 class ImportWorkflowStage(Enum):
@@ -168,7 +169,9 @@ class ImportCoordinatorWorker(QThread):
 
         # Initialize services
         self.file_manager = ImportFileManager()
-        self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
+        self.thumbnail_service = (
+            ImportThumbnailService() if generate_thumbnails else None
+        )
         self.analysis_service = ImportAnalysisService() if run_analysis else None
         self.db_manager = get_database_manager()
 
@@ -178,7 +181,9 @@ class ImportCoordinatorWorker(QThread):
 
         try:
             # Stage 1: Validation
-            self._update_stage(ImportWorkflowStage.VALIDATION, "Validating import settings...")
+            self._update_stage(
+                ImportWorkflowStage.VALIDATION, "Validating import settings..."
+            )
             if not self._validate_settings():
                 return
 
@@ -202,7 +207,9 @@ class ImportCoordinatorWorker(QThread):
                 thumbnail_result = self._generate_thumbnails(processed_files)
 
             # Stage 5: Store in database
-            self._update_stage(ImportWorkflowStage.DATABASE_STORAGE, "Storing import results...")
+            self._update_stage(
+                ImportWorkflowStage.DATABASE_STORAGE, "Storing import results..."
+            )
             stored_models = self._store_in_database(session, processed_files)
 
             # Stage 6: Queue background analysis
@@ -227,7 +234,9 @@ class ImportCoordinatorWorker(QThread):
                 duplicates_detected=import_result.duplicate_count,
             )
 
-            self._update_stage(ImportWorkflowStage.COMPLETED, "Import completed successfully")
+            self._update_stage(
+                ImportWorkflowStage.COMPLETED, "Import completed successfully"
+            )
             self.import_completed.emit(final_result)
 
             # Cleanup
@@ -318,13 +327,21 @@ class ImportCoordinatorWorker(QThread):
     def _generate_thumbnails(
         self, processed_files: List[ImportFileInfo]
     ) -> Optional[ThumbnailBatchResult]:
-        """Generate thumbnails for processed files."""
-        self._update_stage(ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails...")
+        """
+        Generate thumbnails for processed files with image pairing support.
+
+        Checks for matching image files (e.g., model1.stl + model1.jpg) and uses
+        them as thumbnails instead of generating via VTK rendering.
+        """
+        self._update_stage(
+            ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails..."
+        )
 
         try:
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
+            import shutil
 
             config = ApplicationConfig.get_default()
             settings = QSettings()
@@ -333,7 +350,9 @@ class ImportCoordinatorWorker(QThread):
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -341,39 +360,109 @@ class ImportCoordinatorWorker(QThread):
             # Use background image if set, otherwise use background color
             background = bg_image if bg_image else bg_color
 
-            # Prepare file list for thumbnail generation
+            # Get image pairing service
+            pairing_service = get_image_pairing_service()
+
+            # Collect all file paths for pairing detection
+            all_file_paths = [
+                f.managed_path or f.original_path for f in processed_files
+            ]
+
+            # Find image-model pairs
+            pairs, unpaired_models, unpaired_images = pairing_service.find_pairs(
+                all_file_paths
+            )
+
+            # Track paired thumbnails
+            paired_count = 0
+            thumbnail_dir = Path(config.thumbnail_directory)
+            thumbnail_dir.mkdir(parents=True, exist_ok=True)
+
+            # Process paired images first
+            for pair in pairs:
+                # Find the corresponding file info
+                file_info = next(
+                    (
+                        f
+                        for f in processed_files
+                        if (f.managed_path or f.original_path) == pair.model_path
+                    ),
+                    None,
+                )
+
+                if not file_info or not file_info.file_hash:
+                    continue
+
+                # Validate the paired image
+                if not pairing_service.validate_image(pair.image_path):
+                    self.logger.warning(
+                        "Paired image invalid, will generate thumbnail: %s",
+                        pair.image_path,
+                    )
+                    continue
+
+                # Copy paired image as thumbnail
+                try:
+                    thumbnail_path = thumbnail_dir / f"{file_info.file_hash}.png"
+                    shutil.copy2(pair.image_path, thumbnail_path)
+                    paired_count += 1
+                    self.logger.info(
+                        "Used paired image as thumbnail: %s -> %s",
+                        Path(pair.image_path).name,
+                        thumbnail_path.name,
+                    )
+                except (OSError, IOError) as e:
+                    self.logger.error("Failed to copy paired image: %s", e)
+
+            # Prepare file list for VTK thumbnail generation (unpaired models only)
             file_info_list = [
                 (f.managed_path or f.original_path, f.file_hash)
                 for f in processed_files
-                if f.file_hash and f.import_status == "completed"
+                if f.file_hash
+                and f.import_status == "completed"
+                and (f.managed_path or f.original_path) in unpaired_models
             ]
 
-            if not file_info_list:
+            total_files = len(file_info_list) + paired_count
+
+            if not file_info_list and paired_count == 0:
                 return None
 
-            total_files = len(file_info_list)
+            # Generate thumbnails for unpaired models
+            result = None
+            if file_info_list:
 
-            def progress_callback(completed: int, total: int, current_file: str) -> None:
-                """TODO: Add docstring."""
-                progress = ImportProgress(
-                    stage=ImportWorkflowStage.THUMBNAIL_GENERATION,
-                    overall_percent=70 + (completed / total) * 20,  # 70-90%
-                    current_file_index=completed,
-                    total_files=total_files,
-                    current_file_name=current_file,
-                    stage_message=f"Generating thumbnail for {current_file}",
-                    stage_percent=(completed / total) * 100,
-                    thumbnails_generated=completed,
-                    elapsed_time_seconds=time.time() - self.start_time,
+                def progress_callback(
+                    completed: int, total: int, current_file: str
+                ) -> None:
+                    """Progress callback for thumbnail generation."""
+                    total_completed = paired_count + completed
+                    progress = ImportProgress(
+                        stage=ImportWorkflowStage.THUMBNAIL_GENERATION,
+                        overall_percent=70
+                        + (total_completed / total_files) * 20,  # 70-90%
+                        current_file_index=total_completed,
+                        total_files=total_files,
+                        current_file_name=current_file,
+                        stage_message=f"Generating thumbnail for {current_file}",
+                        stage_percent=(total_completed / total_files) * 100,
+                        thumbnails_generated=total_completed,
+                        elapsed_time_seconds=time.time() - self.start_time,
+                    )
+                    self.progress_updated.emit(progress)
+
+                result = self.thumbnail_service.generate_thumbnails_batch(
+                    file_info_list,
+                    progress_callback,
+                    self.cancellation_token,
+                    background=background,
+                    material=material,
                 )
-                self.progress_updated.emit(progress)
 
-            result = self.thumbnail_service.generate_thumbnails_batch(
-                file_info_list,
-                progress_callback,
-                self.cancellation_token,
-                background=background,
-                material=material,
+            self.logger.info(
+                "Thumbnail generation complete: %d paired, %d generated",
+                paired_count,
+                len(file_info_list) if file_info_list else 0,
             )
 
             return result
@@ -404,14 +493,18 @@ class ImportCoordinatorWorker(QThread):
                     }
                     stored_models.append(model_data)
 
-            self.logger.info("Prepared %s models for database storage", len(stored_models))
+            self.logger.info(
+                "Prepared %s models for database storage", len(stored_models)
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Database storage failed: %s", e, exc_info=True)
 
         return stored_models
 
-    def _queue_analysis(self, stored_models: List[Dict[str, Any]]) -> Optional[BatchAnalysisResult]:
+    def _queue_analysis(
+        self, stored_models: List[Dict[str, Any]]
+    ) -> Optional[BatchAnalysisResult]:
         """Queue background analysis for imported models."""
         self._update_stage(
             ImportWorkflowStage.BACKGROUND_ANALYSIS, "Queueing background analysis..."
@@ -431,7 +524,9 @@ class ImportCoordinatorWorker(QThread):
                 file_model_pairs, cancellation_token=self.cancellation_token
             )
 
-            self.logger.info("Queued %s models for background analysis", len(file_model_pairs))
+            self.logger.info(
+                "Queued %s models for background analysis", len(file_model_pairs)
+            )
             return None  # Analysis result will come later via signals
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -634,10 +729,15 @@ class ImportCoordinator(QObject):
         return {
             **self._stats,
             "avg_import_time": (
-                self._stats["total_import_time"] / max(1, self._stats["successful_imports"])
+                self._stats["total_import_time"]
+                / max(1, self._stats["successful_imports"])
             ),
             "success_rate": (
-                (self._stats["successful_imports"] / max(1, self._stats["total_imports"])) * 100
+                (
+                    self._stats["successful_imports"]
+                    / max(1, self._stats["total_imports"])
+                )
+                * 100
             ),
         }
 
