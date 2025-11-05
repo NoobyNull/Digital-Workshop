@@ -72,7 +72,16 @@ class ModelLoadWorker(QThread):
 
                 # Set callback to emit progress
                 def emit_progress(progress: float, message: str) -> None:
-                    """TODO: Add docstring."""
+                    """
+                    Emit progress updates for the current file being loaded.
+
+                    Calculates overall progress across all files and emits a signal
+                    with the progress percentage and status message.
+
+                    Args:
+                        progress: Progress percentage for current file (0-100)
+                        message: Status message describing current operation
+                    """
                     # Adjust for multiple files
                     file_progress = (i / max(1, len(self.file_paths))) * 100.0
                     overall_progress = file_progress + (progress / len(self.file_paths))

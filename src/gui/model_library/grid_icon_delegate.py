@@ -19,7 +19,12 @@ class GridIconDelegate(QStyledItemDelegate):
     """
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
+        """
+        Initialize the grid icon delegate.
+
+        Args:
+            parent: Optional parent widget
+        """
         super().__init__(parent)
         self.icon_size = QSize(128, 128)
 
