@@ -170,8 +170,12 @@ class ModelLibraryWidget(QWidget):
         """Open file in native application."""
         self.facade.file_browser.open_in_native_app(file_path)
 
-    def _refresh_model_display(self) -> None:
-        """Refresh model display."""
+    def _refresh_model_display(self, model_id: Optional[int] = None) -> None:
+        """Refresh model display.
+
+        Args:
+            model_id: Optional model ID (currently unused, for compatibility)
+        """
         self.facade.model_manager.update_model_view()
 
     # ==================== Event Handlers ====================
