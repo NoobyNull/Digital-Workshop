@@ -7,7 +7,7 @@ converting between different color formats (hex, RGB, QColor, VTK RGB).
 
 # Import color utilities from shared utils module
 # These are re-exported for backward compatibility with existing code
-from utils.color_utils import (
+from src.utils.color_utils import (
     FALLBACK_COLOR,  # noqa: F401 - Re-exported for backward compatibility
     normalize_hex as _normalize_hex,  # noqa: F401 - Re-exported for backward compatibility
     hex_to_rgb,  # noqa: F401 - Re-exported for backward compatibility
