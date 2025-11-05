@@ -8,6 +8,13 @@ and built-in theme presets (modern, high contrast, etc.).
 from typing import Dict
 
 from .theme_constants import _normalize_hex, hex_to_rgb
+from .presets import (
+    PRESET_LIGHT,
+    PRESET_DARK,
+    PRESET_HIGH_CONTRAST as PRESET_HIGH_CONTRAST_MAIN,
+    PRESET_SOLARIZED_LIGHT,
+    PRESET_SOLARIZED_DARK,
+)
 
 
 def _srgb_to_linear(c: float) -> float:
@@ -274,7 +281,14 @@ PRESET_HIGH_CONTRAST: Dict[str, str] = {
     "menubar_item_hover_text": "#000000",
 }
 
+# Merge all presets: main presets + palette-specific presets
 PRESETS: Dict[str, Dict[str, str]] = {
+    # Main presets from presets.py
+    "light": PRESET_LIGHT,
+    "dark": PRESET_DARK,
+    "high_contrast": PRESET_HIGH_CONTRAST_MAIN,
+    "solarized_light": PRESET_SOLARIZED_LIGHT,
+    "solarized_dark": PRESET_SOLARIZED_DARK,
+    # Palette-specific presets
     "modern": PRESET_MODERN,
-    "high_contrast": PRESET_HIGH_CONTRAST,
 }
