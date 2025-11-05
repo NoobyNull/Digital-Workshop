@@ -12,13 +12,17 @@ Key Features:
 - Progressive loading capabilities
 - Memory-efficient processing
 - Comprehensive error handling and logging
+
+Refactored Architecture:
+- Format detection extracted to stl_format_detector.py
+- Geometry validation extracted to stl_geometry_validator.py
+- Core parsing logic remains in this file
 """
 
 import struct
 import time
 import gc
 import os
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -38,13 +42,16 @@ from src.core.interfaces.parser_interfaces import (
     ParseError,
 )
 
-
-class STLFormat(Enum):
-    """STL file format types."""
-
-    BINARY = "binary"
-    ASCII = "ascii"
-    UNKNOWN = "unknown"
+# Import from modular STL components
+from src.parsers.stl_format_detector import (
+    STLFormat,
+    STLFormatDetector,
+    STLFormatError,
+)
+from src.parsers.stl_geometry_validator import (
+    STLGeometryValidator,
+    STLGeometryError,
+)
 
 
 class STLParseError(ParseError):
@@ -97,6 +104,8 @@ class RefactoredSTLParser(RefactoredBaseParser):
         """
         Detect whether an STL file is binary or ASCII format.
 
+        Delegates to STLFormatDetector for format detection.
+
         Args:
             file_path: Path to the STL file
 
@@ -107,46 +116,14 @@ class RefactoredSTLParser(RefactoredBaseParser):
             STLParseError: If format cannot be determined
         """
         try:
-            with open(file_path, "rb") as file:
-                # Read first 80 bytes (header) and check for ASCII indicators
-                header = file.read(self.BINARY_HEADER_SIZE)
-
-                # Check if header contains ASCII indicators
-                header_text = header.decode("utf-8", errors="ignore").lower()
-                if "solid" in header_text and header_text.count("\x00") < 5:
-                    # Likely ASCII, but verify by checking for "facet normal" keyword
-                    file.seek(0)
-                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
-                    if first_line.lower().startswith("solid"):
-                        return STLFormat.ASCII
-
-                # Check if it's valid binary by attempting to read triangle count
-                file.seek(self.BINARY_HEADER_SIZE)
-                count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
-                if len(count_bytes) == self.BINARY_TRIANGLE_COUNT_SIZE:
-                    triangle_count = struct.unpack("<I", count_bytes)[0]
-
-                    # Verify file size matches expected binary format size
-                    file.seek(0, 2)  # Seek to end
-                    file_size = file.tell()
-                    expected_size = (
-                        self.BINARY_HEADER_SIZE
-                        + self.BINARY_TRIANGLE_COUNT_SIZE
-                        + (triangle_count * self.BINARY_TRIANGLE_SIZE)
-                    )
-
-                    if file_size == expected_size:
-                        return STLFormat.BINARY
-
-                return STLFormat.UNKNOWN
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            return STLFormatDetector.detect_format(file_path)
+        except STLFormatError as e:
             error_context = {
                 "file_path": str(file_path),
                 "operation": "format_detection",
             }
             self.logging_service.log_error(e, error_context)
-            raise STLParseError(f"Failed to detect STL format: {str(e)}")
+            raise STLParseError(f"Failed to detect STL format: {str(e)}") from e
 
     def _parse_file_internal(
         self,
@@ -1201,6 +1178,8 @@ class RefactoredSTLParser(RefactoredBaseParser):
         """
         Internal method for geometry validation.
 
+        Delegates to STLGeometryValidator for validation.
+
         Args:
             file_path: Path to the model file
 
@@ -1216,65 +1195,10 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     "statistics": {},
                 }
 
-            # Parse a small sample to check geometry
-            format_type = self._detect_format(file_path)
+            # Delegate to geometry validator
+            return STLGeometryValidator.validate_geometry(file_path)
 
-            issues = []
-            stats = {}
-
-            if format_type == STLFormat.BINARY:
-                # Sample first few triangles
-                with open(file_path, "rb") as file:
-                    file.seek(self.BINARY_HEADER_SIZE + self.BINARY_TRIANGLE_COUNT_SIZE)
-
-                    # Read first triangle
-                    triangle_data = file.read(self.BINARY_TRIANGLE_SIZE)
-                    if len(triangle_data) == self.BINARY_TRIANGLE_SIZE:
-                        values = struct.unpack("<ffffffffffffH", triangle_data)
-
-                        # Check for degenerate triangles
-                        v1 = [values[3], values[4], values[5]]
-                        v2 = [values[6], values[7], values[8]]
-                        v3 = [values[9], values[10], values[11]]
-
-                        # Simple degeneracy check (area near zero)
-                        import math
-
-                        area = 0.5 * math.sqrt(
-                            ((v2[0] - v1[0]) * (v3[1] - v1[1]) - (v3[0] - v1[0]) * (v2[1] - v1[1]))
-                            ** 2
-                            + (
-                                (v2[1] - v1[1]) * (v3[2] - v1[2])
-                                - (v3[1] - v1[1]) * (v2[2] - v1[2])
-                            )
-                            ** 2
-                            + (
-                                (v2[2] - v1[2]) * (v3[0] - v1[0])
-                                - (v3[2] - v1[2]) * (v2[0] - v1[0])
-                            )
-                            ** 2
-                        )
-
-                        if area < 1e-10:
-                            issues.append("Degenerate triangles detected")
-
-                        stats["sample_triangle_area"] = area
-
-            elif format_type == STLFormat.ASCII:
-                # Sample first few lines
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
-                    first_line = file.readline().strip().lower()
-                    if not first_line.startswith("solid"):
-                        issues.append("Invalid ASCII STL header")
-
-                    # Check for basic triangle structure
-                    content = file.read(500).lower()
-                    if "facet normal" not in content or "vertex" not in content:
-                        issues.append("No valid triangle data found")
-
-            return {"is_valid": len(issues) == 0, "issues": issues, "statistics": stats}
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError, STLGeometryError) as e:
             self.logger.error("Error validating STL geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -1286,6 +1210,8 @@ class RefactoredSTLParser(RefactoredBaseParser):
         """
         Internal method for geometry statistics.
 
+        Delegates to STLGeometryValidator for statistics.
+
         Args:
             file_path: Path to the model file
 
@@ -1293,72 +1219,14 @@ class RefactoredSTLParser(RefactoredBaseParser):
             Dictionary containing geometric statistics
         """
         try:
-            # Parse a sample to get statistics
-            format_type = self._detect_format(file_path)
+            # Delegate to geometry validator
+            return STLGeometryValidator.get_geometry_stats(file_path)
 
-            if format_type == STLFormat.BINARY:
-                triangle_count = self._get_binary_triangle_count(file_path)
-            elif format_type == STLFormat.ASCII:
-                triangle_count = self._get_ascii_triangle_count(file_path)
-            else:
-                raise STLParseError("Unable to determine STL format")
-
-            # Basic statistics
-            stats = {
-                "vertex_count": triangle_count * 3,
-                "face_count": triangle_count,
-                "edge_count": triangle_count * 3,  # Approximation
-                "component_count": 1,  # Assume single component for now
-                "degeneracy_count": 0,  # Would need full parse to determine
-                "manifold": True,  # Assume manifold for STL files
-            }
-
-            return stats
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError, STLGeometryError) as e:
             self.logger.error("Error getting STL geometry stats: %s", str(e))
-            raise ParseError(f"Failed to get geometry stats: {str(e)}")
+            raise ParseError(f"Failed to get geometry stats: {str(e)}") from e
 
-    def _get_binary_triangle_count(self, file_path: Path) -> int:
-        """
-        Get triangle count from binary STL without loading full geometry.
 
-        Args:
-            file_path: Path to the binary STL file
-
-        Returns:
-            Triangle count
-        """
-        with open(file_path, "rb") as file:
-            # Skip header
-            file.seek(self.BINARY_HEADER_SIZE)
-
-            # Read triangle count
-            count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
-            if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                raise STLParseError("Invalid binary STL: cannot read triangle count")
-
-            triangle_count = struct.unpack("<I", count_bytes)[0]
-            return triangle_count
-
-    def _get_ascii_triangle_count(self, file_path: Path) -> int:
-        """
-        Get triangle count from ASCII STL without loading full geometry.
-
-        Args:
-            file_path: Path to the ASCII STL file
-
-        Returns:
-            Triangle count
-        """
-        triangle_count = 0
-
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
-            for line in file:
-                if line.strip().lower().startswith("facet normal"):
-                    triangle_count += 1
-
-        return triangle_count
 
     def get_parser_info(self) -> Dict[str, str]:
         """
