@@ -160,15 +160,39 @@ class VTKRenderingEngine:
             plane.SetPoint1(scale, -scale, cam_focal[2] - distance * 1.5)
             plane.SetPoint2(-scale, scale, cam_focal[2] - distance * 1.5)
             plane.SetResolution(1, 1)
+            plane.Update()
+
+            # Generate texture coordinates for the plane
+            plane_output = plane.GetOutput()
+            num_points = plane_output.GetNumberOfPoints()
+
+            # Create texture coordinates array
+            tcoords = vtk.vtkFloatArray()
+            tcoords.SetNumberOfComponents(2)
+            tcoords.SetNumberOfTuples(num_points)
+            tcoords.SetName("TextureCoordinates")
+
+            # Set UV coordinates for each point (4 corners of the plane)
+            # Bottom-left (0, 0)
+            tcoords.SetTuple2(0, 0.0, 0.0)
+            # Bottom-right (1, 0)
+            tcoords.SetTuple2(1, 1.0, 0.0)
+            # Top-left (0, 1)
+            tcoords.SetTuple2(2, 0.0, 1.0)
+            # Top-right (1, 1)
+            tcoords.SetTuple2(3, 1.0, 1.0)
+
+            # Add texture coordinates to the plane
+            plane_output.GetPointData().SetTCoords(tcoords)
 
             mapper = vtk.vtkPolyDataMapper()
-            mapper.SetInputConnection(plane.GetOutputPort())
+            mapper.SetInputData(plane_output)
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
 
-            # Set texture on diffuse property (works better with LightingOff)
-            actor.GetProperty().SetTexture("map_d", texture)
+            # Apply texture directly to actor (standard VTK approach)
+            actor.SetTexture(texture)
             actor.GetProperty().LightingOff()
             actor.GetProperty().SetOpacity(1.0)
 

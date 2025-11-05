@@ -174,9 +174,38 @@ class ModelLibraryWidget(QWidget):
         """Refresh model display.
 
         Args:
-            model_id: Optional model ID (currently unused, for compatibility)
+            model_id: Optional model ID to refresh specifically, or None to refresh all
         """
-        self.facade.model_manager.update_model_view()
+        if model_id is not None:
+            # Refresh specific model - find and update its thumbnail
+            from PySide6.QtGui import QPixmapCache, QIcon
+            from pathlib import Path
+
+            # Clear Qt's pixmap cache to force reload
+            QPixmapCache.clear()
+
+            # Find the model in current_models
+            for i, model in enumerate(self.current_models):
+                if model.get("id") == model_id:
+                    # Get the thumbnail path from database (it might have been updated)
+                    updated_model = self.db_manager.get_model(model_id)
+                    if updated_model:
+                        thumbnail_path = updated_model.get("thumbnail_path")
+                        if thumbnail_path and Path(thumbnail_path).exists():
+                            # Find the item in the list model
+                            for row in range(self.list_model.rowCount()):
+                                item = self.list_model.item(row, 0)
+                                if item and item.data(Qt.UserRole) == model_id:
+                                    # Update the icon with the new thumbnail
+                                    icon = QIcon(thumbnail_path)
+                                    item.setIcon(icon)
+                                    # Update the model in current_models
+                                    self.current_models[i] = updated_model
+                                    break
+                    break
+        else:
+            # Refresh all models
+            self.facade.model_manager.update_model_view()
 
     # ==================== Event Handlers ====================
 

@@ -196,10 +196,8 @@ class TrimeshLoader:
                 '.stl': ModelFormat.STL,
                 '.obj': ModelFormat.OBJ,
                 '.3mf': ModelFormat.THREE_MF,
-                '.ply': ModelFormat.PLY,
-                '.off': ModelFormat.OFF,
-                '.glb': ModelFormat.GLB,
-                '.gltf': ModelFormat.GLTF,
+                # Note: PLY, OFF, GLB, GLTF not in ModelFormat enum yet
+                # These will use ModelFormat.UNKNOWN
             }
             format_type = format_map.get(suffix, ModelFormat.UNKNOWN)
             

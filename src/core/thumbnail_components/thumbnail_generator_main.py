@@ -309,15 +309,27 @@ class ThumbnailGenerator:
                 if background.startswith("#"):
                     self.logger.debug("Background is hex color: %s", background)
                     engine.set_background_color(background)
-                elif Path(background).exists():
-                    self.logger.info("Background image exists, using: %s", background)
-                    engine.set_background_image(background)
                 else:
-                    self.logger.warning(
-                        f"Background path does not exist: {background}, using default color"
-                    )
-                    # Professional studio background: dark teal-gray
-                    engine.set_background_color((0.25, 0.35, 0.40))
+                    # Resolve background name to path using BackgroundProvider
+                    from src.core.background_provider import BackgroundProvider
+                    bg_provider = BackgroundProvider()
+
+                    try:
+                        # Try to resolve as a background name
+                        resolved_path = bg_provider.get_background_by_name(background)
+                        self.logger.info("Resolved background '%s' to: %s", background, resolved_path)
+                        engine.set_background_image(str(resolved_path))
+                    except FileNotFoundError:
+                        # Not a valid background name, check if it's a path
+                        if Path(background).exists():
+                            self.logger.info("Background is path: %s", background)
+                            engine.set_background_image(background)
+                        else:
+                            self.logger.warning(
+                                f"Background '{background}' not found, using default color"
+                            )
+                            # Professional studio background: dark teal-gray
+                            engine.set_background_color((0.25, 0.35, 0.40))
             elif isinstance(background, (tuple, list)) and len(background) == 3:
                 self.logger.debug("Background is RGB tuple: %s", background)
                 engine.set_background_color(background)
