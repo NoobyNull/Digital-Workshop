@@ -187,6 +187,7 @@ class VTKRenderingEngine:
 
             mapper = vtk.vtkPolyDataMapper()
             mapper.SetInputData(plane_output)
+            mapper.ScalarVisibilityOff()  # Use texture coordinates, not scalar data
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
