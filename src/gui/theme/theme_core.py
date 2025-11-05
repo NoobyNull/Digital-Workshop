@@ -33,7 +33,9 @@ from .theme_constants import (
 )
 
 # Theme defaults
-from .theme_defaults import ThemeDefaults  # noqa: F401 - Re-exported for backward compatibility
+from .theme_defaults import (
+    ThemeDefaults,
+)  # noqa: F401 - Re-exported for backward compatibility
 
 # Palette generation and presets
 from .theme_palette import (
@@ -53,7 +55,9 @@ from .presets import (
 )
 
 # Theme persistence
-from .persistence import ThemePersistence  # noqa: F401 - Re-exported for backward compatibility
+from .persistence import (
+    ThemePersistence,
+)  # noqa: F401 - Re-exported for backward compatibility
 
 # ============================================================
 # Backward Compatibility Exports

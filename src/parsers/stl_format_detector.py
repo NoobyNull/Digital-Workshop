@@ -41,7 +41,9 @@ class STLFormatDetector:
     # Binary STL format constants
     BINARY_HEADER_SIZE = 80
     BINARY_TRIANGLE_COUNT_SIZE = 4
-    BINARY_TRIANGLE_SIZE = 50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    BINARY_TRIANGLE_SIZE = (
+        50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    )
 
     @classmethod
     def detect_format(cls, file_path: Path) -> STLFormat:
@@ -67,7 +69,9 @@ class STLFormatDetector:
                 if "solid" in header_text and header_text.count("\x00") < 5:
                     # Likely ASCII, but verify by checking for "facet normal" keyword
                     file.seek(0)
-                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
+                    first_line = (
+                        file.readline().decode("utf-8", errors="ignore").strip()
+                    )
                     if first_line.lower().startswith("solid"):
                         return STLFormat.ASCII
 
@@ -92,7 +96,7 @@ class STLFormatDetector:
                 return STLFormat.UNKNOWN
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            raise STLFormatError(f"Failed to detect STL format: {str(e)}")
+            raise STLFormatError(f"Failed to detect STL format: {str(e)}") from e
 
     @classmethod
     def is_binary(cls, file_path: Path) -> bool:
@@ -121,7 +125,9 @@ class STLFormatDetector:
         return cls.detect_format(file_path) == STLFormat.ASCII
 
     @classmethod
-    def get_triangle_count(cls, file_path: Path, format_type: Optional[STLFormat] = None) -> int:
+    def get_triangle_count(
+        cls, file_path: Path, format_type: Optional[STLFormat] = None
+    ) -> int:
         """
         Get triangle count from STL file without loading full geometry.
 
@@ -140,10 +146,9 @@ class STLFormatDetector:
 
         if format_type == STLFormat.BINARY:
             return cls._get_binary_triangle_count(file_path)
-        elif format_type == STLFormat.ASCII:
+        if format_type == STLFormat.ASCII:
             return cls._get_ascii_triangle_count(file_path)
-        else:
-            raise STLFormatError("Unable to determine STL format")
+        raise STLFormatError("Unable to determine STL format")
 
     @classmethod
     def _get_binary_triangle_count(cls, file_path: Path) -> int:
@@ -167,13 +172,15 @@ class STLFormatDetector:
                 # Read triangle count
                 count_bytes = file.read(cls.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) != cls.BINARY_TRIANGLE_COUNT_SIZE:
-                    raise STLFormatError("Invalid binary STL: cannot read triangle count")
+                    raise STLFormatError(
+                        "Invalid binary STL: cannot read triangle count"
+                    )
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
                 return triangle_count
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            raise STLFormatError(f"Failed to read binary triangle count: {str(e)}")
+            raise STLFormatError(f"Failed to read binary triangle count: {str(e)}") from e
 
     @classmethod
     def _get_ascii_triangle_count(cls, file_path: Path) -> int:
@@ -200,5 +207,4 @@ class STLFormatDetector:
             return triangle_count
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            raise STLFormatError(f"Failed to read ASCII triangle count: {str(e)}")
-
+            raise STLFormatError(f"Failed to read ASCII triangle count: {str(e)}") from e

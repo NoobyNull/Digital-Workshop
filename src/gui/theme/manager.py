@@ -41,7 +41,9 @@ from .theme_constants import (
 )
 
 # Theme defaults
-from .theme_defaults import ThemeDefaults  # noqa: F401 - Re-exported for backward compatibility
+from .theme_defaults import (
+    ThemeDefaults,
+)  # noqa: F401 - Re-exported for backward compatibility
 
 # Palette generation and presets
 from .theme_palette import (
@@ -50,7 +52,9 @@ from .theme_palette import (
 )
 
 # Theme manager core
-from .theme_manager_core import ThemeManager  # noqa: F401 - Re-exported for backward compatibility
+from .theme_manager_core import (
+    ThemeManager,
+)  # noqa: F401 - Re-exported for backward compatibility
 
 # Theme API functions
 from .theme_api import (
@@ -113,4 +117,3 @@ __all__ = [
     "qss_tabs_lists_labels",
     "qss_groupbox_base",
 ]
-

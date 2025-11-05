@@ -94,7 +94,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
     # Binary STL format constants
     BINARY_HEADER_SIZE = 80
     BINARY_TRIANGLE_COUNT_SIZE = 4
-    BINARY_TRIANGLE_SIZE = 50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    BINARY_TRIANGLE_SIZE = (
+        50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    )
 
     def __init__(self) -> None:
         """Initialize the refactored STL parser."""
@@ -156,7 +158,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
             # Detect format
             format_type = self._detect_format(file_path)
             if format_type == STLFormat.UNKNOWN:
-                raise STLParseError("Unable to determine STL format (invalid or corrupted file)")
+                raise STLParseError(
+                    "Unable to determine STL format (invalid or corrupted file)"
+                )
 
             # Parse based on format
             if format_type == STLFormat.BINARY:
@@ -216,7 +220,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 # Read triangle count
                 count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                    raise STLParseError("Invalid binary STL: cannot read triangle count")
+                    raise STLParseError(
+                        "Invalid binary STL: cannot read triangle count"
+                    )
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
 
@@ -233,7 +239,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     raise STLParseError(f"Invalid triangle count: {triangle_count}")
 
                 # Update progress
-                self._update_progress(5.0, f"Reading {triangle_count} triangles", progress_callback)
+                self._update_progress(
+                    5.0, f"Reading {triangle_count} triangles", progress_callback
+                )
 
                 # Decide parsing strategy based on file size and triangle count
                 file_size_mb = file_path.stat().st_size / (1024 * 1024)
@@ -292,7 +300,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 # Read all triangle records: 50 bytes each
                 total_bytes = triangle_count * self.BINARY_TRIANGLE_SIZE
-                self._update_progress(15.0, "Reading triangle data...", progress_callback)
+                self._update_progress(
+                    15.0, "Reading triangle data...", progress_callback
+                )
 
                 data = file.read(total_bytes)
                 if len(data) != total_bytes:
@@ -300,7 +310,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                         f"Failed to read triangle block ({len(data)} of {total_bytes} bytes)"
                     )
 
-                self._update_progress(25.0, "Decoding triangle floats...", progress_callback)
+                self._update_progress(
+                    25.0, "Decoding triangle floats...", progress_callback
+                )
 
                 # Convert to NumPy array and extract floats
                 u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
@@ -334,7 +346,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 min_xyz = verts.reshape(-1, 3).min(axis=0)
                 max_xyz = verts.reshape(-1, 3).max(axis=0)
 
-                self._update_progress(45.0, "Building triangles (multi-core)...", progress_callback)
+                self._update_progress(
+                    45.0, "Building triangles (multi-core)...", progress_callback
+                )
 
                 # Build Triangle dictionaries using multiple processes
                 cpu_cnt = max(2, (os.cpu_count() or 2))
@@ -403,7 +417,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     },
                 }
 
-                self._update_progress(100.0, "Binary STL parsing completed", progress_callback)
+                self._update_progress(
+                    100.0, "Binary STL parsing completed", progress_callback
+                )
 
                 self.logging_service.log_info(
                     f"Successfully parsed binary STL (vectorized): {triangle_count} triangles, "
@@ -460,7 +476,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     # Read triangle data (50 bytes)
                     triangle_data = file.read(self.BINARY_TRIANGLE_SIZE)
                     if len(triangle_data) != self.BINARY_TRIANGLE_SIZE:
-                        raise STLParseError(f"Failed to read triangle {i}: incomplete data")
+                        raise STLParseError(
+                            f"Failed to read triangle {i}: incomplete data"
+                        )
 
                     values = struct.unpack("<ffffffffffffH", triangle_data)
 
@@ -514,7 +532,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     },
                 }
 
-                self._update_progress(100.0, "Binary STL parsing completed", progress_callback)
+                self._update_progress(
+                    100.0, "Binary STL parsing completed", progress_callback
+                )
 
                 self.logger.info(
                     f"Successfully parsed binary STL: {triangle_count} triangles, "
@@ -558,17 +578,23 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 # Triangle count
                 count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                    raise STLParseError("Invalid binary STL: cannot read triangle count")
+                    raise STLParseError(
+                        "Invalid binary STL: cannot read triangle count"
+                    )
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
-                self.logger.info("Parsing binary STL with %s triangles [array path]", triangle_count)
+                self.logger.info(
+                    "Parsing binary STL with %s triangles [array path]", triangle_count
+                )
 
                 if triangle_count <= 0:
                     raise STLParseError("Invalid triangle count in STL")
 
                 # Read all triangle records
                 total_bytes = triangle_count * self.BINARY_TRIANGLE_SIZE
-                self._update_progress(8.0, "Reading triangle block...", progress_callback)
+                self._update_progress(
+                    8.0, "Reading triangle block...", progress_callback
+                )
 
                 data = file.read(total_bytes)
                 if len(data) != total_bytes:
@@ -588,7 +614,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                 for start_idx in range(0, triangle_count, chunk_size):
                     end_idx = min(start_idx + chunk_size, triangle_count)
                     chunk_floats = (
-                        u8[start_idx:end_idx, :48].view("<f4").reshape(end_idx - start_idx, 12)
+                        u8[start_idx:end_idx, :48]
+                        .view("<f4")
+                        .reshape(end_idx - start_idx, 12)
                     )
                     floats[start_idx:end_idx] = chunk_floats
 
@@ -609,10 +637,14 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                 # normals: cols 0..2, vertices: cols 3..11 reshaped to (N,3,3)
                 verts = floats[:, 3:12].reshape(triangle_count, 3, 3)
-                vertex_array = verts.reshape(triangle_count * 3, 3).astype("float32", copy=False)
+                vertex_array = verts.reshape(triangle_count * 3, 3).astype(
+                    "float32", copy=False
+                )
 
                 # Repeat each normal 3 times, one per vertex
-                normal_array = np.repeat(floats[:, 0:3], 3, axis=0).astype("float32", copy=False)
+                normal_array = np.repeat(floats[:, 0:3], 3, axis=0).astype(
+                    "float32", copy=False
+                )
 
                 # Bounds
                 flat = verts.reshape(-1, 3)
@@ -656,7 +688,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     "loading_state": "ARRAY_GEOMETRY",
                 }
 
-                self._update_progress(100.0, "Array-based STL parsing completed", progress_callback)
+                self._update_progress(
+                    100.0, "Array-based STL parsing completed", progress_callback
+                )
 
                 self.logger.info(
                     f"Successfully parsed binary STL (array path): {triangle_count} triangles, "
@@ -722,7 +756,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                             # Parse normal vector
                             normal_parts = line.split()
                             if len(normal_parts) != 5:
-                                raise STLParseError(f"Invalid facet normal line: {line}")
+                                raise STLParseError(
+                                    f"Invalid facet normal line: {line}"
+                                )
 
                             normal = [
                                 float(normal_parts[2]),
@@ -732,8 +768,13 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                             # Expect "outer loop" on next line
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "outer loop":
-                                raise STLParseError("Expected 'outer loop' after facet normal")
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "outer loop"
+                            ):
+                                raise STLParseError(
+                                    "Expected 'outer loop' after facet normal"
+                                )
 
                             # Parse three vertices
                             vertices = []
@@ -746,11 +787,15 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                                 vertex_line = lines[i].strip().lower()
                                 if not vertex_line.startswith("vertex"):
-                                    raise STLParseError(f"Expected 'vertex', got: {vertex_line}")
+                                    raise STLParseError(
+                                        f"Expected 'vertex', got: {vertex_line}"
+                                    )
 
                                 vertex_parts = vertex_line.split()
                                 if len(vertex_parts) != 4:
-                                    raise STLParseError(f"Invalid vertex line: {vertex_line}")
+                                    raise STLParseError(
+                                        f"Invalid vertex line: {vertex_line}"
+                                    )
 
                                 vertex = [
                                     float(vertex_parts[1]),
@@ -769,12 +814,18 @@ class RefactoredSTLParser(RefactoredBaseParser):
 
                             # Expect "endloop"
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "endloop":
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "endloop"
+                            ):
                                 raise STLParseError("Expected 'endloop' after vertices")
 
                             # Expect "endfacet"
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "endfacet":
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "endfacet"
+                            ):
                                 raise STLParseError("Expected 'endfacet' after endloop")
 
                             # Create triangle
@@ -827,7 +878,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                     },
                 }
 
-                self._update_progress(100.0, "ASCII STL parsing completed", progress_callback)
+                self._update_progress(
+                    100.0, "ASCII STL parsing completed", progress_callback
+                )
 
                 self.logger.info(
                     f"Successfully parsed ASCII STL: {triangle_count} triangles, "
@@ -1026,7 +1079,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
                         chunk_triangles = []
                         for i in range(triangles_in_chunk):
                             offset = i * self.BINARY_TRIANGLE_SIZE
-                            triangle_data = data[offset : offset + self.BINARY_TRIANGLE_SIZE]
+                            triangle_data = data[
+                                offset : offset + self.BINARY_TRIANGLE_SIZE
+                            ]
                             values = struct.unpack("<ffffffffffffH", triangle_data)
 
                             triangle = {
@@ -1198,7 +1253,15 @@ class RefactoredSTLParser(RefactoredBaseParser):
             # Delegate to geometry validator
             return STLGeometryValidator.validate_geometry(file_path)
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError, STLGeometryError) as e:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+            STLGeometryError,
+        ) as e:
             self.logger.error("Error validating STL geometry: %s", str(e))
             return {
                 "is_valid": False,
@@ -1222,11 +1285,17 @@ class RefactoredSTLParser(RefactoredBaseParser):
             # Delegate to geometry validator
             return STLGeometryValidator.get_geometry_stats(file_path)
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError, STLGeometryError) as e:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+            STLGeometryError,
+        ) as e:
             self.logger.error("Error getting STL geometry stats: %s", str(e))
             raise ParseError(f"Failed to get geometry stats: {str(e)}") from e
-
-
 
     def get_parser_info(self) -> Dict[str, str]:
         """
