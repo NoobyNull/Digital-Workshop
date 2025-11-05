@@ -71,4 +71,6 @@ class GridIconDelegate(QStyledItemDelegate):
         """
         # Add some padding around the icon
         padding = 10
-        return QSize(self.icon_size.width() + padding, self.icon_size.height() + padding)
+        return QSize(
+            self.icon_size.width() + padding, self.icon_size.height() + padding
+        )

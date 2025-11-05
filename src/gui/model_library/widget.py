@@ -25,7 +25,7 @@ from .model_load_worker import ModelLoadWorker
 class ModelLibraryWidget(QWidget):
     """
     Main model library widget.
-    
+
     Provides a unified interface for:
     - File browser with multi-root support
     - List/Grid views of models
@@ -36,7 +36,7 @@ class ModelLibraryWidget(QWidget):
     - Context menus for operations
     - Metadata editing
     - Thumbnail generation
-    
+
     Signals:
         model_selected: Emitted when a model is selected (model_id: int)
         model_double_clicked: Emitted when a model is double-clicked (model_id: int)
@@ -51,7 +51,7 @@ class ModelLibraryWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize the model library widget.
-        
+
         Args:
             parent: Parent widget (optional)
         """
@@ -85,7 +85,7 @@ class ModelLibraryWidget(QWidget):
     def get_selected_model_id(self) -> Optional[int]:
         """
         Get the ID of the currently selected model.
-        
+
         Returns:
             Model ID if a model is selected, None otherwise
         """
@@ -94,7 +94,7 @@ class ModelLibraryWidget(QWidget):
     def get_selected_models(self) -> List[int]:
         """
         Get IDs of all currently selected models.
-        
+
         Returns:
             List of model IDs
         """
@@ -129,7 +129,7 @@ class ModelLibraryWidget(QWidget):
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """
         Handle drag enter events.
-        
+
         Args:
             event: Drag enter event
         """
@@ -138,7 +138,7 @@ class ModelLibraryWidget(QWidget):
     def dropEvent(self, event: QDropEvent) -> None:
         """
         Handle drop events.
-        
+
         Args:
             event: Drop event
         """
@@ -147,10 +147,9 @@ class ModelLibraryWidget(QWidget):
     def closeEvent(self, event: QCloseEvent) -> None:
         """
         Handle widget close event.
-        
+
         Args:
             event: Close event
         """
         self.cleanup()
         super().closeEvent(event)
-

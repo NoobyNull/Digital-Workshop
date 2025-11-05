@@ -66,7 +66,9 @@ class ModelLoadWorker(QThread):
                 file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
 
                 # Create detailed progress tracker for this file
-                tracker = DetailedProgressTracker(triangle_count=0, file_size_mb=file_size_mb)
+                tracker = DetailedProgressTracker(
+                    triangle_count=0, file_size_mb=file_size_mb
+                )
 
                 # Set callback to emit progress
                 def emit_progress(progress: float, message: str) -> None:
@@ -74,7 +76,9 @@ class ModelLoadWorker(QThread):
                     # Adjust for multiple files
                     file_progress = (i / max(1, len(self.file_paths))) * 100.0
                     overall_progress = file_progress + (progress / len(self.file_paths))
-                    self.progress_updated.emit(overall_progress, f"{filename}: {message}")
+                    self.progress_updated.emit(
+                        overall_progress, f"{filename}: {message}"
+                    )
 
                 tracker.set_progress_callback(emit_progress)
 
@@ -84,7 +88,9 @@ class ModelLoadWorker(QThread):
                 )
 
                 # Check cache first
-                tracker.start_stage(LoadingStage.METADATA, f"Checking cache for {filename}")
+                tracker.start_stage(
+                    LoadingStage.METADATA, f"Checking cache for {filename}"
+                )
                 cached_model = self.model_cache.get(file_path, CacheLevel.METADATA)
                 if cached_model:
                     model = cached_model
@@ -97,7 +103,10 @@ class ModelLoadWorker(QThread):
                     model = None
 
                     if trimesh_loader.is_trimesh_available():
-                        tracker.start_stage(LoadingStage.PARSING, f"Loading {filename} with Trimesh (fast)...")
+                        tracker.start_stage(
+                            LoadingStage.PARSING,
+                            f"Loading {filename} with Trimesh (fast)...",
+                        )
                         model = trimesh_loader.load_model(file_path, tracker)
 
                     # Fallback to standard parsers if Trimesh failed or unavailable
@@ -118,7 +127,9 @@ class ModelLoadWorker(QThread):
                         # Parse with progress tracking
                         tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")
                         model = parser.parse_metadata_only(file_path)
-                        tracker.complete_stage(f"Parsed {model.stats.triangle_count:,} triangles")
+                        tracker.complete_stage(
+                            f"Parsed {model.stats.triangle_count:,} triangles"
+                        )
 
                     # Cache the model
                     self.model_cache.put(file_path, CacheLevel.METADATA, model)
@@ -151,7 +162,14 @@ class ModelLoadWorker(QThread):
                 if i % 10 == 0:
                     gc.collect()
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 msg = f"Failed to load {file_path}: {e}"
                 self.logger.error(msg)
                 self.error_occurred.emit(msg)

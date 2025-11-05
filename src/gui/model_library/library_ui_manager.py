@@ -102,7 +102,9 @@ class LibraryUIManager:
 
         self.library_widget.file_model = MultiRootFileSystemModel()
         self.library_widget.file_proxy_model = FileSystemProxyModel()
-        self.library_widget.file_proxy_model.setSourceModel(self.library_widget.file_model)
+        self.library_widget.file_proxy_model.setSourceModel(
+            self.library_widget.file_model
+        )
 
         self.library_widget.file_model.indexing_started.connect(
             self.library_widget._on_indexing_started
@@ -137,7 +139,9 @@ class LibraryUIManager:
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
-        self.library_widget.import_folder_button.setToolTip("Import the selected folder")
+        self.library_widget.import_folder_button.setToolTip(
+            "Import the selected folder"
+        )
         import_layout.addWidget(self.library_widget.import_folder_button)
 
         layout.addWidget(import_frame)
