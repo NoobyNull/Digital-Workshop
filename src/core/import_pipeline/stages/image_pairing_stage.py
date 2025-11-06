@@ -169,8 +169,13 @@ class ImagePairingStage(BaseStage):
 
                 # Update database if model exists
                 if task.model_id:
-                    # Store image path in metadata or separate table
-                    # For now, we'll add it to metadata
+                    # Update thumbnail path in models table so UI can display it
+                    if task.thumbnail_path:
+                        self.db_manager.update_model_thumbnail(
+                            task.model_id, task.thumbnail_path
+                        )
+
+                    # Store original image path in metadata
                     self.db_manager.update_model_metadata(
                         task.model_id, preview_image=image_path
                     )
