@@ -128,10 +128,32 @@ class PipelineCoordinator(QObject):
         try:
             self.signals.task_started.emit(task)
 
+            # Detect completed stages if resume detector available
+            completed_stages = []
+            if self.resume_detector:
+                completed_stages = self.resume_detector.detect_completed_stages(task)
+                if completed_stages:
+                    self.logger.info(
+                        "Task %s has %d completed stages: %s",
+                        task.filename,
+                        len(completed_stages),
+                        [stage.value for stage in completed_stages]
+                    )
+
             # Execute each stage in order
             for stage in self.stages:
                 if self._is_cancelled:
                     return
+
+                # Skip stage if already completed
+                stage_enum = self._get_stage_enum(stage)
+                if stage_enum and stage_enum in completed_stages:
+                    self.logger.info(
+                        "Skipping completed stage %s for task %s",
+                        stage_enum.value,
+                        task.filename
+                    )
+                    continue
 
                 # Execute stage
                 result = stage.execute(task)
@@ -159,6 +181,26 @@ class PipelineCoordinator(QObject):
             self._failed_count += 1
             self.signals.task_failed.emit(task, error_msg)
 
+    def _get_stage_enum(self, stage: BaseStage) -> Optional[ImportStage]:
+        """
+        Get the ImportStage enum for a stage instance.
+
+        Args:
+            stage: The stage instance
+
+        Returns:
+            The corresponding ImportStage enum or None
+        """
+        # Map stage class names to ImportStage enums
+        stage_class_name = stage.__class__.__name__
+        stage_map = {
+            "DatabaseStage": ImportStage.DATABASE_INSERT,
+            "HashingStage": ImportStage.HASHING,
+            "ImagePairingStage": ImportStage.IMAGE_PAIRING,
+            "ThumbnailStage": ImportStage.THUMBNAIL_GENERATION,
+        }
+        return stage_map.get(stage_class_name)
+
     def _emit_progress(self) -> None:
         """Emit progress update signal."""
         progress = PipelineProgress(
@@ -172,4 +214,3 @@ class PipelineCoordinator(QObject):
         """Cancel the pipeline execution."""
         self._is_cancelled = True
         self.logger.info("Pipeline cancellation requested")
-
