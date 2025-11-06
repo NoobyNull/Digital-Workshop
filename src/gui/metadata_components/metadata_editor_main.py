@@ -664,15 +664,40 @@ class MetadataEditorWidget(QWidget):
                 self._clear_preview_image()
                 return
 
+            # First try to use thumbnail_path from database (fast path)
+            thumbnail_path_str = model.get("thumbnail_path")
+            if thumbnail_path_str:
+                thumbnail_path = Path(thumbnail_path_str)
+                if thumbnail_path.exists():
+                    # Load and display the thumbnail
+                    pixmap = QPixmap(str(thumbnail_path))
+                    if not pixmap.isNull():
+                        # Scale the image to fit the label while maintaining aspect ratio
+                        scaled_pixmap = pixmap.scaled(
+                            self.preview_image_label.size(),
+                            Qt.KeepAspectRatio,
+                            Qt.SmoothTransformation,
+                        )
+                        # Use set_thumbnail to store both scaled and full-resolution versions
+                        self.preview_image_label.set_thumbnail(
+                            scaled_pixmap, str(thumbnail_path)
+                        )
+                        self.preview_image_label.setText("")  # Clear any placeholder text
+                        self.logger.debug("Loaded preview image for model %s", model_id)
+                        return
+
+            # Fallback: Try to find thumbnail by hashing the file (slow path)
             model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
                 self._clear_preview_image()
                 return
 
-            # Get file hash and thumbnail path
-            hasher = FastHasher()
-            hash_result = hasher.hash_file(model_path)
-            file_hash = hash_result.hash_value if hash_result.success else None
+            # Get file hash from database first, or compute it
+            file_hash = model.get("file_hash")
+            if not file_hash:
+                hasher = FastHasher()
+                hash_result = hasher.hash_file(model_path)
+                file_hash = hash_result.hash_value if hash_result.success else None
 
             if not file_hash:
                 self._clear_preview_image()
@@ -701,7 +726,7 @@ class MetadataEditorWidget(QWidget):
                 self._clear_preview_image()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to load preview image for model %s: {str(e)}", model_id)
+            self.logger.error("Failed to load preview image for model %s: %s", model_id, e)
             self._clear_preview_image()
 
     def _clear_preview_image(self) -> None:
