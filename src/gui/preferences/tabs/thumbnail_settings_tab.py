@@ -1,49 +1,32 @@
-from __future__ import annotations
-
 """
-Preferences dialog with tabbed interface:
-- Display
-- System
-- Files
-- Theming (live-apply + persist to AppData)
+Thumbnail Settings Tab
 
-The Theming tab edits central color variables in gui.theme.COLORS and applies
-changes live across the running app. On Save, the current theme is persisted
+This tab allows users to configure thumbnail generation settings including:
+- Background images (with add/remove functionality)
+- Materials (with add/remove functionality)
+- Background colors
+
+All settings are saved to QSettings for persistence and automatically synced
 to AppData and loaded on next startup.
 """
+from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
-from typing import Callable
 
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QCheckBox,
     QColorDialog,
-    QComboBox,
-    QDialog,
-    QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QSlider,
-    QSpinBox,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
-
-from src.gui.theme import save_theme_to_settings, set_theme, theme_to_dict
-from src.gui.theme.color_helper import get_theme_color
 
 
 class ThumbnailSettingsTab(QWidget):
@@ -525,7 +508,6 @@ class ThumbnailSettingsTab(QWidget):
 
                 # Check if file already exists
                 if dest.exists():
-                    from PySide6.QtWidgets import QMessageBox
                     reply = QMessageBox.question(
                         self,
                         "File Exists",
@@ -552,7 +534,6 @@ class ThumbnailSettingsTab(QWidget):
         """Handle removing/hiding a background."""
         try:
             if not self.selected_bg_button:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.information(
                     self,
                     "No Selection",
@@ -572,7 +553,6 @@ class ThumbnailSettingsTab(QWidget):
                     self.logger.info("Hidden default background: %s", bg_name)
             else:
                 # Delete user-added backgrounds
-                from PySide6.QtWidgets import QMessageBox
                 reply = QMessageBox.question(
                     self,
                     "Delete Background",
@@ -598,7 +578,7 @@ class ThumbnailSettingsTab(QWidget):
     def _on_add_material(self) -> None:
         """Handle adding a new material."""
         try:
-            from PySide6.QtWidgets import QFileDialog, QMessageBox
+            from PySide6.QtWidgets import QFileDialog
 
             # Open file dialog to select MTL file
             mtl_path, _ = QFileDialog.getOpenFileName(
@@ -667,7 +647,6 @@ class ThumbnailSettingsTab(QWidget):
         """Handle removing/hiding a material."""
         try:
             if not self.selected_mat_button:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.information(
                     self,
                     "No Selection",
@@ -679,7 +658,6 @@ class ThumbnailSettingsTab(QWidget):
 
             # Can't remove "None" option
             if mat_name is None:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.information(
                     self,
                     "Cannot Remove",
@@ -698,7 +676,6 @@ class ThumbnailSettingsTab(QWidget):
                     self.logger.info("Hidden default material: %s", mat_name)
             else:
                 # Delete user-added materials
-                from PySide6.QtWidgets import QMessageBox
                 reply = QMessageBox.question(
                     self,
                     "Delete Material",
@@ -820,7 +797,9 @@ class ThumbnailSettingsTab(QWidget):
             if self.logger:
                 self.logger.info("=== THUMBNAIL SETTINGS SAVE ===")
                 self.logger.info(
-                    f"Attempting to save: bg={settings_dict['background_image']}, material={settings_dict['material']}"
+                    "Attempting to save: bg=%s, material=%s",
+                    settings_dict['background_image'],
+                    settings_dict['material']
                 )
 
             # Save to QSettings (persistent storage)
@@ -844,5 +823,3 @@ class ThumbnailSettingsTab(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to save settings: %s", e, exc_info=True)
-
-
