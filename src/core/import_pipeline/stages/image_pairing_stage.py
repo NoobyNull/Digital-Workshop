@@ -172,7 +172,7 @@ class ImagePairingStage(BaseStage):
                     # Store image path in metadata or separate table
                     # For now, we'll add it to metadata
                     self.db_manager.update_model_metadata(
-                        task.model_id, {"preview_image": image_path}
+                        task.model_id, preview_image=image_path
                     )
 
                 self.logger.info(
