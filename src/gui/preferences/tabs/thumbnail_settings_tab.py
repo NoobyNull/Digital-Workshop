@@ -16,7 +16,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Callable
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -105,15 +106,23 @@ class ThumbnailSettingsTab(QWidget):
         bg_layout.addLayout(color_h_layout)
 
         # Background image selection
-        img_desc = QLabel("Background Image (optional):")
+        img_desc = QLabel("Background Image (optional - click to select):")
         img_desc.setWordWrap(True)
         bg_layout.addWidget(img_desc)
 
-        # Background list
-        self.bg_list = QListWidget()
-        self.bg_list.setMaximumHeight(150)
+        # Background grid with scroll area
+        bg_scroll = QScrollArea()
+        bg_scroll.setWidgetResizable(True)
+        bg_scroll.setMaximumHeight(200)
+        bg_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        bg_grid_widget = QWidget()
+        self.bg_grid = QGridLayout(bg_grid_widget)
+        self.bg_grid.setSpacing(8)
         self._populate_backgrounds()
-        bg_layout.addWidget(self.bg_list)
+
+        bg_scroll.setWidget(bg_grid_widget)
+        bg_layout.addWidget(bg_scroll)
 
         layout.addWidget(bg_group)
 
@@ -124,109 +133,178 @@ class ThumbnailSettingsTab(QWidget):
         mat_label = QLabel("<b>Material</b>")
         mat_layout.addWidget(mat_label)
 
-        mat_desc = QLabel("Select a material to apply to all thumbnails:")
+        mat_desc = QLabel("Select a material to apply to all thumbnails (click to select):")
         mat_desc.setWordWrap(True)
         mat_layout.addWidget(mat_desc)
 
-        # Material combo
-        self.material_combo = QComboBox()
+        # Material grid with scroll area
+        mat_scroll = QScrollArea()
+        mat_scroll.setWidgetResizable(True)
+        mat_scroll.setMaximumHeight(200)
+        mat_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        mat_grid_widget = QWidget()
+        self.mat_grid = QGridLayout(mat_grid_widget)
+        self.mat_grid.setSpacing(8)
         self._populate_materials()
-        mat_layout.addWidget(self.material_combo)
+
+        mat_scroll.setWidget(mat_grid_widget)
+        mat_layout.addWidget(mat_scroll)
 
         layout.addWidget(mat_group)
 
-        # Preview group - side by side layout
-        preview_group = QFrame()
-        preview_layout = QVBoxLayout(preview_group)
-
-        preview_label = QLabel("<b>Preview</b>")
-        preview_layout.addWidget(preview_label)
-
-        # Horizontal layout for side-by-side previews
-        preview_h_layout = QHBoxLayout()
-
-        # Background preview
-        bg_preview_container = QVBoxLayout()
-        bg_preview_title = QLabel("Background")
-        bg_preview_title.setAlignment(Qt.AlignCenter)
-        bg_preview_container.addWidget(bg_preview_title)
-
-        self.preview_label = QLabel()
-        self.preview_label.setMinimumHeight(120)
-        self.preview_label.setMinimumWidth(120)
-        self.preview_label.setAlignment(Qt.AlignCenter)
-        # Use theme-aware colors for background and border
-        bg_color = get_theme_color('canvas_bg') or '#1E1E1E'
-        border_color = get_theme_color('border') or '#444444'
-        self.preview_label.setStyleSheet(f"""
-            QLabel {{
-                border: 1px solid {border_color};
-                border-radius: 4px;
-                background-color: {bg_color};
-            }}
-        """)
-        bg_preview_container.addWidget(self.preview_label)
-
-        # Material preview
-        mat_preview_container = QVBoxLayout()
-        mat_preview_title = QLabel("Material")
-        mat_preview_title.setAlignment(Qt.AlignCenter)
-        mat_preview_container.addWidget(mat_preview_title)
-
-        self.material_preview_label = QLabel()
-        self.material_preview_label.setMinimumHeight(120)
-        self.material_preview_label.setMinimumWidth(120)
-        self.material_preview_label.setAlignment(Qt.AlignCenter)
-        self.material_preview_label.setStyleSheet(f"""
-            QLabel {{
-                border: 1px solid {border_color};
-                border-radius: 4px;
-                background-color: {bg_color};
-            }}
-        """)
-        mat_preview_container.addWidget(self.material_preview_label)
-
-        preview_h_layout.addLayout(bg_preview_container)
-        preview_h_layout.addLayout(mat_preview_container)
-        preview_layout.addLayout(preview_h_layout)
-
-        layout.addWidget(preview_group)
-
         layout.addStretch()
-
-        # Connect signals
-        self.bg_list.itemSelectionChanged.connect(self._on_background_selected)
-        self.material_combo.currentIndexChanged.connect(self._update_preview)
 
         # Initialize color to default
         self._bg_color = "#404658"  # Professional dark teal-gray
 
+        # Track selected items
+        self.selected_bg_button = None
+        self.selected_mat_button = None
+        self.bg_buttons = {}
+        self.mat_buttons = {}
+
     def _populate_backgrounds(self) -> None:
-        """Populate background list from resources/backgrounds."""
+        """Populate background grid with clickable image buttons."""
         try:
             # Navigate from src/gui/preferences/tabs to src/resources
             bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
             if bg_dir.exists():
+                row, col = 0, 0
+                max_cols = 4  # 4 images per row
+
                 for bg_file in sorted(bg_dir.glob("*.png")):
-                    item = QListWidgetItem(bg_file.stem)
-                    # Store only the NAME, not the full path
-                    item.setData(Qt.UserRole, bg_file.stem)
-                    self.bg_list.addItem(item)
+                    bg_name = bg_file.stem
+
+                    # Create button with image
+                    btn = QPushButton()
+                    btn.setFixedSize(100, 100)
+                    btn.setToolTip(bg_name)
+                    btn.setCheckable(True)
+                    btn.setProperty("bg_name", bg_name)
+
+                    # Load and scale image
+                    pixmap = QPixmap(str(bg_file))
+                    if not pixmap.isNull():
+                        scaled = pixmap.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        btn.setIcon(QIcon(scaled))
+                        btn.setIconSize(QSize(90, 90))
+
+                    # Style button
+                    btn.setStyleSheet("""
+                        QPushButton {
+                            border: 2px solid #444444;
+                            border-radius: 4px;
+                            background-color: #2b2b2b;
+                        }
+                        QPushButton:hover {
+                            border: 2px solid #666666;
+                        }
+                        QPushButton:checked {
+                            border: 3px solid #0078d4;
+                            background-color: #1e1e1e;
+                        }
+                    """)
+
+                    # Connect click handler
+                    btn.clicked.connect(lambda checked, b=btn: self._on_background_clicked(b))
+
+                    # Add to grid
+                    self.bg_grid.addWidget(btn, row, col)
+                    self.bg_buttons[bg_name] = btn
+
+                    col += 1
+                    if col >= max_cols:
+                        col = 0
+                        row += 1
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to populate backgrounds: %s", e)
 
     def _populate_materials(self) -> None:
-        """Populate material combo from resources/materials."""
+        """Populate material grid with clickable image buttons."""
         try:
-            self.material_combo.addItem("None (Default)", None)
+            row, col = 0, 0
+            max_cols = 4  # 4 images per row
+
+            # Add "None" option first
+            none_btn = QPushButton("None\n(Default)")
+            none_btn.setFixedSize(100, 100)
+            none_btn.setCheckable(True)
+            none_btn.setProperty("mat_name", None)
+            none_btn.setStyleSheet("""
+                QPushButton {
+                    border: 2px solid #444444;
+                    border-radius: 4px;
+                    background-color: #2b2b2b;
+                }
+                QPushButton:hover {
+                    border: 2px solid #666666;
+                }
+                QPushButton:checked {
+                    border: 3px solid #0078d4;
+                    background-color: #1e1e1e;
+                }
+            """)
+            none_btn.clicked.connect(lambda checked, b=none_btn: self._on_material_clicked(b))
+            self.mat_grid.addWidget(none_btn, row, col)
+            self.mat_buttons[None] = none_btn
+            col += 1
 
             # Navigate from src/gui/preferences/tabs to src/resources
             mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
             if mat_dir.exists():
                 for mat_file in sorted(mat_dir.glob("*.mtl")):
                     material_name = mat_file.stem
-                    self.material_combo.addItem(material_name, material_name)
+
+                    # Create button with image
+                    btn = QPushButton()
+                    btn.setFixedSize(100, 100)
+                    btn.setToolTip(material_name)
+                    btn.setCheckable(True)
+                    btn.setProperty("mat_name", material_name)
+
+                    # Look for material texture image
+                    mat_image_path = mat_dir / f"{material_name}.png"
+                    if mat_image_path.exists():
+                        pixmap = QPixmap(str(mat_image_path))
+                        if not pixmap.isNull():
+                            scaled = pixmap.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                            btn.setIcon(QIcon(scaled))
+                            btn.setIconSize(QSize(90, 90))
+                    else:
+                        # No preview image, show text
+                        btn.setText(material_name)
+
+                    # Style button
+                    btn.setStyleSheet("""
+                        QPushButton {
+                            border: 2px solid #444444;
+                            border-radius: 4px;
+                            background-color: #2b2b2b;
+                        }
+                        QPushButton:hover {
+                            border: 2px solid #666666;
+                        }
+                        QPushButton:checked {
+                            border: 3px solid #0078d4;
+                            background-color: #1e1e1e;
+                        }
+                    """)
+
+                    # Connect click handler
+                    btn.clicked.connect(lambda checked, b=btn: self._on_material_clicked(b))
+
+                    # Add to grid
+                    self.mat_grid.addWidget(btn, row, col)
+                    self.mat_buttons[material_name] = btn
+
+                    col += 1
+                    if col >= max_cols:
+                        col = 0
+                        row += 1
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to populate materials: %s", e)
@@ -276,29 +354,60 @@ class ThumbnailSettingsTab(QWidget):
                     # New format: just the name like "Brick"
                     bg_name = bg_image
 
-                for i in range(self.bg_list.count()):
-                    item = self.bg_list.item(i)
-                    if item.data(Qt.UserRole) == bg_name:
-                        self.bg_list.setCurrentItem(item)
-                        if self.logger:
-                            self.logger.info("✓ Set background to: %s", bg_name)
-                        break
+                # Find and select the button
+                if bg_name in self.bg_buttons:
+                    btn = self.bg_buttons[bg_name]
+                    btn.setChecked(True)
+                    self.selected_bg_button = btn
+                    if self.logger:
+                        self.logger.info("✓ Set background to: %s", bg_name)
 
             # Load material into UI
             if material:
-                idx = self.material_combo.findData(material)
-                if idx >= 0:
-                    self.material_combo.setCurrentIndex(idx)
+                if material in self.mat_buttons:
+                    btn = self.mat_buttons[material]
+                    btn.setChecked(True)
+                    self.selected_mat_button = btn
                     if self.logger:
                         self.logger.info("✓ Set material to: %s", material)
-
-            self._update_preview()
+            else:
+                # Select "None" by default
+                if None in self.mat_buttons:
+                    btn = self.mat_buttons[None]
+                    btn.setChecked(True)
+                    self.selected_mat_button = btn
 
             if self.logger:
                 self.logger.info("=== THUMBNAIL SETTINGS LOAD COMPLETE ===")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to load thumbnail settings: %s", e, exc_info=True)
+
+    def _on_background_clicked(self, button: QPushButton) -> None:
+        """Handle background button click."""
+        try:
+            # Uncheck previous selection
+            if self.selected_bg_button and self.selected_bg_button != button:
+                self.selected_bg_button.setChecked(False)
+
+            # Update selection
+            self.selected_bg_button = button
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to handle background click: %s", e)
+
+    def _on_material_clicked(self, button: QPushButton) -> None:
+        """Handle material button click."""
+        try:
+            # Uncheck previous selection
+            if self.selected_mat_button and self.selected_mat_button != button:
+                self.selected_mat_button.setChecked(False)
+
+            # Update selection
+            self.selected_mat_button = button
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to handle material click: %s", e)
 
     def _on_color_picker_clicked(self) -> None:
         """Handle color picker button click."""
@@ -327,71 +436,17 @@ class ThumbnailSettingsTab(QWidget):
             if self.logger:
                 self.logger.error("Failed to update color preview: %s", e)
 
-    def _on_background_selected(self) -> None:
-        """Handle background selection."""
-        self._update_preview()
-
-    def _update_preview(self) -> None:
-        """Update preview images for both background and material."""
-        try:
-            # Update background preview
-            current_item = self.bg_list.currentItem()
-            if current_item:
-                bg_name = current_item.data(Qt.UserRole)
-                # Resolve background name to full path
-                from src.core.background_provider import BackgroundProvider
-                bg_provider = BackgroundProvider()
-                try:
-                    bg_path = bg_provider.get_background_by_name(bg_name)
-                    pixmap = QPixmap(str(bg_path))
-                    if not pixmap.isNull():
-                        scaled = pixmap.scaledToHeight(120, Qt.SmoothTransformation)
-                        self.preview_label.setPixmap(scaled)
-                    else:
-                        self.preview_label.setText("Error loading\nbackground")
-                except FileNotFoundError:
-                    self.preview_label.setText("Background\nnot found")
-            else:
-                self.preview_label.setText("No background\nselected")
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            if self.logger:
-                self.logger.error("Failed to update background preview: %s", e)
-            self.preview_label.setText("Error loading\npreview")
-
-        # Update material preview
-        try:
-            material_name = self.material_combo.currentData()
-            if material_name:
-                # Look for material texture image
-                # Navigate from src/gui/preferences/tabs to src/resources
-                mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
-                mat_image_path = mat_dir / f"{material_name}.png"
-
-                if mat_image_path.exists():
-                    pixmap = QPixmap(str(mat_image_path))
-                    if not pixmap.isNull():
-                        scaled = pixmap.scaledToHeight(120, Qt.SmoothTransformation)
-                        self.material_preview_label.setPixmap(scaled)
-                        return
-
-                self.material_preview_label.setText(f"{material_name}\n(no preview)")
-            else:
-                self.material_preview_label.setText("No material\nselected")
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            if self.logger:
-                self.logger.error("Failed to update material preview: %s", e)
-            self.material_preview_label.setText("Error loading\nmaterial")
-
     def get_settings(self) -> dict:
         """Get current thumbnail settings."""
         settings = {"background_image": None, "material": None, "background_color": "#404658"}
 
         try:
-            current_item = self.bg_list.currentItem()
-            if current_item:
-                settings["background_image"] = current_item.data(Qt.UserRole)
+            if self.selected_bg_button:
+                settings["background_image"] = self.selected_bg_button.property("bg_name")
 
-            settings["material"] = self.material_combo.currentData()
+            if self.selected_mat_button:
+                settings["material"] = self.selected_mat_button.property("mat_name")
+
             settings["background_color"] = self._bg_color
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
