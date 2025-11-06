@@ -1814,9 +1814,9 @@ class MainWindow(QMainWindow):
             # Refresh model library to show the newly imported model
             if hasattr(self, "model_library_widget") and self.model_library_widget:
                 self.model_library_widget._load_models_from_database()
-                self.logger.debug(f"Model library refreshed for model ID: {model_id}")
+                self.logger.debug("Model library refreshed for model ID: %d", model_id)
         except Exception as e:
-            self.logger.error(f"Failed to refresh model library for model {model_id}: {e}")
+            self.logger.error("Failed to refresh model library for model %d: %s", model_id, e)
 
     def _import_models(self) -> None:
         """Show the import models dialog."""

@@ -9,6 +9,7 @@ Provides a user interface for the NUCLEAR RESET feature with:
 - Progress tracking
 """
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QMessageBox,
     QGroupBox,
+    QInputDialog,
 )
 
 from src.core.logging_config import get_logger
@@ -68,7 +70,7 @@ class NuclearResetWorker(QThread):
                 self.reset_failed.emit(error_msg)
                 
         except Exception as e:
-            logger.error(f"Nuclear reset worker failed: {e}", exc_info=True)
+            logger.error("Nuclear reset worker failed: %s", e, exc_info=True)
             self.reset_failed.emit(str(e))
 
 
@@ -197,7 +199,6 @@ class NuclearResetDialog(QDialog):
     def _update_backup_location(self):
         """Update the backup location label."""
         if self.backup_checkbox.isChecked():
-            import os
             docs_path = Path(os.environ.get("USERPROFILE", Path.home())) / "Documents"
             backup_path = docs_path / "DigitalWorkshop_Backups"
             self.backup_location_label.setText(
@@ -216,7 +217,7 @@ class NuclearResetDialog(QDialog):
             targets = self.reset_handler.scan_all_targets()
             
             # Display summary
-            self.scan_text.append(f"📊 SUMMARY:")
+            self.scan_text.append("📊 SUMMARY:")
             self.scan_text.append(f"  • Directories: {len(targets['directories'])}")
             self.scan_text.append(f"  • Files: {targets['file_count']:,}")
             self.scan_text.append(f"  • Total Size: {targets['total_size_mb']:.2f} MB")
@@ -238,7 +239,7 @@ class NuclearResetDialog(QDialog):
                     self.scan_text.append(f"  • {key}")
             
         except Exception as e:
-            self.logger.error(f"Failed to scan targets: {e}", exc_info=True)
+            self.logger.error("Failed to scan targets: %s", e, exc_info=True)
             self.scan_text.append(f"\n❌ ERROR: {e}")
     
     def _confirm_and_execute(self):
@@ -261,9 +262,8 @@ class NuclearResetDialog(QDialog):
         
         if reply != QMessageBox.StandardButton.Yes:
             return
-        
+
         # Second confirmation (type confirmation)
-        from PySide6.QtWidgets import QInputDialog
         text, ok = QInputDialog.getText(
             self,
             "Type to Confirm",
@@ -318,7 +318,7 @@ class NuclearResetDialog(QDialog):
             message += f"\n📦 Backup created at:\n{results['backup_path']}"
 
         if results.get("errors"):
-            message += f"\n\n⚠️ Some files couldn't be deleted (still in use):\n"
+            message += "\n\n⚠️ Some files couldn't be deleted (still in use):\n"
             for error in results["errors"][:3]:  # Show first 3 errors
                 message += f"• {error}\n"
             if len(results["errors"]) > 3:
@@ -333,8 +333,6 @@ class NuclearResetDialog(QDialog):
 
         # Force close the application immediately without cleanup
         # (cleanup will fail because database is gone)
-        import os
-
         self.accept()
 
         # Kill the process immediately - no cleanup

@@ -37,12 +37,14 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QSplitter,
+    QCheckBox,
 )
-from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize
+from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
+from src.core.application_config import ApplicationConfig
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
@@ -57,8 +59,6 @@ from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordina
 from src.core.import_pipeline import (
     create_pipeline,
     ImportTask,
-    ImportStage as PipelineStage,
-    ImportStatus,
     PipelineResult,
 )
 from src.core.database_manager import get_database_manager
@@ -226,9 +226,6 @@ class ImportWorker(QThread):
             files_to_process: List of (model_path, file_hash) tuples
         """
         try:
-            from src.core.application_config import ApplicationConfig
-            from PySide6.QtCore import QSettings
-
             config = ApplicationConfig.get_default()
             settings = QSettings()
 
@@ -340,7 +337,7 @@ class PipelineImportWorker(QThread):
                 self.import_failed.emit("No valid files to import")
                 return
 
-            self.logger.info(f"Starting pipeline import of {total_files} files")
+            self.logger.info("Starting pipeline import of %d files", total_files)
 
             # Create pipeline
             db_manager = get_database_manager()
@@ -374,7 +371,7 @@ class PipelineImportWorker(QThread):
             pipeline.execute(tasks)
 
         except Exception as e:
-            self.logger.error(f"Pipeline import failed: {e}", exc_info=True)
+            self.logger.error("Pipeline import failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
 
     def _on_task_started(self, task: ImportTask) -> None:
@@ -396,12 +393,12 @@ class PipelineImportWorker(QThread):
 
     def _on_task_failed(self, task: ImportTask, error: str) -> None:
         """Handle task failed signal."""
-        self.logger.warning(f"Task failed for {task.filename}: {error}")
+        self.logger.warning("Task failed for %s: %s", task.filename, error)
         self.file_progress.emit(task.filename, 0, f"Failed: {error}")
 
     def _on_pipeline_completed(self, result: PipelineResult) -> None:
         """Handle pipeline completion signal."""
-        self.logger.info(f"Pipeline completed: {result.successful_tasks}/{result.total_tasks}")
+        self.logger.info("Pipeline completed: %d/%d", result.successful_tasks, result.total_tasks)
 
         # Complete session
         if self.session:
@@ -412,7 +409,7 @@ class PipelineImportWorker(QThread):
 
     def _on_pipeline_failed(self, error: str) -> None:
         """Handle pipeline failure signal."""
-        self.logger.error(f"Pipeline failed: {error}")
+        self.logger.error("Pipeline failed: %s", error)
         self.import_failed.emit(error)
 
     def cancel(self) -> None:
@@ -616,8 +613,6 @@ class ImportDialog(QDialog):
         options_label = QLabel("Processing Options:")
         options_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(options_label)
-
-        from PySide6.QtWidgets import QCheckBox
 
         self.generate_thumbnails_check = QCheckBox("Generate Thumbnails")
         self.generate_thumbnails_check.setChecked(True)
@@ -987,10 +982,10 @@ class ImportDialog(QDialog):
         self.import_worker.import_failed.connect(self._on_import_failed)
 
         # Allow parent window to connect to model_imported signal for real-time updates
-        if self.parent() and hasattr(self.parent(), '_on_model_imported_during_import'):
-            self.import_worker.model_imported.connect(
-                self.parent()._on_model_imported_during_import
-            )
+        parent = self.parent()
+        if parent and hasattr(parent, '_on_model_imported_during_import'):
+            handler = getattr(parent, '_on_model_imported_during_import')
+            self.import_worker.model_imported.connect(handler)
 
         # Start worker
         self.import_worker.start()
@@ -1032,7 +1027,7 @@ class ImportDialog(QDialog):
         """
         # Notify parent window to refresh model library
         # The parent window should connect to the worker's model_imported signal
-        self.logger.debug(f"Model imported: ID {model_id}")
+        self.logger.debug("Model imported: ID %d", model_id)
 
     def _on_import_completed(self, result: ImportResult) -> None:
         """Handle successful import completion."""

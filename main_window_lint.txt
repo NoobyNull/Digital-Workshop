@@ -1,0 +1,598 @@
+************* Module src.gui.main_window
+src\gui\main_window.py:2833:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+src\gui\main_window.py:1:0: C0302: Too many lines in module (2891/1000) (too-many-lines)
+src\gui\main_window.py:1800:9: W0511: TODO: Add material roughness/metallic sliders in picker (fixme)
+src\gui\main_window.py:1801:9: W0511: TODO: Add export material presets feature (fixme)
+src\gui\main_window.py:84:8: C0415: Import outside toplevel (time) (import-outside-toplevel)
+src\gui\main_window.py:99:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:95:12: C0415: Import outside toplevel (src.gui.services.ai_description_service.AIDescriptionService) (import-outside-toplevel)
+src\gui\main_window.py:100:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:129:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:111:12: C0415: Import outside toplevel (src.core.application_config.ApplicationConfig) (import-outside-toplevel)
+src\gui\main_window.py:126:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:130:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:151:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:148:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:152:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:114:12: W0612: Unused variable 'min_width' (unused-variable)
+src\gui\main_window.py:115:12: W0612: Unused variable 'min_height' (unused-variable)
+src\gui\main_window.py:184:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:188:8: C0415: Import outside toplevel (src.gui.components.menu_manager.MenuManager) (import-outside-toplevel)
+src\gui\main_window.py:189:8: C0415: Import outside toplevel (src.gui.components.toolbar_manager.ToolbarManager) (import-outside-toplevel)
+src\gui\main_window.py:190:8: C0415: Import outside toplevel (src.gui.components.status_bar_manager.StatusBarManager) (import-outside-toplevel)
+src\gui\main_window.py:204:8: W0212: Access to a protected member _update_theme_icon of a client class (protected-access)
+src\gui\main_window.py:227:8: C0415: Import outside toplevel (src.gui.model.model_loader.ModelLoader) (import-outside-toplevel)
+src\gui\main_window.py:243:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:247:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:326:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:404:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:382:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:366:16: C0415: Import outside toplevel (src.gui.model_library.ModelLibraryWidget) (import-outside-toplevel)
+src\gui\main_window.py:383:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:395:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:396:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:405:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:483:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:448:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:425:16: C0415: Import outside toplevel (src.gui.project_manager.ProjectTreeWidget) (import-outside-toplevel)
+src\gui\main_window.py:426:16: C0415: Import outside toplevel (src.core.database.database_manager.DatabaseManager) (import-outside-toplevel)
+src\gui\main_window.py:449:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:466:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:467:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:475:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:476:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:484:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:426:16: W0611: Unused DatabaseManager imported from src.core.database.database_manager (unused-import)
+src\gui\main_window.py:521:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:512:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:513:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:522:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:615:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:576:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:542:16: C0415: Import outside toplevel (src.gui.metadata_editor.MetadataEditorWidget) (import-outside-toplevel)
+src\gui\main_window.py:577:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:590:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:591:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:599:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:600:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:616:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:672:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:639:16: C0415: Import outside toplevel (src.gui.viewer_widget_vtk.Viewer3DWidget) (import-outside-toplevel)
+src\gui\main_window.py:642:20: C0415: Import outside toplevel (src.gui.viewer_widget.Viewer3DWidget) (import-outside-toplevel)
+src\gui\main_window.py:673:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:684:12: W0621: Redefining name 'get_database_manager' from outer scope (line 51) (redefined-outer-name)
+src\gui\main_window.py:753:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:684:12: W0404: Reimport 'get_database_manager' (imported line 51) (reimported)
+src\gui\main_window.py:684:12: C0415: Import outside toplevel (src.core.database_manager.get_database_manager) (import-outside-toplevel)
+src\gui\main_window.py:685:12: C0415: Import outside toplevel (src.gui.material_manager.MaterialManager) (import-outside-toplevel)
+src\gui\main_window.py:686:12: C0415: Import outside toplevel (src.gui.lighting_manager.LightingManager) (import-outside-toplevel)
+src\gui\main_window.py:691:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:693:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:701:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:703:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:739:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:707:16: C0415: Import outside toplevel (src.gui.lighting_control_panel.LightingControlPanel) (import-outside-toplevel)
+src\gui\main_window.py:741:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:749:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:745:16: C0415: Import outside toplevel (src.gui.materials.integration.MaterialLightingIntegrator) (import-outside-toplevel)
+src\gui\main_window.py:751:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:754:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:759:31: W0613: Unused argument 'title' (unused-argument)
+src\gui\main_window.py:781:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:776:12: C0415: Import outside toplevel (src.gui.gcode_previewer_components.GcodePreviewerWidget) (import-outside-toplevel)
+src\gui\main_window.py:782:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:800:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:795:12: C0415: Import outside toplevel (src.gui.CLO.CutListOptimizerWidget) (import-outside-toplevel)
+src\gui\main_window.py:801:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:817:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:812:12: C0415: Import outside toplevel (src.gui.feeds_and_speeds.FeedsAndSpeedsWidget) (import-outside-toplevel)
+src\gui\main_window.py:818:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:835:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:830:12: C0415: Import outside toplevel (src.gui.cost_estimator.CostEstimatorWidget) (import-outside-toplevel)
+src\gui\main_window.py:836:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:852:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:853:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:888:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:889:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:939:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:922:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:937:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:940:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:966:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:967:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1003:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1000:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1004:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1008:8: W0107: Unnecessary pass statement (unnecessary-pass)
+src\gui\main_window.py:1022:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1023:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1031:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1032:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1040:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1041:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1049:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1050:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1058:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1059:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1077:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1078:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1083:12: W0621: Redefining name 'QSettings' from outer scope (line 15) (redefined-outer-name)
+src\gui\main_window.py:1084:12: W0621: Redefining name 'QTabWidget' from outer scope (line 28) (redefined-outer-name)
+src\gui\main_window.py:1112:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1083:12: W0404: Reimport 'QSettings' (imported line 15) (reimported)
+src\gui\main_window.py:1083:12: C0415: Import outside toplevel (PySide6.QtCore.QSettings) (import-outside-toplevel)
+src\gui\main_window.py:1084:12: W0404: Reimport 'QTabWidget' (imported line 28) (reimported)
+src\gui\main_window.py:1084:12: C0415: Import outside toplevel (PySide6.QtWidgets.QTabWidget) (import-outside-toplevel)
+src\gui\main_window.py:1108:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1113:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1122:12: W0621: Redefining name 'QSettings' from outer scope (line 15) (redefined-outer-name)
+src\gui\main_window.py:1195:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1122:12: W0404: Reimport 'QSettings' (imported line 15) (reimported)
+src\gui\main_window.py:1122:12: C0415: Import outside toplevel (PySide6.QtCore.QSettings) (import-outside-toplevel)
+src\gui\main_window.py:1144:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1157:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1148:16: C0415: Import outside toplevel (src.core.application_config.ApplicationConfig) (import-outside-toplevel)
+src\gui\main_window.py:1154:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1158:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1178:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1179:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1196:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1205:8: C0415: Import outside toplevel (time) (import-outside-toplevel)
+src\gui\main_window.py:1302:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1217:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1266:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1237:20: C0415: Import outside toplevel (src.core.application_config.ApplicationConfig) (import-outside-toplevel)
+src\gui\main_window.py:1248:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1257:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1267:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1280:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1303:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1205:8: W0611: Unused import time (unused-import)
+src\gui\main_window.py:1239:20: W0612: Unused variable 'config' (unused-variable)
+src\gui\main_window.py:1337:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1338:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1343:12: W0621: Redefining name 'sys' from outer scope (line 9) (redefined-outer-name)
+src\gui\main_window.py:1388:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1343:12: W0404: Reimport 'sys' (imported line 9) (reimported)
+src\gui\main_window.py:1343:12: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+src\gui\main_window.py:1389:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1398:12: W0621: Redefining name 'QTimer' from outer scope (line 15) (redefined-outer-name)
+src\gui\main_window.py:1412:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1398:12: W0404: Reimport 'QTimer' (imported line 15) (reimported)
+src\gui\main_window.py:1398:12: C0415: Import outside toplevel (PySide6.QtCore.QTimer) (import-outside-toplevel)
+src\gui\main_window.py:1413:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1445:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1442:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1446:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1457:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1451:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1458:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1485:16: W0621: Redefining name 'QTimer' from outer scope (line 15) (redefined-outer-name)
+src\gui\main_window.py:1470:8: C0415: Import outside toplevel (time) (import-outside-toplevel)
+src\gui\main_window.py:1492:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1485:16: W0404: Reimport 'QTimer' (imported line 15) (reimported)
+src\gui\main_window.py:1485:16: C0415: Import outside toplevel (PySide6.QtCore.QTimer) (import-outside-toplevel)
+src\gui\main_window.py:1493:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1578:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1518:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1570:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1536:20: C0415: Import outside toplevel (src.core.application_config.ApplicationConfig) (import-outside-toplevel)
+src\gui\main_window.py:1548:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1559:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1563:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1571:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1579:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1607:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1608:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1616:8: C0415: Import outside toplevel (time) (import-outside-toplevel)
+src\gui\main_window.py:1631:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1632:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1642:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1643:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1663:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1656:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1664:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1675:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1672:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1676:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1691:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1682:12: C0415: Import outside toplevel (src.gui.main_window_components.settings_manager.SettingsManager) (import-outside-toplevel)
+src\gui\main_window.py:1688:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1692:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1705:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1702:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1706:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1724:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1715:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1718:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1721:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1725:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1728:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1742:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1753:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1752:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1754:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1768:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1769:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1783:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1784:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1797:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1818:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1816:16: W0212: Access to a protected member _load_models_from_database of a client class (protected-access)
+src\gui\main_window.py:1817:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1819:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1860:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1824:12: C0415: Import outside toplevel (src.gui.import_components.import_dialog.ImportDialog) (import-outside-toplevel)
+src\gui\main_window.py:1825:12: C0415: Import outside toplevel (src.core.root_folder_manager.RootFolderManager) (import-outside-toplevel)
+src\gui\main_window.py:1826:12: C0415: Import outside toplevel (src.core.database.import_migration.migrate_import_schema) (import-outside-toplevel)
+src\gui\main_window.py:1832:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1842:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1855:24: W0212: Access to a protected member _load_models_from_database of a client class (protected-access)
+src\gui\main_window.py:1861:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1893:16: W0621: Redefining name 'Path' from outer scope (line 12) (redefined-outer-name)
+src\gui\main_window.py:1911:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1890:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1893:16: W0404: Reimport 'Path' (imported line 12) (reimported)
+src\gui\main_window.py:1893:16: C0415: Import outside toplevel (pathlib.Path) (import-outside-toplevel)
+src\gui\main_window.py:1909:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1912:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1923:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1967:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1965:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1968:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1995:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:1983:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1988:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1993:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:1996:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2005:16: W0621: Redefining name 'QMessageBox' from outer scope (line 28) (redefined-outer-name)
+src\gui\main_window.py:2081:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2005:16: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2005:16: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2019:16: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2019:16: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2027:16: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2027:16: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2043:29: E0110: Abstract class 'OBJParser' with abstract methods instantiated (abstract-class-instantiated)
+src\gui\main_window.py:2045:29: E0110: Abstract class 'ThreeMFParser' with abstract methods instantiated (abstract-class-instantiated)
+src\gui\main_window.py:2047:29: E0110: Abstract class 'STEPParser' with abstract methods instantiated (abstract-class-instantiated)
+src\gui\main_window.py:2049:20: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2049:20: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2063:16: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2063:16: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2071:12: C0415: Import outside toplevel (src.gui.model_editor.model_analyzer_dialog.ModelAnalyzerDialog) (import-outside-toplevel)
+src\gui\main_window.py:2077:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2077:42: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+src\gui\main_window.py:2082:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2083:12: W0404: Reimport 'QMessageBox' (imported line 28) (reimported)
+src\gui\main_window.py:2083:12: C0415: Import outside toplevel (PySide6.QtWidgets.QMessageBox) (import-outside-toplevel)
+src\gui\main_window.py:2098:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2099:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2132:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2109:35: W0212: Access to a protected member _load_models of a client class (protected-access)
+src\gui\main_window.py:2125:27: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2126:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2129:12: W0212: Access to a protected member _load_models of a client class (protected-access)
+src\gui\main_window.py:2133:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2163:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2164:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2184:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2174:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2179:16: W0212: Access to a protected member _load_models_from_database of a client class (protected-access)
+src\gui\main_window.py:2185:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2199:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2195:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2200:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2252:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2210:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2220:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2217:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2221:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2234:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2231:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2235:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2245:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2242:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2246:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2253:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2267:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2263:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2268:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2282:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2278:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2283:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2295:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2296:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2317:8: W0212: Access to a protected member _update_theme_icon of a client class (protected-access)
+src\gui\main_window.py:2381:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2332:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2333:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2363:23: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2341:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2364:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2377:27: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2378:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2382:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2405:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2395:41: W0212: Access to a protected member _load_config of a client class (protected-access)
+src\gui\main_window.py:2397:16: W0212: Access to a protected member _initialize_providers of a client class (protected-access)
+src\gui\main_window.py:2398:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2406:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2416:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2411:12: C0415: Import outside toplevel (src.gui.theme.ThemeDialog) (import-outside-toplevel)
+src\gui\main_window.py:2417:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2425:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2461:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2462:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2499:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2469:12: C0415: Import outside toplevel (src.gui.theme.simple_service.ThemeService) (import-outside-toplevel)
+src\gui\main_window.py:2495:12: W0212: Access to a protected member _update_theme_icon of a client class (protected-access)
+src\gui\main_window.py:2497:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2500:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2584:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2563:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2568:31: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2569:28: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2585:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2626:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2618:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2624:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2627:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2636:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2632:12: C0415: Import outside toplevel (src.gui.help_system.HelpDialog) (import-outside-toplevel)
+src\gui\main_window.py:2637:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2661:12: W0621: Redefining name 'get_database_manager' from outer scope (line 51) (redefined-outer-name)
+src\gui\main_window.py:2709:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2659:12: C0415: Import outside toplevel (src.gui.thumbnail_generation_coordinator.ThumbnailGenerationCoordinator) (import-outside-toplevel)
+src\gui\main_window.py:2660:12: C0415: Import outside toplevel (src.core.application_config.ApplicationConfig) (import-outside-toplevel)
+src\gui\main_window.py:2661:12: W0404: Reimport 'get_database_manager' (imported line 51) (reimported)
+src\gui\main_window.py:2661:12: C0415: Import outside toplevel (src.core.database_manager.get_database_manager) (import-outside-toplevel)
+src\gui\main_window.py:2707:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2710:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2724:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2725:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2733:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2730:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2734:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2741:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2739:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2742:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2765:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2752:16: W0212: Access to a protected member _load_models_from_database of a client class (protected-access)
+src\gui\main_window.py:2766:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2777:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2773:16: W0212: Access to a protected member _load_models_from_database of a client class (protected-access)
+src\gui\main_window.py:2778:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2787:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2788:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2809:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2805:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2807:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2810:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2849:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2828:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2834:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2844:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2850:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2882:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src\gui\main_window.py:2864:56: E0602: Undefined variable 'setup_dock_snapping' (undefined-variable)
+src\gui\main_window.py:2880:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:2883:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src\gui\main_window.py:271:8: W0201: Attribute 'hero_tabs' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:351:12: W0201: Attribute 'model_library_dock' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:368:16: W0201: Attribute 'model_library_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:410:12: W0201: Attribute 'project_manager_dock' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:429:16: W0201: Attribute 'project_manager_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:489:12: W0201: Attribute 'properties_dock' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:503:12: W0201: Attribute 'project_details_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:527:12: W0201: Attribute 'metadata_dock' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:544:16: W0201: Attribute 'metadata_editor' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:551:16: W0201: Attribute 'metadata_tabs' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:647:16: W0201: Attribute 'viewer_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:651:16: W0201: Attribute 'viewer_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:675:12: W0201: Attribute 'viewer_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:690:16: W0201: Attribute 'material_manager' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:692:16: W0201: Attribute 'material_manager' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:698:16: W0201: Attribute 'lighting_manager' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:702:16: W0201: Attribute 'lighting_manager' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:709:16: W0201: Attribute 'lighting_panel' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:740:16: W0201: Attribute 'lighting_panel' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:747:16: W0201: Attribute 'material_lighting_integrator' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:750:16: W0201: Attribute 'material_lighting_integrator' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:778:12: W0201: Attribute 'gcode_previewer_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:797:12: W0201: Attribute 'clo_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:814:12: W0201: Attribute 'feeds_and_speeds_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:832:12: W0201: Attribute 'cost_estimator_widget' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:901:12: W0201: Attribute 'layout_edit_mode' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:1401:12: W0201: Attribute '_window_state_save_timer' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:1477:16: W0201: Attribute '_window_shown' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:1901:16: W0201: Attribute 'current_model_id' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:1947:12: W0201: Attribute 'current_model_id' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:2864:16: W0201: Attribute '_snap_layer' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:2864:34: W0201: Attribute '_snap_handlers' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:2874:16: W0201: Attribute '_snap_handlers' defined outside __init__ (attribute-defined-outside-init)
+src\gui\main_window.py:8:0: W0611: Unused import logging (unused-import)
+src\gui\main_window.py:9:0: W0611: Unused import sys (unused-import)
+src\gui\main_window.py:10:0: W0611: Unused import json (unused-import)
+src\gui\main_window.py:11:0: W0611: Unused import base64 (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QSize imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QStandardPaths imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QEvent imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QObject imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QPoint imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:15:0: W0611: Unused QRect imported from PySide6.QtCore (unused-import)
+src\gui\main_window.py:27:0: W0611: Unused QAction imported from PySide6.QtGui (unused-import)
+src\gui\main_window.py:27:0: W0611: Unused QIcon imported from PySide6.QtGui (unused-import)
+src\gui\main_window.py:27:0: W0611: Unused QKeySequence imported from PySide6.QtGui (unused-import)
+src\gui\main_window.py:27:0: W0611: Unused QPalette imported from PySide6.QtGui (unused-import)
+src\gui\main_window.py:27:0: W0611: Unused QCursor imported from PySide6.QtGui (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QHBoxLayout imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QMenuBar imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QToolBar imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QStatusBar imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QTextEdit imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QPushButton imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QFrame imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QSplitter imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QFileDialog imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:28:0: W0611: Unused QProgressBar imported from PySide6.QtWidgets (unused-import)
+src\gui\main_window.py:54:0: W0611: Unused STLProgressCallback imported from src.parsers.stl_parser (unused-import)
+src\gui\main_window.py:60:0: W0611: Unused SnapOverlayLayer imported from src.gui.window.dock_snapping (unused-import)
+
+
+Report
+======
+1426 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |1      |1          |=          |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |1      |1          |=          |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |83     |83         |=          |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |2      |2          |=          |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    PySide6 
+      \-QtCore (src.gui.main_window)
+      \-QtGui (src.gui.main_window)
+      \-QtWidgets (src.gui.main_window)
+    src 
+      \-core 
+      | \-application_config (src.gui.main_window)
+      | \-data_structures (src.gui.main_window)
+      | \-database 
+      | | \-database_manager (src.gui.main_window)
+      | | \-import_migration (src.gui.main_window)
+      | \-database_manager (src.gui.main_window)
+      | \-logging_config (src.gui.main_window)
+      | \-model_cache (src.gui.main_window)
+      | \-root_folder_manager (src.gui.main_window)
+      \-parsers 
+        \-format_detector (src.gui.main_window)
+        \-obj_parser (src.gui.main_window)
+        \-step_parser (src.gui.main_window)
+        \-stl_parser (src.gui.main_window)
+        \-threemf_parser (src.gui.main_window)
+
+
+
+2893 lines have been analyzed
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |1804   |62.36 |1804     |=          |
++----------+-------+------+---------+-----------+
+|docstring |322    |11.13 |322      |=          |
++----------+-------+------+---------+-----------+
+|comment   |312    |10.78 |312      |=          |
++----------+-------+------+---------+-----------+
+|empty     |455    |15.73 |455      |=          |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |0     |0        |0          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.000 |0.000    |=          |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |54     |54       |54         |
++-----------+-------+---------+-----------+
+|refactor   |0      |0        |0          |
++-----------+-------+---------+-----------+
+|warning    |381    |381      |381        |
++-----------+-------+---------+-----------+
+|error      |4      |4        |4          |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++--------------------+-------+--------+---------+-----------+
+|module              |error  |warning |refactor |convention |
++====================+=======+========+=========+===========+
+|src.gui.main_window |100.00 |100.00  |0.00     |100.00     |
++--------------------+-------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++-------------------------------+------------+
+|message id                     |occurrences |
++===============================+============+
+|logging-fstring-interpolation  |163         |
++-------------------------------+------------+
+|broad-exception-caught         |111         |
++-------------------------------+------------+
+|import-outside-toplevel        |52          |
++-------------------------------+------------+
+|attribute-defined-outside-init |33          |
++-------------------------------+------------+
+|unused-import                  |29          |
++-------------------------------+------------+
+|reimported                     |15          |
++-------------------------------+------------+
+|protected-access               |12          |
++-------------------------------+------------+
+|redefined-outer-name           |10          |
++-------------------------------+------------+
+|unused-variable                |3           |
++-------------------------------+------------+
+|abstract-class-instantiated    |3           |
++-------------------------------+------------+
+|fixme                          |2           |
++-------------------------------+------------+
+|unused-argument                |1           |
++-------------------------------+------------+
+|unnecessary-pass               |1           |
++-------------------------------+------------+
+|undefined-variable             |1           |
++-------------------------------+------------+
+|too-many-lines                 |1           |
++-------------------------------+------------+
+|superfluous-parens             |1           |
++-------------------------------+------------+
+|f-string-without-interpolation |1           |
++-------------------------------+------------+
+
+
+
+
+------------------------------------------------------------------
+Your code has been rated at 6.81/10 (previous run: 6.81/10, +0.00)
+
