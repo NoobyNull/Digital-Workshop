@@ -106,9 +106,26 @@ class ThumbnailSettingsTab(QWidget):
         bg_layout.addLayout(color_h_layout)
 
         # Background image selection
+        bg_header_layout = QHBoxLayout()
         img_desc = QLabel("Background Image (optional - click to select):")
         img_desc.setWordWrap(True)
-        bg_layout.addWidget(img_desc)
+        bg_header_layout.addWidget(img_desc)
+        bg_header_layout.addStretch()
+
+        # Add/Remove buttons for backgrounds
+        self.add_bg_button = QPushButton("+")
+        self.add_bg_button.setFixedSize(30, 30)
+        self.add_bg_button.setToolTip("Add new background image")
+        self.add_bg_button.clicked.connect(self._on_add_background)
+        bg_header_layout.addWidget(self.add_bg_button)
+
+        self.remove_bg_button = QPushButton("-")
+        self.remove_bg_button.setFixedSize(30, 30)
+        self.remove_bg_button.setToolTip("Remove selected background")
+        self.remove_bg_button.clicked.connect(self._on_remove_background)
+        bg_header_layout.addWidget(self.remove_bg_button)
+
+        bg_layout.addLayout(bg_header_layout)
 
         # Background grid with scroll area
         bg_scroll = QScrollArea()
@@ -133,9 +150,27 @@ class ThumbnailSettingsTab(QWidget):
         mat_label = QLabel("<b>Material</b>")
         mat_layout.addWidget(mat_label)
 
+        # Material header with add/remove buttons
+        mat_header_layout = QHBoxLayout()
         mat_desc = QLabel("Select a material to apply to all thumbnails (click to select):")
         mat_desc.setWordWrap(True)
-        mat_layout.addWidget(mat_desc)
+        mat_header_layout.addWidget(mat_desc)
+        mat_header_layout.addStretch()
+
+        # Add/Remove buttons for materials
+        self.add_mat_button = QPushButton("+")
+        self.add_mat_button.setFixedSize(30, 30)
+        self.add_mat_button.setToolTip("Add new material")
+        self.add_mat_button.clicked.connect(self._on_add_material)
+        mat_header_layout.addWidget(self.add_mat_button)
+
+        self.remove_mat_button = QPushButton("-")
+        self.remove_mat_button.setFixedSize(30, 30)
+        self.remove_mat_button.setToolTip("Remove selected material")
+        self.remove_mat_button.clicked.connect(self._on_remove_material)
+        mat_header_layout.addWidget(self.remove_mat_button)
+
+        mat_layout.addLayout(mat_header_layout)
 
         # Material grid with scroll area
         mat_scroll = QScrollArea()
@@ -164,6 +199,53 @@ class ThumbnailSettingsTab(QWidget):
         self.bg_buttons = {}
         self.mat_buttons = {}
 
+        # Track hidden items (for hiding defaults without deleting)
+        self.hidden_backgrounds = set()
+        self.hidden_materials = set()
+
+        # Load hidden items from settings
+        self._load_hidden_items()
+
+
+    def _load_hidden_items(self) -> None:
+        """Load hidden backgrounds and materials from settings."""
+        try:
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
+
+            # Load hidden backgrounds
+            hidden_bg = settings.value("thumbnail/hidden_backgrounds", [])
+            if isinstance(hidden_bg, list):
+                self.hidden_backgrounds = set(hidden_bg)
+
+            # Load hidden materials
+            hidden_mat = settings.value("thumbnail/hidden_materials", [])
+            if isinstance(hidden_mat, list):
+                self.hidden_materials = set(hidden_mat)
+
+            if self.logger:
+                self.logger.info("Loaded hidden items: %d backgrounds, %d materials",
+                               len(self.hidden_backgrounds), len(self.hidden_materials))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to load hidden items: %s", e)
+
+    def _save_hidden_items(self) -> None:
+        """Save hidden backgrounds and materials to settings."""
+        try:
+            from PySide6.QtCore import QSettings
+            settings = QSettings()
+
+            settings.setValue("thumbnail/hidden_backgrounds", list(self.hidden_backgrounds))
+            settings.setValue("thumbnail/hidden_materials", list(self.hidden_materials))
+
+            if self.logger:
+                self.logger.info("Saved hidden items: %d backgrounds, %d materials",
+                               len(self.hidden_backgrounds), len(self.hidden_materials))
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to save hidden items: %s", e)
+
     def _populate_backgrounds(self) -> None:
         """Populate background grid with clickable image buttons."""
         try:
@@ -176,12 +258,17 @@ class ThumbnailSettingsTab(QWidget):
                 for bg_file in sorted(bg_dir.glob("*.png")):
                     bg_name = bg_file.stem
 
+                    # Skip hidden backgrounds
+                    if bg_name in self.hidden_backgrounds:
+                        continue
+
                     # Create button with image
                     btn = QPushButton()
                     btn.setFixedSize(100, 100)
                     btn.setToolTip(bg_name)
                     btn.setCheckable(True)
                     btn.setProperty("bg_name", bg_name)
+                    btn.setProperty("is_default", True)  # Mark as default (shipped with app)
 
                     # Load and scale image
                     pixmap = QPixmap(str(bg_file))
@@ -258,12 +345,17 @@ class ThumbnailSettingsTab(QWidget):
                 for mat_file in sorted(mat_dir.glob("*.mtl")):
                     material_name = mat_file.stem
 
+                    # Skip hidden materials
+                    if material_name in self.hidden_materials:
+                        continue
+
                     # Create button with image
                     btn = QPushButton()
                     btn.setFixedSize(100, 100)
                     btn.setToolTip(material_name)
                     btn.setCheckable(True)
                     btn.setProperty("mat_name", material_name)
+                    btn.setProperty("is_default", True)  # Mark as default (shipped with app)
 
                     # Look for material texture image
                     mat_image_path = mat_dir / f"{material_name}.png"
@@ -408,6 +500,266 @@ class ThumbnailSettingsTab(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to handle material click: %s", e)
+
+
+    def _on_add_background(self) -> None:
+        """Handle adding a new background image."""
+        try:
+            from PySide6.QtWidgets import QFileDialog
+
+            # Open file dialog to select image
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Select Background Image",
+                "",
+                "Images (*.png *.jpg *.jpeg *.bmp)"
+            )
+
+            if file_path:
+                # Copy to backgrounds directory
+                bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+                bg_dir.mkdir(parents=True, exist_ok=True)
+
+                source = Path(file_path)
+                dest = bg_dir / source.name
+
+                # Check if file already exists
+                if dest.exists():
+                    from PySide6.QtWidgets import QMessageBox
+                    reply = QMessageBox.question(
+                        self,
+                        "File Exists",
+                        f"Background '{source.stem}' already exists. Replace it?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply == QMessageBox.No:
+                        return
+
+                # Copy file
+                import shutil
+                shutil.copy2(source, dest)
+
+                # Refresh the grid
+                self._refresh_backgrounds()
+
+                if self.logger:
+                    self.logger.info("Added background: %s", source.stem)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to add background: %s", e)
+
+    def _on_remove_background(self) -> None:
+        """Handle removing/hiding a background."""
+        try:
+            if not self.selected_bg_button:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "No Selection",
+                    "Please select a background to remove."
+                )
+                return
+
+            bg_name = self.selected_bg_button.property("bg_name")
+            is_default = self.selected_bg_button.property("is_default")
+
+            if is_default:
+                # Hide default backgrounds (don't delete)
+                self.hidden_backgrounds.add(bg_name)
+                self._save_hidden_items()
+
+                if self.logger:
+                    self.logger.info("Hidden default background: %s", bg_name)
+            else:
+                # Delete user-added backgrounds
+                from PySide6.QtWidgets import QMessageBox
+                reply = QMessageBox.question(
+                    self,
+                    "Delete Background",
+                    f"Permanently delete background '{bg_name}'?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+                    bg_file = bg_dir / f"{bg_name}.png"
+                    if bg_file.exists():
+                        bg_file.unlink()
+
+                    if self.logger:
+                        self.logger.info("Deleted background: %s", bg_name)
+
+            # Refresh the grid
+            self._refresh_backgrounds()
+            self.selected_bg_button = None
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to remove background: %s", e)
+
+    def _on_add_material(self) -> None:
+        """Handle adding a new material."""
+        try:
+            from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+            # Open file dialog to select MTL file
+            mtl_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Select Material File (.mtl)",
+                "",
+                "Material Files (*.mtl)"
+            )
+
+            if not mtl_path:
+                return
+
+            # Ask for optional texture image
+            QMessageBox.information(
+                self,
+                "Select Texture",
+                "Now select an optional texture image (PNG) for the material preview.\n\n"
+                "Click Cancel if you don't have a texture image."
+            )
+
+            texture_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Select Texture Image (optional)",
+                "",
+                "Images (*.png)"
+            )
+
+            # Copy to materials directory
+            mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+            mat_dir.mkdir(parents=True, exist_ok=True)
+
+            source_mtl = Path(mtl_path)
+            dest_mtl = mat_dir / source_mtl.name
+
+            # Check if material already exists
+            if dest_mtl.exists():
+                reply = QMessageBox.question(
+                    self,
+                    "File Exists",
+                    f"Material '{source_mtl.stem}' already exists. Replace it?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.No:
+                    return
+
+            # Copy MTL file
+            import shutil
+            shutil.copy2(source_mtl, dest_mtl)
+
+            # Copy texture if provided
+            if texture_path:
+                source_texture = Path(texture_path)
+                dest_texture = mat_dir / f"{source_mtl.stem}.png"
+                shutil.copy2(source_texture, dest_texture)
+
+            # Refresh the grid
+            self._refresh_materials()
+
+            if self.logger:
+                self.logger.info("Added material: %s", source_mtl.stem)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to add material: %s", e)
+
+    def _on_remove_material(self) -> None:
+        """Handle removing/hiding a material."""
+        try:
+            if not self.selected_mat_button:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "No Selection",
+                    "Please select a material to remove."
+                )
+                return
+
+            mat_name = self.selected_mat_button.property("mat_name")
+
+            # Can't remove "None" option
+            if mat_name is None:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "Cannot Remove",
+                    "The 'None' option cannot be removed."
+                )
+                return
+
+            is_default = self.selected_mat_button.property("is_default")
+
+            if is_default:
+                # Hide default materials (don't delete)
+                self.hidden_materials.add(mat_name)
+                self._save_hidden_items()
+
+                if self.logger:
+                    self.logger.info("Hidden default material: %s", mat_name)
+            else:
+                # Delete user-added materials
+                from PySide6.QtWidgets import QMessageBox
+                reply = QMessageBox.question(
+                    self,
+                    "Delete Material",
+                    f"Permanently delete material '{mat_name}'?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+                    mtl_file = mat_dir / f"{mat_name}.mtl"
+                    png_file = mat_dir / f"{mat_name}.png"
+
+                    if mtl_file.exists():
+                        mtl_file.unlink()
+                    if png_file.exists():
+                        png_file.unlink()
+
+                    if self.logger:
+                        self.logger.info("Deleted material: %s", mat_name)
+
+            # Refresh the grid
+            self._refresh_materials()
+            self.selected_mat_button = None
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to remove material: %s", e)
+
+    def _refresh_backgrounds(self) -> None:
+        """Refresh the background grid."""
+        try:
+            # Clear existing buttons
+            for i in reversed(range(self.bg_grid.count())):
+                widget = self.bg_grid.itemAt(i).widget()
+                if widget:
+                    widget.deleteLater()
+
+            self.bg_buttons.clear()
+            self.selected_bg_button = None
+
+            # Repopulate
+            self._populate_backgrounds()
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to refresh backgrounds: %s", e)
+
+    def _refresh_materials(self) -> None:
+        """Refresh the material grid."""
+        try:
+            # Clear existing buttons
+            for i in reversed(range(self.mat_grid.count())):
+                widget = self.mat_grid.itemAt(i).widget()
+                if widget:
+                    widget.deleteLater()
+
+            self.mat_buttons.clear()
+            self.selected_mat_button = None
+
+            # Repopulate
+            self._populate_materials()
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            if self.logger:
+                self.logger.error("Failed to refresh materials: %s", e)
 
     def _on_color_picker_clicked(self) -> None:
         """Handle color picker button click."""
