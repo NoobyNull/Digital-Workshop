@@ -338,20 +338,13 @@ class ImportFileManager:
         )
 
         # Create file info for each file
-        path_validator = PathValidator()
         security_logger = SecurityEventLogger()
 
         for file_path in file_paths:
             try:
-                # Validate path to prevent directory traversal
-                if not path_validator.validate_path(file_path):
-                    security_logger.log_path_validation_failure(
-                        file_path, "Path validation failed"
-                    )
-                    self.logger.warning("Path validation failed: %s", file_path)
-                    continue
-
-                # Check for system files
+                # Check for system files (security check)
+                # Note: We don't validate path traversal for imports since users
+                # should be able to import files from anywhere on their system
                 if PathValidator.is_system_file(file_path):
                     security_logger.log_system_file_blocked(file_path)
                     self.logger.warning("System file blocked: %s", file_path)

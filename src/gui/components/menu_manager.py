@@ -180,13 +180,13 @@ class MenuManager:
         # Tools menu
         tools_menu = menubar.addMenu("&Tools")
 
-        # Generate screenshots action
-        generate_screenshots_action = QAction("Generate &Screenshots for Library", self.main_window)
-        generate_screenshots_action.setStatusTip(
-            "Generate screenshots of all models in the library with applied materials"
+        # Generate thumbnails action
+        generate_thumbnails_action = QAction("Generate &Thumbnails for Library", self.main_window)
+        generate_thumbnails_action.setStatusTip(
+            "Generate thumbnails for all models in the library with applied materials"
         )
-        generate_screenshots_action.triggered.connect(self._generate_library_screenshots)
-        tools_menu.addAction(generate_screenshots_action)
+        generate_thumbnails_action.triggered.connect(self._generate_library_screenshots)
+        tools_menu.addAction(generate_thumbnails_action)
 
         # Help menu
         help_menu = menubar.addMenu("&Help")

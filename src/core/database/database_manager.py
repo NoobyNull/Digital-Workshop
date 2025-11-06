@@ -79,6 +79,18 @@ class DatabaseManager:
         """Get model information by ID."""
         return self._model_repo.get_model(model_id)
 
+    def get_model_by_id(self, model_id: int) -> Optional[Dict[str, Any]]:
+        """Get model information by ID (alias for get_model)."""
+        return self._model_repo.get_model(model_id)
+
+    def get_model_by_path(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Get model information by file path."""
+        return self._model_repo.get_model_by_path(file_path)
+
+    def update_model_hash(self, model_id: int, file_hash: str) -> bool:
+        """Update file hash for a model."""
+        return self._model_repo.update_model_hash(model_id, file_hash)
+
     def get_all_models(
         self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> List[Dict[str, Any]]:
@@ -130,6 +142,10 @@ class DatabaseManager:
     def add_model_metadata(self, model_id: int, **kwargs) -> int:
         """Add metadata for a model (compatibility alias)."""
         return self.add_metadata(model_id, **kwargs)
+
+    def get_model_metadata(self, model_id: int) -> Optional[Dict[str, Any]]:
+        """Get model metadata."""
+        return self._metadata_repo.get_model_metadata(model_id)
 
     def update_model_metadata(self, model_id: int, **kwargs) -> bool:
         """Update model metadata."""
@@ -430,6 +446,15 @@ class DatabaseManager:
         return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
 
     # ===== Connection Management =====
+
+    def get_connection(self) -> sqlite3.Connection:
+        """
+        Get a database connection.
+
+        Returns:
+            SQLite connection object
+        """
+        return self._db_ops.get_connection()
 
     @log_function_call(logger)
     def close(self) -> None:

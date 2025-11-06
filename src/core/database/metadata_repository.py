@@ -66,6 +66,36 @@ class MetadataRepository:
             raise
 
     @log_function_call(logger)
+    def get_model_metadata(self, model_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get metadata for a model.
+
+        Args:
+            model_id: Model ID
+
+        Returns:
+            Metadata dictionary or None if not found
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    SELECT * FROM model_metadata WHERE model_id = ?
+                """,
+                    (model_id,),
+                )
+
+                row = cursor.fetchone()
+                return dict(row) if row else None
+
+        except sqlite3.Error as e:
+            logger.error("Failed to get metadata for model %s: {str(e)}", model_id)
+            return None
+
+    @log_function_call(logger)
     def update_model_metadata(self, model_id: int, **kwargs) -> bool:
         """
         Update model metadata.

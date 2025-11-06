@@ -754,6 +754,7 @@ class MetadataEditorWidget(QWidget):
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
+            from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 
             config = ApplicationConfig.get_default()
             settings = QSettings()
@@ -770,34 +771,33 @@ class MetadataEditorWidget(QWidget):
             # Use background image if set, otherwise use background color
             background = bg_image if bg_image else bg_color
 
-            # Generate thumbnail with current preferences
-            thumbnail_service = ImportThumbnailService()
-            result = thumbnail_service.generate_thumbnail(
-                model_path=model_path,
-                file_hash=file_hash,
-                material=material,
-                background=background,
-                force_regenerate=True,
-            )
+            # Generate thumbnail using coordinator with dedicated window
+            coordinator = ThumbnailGenerationCoordinator(parent=self)
 
-            if result.success:
-                # Save thumbnail path to database
-                if result.thumbnail_path:
-                    self.db_manager.update_model_thumbnail(
-                        self.current_model_id, str(result.thumbnail_path)
-                    )
-                    self.logger.info("Saved thumbnail path to database: %s", result.thumbnail_path)
-
+            # Connect completion signal to refresh display
+            def on_generation_completed():
+                self.logger.info("Preview generated for model %s", self.current_model_id)
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
+                # Save thumbnail path to database
+                model = self.db_manager.get_model(self.current_model_id)
+                if model:
+                    thumbnail_path = model.get("thumbnail_path")
+                    if thumbnail_path:
+                        self.db_manager.update_model_thumbnail(
+                            self.current_model_id, str(thumbnail_path)
+                        )
+                        self.logger.info("Saved thumbnail path to database: %s", thumbnail_path)
                 QMessageBox.information(self, "Success", "Preview generated successfully!")
-                self.logger.info("Preview generated for model %s", self.current_model_id)
-            else:
-                error_msg = result.error or "Unknown error"
-                QMessageBox.warning(self, "Error", f"Failed to generate preview: {error_msg}")
-                self.logger.error(
-                    f"Preview generation failed for model {self.current_model_id}: {error_msg}"
-                )
+
+            coordinator.generation_completed.connect(on_generation_completed)
+
+            # Generate thumbnail
+            coordinator.generate_thumbnails(
+                file_info_list=[(model_path, file_hash)],
+                background=background,
+                material=material,
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"

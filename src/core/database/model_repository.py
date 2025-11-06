@@ -196,6 +196,54 @@ class ModelRepository:
             return None
 
     @log_function_call(logger)
+    def get_model_by_path(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Get model information by file path.
+
+        Args:
+            file_path: Full path to the model file
+
+        Returns:
+            Model information dictionary or None if not found
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    SELECT m.*, mm.title, mm.description, mm.keywords, mm.category,
+                           mm.source, mm.rating, mm.view_count, mm.last_viewed
+                    FROM models m
+                    LEFT JOIN model_metadata mm ON m.id = mm.model_id
+                    WHERE m.file_path = ?
+                """,
+                    (file_path,),
+                )
+
+                row = cursor.fetchone()
+                return dict(row) if row else None
+
+        except sqlite3.Error as e:
+            logger.error("Failed to get model by path %s: {str(e)}", file_path)
+            return None
+
+    @log_function_call(logger)
+    def update_model_hash(self, model_id: int, file_hash: str) -> bool:
+        """
+        Update file hash for a model (alias for update_file_hash).
+
+        Args:
+            model_id: Model ID
+            file_hash: xxHash128 hash to set (32 hex characters)
+
+        Returns:
+            True if successful
+        """
+        return self.update_file_hash(model_id, file_hash)
+
+    @log_function_call(logger)
     def get_all_models(
         self,
         limit: Optional[int] = None,

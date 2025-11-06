@@ -222,8 +222,19 @@ class LibraryEventHandler:
                     # Add separator before file-specific actions
                     menu.addSeparator()
 
-                    # File/folder specific actions
-                    import_action = menu.addAction("Import")
+                    # Differentiate between files and folders
+                    path_obj = Path(file_path)
+                    if path_obj.is_file():
+                        # Check if it's a supported model file
+                        if path_obj.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                            import_action = menu.addAction("Import File")
+                        else:
+                            import_action = None
+                    elif path_obj.is_dir():
+                        import_action = menu.addAction("Import Folder")
+                    else:
+                        import_action = None
+
                     open_action = menu.addAction("Open in Explorer")
 
                     # Execute menu
@@ -233,7 +244,7 @@ class LibraryEventHandler:
 
                     if action == add_root_action:
                         self._add_root_folder()
-                    elif action == import_action:
+                    elif import_action and action == import_action:
                         self.library_widget._import_from_context_menu(file_path)
                     elif action == open_action:
                         self.library_widget._open_in_native_app(file_path)
@@ -324,7 +335,7 @@ class LibraryEventHandler:
                     ]:
                         files.append(p)
             if files:
-                self.library_widget.model_manager.load_models(files)
+                self.library_widget.facade.model_manager.load_models(files)
 
     def _generate_preview(self, model_id: int) -> None:
         """Generate preview image for a model."""

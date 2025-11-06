@@ -194,20 +194,22 @@ class LibraryUIManager:
         # Enable column reordering
         header.setSectionsMovable(True)
 
+        # Set default resize modes BEFORE restoring sizes
+        # All columns: interactive (user can resize and sizes persist)
+        for col in range(7):
+            header.setSectionResizeMode(col, QHeaderView.Interactive)
+
         # Restore column sizes from settings
         for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
             width = settings.value(f"column_{col}_width", type=int)
             if width:
                 header.resizeSection(col, width)
-
-        # Set default resize modes
-        # Thumbnail column: fixed width
-        header.setSectionResizeMode(0, QHeaderView.Interactive)
-        # Name column: stretch to fill available space
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
-        # Other columns: interactive (user can resize)
-        for col in range(2, 7):
-            header.setSectionResizeMode(col, QHeaderView.Interactive)
+            else:
+                # Set default widths if not saved
+                if col == 0:  # Thumbnail
+                    header.resizeSection(col, 100)
+                elif col == 1:  # Name - wider default
+                    header.resizeSection(col, 250)
 
         # Save column sizes when they change
         header.sectionResized.connect(self._save_column_size)

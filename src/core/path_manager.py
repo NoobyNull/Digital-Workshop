@@ -124,8 +124,9 @@ class PathManager:
             return self._temp_base / "cache"
 
         if self._installation_type == InstallationType.RAW:
-            # Development: use local cache directory
-            return Path.cwd() / "cache"
+            # Development: use AppData with -Dev suffix for consistency
+            # This ensures all developers use the same location structure
+            return self._get_app_data_base_path() / "cache"
         elif self._installation_type == InstallationType.PORTABLE:
             # Portable: use directory relative to executable
             executable_dir = (
@@ -206,7 +207,10 @@ class PathManager:
 
     def _get_app_data_base_path(self) -> Path:
         """
-        Get the base application data path for installed versions.
+        Get the base application data path.
+
+        For development (RAW), adds "-Dev" suffix to keep separate from installed version.
+        For installed versions, uses standard app name.
 
         Returns:
             Path: The base application data path
@@ -214,6 +218,10 @@ class PathManager:
         from .version_manager import get_app_name
 
         app_name = get_app_name()
+
+        # Add -Dev suffix when running from source for consistency
+        if self._installation_type == InstallationType.RAW:
+            app_name = f"{app_name}-Dev"
 
         if self._system == "Windows":
             if self._installation_type == InstallationType.SYSTEM:

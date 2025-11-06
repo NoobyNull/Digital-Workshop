@@ -100,9 +100,11 @@ class LibraryModelManager:
                 model.get("title") or model.get("filename", "Unknown")
             )
             name_item.setData(model.get("id"), Qt.UserRole)
+            name_item.setEditable(False)  # Not editable - use metadata editor to change name
 
             fmt = (model.get("format") or "Unknown").upper()
             format_item = QStandardItem(fmt)
+            format_item.setEditable(False)
 
             # Size column - store numeric value for proper sorting
             size_bytes = model.get("file_size", 0) or 0
@@ -114,14 +116,18 @@ class LibraryModelManager:
                 size_str = f"{size_bytes} B"
             size_item = QStandardItem(size_str)
             size_item.setData(size_bytes, Qt.UserRole)  # Store numeric value for sorting
+            size_item.setEditable(False)
 
             # Triangles column - store numeric value for proper sorting
             triangle_count = model.get("triangle_count", 0) or 0
             triangles_item = QStandardItem(f"{triangle_count:,}")
             triangles_item.setData(triangle_count, Qt.UserRole)  # Store numeric value for sorting
+            triangles_item.setEditable(False)
 
             category_item = QStandardItem(model.get("category", "Uncategorized"))
+            category_item.setEditable(False)
             date_item = QStandardItem(str(model.get("date_added", "Unknown")))
+            date_item.setEditable(False)
 
             self.library_widget.list_model.appendRow(
                 [

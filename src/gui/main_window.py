@@ -1800,6 +1800,24 @@ class MainWindow(QMainWindow):
         # TODO: Add material roughness/metallic sliders in picker
         # TODO: Add export material presets feature
 
+    def _on_model_imported_during_import(self, model_id: int) -> None:
+        """
+        Handle individual model import completion during batch import.
+
+        This is called after each model is successfully imported, allowing
+        the model library to update in real-time instead of waiting for all imports.
+
+        Args:
+            model_id: Database ID of the imported model
+        """
+        try:
+            # Refresh model library to show the newly imported model
+            if hasattr(self, "model_library_widget") and self.model_library_widget:
+                self.model_library_widget._load_models_from_database()
+                self.logger.debug(f"Model library refreshed for model ID: {model_id}")
+        except Exception as e:
+            self.logger.error(f"Failed to refresh model library for model {model_id}: {e}")
+
     def _import_models(self) -> None:
         """Show the import models dialog."""
         try:
@@ -1828,7 +1846,8 @@ class MainWindow(QMainWindow):
                         f"Import complete: {import_result.processed_files} file(s) imported"
                     )
 
-                    # Refresh model library to show new imports
+                    # Final refresh to ensure everything is up to date
+                    # (Individual models were already added during import via _on_model_imported_during_import)
                     if (
                         hasattr(self, "model_library_widget")
                         and self.model_library_widget
@@ -2635,17 +2654,21 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "About Digital Workshop", about_text)
 
     def _generate_library_screenshots(self) -> None:
-        """Generate screenshots for all models in the library with applied materials."""
+        """Generate thumbnails for all models in the library with applied materials."""
         try:
-            from src.gui.batch_screenshot_worker import BatchScreenshotWorker
+            from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
             from src.core.application_config import ApplicationConfig
+            from src.core.database_manager import get_database_manager
 
-            # Check if material manager is available
-            if not hasattr(self, "material_manager") or self.material_manager is None:
-                QMessageBox.warning(
+            # Get all models from database
+            db_manager = get_database_manager()
+            models = db_manager.get_all_models()
+
+            if not models:
+                QMessageBox.information(
                     self,
-                    "Screenshot Generation",
-                    "Material manager not available. Cannot generate screenshots.",
+                    "No Models",
+                    "No models found in the library. Import some models first.",
                 )
                 return
 
@@ -2654,40 +2677,41 @@ class MainWindow(QMainWindow):
             bg_image = config.thumbnail_bg_image
             material = config.thumbnail_material
 
-            # Create and start the batch screenshot worker
-            self.screenshot_worker = BatchScreenshotWorker(
-                material_manager=self.material_manager,
-                screenshot_size=256,
-                background_image=bg_image,
-                material_name=material,
+            # Build file info list: (file_path, file_hash)
+            file_info_list = []
+            for model in models:
+                file_path = model.get("file_path")
+                file_hash = model.get("file_hash")
+                if file_path and file_hash and Path(file_path).exists():
+                    file_info_list.append((file_path, file_hash))
+
+            if not file_info_list:
+                QMessageBox.warning(
+                    self,
+                    "No Valid Models",
+                    "No valid model files found. Check that model files still exist.",
+                )
+                return
+
+            # Create coordinator and generate thumbnails
+            coordinator = ThumbnailGenerationCoordinator(parent=self)
+            coordinator.generate_thumbnails(
+                file_info_list=file_info_list,
+                background=bg_image,
+                material=material,
             )
 
-            # Connect signals
-            self.screenshot_worker.progress_updated.connect(
-                self._on_screenshot_progress
-            )
-            self.screenshot_worker.screenshot_generated.connect(
-                self._on_screenshot_generated
-            )
-            self.screenshot_worker.error_occurred.connect(self._on_screenshot_error)
-            self.screenshot_worker.finished_batch.connect(self._on_screenshots_finished)
+            # Connect completion signal to reload library
+            coordinator.generation_completed.connect(self._on_library_thumbnails_completed)
 
-            # Show progress dialog
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setRange(0, 100)
-            self.progress_bar.setValue(0)
-            self.status_label.setText("Generating screenshots for all models...")
-
-            # Start worker
-            self.screenshot_worker.start()
-            self.logger.info("Started batch screenshot generation")
+            self.logger.info(f"Started thumbnail generation for {len(file_info_list)} models")
 
         except Exception as e:
-            self.logger.error(f"Failed to start screenshot generation: {e}")
+            self.logger.error(f"Failed to start thumbnail generation: {e}")
             QMessageBox.critical(
                 self,
-                "Screenshot Generation Error",
-                f"Failed to start screenshot generation:\n{e}",
+                "Thumbnail Generation Error",
+                f"Failed to start thumbnail generation:\n{e}",
             )
 
     def _on_screenshot_progress(self, current: int, total: int) -> None:
@@ -2740,6 +2764,18 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"Failed to handle screenshots finished event: {e}")
+
+    def _on_library_thumbnails_completed(self) -> None:
+        """Handle library thumbnail generation completion."""
+        try:
+            # Reload model library to display new thumbnails
+            if hasattr(self, "model_library_widget") and self.model_library_widget:
+                self.model_library_widget._load_models_from_database()
+
+            self.logger.info("Library thumbnail generation completed")
+
+        except Exception as e:
+            self.logger.error(f"Failed to handle library thumbnails completion: {e}")
 
     def _toggle_maximize(self) -> None:
         """Toggle window maximize/restore state."""

@@ -6,7 +6,6 @@ This script helps users quickly set up and run the Digital Workshop application
 with automatic dependency checking and circular import fixes.
 """
 
-import os
 import sys
 import subprocess
 import importlib.util
@@ -141,30 +140,37 @@ def fix_circular_imports():
 def run_application():
     """Run the Digital Workshop application."""
     print("\nStarting Digital Workshop application...")
-    
+
     try:
-        # Change to src directory temporarily
-        original_dir = os.getcwd()
+        # Add src directory to Python path so imports work
         src_dir = Path("src")
-        
+
         if not src_dir.exists():
             print("Error: src directory not found")
             return False
-        
-        os.chdir(src_dir)
-        
-        # Run the application with command line arguments
-        # Pass through any command line arguments that were given to run.py
-        cmd = [sys.executable, "main.py"] + sys.argv[1:]
-        subprocess.run(cmd, check=True)
-        
-        return True
-    except subprocess.CalledProcessError as e:
+
+        # Add src to path if not already there
+        src_path = str(src_dir.resolve())
+        if src_path not in sys.path:
+            sys.path.insert(0, src_path)
+
+        # Import and run main() from src.main
+        # This directly calls the main function instead of using subprocess
+        from src.main import main as app_main
+
+        # Run the application - main() returns an exit code
+        exit_code = app_main()
+
+        # Exit with the same code as the application
+        sys.exit(exit_code if exit_code is not None else 0)
+
+    except ImportError as e:
+        print(f"Failed to import application: {e}")
+        print("Make sure all dependencies are installed.")
+        return False
+    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
         print(f"Failed to run application: {e}")
         return False
-    finally:
-        # Restore original directory
-        os.chdir(original_dir)
 
 def main():
     """Main function to check and run the application."""

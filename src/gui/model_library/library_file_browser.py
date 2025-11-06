@@ -47,7 +47,7 @@ class LibraryFileBrowser:
 
                 if files_to_import:
                     files_to_import = [str(f) for f in files_to_import]
-                    self.library_widget.model_manager.load_models(files_to_import)
+                    self.library_widget.facade.model_manager.load_models(files_to_import)
                 else:
                     QMessageBox.information(
                         self.library_widget,
@@ -135,7 +135,7 @@ class LibraryFileBrowser:
 
     def refresh_models(self) -> None:
         """Refresh models from database."""
-        self.library_widget.model_manager.load_models_from_database()
+        self.library_widget.facade.model_manager.load_models_from_database()
 
     def refresh_file_browser(self) -> None:
         """Refresh the file browser by re-indexing directories."""
@@ -220,7 +220,7 @@ class LibraryFileBrowser:
                         files_to_import.append(file_path)
 
             if files_to_import:
-                self.library_widget.model_manager.load_models(files_to_import)
+                self.library_widget.facade.model_manager.load_models(files_to_import)
             else:
                 QMessageBox.warning(
                     self.library_widget, "Import", "No supported model files selected."
@@ -262,7 +262,7 @@ class LibraryFileBrowser:
             if files_to_import:
                 # Remove duplicates and convert to strings
                 files_to_import = list(set(str(f) for f in files_to_import))
-                self.library_widget.model_manager.load_models(files_to_import)
+                self.library_widget.facade.model_manager.load_models(files_to_import)
             else:
                 QMessageBox.information(
                     self.library_widget,
