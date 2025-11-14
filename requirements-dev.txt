@@ -1,0 +1,23 @@
+# Digital Workshop - Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Include all core dependencies
+-r requirements.txt
+
+# Build and Packaging Tools
+pyinstaller>=6.0.0
+cx-freeze>=6.15.0
+
+# Code Quality and Linting
+pylint>=3.0.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+
+# Type Checking
+mypy>=1.0.0
+
+# Documentation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
