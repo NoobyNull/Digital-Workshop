@@ -48,9 +48,9 @@ build_windows_exe:
 
     # Write build metadata alongside the artifacts
     - $infoPath = Join-Path $distDir "build-info.txt"
-    - "Build: $buildNumber"        | Out-File -FilePath $infoPath -Encoding utf8
-    - "Commit: $Env:CI_COMMIT_SHA" | Out-File -FilePath $infoPath -Append -Encoding utf8
-    - "Pipeline: $Env:CI_PIPELINE_URL" | Out-File -FilePath $infoPath -Append -Encoding utf8
+    - 'Set-Content -Path $infoPath -Value "Build: $buildNumber" -Encoding utf8'
+    - 'Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA"'
+    - 'Add-Content -Path $infoPath -Value "Pipeline: $Env:CI_PIPELINE_URL"'
 
   artifacts:
     name: "digital-workshop-build-$CI_PIPELINE_IID"
