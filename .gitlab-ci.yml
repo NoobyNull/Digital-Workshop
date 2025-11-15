@@ -6,6 +6,10 @@ spec:
     windows-runner-tag:
       description: "Runner tag to use for the Windows EXE build job"
       default: windows
+    run-tests:
+      description: "If true, run pytest before building the Windows EXE"
+      type: boolean
+      default: false
 ---
 stages:
   - $[[ inputs.windows-stage ]]
@@ -39,6 +43,9 @@ build_windows_exe:
     # Install optional AI/utility dependencies that are used but not listed
     # explicitly in requirements.txt (needed for PyInstaller analysis)
     - python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
+
+    # Optionally run tests before building, controlled by the run-tests input
+    - if ($[[ inputs.run-tests ]]) { python -m pytest }
 
     # Build the EXE using the PyInstaller spec (entry point: src/main.py)
     - python build_exe.py
