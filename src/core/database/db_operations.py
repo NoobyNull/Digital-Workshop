@@ -40,6 +40,9 @@ class DatabaseOperations:
                 timeout=30.0,  # 30 second timeout
             )
 
+            # Return rows as dictionary-like objects for convenient access
+            conn.row_factory = sqlite3.Row
+
             # Enable foreign key constraints
             conn.execute("PRAGMA foreign_keys = ON")
 
@@ -224,6 +227,9 @@ class DatabaseOperations:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
 
+                # Create materials and backgrounds tables for default resources
+                self._create_resources_tables(cursor)
+
                 # Create extended workflow tables (G-code, cut lists, cost tracking, tool imports, etc.)
                 self._create_extended_workflow_tables(cursor)
 
@@ -377,6 +383,79 @@ class DatabaseOperations:
         except sqlite3.Error as e:
             logger.error("Failed to migrate database schema: %s", str(e))
             raise
+
+    def _create_resources_tables(self, cursor: sqlite3.Cursor) -> None:
+        """
+        Create tables for storing default materials and backgrounds as database resources.
+
+        These tables store the default resources that cannot be deleted and can be associated with models.
+        """
+        # Materials table for default material resources
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS materials (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                type TEXT NOT NULL DEFAULT 'wood',
+                display_name TEXT,
+                description TEXT,
+                file_path TEXT NOT NULL,
+                file_hash TEXT,
+                texture_path TEXT,
+                mtl_path TEXT,
+                properties_json TEXT,
+                is_default BOOLEAN DEFAULT 0,
+                is_deletable BOOLEAN DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_name ON materials(name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_default ON materials(is_default)")
+
+        # Backgrounds table for default background resources
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS backgrounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                display_name TEXT,
+                description TEXT,
+                file_path TEXT NOT NULL,
+                file_hash TEXT,
+                file_size INTEGER,
+                thumbnail_path TEXT,
+                is_default BOOLEAN DEFAULT 0,
+                is_deletable BOOLEAN DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_backgrounds_name ON backgrounds(name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_backgrounds_default ON backgrounds(is_default)")
+
+        # Model resource associations table to link models with materials and backgrounds
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS model_resources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER NOT NULL,
+                resource_type TEXT NOT NULL CHECK(resource_type IN ('material', 'background')),
+                resource_id INTEGER NOT NULL,
+                is_primary BOOLEAN DEFAULT 0,
+                metadata_json TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE,
+                FOREIGN KEY (resource_id) REFERENCES materials(id) ON DELETE CASCADE,
+                FOREIGN KEY (resource_id) REFERENCES backgrounds(id) ON DELETE CASCADE
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_resources_model ON model_resources(model_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_resources_type ON model_resources(resource_type)")
 
     def _create_extended_workflow_tables(self, cursor: sqlite3.Cursor) -> None:
         """

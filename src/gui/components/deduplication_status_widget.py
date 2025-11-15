@@ -7,14 +7,6 @@ Shows hashing progress and duplicate count with clickable indicator.
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
-# Import theme system for proper theming
-try:
-    from src.gui.theme import COLORS
-    from src.gui.theme.simple_service import ThemeService
-except ImportError:
-    # Fallback if theme system is not available
-    COLORS = None
-    ThemeService = None
 
 from src.core.logging_config import get_logger
 
@@ -93,26 +85,6 @@ class DeduplicationStatusWidget(QWidget):
             self.duplicate_btn.setVisible(True)
             self.duplicate_btn.setText(f"⚠️ {count} Duplicates")
 
-            # Apply theme-aware styling
-            try:
-                if COLORS:
-                    warning_color = getattr(COLORS, "warning", "#FF6B6B")
-                    text_color = getattr(COLORS, "text", "#ffffff")
-                else:
-                    # Fallback colors
-                    warning_color = "#FF6B6B"
-                    text_color = "#ffffff"
-
-                self.duplicate_btn.setStyleSheet(
-                    f"background-color: {warning_color}; color: {text_color}; font-weight: bold; "
-                    "border-radius: 3px; padding: 2px 8px;"
-                )
-            except (AttributeError, TypeError):
-                # Fallback if theme system fails
-                self.duplicate_btn.setStyleSheet(
-                    "background-color: #FF6B6B; color: white; font-weight: bold; "
-                    "border-radius: 3px; padding: 2px 8px;"
-                )
         else:
             self.duplicate_btn.setVisible(False)
 

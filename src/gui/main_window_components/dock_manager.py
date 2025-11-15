@@ -87,21 +87,7 @@ class DockManager:
 
             self.main_window.metadata_dock.setWidget(self.main_window.metadata_tabs)
 
-            # Theme the dock header
-            try:
-                tm = UnifiedThemeManager.instance()
-                _dock_css_meta = """
-                    QDockWidget#MetadataDock::title {
-                        background-color: {{dock_title_bg}};
-                        color: {{text}};
-                        border-bottom: 1px solid {{dock_title_border}};
-                        padding: 6px;
-                    }
-                """
-                tm.register_widget(self.main_window.metadata_dock, css_text=_dock_css_meta)
-                tm.apply_stylesheet(self.main_window.metadata_dock)
-            except Exception:
-                pass
+            # Let Qt / qt-material handle dock header theming; no custom CSS.
 
             logger.info("Metadata editor widget created successfully")
 

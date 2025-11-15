@@ -32,30 +32,7 @@ from src.gui.theme import (
     SPACING_8,
     SPACING_12,
     SPACING_16,
-    COLORS,
 )
-
-# Import QSS helpers from the facade module
-try:
-    from src.gui.theme import qss_button_base, qss_progress_bar
-except ImportError:
-    # Fallback: create simple QSS functions
-    def qss_button_base() -> str:
-        """Fallback button styling."""
-        return (
-            f"QPushButton {{ background-color: {COLORS.surface}; "
-            f"color: {COLORS.text}; border: 1px solid {COLORS.border}; "
-            f"padding: 6px 12px; border-radius: 2px; }}"
-        )
-
-    def qss_progress_bar() -> str:
-        """Fallback progress bar styling."""
-        return (
-            f"QProgressBar {{ border: 1px solid {COLORS.border}; "
-            f"border-radius: 2px; background-color: {COLORS.window_bg}; "
-            f"color: {COLORS.text}; }} "
-            f"QProgressBar::chunk {{ background-color: {COLORS.progress_chunk}; }}"
-        )
 
 
 class ThumbnailGenerationWindow(QMainWindow):
@@ -131,38 +108,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.setMinimumSize(900, 600)
         self.setWindowModality(Qt.WindowModality.NonModal)
 
-        # Apply comprehensive theme styling
-        self.setStyleSheet(
-            f"""
-            QMainWindow {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QWidget {{
-                background-color: {COLORS.window_bg};
-                color: {COLORS.text};
-            }}
-            QGroupBox {{
-                background-color: {COLORS.surface};
-                border: 1px solid {COLORS.border};
-                border-radius: 4px;
-                margin-top: 8px;
-                padding-top: 8px;
-                font-weight: bold;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 4px 8px;
-                color: {COLORS.text};
-            }}
-            QLabel {{
-                color: {COLORS.text};
-                background-color: transparent;
-            }}
-            """
-        )
-
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -198,10 +143,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         warning_font.setPointSize(9)
         warning_font.setBold(True)
         warning_label.setFont(warning_font)
-        warning_label.setStyleSheet(
-            f"color: {COLORS.warning}; padding: {SPACING_8}px; "
-            f"background-color: {COLORS.surface}; border-radius: 2px;"
-        )
         left_layout.addWidget(warning_label)
 
         # Control buttons
@@ -238,7 +179,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.batch_progress_bar.setMinimumHeight(30)
         self.batch_progress_bar.setTextVisible(True)
         self.batch_progress_bar.setFormat("%p%")
-        self.batch_progress_bar.setStyleSheet(qss_progress_bar())
         layout.addWidget(self.batch_progress_bar)
 
         section.setLayout(layout)
@@ -259,7 +199,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.individual_progress_bar.setMinimumHeight(25)
         self.individual_progress_bar.setTextVisible(True)
         self.individual_progress_bar.setFormat("%p%")
-        self.individual_progress_bar.setStyleSheet(qss_progress_bar())
         layout.addWidget(self.individual_progress_bar)
 
         self.stage_label = QLabel("Stage: Waiting...")
@@ -290,14 +229,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.preview_widget = QLabel("Preview will appear here during rendering")
         self.preview_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_widget.setMinimumSize(400, 400)
-        self.preview_widget.setStyleSheet(
-            f"QLabel {{ "
-            f"background-color: {COLORS.surface_alt}; "
-            f"border: 2px solid {COLORS.border}; "
-            f"border-radius: 4px; "
-            f"color: {COLORS.text_muted}; "
-            f"}}"
-        )
         layout.addWidget(self.preview_widget)
 
         section.setLayout(layout)
@@ -308,20 +239,15 @@ class ThumbnailGenerationWindow(QMainWindow):
         layout = QHBoxLayout()
         layout.setSpacing(SPACING_12)
 
-        # Apply button styling
-        button_style = qss_button_base()
-
         self.pause_button = QPushButton("Pause")
         self.pause_button.setMinimumWidth(100)
         self.pause_button.setMinimumHeight(MIN_WIDGET_SIZE)
-        self.pause_button.setStyleSheet(button_style)
         self.pause_button.clicked.connect(self._on_pause_resume_clicked)
         layout.addWidget(self.pause_button)
 
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setMinimumWidth(100)
         self.cancel_button.setMinimumHeight(MIN_WIDGET_SIZE)
-        self.cancel_button.setStyleSheet(button_style)
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
         layout.addWidget(self.cancel_button)
 
@@ -330,7 +256,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         minimize_button = QPushButton("Minimize to Background")
         minimize_button.setMinimumWidth(180)
         minimize_button.setMinimumHeight(MIN_WIDGET_SIZE)
-        minimize_button.setStyleSheet(button_style)
         minimize_button.clicked.connect(self._on_minimize_clicked)
         layout.addWidget(minimize_button)
 

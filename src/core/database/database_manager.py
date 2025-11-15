@@ -17,6 +17,13 @@ from .db_maintenance import DatabaseMaintenance
 from .project_repository import ProjectRepository
 from .file_repository import FileRepository
 from .project_model_repository import ProjectModelRepository
+from .gcode_repository import GcodeRepository
+from .cutlist_repository import CutListRepository
+from .cost_repository import CostRepository
+from .tool_import_repository import ToolImportRepository
+from .material_repository import MaterialRepository
+from .background_repository import BackgroundRepository
+from .model_resources_repository import ModelResourcesRepository
 
 logger = get_logger(__name__)
 
@@ -49,9 +56,18 @@ class DatabaseManager:
         self._project_repo = ProjectRepository(get_conn)
         self._file_repo = FileRepository(get_conn)
         self._project_model_repo = ProjectModelRepository(get_conn)
+        self._gcode_repo = GcodeRepository(get_conn)
+        self._cutlist_repo = CutListRepository(get_conn)
+        self._cost_repo = CostRepository(get_conn)
+        self._tool_import_repo = ToolImportRepository(get_conn)
+        self._material_repo = MaterialRepository(get_conn)
+        self._background_repo = BackgroundRepository(get_conn)
+        self._model_resources_repo = ModelResourcesRepository(get_conn)
 
-        # Initialize database schema
+        # Initialize database schema and default resources
         self._db_ops.initialize_schema()
+        self._material_repo.initialize_default_materials()
+        self._background_repo.initialize_default_backgrounds()
 
     # ===== Model Operations (delegated to ModelRepository) =====
 
@@ -488,6 +504,255 @@ class DatabaseManager:
     def delete_project_model_link(self, record_id: int) -> bool:
         """Remove the association between a project and a model/derived asset."""
         return self._project_model_repo.delete_project_model(record_id)
+
+    # ===== G-code Operations / Metrics / Tool Snapshots =====
+
+    def create_gcode_operation(self, **kwargs: Any) -> str:
+        """Create a G-code operation row."""
+        return self._gcode_repo.create_operation(**kwargs)
+
+    def get_gcode_operation(self, operation_id: str) -> Optional[Dict[str, Any]]:
+        return self._gcode_repo.get_operation(operation_id)
+
+    def list_gcode_operations(
+        self, project_id: Optional[str] = None, status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        return self._gcode_repo.list_operations(project_id=project_id, status=status)
+
+    def update_gcode_operation(self, operation_id: str, **kwargs: Any) -> bool:
+        return self._gcode_repo.update_operation(operation_id, **kwargs)
+
+    def delete_gcode_operation(self, operation_id: str) -> bool:
+        return self._gcode_repo.delete_operation(operation_id)
+
+    def create_gcode_version(self, **kwargs: Any) -> int:
+        return self._gcode_repo.create_version(**kwargs)
+
+    def get_gcode_version(self, version_id: int) -> Optional[Dict[str, Any]]:
+        return self._gcode_repo.get_version(version_id)
+
+    def list_gcode_versions(self, operation_id: str) -> List[Dict[str, Any]]:
+        return self._gcode_repo.list_versions(operation_id)
+
+    def update_gcode_version(self, version_id: int, **kwargs: Any) -> bool:
+        return self._gcode_repo.update_version(version_id, **kwargs)
+
+    def delete_gcode_version(self, version_id: int) -> bool:
+        return self._gcode_repo.delete_version(version_id)
+
+    def upsert_gcode_metrics(self, version_id: int, **metrics: Any) -> bool:
+        return self._gcode_repo.upsert_metrics(version_id, **metrics)
+
+    def get_gcode_metrics(self, version_id: int) -> Optional[Dict[str, Any]]:
+        return self._gcode_repo.get_metrics(version_id)
+
+    def add_gcode_tool_snapshot(self, **kwargs: Any) -> int:
+        return self._gcode_repo.add_tool_snapshot(**kwargs)
+
+    def list_gcode_tool_snapshots(self, version_id: int) -> List[Dict[str, Any]]:
+        return self._gcode_repo.list_tool_snapshots(version_id)
+
+    def delete_gcode_tool_snapshots(self, version_id: int) -> int:
+        return self._gcode_repo.delete_tool_snapshots(version_id)
+
+    # ===== Cut List Optimizer (Scenarios / Materials / Pieces / Sequences) =====
+
+    def create_cutlist_scenario(self, **kwargs: Any) -> int:
+        return self._cutlist_repo.create_scenario(**kwargs)
+
+    def get_cutlist_scenario(self, scenario_id: int) -> Optional[Dict[str, Any]]:
+        return self._cutlist_repo.get_scenario(scenario_id)
+
+    def list_cutlist_scenarios(
+        self, project_id: str, status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        return self._cutlist_repo.list_scenarios(project_id, status)
+
+    def update_cutlist_scenario(self, scenario_id: int, **kwargs: Any) -> bool:
+        return self._cutlist_repo.update_scenario(scenario_id, **kwargs)
+
+    def delete_cutlist_scenario(self, scenario_id: int) -> bool:
+        return self._cutlist_repo.delete_scenario(scenario_id)
+
+    def add_cutlist_material(self, **kwargs: Any) -> int:
+        return self._cutlist_repo.add_material(**kwargs)
+
+    def list_cutlist_materials(self, scenario_id: int) -> List[Dict[str, Any]]:
+        return self._cutlist_repo.list_materials(scenario_id)
+
+    def delete_cutlist_material(self, material_id: int) -> bool:
+        return self._cutlist_repo.delete_material(material_id)
+
+    def add_cutlist_piece(self, **kwargs: Any) -> int:
+        return self._cutlist_repo.add_piece(**kwargs)
+
+    def list_cutlist_pieces(self, scenario_id: int) -> List[Dict[str, Any]]:
+        return self._cutlist_repo.list_pieces(scenario_id)
+
+    def delete_cutlist_piece(self, piece_id: int) -> bool:
+        return self._cutlist_repo.delete_piece(piece_id)
+
+    def add_cutlist_sequence_step(self, **kwargs: Any) -> int:
+        return self._cutlist_repo.add_sequence_step(**kwargs)
+
+    def list_cutlist_sequence(self, scenario_id: int) -> List[Dict[str, Any]]:
+        return self._cutlist_repo.list_sequence(scenario_id)
+
+    def delete_cutlist_sequence(self, scenario_id: int) -> int:
+        return self._cutlist_repo.delete_sequence(scenario_id)
+
+    # ===== Cost Estimation =====
+
+    def create_cost_template(self, **kwargs: Any) -> int:
+        return self._cost_repo.create_template(**kwargs)
+
+    def list_cost_templates(self) -> List[Dict[str, Any]]:
+        return self._cost_repo.list_templates()
+
+    def get_cost_template(self, template_id: int) -> Optional[Dict[str, Any]]:
+        return self._cost_repo.get_template(template_id)
+
+    def update_cost_template(self, template_id: int, **kwargs: Any) -> bool:
+        return self._cost_repo.update_template(template_id, **kwargs)
+
+    def delete_cost_template(self, template_id: int) -> bool:
+        return self._cost_repo.delete_template(template_id)
+
+    def create_cost_snapshot(self, **kwargs: Any) -> int:
+        return self._cost_repo.create_snapshot(**kwargs)
+
+    def list_cost_snapshots(self, project_id: str) -> List[Dict[str, Any]]:
+        return self._cost_repo.list_snapshots(project_id)
+
+    def get_cost_snapshot(self, snapshot_id: int) -> Optional[Dict[str, Any]]:
+        return self._cost_repo.get_snapshot(snapshot_id)
+
+    def update_cost_snapshot(self, snapshot_id: int, **kwargs: Any) -> bool:
+        return self._cost_repo.update_snapshot(snapshot_id, **kwargs)
+
+    def delete_cost_snapshot(self, snapshot_id: int) -> bool:
+        return self._cost_repo.delete_snapshot(snapshot_id)
+
+    def add_cost_entry(self, **kwargs: Any) -> int:
+        return self._cost_repo.add_entry(**kwargs)
+
+    def list_cost_entries(self, snapshot_id: int) -> List[Dict[str, Any]]:
+        return self._cost_repo.list_entries(snapshot_id)
+
+    def delete_cost_entries(self, snapshot_id: int) -> int:
+        return self._cost_repo.delete_entries(snapshot_id)
+
+    # ===== Tool Import Tracking =====
+
+    def create_tool_provider_source(self, **kwargs: Any) -> int:
+        return self._tool_import_repo.create_provider_source(**kwargs)
+
+    def update_tool_provider_source(self, source_id: int, **kwargs: Any) -> bool:
+        return self._tool_import_repo.update_provider_source(source_id, **kwargs)
+
+    def list_tool_provider_sources(self) -> List[Dict[str, Any]]:
+        return self._tool_import_repo.list_provider_sources()
+
+    def get_tool_provider_source(self, source_id: int) -> Optional[Dict[str, Any]]:
+        return self._tool_import_repo.get_provider_source(source_id)
+
+    def delete_tool_provider_source(self, source_id: int) -> bool:
+        return self._tool_import_repo.delete_provider_source(source_id)
+
+    def create_tool_import_batch(self, **kwargs: Any) -> int:
+        return self._tool_import_repo.create_import_batch(**kwargs)
+
+    def list_tool_import_batches(
+        self, provider_source_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        return self._tool_import_repo.list_import_batches(provider_source_id)
+
+    def get_tool_import_batch(self, batch_id: int) -> Optional[Dict[str, Any]]:
+        return self._tool_import_repo.get_import_batch(batch_id)
+
+    def delete_tool_import_batch(self, batch_id: int) -> bool:
+        return self._tool_import_repo.delete_import_batch(batch_id)
+
+    # ===== Resource Operations (Materials, Backgrounds, and Model Resources) =====
+
+    # --- Materials ---
+
+    def add_material(self, **kwargs: Any) -> int:
+        return self._material_repo.add_material(**kwargs)
+
+    def get_material(self, material_id: int) -> Optional[Dict[str, Any]]:
+        return self._material_repo.get_material(material_id)
+
+    def get_material_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        return self._material_repo.get_material_by_name(name)
+
+    def get_all_materials(self, include_deletable: bool = True) -> List[Dict[str, Any]]:
+        return self._material_repo.get_all_materials(include_deletable=include_deletable)
+
+    def get_default_materials(self) -> List[Dict[str, Any]]:
+        return self._material_repo.get_default_materials()
+
+    def delete_material(self, material_id: int) -> bool:
+        return self._material_repo.delete_material(material_id)
+
+    # --- Backgrounds ---
+
+    def add_background(self, **kwargs: Any) -> int:
+        return self._background_repo.add_background(**kwargs)
+
+    def get_background(self, background_id: int) -> Optional[Dict[str, Any]]:
+        return self._background_repo.get_background(background_id)
+
+    def get_background_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        return self._background_repo.get_background_by_name(name)
+
+    def get_all_backgrounds(self, include_deletable: bool = True) -> List[Dict[str, Any]]:
+        return self._background_repo.get_all_backgrounds(include_deletable=include_deletable)
+
+    def get_default_backgrounds(self) -> List[Dict[str, Any]]:
+        return self._background_repo.get_default_backgrounds()
+
+    def delete_background(self, background_id: int) -> bool:
+        return self._background_repo.delete_background(background_id)
+
+    # --- Model resources associations ---
+
+    def associate_resource_with_model(self, **kwargs: Any) -> int:
+        return self._model_resources_repo.associate_resource_with_model(**kwargs)
+
+    def get_model_materials(self, model_id: int) -> List[Dict[str, Any]]:
+        return self._model_resources_repo.get_model_materials(model_id)
+
+    def get_model_backgrounds(self, model_id: int) -> List[Dict[str, Any]]:
+        return self._model_resources_repo.get_model_backgrounds(model_id)
+
+    def get_primary_material(self, model_id: int) -> Optional[Dict[str, Any]]:
+        return self._model_resources_repo.get_primary_material(model_id)
+
+    def get_primary_background(self, model_id: int) -> Optional[Dict[str, Any]]:
+        return self._model_resources_repo.get_primary_background(model_id)
+
+    def remove_resource_association(
+        self,
+        model_id: int,
+        resource_type: str,
+        resource_id: int,
+    ) -> bool:
+        return self._model_resources_repo.remove_resource_association(
+            model_id=model_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+        )
+
+    def remove_all_model_resources(self, model_id: int) -> int:
+        return self._model_resources_repo.remove_all_model_resources(model_id)
+
+    def get_models_using_material(self, material_id: int) -> List[Dict[str, Any]]:
+        return self._model_resources_repo.get_models_using_material(material_id)
+
+    def get_models_using_background(self, background_id: int) -> List[Dict[str, Any]]:
+        return self._model_resources_repo.get_models_using_background(background_id)
+
 
     # ===== Connection Management =====
 

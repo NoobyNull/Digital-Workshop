@@ -132,7 +132,7 @@ class EventHandler:
     def show_theme_manager(self) -> None:
         """Show the Theme Manager dialog."""
         try:
-            from src.gui.theme import ThemeDialog
+            from src.gui.theme.ui.theme_dialog import ThemeDialog
 
             dlg = ThemeDialog(self.main_window)
             dlg.theme_applied.connect(self.on_theme_applied)

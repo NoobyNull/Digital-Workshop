@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 
 from src.core.logging_config import get_logger
 from src.core.nuclear_reset import NuclearReset
-from src.gui.theme import COLORS, SPACING_16
+from src.gui.theme import SPACING_16
 
 logger = get_logger(__name__)
 
@@ -111,17 +111,11 @@ class NuclearResetDialog(QDialog):
             "THIS CANNOT BE UNDONE!"
         )
         warning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # Only set warning color and border - let qt-material handle the rest
-        warning_label.setStyleSheet(
-            f"QLabel {{ "
-            f"color: {COLORS.warning}; "
-            f"padding: {SPACING_16}px; "
-            f"border: 2px solid {COLORS.warning}; "
-            f"border-radius: 4px; "
-            f"font-weight: bold; "
-            f"font-size: 11pt; "
-            f"}}"
-        )
+
+        # Emphasize the warning using font only; let Qt handle colors and borders.
+        font = warning_label.font()
+        font.setBold(True)
+        warning_label.setFont(font)
         layout.addWidget(warning_label)
 
         # Scan results group - let qt-material handle styling
@@ -131,10 +125,6 @@ class NuclearResetDialog(QDialog):
         self.scan_text = QTextEdit()
         self.scan_text.setReadOnly(True)
         self.scan_text.setMaximumHeight(200)
-        # Only set monospace font - let qt-material handle colors
-        self.scan_text.setStyleSheet(
-            "QTextEdit { font-family: 'Consolas', 'Courier New', monospace; }"
-        )
         scan_layout.addWidget(self.scan_text)
 
         scan_group.setLayout(scan_layout)
@@ -143,7 +133,6 @@ class NuclearResetDialog(QDialog):
         # Backup option - let qt-material handle styling
         self.backup_checkbox = QCheckBox("Create backup before deletion (HIGHLY RECOMMENDED)")
         self.backup_checkbox.setChecked(True)
-        self.backup_checkbox.setStyleSheet("QCheckBox { font-weight: bold; }")
         layout.addWidget(self.backup_checkbox)
 
         # Backup location label - let qt-material handle colors
@@ -172,18 +161,6 @@ class NuclearResetDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
 
         self.execute_button = QPushButton("⚠️ EXECUTE NUCLEAR RESET")
-        # Only override warning color - let qt-material handle the rest
-        self.execute_button.setStyleSheet(
-            f"QPushButton {{ "
-            f"background-color: {COLORS.warning}; "
-            f"color: #000000; "
-            f"font-weight: bold; "
-            f"}}"
-            f"QPushButton:hover {{ "
-            f"background-color: {COLORS.warning}; "
-            f"opacity: 0.8; "
-            f"}}"
-        )
         self.execute_button.clicked.connect(self._confirm_and_execute)
         button_layout.addWidget(self.execute_button)
 

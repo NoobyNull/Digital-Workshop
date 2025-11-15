@@ -523,12 +523,7 @@ class EnhancedMetadataRepository(IMetadataRepository):
         try:
             # Use theme color if none provided
             if color is None:
-                try:
-                    from ...gui.theme import COLORS
-
-                    color = COLORS.category_default
-                except (ImportError, AttributeError):
-                    color = "#CCCCCC"  # Fallback to original default
+                color = "#CCCCCC"  # Default category color
 
             with self._get_connection() as conn:
                 cursor = conn.cursor()

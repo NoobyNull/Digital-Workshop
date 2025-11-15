@@ -33,7 +33,7 @@ class ThumbnailSettingsTab(QWidget):
     """Thumbnail generation settings tab."""
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
+        """Initialize thumbnail settings tab."""
         super().__init__(parent)
         self.logger = None
         try:
@@ -41,9 +41,21 @@ class ThumbnailSettingsTab(QWidget):
 
             self.logger = get_logger(__name__)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
+            # Logger initialization is best-effort only; the UI must still function.
             pass
-        self._setup_ui()
 
+        # Initialize state before building the UI so population helpers can use it safely.
+        self._bg_color = "#404658"  # Default background color
+        self.selected_bg_button = None
+        self.selected_mat_button = None
+        self.bg_buttons = {}
+        self.mat_buttons = {}
+        self.hidden_backgrounds = set()
+        self.hidden_materials = set()
+
+        # Load any hidden/default state and then build the UI.
+        self._load_hidden_items()
+        self._setup_ui()
         self._load_settings()
 
     def _setup_ui(self) -> None:
@@ -82,7 +94,7 @@ class ThumbnailSettingsTab(QWidget):
         self.color_preview = QLabel()
         self.color_preview.setMinimumWidth(40)
         self.color_preview.setMinimumHeight(30)
-        self.color_preview.setStyleSheet("border: 1px solid #444444; border-radius: 2px;")
+        # Use native Qt theming; no custom stylesheet.
         color_h_layout.addWidget(self.color_button)
         color_h_layout.addWidget(self.color_preview)
         color_h_layout.addStretch()
@@ -173,21 +185,6 @@ class ThumbnailSettingsTab(QWidget):
 
         layout.addStretch()
 
-        # Initialize color to default
-        self._bg_color = "#404658"  # Professional dark teal-gray
-
-        # Track selected items
-        self.selected_bg_button = None
-        self.selected_mat_button = None
-        self.bg_buttons = {}
-        self.mat_buttons = {}
-
-        # Track hidden items (for hiding defaults without deleting)
-        self.hidden_backgrounds = set()
-        self.hidden_materials = set()
-
-        # Load hidden items from settings
-        self._load_hidden_items()
 
 
     def _load_hidden_items(self) -> None:
@@ -260,21 +257,7 @@ class ThumbnailSettingsTab(QWidget):
                         btn.setIcon(QIcon(scaled))
                         btn.setIconSize(QSize(90, 90))
 
-                    # Style button
-                    btn.setStyleSheet("""
-                        QPushButton {
-                            border: 2px solid #444444;
-                            border-radius: 4px;
-                            background-color: #2b2b2b;
-                        }
-                        QPushButton:hover {
-                            border: 2px solid #666666;
-                        }
-                        QPushButton:checked {
-                            border: 3px solid #0078d4;
-                            background-color: #1e1e1e;
-                        }
-                    """)
+                    # Use native Qt theming; no custom stylesheet.
 
                     # Connect click handler
                     btn.clicked.connect(lambda checked, b=btn: self._on_background_clicked(b))
@@ -303,20 +286,7 @@ class ThumbnailSettingsTab(QWidget):
             none_btn.setFixedSize(100, 100)
             none_btn.setCheckable(True)
             none_btn.setProperty("mat_name", None)
-            none_btn.setStyleSheet("""
-                QPushButton {
-                    border: 2px solid #444444;
-                    border-radius: 4px;
-                    background-color: #2b2b2b;
-                }
-                QPushButton:hover {
-                    border: 2px solid #666666;
-                }
-                QPushButton:checked {
-                    border: 3px solid #0078d4;
-                    background-color: #1e1e1e;
-                }
-            """)
+            # Use native Qt theming; no custom stylesheet.
             none_btn.clicked.connect(lambda checked, b=none_btn: self._on_material_clicked(b))
             self.mat_grid.addWidget(none_btn, row, col)
             self.mat_buttons[None] = none_btn
@@ -352,21 +322,7 @@ class ThumbnailSettingsTab(QWidget):
                         # No preview image, show text
                         btn.setText(material_name)
 
-                    # Style button
-                    btn.setStyleSheet("""
-                        QPushButton {
-                            border: 2px solid #444444;
-                            border-radius: 4px;
-                            background-color: #2b2b2b;
-                        }
-                        QPushButton:hover {
-                            border: 2px solid #666666;
-                        }
-                        QPushButton:checked {
-                            border: 3px solid #0078d4;
-                            background-color: #1e1e1e;
-                        }
-                    """)
+                    # Use native Qt theming; no custom stylesheet.
 
                     # Connect click handler
                     btn.clicked.connect(lambda checked, b=btn: self._on_material_clicked(b))
@@ -758,9 +714,13 @@ class ThumbnailSettingsTab(QWidget):
     def _update_color_preview(self) -> None:
         """Update the color preview button."""
         try:
-            self.color_preview.setStyleSheet(
-                f"background-color: {self._bg_color}; border: 1px solid #444444; border-radius: 2px;"
-            )
+            # Use native Qt theming only; avoid custom stylesheet strings.
+            # We still reflect the chosen color via QPalette so users get feedback
+            # without hard-coding full widget styles.
+            palette = self.color_preview.palette()
+            palette.setColor(self.color_preview.backgroundRole(), QColor(self._bg_color))
+            self.color_preview.setAutoFillBackground(True)
+            self.color_preview.setPalette(palette)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to update color preview: %s", e)

@@ -2252,7 +2252,7 @@ class MainWindow(QMainWindow):
     def _show_theme_manager(self) -> None:
         """Show the Theme Manager dialog and hook apply signal."""
         try:
-            from src.gui.theme import ThemeDialog
+            from src.gui.theme.ui.theme_dialog import ThemeDialog
 
             dlg = ThemeDialog(self)
             dlg.theme_applied.connect(self._on_theme_applied)
