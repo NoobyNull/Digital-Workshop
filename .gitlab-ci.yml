@@ -1,0 +1,61 @@
+stages:
+  - build
+
+variables:
+  # Cache directory for pip downloads
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Use GitLab's per-project sequential pipeline IID as our build number
+  BUILD_NUMBER: "$CI_PIPELINE_IID"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip/
+
+build_windows_exe:
+  stage: build
+  tags:
+    - windows
+  script:
+    # Be strict about errors
+    - $ErrorActionPreference = "Stop"
+
+    # Basic sanity check
+    - python --version
+
+    # Install core and dev dependencies
+    - python -m pip install --upgrade pip
+    - python -m pip install -r requirements.txt -r requirements-dev.txt
+
+    # Install optional AI/utility dependencies that are used but not listed
+    # explicitly in requirements.txt (needed for PyInstaller analysis)
+    - python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
+
+    # Build the EXE using the PyInstaller spec (entry point: src/main.py)
+    - python build_exe.py
+
+    # Rename the generated EXE to include the sequential build number
+    - $buildNumber = $Env:CI_PIPELINE_IID
+    - if (-not $buildNumber) { $buildNumber = "local" }
+    - Write-Host "Build number: $buildNumber"
+
+    - $distDir = "dist"
+    - $exePath = Join-Path $distDir "Digital Workshop.exe"
+    - if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
+
+    - $newExeName = "Digital Workshop-build-$buildNumber.exe"
+    - Rename-Item -Path $exePath -NewName $newExeName
+
+    # Write build metadata alongside the artifacts
+    - $infoPath = Join-Path $distDir "build-info.txt"
+    - "Build: $buildNumber"        | Out-File -FilePath $infoPath -Encoding utf8
+    - "Commit: $Env:CI_COMMIT_SHA" | Out-File -FilePath $infoPath -Append -Encoding utf8
+    - "Pipeline: $Env:CI_PIPELINE_URL" | Out-File -FilePath $infoPath -Append -Encoding utf8
+
+  artifacts:
+    name: "digital-workshop-build-$CI_PIPELINE_IID"
+    when: always
+    expire_in: 1 year
+    paths:
+      - dist/
+
