@@ -4,6 +4,9 @@ PyInstaller spec file for Digital Workshop
 Builds a standalone EXE for src/main.py (Digital Workshop GUI entry point)
 """
 
+import sys
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
+
 a = Analysis(
     ['src/main.py'],
     pathex=[],
