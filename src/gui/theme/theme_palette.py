@@ -187,9 +187,7 @@ def derive_mode_palette(seed_primary: str, mode: str = "auto") -> Dict[str, str]
         "progress_text": text,
         "progress_border": border,
         "progress_chunk": p,
-        "progress_disabled_border": (
-            _lighten(border, 0.15) if not dark else _darken(border, 0.15)
-        ),
+        "progress_disabled_border": (_lighten(border, 0.15) if not dark else _darken(border, 0.15)),
         "progress_disabled_bg": _mix_hex(window_bg, surface, 0.5),
         "progress_disabled_text": "#a0a0a0",
         "progress_disabled_chunk": _mix_hex(p, surface, 0.65),

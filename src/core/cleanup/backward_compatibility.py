@@ -298,7 +298,14 @@ class CleanupErrorHandler:
 
             return True
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as handling_error:
             self.logger.error("Error in cleanup error handler: %s", handling_error)
             return False
 

@@ -28,7 +28,9 @@ def test_info_level_logging():
     print("="*60)
 
     # Setup logging at INFO level
-    logger = setup_logging(log_level="INFO", log_dir="logs", enable_console=False)
+    logger = setup_logging(
+        profile={"log_level": "INFO", "log_dir": "logs", "enable_console": False}
+    )
 
     logger.info("TEST_INFO_MESSAGE")
     logger.debug("TEST_DEBUG_MESSAGE_SHOULD_NOT_APPEAR")
@@ -54,7 +56,9 @@ def test_debug_level_logging():
     print("="*60)
 
     # Setup logging at DEBUG level
-    logger = setup_logging(log_level="DEBUG", log_dir="logs", enable_console=False)
+    logger = setup_logging(
+        profile={"log_level": "DEBUG", "log_dir": "logs", "enable_console": False}
+    )
 
     # Check that logger level is set correctly
     print("\nLogger effective level: {}".format(logger.getEffectiveLevel()))
@@ -74,7 +78,7 @@ def test_performance_monitor_debug_logging():
     print("="*60)
 
     # Setup logging at INFO level
-    setup_logging(log_level="INFO", log_dir="logs", enable_console=False)
+    setup_logging(profile={"log_level": "INFO", "log_dir": "logs", "enable_console": False})
 
     # Create performance monitor
     monitor = PerformanceMonitor()

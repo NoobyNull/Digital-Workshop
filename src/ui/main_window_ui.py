@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 
 class Ui_MainWindow(object):
     """TODO: Add docstring."""
+
     def setupUi(self, MainWindow) -> None:
         """TODO: Add docstring."""
         if not MainWindow.objectName():

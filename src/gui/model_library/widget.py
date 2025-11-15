@@ -88,6 +88,7 @@ class ModelLibraryWidget(QWidget):
 
         # Schedule column visibility restoration after a delay to ensure dock layout is restored first
         from PySide6.QtCore import QTimer
+
         QTimer.singleShot(200, self.restore_column_visibility)
 
     # ==================== Public API ====================
@@ -95,6 +96,7 @@ class ModelLibraryWidget(QWidget):
     def restore_column_visibility(self) -> None:
         """Restore column visibility and order from settings (called after dock layout restoration)."""
         from PySide6.QtCore import QSettings
+
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
 
         print("DEBUG: [DELAYED] Restoring column visibility from settings...")
@@ -103,10 +105,12 @@ class ModelLibraryWidget(QWidget):
             visible_value = settings.value(f"column_{col}_visible", True)
             # Convert to bool explicitly (QSettings may return string "true"/"false")
             if isinstance(visible_value, str):
-                visible = visible_value.lower() in ('true', '1', 'yes')
+                visible = visible_value.lower() in ("true", "1", "yes")
             else:
                 visible = bool(visible_value)
-            print(f"DEBUG: [DELAYED] Restoring column {col} visibility: raw={visible_value}, converted={visible}")
+            print(
+                f"DEBUG: [DELAYED] Restoring column {col} visibility: raw={visible_value}, converted={visible}"
+            )
             self.list_view.setColumnHidden(col, not visible)
 
         # Restore column order
@@ -119,6 +123,7 @@ class ModelLibraryWidget(QWidget):
                 # QSettings might return as string, try to parse
                 try:
                     import ast
+
                     column_order = ast.literal_eval(column_order)
                 except:
                     column_order = None
@@ -279,11 +284,14 @@ class ModelLibraryWidget(QWidget):
                 delta = event.angleDelta().y()
 
                 # Determine which view is active
-                is_grid_view = (obj == self.grid_view.viewport())
+                is_grid_view = obj == self.grid_view.viewport()
 
                 if is_grid_view:
                     # Grid view zoom
-                    self.logger.debug(f"EventFilter wheel (grid): delta={delta}, current_size={self.current_grid_icon_size}")
+                    self.logger.debug(
+                        "EventFilter wheel (grid): delta=%s, current_size={self.current_grid_icon_size}",
+                        delta,
+                    )
 
                     # Calculate new icon size (larger steps for grid)
                     if delta > 0:
@@ -292,13 +300,16 @@ class ModelLibraryWidget(QWidget):
                         step = -16  # Scroll down = zoom out
 
                     new_size = self.current_grid_icon_size + step
-                    self.logger.debug(f"EventFilter new grid size: {new_size}")
+                    self.logger.debug("EventFilter new grid size: %s", new_size)
 
                     # Update grid icon size
                     self.facade.ui_manager.set_grid_icon_size(new_size)
                 else:
                     # List view zoom
-                    self.logger.debug(f"EventFilter wheel (list): delta={delta}, current_height={self.current_row_height}")
+                    self.logger.debug(
+                        "EventFilter wheel (list): delta=%s, current_height={self.current_row_height}",
+                        delta,
+                    )
 
                     # Calculate new row height
                     if delta > 0:
@@ -307,7 +318,7 @@ class ModelLibraryWidget(QWidget):
                         step = -8  # Scroll down = zoom out
 
                     new_height = self.current_row_height + step
-                    self.logger.debug(f"EventFilter new row height: {new_height}")
+                    self.logger.debug("EventFilter new row height: %s", new_height)
 
                     # Update row height
                     self.facade.ui_manager.set_row_height(new_height)
@@ -349,7 +360,9 @@ class ModelLibraryWidget(QWidget):
             delta = event.angleDelta().y()
 
             # Debug logging
-            self.logger.debug(f"Wheel event: delta={delta}, current_height={self.current_row_height}")
+            self.logger.debug(
+                "Wheel event: delta=%s, current_height={self.current_row_height}", delta
+            )
 
             # Calculate new row height (scroll up = increase, scroll down = decrease)
             # Use step size of 8 pixels per scroll notch
@@ -359,7 +372,7 @@ class ModelLibraryWidget(QWidget):
                 step = -8  # Scroll down = zoom out
 
             new_height = self.current_row_height + step
-            self.logger.debug(f"New height: {new_height}")
+            self.logger.debug("New height: %s", new_height)
 
             # Update row height through UI manager
             self.facade.ui_manager.set_row_height(new_height)

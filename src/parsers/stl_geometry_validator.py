@@ -170,10 +170,8 @@ class STLGeometryValidator:
         # Cross product magnitude / 2
         area = 0.5 * math.sqrt(
             ((v2[0] - v1[0]) * (v3[1] - v1[1]) - (v3[0] - v1[0]) * (v2[1] - v1[1])) ** 2
-            + ((v2[1] - v1[1]) * (v3[2] - v1[2]) - (v3[1] - v1[1]) * (v2[2] - v1[2]))
-            ** 2
-            + ((v2[2] - v1[2]) * (v3[0] - v1[0]) - (v3[2] - v1[2]) * (v2[0] - v1[0]))
-            ** 2
+            + ((v2[1] - v1[1]) * (v3[2] - v1[2]) - (v3[1] - v1[1]) * (v2[2] - v1[2])) ** 2
+            + ((v2[2] - v1[2]) * (v3[0] - v1[0]) - (v3[2] - v1[2]) * (v2[0] - v1[0])) ** 2
         )
         return area
 
@@ -194,9 +192,7 @@ class STLGeometryValidator:
         try:
             # Detect format and get triangle count
             format_type = STLFormatDetector.detect_format(file_path)
-            triangle_count = STLFormatDetector.get_triangle_count(
-                file_path, format_type
-            )
+            triangle_count = STLFormatDetector.get_triangle_count(file_path, format_type)
 
             # Basic statistics
             stats = {

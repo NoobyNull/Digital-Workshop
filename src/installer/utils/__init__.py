@@ -16,4 +16,3 @@ __all__ = [
     "PathUtils",
     "setup_logger",
 ]
-

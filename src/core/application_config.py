@@ -6,7 +6,10 @@ application metadata, version information, and organization details.
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .logging_config import LoggingProfile
 
 
 @dataclass
@@ -92,6 +95,7 @@ class ApplicationConfig:
     enable_console_logging: bool = False  # Console logging disabled by default
     log_retention_days: int = 30
     log_human_readable: bool = False  # Use human-readable format instead of JSON
+    logging_profile: Optional["LoggingProfile"] = None
 
     # Thumbnail Generation Configuration
     thumbnail_bg_color: str = "#404658"  # Professional dark teal-gray background color

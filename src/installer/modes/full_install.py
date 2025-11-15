@@ -7,7 +7,6 @@ with all modules.
 
 import json
 import logging
-from pathlib import Path
 from typing import List
 from datetime import datetime
 
@@ -16,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 class FullInstallMode:
     """Handles full fresh installation."""
-    
+
     def __init__(self, installer):
         """Initialize full install mode."""
         self.installer = installer
-    
+
     def execute(self, version: str, modules: List[str]) -> bool:
         """
         Execute full installation.
@@ -69,21 +68,21 @@ class FullInstallMode:
         except Exception as e:
             logger.error("FULL_INSTALL failed: %s", e)
             return False
-    
+
     def _create_directories(self):
         """Create directory structure."""
         logger.debug("Creating directory structure")
         self.installer.create_directories()
-    
+
     def _install_modules(self, modules: List[str]):
         """Install modules."""
-        logger.info(f"Installing {len(modules)} modules: {modules}")
-        
+        logger.info("Installing %s modules: {modules}", len(modules))
+
         for module in modules:
-            logger.info(f"Installing module: {module}")
+            logger.info("Installing module: %s", module)
             # Module installation logic will be implemented in ModuleManager
-            logger.debug(f"Module {module} installed")
-    
+            logger.debug("Module %s installed", module)
+
     def _initialize_database(self):
         """Initialize database."""
         logger.info("Initializing database")
@@ -97,14 +96,14 @@ class FullInstallMode:
             logger.debug("Database initialized")
         else:
             logger.debug("Database already exists")
-    
+
     def _create_configuration(self):
         """Create configuration files."""
         logger.info("Creating configuration files")
-        
+
         config_file = self.installer.config_dir / "config.json"
         preferences_file = self.installer.config_dir / "preferences.json"
-        
+
         if not config_file.exists():
             config = {
                 "app_name": self.installer.APP_NAME,
@@ -113,36 +112,36 @@ class FullInstallMode:
                 "data_dir": str(self.installer.data_dir),
                 "modules_dir": str(self.installer.modules_dir),
             }
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config, f, indent=2)
-            logger.debug(f"Configuration created: {config_file}")
-        
+            logger.debug("Configuration created: %s", config_file)
+
         if not preferences_file.exists():
             preferences = {
                 "theme": "dark",
                 "language": "en",
                 "auto_update": False,
             }
-            with open(preferences_file, 'w') as f:
+            with open(preferences_file, "w") as f:
                 json.dump(preferences, f, indent=2)
-            logger.debug(f"Preferences created: {preferences_file}")
-    
+            logger.debug("Preferences created: %s", preferences_file)
+
     def _create_shortcuts(self):
         """Create application shortcuts."""
         logger.info("Creating shortcuts")
         # Shortcut creation logic will be implemented
         logger.debug("Shortcuts created")
-    
+
     def _register_application(self):
         """Register application in system."""
         logger.info("Registering application")
         # Application registration logic will be implemented
         logger.debug("Application registered")
-    
+
     def _update_manifest(self, modules: List[str], version: str):
         """Update manifest file."""
         logger.info("Updating manifest")
-        
+
         manifest = {
             "app_name": self.installer.APP_NAME,
             "version": version,
@@ -155,10 +154,9 @@ class FullInstallMode:
                     "install_date": datetime.now().isoformat(),
                 }
                 for module in modules
-            }
+            },
         }
-        
+
         self.installer._save_manifest(manifest)
         self.installer._update_version_file(version)
         logger.debug("Manifest updated")
-

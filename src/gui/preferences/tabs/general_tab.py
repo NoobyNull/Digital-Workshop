@@ -12,37 +12,25 @@ changes live across the running app. On Save, the current theme is persisted
 to AppData and loaded on next startup.
 """
 
-from dataclasses import asdict
-from pathlib import Path
 from typing import Callable
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QIcon, QPixmap
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
-    QColorDialog,
     QComboBox,
-    QDialog,
     QFormLayout,
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QScrollArea,
     QSlider,
     QSpinBox,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from src.gui.theme import save_theme_to_settings, set_theme, theme_to_dict
-from src.gui.theme.color_helper import get_theme_color
 
 
 class GeneralTab(QWidget):

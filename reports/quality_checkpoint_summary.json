@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-11-09T15:41:49.991336",
-  "monolithic_violations": 11,
-  "monolithic_compliance": 0,
-  "formatting_issues": 0,
-  "pylint_issues": 4128,
-  "status": "COMPLETE"
-}

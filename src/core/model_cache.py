@@ -345,7 +345,9 @@ class ModelCache:
             self.stats.eviction_count += 1
 
         if entries_to_evict:
-            self.logger.debug("Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict))
+            self.logger.debug(
+                "Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict)
+            )
 
     def _store_to_disk_cache(self, key: str, entry: CacheEntry) -> None:
         """
@@ -719,7 +721,9 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info("High memory usage (%.1f%%), evicting entries", memory_usage_ratio * 100)
+                self.logger.info(
+                    "High memory usage (%.1f%%), evicting entries", memory_usage_ratio * 100
+                )
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries

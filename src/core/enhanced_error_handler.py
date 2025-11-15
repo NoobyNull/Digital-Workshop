@@ -179,7 +179,14 @@ class EnhancedErrorHandler(IErrorHandler):
 
             return recovery_success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as handling_error:
             self.logger.error("Error handler failed: %s", str(handling_error), exc_info=True)
             return False
 
@@ -699,7 +706,14 @@ class EnhancedErrorHandler(IErrorHandler):
 
             return False
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as recovery_error:
             self.logger.error("Recovery attempt failed: %s", str(recovery_error), exc_info=True)
             return False
 
@@ -794,6 +808,7 @@ def handle_errors(operation_name: str = None, reraise: bool = True) -> None:
 
     def decorator(func: Callable) -> Callable:
         """TODO: Add docstring."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
             """TODO: Add docstring."""

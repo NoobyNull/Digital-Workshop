@@ -6,7 +6,6 @@ Ensures temporary files are properly cleaned up and securely handled.
 
 import tempfile
 import os
-from pathlib import Path
 from typing import Optional, Generator
 from contextlib import contextmanager
 from src.core.logging_config import get_logger
@@ -19,7 +18,7 @@ class TempFileManager:
 
     def __init__(self, base_temp_dir: Optional[str] = None) -> None:
         """Initialize temp file manager.
-        
+
         Args:
             base_temp_dir: Base directory for temporary files
         """
@@ -27,33 +26,29 @@ class TempFileManager:
         self.temp_files = []
 
     @contextmanager
-    def temporary_file(
-        self, suffix: str = "", prefix: str = "dw_"
-    ) -> Generator[str, None, None]:
+    def temporary_file(self, suffix: str = "", prefix: str = "dw_") -> Generator[str, None, None]:
         """Context manager for temporary file creation.
-        
+
         Ensures file is cleaned up even if an error occurs.
-        
+
         Args:
             suffix: File suffix
             prefix: File prefix
-            
+
         Yields:
             Path to temporary file
         """
         temp_file = None
         try:
             # Create temporary file
-            fd, temp_file = tempfile.mkstemp(
-                suffix=suffix, prefix=prefix, dir=self.base_temp_dir
-            )
+            fd, temp_file = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.base_temp_dir)
             os.close(fd)
-            
+
             self.temp_files.append(temp_file)
             logger.debug("Created temporary file: %s", temp_file)
-            
+
             yield temp_file
-            
+
         except (OSError, IOError) as e:
             logger.error("Error creating temporary file: %s", e)
             raise
@@ -70,12 +65,12 @@ class TempFileManager:
     @contextmanager
     def temporary_directory(self, prefix: str = "dw_") -> Generator[str, None, None]:
         """Context manager for temporary directory creation.
-        
+
         Ensures directory is cleaned up even if an error occurs.
-        
+
         Args:
             prefix: Directory prefix
-            
+
         Yields:
             Path to temporary directory
         """
@@ -84,9 +79,9 @@ class TempFileManager:
             # Create temporary directory
             temp_dir = tempfile.mkdtemp(prefix=prefix, dir=self.base_temp_dir)
             logger.debug("Created temporary directory: %s", temp_dir)
-            
+
             yield temp_dir
-            
+
         except (OSError, IOError) as e:
             logger.error("Error creating temporary directory: %s", e)
             raise
@@ -95,6 +90,7 @@ class TempFileManager:
             if temp_dir and os.path.exists(temp_dir):
                 try:
                     import shutil
+
                     shutil.rmtree(temp_dir)
                     logger.debug("Cleaned up temporary directory: %s", temp_dir)
                 except (OSError, IOError) as e:
@@ -114,4 +110,3 @@ class TempFileManager:
     def __del__(self) -> None:
         """Ensure cleanup on object destruction."""
         self.cleanup_all()
-

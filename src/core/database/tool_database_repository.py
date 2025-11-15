@@ -92,7 +92,7 @@ class ToolDatabaseRepository:
                     )
 
                 conn.commit()
-                self.logger.info("Added tool: %s (ID: {tool_id})", tool_data.get('description'))
+                self.logger.info("Added tool: %s (ID: {tool_id})", tool_data.get("description"))
                 return tool_id
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

@@ -54,7 +54,6 @@ class BaseWorker(QRunnable, ABC):
 
         Subclasses must implement this method.
         """
-        pass
 
     @Slot()
     def run(self) -> None:
@@ -87,4 +86,3 @@ class BaseWorker(QRunnable, ABC):
 
             # Emit failure signal
             self.signals.failed.emit(self.task.file_path, error_msg)
-

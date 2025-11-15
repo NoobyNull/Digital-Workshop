@@ -20,7 +20,7 @@ import shutil
 import platform
 from pathlib import Path
 from typing import List, Dict, Any
-from PySide6.QtCore import QSettings, QStandardPaths
+from PySide6.QtCore import QSettings
 
 from src.core.logging_config import get_logger
 from src.core.path_manager import PathManager
@@ -39,83 +39,89 @@ class NuclearReset:
         self.system = platform.system()
         self.app_name = get_app_name()
         self.org_name = get_organization_name()
-        
+
         # Track what will be deleted
         self.deletion_targets: List[Path] = []
         self.registry_targets: List[str] = []
-        
+
     def scan_all_targets(self) -> Dict[str, Any]:
         """
         Scan and identify ALL targets for deletion.
-        
+
         Returns:
             Dictionary with all targets and their sizes
         """
         self.logger.info("Scanning for all application data...")
-        
+
         targets = {
             "directories": [],
             "registry_keys": [],
             "total_size_mb": 0.0,
             "file_count": 0,
         }
-        
+
         # 1. Main AppData directories
         app_data_dirs = self._get_all_appdata_directories()
         for directory in app_data_dirs:
             if directory.exists():
                 size_mb, file_count = self._calculate_directory_size(directory)
-                targets["directories"].append({
-                    "path": str(directory),
-                    "size_mb": size_mb,
-                    "file_count": file_count,
-                    "type": "AppData"
-                })
+                targets["directories"].append(
+                    {
+                        "path": str(directory),
+                        "size_mb": size_mb,
+                        "file_count": file_count,
+                        "type": "AppData",
+                    }
+                )
                 targets["total_size_mb"] += size_mb
                 targets["file_count"] += file_count
-        
+
         # 2. Thumbnail storage (might be in different location)
         thumbnail_dirs = self._get_thumbnail_directories()
         for directory in thumbnail_dirs:
             if directory.exists():
                 size_mb, file_count = self._calculate_directory_size(directory)
-                targets["directories"].append({
-                    "path": str(directory),
-                    "size_mb": size_mb,
-                    "file_count": file_count,
-                    "type": "Thumbnails"
-                })
+                targets["directories"].append(
+                    {
+                        "path": str(directory),
+                        "size_mb": size_mb,
+                        "file_count": file_count,
+                        "type": "Thumbnails",
+                    }
+                )
                 targets["total_size_mb"] += size_mb
                 targets["file_count"] += file_count
-        
+
         # 3. Temp directories
         temp_dirs = self._get_temp_directories()
         for directory in temp_dirs:
             if directory.exists():
                 size_mb, file_count = self._calculate_directory_size(directory)
-                targets["directories"].append({
-                    "path": str(directory),
-                    "size_mb": size_mb,
-                    "file_count": file_count,
-                    "type": "Temp"
-                })
+                targets["directories"].append(
+                    {
+                        "path": str(directory),
+                        "size_mb": size_mb,
+                        "file_count": file_count,
+                        "type": "Temp",
+                    }
+                )
                 targets["total_size_mb"] += size_mb
                 targets["file_count"] += file_count
-        
+
         # 4. QSettings / Registry keys
         if self.system == "Windows":
             targets["registry_keys"] = [
                 f"HKEY_CURRENT_USER\\Software\\{self.org_name}",
                 f"HKEY_CURRENT_USER\\Software\\{self.org_name}\\{self.app_name}",
             ]
-        
+
         self.logger.info(
             f"Scan complete: {len(targets['directories'])} directories, "
             f"{targets['file_count']} files, {targets['total_size_mb']:.2f} MB"
         )
-        
+
         return targets
-    
+
     def execute_nuclear_reset(self, create_backup: bool = True) -> Dict[str, Any]:
         """
         Execute the NUCLEAR RESET - destroy everything.
@@ -147,7 +153,7 @@ class NuclearReset:
                 if backup_path:
                     results["backup_created"] = True
                     results["backup_path"] = str(backup_path)
-                    self.logger.info(f"Backup created: {backup_path}")
+                    self.logger.info("Backup created: %s", backup_path)
 
             # Step 2: Close all log handlers to release file locks
             self.logger.warning("Closing log handlers...")
@@ -176,12 +182,12 @@ class NuclearReset:
             self.logger.warning("=" * 80)
 
         except Exception as e:
-            self.logger.error(f"Nuclear reset failed: {e}", exc_info=True)
+            self.logger.error("Nuclear reset failed: %s", e, exc_info=True)
             results["errors"].append(str(e))
             results["success"] = False
 
         return results
-    
+
     def _get_all_appdata_directories(self) -> List[Path]:
         """Get all AppData directories used by the application."""
         directories = []
@@ -191,14 +197,16 @@ class NuclearReset:
         # - RAW: %LOCALAPPDATA%\DigitalWorkshop-Dev\
         # - Installed: %LOCALAPPDATA%\DigitalWorkshop\
         try:
-            directories.extend([
-                self.path_manager.get_cache_directory().parent,  # Get base app directory
-                self.path_manager.get_log_directory(),
-                self.path_manager.get_data_directory(),
-                self.path_manager.get_config_directory(),
-            ])
+            directories.extend(
+                [
+                    self.path_manager.get_cache_directory().parent,  # Get base app directory
+                    self.path_manager.get_log_directory(),
+                    self.path_manager.get_data_directory(),
+                    self.path_manager.get_config_directory(),
+                ]
+            )
         except Exception as e:
-            self.logger.warning(f"Failed to get directories from PathManager: {e}")
+            self.logger.warning("Failed to get directories from PathManager: %s", e)
 
         # Also check for alternate names (in case of migration)
         if self.system == "Windows":
@@ -217,62 +225,65 @@ class NuclearReset:
                 dw_dir = base_dir / "DigitalWorkshop"
                 if dw_dir.exists() and dw_dir not in directories:
                     directories.append(dw_dir)
-        
+
         elif self.system == "Darwin":  # macOS
             app_support = Path.home() / "Library" / "Application Support" / self.app_name
             if app_support.exists():
                 directories.append(app_support)
-        
+
         else:  # Linux
             local_share = Path.home() / ".local" / "share" / self.app_name
             if local_share.exists():
                 directories.append(local_share)
-        
+
         # Add directories from PathManager
         try:
-            directories.extend([
-                self.path_manager.get_cache_directory(),
-                self.path_manager.get_log_directory(),
-                self.path_manager.get_data_directory(),
-                self.path_manager.get_config_directory(),
-            ])
+            directories.extend(
+                [
+                    self.path_manager.get_cache_directory(),
+                    self.path_manager.get_log_directory(),
+                    self.path_manager.get_data_directory(),
+                    self.path_manager.get_config_directory(),
+                ]
+            )
         except Exception as e:
-            self.logger.warning(f"Failed to get some directories from PathManager: {e}")
-        
+            self.logger.warning("Failed to get some directories from PathManager: %s", e)
+
         # Remove duplicates
         unique_dirs = []
         for d in directories:
             if d not in unique_dirs:
                 unique_dirs.append(d)
-        
+
         return unique_dirs
-    
+
     def _get_thumbnail_directories(self) -> List[Path]:
         """Get thumbnail storage directories."""
         directories = []
-        
+
         if self.system == "Windows":
             appdata = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
             thumb_dir = appdata / "3DModelManager" / "thumbnails"
             if thumb_dir.exists():
                 directories.append(thumb_dir)
-        
+
         return directories
-    
+
     def _get_temp_directories(self) -> List[Path]:
         """Get temporary directories used by the application."""
         directories = []
-        
+
         import tempfile
+
         temp_base = Path(tempfile.gettempdir())
-        
+
         # Check for various temp directory patterns
         patterns = [
             "digital_workshop_*",
             "dw_*",
             "DigitalWorkshop_*",
         ]
-        
+
         for pattern in patterns:
             for temp_dir in temp_base.glob(pattern):
                 if temp_dir.is_dir():
@@ -299,7 +310,7 @@ class NuclearReset:
                     total_size += item.stat().st_size
                     file_count += 1
         except Exception as e:
-            self.logger.warning(f"Failed to calculate size for {directory}: {e}")
+            self.logger.warning("Failed to calculate size for %s: {e}", directory)
 
         size_mb = total_size / (1024 * 1024)
         return size_mb, file_count
@@ -334,15 +345,15 @@ class NuclearReset:
                     dest_dir = backup_dir / source_dir.name
                     try:
                         shutil.copytree(source_dir, dest_dir, ignore_dangling_symlinks=True)
-                        self.logger.info(f"Backed up: {source_dir} -> {dest_dir}")
+                        self.logger.info("Backed up: %s -> {dest_dir}", source_dir)
                     except Exception as e:
-                        self.logger.warning(f"Failed to backup {source_dir}: {e}")
+                        self.logger.warning("Failed to backup %s: {e}", source_dir)
 
-            self.logger.info(f"Final backup created: {backup_dir}")
+            self.logger.info("Final backup created: %s", backup_dir)
             return backup_dir
 
         except Exception as e:
-            self.logger.error(f"Failed to create backup: {e}", exc_info=True)
+            self.logger.error("Failed to create backup: %s", e, exc_info=True)
             return None
 
     def _clear_qsettings(self) -> bool:
@@ -368,15 +379,12 @@ class NuclearReset:
 
                     # Try to delete organization key (this deletes all app keys under it)
                     try:
-                        winreg.DeleteKey(
-                            winreg.HKEY_CURRENT_USER,
-                            f"Software\\{self.org_name}"
-                        )
-                        self.logger.info(f"Deleted registry key: Software\\{self.org_name}")
+                        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.org_name}")
+                        self.logger.info("Deleted registry key: Software\\%s", self.org_name)
                     except FileNotFoundError:
                         pass  # Key doesn't exist
                     except Exception as e:
-                        self.logger.warning(f"Failed to delete registry key: {e}")
+                        self.logger.warning("Failed to delete registry key: %s", e)
 
                 except ImportError:
                     self.logger.warning("winreg not available, skipping direct registry deletion")
@@ -384,7 +392,7 @@ class NuclearReset:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to clear QSettings: {e}", exc_info=True)
+            self.logger.error("Failed to clear QSettings: %s", e, exc_info=True)
             return False
 
     def _delete_all_directories(self) -> tuple[int, int, List[str]]:
@@ -418,7 +426,7 @@ class NuclearReset:
 
                     dirs_deleted += 1
                     files_deleted += file_count
-                    self.logger.info(f"Deleted: {directory} ({file_count} files)")
+                    self.logger.info("Deleted: %s ({file_count} files)", directory)
 
                 except Exception as e:
                     error_msg = f"Failed to delete {directory}: {e}"
@@ -431,6 +439,7 @@ class NuclearReset:
         """Clean any remaining temp files."""
         try:
             import tempfile
+
             temp_base = Path(tempfile.gettempdir())
 
             # Clean VTK temp files
@@ -441,12 +450,12 @@ class NuclearReset:
                     elif vtk_temp.is_dir():
                         shutil.rmtree(vtk_temp)
                 except Exception as e:
-                    self.logger.debug(f"Failed to clean {vtk_temp}: {e}")
+                    self.logger.debug("Failed to clean %s: {e}", vtk_temp)
 
             self.logger.info("Temp files cleaned")
 
         except Exception as e:
-            self.logger.warning(f"Failed to clean temp files: {e}")
+            self.logger.warning("Failed to clean temp files: %s", e)
 
     def _close_log_handlers(self) -> None:
         """Close all log handlers to release file locks."""

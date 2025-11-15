@@ -313,7 +313,14 @@ class TransactionManager:
             if transaction:
                 try:
                     transaction.rollback()
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as rollback_error:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as rollback_error:
                     logger.error(
                         f"Failed to rollback transaction {transaction.transaction_id}: {str(rollback_error)}"
                     )
@@ -477,6 +484,7 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1) -> None:
 
     def decorator(func: Callable) -> Callable:
         """TODO: Add docstring."""
+
         @wraps(func)
         def wrapper(*args, **kwargs) -> None:
             """TODO: Add docstring."""

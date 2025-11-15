@@ -243,7 +243,14 @@ class EventHandler:
                         try:
                             if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                                 self.main_window.viewer_widget.reset_save_view_button()
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(
                             3000, lambda: self.main_window.status_label.setText("Ready")

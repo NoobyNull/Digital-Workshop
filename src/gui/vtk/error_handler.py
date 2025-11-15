@@ -118,6 +118,7 @@ class VTKErrorHandler:
             # Create a custom error observer class that inherits from vtk.vtkCommand
             class VTKErrorObserver(vtk.vtkCommand):
                 """TODO: Add docstring."""
+
                 def __init__(self, handler) -> None:
                     """TODO: Add docstring."""
                     super().__init__()
@@ -250,7 +251,7 @@ class VTKErrorHandler:
 
         # Log with appropriate level
         if severity == VTKErrorSeverity.CRITICAL:
-            self.logger.critical("VTK Critical Error: %s", error_info['error_text'], extra=log_data)
+            self.logger.critical("VTK Critical Error: %s", error_info["error_text"], extra=log_data)
         elif severity == VTKErrorSeverity.HIGH:
             self.logger.error(
                 f"VTK High Severity Error: {error_info['error_text']}", extra=log_data
@@ -260,7 +261,9 @@ class VTKErrorHandler:
                 f"VTK Medium Severity Error: {error_info['error_text']}", extra=log_data
             )
         else:  # LOW severity
-            self.logger.debug("VTK Low Severity Error: %s", error_info['error_text'], extra=log_data)
+            self.logger.debug(
+                "VTK Low Severity Error: %s", error_info["error_text"], extra=log_data
+            )
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""

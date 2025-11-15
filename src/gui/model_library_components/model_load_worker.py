@@ -97,7 +97,9 @@ class ModelLoadWorker(QThread):
                     model = None
 
                     if trimesh_loader.is_trimesh_available():
-                        tracker.start_stage(LoadingStage.PARSING, f"Loading {filename} with Trimesh (fast)...")
+                        tracker.start_stage(
+                            LoadingStage.PARSING, f"Loading {filename} with Trimesh (fast)..."
+                        )
                         model = trimesh_loader.load_model(file_path, tracker)
 
                     # Fallback to standard parsers if Trimesh failed or unavailable

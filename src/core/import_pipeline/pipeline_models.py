@@ -148,4 +148,3 @@ class PipelineResult:
         if self.total_tasks == 0:
             return 0.0
         return (self.successful_tasks / self.total_tasks) * 100.0
-

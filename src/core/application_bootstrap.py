@@ -93,7 +93,14 @@ class ApplicationBootstrap:
                         self.logger.debug("Theme applied successfully")
                     else:
                         self.logger.debug("Theme application returned False, but continuing")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as theme_error:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as theme_error:
                     self.logger.debug("Failed to apply theme: %s", theme_error)
 
                 return True

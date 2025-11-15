@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 class Ui_Viewer3DWidget(object):
     """TODO: Add docstring."""
+
     def setupUi(self, Viewer3DWidget) -> None:
         """TODO: Add docstring."""
         if not Viewer3DWidget.objectName():

@@ -15,7 +15,7 @@ from PySide6.QtCore import QStandardPaths, QDir
 from PySide6.QtWidgets import QApplication
 
 from .application_config import ApplicationConfig
-from .logging_config import setup_logging, get_logger
+from .logging_config import get_logger, setup_logging
 
 
 class SystemInitializer:
@@ -69,17 +69,17 @@ class SystemInitializer:
 
     def _setup_logging(self) -> None:
         """Initialize the logging system."""
-        # Get the app data path for logs
-        app_data_path = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        log_dir = os.path.join(app_data_path, "logs")
-
-        # Setup logging with console enabled only if explicitly requested
-        setup_logging(
-            log_level=self.config.log_level,
-            log_dir=log_dir,
-            enable_console=self.config.enable_console_logging,
-            human_readable=self.config.log_human_readable,
-        )
+        if self.config.logging_profile:
+            setup_logging(profile=self.config.logging_profile)
+        else:
+            app_data_path = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            log_dir = os.path.join(app_data_path, "logs")
+            setup_logging(
+                log_level=self.config.log_level,
+                log_dir=log_dir,
+                enable_console=self.config.enable_console_logging,
+                human_readable=self.config.log_human_readable,
+            )
 
         self.logger = get_logger(__name__)
         self.logger.info("Logging system initialized")

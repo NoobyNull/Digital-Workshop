@@ -356,7 +356,7 @@ class MetadataEditorWidget(QWidget):
             # Reset dirty state
             self._reset_dirty_state()
 
-            self.logger.info("Metadata loaded for model: %s", model['filename'])
+            self.logger.info("Metadata loaded for model: %s", model["filename"])
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
@@ -679,9 +679,7 @@ class MetadataEditorWidget(QWidget):
                             Qt.SmoothTransformation,
                         )
                         # Use set_thumbnail to store both scaled and full-resolution versions
-                        self.preview_image_label.set_thumbnail(
-                            scaled_pixmap, str(thumbnail_path)
-                        )
+                        self.preview_image_label.set_thumbnail(scaled_pixmap, str(thumbnail_path))
                         self.preview_image_label.setText("")  # Clear any placeholder text
                         self.logger.debug("Loaded preview image for model %s", model_id)
                         return
@@ -876,7 +874,9 @@ class MetadataEditorWidget(QWidget):
             # Use the first available provider if current_provider is not set
             if not ai_service.current_provider:
                 ai_service.current_provider = next(iter(ai_service.providers.values()))
-                self.logger.info("Set current provider to: %s", list(ai_service.providers.keys())[0])
+                self.logger.info(
+                    "Set current provider to: %s", list(ai_service.providers.keys())[0]
+                )
 
             # Check if provider is configured
             if not ai_service.current_provider.is_configured():
@@ -941,12 +941,12 @@ class MetadataEditorWidget(QWidget):
             # Update title if provided
             if "title" in result and result["title"]:
                 self.title_field.setText(result["title"])
-                self.logger.info("Updated title: %s", result['title'])
+                self.logger.info("Updated title: %s", result["title"])
 
             # Update description if provided
             if "description" in result and result["description"]:
                 self.description_field.setPlainText(result["description"])
-                self.logger.info("Updated description: %s...", result['description'][:50])
+                self.logger.info("Updated description: %s...", result["description"][:50])
 
             # Update keywords if provided
             if "metadata_keywords" in result and result["metadata_keywords"]:

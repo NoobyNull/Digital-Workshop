@@ -4,7 +4,6 @@ Security event logging for tracking security-related events.
 Logs security events like failed authentication, path validation failures, etc.
 """
 
-import logging
 from enum import Enum
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -42,7 +41,7 @@ class SecurityEventLogger:
         severity: str = "INFO",
     ) -> None:
         """Log a security event.
-        
+
         Args:
             event_type: Type of security event
             description: Human-readable description
@@ -55,9 +54,9 @@ class SecurityEventLogger:
             "description": description,
             "details": details or {},
         }
-        
+
         self.events.append(event)
-        
+
         # Log to file
         log_method = getattr(self.logger, severity.lower(), self.logger.info)
         log_method(
@@ -69,7 +68,7 @@ class SecurityEventLogger:
 
     def log_path_validation_failure(self, path: str, reason: str) -> None:
         """Log path validation failure.
-        
+
         Args:
             path: Path that failed validation
             reason: Reason for failure
@@ -83,7 +82,7 @@ class SecurityEventLogger:
 
     def log_invalid_file_type(self, file_path: str, file_type: str) -> None:
         """Log invalid file type attempt.
-        
+
         Args:
             file_path: Path to file
             file_type: File type/extension
@@ -97,7 +96,7 @@ class SecurityEventLogger:
 
     def log_system_file_blocked(self, file_path: str) -> None:
         """Log system file block.
-        
+
         Args:
             file_path: Path to system file
         """
@@ -110,7 +109,7 @@ class SecurityEventLogger:
 
     def log_credential_access(self, credential_type: str, success: bool) -> None:
         """Log credential access attempt.
-        
+
         Args:
             credential_type: Type of credential accessed
             success: Whether access was successful
@@ -124,19 +123,18 @@ class SecurityEventLogger:
 
     def get_events(self, event_type: Optional[SecurityEventType] = None) -> list:
         """Get logged events, optionally filtered by type.
-        
+
         Args:
             event_type: Optional event type to filter by
-            
+
         Returns:
             List of events
         """
         if event_type is None:
             return self.events
-        
+
         return [e for e in self.events if e["type"] == event_type.value]
 
     def clear_events(self) -> None:
         """Clear all logged events."""
         self.events.clear()
-

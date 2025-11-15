@@ -44,7 +44,7 @@ class MetadataManager:
 
             self.logger.debug("Metadata visibility binding established")
         except Exception as e:
-            self.logger.warning(f"Failed to setup metadata visibility binding: {e}")
+            self.logger.warning("Failed to setup metadata visibility binding: %s", e)
 
     def _on_tab_changed(self, index: int) -> None:
         """Handle tab change event."""
@@ -78,7 +78,7 @@ class MetadataManager:
                 self.logger.debug("Metadata dock hidden (Model Previewer tab inactive)")
 
         except Exception as e:
-            self.logger.warning(f"Failed to update metadata visibility: {e}")
+            self.logger.warning("Failed to update metadata visibility: %s", e)
 
     def update_metadata_action_state(self) -> None:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
@@ -105,9 +105,9 @@ class MetadataManager:
             settings = QSettings()
             vis = bool(self.main_window.metadata_dock.isVisible())
             settings.setValue("metadata_panel/visible", vis)
-            self.logger.debug(f"Saved metadata panel visibility: {vis}")
+            self.logger.debug("Saved metadata panel visibility: %s", vis)
         except Exception as e:
-            self.logger.warning(f"Failed to save metadata panel visibility: {e}")
+            self.logger.warning("Failed to save metadata panel visibility: %s", e)
 
     def load_metadata_panel_visibility(self) -> bool:
         """Load and restore the metadata panel visibility state."""
@@ -122,17 +122,17 @@ class MetadataManager:
             if settings.contains("metadata_panel/visible"):
                 vis = settings.value("metadata_panel/visible", True, type=bool)
                 self.main_window.metadata_dock.setVisible(vis)
-                self.logger.debug(f"Restored metadata panel visibility: {vis}")
+                self.logger.debug("Restored metadata panel visibility: %s", vis)
                 return True
         except Exception as e:
-            self.logger.warning(f"Failed to load metadata panel visibility: {e}")
+            self.logger.warning("Failed to load metadata panel visibility: %s", e)
 
         return False
 
     def on_metadata_saved(self, model_id: int) -> None:
         """Handle metadata saved event from the metadata editor."""
         try:
-            self.logger.info(f"Metadata saved for model ID: {model_id}")
+            self.logger.info("Metadata saved for model ID: %s", model_id)
             self.main_window.status_label.setText("Metadata saved")
 
             # Update the model library to reflect changes
@@ -143,12 +143,12 @@ class MetadataManager:
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle metadata saved event: {str(e)}")
+            self.logger.error("Failed to handle metadata saved event: %s", str(e))
 
     def on_metadata_changed(self, model_id: int) -> None:
         """Handle metadata changed event from the metadata editor."""
         try:
-            self.logger.debug(f"Metadata changed for model ID: {model_id}")
+            self.logger.debug("Metadata changed for model ID: %s", model_id)
             self.main_window.status_label.setText("Metadata modified (unsaved changes)")
 
             # Refresh the model display in the library to show updated metadata
@@ -157,5 +157,4 @@ class MetadataManager:
                     self.main_window.model_library_widget._refresh_model_display(model_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to handle metadata changed event: {str(e)}")
-
+            self.logger.error("Failed to handle metadata changed event: %s", str(e))

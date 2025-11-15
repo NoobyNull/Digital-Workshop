@@ -104,9 +104,7 @@ class LibraryUIManager:
 
         self.library_widget.file_model = MultiRootFileSystemModel()
         self.library_widget.file_proxy_model = FileSystemProxyModel()
-        self.library_widget.file_proxy_model.setSourceModel(
-            self.library_widget.file_model
-        )
+        self.library_widget.file_proxy_model.setSourceModel(self.library_widget.file_model)
 
         self.library_widget.file_model.indexing_started.connect(
             self.library_widget._on_indexing_started
@@ -141,9 +139,7 @@ class LibraryUIManager:
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
-        self.library_widget.import_folder_button.setToolTip(
-            "Import the selected folder"
-        )
+        self.library_widget.import_folder_button.setToolTip("Import the selected folder")
         import_layout.addWidget(self.library_widget.import_folder_button)
 
         layout.addWidget(import_frame)
@@ -282,7 +278,10 @@ class LibraryUIManager:
         old_value = value
         value = max(32, min(256, value))
 
-        logger.debug(f"set_row_height: requested={old_value}, clamped={value}, current={self.library_widget.current_row_height}")
+        logger.debug(
+            "set_row_height: requested=%s, clamped={value}, current={self.library_widget.current_row_height}",
+            old_value,
+        )
 
         # Store current height
         self.library_widget.current_row_height = value
@@ -290,7 +289,7 @@ class LibraryUIManager:
         # Save to settings
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
         settings.setValue("row_height", value)
-        logger.debug(f"Saved row_height to settings: {value}")
+        logger.debug("Saved row_height to settings: %s", value)
 
         # Update icon size for list view (thumbnails scale with row height)
         icon_size = QSize(value, value)
@@ -314,7 +313,10 @@ class LibraryUIManager:
         old_value = value
         value = max(64, min(512, value))
 
-        logger.debug(f"set_grid_icon_size: requested={old_value}, clamped={value}, current={self.library_widget.current_grid_icon_size}")
+        logger.debug(
+            "set_grid_icon_size: requested=%s, clamped={value}, current={self.library_widget.current_grid_icon_size}",
+            old_value,
+        )
 
         # Store current size
         self.library_widget.current_grid_icon_size = value
@@ -322,7 +324,7 @@ class LibraryUIManager:
         # Save to settings
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
         settings.setValue("grid_icon_size", value)
-        logger.debug(f"Saved grid_icon_size to settings: {value}")
+        logger.debug("Saved grid_icon_size to settings: %s", value)
 
         # Update icon size for grid view
         icon_size = QSize(value, value)
@@ -342,13 +344,15 @@ class LibraryUIManager:
             index: Tab index (0=List, 1=Grid)
         """
         # Enable thumbnail filtering for grid view (index 1), disable for list view (index 0)
-        is_grid_view = (index == 1)
+        is_grid_view = index == 1
         self.library_widget.proxy_model.filter_no_thumbnails = is_grid_view
 
         # Invalidate filter to reapply with new settings
         self.library_widget.proxy_model.invalidateFilter()
 
-        logger.debug(f"View tab changed to {'Grid' if is_grid_view else 'List'}, thumbnail filtering={'enabled' if is_grid_view else 'disabled'}")
+        logger.debug(
+            f"View tab changed to {'Grid' if is_grid_view else 'List'}, thumbnail filtering={'enabled' if is_grid_view else 'disabled'}"
+        )
 
     def _save_column_size(self, column: int, old_size: int, new_size: int) -> None:
         """
@@ -362,7 +366,9 @@ class LibraryUIManager:
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
         settings.setValue(f"column_{column}_width", new_size)
 
-    def _save_column_order(self, logical_index: int, old_visual_index: int, new_visual_index: int) -> None:
+    def _save_column_order(
+        self, logical_index: int, old_visual_index: int, new_visual_index: int
+    ) -> None:
         """
         Save column order to settings when columns are reordered.
 
@@ -381,7 +387,7 @@ class LibraryUIManager:
 
         settings.setValue("column_order", visual_order)
         print(f"DEBUG: Saved column order: {visual_order}")
-        logger.debug(f"Saved column order: {visual_order}")
+        logger.debug("Saved column order: %s", visual_order)
 
     def _show_column_menu(self, position):
         """Show context menu for column visibility control."""
@@ -396,8 +402,10 @@ class LibraryUIManager:
         # Create actions for each column
         def make_toggle_handler(column_index):
             """Create a handler that captures the column index."""
+
             def handler(checked):
                 self._toggle_column_visibility(column_index, checked)
+
             return handler
 
         for col, name in enumerate(column_names):
@@ -422,16 +430,25 @@ class LibraryUIManager:
             column: Column index
             checked: Whether column should be visible
         """
-        print(f"DEBUG: Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})")
-        logger.info(f"Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})")
+        print(
+            f"DEBUG: Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})"
+        )
+        logger.info(
+            "Toggle column {column} visibility: checked={checked} (will be %s)",
+            "visible" if checked else "hidden",
+        )
         self.library_widget.list_view.setColumnHidden(column, not checked)
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
         settings.setValue(f"column_{column}_visible", checked)
         settings.sync()  # Force write to disk
         # Verify it was saved
         saved_value = settings.value(f"column_{column}_visible")
-        print(f"DEBUG: Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}")
-        logger.info(f"Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}")
+        print(
+            f"DEBUG: Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}"
+        )
+        logger.info(
+            "Saved and verified column_%s_visible: saved={checked}, read_back={saved_value}", column
+        )
 
     def apply_styling(self) -> None:
         """Apply CSS styling (no-op - qt-material handles this)."""

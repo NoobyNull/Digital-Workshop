@@ -165,7 +165,7 @@ class MaterialProvider:
                         # Specular exponent (shininess)
                         try:
                             properties["shininess"] = float(line.split()[1])
-                            self.logger.debug("Found shininess: %s", properties['shininess'])
+                            self.logger.debug("Found shininess: %s", properties["shininess"])
                         except (IndexError, ValueError) as e:
                             self.logger.warning("Failed to parse Ns value: %s", e)
 
@@ -178,7 +178,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug("Found ambient color: %s", properties['ambient'])
+                            self.logger.debug("Found ambient color: %s", properties["ambient"])
                         except (IndexError, ValueError) as e:
                             self.logger.warning("Failed to parse Ka values: %s", e)
 
@@ -191,7 +191,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug("Found diffuse color: %s", properties['diffuse'])
+                            self.logger.debug("Found diffuse color: %s", properties["diffuse"])
                         except (IndexError, ValueError) as e:
                             self.logger.warning("Failed to parse Kd values: %s", e)
 
@@ -204,7 +204,7 @@ class MaterialProvider:
                                 float(parts[2]),
                                 float(parts[3]),
                             )
-                            self.logger.debug("Found specular color: %s", properties['specular'])
+                            self.logger.debug("Found specular color: %s", properties["specular"])
                         except (IndexError, ValueError) as e:
                             self.logger.warning("Failed to parse Ks values: %s", e)
 

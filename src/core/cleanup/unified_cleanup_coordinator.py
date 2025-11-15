@@ -168,7 +168,7 @@ class CleanupHandler:
     def set_enabled(self, enabled: bool) -> None:
         """Enable or disable this handler."""
         self.enabled = enabled
-        self.logger.debug("Handler {self.name} %s", 'enabled' if enabled else 'disabled')
+        self.logger.debug("Handler {self.name} %s", "enabled" if enabled else "disabled")
 
 
 class UnifiedCleanupCoordinator:

@@ -42,7 +42,6 @@ class BaseStage(ABC):
     @abstractmethod
     def stage_name(self) -> ImportStage:
         """Return the stage identifier."""
-        pass
 
     @abstractmethod
     def should_process(self, task: ImportTask) -> bool:
@@ -58,7 +57,6 @@ class BaseStage(ABC):
         Returns:
             True if stage should process, False to skip
         """
-        pass
 
     @abstractmethod
     def process(self, task: ImportTask) -> StageResult:
@@ -76,7 +74,6 @@ class BaseStage(ABC):
         Returns:
             StageResult with success/failure information
         """
-        pass
 
     def execute(self, task: ImportTask) -> StageResult:
         """
@@ -107,9 +104,7 @@ class BaseStage(ABC):
 
             # Emit started signal
             self.signals.started.emit(task)
-            self.logger.debug(
-                "Starting %s for %s", self.stage_name.value, task.filename
-            )
+            self.logger.debug("Starting %s for %s", self.stage_name.value, task.filename)
 
             # Process the task
             result = self.process(task)
@@ -117,9 +112,7 @@ class BaseStage(ABC):
             # Emit completion signal
             if result.success:
                 self.signals.completed.emit(result)
-                self.logger.debug(
-                    "Completed %s for %s", self.stage_name.value, task.filename
-                )
+                self.logger.debug("Completed %s for %s", self.stage_name.value, task.filename)
             else:
                 self.signals.failed.emit(task, result.error_message or "Unknown error")
                 self.logger.error(
@@ -149,4 +142,3 @@ class BaseStage(ABC):
                 task=task,
                 error_message=error_msg,
             )
-

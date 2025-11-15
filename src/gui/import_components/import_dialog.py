@@ -216,9 +216,7 @@ class ImportWorker(QThread):
         """Cancel the import operation."""
         self.cancellation_token.cancel()
 
-    def _generate_thumbnails_with_window(
-        self, files_to_process: List[Tuple[str, str]]
-    ) -> None:
+    def _generate_thumbnails_with_window(self, files_to_process: List[Tuple[str, str]]) -> None:
         """
         Generate thumbnails using dedicated window.
 
@@ -235,9 +233,7 @@ class ImportWorker(QThread):
                 config.thumbnail_bg_image,
                 type=str,
             )
-            material = settings.value(
-                "thumbnail/material", config.thumbnail_material, type=str
-            )
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
             bg_color = settings.value(
                 "thumbnail/background_color",
                 config.thumbnail_bg_color,
@@ -356,7 +352,7 @@ class PipelineImportWorker(QThread):
             tasks = []
             for file_info in session.files:
                 file_path = file_info.managed_path or file_info.original_path
-                file_format = Path(file_path).suffix.lower().lstrip('.')
+                file_format = Path(file_path).suffix.lower().lstrip(".")
                 task = ImportTask(
                     file_path=file_path,
                     filename=Path(file_path).name,
@@ -983,8 +979,8 @@ class ImportDialog(QDialog):
 
         # Allow parent window to connect to model_imported signal for real-time updates
         parent = self.parent()
-        if parent and hasattr(parent, '_on_model_imported_during_import'):
-            handler = getattr(parent, '_on_model_imported_during_import')
+        if parent and hasattr(parent, "_on_model_imported_during_import"):
+            handler = getattr(parent, "_on_model_imported_during_import")
             self.import_worker.model_imported.connect(handler)
 
         # Start worker

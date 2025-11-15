@@ -123,9 +123,7 @@ class ThumbnailGenerationWindow(QMainWindow):
         self._setup_ui()
         self._restore_window_state()
 
-        self.logger.info(
-            "ThumbnailGenerationWindow initialized: total_items=%d", total_items
-        )
+        self.logger.info("ThumbnailGenerationWindow initialized: total_items=%d", total_items)
 
     def _setup_ui(self) -> None:
         """Create all UI components."""
@@ -194,9 +192,7 @@ class ThumbnailGenerationWindow(QMainWindow):
         left_layout.addWidget(self.time_label)
 
         # Warning message
-        warning_label = QLabel(
-            "⚠️  Closing this window will STOP thumbnail generation!"
-        )
+        warning_label = QLabel("⚠️  Closing this window will STOP thumbnail generation!")
         warning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         warning_font = QFont()
         warning_font.setPointSize(9)
@@ -358,9 +354,7 @@ class ThumbnailGenerationWindow(QMainWindow):
                 remaining_items = self.total_items - self.current_index
                 remaining_time = avg_time_per_item * remaining_items
                 remaining_str = self._format_time(remaining_time)
-                self.time_label.setText(
-                    f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}"
-                )
+                self.time_label.setText(f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}")
             else:
                 self.time_label.setText(f"Elapsed: {elapsed_str} | Remaining: Calculating...")
 
@@ -482,9 +476,7 @@ class ThumbnailGenerationWindow(QMainWindow):
         if self.batch_label:
             self.batch_label.setText(f"Batch: {current} of {total} images")
 
-    def update_individual_progress(
-        self, current_file: str, percent: int, stage: str
-    ) -> None:
+    def update_individual_progress(self, current_file: str, percent: int, stage: str) -> None:
         """
         Update individual image progress.
 
@@ -520,4 +512,3 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
-

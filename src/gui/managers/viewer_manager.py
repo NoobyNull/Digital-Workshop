@@ -37,7 +37,7 @@ class ViewerManager:
                 self.main_window.material_manager = MaterialManager(get_database_manager())
             except Exception as e:
                 self.main_window.material_manager = None
-                self.logger.warning(f"MaterialManager unavailable: {e}")
+                self.logger.warning("MaterialManager unavailable: %s", e)
 
             # Lighting manager
             try:
@@ -46,11 +46,11 @@ class ViewerManager:
                 )
             except Exception as e:
                 self.main_window.lighting_manager = None
-                self.logger.warning(f"LightingManager unavailable: {e}")
+                self.logger.warning("LightingManager unavailable: %s", e)
 
             self.logger.info("Viewer managers initialized")
         except Exception as e:
-            self.logger.warning(f"Failed to setup viewer managers: {e}")
+            self.logger.warning("Failed to setup viewer managers: %s", e)
 
     def zoom_in(self) -> None:
         """Handle zoom in action."""
@@ -87,7 +87,7 @@ class ViewerManager:
                 if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                     self.main_window.viewer_widget.reset_save_view_button()
             except Exception as e:
-                self.logger.warning(f"Failed to reset save view button: {e}")
+                self.logger.warning("Failed to reset save view button: %s", e)
         else:
             QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
 
@@ -118,9 +118,7 @@ class ViewerManager:
             model_id = db_manager.get_model_id_by_file_path(model.file_path)
 
             if not model_id:
-                QMessageBox.warning(
-                    self.main_window, "Save View", "Model not found in database."
-                )
+                QMessageBox.warning(self.main_window, "Save View", "Model not found in database.")
                 return
 
             # Get camera state from viewer
@@ -148,13 +146,13 @@ class ViewerManager:
 
                     if success:
                         self.main_window.status_label.setText("View saved for this model")
-                        self.logger.info(f"Saved camera view for model ID {model_id}")
+                        self.logger.info("Saved camera view for model ID %s", model_id)
                         # Reset save view button after successful save
                         try:
                             if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                                 self.main_window.viewer_widget.reset_save_view_button()
                         except Exception as e:
-                            self.logger.warning(f"Failed to reset save view button: {e}")
+                            self.logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(
                             3000, lambda: self.main_window.status_label.setText("Ready")
                         )
@@ -168,10 +166,8 @@ class ViewerManager:
                 QMessageBox.warning(self.main_window, "Save View", "Viewer not initialized.")
 
         except Exception as e:
-            self.logger.error(f"Failed to save current view: {e}")
-            QMessageBox.critical(
-                self.main_window, "Error", f"Failed to save view:\n{str(e)}"
-            )
+            self.logger.error("Failed to save current view: %s", e)
+            QMessageBox.critical(self.main_window, "Error", f"Failed to save view:\n{str(e)}")
 
     def restore_saved_camera(self, model_id: int) -> None:
         """Restore saved camera view for a model."""
@@ -205,12 +201,11 @@ class ViewerManager:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
+                    self.logger.info("Restored saved camera view for model ID %s", model_id)
                     self.main_window.status_label.setText("Restored saved view")
                     QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
             else:
-                self.logger.debug(f"No saved camera view for model ID {model_id}")
+                self.logger.debug("No saved camera view for model ID %s", model_id)
 
         except Exception as e:
-            self.logger.warning(f"Failed to restore saved camera: {e}")
-
+            self.logger.warning("Failed to restore saved camera: %s", e)

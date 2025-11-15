@@ -483,6 +483,7 @@ class ImportAnalysisService:
 
                 class ProgressWrapper:
                     """TODO: Add docstring."""
+
                     def report(self, percent, message) -> None:
                         """TODO: Add docstring."""
                         parser_progress_wrapper(percent, message)

@@ -268,7 +268,14 @@ class STLGPUParser(BaseParser):
             # Attempt CPU fallback
             try:
                 return self._parse_binary_stl_cpu_fallback(file_path, progress_callback)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as fallback_e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as fallback_e:
                 raise STLParseError(
                     f"GPU parsing failed and CPU fallback also failed: {e}, {fallback_e}"
                 )
@@ -443,6 +450,7 @@ class STLGPUParser(BaseParser):
 
             class STLCallbackAdapter:
                 """TODO: Add docstring."""
+
                 def report(self, progress: float, message: str) -> None:
                     """TODO: Add docstring."""
                     progress_callback.report(progress, message)

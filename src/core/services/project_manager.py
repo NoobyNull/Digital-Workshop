@@ -81,7 +81,7 @@ class ProjectManager:
                 raise ValueError(f"Project not found: {project_id}")
 
             self.current_project = project
-            logger.info("Opened project: %s", project['name'])
+            logger.info("Opened project: %s", project["name"])
             return True
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -93,7 +93,7 @@ class ProjectManager:
         """Close current project."""
         try:
             if self.current_project:
-                logger.info("Closed project: %s", self.current_project['name'])
+                logger.info("Closed project: %s", self.current_project["name"])
                 self.current_project = None
             return True
 

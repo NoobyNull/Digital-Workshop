@@ -382,7 +382,9 @@ class ModelRepository:
                 success = cursor.rowcount > 0
                 conn.commit()
                 if success:
-                    logger.info("Updated camera view for model %s to '%s'", model_id, camera_view_name)
+                    logger.info(
+                        "Updated camera view for model %s to '%s'", model_id, camera_view_name
+                    )
                 return success
         except sqlite3.Error as e:
             logger.error("Failed to update camera view for model %s: {e}", model_id)
@@ -396,7 +398,7 @@ class ModelRepository:
         vertex_count: Optional[int] = None,
         min_bounds: Optional[Tuple[float, float, float]] = None,
         max_bounds: Optional[Tuple[float, float, float]] = None,
-        **kwargs
+        **kwargs,
     ) -> int:
         """
         Add analysis data for a model.

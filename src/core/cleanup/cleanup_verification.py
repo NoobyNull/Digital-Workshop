@@ -119,7 +119,7 @@ class CleanupVerificationReport:
             # Use JSON formatting for complex structures
             try:
                 # Convert to JSON with compact formatting
-                json_str = json.dumps(value, indent=None, separators=(',', ':'))
+                json_str = json.dumps(value, indent=None, separators=(",", ":"))
                 # For very long strings, truncate
                 if len(json_str) > 200:
                     return json_str[:197] + "..."

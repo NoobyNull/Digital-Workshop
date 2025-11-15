@@ -94,6 +94,7 @@ class ProjectTreeWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         # Set minimum size to prevent zero-width/zero-height widgets
         from src.gui.theme import MIN_WIDGET_SIZE
+
         self.setMinimumSize(MIN_WIDGET_SIZE, MIN_WIDGET_SIZE)
 
         self.db_manager = db_manager

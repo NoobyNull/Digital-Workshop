@@ -67,4 +67,3 @@ class WorkerSignals(QObject):
 
     # Progress reporting
     progress = Signal(str, float, str)  # task_id, progress_percentage, message
-

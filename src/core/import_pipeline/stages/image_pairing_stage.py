@@ -171,14 +171,10 @@ class ImagePairingStage(BaseStage):
                 if task.model_id:
                     # Update thumbnail path in models table so UI can display it
                     if task.thumbnail_path:
-                        self.db_manager.update_model_thumbnail(
-                            task.model_id, task.thumbnail_path
-                        )
+                        self.db_manager.update_model_thumbnail(task.model_id, task.thumbnail_path)
 
                     # Store original image path in metadata
-                    self.db_manager.update_model_metadata(
-                        task.model_id, preview_image=image_path
-                    )
+                    self.db_manager.update_model_metadata(task.model_id, preview_image=image_path)
 
                 self.logger.info(
                     "Found matching image for %s: %s",

@@ -137,7 +137,7 @@ class PipelineCoordinator(QObject):
                         "Task %s has %d completed stages: %s",
                         task.filename,
                         len(completed_stages),
-                        [stage.value for stage in completed_stages]
+                        [stage.value for stage in completed_stages],
                     )
 
             # Execute each stage in order
@@ -149,9 +149,7 @@ class PipelineCoordinator(QObject):
                 stage_enum = self._get_stage_enum(stage)
                 if stage_enum and stage_enum in completed_stages:
                     self.logger.info(
-                        "Skipping completed stage %s for task %s",
-                        stage_enum.value,
-                        task.filename
+                        "Skipping completed stage %s for task %s", stage_enum.value, task.filename
                     )
                     continue
 

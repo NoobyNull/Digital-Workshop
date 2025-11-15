@@ -77,9 +77,7 @@ class HashingStage(BaseStage):
                     )
                     return False
             except Exception as e:
-                self.logger.warning(
-                    "Error checking for existing hash for %s: %s", task.filename, e
-                )
+                self.logger.warning("Error checking for existing hash for %s: %s", task.filename, e)
 
         return True
 
@@ -154,4 +152,3 @@ class HashingStage(BaseStage):
                 error_message=error_msg,
                 duration_seconds=duration,
             )
-

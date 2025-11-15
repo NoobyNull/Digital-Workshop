@@ -118,9 +118,7 @@ class ResumeDetector:
                     task.paired_image_path = metadata["preview_image"]
                     return True
             except Exception as e:
-                logger.warning(
-                    "Error checking image pairing for %s: %s", task.filename, e
-                )
+                logger.warning("Error checking image pairing for %s: %s", task.filename, e)
 
         # Image pairing is optional - if no image found, consider it "complete"
         # (i.e., we tried and there was no image to pair)
@@ -186,4 +184,3 @@ class ResumeDetector:
             "not_started": not_started,
             "stage_completion": stage_completion,
         }
-

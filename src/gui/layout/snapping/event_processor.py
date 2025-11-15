@@ -838,7 +838,7 @@ class EventProcessor:
         """
         try:
             self._processing_enabled = enabled
-            self.logger.info("Event processing %s", 'enabled' if enabled else 'disabled')
+            self.logger.info("Event processing %s", "enabled" if enabled else "disabled")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set processing enabled: %s", e)
 

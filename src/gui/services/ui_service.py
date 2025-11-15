@@ -558,4 +558,4 @@ class NotificationService(INotificationService):
         self.notifications_enabled = enabled
         if not enabled:
             self.clear_all_notifications()
-        self.logger.info("Notifications %s", 'enabled' if enabled else 'disabled')
+        self.logger.info("Notifications %s", "enabled" if enabled else "disabled")

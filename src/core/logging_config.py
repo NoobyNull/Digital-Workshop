@@ -1,91 +1,106 @@
 """
 JSON logging configuration with rotation for Digital Workshop application.
 
-This module provides a centralized logging configuration with JSON formatting
-and rotating file handlers to ensure efficient log management without memory leaks.
+Provides standardized logging profiles, shared formatters/filters, and a singleton
+LoggingManager that guarantees consistent handler configuration across the process.
 """
 
 import json
 import logging
 import logging.handlers
+import os
 import sys
+import threading
 import traceback
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
+
+from .installation_detector import get_installation_type
+from .path_manager import get_log_directory
+from .version_manager import get_logger_name
+
+
+@dataclass(frozen=True)
+class LoggingProfile:
+    """Immutable logging profile describing runtime logging preferences."""
+
+    log_level: str = "INFO"
+    enable_console: bool = False
+    human_readable: bool = False
+    log_dir: Optional[str] = None
+    max_bytes: int = 10 * 1024 * 1024
+    backup_count: int = 5
+    correlation_id: Optional[str] = None
+
+    def merged(self, **overrides: Any) -> "LoggingProfile":
+        """Return a copy of this profile with overrides applied."""
+        cleaned = {k: v for k, v in overrides.items() if v is not None}
+        if not cleaned:
+            return self
+        return replace(self, **cleaned)
+
+
+class StructuredContextFilter(logging.Filter):
+    """Injects shared structured metadata into every record."""
+
+    def __init__(self, correlation_provider) -> None:
+        super().__init__()
+        self._correlation_provider = correlation_provider
+        self._installation_type = get_installation_type().value
+        self._app_version = None
+        self._lock = threading.Lock()
+
+    def _app_version_value(self) -> str:
+        if self._app_version is None:
+            with self._lock:
+                if self._app_version is None:
+                    try:
+                        from .version_manager import get_display_version
+
+                        self._app_version = get_display_version()
+                    except Exception:
+                        self._app_version = "unknown"
+        return self._app_version
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.app_version = self._app_version_value()
+        record.installation_type = self._installation_type
+        record.process_id = os.getpid()
+        record.thread_id = threading.get_ident()
+        correlation_id = self._correlation_provider()
+        record.correlation_id = correlation_id if correlation_id else "-"
+        return True
 
 
 class SimpleFormatter(logging.Formatter):
-    """
-    Simple text formatter for activity messages.
-
-    Formats log records as simple text with timestamp and message only.
-    """
+    """Simple text formatter for activity messages."""
 
     def format(self, record: logging.LogRecord) -> str:
-        """
-        Format a log record as simple text.
-
-        Args:
-            record: The log record to format
-
-        Returns:
-            Simple formatted log entry as string
-        """
         timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S")
         return f"[{timestamp}] {record.getMessage()}"
 
 
 class HumanReadableFormatter(logging.Formatter):
-    """
-    Human-readable formatter for logs.
-
-    Formats log records as readable text with timestamp, level, logger, and message.
-    """
+    """Human-readable formatter for logs."""
 
     def format(self, record: logging.LogRecord) -> str:
-        """
-        Format a log record as human-readable text.
-
-        Args:
-            record: The log record to format
-
-        Returns:
-            Human-readable formatted log entry as string
-        """
         timestamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S")
         level = record.levelname.ljust(8)
-        logger = record.name.split(".")[-1]  # Get last part of logger name
+        logger_name = record.name.split(".")[-1]
+        message = record.getMessage()
 
-        # Format the message
-        msg = record.getMessage()
-
-        # Add exception info if present
         if record.exc_info:
-            msg += "\n" + "".join(traceback.format_exception(*record.exc_info))
+            message += "\n" + "".join(traceback.format_exception(*record.exc_info))
 
-        return f"[{timestamp}] {level} | {logger:20s} | {msg}"
+        return f"[{timestamp}] {level} | {logger_name:20s} | {message}"
 
 
 class JSONFormatter(logging.Formatter):
-    """
-    Custom JSON formatter that creates structured log entries.
-
-    Formats log records as JSON with timestamp, level, logger, function, line, and message.
-    Excludes taskname field to avoid null values.
-    """
+    """Custom JSON formatter that creates structured log entries."""
 
     def format(self, record: logging.LogRecord) -> str:
-        """
-        Format a log record as JSON.
-
-        Args:
-            record: The log record to format
-
-        Returns:
-            JSON-formatted log entry as string
-        """
-        # Create the base log entry
         log_entry = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
             "level": record.levelname,
@@ -96,9 +111,11 @@ class JSONFormatter(logging.Formatter):
             "module": record.module,
             "thread": record.thread,
             "process": record.process,
+            "app_version": getattr(record, "app_version", "unknown"),
+            "installation_type": getattr(record, "installation_type", "unknown"),
+            "correlation_id": getattr(record, "correlation_id", "-"),
         }
 
-        # Add exception information if present
         if record.exc_info:
             log_entry["exception"] = {
                 "type": record.exc_info[0].__name__,
@@ -106,9 +123,12 @@ class JSONFormatter(logging.Formatter):
                 "traceback": traceback.format_exception(*record.exc_info),
             }
 
-        # Add extra fields if present (excluding taskname and other standard fields)
         for key, value in record.__dict__.items():
-            if key not in {
+            if key in log_entry:
+                continue
+            if key.startswith("_"):
+                continue
+            if key in {
                 "name",
                 "msg",
                 "args",
@@ -130,10 +150,9 @@ class JSONFormatter(logging.Formatter):
                 "exc_info",
                 "exc_text",
                 "stack_info",
-                "taskname",
-                "taskName",  # Exclude taskname variants
             }:
-                log_entry[key] = value
+                continue
+            log_entry[key] = value
 
         return json.dumps(log_entry, default=str, ensure_ascii=False)
 
@@ -151,14 +170,6 @@ class TimestampRotatingFileHandler(logging.Handler):
         max_bytes: int = 10 * 1024 * 1024,
         backup_count: int = 5,
     ):
-        """
-        Initialize the timestamp rotating file handler.
-
-        Args:
-            log_dir: Directory to store log files
-            max_bytes: Maximum bytes before rotation
-            backup_count: Number of backup files to keep
-        """
         super().__init__()
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -169,211 +180,296 @@ class TimestampRotatingFileHandler(logging.Handler):
         self.stream = None
 
     def _get_log_filename(self, level: str) -> str:
-        """
-        Generate a timestamp-based log filename.
-
-        Args:
-            level: Log level for the filename
-
-        Returns:
-            Formatted log filename
-        """
         timestamp = datetime.now().strftime("%m%d%y-%H-%M-%S")
         return f"Log - {timestamp} {level}.txt"
 
     def _rotate_if_needed(self, level: str) -> None:
-        """
-        Rotate log file if needed based on size or level change.
-
-        Args:
-            level: Current log level
-        """
-        # Initialize stream if needed
         if not self.stream:
             self._rotate_file()
             return
 
-        # Check if we need to rotate due to level change
         if self.current_level != level:
             self._rotate_file()
             self.current_level = level
             return
 
-        # Check if we need to rotate due to size
         if self.stream.tell() >= self.max_bytes:
             self._rotate_file()
 
     def _rotate_file(self) -> None:
-        """
-        Close current file and create a new one with timestamp.
-        """
         if self.stream:
             self.stream.close()
             self.stream = None
 
-        # Clean up old log files if we have too many
         self._cleanup_old_logs()
-
-        # Create new log file
         filename = self._get_log_filename(self.current_level)
         self.current_file = self.log_dir / filename
         self.stream = open(self.current_file, "w", encoding="utf-8")
 
     def _cleanup_old_logs(self) -> None:
-        """
-        Remove old log files if we exceed the backup count.
-        """
         log_files = list(self.log_dir.glob("Log - *.txt"))
         log_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
-        # Keep only the most recent files
         for log_file in log_files[self.backup_count :]:
             try:
                 log_file.unlink()
             except OSError:
-                pass  # Ignore errors when removing files
+                pass
 
     def emit(self, record: logging.LogRecord) -> None:
-        """
-        Emit a log record to the file.
-
-        Args:
-            record: The log record to emit
-        """
         try:
-            # Rotate if needed
             self._rotate_if_needed(record.levelname)
-
-            # Ensure we have an open file
             if not self.stream:
                 self._rotate_file()
 
-            # Format and write the log entry
             msg = self.format(record)
             self.stream.write(msg + "\n")
             self.stream.flush()
-
         except Exception:
             self.handleError(record)
 
     def close(self) -> None:
-        """
-        Close the handler and any open files.
-        """
         if self.stream:
             self.stream.close()
             self.stream = None
         super().close()
 
 
+class LoggingManager:
+    """Singleton manager that owns all logging handlers for the process."""
+
+    _instance: Optional["LoggingManager"] = None
+    _instance_lock = threading.RLock()
+
+    _SPECIAL_LOGGERS: Dict[str, Dict[str, Any]] = {
+        "security": {"filename": "security.log", "level": logging.WARNING},
+        "performance": {"filename": "performance.log", "level": logging.INFO},
+        "errors": {"filename": "errors.log", "level": logging.ERROR},
+    }
+
+    def __init__(self, profile: LoggingProfile) -> None:
+        self._lock = threading.RLock()
+        self._profile = profile
+        self._thread_context = threading.local()
+        self._base_logger_name = get_logger_name()
+        self._base_logger = logging.getLogger(self._base_logger_name)
+        self._structured_filter = StructuredContextFilter(self._current_correlation_id)
+        self._formatter = self._create_formatter()
+        self._handlers_initialized = False
+        self._log_directory = self._resolve_log_directory()
+
+    @classmethod
+    def get_instance(cls, profile: Optional[LoggingProfile] = None) -> "LoggingManager":
+        with cls._instance_lock:
+            if cls._instance is None:
+                cls._instance = LoggingManager(profile or LoggingProfile())
+            elif profile is not None:
+                cls._instance.configure(profile)
+        return cls._instance
+
+    def configure(self, profile: Optional[LoggingProfile] = None) -> None:
+        with self._lock:
+            if profile is not None:
+                self._profile = profile
+            self._structured_filter = StructuredContextFilter(self._current_correlation_id)
+            self._formatter = self._create_formatter()
+            self._log_directory = self._resolve_log_directory()
+            self._handlers_initialized = False
+
+    def get_logger(self, name: Optional[str] = None) -> logging.Logger:
+        self._ensure_handlers()
+        if name:
+            return logging.getLogger(f"{self._base_logger_name}.{name}")
+        return self._base_logger
+
+    def get_activity_logger(self, name: str) -> logging.Logger:
+        self._ensure_handlers()
+        logger = logging.getLogger(f"{self._base_logger_name}.Activity.{name}")
+        self._reset_handlers(logger)
+
+        handler = logging.StreamHandler(sys.stdout)
+        self._decorate_handler(handler)
+        handler.setLevel(logging.INFO)
+
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+        return logger
+
+    def set_correlation_id(self, correlation_id: Optional[str]) -> None:
+        if correlation_id:
+            self._thread_context.correlation_id = correlation_id
+        else:
+            self.clear_correlation_id()
+
+    def clear_correlation_id(self) -> None:
+        if hasattr(self._thread_context, "correlation_id"):
+            del self._thread_context.correlation_id
+
+    def _current_correlation_id(self) -> Optional[str]:
+        return getattr(self._thread_context, "correlation_id", self._profile.correlation_id)
+
+    def _ensure_handlers(self) -> None:
+        with self._lock:
+            if self._handlers_initialized:
+                return
+            self._apply_base_logger_settings()
+            self._install_application_handler()
+            self._install_console_handler()
+            self._install_special_handlers()
+            self._handlers_initialized = True
+
+    def _apply_base_logger_settings(self) -> None:
+        self._base_logger.propagate = False
+        self._base_logger.setLevel(self._level_value(self._profile.log_level))
+        self._reset_handlers(self._base_logger)
+
+    def _install_application_handler(self) -> None:
+        handler = TimestampRotatingFileHandler(
+            log_dir=str(self._log_directory),
+            max_bytes=self._profile.max_bytes,
+            backup_count=self._profile.backup_count,
+        )
+        self._decorate_handler(handler)
+        self._base_logger.addHandler(handler)
+
+    def _install_console_handler(self) -> None:
+        if not self._profile.enable_console:
+            return
+        console_handler = logging.StreamHandler(sys.stdout)
+        self._decorate_handler(console_handler)
+        console_handler.setLevel(self._level_value(self._profile.log_level))
+        self._base_logger.addHandler(console_handler)
+
+    def _install_special_handlers(self) -> None:
+        for key, config in self._SPECIAL_LOGGERS.items():
+            logger = logging.getLogger(f"{self._base_logger_name}.{key}")
+            self._reset_handlers(logger)
+
+            log_path = self._log_directory / config["filename"]
+            file_handler = logging.handlers.RotatingFileHandler(
+                log_path,
+                maxBytes=self._profile.max_bytes,
+                backupCount=self._profile.backup_count,
+                encoding="utf-8",
+            )
+            self._decorate_handler(file_handler)
+            file_handler.setLevel(config["level"])
+
+            logger.addHandler(file_handler)
+            logger.setLevel(config["level"])
+            logger.propagate = False
+
+    def _decorate_handler(self, handler: logging.Handler) -> None:
+        handler.setFormatter(self._formatter)
+        handler.addFilter(self._structured_filter)
+
+    def _reset_handlers(self, logger: logging.Logger) -> None:
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
+
+    def _level_value(self, level_name: str) -> int:
+        return getattr(logging, str(level_name).upper(), logging.INFO)
+
+    def _create_formatter(self) -> logging.Formatter:
+        if self._profile.human_readable:
+            return HumanReadableFormatter()
+        return JSONFormatter()
+
+    def _resolve_log_directory(self) -> Path:
+        if not self._profile.log_dir or self._profile.log_dir == "logs":
+            directory = get_log_directory()
+        else:
+            directory = Path(self._profile.log_dir)
+
+        directory.mkdir(parents=True, exist_ok=True)
+        return directory
+
+
+def _coerce_profile(
+    candidate: Optional[Union[LoggingProfile, Dict[str, Any]]],
+    defaults: Dict[str, Any],
+) -> LoggingProfile:
+    defaults = {k: v for k, v in defaults.items() if k != "profile"}
+    if isinstance(candidate, LoggingProfile):
+        return candidate.merged(**defaults)
+    if isinstance(candidate, dict):
+        combined = {**defaults, **candidate}
+        return LoggingProfile(**combined)
+    return LoggingProfile(**defaults)
+
+
+def _prepare_profile_kwargs(**kwargs: Any) -> Dict[str, Any]:
+    log_dir = kwargs.get("log_dir")
+    if log_dir == "logs":
+        kwargs["log_dir"] = None
+    return kwargs
+
+
 def setup_logging(
-    log_level: str = "INFO",
-    log_dir: str = "logs",
+    log_level: Union[str, LoggingProfile, Dict[str, Any]] = "INFO",
+    log_dir: Optional[str] = None,
     enable_console: bool = False,
     max_bytes: int = 10 * 1024 * 1024,
     backup_count: int = 5,
     human_readable: bool = False,
+    profile: Optional[Union[LoggingProfile, Dict[str, Any]]] = None,
+    **kwargs: Any,
 ) -> logging.Logger:
     """
-    Set up logging with rotation for the application.
+    Configure logging according to the provided profile and return the base logger.
 
-    Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_dir: Directory to store log files
-        enable_console: Whether to enable console logging (default: False, logs go to file only)
-        max_bytes: Maximum bytes before rotation
-        backup_count: Number of backup files to keep
-        human_readable: Whether to use human-readable format instead of JSON (default: False)
-
-    Returns:
-        Configured logger instance
+    Existing callers can continue to provide the original keyword arguments or pass
+    an explicit LoggingProfile/dict via the profile argument.
     """
-    # Use installation-type aware log directory if default is used
-    if log_dir == "logs":
-        from .path_manager import get_log_directory
+    profile_candidate = profile
+    if isinstance(log_level, (LoggingProfile, dict)):
+        profile_candidate = log_level
+        log_level = "INFO"
 
-        log_dir = str(get_log_directory())
-
-    # Create the application logger
-    from .version_manager import get_logger_name
-
-    logger = logging.getLogger(get_logger_name())
-    logger.setLevel(getattr(logging, log_level.upper()))
-
-    # Clear any existing handlers
-    logger.handlers.clear()
-
-    # Create appropriate formatter
-    if human_readable:
-        formatter = HumanReadableFormatter()
-    else:
-        formatter = JSONFormatter()
-
-    # Add timestamp rotating file handler
-    file_handler = TimestampRotatingFileHandler(
-        log_dir=log_dir, max_bytes=max_bytes, backup_count=backup_count
+    defaults = _prepare_profile_kwargs(
+        log_level=log_level,
+        log_dir=log_dir,
+        enable_console=enable_console,
+        max_bytes=max_bytes,
+        backup_count=backup_count,
+        human_readable=human_readable,
+        **kwargs,
     )
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
 
-    # Add console handler if requested
-    if enable_console:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-    return logger
+    resolved_profile = _coerce_profile(profile_candidate, defaults)
+    manager = LoggingManager.get_instance(resolved_profile)
+    return manager.get_logger()
 
 
 def get_logger(name: str) -> logging.Logger:
-    """
-    Get a logger instance with the specified name.
-
-    Args:
-        name: Logger name (typically __name__ of the calling module)
-
-    Returns:
-        Logger instance
-    """
-    from .version_manager import get_logger_name
-
-    logger_name = get_logger_name()
-    return logging.getLogger(f"{logger_name}.{name}")
+    """Get a child logger instance with the specified name."""
+    manager = LoggingManager.get_instance()
+    return manager.get_logger(name)
 
 
 def get_activity_logger(name: str) -> logging.Logger:
     """
-    Get an activity logger that always logs to console with simple formatting.
+    Get an activity logger that always logs to console with shared formatter/filter.
 
-    Used for user-visible activities like importing, rendering, analyzing models.
     These messages are always shown in the console regardless of --log-console flag.
-
-    Args:
-        name: Logger name (typically __name__ of the calling module)
-
-    Returns:
-        Activity logger instance
     """
-    from .version_manager import get_logger_name
+    manager = LoggingManager.get_instance()
+    return manager.get_activity_logger(name)
 
-    logger_name = get_logger_name()
-    logger = logging.getLogger(f"{logger_name}.Activity.{name}")
 
-    # Clear any existing handlers to avoid duplicates
-    logger.handlers.clear()
+def set_correlation_id(correlation_id: Optional[str]) -> None:
+    """Set the correlation identifier for the current thread."""
+    LoggingManager.get_instance().set_correlation_id(correlation_id)
 
-    # Set to INFO level to show activity messages
-    logger.setLevel(logging.INFO)
 
-    # Add console handler with simple formatting
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(SimpleFormatter())
-    logger.addHandler(console_handler)
-
-    # Prevent propagation to parent logger to avoid duplicate messages
-    logger.propagate = False
-
-    return logger
+def clear_correlation_id() -> None:
+    """Clear the correlation identifier for the current thread."""
+    LoggingManager.get_instance().clear_correlation_id()
 
 
 def log_function_call(logger: logging.Logger, enable_logging: bool = False):
@@ -382,27 +478,23 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
 
     Args:
         logger: Logger instance to use for logging
-        enable_logging: Whether to enable function call logging (default: False for less verbose output)
-
-    Returns:
-        Decorator function
+        enable_logging: Whether to enable function call logging
     """
 
     def decorator(func):
         def wrapper(*args, **kwargs):
-            # Only log if explicitly enabled
             if enable_logging:
                 try:
                     logger.debug(
-                        f"Calling {func.__name__}",
+                        "Calling %s",
+                        func.__name__,
                         extra={
                             "custom_function": func.__name__,
                             "custom_args": str(args),
                             "custom_kwargs": str(kwargs),
                         },
                     )
-                except:
-                    # If logging fails, continue with the function
+                except Exception:
                     pass
 
             try:
@@ -410,31 +502,29 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                 if enable_logging:
                     try:
                         logger.debug(
-                            f"Completed {func.__name__}",
+                            "Completed %s",
+                            func.__name__,
                             extra={
                                 "custom_function": func.__name__,
-                                "custom_result": str(result)[
-                                    :100
-                                ],  # Limit result length
+                                "custom_result": str(result)[:100],
                             },
                         )
-                    except:
-                        # If logging fails, continue with the function
+                    except Exception:
                         pass
                 return result
-            except Exception as e:
-                # Always log errors regardless of enable_logging setting
+            except Exception as exc:
                 try:
                     logger.error(
-                        f"Error in {func.__name__}: {str(e)}",
+                        "Error in %s: %s",
+                        func.__name__,
+                        str(exc),
                         extra={
                             "custom_function": func.__name__,
-                            "custom_error_type": type(e).__name__,
-                            "custom_error_message": str(e),
+                            "custom_error_type": type(exc).__name__,
+                            "custom_error_message": str(exc),
                         },
                     )
-                except:
-                    # If logging fails, continue with the exception
+                except Exception:
                     pass
                 raise
 

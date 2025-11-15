@@ -12,4 +12,3 @@ from src.core.import_pipeline.workers.base_worker import BaseWorker
 __all__ = [
     "BaseWorker",
 ]
-

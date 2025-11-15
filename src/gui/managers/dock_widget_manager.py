@@ -6,7 +6,6 @@ Extracted from MainWindow to reduce monolithic class size.
 """
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -75,9 +74,7 @@ class DockWidgetManager:
     def _configure_dock_options(self) -> None:
         """Configure native Qt dock options."""
         dock_options = (
-            QMainWindow.AllowNestedDocks
-            | QMainWindow.AllowTabbedDocks
-            | QMainWindow.AnimatedDocks
+            QMainWindow.AllowNestedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AnimatedDocks
         )
         if hasattr(QMainWindow, "GroupedDragging"):
             dock_options |= QMainWindow.GroupedDragging
@@ -104,11 +101,11 @@ class DockWidgetManager:
                     dock = getattr(self.main_window, attr)
                     if dock is not None:
                         dock.setVisible(True)
-                        self.logger.debug(f"Ensured {attr} is visible")
+                        self.logger.debug("Ensured %s is visible", attr)
                 else:
-                    self.logger.warning(f"Dock attribute {attr} not found on main window")
+                    self.logger.warning("Dock attribute %s not found on main window", attr)
         except (RuntimeError, AttributeError) as e:
-            self.logger.warning(f"Failed to ensure dock visibility: {e}", exc_info=True)
+            self.logger.warning("Failed to ensure dock visibility: %s", e, exc_info=True)
 
     def _log_widget_summary(self) -> None:
         """Log a summary of which widgets were successfully created."""
@@ -120,10 +117,10 @@ class DockWidgetManager:
             ("gcode_properties_widget", "G-code Properties"),
             ("gcode_controls_widget", "G-code Controls"),
         ]
-        
+
         created = []
         missing = []
-        
+
         for attr, name in widget_attrs:
             if hasattr(self.main_window, attr):
                 widget = getattr(self.main_window, attr)
@@ -133,12 +130,14 @@ class DockWidgetManager:
                     missing.append(name)
             else:
                 missing.append(name)
-        
-        self.logger.info(f"Widget creation summary: {len(created)} created, {len(missing)} missing")
+
+        self.logger.info(
+            "Widget creation summary: %s created, {len(missing)} missing", len(created)
+        )
         if created:
-            self.logger.info(f"Successfully created widgets: {', '.join(created)}")
+            self.logger.info("Successfully created widgets: %s", ", ".join(created))
         if missing:
-            self.logger.warning(f"Missing widgets: {', '.join(missing)}")
+            self.logger.warning("Missing widgets: %s", ", ".join(missing))
 
     def _setup_model_library_dock(self) -> None:
         """Set up model library dock."""
@@ -159,12 +158,8 @@ class DockWidgetManager:
 
                 self.logger.debug("Creating ModelLibraryWidget instance...")
                 widget = ModelLibraryWidget(self.main_window)
-                widget.model_selected.connect(
-                    self.main_window._on_model_selected
-                )
-                widget.model_double_clicked.connect(
-                    self.main_window._on_model_double_clicked
-                )
+                widget.model_selected.connect(self.main_window._on_model_selected)
+                widget.model_double_clicked.connect(self.main_window._on_model_double_clicked)
                 widget.models_added.connect(self.main_window._on_models_added)
 
                 dock.setWidget(widget)
@@ -172,20 +167,18 @@ class DockWidgetManager:
                 self.logger.info("Model library dock created successfully")
 
             except Exception as e:
-                self.logger.error(f"Failed to create model library: {e}", exc_info=True)
+                self.logger.error("Failed to create model library: %s", e, exc_info=True)
                 fallback = QLabel("Model Library\n\nComponent unavailable.")
                 fallback.setAlignment(Qt.AlignCenter)
                 dock.setWidget(fallback)
 
             self.main_window.addDockWidget(Qt.LeftDockWidgetArea, dock)
-            dock.visibilityChanged.connect(
-                lambda: self.main_window._update_library_action_state()
-            )
+            dock.visibilityChanged.connect(lambda: self.main_window._update_library_action_state())
             self.main_window.model_library_dock = dock
             dock.setMinimumWidth(MIN_WIDGET_SIZE)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup model library dock: {e}", exc_info=True)
+            self.logger.error("Failed to setup model library dock: %s", e, exc_info=True)
 
     def _setup_project_manager_dock(self) -> None:
         """Set up project manager dock."""
@@ -210,16 +203,14 @@ class DockWidgetManager:
                 widget.project_opened.connect(self.main_window._on_project_opened)
                 widget.project_created.connect(self.main_window._on_project_created)
                 widget.project_deleted.connect(self.main_window._on_project_deleted)
-                widget.tab_switch_requested.connect(
-                    self.main_window._on_tab_switch_requested
-                )
+                widget.tab_switch_requested.connect(self.main_window._on_tab_switch_requested)
 
                 dock.setWidget(widget)
                 self.main_window.project_manager_widget = widget
                 self.logger.info("Project manager dock created successfully")
 
             except Exception as e:
-                self.logger.error(f"Failed to create project manager: {e}", exc_info=True)
+                self.logger.error("Failed to create project manager: %s", e, exc_info=True)
                 fallback = QLabel("Project Manager\n\nComponent unavailable.")
                 fallback.setAlignment(Qt.AlignCenter)
                 dock.setWidget(fallback)
@@ -229,9 +220,7 @@ class DockWidgetManager:
             # Tabify with model library
             if hasattr(self.main_window, "model_library_dock"):
                 try:
-                    self.main_window.tabifyDockWidget(
-                        self.main_window.model_library_dock, dock
-                    )
+                    self.main_window.tabifyDockWidget(self.main_window.model_library_dock, dock)
                 except Exception:
                     pass
 
@@ -242,7 +231,7 @@ class DockWidgetManager:
             dock.setMinimumWidth(MIN_WIDGET_SIZE)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup project manager dock: {e}", exc_info=True)
+            self.logger.error("Failed to setup project manager dock: %s", e, exc_info=True)
 
     def _setup_properties_dock(self) -> None:
         """Set up properties dock."""
@@ -269,7 +258,7 @@ class DockWidgetManager:
             dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup properties dock: {e}")
+            self.logger.error("Failed to setup properties dock: %s", e)
 
     def _setup_metadata_dock(self) -> None:
         """Set up metadata dock."""
@@ -297,9 +286,7 @@ class DockWidgetManager:
                 tabs.setObjectName("MetadataTabs")
                 tabs.addTab(editor, "Metadata")
 
-                notes = QLabel(
-                    "Notes\n\nAdd project or model-specific notes here."
-                )
+                notes = QLabel("Notes\n\nAdd project or model-specific notes here.")
                 notes.setAlignment(Qt.AlignCenter)
                 notes.setWordWrap(True)
                 tabs.addTab(notes, "Notes")
@@ -315,7 +302,7 @@ class DockWidgetManager:
                 self.logger.info("Metadata dock created successfully")
 
             except Exception as e:
-                self.logger.error(f"Failed to create metadata editor: {e}", exc_info=True)
+                self.logger.error("Failed to create metadata editor: %s", e, exc_info=True)
                 fallback = QLabel("Metadata Editor\n\nComponent unavailable.")
                 fallback.setAlignment(Qt.AlignCenter)
                 fallback.setWordWrap(True)
@@ -325,22 +312,18 @@ class DockWidgetManager:
 
             if hasattr(self.main_window, "properties_dock"):
                 try:
-                    self.main_window.tabifyDockWidget(
-                        self.main_window.properties_dock, dock
-                    )
+                    self.main_window.tabifyDockWidget(self.main_window.properties_dock, dock)
                 except Exception:
                     pass
 
-            dock.visibilityChanged.connect(
-                lambda: self.main_window._update_metadata_action_state()
-            )
+            dock.visibilityChanged.connect(lambda: self.main_window._update_metadata_action_state())
             self.main_window.metadata_dock = dock
             dock.setMinimumWidth(MIN_WIDGET_SIZE)
             dock.setMaximumWidth(500)
             dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup metadata dock: {e}", exc_info=True)
+            self.logger.error("Failed to setup metadata dock: %s", e, exc_info=True)
 
     def _setup_gcode_properties_dock(self) -> None:
         """Set up G-code properties dock."""
@@ -361,9 +344,7 @@ class DockWidgetManager:
 
             if hasattr(self.main_window, "metadata_dock"):
                 try:
-                    self.main_window.tabifyDockWidget(
-                        self.main_window.metadata_dock, dock
-                    )
+                    self.main_window.tabifyDockWidget(self.main_window.metadata_dock, dock)
                 except Exception:
                     pass
 
@@ -377,7 +358,7 @@ class DockWidgetManager:
             dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup G-code properties dock: {e}")
+            self.logger.error("Failed to setup G-code properties dock: %s", e)
 
     def _setup_gcode_controls_dock(self) -> None:
         """Set up G-code controls dock."""
@@ -398,9 +379,7 @@ class DockWidgetManager:
 
             if hasattr(self.main_window, "gcode_properties_dock"):
                 try:
-                    self.main_window.tabifyDockWidget(
-                        self.main_window.gcode_properties_dock, dock
-                    )
+                    self.main_window.tabifyDockWidget(self.main_window.gcode_properties_dock, dock)
                 except Exception:
                     pass
 
@@ -414,4 +393,4 @@ class DockWidgetManager:
             dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup G-code controls dock: {e}")
+            self.logger.error("Failed to setup G-code controls dock: %s", e)

@@ -359,7 +359,7 @@ class SnapConfiguration:
         try:
             old_state = self.enabled
             self.enabled = enabled
-            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
+            self.logger.info("Snapping system %s", "enabled" if enabled else "disabled")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set snapping enabled state: %s", e)
             self.enabled = old_state  # Restore previous state

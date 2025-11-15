@@ -157,9 +157,7 @@ class ThumbnailStage(BaseStage):
                             task.filename,
                         )
                 else:
-                    self.logger.warning(
-                        "Thumbnail generation returned None for %s", task.filename
-                    )
+                    self.logger.warning("Thumbnail generation returned None for %s", task.filename)
 
             task.status = ImportStatus.COMPLETED
 

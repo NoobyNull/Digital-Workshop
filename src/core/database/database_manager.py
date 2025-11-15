@@ -16,6 +16,7 @@ from .metadata_repository import MetadataRepository
 from .db_maintenance import DatabaseMaintenance
 from .project_repository import ProjectRepository
 from .file_repository import FileRepository
+from .project_model_repository import ProjectModelRepository
 
 logger = get_logger(__name__)
 
@@ -41,11 +42,13 @@ class DatabaseManager:
 
         # Initialize specialized modules
         self._db_ops = DatabaseOperations(str(self.db_path))
-        self._model_repo = ModelRepository(self._db_ops.get_connection)
-        self._metadata_repo = MetadataRepository(self._db_ops.get_connection)
-        self._maintenance = DatabaseMaintenance(self._db_ops.get_connection)
-        self._project_repo = ProjectRepository(self._db_ops.get_connection)
-        self._file_repo = FileRepository(self._db_ops.get_connection)
+        get_conn = self._db_ops.get_connection
+        self._model_repo = ModelRepository(get_conn)
+        self._metadata_repo = MetadataRepository(get_conn)
+        self._maintenance = DatabaseMaintenance(get_conn)
+        self._project_repo = ProjectRepository(get_conn)
+        self._file_repo = FileRepository(get_conn)
+        self._project_model_repo = ProjectModelRepository(get_conn)
 
         # Initialize database schema
         self._db_ops.initialize_schema()
@@ -55,13 +58,15 @@ class DatabaseManager:
     def add_model(
         self,
         filename: str,
-        format: str,
+        model_format: str,
         file_path: str,
         file_size: Optional[int] = None,
         file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
-        return self._model_repo.add_model(filename, format, file_path, file_size, file_hash)
+        return self._model_repo.add_model(
+            filename, model_format, file_path, file_size, file_hash
+        )
 
     def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find a model by its file hash."""
@@ -125,7 +130,7 @@ class DatabaseManager:
         vertex_count: Optional[int] = None,
         min_bounds: Optional[tuple] = None,
         max_bounds: Optional[tuple] = None,
-        **kwargs
+        **kwargs,
     ) -> int:
         """Add analysis data for a model."""
         return self._model_repo.add_model_analysis(
@@ -235,15 +240,15 @@ class DatabaseManager:
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            logger.error("Failed to update model %s: {e}", model_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as err:
+            logger.exception("Failed to update model %s", model_id, exc_info=err)
             return False
 
     def search_models(
         self,
         query: str = "",
         category: Optional[str] = None,
-        format: Optional[str] = None,
+        model_format: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for models by query and filters.
@@ -284,9 +289,9 @@ class DatabaseManager:
                     sql += " AND mm.category = ?"
                     params.append(category)
 
-                if format:
+                if model_format:
                     sql += " AND m.format = ?"
-                    params.append(format)
+                    params.append(model_format)
 
                 cursor.execute(sql, params)
                 rows = cursor.fetchall()
@@ -341,8 +346,8 @@ class DatabaseManager:
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            logger.error("Failed to update category %s: {e}", category_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as err:
+            logger.exception("Failed to update category %s", category_id, exc_info=err)
             return False
 
     # ===== Project Operations (delegated to ProjectRepository) =====
@@ -444,6 +449,45 @@ class DatabaseManager:
     def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash in a project."""
         return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
+
+    # ===== Project ↔ Model Associations (delegated to ProjectModelRepository) =====
+
+    def link_model_to_project(
+        self,
+        project_id: str,
+        model_id: Optional[int] = None,
+        **kwargs: Any,
+    ) -> int:
+        """
+        Create an association between a project and a model/derived asset.
+
+        kwargs may include: role, version, material_tag, orientation_hint, derived_from_model_id, metadata.
+        """
+        return self._project_model_repo.create_project_model(project_id, model_id, **kwargs)
+
+    def get_project_model_link(self, record_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single project-model association."""
+        return self._project_model_repo.get_project_model(record_id)
+
+    def list_project_models(self, project_id: str) -> List[Dict[str, Any]]:
+        """List all models (and derived assets) linked to a project."""
+        return self._project_model_repo.list_by_project(project_id)
+
+    def list_project_models_by_role(self, project_id: str, role: str) -> List[Dict[str, Any]]:
+        """List project associations filtered by workflow role (e.g., stock, reference, output)."""
+        return self._project_model_repo.list_by_role(project_id, role)
+
+    def list_project_links_for_model(self, model_id: int) -> List[Dict[str, Any]]:
+        """List every project association referencing a given model."""
+        return self._project_model_repo.list_by_model(model_id)
+
+    def update_project_model_link(self, record_id: int, **kwargs: Any) -> bool:
+        """Update metadata for a project-model association."""
+        return self._project_model_repo.update_project_model(record_id, **kwargs)
+
+    def delete_project_model_link(self, record_id: int) -> bool:
+        """Remove the association between a project and a model/derived asset."""
+        return self._project_model_repo.delete_project_model(record_id)
 
     # ===== Connection Management =====
 

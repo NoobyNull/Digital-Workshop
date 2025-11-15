@@ -283,7 +283,14 @@ class BaseParser(ABC):
                     # Always copy stats and format (in case improved precision)
                     metadata_model.stats = full_model.stats
                     metadata_model.format_type = full_model.format_type
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as merge_err:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as merge_err:
                     # Fallback to legacy triangles only to avoid blank view
                     self.logger.warning(
                         f"Geometry merge fallback (triangles only) due to: {merge_err}"

@@ -151,7 +151,9 @@ class Viewer3DWidget(QWidget):
 
         # Camera controller (pass ui_manager for button visibility control)
         self.render_window = self.scene_manager.render_window
-        self.camera_controller = CameraController(self.renderer, self.render_window, self.ui_manager)
+        self.camera_controller = CameraController(
+            self.renderer, self.render_window, self.ui_manager
+        )
 
         # Expose commonly used attributes
         self.interactor = self.scene_manager.interactor
@@ -255,7 +257,9 @@ class Viewer3DWidget(QWidget):
         """Rotate view around axis."""
         self.camera_controller.rotate_around_view_axis(degrees)
 
-    def load_model(self, model: Model, progress_callback=None, model_id: Optional[int] = None) -> bool:
+    def load_model(
+        self, model: Model, progress_callback=None, model_id: Optional[int] = None
+    ) -> bool:
         """
         Load a model into the viewer with optional progress tracking.
 
@@ -922,7 +926,14 @@ class Viewer3DWidget(QWidget):
 
                 self.logger.warning("Material manager not found, creating fallback instance")
                 return MaterialManager(get_database_manager())
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as fallback_error:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as fallback_error:
                 self.logger.debug("Could not create fallback material manager: %s", fallback_error)
 
             self.logger.debug("Material manager not found in any location")

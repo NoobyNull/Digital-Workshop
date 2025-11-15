@@ -25,6 +25,7 @@ from src.core.material_provider import MaterialProvider
 
 class MaterialManager:
     """TODO: Add docstring."""
+
     def __init__(self, database_manager) -> None:
         """Initialize with database manager reference"""
         self.db = database_manager
@@ -249,19 +250,40 @@ class MaterialManager:
                         try:
                             texture.InterpolateOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             self.logger.warning("Failed to enable texture interpolation: %s", e)
 
                         try:
                             texture.MipmapOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             self.logger.warning("Failed to enable texture mipmaps: %s", e)
 
                         try:
                             texture.RepeatOn()
                             self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             self.logger.warning("Failed to enable texture repeat: %s", e)
 
                         # NEW DIAGNOSTIC: Check texture before assignment

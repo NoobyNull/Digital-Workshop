@@ -18,7 +18,11 @@ sys.path.insert(0, parent_dir)
 from src.core.application import Application
 from src.core.application_config import ApplicationConfig
 from src.core.exception_handler import ExceptionHandler
-from src.core.logging_config import get_logger
+from src.core.logging_config import (
+    LoggingProfile,
+    get_logger,
+    setup_logging,
+)
 
 
 def parse_arguments() -> None:
@@ -85,13 +89,24 @@ Examples:
     return parser.parse_args()
 
 
+def _build_logging_profile(args, base_level: str) -> LoggingProfile:
+    """Construct the runtime logging profile from CLI arguments."""
+    return LoggingProfile(
+        log_level=base_level,
+        enable_console=args.log_console,
+        human_readable=args.log_human,
+    )
+
+
 def main() -> None:
     """Main function to start the Digital Workshop application."""
-    logger = get_logger(__name__)
-    logger.info("Digital Workshop application starting")
-
     args = parse_arguments()
     log_level = args.log_level if args.log_level is not None else "INFO"
+    profile = _build_logging_profile(args, log_level)
+    setup_logging(profile=profile)
+
+    logger = get_logger(__name__)
+    logger.info("Digital Workshop application starting")
     logger.info("Log level set to: %s", log_level)
 
     # Set environment variable for in-memory database if --mem-only flag is used
@@ -107,6 +122,7 @@ def main() -> None:
         log_level=log_level,
         enable_console_logging=args.log_console,
         log_human_readable=args.log_human,
+        logging_profile=profile,
     )
 
     exception_handler = ExceptionHandler()
@@ -143,7 +159,7 @@ def main() -> None:
         exception_handler.handle_startup_error(e)
         return 1
 
-    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
         # Catch all other exceptions
         logger.error("Application startup failed: %s", str(e), exc_info=True)
         exception_handler.handle_startup_error(e)

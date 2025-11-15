@@ -44,6 +44,7 @@ except ImportError:
     # Fallback: create a simple COLORS proxy
     class _SimpleColorsProxy:
         """TODO: Add docstring."""
+
         def __getattr__(self, name) -> None:
             """TODO: Add docstring."""
             return "#E31C79"  # Fallback color
@@ -177,9 +178,9 @@ def log_theme_system_status() -> None:
     logger = get_logger(__name__)
 
     logger.debug("Theme System Status:")
-    logger.debug("  Architecture: %s", info['architecture'])
-    logger.debug("  Version: %s", info['version'])
-    logger.debug("  Current Theme: %s", info['current_theme'])
+    logger.debug("  Architecture: %s", info["architecture"])
+    logger.debug("  Version: %s", info["version"])
+    logger.debug("  Current Theme: %s", info["current_theme"])
 
 
 # ============================================================

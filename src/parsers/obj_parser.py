@@ -235,7 +235,7 @@ class OBJParser(BaseParser):
                                 self._load_mtl_file(file_path.parent / mtl_file)
 
                     except (ValueError, IndexError) as e:
-                        self.logger.warning("Invalid line %s: {line} - {str(e)}", i+1)
+                        self.logger.warning("Invalid line %s: {line} - {str(e)}", i + 1)
                         continue
 
                     # Periodic garbage collection

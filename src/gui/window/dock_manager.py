@@ -451,9 +451,7 @@ class DockManager:
                 else:
                     # Allow moving and closing, but not floating
                     # This lets users rearrange tabs and separate them, but not float outside main window
-                    d.setFeatures(
-                        QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
-                    )
+                    d.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable)
             self.enable_snap_handlers(self.main_window.layout_edit_mode)
             # Persist state for next launch
             settings = QSettings()

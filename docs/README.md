@@ -35,7 +35,7 @@ Digital Workshop is a powerful desktop application that provides tools for 3D mo
 
 3. Run the application:
    ```bash
-   python run.py
+   python main.py
    ```
 
 ## Project Structure
@@ -201,6 +201,82 @@ The installer is created automatically during build. For custom installer config
 - **Python Linting**: [`.pylintrc`](.pylintrc)
 - **Testing**: [`pytest.ini`](pytest.ini)
 - **Git**: [`.gitignore`](.gitignore)
+
+### Logging Configuration
+
+Digital Workshop features a standardized logging system with structured JSON output, rotation, and metadata injection. The logging system is managed by a singleton `LoggingManager` that ensures consistent handler configuration across the entire application.
+
+#### LoggingProfile Configuration
+
+The logging behavior is controlled by a `LoggingProfile` dataclass with the following properties:
+
+- **log_level**: Set the minimum log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: "INFO"
+- **enable_console**: Enable console output in addition to file logging. Default: False
+- **human_readable**: Use human-readable text format instead of JSON. Default: False
+- **log_dir**: Directory for log files (resolved via `path_manager`). Default: App data/logs
+- **max_bytes**: Maximum log file size before rotation. Default: 10MB
+- **backup_count**: Number of backup files to retain. Default: 5
+- **correlation_id**: Optional correlation identifier for request tracking
+
+#### Command Line Flags
+
+The logging system can be configured via command line flags:
+
+```bash
+# Set log level
+python main.py --log-level DEBUG    # Verbose logging
+python main.py --log-level INFO     # Standard logging (default)
+python main.py --log-level WARNING  # Minimal logging
+
+# Enable console output
+python main.py --log-console        # Show logs in console
+
+# Use human-readable format
+python main.py --log-human          # Human-readable instead of JSON
+
+# Combine options
+python main.py --debug --log-console --log-human
+```
+
+#### Log Output Locations
+
+- **Main Application Logs**: `{app_data}/logs/Log - MMDDYY-HH-MM-SS LEVEL.txt` (timestamp-based rotation)
+- **Security Events**: `{app_data}/logs/security.log` (dedicated security audit trail)
+- **Performance Metrics**: `{app_data}/logs/performance.log` (performance monitoring data)
+- **Errors**: `{app_data}/logs/errors.log` (isolated error tracking)
+
+#### Structured Log Format
+
+When using the default JSON format, each log entry includes:
+- timestamp, level, logger name, function, line number
+- app version, installation type, process/thread IDs
+- correlation ID for request tracking
+- Custom fields and exception details when applicable
+
+#### Activity Loggers
+
+Activity loggers provide simplified console output for user-facing operations:
+- Always output to stdout regardless of console logging flag
+- Use shared formatter/filter for consistency
+- Format: `[HH:MM:SS] Message`
+
+#### Programmatic Usage
+
+```python
+from src.core.logging_config import get_logger, get_activity_logger, setup_logging
+
+# Get a standard logger
+logger = get_logger(__name__)
+logger.info("Application operation completed")
+
+# Get an activity logger (always visible to user)
+activity_logger = get_activity_logger("Import")
+activity_logger.info("Importing model file...")
+
+# Set correlation ID for request tracking
+from src.core.logging_config import set_correlation_id
+set_correlation_id("request-123")
+```
 
 ## Documentation
 

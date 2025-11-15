@@ -13,7 +13,7 @@ The UnifiedProgressWindow adapts its UI based on the operation mode:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 import time
 
 
@@ -211,9 +211,7 @@ class ProgressWeights:
     thumbnail_weight: int = 30  # 50-80%
     analysis_weight: int = 20  # 80-100%
 
-    def calculate_overall_progress(
-        self, current_stage: str, stage_progress: int
-    ) -> int:
+    def calculate_overall_progress(self, current_stage: str, stage_progress: int) -> int:
         """
         Calculate overall progress percentage based on current stage and progress.
 
@@ -228,9 +226,7 @@ class ProgressWeights:
             "validation": 0,
             "hashing": self.validation_weight,
             "copying": self.validation_weight + self.hashing_weight,
-            "thumbnails": self.validation_weight
-            + self.hashing_weight
-            + self.copying_weight,
+            "thumbnails": self.validation_weight + self.hashing_weight + self.copying_weight,
             "analysis": self.validation_weight
             + self.hashing_weight
             + self.copying_weight
@@ -251,4 +247,3 @@ class ProgressWeights:
         stage_contribution = (stage_progress / 100.0) * current_weight
 
         return min(100, int(base_progress + stage_contribution))
-

@@ -268,7 +268,7 @@ class ViewerUIManager:
             if button is not None:
                 button.setVisible(visible)
 
-        logger.debug(f"Coordinate rotation buttons {'shown' if visible else 'hidden'}")
+        logger.debug("Coordinate rotation buttons %s", "shown" if visible else "hidden")
 
     def apply_theme(self) -> None:
         """Apply theme styling."""

@@ -6,7 +6,6 @@ Extracted from MainWindow to reduce monolithic class size.
 """
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import (
@@ -93,9 +92,7 @@ class CentralWidgetManager:
                 if hasattr(viewer, "model_loaded"):
                     viewer.model_loaded.connect(self.main_window._on_model_loaded)
                 if hasattr(viewer, "lighting_panel_requested"):
-                    viewer.lighting_panel_requested.connect(
-                        self.main_window._toggle_lighting_panel
-                    )
+                    viewer.lighting_panel_requested.connect(self.main_window._toggle_lighting_panel)
 
                 self.logger.info("3D viewer widget created")
             else:
@@ -105,7 +102,7 @@ class CentralWidgetManager:
                 self.logger.warning("Viewer3DWidget not available")
 
         except Exception as e:
-            self.logger.error(f"Failed to setup viewer: {e}", exc_info=True)
+            self.logger.error("Failed to setup viewer: %s", e, exc_info=True)
             fallback = QLabel("3D Viewer\n\nComponent unavailable.")
             fallback.setAlignment(Qt.AlignCenter)
             tabs.addTab(fallback, "3D Viewer")
@@ -136,7 +133,7 @@ class CentralWidgetManager:
             self.main_window.gcode_previewer_widget = widget
             self.logger.info("G-code Previewer tab created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create G-code Previewer: {e}", exc_info=True)
+            self.logger.error("Failed to create G-code Previewer: %s", e, exc_info=True)
             tabs.addTab(
                 self._create_placeholder("G Code Previewer", "Component unavailable."),
                 "G Code Previewer",
@@ -154,7 +151,7 @@ class CentralWidgetManager:
             self.main_window.clo_widget = widget
             self.logger.info("Cut List Optimizer tab created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create Cut List Optimizer: {e}", exc_info=True)
+            self.logger.error("Failed to create Cut List Optimizer: %s", e, exc_info=True)
             tabs.addTab(
                 self._create_placeholder("Cut List Optimizer", "Component unavailable."),
                 "Cut List Optimizer",
@@ -172,7 +169,7 @@ class CentralWidgetManager:
             self.main_window.feeds_and_speeds_widget = widget
             self.logger.info("Feeds & Speeds tab created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create Feeds & Speeds: {e}", exc_info=True)
+            self.logger.error("Failed to create Feeds & Speeds: %s", e, exc_info=True)
             tabs.addTab(
                 self._create_placeholder(
                     "Feed and Speed", "Feeds & Speeds Calculator\n\nComponent unavailable."
@@ -192,7 +189,7 @@ class CentralWidgetManager:
             self.main_window.cost_estimator_widget = widget
             self.logger.info("Cost Estimator tab created successfully")
         except Exception as e:
-            self.logger.error(f"Failed to create Cost Estimator: {e}", exc_info=True)
+            self.logger.error("Failed to create Cost Estimator: %s", e, exc_info=True)
             tabs.addTab(
                 self._create_placeholder(
                     "Project Cost Estimator",
@@ -209,7 +206,7 @@ class CentralWidgetManager:
             if isinstance(active_tab, int) and 0 <= active_tab < tabs.count():
                 tabs.setCurrentIndex(active_tab)
         except Exception as e:
-            self.logger.debug(f"Failed to restore active tab: {e}")
+            self.logger.debug("Failed to restore active tab: %s", e)
 
     def _log_tab_summary(self, tabs: QTabWidget) -> None:
         """Log a summary of which tabs were successfully created."""
@@ -220,10 +217,10 @@ class CentralWidgetManager:
             ("feeds_and_speeds_widget", "Feed and Speed"),
             ("cost_estimator_widget", "Project Cost Estimator"),
         ]
-        
+
         created = []
         missing = []
-        
+
         for attr, name in tab_widget_attrs:
             if hasattr(self.main_window, attr):
                 widget = getattr(self.main_window, attr)
@@ -233,15 +230,15 @@ class CentralWidgetManager:
                     missing.append(name)
             else:
                 missing.append(name)
-        
-        self.logger.info(f"Tab creation summary: {len(created)} created, {len(missing)} missing")
+
+        self.logger.info("Tab creation summary: %s created, {len(missing)} missing", len(created))
         if created:
-            self.logger.info(f"Successfully created tabs: {', '.join(created)}")
+            self.logger.info("Successfully created tabs: %s", ", ".join(created))
         if missing:
-            self.logger.warning(f"Missing tabs: {', '.join(missing)}")
-        
+            self.logger.warning("Missing tabs: %s", ", ".join(missing))
+
         # Also log actual tab count
-        self.logger.info(f"Total tabs in widget: {tabs.count()}")
+        self.logger.info("Total tabs in widget: %s", tabs.count())
 
     @staticmethod
     def _create_placeholder(title: str, content: str) -> QWidget:
@@ -257,4 +254,3 @@ class CentralWidgetManager:
         layout.addStretch(1)
 
         return widget
-

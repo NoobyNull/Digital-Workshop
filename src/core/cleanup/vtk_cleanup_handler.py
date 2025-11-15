@@ -190,7 +190,7 @@ class VTKCleanupHandler(CleanupHandler):
 
                 # Get resource statistics without cleanup
                 stats = self._resource_tracker.get_stats()
-                self.logger.info("Tracked resources: %s", stats.get('total_tracked', 0))
+                self.logger.info("Tracked resources: %s", stats.get("total_tracked", 0))
 
                 # Clear references for garbage collection
                 self._resource_tracker.clear_all_resources()

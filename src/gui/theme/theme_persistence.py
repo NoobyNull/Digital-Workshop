@@ -197,7 +197,14 @@ class ThemePersistence:
                     if backup_data:
                         try:
                             self._atomic_save(backup_data)
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as rollback_error:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as rollback_error:
                             logger.error("Rollback failed: %s", rollback_error)
 
                     elapsed = (time.time() - start_time) * 1000
@@ -467,13 +474,13 @@ class ThemePersistence:
             # Validate theme name
             valid_themes = ["dark", "light", "auto"]
             if theme_data["theme_name"] not in valid_themes:
-                logger.warning("Invalid theme name: %s", theme_data['theme_name'])
+                logger.warning("Invalid theme name: %s", theme_data["theme_name"])
                 return False
 
             # Validate theme variant
             valid_variants = ["blue", "amber", "cyan", "red", "green", "purple"]
             if theme_data["theme_variant"] not in valid_variants:
-                logger.warning("Invalid theme variant: %s", theme_data['theme_variant'])
+                logger.warning("Invalid theme variant: %s", theme_data["theme_variant"])
                 return False
 
             # Validate custom colors if present

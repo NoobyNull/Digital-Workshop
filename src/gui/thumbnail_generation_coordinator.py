@@ -72,9 +72,7 @@ class ThumbnailGenerationCoordinator(QObject):
             self.logger.warning("No files to process")
             return
 
-        self.logger.info(
-            "Starting thumbnail generation for %d files", len(file_info_list)
-        )
+        self.logger.info("Starting thumbnail generation for %d files", len(file_info_list))
 
         # Create window
         self.window = ThumbnailGenerationWindow(
@@ -104,19 +102,13 @@ class ThumbnailGenerationCoordinator(QObject):
             return
 
         # Batch progress
-        self.worker.batch_progress_updated.connect(
-            self.window.update_batch_progress
-        )
+        self.worker.batch_progress_updated.connect(self.window.update_batch_progress)
 
         # Individual progress
-        self.worker.individual_progress_updated.connect(
-            self._on_individual_progress_updated
-        )
+        self.worker.individual_progress_updated.connect(self._on_individual_progress_updated)
 
         # File changes
-        self.worker.current_file_changed.connect(
-            self._on_current_file_changed
-        )
+        self.worker.current_file_changed.connect(self._on_current_file_changed)
 
         # Completion
         self.worker.finished_batch.connect(self._on_generation_completed)
@@ -191,4 +183,3 @@ class ThumbnailGenerationCoordinator(QObject):
         if self.worker:
             self.worker.stop()
             self.logger.info("Thumbnail generation stopped")
-

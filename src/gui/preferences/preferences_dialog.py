@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -20,7 +20,6 @@ from src.gui.preferences.tabs import (
     ThumbnailSettingsTab,
     ViewerSettingsTab,
 )
-from src.gui.theme import save_theme_to_settings, set_theme, theme_to_dict
 
 
 class PreferencesDialog(QDialog):

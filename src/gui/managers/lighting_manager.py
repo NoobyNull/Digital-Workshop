@@ -6,7 +6,6 @@ Extracted from MainWindow to reduce monolithic class size.
 """
 
 import logging
-from typing import Optional, Tuple
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QMainWindow
@@ -48,7 +47,7 @@ class LightingManager:
             else:
                 self.logger.warning("No renderer available for lighting manager")
         except Exception as e:
-            self.logger.warning(f"Failed to create lighting manager: {e}")
+            self.logger.warning("Failed to create lighting manager: %s", e)
 
     def _setup_lighting_panel(self) -> None:
         """Create and configure the lighting control panel."""
@@ -65,9 +64,7 @@ class LightingManager:
                 self.lighting_panel.position_changed.connect(self._on_position_changed)
                 self.lighting_panel.color_changed.connect(self._on_color_changed)
                 self.lighting_panel.intensity_changed.connect(self._on_intensity_changed)
-                self.lighting_panel.cone_angle_changed.connect(
-                    self._on_cone_angle_changed
-                )
+                self.lighting_panel.cone_angle_changed.connect(self._on_cone_angle_changed)
 
                 # Initialize panel with current properties
                 props = self.lighting_manager.get_properties()
@@ -81,7 +78,7 @@ class LightingManager:
 
             self.logger.info("Lighting control panel created")
         except Exception as e:
-            self.logger.warning(f"Failed to create lighting panel: {e}")
+            self.logger.warning("Failed to create lighting panel: %s", e)
 
     def _load_lighting_settings(self) -> None:
         """Load lighting settings from QSettings."""
@@ -120,7 +117,7 @@ class LightingManager:
 
             self.logger.info("Lighting settings loaded")
         except Exception as e:
-            self.logger.warning(f"Failed to load lighting settings: {e}")
+            self.logger.warning("Failed to load lighting settings: %s", e)
 
     def _save_lighting_settings(self) -> None:
         """Save current lighting settings to QSettings."""
@@ -143,7 +140,7 @@ class LightingManager:
 
             self.logger.debug("Lighting settings saved")
         except Exception as e:
-            self.logger.warning(f"Failed to save lighting settings: {e}")
+            self.logger.warning("Failed to save lighting settings: %s", e)
 
     def toggle_lighting_panel(self) -> None:
         """Toggle the lighting control panel visibility."""
@@ -161,7 +158,7 @@ class LightingManager:
 
             self.logger.debug("Lighting panel toggled")
         except Exception as e:
-            self.logger.warning(f"Failed to toggle lighting panel: {e}")
+            self.logger.warning("Failed to toggle lighting panel: %s", e)
 
     def _on_position_changed(self, x: float, y: float, z: float) -> None:
         """Handle light position change."""
@@ -170,7 +167,7 @@ class LightingManager:
                 self.lighting_manager.update_position(x, y, z)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light position: {e}")
+            self.logger.warning("Failed to update light position: %s", e)
 
     def _on_color_changed(self, r: float, g: float, b: float) -> None:
         """Handle light color change."""
@@ -179,7 +176,7 @@ class LightingManager:
                 self.lighting_manager.update_color(r, g, b)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light color: {e}")
+            self.logger.warning("Failed to update light color: %s", e)
 
     def _on_intensity_changed(self, value: float) -> None:
         """Handle light intensity change."""
@@ -188,7 +185,7 @@ class LightingManager:
                 self.lighting_manager.update_intensity(value)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light intensity: {e}")
+            self.logger.warning("Failed to update light intensity: %s", e)
 
     def _on_cone_angle_changed(self, angle: float) -> None:
         """Handle light cone angle change."""
@@ -197,7 +194,7 @@ class LightingManager:
                 self.lighting_manager.update_cone_angle(angle)
                 self._save_lighting_settings()
         except Exception as e:
-            self.logger.warning(f"Failed to update light cone angle: {e}")
+            self.logger.warning("Failed to update light cone angle: %s", e)
 
     def apply_material_species(self, species_name: str) -> None:
         """Apply selected material species to the current model."""
@@ -209,11 +206,8 @@ class LightingManager:
                 hasattr(self.main_window, "material_lighting_integrator")
                 and self.main_window.material_lighting_integrator
             ):
-                self.main_window.material_lighting_integrator.apply_material_species(
-                    species_name
-                )
+                self.main_window.material_lighting_integrator.apply_material_species(species_name)
             else:
                 self.logger.warning("MaterialLightingIntegrator not available")
         except Exception as e:
             self.logger.error(f"Failed to apply material species '{species_name}': {e}")
-

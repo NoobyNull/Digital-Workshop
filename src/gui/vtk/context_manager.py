@@ -317,7 +317,7 @@ class VTKContextManager:
             enabled: Whether to enable validation
         """
         self.validation_enabled = enabled
-        self.logger.info("Context validation %s", 'enabled' if enabled else 'disabled')
+        self.logger.info("Context validation %s", "enabled" if enabled else "disabled")
 
     def set_strict_mode(self, strict: bool) -> None:
         """
@@ -330,7 +330,7 @@ class VTKContextManager:
             strict: Whether to enable strict mode
         """
         self.strict_mode = strict
-        self.logger.info("Strict mode %s", 'enabled' if strict else 'disabled')
+        self.logger.info("Strict mode %s", "enabled" if strict else "disabled")
 
     def safe_render(self, render_window: vtk.vtkRenderWindow) -> bool:
         """

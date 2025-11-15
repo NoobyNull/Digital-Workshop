@@ -53,9 +53,7 @@ class LibraryModelManager:
         """Load models from the database into the view."""
         try:
             self.library_widget.status_label.setText("Loading models...")
-            self.library_widget.current_models = (
-                self.library_widget.db_manager.get_all_models()
-            )
+            self.library_widget.current_models = self.library_widget.db_manager.get_all_models()
             self.update_model_view()
             self.library_widget.model_count_label.setText(
                 f"Models: {len(self.library_widget.current_models)}"
@@ -96,9 +94,7 @@ class LibraryModelManager:
             thumbnail_item.setEditable(False)
 
             # Create name item (second column)
-            name_item = QStandardItem(
-                model.get("title") or model.get("filename", "Unknown")
-            )
+            name_item = QStandardItem(model.get("title") or model.get("filename", "Unknown"))
             name_item.setData(model.get("id"), Qt.UserRole)
             name_item.setEditable(False)  # Not editable - use metadata editor to change name
 
@@ -212,9 +208,7 @@ class LibraryModelManager:
             throttle_ms=100.0,  # Update UI at most every 100ms
         )
 
-        self.logger.info(
-            "Starting batch load of %d models with async processing", len(file_paths)
-        )
+        self.logger.info("Starting batch load of %d models with async processing", len(file_paths))
 
         from .model_load_worker import ModelLoadWorker
 
@@ -412,9 +406,7 @@ class LibraryModelManager:
                     except Exception:
                         pass
                     try:
-                        self.library_widget.model_loader.finished.disconnect(
-                            self.on_load_finished
-                        )
+                        self.library_widget.model_loader.finished.disconnect(self.on_load_finished)
                     except Exception:
                         pass
                 except Exception:
@@ -428,18 +420,10 @@ class LibraryModelManager:
 
         if self.library_widget.model_loader:
             try:
-                self.library_widget.model_loader.model_loaded.disconnect(
-                    self.on_model_loaded
-                )
-                self.library_widget.model_loader.progress_updated.disconnect(
-                    self.on_load_progress
-                )
-                self.library_widget.model_loader.error_occurred.disconnect(
-                    self.on_load_error
-                )
-                self.library_widget.model_loader.finished.disconnect(
-                    self.on_load_finished
-                )
+                self.library_widget.model_loader.model_loaded.disconnect(self.on_model_loaded)
+                self.library_widget.model_loader.progress_updated.disconnect(self.on_load_progress)
+                self.library_widget.model_loader.error_occurred.disconnect(self.on_load_error)
+                self.library_widget.model_loader.finished.disconnect(self.on_load_finished)
             except Exception:
                 pass
 
@@ -466,18 +450,12 @@ class LibraryModelManager:
                 main_window.dedup_service.start_hashing()
 
                 # Find duplicates
-                duplicates = (
-                    main_window.dedup_service.dedup_manager.find_all_duplicates()
-                )
-                duplicate_count = (
-                    main_window.dedup_service.dedup_manager.get_duplicate_count()
-                )
+                duplicates = main_window.dedup_service.dedup_manager.find_all_duplicates()
+                duplicate_count = main_window.dedup_service.dedup_manager.get_duplicate_count()
 
                 if duplicate_count > 0:
                     main_window.dedup_service.pending_duplicates = duplicates
                     main_window.dedup_service.duplicates_found.emit(duplicate_count)
-                    self.logger.info(
-                        "Found %s duplicate models after import", duplicate_count
-                    )
+                    self.logger.info("Found %s duplicate models after import", duplicate_count)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to trigger post-import deduplication: %s", e)

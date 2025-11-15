@@ -751,7 +751,9 @@ class VTKCleanupCoordinator:
                     cleared_count += 1
                     self.logger.debug("CRITICAL FIX: Cleared resource reference: %s", resource_name)
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.debug("CRITICAL FIX: Error clearing resource %s: {e}", resource_name)
+                    self.logger.debug(
+                        "CRITICAL FIX: Error clearing resource %s: {e}", resource_name
+                    )
 
             self.logger.info("CRITICAL FIX: Cleared %s resource references", cleared_count)
 

@@ -124,7 +124,9 @@ class CameraController:
             self.render_window.Render()
 
             # Hide coordinate rotation buttons when using saved optimal view
-            if self.ui_manager and hasattr(self.ui_manager, "set_coordinate_rotation_buttons_visible"):
+            if self.ui_manager and hasattr(
+                self.ui_manager, "set_coordinate_rotation_buttons_visible"
+            ):
                 self.ui_manager.set_coordinate_rotation_buttons_visible(False)
 
             logger.info(
@@ -133,7 +135,7 @@ class CameraController:
             return True
 
         except Exception as e:
-            logger.warning(f"Failed to apply saved camera view: {e}")
+            logger.warning("Failed to apply saved camera view: %s", e)
             return False
 
     @log_function_call(logger)
@@ -175,7 +177,7 @@ class CameraController:
             # Try to load saved camera view if model_id is provided
             if model_id is not None:
                 if self._apply_saved_camera_view(model_id, bounds):
-                    logger.info(f"Applied saved camera view for model {model_id}")
+                    logger.info("Applied saved camera view for model %s", model_id)
                     return
 
             xmin, xmax, ymin, ymax, zmin, zmax = bounds

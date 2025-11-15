@@ -113,7 +113,14 @@ class DWWExportManager:
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
                                     dww_archive.write(thumbnail_path, arcname=thumb_arcname)
-                                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                                except (
+                                    OSError,
+                                    IOError,
+                                    ValueError,
+                                    TypeError,
+                                    KeyError,
+                                    AttributeError,
+                                ) as e:
                                     self.logger.debug("Failed to add thumbnail: %s", e)
 
                         if progress_callback:

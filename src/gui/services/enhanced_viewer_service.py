@@ -132,6 +132,7 @@ class ModelLoadingWorker(QThread):
             # Create a simple model structure
             class DummyModel:
                 """TODO: Add docstring."""
+
                 def __init__(self) -> None:
                     """TODO: Add docstring."""
                     self.filename = (
@@ -140,6 +141,7 @@ class ModelLoadingWorker(QThread):
 
                 class Stats:
                     """TODO: Add docstring."""
+
                     triangle_count = 1000
                     format_type = "STL"
 

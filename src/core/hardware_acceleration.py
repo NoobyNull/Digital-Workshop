@@ -32,6 +32,7 @@ from .logging_config import get_logger
 
 class AccelBackend(Enum):
     """TODO: Add docstring."""
+
     CUDA = "cuda"
     OPENCL = "opencl"
     OPENGL_COMPUTE = "opengl_compute"
@@ -41,6 +42,7 @@ class AccelBackend(Enum):
 @dataclass
 class GPUDevice:
     """TODO: Add docstring."""
+
     name: str
     vendor: str
     device_id: int = 0
@@ -52,6 +54,7 @@ class GPUDevice:
 @dataclass
 class AccelCapabilities:
     """TODO: Add docstring."""
+
     available_backends: List[AccelBackend] = field(default_factory=list)
     devices: List[GPUDevice] = field(default_factory=list)
     recommended_backend: AccelBackend = AccelBackend.CPU
@@ -61,6 +64,7 @@ class AccelCapabilities:
 
 class HardwareAccelerationManager:
     """TODO: Add docstring."""
+
     def __init__(self) -> None:
         """TODO: Add docstring."""
         self.logger = get_logger(__name__)
@@ -203,7 +207,14 @@ class HardwareAccelerationManager:
                                 )
                             )
                             available = True
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             notes.append(f"OpenCL device parse error: {e}")
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     notes.append(f"OpenCL platform error: {e}")

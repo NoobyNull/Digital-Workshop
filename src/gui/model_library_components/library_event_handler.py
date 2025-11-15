@@ -14,7 +14,6 @@ from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager
-from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.fast_hasher import FastHasher
 from src.core.database_manager import get_database_manager
 

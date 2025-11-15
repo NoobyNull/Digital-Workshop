@@ -107,9 +107,7 @@ class ThumbnailRegenerationWorker(QThread):
 
             # Check result
             if result.success:
-                self.logger.info(
-                    "Thumbnail regenerated successfully: %s", result.thumbnail_path
-                )
+                self.logger.info("Thumbnail regenerated successfully: %s", result.thumbnail_path)
                 self.progress_updated.emit(100, 100, "Complete!")
                 self.thumbnail_generated.emit(result)
             else:
@@ -177,9 +175,7 @@ class BatchThumbnailRegenerationWorker(QThread):
         total = len(self.models_data)
 
         try:
-            self.logger.info(
-                "Starting batch thumbnail regeneration for %d models", total
-            )
+            self.logger.info("Starting batch thumbnail regeneration for %d models", total)
 
             # Create thumbnail service
             thumbnail_service = ImportThumbnailService()
@@ -187,9 +183,7 @@ class BatchThumbnailRegenerationWorker(QThread):
             for idx, model_data in enumerate(self.models_data):
                 # Check for cancellation
                 if self._is_cancelled:
-                    self.logger.info(
-                        "Batch thumbnail regeneration cancelled at %d/%d", idx, total
-                    )
+                    self.logger.info("Batch thumbnail regeneration cancelled at %d/%d", idx, total)
                     break
 
                 model_id = model_data["model_id"]
@@ -204,14 +198,12 @@ class BatchThumbnailRegenerationWorker(QThread):
 
                 try:
                     # Generate thumbnail
-                    result: ThumbnailGenerationResult = (
-                        thumbnail_service.generate_thumbnail(
-                            model_path=file_path,
-                            file_hash=file_hash,
-                            material=self.material,
-                            background=self.background,
-                            force_regenerate=True,
-                        )
+                    result: ThumbnailGenerationResult = thumbnail_service.generate_thumbnail(
+                        model_path=file_path,
+                        file_hash=file_hash,
+                        material=self.material,
+                        background=self.background,
+                        force_regenerate=True,
                     )
 
                     if result.success:
@@ -240,9 +232,7 @@ class BatchThumbnailRegenerationWorker(QThread):
             self.batch_complete.emit(success_count, failure_count)
 
         except Exception as e:
-            self.logger.error(
-                "Batch thumbnail regeneration failed: %s", e, exc_info=True
-            )
+            self.logger.error("Batch thumbnail regeneration failed: %s", e, exc_info=True)
 
         finally:
             self.finished.emit()

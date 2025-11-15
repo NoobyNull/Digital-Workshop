@@ -7,7 +7,6 @@ Extracted from MainWindow to reduce monolithic class size.
 
 import logging
 import sys
-from typing import Optional
 
 from PySide6.QtCore import Qt, QSettings, QTimer
 from PySide6.QtGui import QGuiApplication
@@ -65,9 +64,9 @@ class WindowStateManager:
                         self.main_window.showMaximized()
 
                     geometry_restored = True
-                    self.logger.info(f"Window resized to {width}x{height}")
+                    self.logger.info("Window resized to %sx{height}", width)
                 except Exception as e:
-                    self.logger.debug(f"Failed to restore explicit size: {e}")
+                    self.logger.debug("Failed to restore explicit size: %s", e)
 
             # Validate window position
             self.validate_window_position()
@@ -88,19 +87,19 @@ class WindowStateManager:
             self.logger.debug("Early window geometry restoration completed")
 
         except Exception as e:
-            self.logger.warning(f"Failed to restore window geometry: {e}")
+            self.logger.warning("Failed to restore window geometry: %s", e)
 
     def ensure_no_floating_docks(self) -> None:
         """Ensure no dock widgets are floating."""
         try:
             for dock in self.main_window.findChildren(QDockWidget):
                 if dock.isFloating():
-                    self.logger.debug(f"Re-docking floating dock: {dock.windowTitle()}")
+                    self.logger.debug("Re-docking floating dock: %s", dock.windowTitle())
                     dock.setFloating(False)
                     self.main_window.addDockWidget(Qt.RightDockWidgetArea, dock)
             self.logger.debug("All floating docks have been re-docked")
         except Exception as e:
-            self.logger.warning(f"Failed to ensure no floating docks: {e}")
+            self.logger.warning("Failed to ensure no floating docks: %s", e)
 
     def validate_window_position(self) -> None:
         """Validate that the window is positioned on a visible screen."""
@@ -113,9 +112,7 @@ class WindowStateManager:
                 return
 
             # Check if window is on any screen
-            is_on_screen = any(
-                window_rect.intersects(screen.geometry()) for screen in screens
-            )
+            is_on_screen = any(window_rect.intersects(screen.geometry()) for screen in screens)
 
             # If window is off-screen, center it on the primary screen
             if not is_on_screen:
@@ -125,18 +122,12 @@ class WindowStateManager:
                 primary_screen = QGuiApplication.primaryScreen()
                 if primary_screen:
                     screen_rect = primary_screen.geometry()
-                    x = (
-                        screen_rect.x()
-                        + (screen_rect.width() - window_rect.width()) // 2
-                    )
-                    y = (
-                        screen_rect.y()
-                        + (screen_rect.height() - window_rect.height()) // 2
-                    )
+                    x = screen_rect.x() + (screen_rect.width() - window_rect.width()) // 2
+                    y = screen_rect.y() + (screen_rect.height() - window_rect.height()) // 2
                     self.main_window.move(x, y)
-                    self.logger.info(f"Window moved to ({x},{y})")
+                    self.logger.info("Window moved to (%s,{y})", x)
         except Exception as e:
-            self.logger.warning(f"Failed to validate window position: {e}")
+            self.logger.warning("Failed to validate window position: %s", e)
 
     def restore_window_state(self) -> None:
         """Restore saved window state from QSettings."""
@@ -155,7 +146,7 @@ class WindowStateManager:
                     self.main_window.restoreState(state_data)
                     self.logger.info("Window state restored")
         except Exception as e:
-            self.logger.warning(f"Failed to restore window state: {e}")
+            self.logger.warning("Failed to restore window state: %s", e)
 
     def save_window_settings(self) -> None:
         """Save current window geometry and dock state."""
@@ -195,7 +186,7 @@ class WindowStateManager:
                 handler.flush()
 
         except Exception as e:
-            self.logger.error(f"Failed to save window settings: {e}")
+            self.logger.error("Failed to save window settings: %s", e)
 
     def setup_periodic_save(self) -> None:
         """Set up periodic window state saving (every 5 seconds)."""
@@ -205,7 +196,7 @@ class WindowStateManager:
             self._save_timer.start(5000)
             self.logger.debug("Periodic window state save timer started")
         except Exception as e:
-            self.logger.warning(f"Failed to set up periodic save: {e}")
+            self.logger.warning("Failed to set up periodic save: %s", e)
 
     def _periodic_save(self) -> None:
         """Periodically save window state without verbose logging."""
@@ -219,4 +210,3 @@ class WindowStateManager:
             settings.sync()
         except Exception:
             pass  # Silent failure for periodic saves
-

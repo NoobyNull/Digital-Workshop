@@ -64,7 +64,7 @@ class ProjectManager:
                 self.logger.debug("Project details dock hidden (other tab active)")
 
         except Exception as e:
-            self.logger.warning(f"Failed to update project details visibility: {e}")
+            self.logger.warning("Failed to update project details visibility: %s", e)
 
     def update_project_manager_action_state(self) -> None:
         """Update project manager action state based on dock visibility."""
@@ -83,25 +83,21 @@ class ProjectManager:
                     )
 
         except Exception as e:
-            self.logger.debug(f"Failed to update project manager action state: {e}")
+            self.logger.debug("Failed to update project manager action state: %s", e)
 
     def on_project_opened(self, project_id: str) -> None:
         """Handle project opened event from project manager."""
         try:
-            self.logger.info(f"Project opened: {project_id}")
+            self.logger.info("Project opened: %s", project_id)
             self.main_window.status_label.setText(f"Project opened: {project_id}")
 
             # Set current project for all tabs that support tab data save/load
             if hasattr(self.main_window, "clo_widget") and self.main_window.clo_widget:
                 try:
                     self.main_window.clo_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Cut List Optimizer: {project_id}"
-                    )
+                    self.logger.debug(f"Set current project for Cut List Optimizer: {project_id}")
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Cut List Optimizer: {e}"
-                    )
+                    self.logger.warning(f"Failed to set project for Cut List Optimizer: {e}")
 
             if (
                 hasattr(self.main_window, "feeds_and_speeds_widget")
@@ -109,13 +105,9 @@ class ProjectManager:
             ):
                 try:
                     self.main_window.feeds_and_speeds_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Feeds & Speeds: {project_id}"
-                    )
+                    self.logger.debug(f"Set current project for Feeds & Speeds: {project_id}")
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Feeds & Speeds: {e}"
-                    )
+                    self.logger.warning(f"Failed to set project for Feeds & Speeds: {e}")
 
             if (
                 hasattr(self.main_window, "cost_estimator_widget")
@@ -123,37 +115,32 @@ class ProjectManager:
             ):
                 try:
                     self.main_window.cost_estimator_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Cost Estimator: {project_id}"
-                    )
+                    self.logger.debug(f"Set current project for Cost Estimator: {project_id}")
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Cost Estimator: {e}"
-                    )
+                    self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
 
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project opened event: {str(e)}")
+            self.logger.error("Failed to handle project opened event: %s", str(e))
 
     def on_project_created(self, project_id: str) -> None:
         """Handle project created event from project manager."""
         try:
-            self.logger.info(f"Project created: {project_id}")
+            self.logger.info("Project created: %s", project_id)
             self.main_window.status_label.setText(f"Project created: {project_id}")
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project created event: {str(e)}")
+            self.logger.error("Failed to handle project created event: %s", str(e))
 
     def on_project_deleted(self, project_id: str) -> None:
         """Handle project deleted event from project manager."""
         try:
-            self.logger.info(f"Project deleted: {project_id}")
+            self.logger.info("Project deleted: %s", project_id)
             self.main_window.status_label.setText(f"Project deleted: {project_id}")
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 
         except Exception as e:
-            self.logger.error(f"Failed to handle project deleted event: {str(e)}")
-
+            self.logger.error("Failed to handle project deleted event: %s", str(e))
