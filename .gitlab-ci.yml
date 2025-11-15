@@ -1,5 +1,14 @@
+spec:
+  inputs:
+    windows-stage:
+      description: "Stage name for the Windows EXE build job"
+      default: build
+    windows-runner-tag:
+      description: "Runner tag to use for the Windows EXE build job"
+      default: windows
+---
 stages:
-  - build
+  - $[[ inputs.windows-stage ]]
 
 variables:
   # Cache directory for pip downloads
@@ -13,9 +22,9 @@ cache:
     - .cache/pip/
 
 build_windows_exe:
-  stage: build
+  stage: $[[ inputs.windows-stage ]]
   tags:
-    - windows
+    - $[[ inputs.windows-runner-tag ]]
   script:
     # Be strict about errors
     - $ErrorActionPreference = "Stop"
