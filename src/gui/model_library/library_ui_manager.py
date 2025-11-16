@@ -5,7 +5,7 @@ Handles UI creation, layout, and styling.
 """
 
 from PySide6.QtCore import Qt, QSize, QSettings
-from PySide6.QtGui import QStandardItemModel, QAction
+from PySide6.QtGui import QStandardItemModel, QAction, QIcon
 from PySide6.QtWidgets import (
     QFrame,
     QGroupBox,
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QTreeView,
     QMenu,
+    QStyle,
 )
 
 from src.core.logging_config import get_logger
@@ -40,14 +41,21 @@ class LibraryUIManager:
     """Manages UI creation and styling for model library."""
 
     def __init__(self, library_widget) -> None:
-        """
-        Initialize UI manager.
+        """Initialize UI manager.
 
         Args:
             library_widget: The model library widget
         """
         self.library_widget = library_widget
         self.logger = get_logger(__name__)
+
+    def _std_icon(self, standard_pixmap) -> QIcon:
+        """Return a native Qt icon for a given standard pixmap."""
+        try:
+            style = self.library_widget.style()
+            return style.standardIcon(standard_pixmap)
+        except Exception:
+            return QIcon()
 
     def init_ui(self) -> None:
         """Initialize the UI."""
@@ -69,7 +77,11 @@ class LibraryUIManager:
         self.create_model_view_area(library_layout)
         self.create_status_bar(library_layout)
 
-        self.library_widget.internal_tabs.addTab(library_container, "Library")
+        self.library_widget.internal_tabs.addTab(
+            library_container,
+            self._std_icon(QStyle.SP_DirIcon),
+            "Library",
+        )
 
         # Files tab
         files_container = QWidget()
@@ -79,7 +91,11 @@ class LibraryUIManager:
 
         self.create_file_browser(files_layout)
 
-        self.library_widget.internal_tabs.addTab(files_container, "Files")
+        self.library_widget.internal_tabs.addTab(
+            files_container,
+            self._std_icon(QStyle.SP_DirOpenIcon),
+            "Files",
+        )
 
         self.apply_styling()
 
@@ -127,6 +143,7 @@ class LibraryUIManager:
 
         self.library_widget.refresh_button = QPushButton("Refresh")
         self.library_widget.refresh_button.setToolTip("Refresh directory index")
+        self.library_widget.refresh_button.setIcon(self._std_icon(QStyle.SP_BrowserReload))
         self.library_widget.refresh_button.clicked.connect(
             self.library_widget._refresh_file_browser
         )
@@ -136,10 +153,16 @@ class LibraryUIManager:
 
         self.library_widget.import_selected_button = QPushButton("Import Selected")
         self.library_widget.import_selected_button.setToolTip("Import selected file(s)")
+        self.library_widget.import_selected_button.setIcon(
+            self._std_icon(QStyle.SP_ArrowDown)
+        )
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
         self.library_widget.import_folder_button.setToolTip("Import the selected folder")
+        self.library_widget.import_folder_button.setIcon(
+            self._std_icon(QStyle.SP_FileDialogNewFolder)
+        )
         import_layout.addWidget(self.library_widget.import_folder_button)
 
         layout.addWidget(import_frame)
@@ -386,7 +409,6 @@ class LibraryUIManager:
             visual_order.append(header.visualIndex(logical))
 
         settings.setValue("column_order", visual_order)
-        print(f"DEBUG: Saved column order: {visual_order}")
         logger.debug("Saved column order: %s", visual_order)
 
     def _show_column_menu(self, position):
@@ -430,12 +452,17 @@ class LibraryUIManager:
             column: Column index
             checked: Whether column should be visible
         """
-        print(
-            f"DEBUG: Toggle column {column} visibility: checked={checked} (will be {'visible' if checked else 'hidden'})"
+        visibility_label = "visible" if checked else "hidden"
+        logger.debug(
+            "Toggle column %s visibility: checked=%s (will be %s)",
+            column,
+            checked,
+            visibility_label,
         )
         logger.info(
-            "Toggle column {column} visibility: checked={checked} (will be %s)",
-            "visible" if checked else "hidden",
+            "Toggle column %s visibility (will be %s)",
+            column,
+            visibility_label,
         )
         self.library_widget.list_view.setColumnHidden(column, not checked)
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
@@ -443,11 +470,14 @@ class LibraryUIManager:
         settings.sync()  # Force write to disk
         # Verify it was saved
         saved_value = settings.value(f"column_{column}_visible")
-        print(
-            f"DEBUG: Saved and verified column_{column}_visible: saved={checked}, read_back={saved_value}"
+        logger.debug(
+            "Saved and verified column_%s_visible: saved=%s, read_back=%s",
+            column,
+            checked,
+            saved_value,
         )
         logger.info(
-            "Saved and verified column_%s_visible: saved={checked}, read_back={saved_value}", column
+            "Saved and verified column_%s_visible", column
         )
 
     def apply_styling(self) -> None:

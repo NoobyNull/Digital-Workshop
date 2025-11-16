@@ -12,8 +12,8 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtGui import QAction, QKeySequence, QIcon
+from PySide6.QtWidgets import QMainWindow, QStyle
 
 
 class MenuManager:
@@ -51,6 +51,15 @@ class MenuManager:
         except Exception:
             pass
 
+        style = self.main_window.style()
+
+        def _std_icon(standard_pixmap) -> QIcon:
+            """Return a native Qt icon for the given standard pixmap."""
+            try:
+                return style.standardIcon(standard_pixmap)
+            except Exception:
+                return QIcon()
+
         # File menu
         file_menu = menubar.addMenu("&File")
 
@@ -58,6 +67,7 @@ class MenuManager:
         open_action = QAction("&Open Model...", self.main_window)
         open_action.setShortcut(QKeySequence.Open)
         open_action.setStatusTip("Open a 3D model file")
+        open_action.setIcon(_std_icon(QStyle.SP_DirOpenIcon))
         open_action.triggered.connect(self._open_model)
         file_menu.addAction(open_action)
 
@@ -65,6 +75,7 @@ class MenuManager:
         import_action = QAction("&Import Models...", self.main_window)
         import_action.setShortcut(QKeySequence("Ctrl+I"))
         import_action.setStatusTip("Import 3D models into the library")
+        import_action.setIcon(_std_icon(QStyle.SP_FileDialogNewFolder))
         import_action.triggered.connect(self._import_models)
         file_menu.addAction(import_action)
 
@@ -83,6 +94,7 @@ class MenuManager:
         # Analyze Model action
         self.edit_model_action = QAction("&Analyze & Fix Errors...", self.main_window)
         self.edit_model_action.setStatusTip("Analyze model for errors and fix them")
+        self.edit_model_action.setIcon(_std_icon(QStyle.SP_DialogApplyButton))
         self.edit_model_action.setEnabled(False)
         self.edit_model_action.triggered.connect(self._edit_model)
         edit_menu.addAction(self.edit_model_action)
@@ -92,6 +104,7 @@ class MenuManager:
         # Preferences action
         prefs_action = QAction("&Preferences...", self.main_window)
         prefs_action.setStatusTip("Open application preferences")
+        prefs_action.setIcon(_std_icon(QStyle.SP_FileDialogDetailedView))
         prefs_action.triggered.connect(self._show_preferences)
         edit_menu.addAction(prefs_action)
 
@@ -102,12 +115,14 @@ class MenuManager:
         zoom_in_action = QAction("Zoom &In", self.main_window)
         zoom_in_action.setShortcut(QKeySequence.ZoomIn)
         zoom_in_action.setStatusTip("Zoom in on the 3D view")
+        zoom_in_action.setIcon(_std_icon(QStyle.SP_ArrowUp))
         zoom_in_action.triggered.connect(self._zoom_in)
         view_menu.addAction(zoom_in_action)
 
         zoom_out_action = QAction("Zoom &Out", self.main_window)
         zoom_out_action.setShortcut(QKeySequence.ZoomOut)
         zoom_out_action.setStatusTip("Zoom out from the 3D view")
+        zoom_out_action.setIcon(_std_icon(QStyle.SP_ArrowDown))
         zoom_out_action.triggered.connect(self._zoom_out)
         view_menu.addAction(zoom_out_action)
 
@@ -116,6 +131,7 @@ class MenuManager:
         # Reset view action
         reset_view_action = QAction("&Reset View", self.main_window)
         reset_view_action.setStatusTip("Reset the 3D view to default")
+        reset_view_action.setIcon(_std_icon(QStyle.SP_BrowserReload))
         reset_view_action.triggered.connect(self._reset_view)
         view_menu.addAction(reset_view_action)
 
@@ -123,12 +139,14 @@ class MenuManager:
         save_view_action = QAction("&Save View", self.main_window)
         save_view_action.setShortcut(QKeySequence("Ctrl+S"))
         save_view_action.setStatusTip("Save current camera view for this model")
+        save_view_action.setIcon(_std_icon(QStyle.SP_DialogSaveButton))
         save_view_action.triggered.connect(self._save_current_view)
         view_menu.addAction(save_view_action)
 
         # Reset dock layout action (helps when a floating dock is hard to re-dock)
         reset_layout_action = QAction("Reset &Layout", self.main_window)
         reset_layout_action.setStatusTip("Restore default dock layout")
+        reset_layout_action.setIcon(_std_icon(QStyle.SP_DialogResetButton))
         reset_layout_action.triggered.connect(self._reset_dock_layout)
         view_menu.addAction(reset_layout_action)
 
@@ -141,6 +159,7 @@ class MenuManager:
             pass
         self.show_metadata_action.setStatusTip("Restore the Metadata Manager panel")
         self.show_metadata_action.setToolTip("Show the Metadata Manager (Ctrl+Shift+M)")
+        self.show_metadata_action.setIcon(_std_icon(QStyle.SP_FileDialogInfoView))
         self.show_metadata_action.triggered.connect(self._restore_metadata_manager)
         view_menu.addAction(self.show_metadata_action)
 
@@ -152,6 +171,7 @@ class MenuManager:
             pass
         self.show_model_library_action.setStatusTip("Restore the Model Library panel")
         self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
+        self.show_model_library_action.setIcon(_std_icon(QStyle.SP_DirIcon))
         self.show_model_library_action.triggered.connect(self._restore_model_library)
         view_menu.addAction(self.show_model_library_action)
 
@@ -159,6 +179,7 @@ class MenuManager:
         view_menu.addSeparator()
         reload_stylesheet_action = QAction("&Reload Stylesheet", self.main_window)
         reload_stylesheet_action.setStatusTip("Reload and apply the main stylesheet")
+        reload_stylesheet_action.setIcon(_std_icon(QStyle.SP_BrowserReload))
         reload_stylesheet_action.triggered.connect(self._reload_stylesheet_action)
         view_menu.addAction(reload_stylesheet_action)
 
@@ -174,6 +195,7 @@ class MenuManager:
             "Enable rearranging docks. When off, docks are locked in place but still resize with the window."
         )
         self.toggle_layout_edit_action.setToolTip("Toggle Layout Edit Mode (Ctrl+Shift+E)")
+        self.toggle_layout_edit_action.setIcon(_std_icon(QStyle.SP_TitleBarShadeButton))
         self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
         view_menu.addAction(self.toggle_layout_edit_action)
 
@@ -185,6 +207,7 @@ class MenuManager:
         generate_thumbnails_action.setStatusTip(
             "Generate thumbnails for all models in the library with applied materials"
         )
+        generate_thumbnails_action.setIcon(_std_icon(QStyle.SP_MediaPlay))
         generate_thumbnails_action.triggered.connect(self._generate_library_screenshots)
         tools_menu.addAction(generate_thumbnails_action)
 
@@ -194,6 +217,7 @@ class MenuManager:
         # Tips & Tricks action
         tips_action = QAction("&Tips & Tricks", self.main_window)
         tips_action.setStatusTip("View helpful tips and tutorials")
+        tips_action.setIcon(_std_icon(QStyle.SP_MessageBoxInformation))
         tips_action.triggered.connect(self._show_tips)
         help_menu.addAction(tips_action)
 
@@ -202,6 +226,7 @@ class MenuManager:
         # About action
         about_action = QAction("&About Digital Workshop", self.main_window)
         about_action.setStatusTip("Show information about Digital Workshop")
+        about_action.setIcon(_std_icon(QStyle.SP_MessageBoxInformation))
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 

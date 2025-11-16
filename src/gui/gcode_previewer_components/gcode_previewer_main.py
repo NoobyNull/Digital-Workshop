@@ -2,24 +2,26 @@
 
 from typing import Optional
 from pathlib import Path
+import os
 
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
+    QStackedLayout,
     QPushButton,
     QLabel,
     QFileDialog,
     QTableWidget,
     QTableWidgetItem,
     QSplitter,
-    QGroupBox,
     QProgressBar,
     QSlider,
     QSpinBox,
     QComboBox,
     QTabWidget,
     QMessageBox,
+    QCheckBox,
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -30,11 +32,34 @@ from .vtk_widget import VTKWidget
 from .animation_controller import AnimationController, PlaybackState
 from .layer_analyzer import LayerAnalyzer
 from .feed_speed_visualizer import FeedSpeedVisualizer
-from .export_manager import ExportManager
 from .gcode_editor import GcodeEditorWidget
 from .gcode_loader_thread import GcodeLoaderThread
 from .gcode_timeline import GcodeTimeline
 from .gcode_interactive_loader import InteractiveGcodeLoader
+from .gcode_tools_widget import GcodeToolsWidget
+
+
+class GcodeToolsPanelContainer(QWidget):
+    """Container for the right-hand tools panel.
+
+    This lets us "hide" the tools content without removing the splitter
+    widget itself, which avoids jumpy splitter snapping when the tools
+    are toggled on and off.
+    """
+
+    def __init__(self, tools_widget: QWidget, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._tools_widget = tools_widget
+        self._empty_widget = QWidget(self)
+
+        self._stack = QStackedLayout(self)
+        self._stack.addWidget(self._tools_widget)
+        self._stack.addWidget(self._empty_widget)
+        self._stack.setCurrentWidget(self._tools_widget)
+
+    def set_tools_visible(self, visible: bool) -> None:
+        self._stack.setCurrentWidget(self._tools_widget if visible else self._empty_widget)
+
 
 
 class GcodePreviewerWidget(QWidget):
@@ -42,17 +67,26 @@ class GcodePreviewerWidget(QWidget):
 
     gcode_loaded = Signal(str)  # Emits filepath when G-code is loaded
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        """Initialize the G-code previewer widget."""
+    def __init__(self, parent: Optional[QWidget] = None, use_external_tools: bool = False) -> None:
+        """Initialize the G-code previewer widget.
+
+        Args:
+            parent: Optional parent widget.
+            use_external_tools: When True, the right-hand tools panel lives
+                in its own dock widget. In that mode this widget only
+                creates the VTK viewer and expects ``attach_tools_widget``
+                to be called later to wire up the tools side.
+        """
         super().__init__(parent)
         self.logger = get_logger(__name__)
+
+        self.use_external_tools = use_external_tools
 
         self.parser = GcodeParser()
         self.renderer = None  # Defer VTK initialization
         self.animation_controller = AnimationController()
         self.layer_analyzer = LayerAnalyzer()
         self.feed_speed_visualizer = FeedSpeedVisualizer()
-        self.export_manager = ExportManager()
         self.loader_thread: Optional[GcodeLoaderThread] = None
 
         # New VTK viewer components
@@ -60,6 +94,18 @@ class GcodePreviewerWidget(QWidget):
         self.interactive_loader: Optional[InteractiveGcodeLoader] = None
         self.editor: Optional[GcodeEditorWidget] = None
         self.vtk_widget: Optional[VTKWidget] = None
+
+        # Tools-side widgets; these may be created internally or provided
+        # externally when the tools live in their own dock widget.
+        self.tools_widget: Optional[GcodeToolsWidget] = None
+        self.tools_panel_container: Optional[GcodeToolsPanelContainer] = None
+        self.stats_label: Optional[QLabel] = None
+        self.moves_table: Optional[QTableWidget] = None
+        self.viz_mode_combo: Optional[QComboBox] = None
+        self.camera_controls_checkbox: Optional[QCheckBox] = None
+        self.layer_combo: Optional[QComboBox] = None
+        self.show_all_layers_btn: Optional[QPushButton] = None
+        self.progress_bar: Optional[QProgressBar] = None
 
         self.current_file = None
         self.moves = []
@@ -77,22 +123,25 @@ class GcodePreviewerWidget(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        # Top toolbar
-        toolbar_layout = QHBoxLayout()
 
-        load_btn = QPushButton("Load G-code File")
-        load_btn.clicked.connect(self._on_load_file)
-        toolbar_layout.addWidget(load_btn)
+        # If the tools live in their own dock widget, only create the VTK
+        # viewer here and let the main window own the tools side.
+        if self.use_external_tools:
+            try:
+                if self.renderer is None:
+                    self.renderer = GcodeRenderer()
 
-        self.file_label = QLabel("No file loaded")
-        self.file_label.setStyleSheet("color: gray; font-style: italic;")
-        toolbar_layout.addWidget(self.file_label)
+                self.vtk_widget = VTKWidget(self.renderer)
+                layout.addWidget(self.vtk_widget)
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Failed to initialize VTK viewer: %s", e)
+                placeholder = QLabel("VTK Viewer unavailable")
+                layout.addWidget(placeholder)
 
-        toolbar_layout.addStretch()
-        layout.addLayout(toolbar_layout)
+            return
 
-        # Main content: splitter with 3D view and right panel
-        splitter = QSplitter(Qt.Horizontal)
+        # Default embedded layout: splitter with 3D view and right-hand tools panel
+        self.splitter = QSplitter(Qt.Horizontal)
 
         # Initialize VTK renderer lazily
         try:
@@ -101,193 +150,154 @@ class GcodePreviewerWidget(QWidget):
 
             # 3D VTK viewer
             self.vtk_widget = VTKWidget(self.renderer)
-            splitter.addWidget(self.vtk_widget)
+            self.splitter.addWidget(self.vtk_widget)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize VTK viewer: %s", e)
             # Create a placeholder label
             placeholder = QLabel("VTK Viewer unavailable")
-            splitter.addWidget(placeholder)
+            self.splitter.addWidget(placeholder)
 
-        # Right panel with tabs for different views
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(8)
+        # Right panel: dedicated tools widget (timeline, loader, stats, editor, viz controls)
+        self.tools_widget = GcodeToolsWidget(self.renderer, self)
 
-        # Create tab widget for right panel
-        right_tabs = QTabWidget()
+        # Expose key child widgets so existing logic can continue to use
+        # self.timeline, self.interactive_loader, etc. without major refactors.
+        self.timeline = self.tools_widget.timeline
+        self.interactive_loader = self.tools_widget.interactive_loader
+        self.editor = self.tools_widget.editor
+        self.progress_bar = self.tools_widget.progress_bar
+        self.stats_label = self.tools_widget.stats_label
+        self.moves_table = self.tools_widget.moves_table
+        self.viz_mode_combo = self.tools_widget.viz_mode_combo
+        self.camera_controls_checkbox = self.tools_widget.camera_controls_checkbox
+        self.layer_combo = self.tools_widget.layer_combo
+        self.show_all_layers_btn = self.tools_widget.show_all_layers_btn
 
-        # Tab 1: Timeline and Loader
-        timeline_loader_widget = QWidget()
-        timeline_loader_layout = QVBoxLayout(timeline_loader_widget)
-        timeline_loader_layout.setContentsMargins(0, 0, 0, 0)
-        timeline_loader_layout.setSpacing(8)
+        # Wrap the tools widget in a dedicated container so that we can switch
+        # between the real tools UI and an empty page without removing the
+        # splitter widget itself. This avoids jumpy snapping when the tools
+        # are toggled.
+        self.tools_panel_container = GcodeToolsPanelContainer(self.tools_widget)
+        self.splitter.addWidget(self.tools_panel_container)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+        # Let Qt distribute initial sizes based on stretch factors so the VTK viewer
+        # naturally starts wider than the tools panel without forcing pixel sizes.
+        layout.addWidget(self.splitter)
 
-        # Timeline
-        self.timeline = GcodeTimeline()
-        timeline_loader_layout.addWidget(self.timeline)
 
-        # Interactive loader
-        self.interactive_loader = InteractiveGcodeLoader(self.renderer)
-        timeline_loader_layout.addWidget(self.interactive_loader)
 
-        right_tabs.addTab(timeline_loader_widget, "Timeline & Loader")
+    def attach_tools_widget(self, tools_widget: GcodeToolsWidget) -> None:
+        """Attach an externally created tools widget.
 
-        # Tab 2: Statistics and Moves
-        stats_moves_widget = QWidget()
-        stats_moves_layout = QVBoxLayout(stats_moves_widget)
-        stats_moves_layout.setContentsMargins(0, 0, 0, 0)
-        stats_moves_layout.setSpacing(8)
+        This is used when the tools live in a separate dock widget owned by
+        the main window. It updates our references and connects all relevant
+        signals so the rest of the previewer can interact with the tools
+        in exactly the same way as when they are embedded.
+        """
+        self.tools_widget = tools_widget
 
-        # Statistics group
-        stats_group = QGroupBox("Toolpath Statistics")
-        stats_layout = QVBoxLayout(stats_group)
+        # Expose key child widgets for the rest of the class.
+        self.timeline = tools_widget.timeline
+        self.interactive_loader = tools_widget.interactive_loader
+        self.editor = tools_widget.editor
+        self.progress_bar = tools_widget.progress_bar
+        self.stats_label = tools_widget.stats_label
+        self.moves_table = tools_widget.moves_table
+        self.viz_mode_combo = tools_widget.viz_mode_combo
+        self.camera_controls_checkbox = tools_widget.camera_controls_checkbox
+        self.layer_combo = tools_widget.layer_combo
+        self.show_all_layers_btn = tools_widget.show_all_layers_btn
 
-        self.stats_label = QLabel("Load a G-code file to see statistics")
-        self.stats_label.setWordWrap(True)
-        stats_layout.addWidget(self.stats_label)
+        # Now that tools widgets are available, wire up their signals.
+        self._connect_tools_signals()
 
-        stats_moves_layout.addWidget(stats_group)
 
-        # Moves table
-        moves_group = QGroupBox("G-code Moves")
-        moves_layout = QVBoxLayout(moves_group)
 
-        self.moves_table = QTableWidget()
-        self.moves_table.setColumnCount(7)
-        self.moves_table.setHorizontalHeaderLabels(["Line", "Type", "X", "Y", "Z", "Feed", "Speed"])
-        self.moves_table.setMaximumHeight(200)
-        moves_layout.addWidget(self.moves_table)
 
-        stats_moves_layout.addWidget(moves_group)
-        stats_moves_layout.addStretch()
-
-        right_tabs.addTab(stats_moves_widget, "Statistics")
-
-        # Tab 3: G-code Editor
-        self.editor = GcodeEditorWidget()
-        right_tabs.addTab(self.editor, "Editor")
-
-        right_layout.addWidget(right_tabs)
-
-        # Progress bar
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        right_layout.addWidget(self.progress_bar)
-
-        splitter.addWidget(right_panel)
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 1)
-
-        layout.addWidget(splitter)
-
-        # Bottom panel with playback and visualization controls
-        self._init_playback_controls(layout)
-        self._init_visualization_controls(layout)
-
-    def _init_playback_controls(self, parent_layout: QVBoxLayout) -> None:
-        """Initialize playback control panel."""
-        playback_group = QGroupBox("Playback Controls")
-        playback_layout = QHBoxLayout(playback_group)
-
-        self.play_btn = QPushButton("▶ Play")
-        self.play_btn.clicked.connect(self._on_play)
-        playback_layout.addWidget(self.play_btn)
-
-        self.pause_btn = QPushButton("⏸ Pause")
-        self.pause_btn.clicked.connect(self._on_pause)
-        self.pause_btn.setEnabled(False)
-        playback_layout.addWidget(self.pause_btn)
-
-        self.stop_btn = QPushButton("⏹ Stop")
-        self.stop_btn.clicked.connect(self._on_stop)
-        playback_layout.addWidget(self.stop_btn)
-
-        playback_layout.addSpacing(20)
-
-        playback_layout.addWidget(QLabel("Speed:"))
-        self.speed_spinbox = QSpinBox()
-        self.speed_spinbox.setRange(10, 500)
-        self.speed_spinbox.setValue(100)
-        self.speed_spinbox.setSuffix("%")
-        self.speed_spinbox.valueChanged.connect(self._on_speed_changed)
-        playback_layout.addWidget(self.speed_spinbox)
-
-        playback_layout.addSpacing(20)
-
-        playback_layout.addWidget(QLabel("Frame:"))
-        self.frame_slider = QSlider(Qt.Horizontal)
-        self.frame_slider.setMinimum(0)
-        self.frame_slider.sliderMoved.connect(self._on_frame_slider_moved)
-        playback_layout.addWidget(self.frame_slider)
-
-        self.frame_label = QLabel("0/0")
-        playback_layout.addWidget(self.frame_label)
-
-        playback_layout.addStretch()
-
-        parent_layout.addWidget(playback_group)
-
-    def _init_visualization_controls(self, parent_layout: QVBoxLayout) -> None:
-        """Initialize visualization control panel."""
-        viz_group = QGroupBox("Visualization & Export")
-        viz_layout = QHBoxLayout(viz_group)
-
-        viz_layout.addWidget(QLabel("Visualization:"))
-        self.viz_mode_combo = QComboBox()
-        self.viz_mode_combo.addItems(["Default", "Feed Rate", "Spindle Speed"])
-        self.viz_mode_combo.currentTextChanged.connect(self._on_viz_mode_changed)
-        viz_layout.addWidget(self.viz_mode_combo)
-
-        viz_layout.addSpacing(20)
-
-        viz_layout.addWidget(QLabel("Layers:"))
-        self.layer_combo = QComboBox()
-        self.layer_combo.currentIndexChanged.connect(self._on_layer_changed)
-        viz_layout.addWidget(self.layer_combo)
-
-        self.show_all_layers_btn = QPushButton("Show All")
-        self.show_all_layers_btn.clicked.connect(self._on_show_all_layers)
-        viz_layout.addWidget(self.show_all_layers_btn)
-
-        viz_layout.addSpacing(20)
-
-        export_btn = QPushButton("📸 Export Screenshot")
-        export_btn.clicked.connect(self._on_export_screenshot)
-        viz_layout.addWidget(export_btn)
-
-        video_btn = QPushButton("🎬 Export Video")
-        video_btn.clicked.connect(self._on_export_video)
-        viz_layout.addWidget(video_btn)
-
-        edit_btn = QPushButton("✏️ Edit G-code")
-        edit_btn.clicked.connect(self._on_edit_gcode)
-        viz_layout.addWidget(edit_btn)
-
-        viz_layout.addStretch()
-
-        parent_layout.addWidget(viz_group)
+    def _on_camera_controls_toggled(self, checked: bool) -> None:
+        """Show or hide the camera toolbar in the VTK viewer."""
+        if self.vtk_widget is not None:
+            self.vtk_widget.set_toolbar_visible(checked)
 
     def _connect_signals(self) -> None:
-        """Connect animation controller signals."""
+        """Connect animation controller and core UI signals."""
         self.animation_controller.frame_changed.connect(self._on_animation_frame_changed)
         self.animation_controller.state_changed.connect(self._on_animation_state_changed)
 
+        # Ensure initial camera controls visibility matches checkbox state
+        if self.vtk_widget is not None:
+            self.vtk_widget.set_toolbar_visible(True)
+
+        # Connect signals for timeline/loader/editor/controls if they are
+        # available. When the tools live in an external dock, this method is
+        # called once during construction and then ``_connect_tools_signals``
+        # is invoked again from ``attach_tools_widget`` after the dock widget
+        # has been created.
+        self._connect_tools_signals()
+
+    def _connect_tools_signals(self) -> None:
+        """Connect signals for the tools-side widgets.
+
+        This is split out so that tools can be provided either by the
+        embedded splitter layout or by an external dock widget.
+        """
         # Connect timeline signals
         if self.timeline:
             self.timeline.frame_changed.connect(self._on_timeline_frame_changed)
             self.timeline.playback_requested.connect(self._on_timeline_playback_requested)
             self.timeline.pause_requested.connect(self._on_timeline_pause_requested)
             self.timeline.stop_requested.connect(self._on_timeline_stop_requested)
+            self.timeline.speed_spinbox.valueChanged.connect(self._on_speed_changed)
 
         # Connect interactive loader signals
         if self.interactive_loader:
+            # The Load G-code button in the right-hand loader panel should behave
+            # like the main "Load" action and use the central validation logic.
+            self.interactive_loader.load_button.clicked.connect(self._on_load_file)
             self.interactive_loader.loading_complete.connect(self._on_interactive_loader_complete)
             self.interactive_loader.chunk_loaded.connect(self._on_interactive_loader_chunk_loaded)
 
         # Connect editor signals
         if self.editor:
             self.editor.reload_requested.connect(self._on_gcode_reload)
+
+        # Connect visualization controls
+        if self.viz_mode_combo is not None:
+            self.viz_mode_combo.currentTextChanged.connect(self._on_viz_mode_changed)
+
+        if self.camera_controls_checkbox is not None:
+            self.camera_controls_checkbox.toggled.connect(self._on_camera_controls_toggled)
+
+        if self.layer_combo is not None:
+            self.layer_combo.currentIndexChanged.connect(self._on_layer_changed)
+
+        if self.show_all_layers_btn is not None:
+            self.show_all_layers_btn.clicked.connect(self._on_show_all_layers)
+
+        if getattr(self, "tools_widget", None) is not None and getattr(
+            self.tools_widget, "edit_gcode_button", None
+        ):
+            self.tools_widget.edit_gcode_button.clicked.connect(self._on_edit_gcode)
+
+    def _show_status_message(self, message: str, timeout_ms: int = 0) -> None:
+        """Show a message in the main window status bar, if available.
+
+        This keeps transient loading/status text in the bottom status bar instead
+        of the top info strip, which is reserved for stable file context.
+        """
+        try:
+            window = self.window()
+            if window is not None and hasattr(window, "statusBar"):
+                status_bar = window.statusBar()
+                if status_bar is not None:
+                    status_bar.showMessage(message, timeout_ms)
+        except Exception:
+            # Never allow status-bar issues to break the previewer
+            self.logger.debug(
+                "Failed to show status message in main window status bar",
+                exc_info=True,
+            )
 
     def _on_load_file(self) -> None:
         """Handle load file button click with security validation."""
@@ -395,10 +405,9 @@ class GcodePreviewerWidget(QWidget):
             file_path = Path(validated_path)
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
 
-            # Update UI
-            info_text = f"Loading: {file_path.name} ({file_size_mb:.1f}MB)..."
-            self.file_label.setText(info_text)
-            self.file_label.setStyleSheet("color: orange;")
+            # Update UI - transient "Loading" message goes to the main status bar
+            info_text = f"Loading G-code: {file_path.name} ({file_size_mb:.1f}MB)..."
+            self._show_status_message(info_text)
 
             self.current_file = validated_path
             self.moves = []
@@ -413,8 +422,7 @@ class GcodePreviewerWidget(QWidget):
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to start loading: %s", e)
-            self.file_label.setText(f"Error: {str(e)}")
-            self.file_label.setStyleSheet("color: red;")
+            self._show_status_message(f"Error starting load: {e}", 5000)
             self.progress_bar.setVisible(False)
 
     def _update_statistics(self) -> None:
@@ -476,22 +484,15 @@ class GcodePreviewerWidget(QWidget):
         self.animation_controller.stop()
 
     def _on_speed_changed(self, value: int) -> None:
-        """Handle speed change."""
+        """Handle speed change from the timeline control."""
         speed = value / 100.0
         self.animation_controller.set_speed(speed)
 
-    def _on_frame_slider_moved(self, value: int) -> None:
-        """Handle frame slider movement."""
-        self.animation_controller.set_frame(value)
-
     def _on_animation_frame_changed(self, frame: int) -> None:
         """Handle animation frame change."""
-        self.frame_slider.blockSignals(True)
-        self.frame_slider.setValue(frame)
-        self.frame_slider.blockSignals(False)
-
-        total = self.animation_controller.get_total_frames()
-        self.frame_label.setText(f"{frame}/{total}")
+        # Keep the timeline in sync with the animation controller
+        if self.timeline:
+            self.timeline.set_current_frame(frame)
 
         # Update visualization to show moves up to current frame
         moves_to_show = self.animation_controller.get_moves_up_to_frame(frame)
@@ -499,10 +500,14 @@ class GcodePreviewerWidget(QWidget):
         self.vtk_widget.update_render()
 
     def _on_animation_state_changed(self, state: PlaybackState) -> None:
-        """Handle animation state change."""
+        """Handle animation state change and reflect it in the timeline UI."""
         is_playing = state == PlaybackState.PLAYING
-        self.play_btn.setEnabled(not is_playing)
-        self.pause_btn.setEnabled(is_playing)
+        if self.timeline:
+            self.timeline.is_playing = is_playing
+            # When running, disable the Run Simulation button and enable Pause.
+            # When paused or stopped, enable Run Simulation and disable Pause.
+            self.timeline.play_button.setEnabled(not is_playing)
+            self.timeline.pause_button.setEnabled(is_playing)
 
     def _on_viz_mode_changed(self, mode: str) -> None:
         """Handle visualization mode change."""
@@ -540,29 +545,6 @@ class GcodePreviewerWidget(QWidget):
         self.renderer.render_toolpath(self.moves)
         self.vtk_widget.update_render()
 
-    def _on_export_screenshot(self) -> None:
-        """Handle export screenshot."""
-        filepath, _ = QFileDialog.getSaveFileName(
-            self, "Export Screenshot", "", "PNG Files (*.png);;JPEG Files (*.jpg)"
-        )
-        if filepath:
-            self.export_manager.set_render_window(self.renderer.get_render_window())
-            if self.export_manager.export_screenshot(filepath):
-                self.logger.info("Screenshot exported to %s", filepath)
-
-    def _on_export_video(self) -> None:
-        """Handle export video."""
-        if not self.export_manager.is_video_export_available():
-            self.logger.warning(
-                "Video export requires OpenCV. Install with: pip install opencv-python"
-            )
-            return
-
-        filepath, _ = QFileDialog.getSaveFileName(
-            self, "Export Video", "", "MP4 Files (*.mp4);;AVI Files (*.avi)"
-        )
-        if filepath:
-            self.logger.info("Video export not yet fully implemented")
 
     def _on_edit_gcode(self) -> None:
         """Handle edit G-code with proper validation and limits."""
@@ -633,9 +615,6 @@ class GcodePreviewerWidget(QWidget):
             self._update_statistics()
             self._update_moves_table()
 
-            # Update frame slider
-            self.frame_slider.setMaximum(len(self.moves) - 1)
-
             self.logger.info("G-code reloaded and re-rendered")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to reload G-code: %s", e)
@@ -679,16 +658,13 @@ class GcodePreviewerWidget(QWidget):
         self.layer_analyzer.analyze(self.moves)
         self._update_layer_combo()
 
-        # Update UI
+        # Update UI - detailed text in the status bar
         file_name = Path(self.current_file).name
         file_size_mb = Path(self.current_file).stat().st_size / (1024 * 1024)
-        info_text = f"Loaded: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines, {len(self.moves):,} moves)"
-        self.file_label.setText(info_text)
-        self.file_label.setStyleSheet("color: green;")
-
-        # Update frame slider
-        self.frame_slider.setMaximum(len(self.moves) - 1)
-        self.frame_slider.setValue(0)
+        info_text = (
+            f"Loaded G-code: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines, {len(self.moves):,} moves)"
+        )
+        self._show_status_message(info_text, 5000)
 
         # Update moves table
         self._update_moves_table()
@@ -705,8 +681,7 @@ class GcodePreviewerWidget(QWidget):
     def _on_loader_error(self, error_msg: str) -> None:
         """Handle loader error."""
         self.logger.error("Loader error: %s", error_msg)
-        self.file_label.setText(f"Error: {error_msg}")
-        self.file_label.setStyleSheet("color: red;")
+        self._show_status_message(f"G-code load error: {error_msg}", 5000)
         self.progress_bar.setVisible(False)
 
     def _on_timeline_frame_changed(self, frame_index: int) -> None:
@@ -714,14 +689,6 @@ class GcodePreviewerWidget(QWidget):
         if frame_index < len(self.moves):
             # Update animation controller
             self.animation_controller.set_current_frame(frame_index)
-
-            # Update frame slider
-            self.frame_slider.blockSignals(True)
-            self.frame_slider.setValue(frame_index)
-            self.frame_slider.blockSignals(False)
-
-            # Update frame label
-            self.frame_label.setText(f"{frame_index}/{len(self.moves) - 1}")
 
             self.logger.debug("Timeline frame changed to %s", frame_index)
 
@@ -752,14 +719,13 @@ class GcodePreviewerWidget(QWidget):
         self.layer_analyzer.analyze(self.moves)
         self._update_layer_combo()
 
-        # Update frame slider
-        self.frame_slider.setMaximum(len(self.moves) - 1)
-        self.frame_slider.setValue(0)
-
         # Update moves table
         self._update_moves_table()
 
-        # Add axes
+        # Ensure final incremental actors are built before we adjust camera/axes
+        self.renderer._update_incremental_actors()
+
+        # Add axes and fit view
         self.renderer._add_axes()
         self.renderer.reset_camera()
         self.vtk_widget.update_render()

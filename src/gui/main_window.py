@@ -570,6 +570,64 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to setup metadata dock: %s", e)
 
+    def _setup_gcode_tools_dock(self) -> None:
+        """Set up G-code tools dock using native Qt dock system.
+
+        This dock hosts the G-code tools widget that lives alongside the
+        G-code previewer tab and can be detached/tabified like the other
+        docks.
+        """
+        try:
+            from src.gui.gcode_previewer_components.gcode_tools_widget import GcodeToolsWidget
+
+            self.gcode_tools_dock = QDockWidget("G-code Tools", self)
+            self.gcode_tools_dock.setObjectName("GcodeToolsDock")
+
+            # Configure with native Qt dock features
+            self.gcode_tools_dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea
+                | Qt.RightDockWidgetArea
+                | Qt.TopDockWidgetArea
+                | Qt.BottomDockWidgetArea
+            )
+            # Start with layout locked (only closable, not movable)
+            self.gcode_tools_dock.setFeatures(QDockWidget.DockWidgetClosable)
+
+            # Use the renderer from the G-code previewer widget if available.
+            renderer = None
+            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget is not None:
+                renderer = getattr(self.gcode_previewer_widget, "renderer", None)
+
+            self.gcode_tools_widget = GcodeToolsWidget(renderer, self)
+            self.gcode_tools_dock.setWidget(self.gcode_tools_widget)
+
+            # Add to main window using native Qt dock system
+            self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
+
+            # Register for snapping functionality
+            try:
+                self._register_dock_for_snapping(self.gcode_tools_dock)
+            except Exception as e:
+                self.logger.debug("Failed to register G-code tools dock for snapping: %s", e)
+
+            # The G-code tools dock is now independent; its visibility is
+            # controlled purely via the native dock system (close button,
+            # context menu, and layout reset). No coupling to the previewer
+            # widget's UI is required here.
+
+            # Attach this tools widget to the previewer so its signals are wired
+            # up when the docked configuration is in use.
+            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget is not None:
+                try:
+                    self.gcode_previewer_widget.attach_tools_widget(self.gcode_tools_widget)
+                except Exception as e:
+                    self.logger.warning("Failed to attach G-code tools widget to previewer: %s", e)
+
+        except Exception as e:
+            self.logger.error("Failed to setup G-code tools dock: %s", e)
+
+
+
     def _load_native_dock_layout(self) -> None:
         """Load saved dock layout using native Qt methods.
 
@@ -716,9 +774,18 @@ class MainWindow(QMainWindow):
             self.logger.info("Attempting to create G-code Previewer widget...")
             from src.gui.gcode_previewer_components import GcodePreviewerWidget
 
-            self.gcode_previewer_widget = GcodePreviewerWidget(self)
+            # Use external tools mode so the right-hand tools live in their
+            # own detachable dock widget rather than inside the splitter.
+            self.gcode_previewer_widget = GcodePreviewerWidget(self, use_external_tools=True)
             self.hero_tabs.addTab(self.gcode_previewer_widget, "G Code Previewer")
             self.logger.info("G-code Previewer widget created successfully")
+
+            # Once the previewer exists, set up the detachable G-code tools dock
+            # that hosts the tools widget.
+            try:
+                self._setup_gcode_tools_dock()
+            except Exception as dock_error:
+                self.logger.warning("Failed to initialize G-code tools dock: %s", dock_error)
         except Exception as e:
             self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
             self.hero_tabs.addTab(
@@ -1097,6 +1164,16 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     self.logger.debug("Could not tabify docks: %s", e)
 
+            # G-code tools dock to right, tabified with metadata if available
+            if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
+                self.removeDockWidget(self.gcode_tools_dock)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
+                try:
+                    if hasattr(self, "metadata_dock") and self.metadata_dock:
+                        self.tabifyDockWidget(self.metadata_dock, self.gcode_tools_dock)
+                except Exception as e:
+                    self.logger.debug("Could not tabify G-code tools dock: %s", e)
+
             # Make sure all docks are visible
             if hasattr(self, "model_library_dock") and self.model_library_dock:
                 self.model_library_dock.setVisible(True)
@@ -1104,6 +1181,8 @@ class MainWindow(QMainWindow):
                 self.properties_dock.setVisible(True)
             if hasattr(self, "metadata_dock") and self.metadata_dock:
                 self.metadata_dock.setVisible(True)
+            if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
+                self.gcode_tools_dock.setVisible(True)
 
             # Save the new layout state
             self._save_window_settings()

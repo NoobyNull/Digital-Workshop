@@ -99,7 +99,7 @@ class ModelLibraryWidget(QWidget):
 
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
 
-        print("DEBUG: [DELAYED] Restoring column visibility from settings...")
+        self.logger.debug("[DELAYED] Restoring column visibility from settings...")
         for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
             # Get visibility setting - default to True (visible)
             visible_value = settings.value(f"column_{col}_visible", True)
@@ -108,15 +108,18 @@ class ModelLibraryWidget(QWidget):
                 visible = visible_value.lower() in ("true", "1", "yes")
             else:
                 visible = bool(visible_value)
-            print(
-                f"DEBUG: [DELAYED] Restoring column {col} visibility: raw={visible_value}, converted={visible}"
+            self.logger.debug(
+                "[DELAYED] Restoring column %s visibility: raw=%r, converted=%s",
+                col,
+                visible_value,
+                visible,
             )
             self.list_view.setColumnHidden(col, not visible)
 
         # Restore column order
         column_order = settings.value("column_order")
         if column_order:
-            print(f"DEBUG: [DELAYED] Restoring column order: {column_order}")
+            self.logger.debug("[DELAYED] Restoring column order: %s", column_order)
             header = self.list_view.horizontalHeader()
             # Convert to list of ints if needed
             if isinstance(column_order, str):
@@ -133,11 +136,11 @@ class ModelLibraryWidget(QWidget):
                 for logical_index, visual_index in enumerate(column_order):
                     if isinstance(visual_index, int):
                         header.moveSection(header.visualIndex(logical_index), visual_index)
-                print(f"DEBUG: [DELAYED] Column order restored successfully")
+                self.logger.debug("[DELAYED] Column order restored successfully")
             else:
-                print(f"DEBUG: [DELAYED] Invalid column order format: {column_order}")
+                self.logger.debug("[DELAYED] Invalid column order format: %r", column_order)
         else:
-            print("DEBUG: [DELAYED] No saved column order found")
+            self.logger.debug("[DELAYED] No saved column order found")
 
     def get_selected_model_id(self) -> Optional[int]:
         """

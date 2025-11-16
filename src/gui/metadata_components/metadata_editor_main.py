@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QMessageBox,
+    QStyle,
 )
 
 from src.core.logging_config import get_logger
@@ -78,6 +79,14 @@ class MetadataEditorWidget(QWidget):
         self._load_categories()
 
         self.logger.info("Metadata editor widget initialized successfully")
+
+    def _std_icon(self, standard_pixmap) -> QIcon:
+        """Return a native Qt icon for the given standard pixmap."""
+        try:
+            style = self.style()
+            return style.standardIcon(standard_pixmap)
+        except Exception:
+            return QIcon()
 
     def _init_ui(self) -> None:
         """Initialize the user interface layout."""
@@ -162,17 +171,6 @@ class MetadataEditorWidget(QWidget):
         self.preview_image_label = ThumbnailInspectorLabel()
         self.preview_image_label.setAlignment(Qt.AlignCenter)
         self.preview_image_label.setMinimumHeight(200)
-        # Use theme-aware colors instead of hardcoded white background
-        self.preview_image_label.setStyleSheet(
-            """
-            QLabel {
-                border: 2px dashed #666;
-                border-radius: 8px;
-                background-color: #1E1E1E;
-                color: #999;
-            }
-        """
-        )
         self.preview_image_label.setText(
             "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one\n\n(Double-click to inspect at full resolution)"
         )
@@ -182,10 +180,12 @@ class MetadataEditorWidget(QWidget):
         preview_button_layout = QHBoxLayout()
 
         self.generate_preview_button = QPushButton("Generate Preview")
+        self.generate_preview_button.setIcon(self._std_icon(QStyle.SP_DesktopIcon))
         self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
         preview_button_layout.addWidget(self.generate_preview_button)
 
         self.run_ai_analysis_button = QPushButton("Run AI Analysis")
+        self.run_ai_analysis_button.setIcon(self._std_icon(QStyle.SP_MediaPlay))
         self.run_ai_analysis_button.clicked.connect(self._run_ai_analysis)
         self.run_ai_analysis_button.setToolTip(
             "Analyze the preview image with AI to generate metadata"
@@ -264,14 +264,17 @@ class MetadataEditorWidget(QWidget):
         # Save button
         self.save_button = QPushButton("Save")
         self.save_button.setDefault(True)
+        self.save_button.setIcon(self._std_icon(QStyle.SP_DialogSaveButton))
         button_layout.addWidget(self.save_button)
 
         # Cancel button
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setIcon(self._std_icon(QStyle.SP_DialogCancelButton))
         button_layout.addWidget(self.cancel_button)
 
         # Reset button
         self.reset_button = QPushButton("Reset")
+        self.reset_button.setIcon(self._std_icon(QStyle.SP_DialogResetButton))
         button_layout.addWidget(self.reset_button)
 
         parent_layout.addWidget(button_frame)
@@ -732,17 +735,6 @@ class MetadataEditorWidget(QWidget):
         self.preview_image_label.clear()
         self.preview_image_label.setText(
             "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one"
-        )
-        # Use theme-aware colors instead of hardcoded white background
-        self.preview_image_label.setStyleSheet(
-            """
-            QLabel {
-                border: 2px dashed #666;
-                border-radius: 8px;
-                background-color: #1E1E1E;
-                color: #999;
-            }
-        """
         )
 
     def _generate_preview_for_current_model(self) -> None:

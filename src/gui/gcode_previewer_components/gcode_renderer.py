@@ -56,6 +56,8 @@ class GcodeRenderer:
             },
         }
         self.prev_point = None
+        # Counter to throttle how often we rebuild VTK actors during incremental loading
+        self._incremental_update_counter = 0
 
         # Color scheme for different move types
         self.colors = {
@@ -103,9 +105,10 @@ class GcodeRenderer:
         self.actors = {}
 
         # Reset move data
+        vtk_module = self.vtk
         for move_type in self.move_data:
-            self.move_data[move_type]["points"] = vtk.vtkPoints()
-            self.move_data[move_type]["lines"] = vtk.vtkCellArray()
+            self.move_data[move_type]["points"] = vtk_module.vtkPoints()
+            self.move_data[move_type]["lines"] = vtk_module.vtkCellArray()
             self.move_data[move_type]["actor"] = None
 
         prev_point = None
@@ -211,8 +214,9 @@ class GcodeRenderer:
         return self.render_window
 
     def reset_camera(self) -> None:
-        """Reset camera to fit all actors."""
+        """Reset camera to fit all actors and adjust clipping range."""
         self.renderer.ResetCamera()
+        self.renderer.ResetCameraClippingRange()
 
     def set_background_color(self, r: float, g: float, b: float) -> None:
         """Set renderer background color."""
@@ -232,9 +236,14 @@ class GcodeRenderer:
             self.move_data[move_type]["actor"] = None
 
         self.prev_point = None
+        self._incremental_update_counter = 0
 
     def add_moves_incremental(self, moves: List[GcodeMove]) -> None:
-        """Add moves incrementally and update visualization."""
+        """Add moves incrementally and update visualization.
+
+        To keep large files responsive, we throttle how often we rebuild VTK
+        actors and let the loader thread stream moves in small chunks.
+        """
         for move in moves:
             # Skip non-coordinate moves
             if move.is_tool_change or move.is_spindle_on or move.is_spindle_off:
@@ -270,8 +279,11 @@ class GcodeRenderer:
 
             self.prev_point = current_point
 
-        # Update actors
-        self._update_incremental_actors()
+        # Throttle actor rebuilds to avoid UI stalls on very large files
+        self._incremental_update_counter += 1
+        if self._incremental_update_counter >= 10:
+            self._update_incremental_actors()
+            self._incremental_update_counter = 0
 
     def _update_incremental_actors(self) -> None:
         """Update the incremental rendering actors with proper cleanup."""

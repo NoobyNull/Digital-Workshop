@@ -44,7 +44,14 @@ class AIDescriptionService(QObject):
 
             # Load provider configurations from QSettings
             providers = {}
-            for provider_name in ["openai", "openrouter", "gemini", "anthropic"]:
+            for provider_name in [
+                "openai",
+                "openrouter",
+                "gemini",
+                "anthropic",
+                "ollama",
+                "ai_studio",
+            ]:
                 group = f"ai_description/providers/{provider_name}"
 
                 # Get API key from multiple sources (in order of priority):
@@ -54,7 +61,7 @@ class AIDescriptionService(QObject):
                 api_key = ""
 
                 # Check if this is the selected provider and has a user-entered key
-                selected_provider = settings.value("ai/provider_id", "openai", type=str)
+                selected_provider = settings.value("ai/provider_id", "ollama", type=str)
                 if provider_name == selected_provider:
                     api_key = settings.value("ai/api_key", "", type=str)
 
@@ -78,6 +85,18 @@ class AIDescriptionService(QObject):
                     "openrouter": "gpt-4-vision-preview",
                     "gemini": "gemini-2.5-flash",
                     "anthropic": "claude-3-5-sonnet-20241022",
+                    "ollama": "llava",
+                    "ai_studio": "gemini-1.5-pro-vision-001",
+                }
+
+                # Default endpoints for providers that support custom base URLs
+                default_base_urls = {
+                    "openai": "https://api.openai.com/v1",
+                    "openrouter": "https://openrouter.io/api/v1",
+                    "gemini": "https://generativelanguage.googleapis.com/v1",
+                    "anthropic": "https://api.anthropic.com",
+                    "ollama": "http://localhost:11434/v1",
+                    "ai_studio": "http://localhost:1234/v1",
                 }
 
                 providers[provider_name] = {
@@ -87,8 +106,18 @@ class AIDescriptionService(QObject):
                         default_models.get(provider_name, ""),
                         type=str,
                     ),
-                    "base_url": settings.value(f"{group}/base_url", "", type=str),
-                    "enabled": settings.value(f"{group}/enabled", False, type=bool),
+                    "base_url": settings.value(
+                        f"{group}/base_url",
+                        default_base_urls.get(provider_name, ""),
+                        type=str,
+                    ),
+                    # Local providers (ollama, ai_studio) are enabled by default; others
+                    # remain disabled until explicitly configured.
+                    "enabled": settings.value(
+                        f"{group}/enabled",
+                        provider_name in ("ollama", "ai_studio"),
+                        type=bool,
+                    ),
                 }
 
             # Load custom prompts from QSettings
@@ -104,7 +133,7 @@ class AIDescriptionService(QObject):
             # Load settings from QSettings
             settings_dict = {
                 "default_provider": settings.value(
-                    "ai_description/settings/default_provider", "openai", type=str
+                    "ai_description/settings/default_provider", "ollama", type=str
                 ),
                 "auto_apply_results": settings.value(
                     "ai_description/settings/auto_apply_results", True, type=bool
@@ -164,7 +193,7 @@ class AIDescriptionService(QObject):
                 "openai": {
                     "api_key": "",
                     "model": "gpt-4-vision-preview",
-                    "base_url": "",
+                    "base_url": "https://api.openai.com/v1",
                     "enabled": False,
                 },
                 "openrouter": {
@@ -172,6 +201,30 @@ class AIDescriptionService(QObject):
                     "model": "gpt-4-vision-preview",
                     "base_url": "https://openrouter.io/api/v1",
                     "enabled": False,
+                },
+                "gemini": {
+                    "api_key": "",
+                    "model": "gemini-2.5-flash",
+                    "base_url": "https://generativelanguage.googleapis.com/v1",
+                    "enabled": False,
+                },
+                "anthropic": {
+                    "api_key": "",
+                    "model": "claude-3-5-sonnet-20241022",
+                    "base_url": "https://api.anthropic.com",
+                    "enabled": False,
+                },
+                "ollama": {
+                    "api_key": "",
+                    "model": "llava",
+                    "base_url": "http://localhost:11434/v1",
+                    "enabled": True,
+                },
+                "ai_studio": {
+                    "api_key": "",
+                    "model": "gemini-1.5-pro-vision-001",
+                    "base_url": "http://localhost:1234/v1",
+                    "enabled": True,
                 },
             },
             "custom_prompts": {
@@ -201,7 +254,7 @@ Return ONLY valid JSON, no additional text.""",
 Return ONLY valid JSON, no additional text.""",
             },
             "settings": {
-                "default_provider": "openai",
+                "default_provider": "ollama",
                 "auto_apply_results": True,
                 "batch_processing": False,
             },
@@ -295,8 +348,39 @@ Return ONLY valid JSON, no additional text.""",
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
+        # Initialize Ollama provider (local, optional API key)
+        ollama_config = providers_config.get("ollama", {})
+        if ollama_config.get("enabled", False):
+            try:
+                from .providers.ollama_provider import OllamaProvider
+
+                self.providers["ollama"] = OllamaProvider(
+                    api_key=ollama_config.get("api_key") or None,
+                    model=ollama_config.get("model", "llava"),
+                    base_url=ollama_config.get("base_url") or "http://localhost:11434/v1",
+                )
+                self.logger.info("Ollama provider initialized")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Failed to initialize Ollama provider: %s", e)
+
+        # Initialize AI Studio / LM Studio provider (local, optional API key)
+        ai_studio_config = providers_config.get("ai_studio", {})
+        if ai_studio_config.get("enabled", False):
+            try:
+                from .providers.ai_studio_provider import AIStudioProvider
+
+                self.providers["ai_studio"] = AIStudioProvider(
+                    api_key=ai_studio_config.get("api_key") or None,
+                    model=ai_studio_config.get("model", "gemini-1.5-pro-vision-001"),
+                    base_url=ai_studio_config.get("base_url") or "http://localhost:1234/v1",
+                )
+                self.logger.info("AI Studio provider initialized")
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.logger.error("Failed to initialize AI Studio provider: %s", e)
+
+
         # Set current provider
-        default_provider = self.config.get("settings", {}).get("default_provider", "openai")
+        default_provider = self.config.get("settings", {}).get("default_provider", "ollama")
         if default_provider in self.providers:
             self.current_provider = self.providers[default_provider]
         elif self.providers:
@@ -366,8 +450,18 @@ Return ONLY valid JSON, no additional text.""",
         return model_mappings.get(provider_id, {})
 
     @staticmethod
-    def test_provider_connection(provider_id: str, api_key: str, model_id: str) -> tuple[bool, str]:
-        """Test provider connection with given credentials."""
+    def test_provider_connection(
+        provider_id: str,
+        api_key: str,
+        model_id: str,
+        base_url: str | None = None,
+    ) -> tuple[bool, str]:
+        """Test provider connection with given credentials.
+
+        For OpenAI-compatible providers, the ``base_url`` parameter allows
+        testing against custom endpoints such as local Ollama or LM Studio
+        instances.
+        """
         try:
             from .providers import get_provider_class
 
@@ -375,8 +469,22 @@ Return ONLY valid JSON, no additional text.""",
             if not provider_class:
                 return False, f"Provider {provider_id} not supported"
 
-            # Create temporary provider instance for testing
-            provider = provider_class(api_key=api_key, model=model_id)
+            # Create temporary provider instance for testing. Many providers
+            # accept a ``base_url`` parameter, but some do not, so we handle
+            # that gracefully.
+            try:
+                if base_url:
+                    provider = provider_class(
+                        api_key=api_key,
+                        model=model_id,
+                        base_url=base_url,
+                    )
+                else:
+                    provider = provider_class(api_key=api_key, model=model_id)
+            except TypeError:
+                # Fallback for providers whose constructors do not accept a
+                # ``base_url`` argument.
+                provider = provider_class(api_key=api_key, model=model_id)
 
             if not provider.is_configured():
                 return False, "Invalid configuration"
@@ -390,8 +498,7 @@ Return ONLY valid JSON, no additional text.""",
                         True,
                         f"Connected successfully. {len(models)} models available.",
                     )
-                else:
-                    return False, "No models available"
+                return False, "No models available"
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 return False, f"Connection test failed: {str(e)}"
 
@@ -424,7 +531,12 @@ Return ONLY valid JSON, no additional text.""",
     def configure_provider(
         self, provider_name: str, api_key: str, model: str = "", base_url: str = ""
     ) -> bool:
-        """Configure an AI provider."""
+        """Configure an AI provider.
+
+        For local OpenAI-compatible providers (Ollama, AI Studio / LM Studio),
+        the API key is optional and a default local endpoint is used when no
+        base URL is provided.
+        """
         try:
             if provider_name == "openai":
                 provider = OpenAIProvider(
@@ -432,12 +544,38 @@ Return ONLY valid JSON, no additional text.""",
                     model=model or "gpt-4-vision-preview",
                     base_url=base_url or None,
                 )
+                default_model = "gpt-4-vision-preview"
+                default_base_url = base_url
             elif provider_name == "openrouter":
                 provider = OpenRouterProvider(
                     api_key=api_key,
                     model=model or "gpt-4-vision-preview",
                     base_url=base_url or "https://openrouter.io/api/v1",
                 )
+                default_model = "gpt-4-vision-preview"
+                default_base_url = base_url or "https://openrouter.io/api/v1"
+            elif provider_name == "ollama":
+                # Local Ollama provider: API key is optional, local endpoint by default
+                from .providers.ollama_provider import OllamaProvider
+
+                provider = OllamaProvider(
+                    api_key=api_key or None,
+                    model=model or "llava",
+                    base_url=base_url or "http://localhost:11434/v1",
+                )
+                default_model = "llava"
+                default_base_url = base_url or "http://localhost:11434/v1"
+            elif provider_name == "ai_studio":
+                # Local AI Studio / LM Studio provider: API key is optional
+                from .providers.ai_studio_provider import AIStudioProvider
+
+                provider = AIStudioProvider(
+                    api_key=api_key or None,
+                    model=model or "gemini-1.5-pro-vision-001",
+                    base_url=base_url or "http://localhost:1234/v1",
+                )
+                default_model = "gemini-1.5-pro-vision-001"
+                default_base_url = base_url or "http://localhost:1234/v1"
             else:
                 self.logger.error("Unsupported provider: %s", provider_name)
                 return False
@@ -453,8 +591,8 @@ Return ONLY valid JSON, no additional text.""",
             # Update configuration
             self.config.setdefault("providers", {})[provider_name] = {
                 "api_key": api_key,
-                "model": model or "gpt-4-vision-preview",
-                "base_url": base_url,
+                "model": model or default_model,
+                "base_url": default_base_url,
                 "enabled": True,
             }
 
