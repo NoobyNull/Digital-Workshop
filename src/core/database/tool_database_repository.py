@@ -381,3 +381,22 @@ class ToolDatabaseRepository:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to get tool count: %s", e)
             return 0
+
+
+    def delete_tools_by_provider(self, provider_id: int) -> int:
+        """Delete all tools for a provider.
+
+        This relies on ON DELETE CASCADE on the tools → tool_properties
+        relationship to remove associated properties.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM tools WHERE provider_id = ?", (provider_id,))
+                deleted = cursor.rowcount
+                conn.commit()
+                self.logger.info("Deleted %s tools for provider %s", deleted, provider_id)
+                return deleted
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to delete tools for provider %s: %s", provider_id, e)
+            return 0

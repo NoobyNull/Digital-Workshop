@@ -22,6 +22,7 @@ from .cutlist_repository import CutListRepository
 from .cost_repository import CostRepository
 from .tool_import_repository import ToolImportRepository
 from .material_repository import MaterialRepository
+from .machine_repository import MachineRepository
 from .background_repository import BackgroundRepository
 from .model_resources_repository import ModelResourcesRepository
 
@@ -60,12 +61,14 @@ class DatabaseManager:
         self._cutlist_repo = CutListRepository(get_conn)
         self._cost_repo = CostRepository(get_conn)
         self._tool_import_repo = ToolImportRepository(get_conn)
+        self._machine_repo = MachineRepository(get_conn)
         self._material_repo = MaterialRepository(get_conn)
         self._background_repo = BackgroundRepository(get_conn)
         self._model_resources_repo = ModelResourcesRepository(get_conn)
 
         # Initialize database schema and default resources
         self._db_ops.initialize_schema()
+        self._machine_repo.initialize_default_machine()
         self._material_repo.initialize_default_materials()
         self._background_repo.initialize_default_backgrounds()
 
@@ -597,6 +600,37 @@ class DatabaseManager:
 
     def list_cutlist_sequence(self, scenario_id: int) -> List[Dict[str, Any]]:
         return self._cutlist_repo.list_sequence(scenario_id)
+
+
+    # ===== Machine Profiles / Kinematics =====
+
+    def add_machine(self, **kwargs: Any) -> int:
+        """Create a new machine profile."""
+        return self._machine_repo.add_machine(**kwargs)
+
+    def get_machine(self, machine_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single machine by ID."""
+        return self._machine_repo.get_machine(machine_id)
+
+    def get_machine_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """Fetch a machine by its unique name."""
+        return self._machine_repo.get_machine_by_name(name)
+
+    def list_machines(self) -> List[Dict[str, Any]]:
+        """Return all machine profiles, default first."""
+        return self._machine_repo.get_all_machines()
+
+    def get_default_machine(self) -> Optional[Dict[str, Any]]:
+        """Return the default machine profile, if configured."""
+        return self._machine_repo.get_default_machine()
+
+    def update_machine(self, machine_id: int, **kwargs: Any) -> bool:
+        """Update a machine profile."""
+        return self._machine_repo.update_machine(machine_id, **kwargs)
+
+    def delete_machine(self, machine_id: int) -> bool:
+        """Delete a machine profile if it is not marked as default."""
+        return self._machine_repo.delete_machine(machine_id)
 
     def delete_cutlist_sequence(self, scenario_id: int) -> int:
         return self._cutlist_repo.delete_sequence(scenario_id)

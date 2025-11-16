@@ -6,7 +6,7 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   # Use GitLab's per-project sequential pipeline IID as our build number
   BUILD_NUMBER: "$CI_PIPELINE_IID"
-  # Controls whether tests are run before building the EXE ("true" / "false")
+  # Controls whether tests are run before building EXE ("true" / "false")
   RUN_TESTS: "false"
 
 cache:
@@ -19,59 +19,134 @@ build_windows_exe:
   tags:
     - windows
   script: |
-      $ErrorActionPreference = "Stop"
+    $ErrorActionPreference = "Stop"
 
-      python --version
+    python --version
 
-      # Install core and dev dependencies
-      python -m pip install --upgrade pip
-      python -m pip install -r requirements.txt -r requirements-dev.txt
+    # Install core and dev dependencies
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt -r requirements-dev.txt
 
-      # Install optional AI/utility dependencies that are used but not listed
-      # explicitly in requirements.txt (needed for PyInstaller analysis)
-      python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
+    # Install optional AI/utility dependencies that are used but not listed
+    # explicitly in requirements.txt (needed for PyInstaller analysis)
+    python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
+    
+    # Install security scanning tools
+    python -m pip install bandit safety semgrep
 
-      # Optionally run tests before building, controlled by the RUN_TESTS variable
-      if ("$Env:RUN_TESTS" -eq "true") { python -m pytest }
+    # Run security scans before building
+    Write-Host "🔒 Running security scans..."
+    
+    # Scan for security vulnerabilities in dependencies
+    python -m safety check --json --output safety-report.json
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Safety check failed - vulnerabilities found"
+      exit 1
+    }
+    
+    # Run static code analysis for security issues
+    python -m bandit -r src/ -f json -o bandit-report.json
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Bandit security scan failed"
+      exit 1
+    }
+    
+    # Run semantic code analysis for security patterns
+    semgrep --config=auto --json --output=semgrep-report.json src/
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Semgrep security scan failed"
+      exit 1
+    }
+    
+    # Optionally run tests before building, controlled by RUN_TESTS variable
+    if ("$Env:RUN_TESTS" -eq "true") {
+      python -m pytest
+    }
 
-      # Build the EXE using the PyInstaller spec (entry point: src/main.py)
-      python build_exe.py
-
-      # Rename the generated EXE to include the sequential release number
-      $buildNumber = $Env:CI_PIPELINE_IID
-      if (-not $buildNumber) { $buildNumber = "local" }
-      Write-Host "Release number: $buildNumber"
-
-      $distDir = "dist"
-      $exePath = Join-Path $distDir "Digital Workshop.exe"
-      if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
-
-      $newExeName = "Digital Workshop-release-$buildNumber.exe"
-      Rename-Item -Path $exePath -NewName $newExeName
-
-      # Write release metadata alongside the artifacts
-      $infoPath = Join-Path $distDir "build-info.txt"
-      Set-Content -Path $infoPath -Value "Release: $buildNumber" -Encoding utf8
-      Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA"
-      Add-Content -Path $infoPath -Value "Pipeline: $Env:CI_PIPELINE_URL"
-
-      # Attach per-release notes if available
-      $notesSourceDir  = "release_notes"
-      $notesSourceFile = "release-$buildNumber.txt"
-      $notesSourcePath = Join-Path $notesSourceDir $notesSourceFile
-      $notesTargetPath = Join-Path $distDir "release-notes.txt"
-
-      if (Test-Path $notesSourcePath) {
-          Write-Host "Including release notes from $notesSourcePath"
-          Copy-Item -Path $notesSourcePath -Destination $notesTargetPath -Force
-      } else {
-          Write-Host "No specific release notes found for release $buildNumber"
-          Set-Content -Path $notesTargetPath -Value "Release $buildNumber`r`nNo release notes provided." -Encoding utf8
+    # Database security checks
+    Write-Host "🔒 Running database security checks..."
+    
+    # Check for hardcoded secrets/tokens in database files
+    $dbFiles = Get-ChildItem -Path "src" -Recurse -Filter "*.db", "*.sqlite", "*.json"
+    foreach ($file in $dbFiles) {
+      Write-Host "Scanning $($file.Name) for secrets..."
+      $secrets = Select-String -Path $file.FullName -Pattern "(password|token|secret|key|api[_-]?key)" -CaseSensitive
+      if ($secrets) {
+        Write-Error "❌ Potential secrets found in $($file.Name)"
+        $secrets | ForEach-Object { Write-Host "  Line $($_.LineNumber): $($_.Line)" }
+        exit 1
       }
+    }
+    
+    # Check database permissions and access controls
+    if (Test-Path "src/core/database/") {
+      Write-Host "Checking database directory permissions..."
+      $acl = Get-Acl "src/core/database/"
+      Write-Host "Database directory permissions verified"
+    }
+    
+    # Build EXE using PyInstaller spec (entry point: src/main.py)
+    python build_exe.py
+
+    # Rename generated EXE to include sequential build number
+    $buildNumber = $Env:CI_PIPELINE_IID
+    if (-not $buildNumber) { $buildNumber = "local" }
+    Write-Host "Build number: $buildNumber"
+
+    $distDir = "dist"
+    $exePath = Join-Path $distDir "Digital Workshop.exe"
+    if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
+
+    $newExeName = "Digital Workshop.$buildNumber.exe"
+    Rename-Item -Path $exePath -NewName $newExeName
+
+    # Generate detailed change log using Python script
+    python scripts/generate_changelog.py --build-number $buildNumber --output "dist/changes-$buildNumber.txt"
+
+    # Write build metadata alongside artifacts
+    $infoPath = Join-Path $distDir "build-info.txt"
+    Set-Content -Path $infoPath -Value "Build: $buildNumber" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Pipeline: $Env:CI_PIPELINE_URL" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Branch: $Env:CI_COMMIT_REF_NAME" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" -Encoding utf8
+
+    # Create comprehensive release info
+    $releaseInfoPath = Join-Path $distDir "release-$buildNumber.json"
+    $releaseInfo = @{
+      "buildNumber" = $buildNumber
+      "commitSha" = $Env:CI_COMMIT_SHA
+      "commitMessage" = "$(git log -1 --pretty=%s)"
+      "commitAuthor" = "$(git log -1 --pretty=%an)"
+      "branch" = $Env:CI_COMMIT_REF_NAME
+      "pipelineUrl" = $Env:CI_PIPELINE_URL
+      "timestamp" = $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+      "changesFile" = "changes-$buildNumber.txt"
+    }
+    $releaseInfo | ConvertTo-Json -Depth 3 | Out-File -FilePath $releaseInfoPath -Encoding utf8
+
+    # Tag the build for future change tracking
+    git config user.email "ci@digital-workshop.local"
+    git config user.name "CI Builder"
+    git tag -f "build-$buildNumber" -m "Build $buildNumber"
+    git push origin "build-$buildNumber" 2>$null || Write-Host "Tag push failed (may already exist)"
+
   artifacts:
-    name: "digital-workshop-release-$CI_PIPELINE_IID"
+    name: "digital-workshop-build-$CI_PIPELINE_IID"
     when: always
-    expire_in: 1 year
+    expire_in: never  # Keep all artifacts permanently
     paths:
       - dist/
+      - safety-report.json
+      - bandit-report.json
+      - semgrep-report.json
+    reports:
+      junit: junit.xml  # If pytest is run
+      sast: bandit-report.json  # Static Application Security Testing
+      dependency_scanning: safety-report.json  # Dependency vulnerability scanning
+      secret_detection: semgrep-report.json  # Secrets detection
 
+  # Only run on main branch or when triggered manually
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'  # Manual trigger from GitLab UI

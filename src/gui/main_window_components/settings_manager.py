@@ -174,6 +174,12 @@ class SettingsManager:
             settings.setValue("viewer/grid_color", config.grid_color)
             settings.setValue("viewer/grid_size", float(config.grid_size))
 
+            # Cut List Optimizer layout grid defaults
+            settings.setValue("clo/grid_spacing", float(config.clo_grid_spacing))
+            settings.setValue("clo/grid_unit", config.clo_grid_unit)
+            settings.setValue("clo/grid_major_opacity", int(config.clo_grid_major_opacity))
+            settings.setValue("clo/grid_show_intermediate", config.clo_grid_show_intermediate)
+
             # Ground plane settings
             settings.setValue("viewer/ground_visible", config.ground_visible)
             settings.setValue("viewer/ground_color", config.ground_color)

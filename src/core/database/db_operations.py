@@ -338,6 +338,8 @@ class DatabaseOperations:
                         original_path TEXT,
                         structure_type TEXT,
                         import_date DATETIME,
+                        active_machine_id INTEGER,
+                        feed_override_pct REAL DEFAULT 100.0,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
@@ -348,6 +350,24 @@ class DatabaseOperations:
                     "CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)"
                 )
                 logger.info("projects table created successfully")
+
+                # Refresh project columns after potential creation
+                cursor.execute("PRAGMA table_info(projects)")
+                projects_columns = cursor.fetchall()
+
+            project_col_names = [col[1] for col in projects_columns]
+
+            if "active_machine_id" not in project_col_names:
+                logger.info("Adding active_machine_id column to projects table")
+                cursor.execute("ALTER TABLE projects ADD COLUMN active_machine_id INTEGER")
+                logger.info("active_machine_id column added successfully")
+
+            if "feed_override_pct" not in project_col_names:
+                logger.info("Adding feed_override_pct column to projects table")
+                cursor.execute(
+                    "ALTER TABLE projects ADD COLUMN feed_override_pct REAL DEFAULT 100.0"
+                )
+                logger.info("feed_override_pct column added successfully")
 
             # Migration 6: Ensure files table exists (for file tracking)
             cursor.execute("PRAGMA table_info(files)")
@@ -379,6 +399,23 @@ class DatabaseOperations:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
                 logger.info("files table created successfully")
+
+            # Migration 7: Ensure new timing columns exist on gcode_metrics
+            cursor.execute("PRAGMA table_info(gcode_metrics)")
+            metrics_columns = cursor.fetchall()
+            metrics_col_names = [col[1] for col in metrics_columns]
+
+            if metrics_columns:
+                if "best_case_time_seconds" not in metrics_col_names:
+                    logger.info("Adding best_case_time_seconds column to gcode_metrics table")
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN best_case_time_seconds REAL"
+                    )
+                if "time_correction_factor" not in metrics_col_names:
+                    logger.info("Adding time_correction_factor column to gcode_metrics table")
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN time_correction_factor REAL"
+                    )
 
         except sqlite3.Error as e:
             logger.error("Failed to migrate database schema: %s", str(e))
@@ -461,6 +498,22 @@ class DatabaseOperations:
         """
         Create tables that power the CNC workflow (project models, G-code, cut lists, costing, tool DB imports).
         """
+        # Machine profiles (generic kinematics for timing)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS machines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                max_feed_mm_min REAL NOT NULL DEFAULT 600.0,
+                accel_mm_s2 REAL NOT NULL DEFAULT 100.0,
+                notes TEXT,
+                is_default INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
         # Project ↔ model association
         cursor.execute(
             """
@@ -552,6 +605,8 @@ class DatabaseOperations:
                 distance_rapid REAL,
                 material_removed REAL,
                 warnings TEXT,
+                best_case_time_seconds REAL,
+                time_correction_factor REAL,
                 FOREIGN KEY (version_id) REFERENCES gcode_versions(id) ON DELETE CASCADE
             )
         """

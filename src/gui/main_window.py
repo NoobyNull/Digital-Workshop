@@ -2302,6 +2302,23 @@ class MainWindow(QMainWindow):
                     except Exception as e:
                         self.logger.error("ERROR in direct render: %s", e)
 
+            # Also notify Cut List Optimizer layout view so its grid updates live
+            try:
+                if hasattr(self, "clo_widget") and self.clo_widget:
+                    clo_widget = self.clo_widget
+                    if hasattr(clo_widget, "board_visualizer") and clo_widget.board_visualizer:
+                        visualizer = clo_widget.board_visualizer
+                        if hasattr(visualizer, "reload_settings_from_qsettings"):
+                            self.logger.info("Reloading CLO grid settings from QSettings")
+                            visualizer.reload_settings_from_qsettings()
+                            self.logger.info("✓ CLO grid settings reloaded and applied")
+            except Exception as clo_error:
+                self.logger.error(
+                    "Failed to reload CLO grid settings after viewer settings change: %s",
+                    clo_error,
+                    exc_info=True,
+                )
+
             self.logger.info("=== VIEWER SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
             self.logger.error(f"FATAL ERROR applying viewer settings: {e}", exc_info=True)
