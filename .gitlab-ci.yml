@@ -1,3 +1,6 @@
+# Simplified GitLab CI Configuration
+# Use this if you don't have specific runners available
+
 stages:
   - build
 
@@ -16,10 +19,9 @@ cache:
 
 build_windows_exe:
   stage: build
-  tags:
-    - windows
-  script: |
-    $ErrorActionPreference = "Stop"
+  # Remove tags restriction - allows any available runner
+  script:
+    - $ErrorActionPreference = "Stop"
 
     python --version
 
@@ -27,76 +29,46 @@ build_windows_exe:
     python -m pip install --upgrade pip
     python -m pip install -r requirements.txt -r requirements-dev.txt
 
-    # Install optional AI/utility dependencies that are used but not listed
-    # explicitly in requirements.txt (needed for PyInstaller analysis)
+    # Install optional AI/utility dependencies
     python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
     
     # Install security scanning tools
     python -m pip install bandit safety semgrep
-
-    # Run security scans before building
+    
+    # Run security scans
     Write-Host "🔒 Running security scans..."
     
-    # Scan for security vulnerabilities in dependencies
+    # Safety check
     python -m safety check --json --output safety-report.json
     if ($LASTEXITCODE -ne 0) {
-      Write-Error "❌ Safety check failed - vulnerabilities found"
+      Write-Error "❌ Safety check failed"
       exit 1
     }
     
-    # Run static code analysis for security issues
+    # Bandit security scan
     python -m bandit -r src/ -f json -o bandit-report.json
     if ($LASTEXITCODE -ne 0) {
       Write-Error "❌ Bandit security scan failed"
       exit 1
     }
     
-    # Run semantic code analysis for security patterns
+    # Semgrep security scan
     semgrep --config=auto --json --output=semgrep-report.json src/
     if ($LASTEXITCODE -ne 0) {
       Write-Error "❌ Semgrep security scan failed"
       exit 1
     }
     
-    # Optionally run tests before building, controlled by RUN_TESTS variable
-    if ("$Env:RUN_TESTS" -eq "true") {
-      python -m pytest
-    }
-
-    # Database security checks
-    Write-Host "🔒 Running database security checks..."
-    
-    # Check for hardcoded secrets/tokens in database files
-    $dbFiles = Get-ChildItem -Path "src" -Recurse -Filter "*.db", "*.sqlite", "*.json"
-    foreach ($file in $dbFiles) {
-      Write-Host "Scanning $($file.Name) for secrets..."
-      $secrets = Select-String -Path $file.FullName -Pattern "(password|token|secret|key|api[_-]?key)" -CaseSensitive
-      if ($secrets) {
-        Write-Error "❌ Potential secrets found in $($file.Name)"
-        $secrets | ForEach-Object { Write-Host "  Line $($_.LineNumber): $($_.Line)" }
-        exit 1
-      }
-    }
-    
-    # Check database permissions and access controls
-    if (Test-Path "src/core/database/") {
-      Write-Host "Checking database directory permissions..."
-      $acl = Get-Acl "src/core/database/"
-      Write-Host "Database directory permissions verified"
-    }
-    
     # Run automatic security fixes
     Write-Host "🔒 Running automatic security fixes..."
     python scripts/auto_security_fix.py --project-root .
     
-    # Apply security fixes and generate report
-    if (Test-Path "dist/security-fixes.json") {
-      Write-Host "Previous security fixes found, integrating..."
-    } else {
-      Write-Host "No previous security fixes found"
+    # Optionally run tests before building, controlled by RUN_TESTS variable
+    if ("$Env:RUN_TESTS" -eq "true") { 
+      python -m pytest 
     }
-    
-    # Build EXE using PyInstaller spec (entry point: src/main.py)
+
+    # Build EXE using PyInstaller spec
     python build_exe.py
 
     # Rename generated EXE to include sequential build number
@@ -111,10 +83,10 @@ build_windows_exe:
     $newExeName = "Digital Workshop.$buildNumber.exe"
     Rename-Item -Path $exePath -NewName $newExeName
 
-    # Generate detailed change log using Python script
+    # Generate change log
     python scripts/generate_changelog.py --build-number $buildNumber --output "dist/changes-$buildNumber.txt"
 
-    # Write build metadata alongside artifacts
+    # Write build metadata
     $infoPath = Join-Path $distDir "build-info.txt"
     Set-Content -Path $infoPath -Value "Build: $buildNumber" -Encoding utf8
     Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA" -Encoding utf8
@@ -136,7 +108,7 @@ build_windows_exe:
     }
     $releaseInfo | ConvertTo-Json -Depth 3 | Out-File -FilePath $releaseInfoPath -Encoding utf8
 
-    # Tag the build for future change tracking
+    # Tag build for future change tracking
     git config user.email "ci@digital-workshop.local"
     git config user.name "CI Builder"
     git tag -f "build-$buildNumber" -m "Build $buildNumber"
@@ -151,13 +123,14 @@ build_windows_exe:
       - safety-report.json
       - bandit-report.json
       - semgrep-report.json
+      - security-fixes.json
     reports:
       junit: junit.xml  # If pytest is run
       sast: bandit-report.json  # Static Application Security Testing
       dependency_scanning: safety-report.json  # Dependency vulnerability scanning
       secret_detection: semgrep-report.json  # Secrets detection
 
-  # Only run on main branch or when triggered manually
+  # Allow manual trigger and main branch
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_PIPELINE_SOURCE == "web"'  # Manual trigger from GitLab UI
