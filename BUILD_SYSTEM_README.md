@@ -250,3 +250,26 @@ For build system issues:
 **Last Updated**: November 16, 2025  
 **System**: Build Number v2.0  
 **Compatible**: GitLab CI/CD, Windows, Linux, macOS
+### 🔒 Security Features
+
+**Comprehensive Security Scanning:**
+- **Dependency Vulnerability Scanning**: Safety checks for known vulnerabilities
+- **Static Code Analysis**: Bandit for Python security issues
+- **Semantic Analysis**: Semgrep for security patterns
+- **Database Security**: Checks for hardcoded secrets in database files
+- **Token Detection**: Scans for API keys, passwords, certificates
+- **Permission Verification**: Ensures proper file permissions
+
+**Security Reports Generated:**
+- `safety-report.json` - Dependency vulnerability findings
+- `bandit-report.json` - Static analysis security issues
+- `semgrep-report.json` - Semantic analysis results
+- All reports included in GitLab artifacts
+
+**Security Configuration:**
+- [`config/security.yaml`](config/security.yaml:1) - Comprehensive security settings
+- Configurable severity levels and patterns
+- Excludes test files from scanning
+- Customizable ignore rules
+
+---

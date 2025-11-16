@@ -412,6 +412,23 @@ class DatabaseManager:
         """Get total number of projects."""
         return self._project_repo.get_project_count()
 
+    def get_project_active_machine(self, project_id: str) -> Optional[int]:
+        """Get active machine ID for a project."""
+        return self._project_repo.get_active_machine(project_id)
+
+    def set_project_active_machine(self, project_id: str, machine_id: Optional[int]) -> bool:
+        """Set active machine for a project."""
+        return self._project_repo.set_active_machine(project_id, machine_id)
+
+    def get_project_feed_override(self, project_id: str) -> float:
+        """Get the feed override percentage for a project."""
+        return self._project_repo.get_feed_override(project_id)
+
+    def set_project_feed_override(self, project_id: str, override_pct: float) -> bool:
+        """Set the feed override percentage for a project."""
+        return self._project_repo.set_feed_override(project_id, override_pct)
+
+
     # ===== File Operations (delegated to FileRepository) =====
 
     def add_file(

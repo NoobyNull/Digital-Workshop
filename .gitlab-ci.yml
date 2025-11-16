@@ -85,6 +85,17 @@ build_windows_exe:
       Write-Host "Database directory permissions verified"
     }
     
+    # Run automatic security fixes
+    Write-Host "🔒 Running automatic security fixes..."
+    python scripts/auto_security_fix.py --project-root .
+    
+    # Apply security fixes and generate report
+    if (Test-Path "dist/security-fixes.json") {
+      Write-Host "Previous security fixes found, integrating..."
+    } else {
+      Write-Host "No previous security fixes found"
+    }
+    
     # Build EXE using PyInstaller spec (entry point: src/main.py)
     python build_exe.py
 

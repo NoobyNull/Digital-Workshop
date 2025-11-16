@@ -292,6 +292,8 @@ class GcodeRepository:
             "distance_rapid",
             "material_removed",
             "warnings",
+            "best_case_time_seconds",
+            "time_correction_factor",
         }
         payload = {k: v for k, v in metrics.items() if k in fields}
 
