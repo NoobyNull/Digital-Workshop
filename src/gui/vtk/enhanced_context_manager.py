@@ -286,7 +286,9 @@ class EnhancedVTKContextManager:
             old_scenario = self.current_scenario
             self.current_scenario = scenario
 
-            self.logger.info("Shutdown scenario changed: %s -> {scenario.value}", old_scenario.value)
+            self.logger.info(
+                "Shutdown scenario changed: %s -> {scenario.value}", old_scenario.value
+            )
 
             # Trigger scenario-specific cleanup preparation
             self._prepare_scenario_cleanup(scenario)
@@ -370,10 +372,10 @@ class EnhancedVTKContextManager:
                     )
                     result = callback()
                     if not result:
-                        self.logger.warning("Cleanup callback %s returned False", i+1)
+                        self.logger.warning("Cleanup callback %s returned False", i + 1)
                         cleanup_success = False
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.error("Cleanup callback %s failed: {e}", i+1)
+                    self.logger.error("Cleanup callback %s failed: {e}", i + 1)
                     cleanup_success = False
 
             # Final verification
@@ -595,7 +597,9 @@ class EnhancedVTKContextManager:
         """Enable or disable early context loss detection."""
         with self._lock:
             self.early_detection_enabled = enabled
-            self.logger.info("Early context loss detection %s", 'enabled' if enabled else 'disabled')
+            self.logger.info(
+                "Early context loss detection %s", "enabled" if enabled else "disabled"
+            )
 
     def set_detection_interval(self, interval: float) -> None:
         """Set the detection interval for early context loss detection."""

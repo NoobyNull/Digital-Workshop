@@ -288,6 +288,7 @@ class PerformanceProfiler:
 
         def decorator(func) -> None:
             """TODO: Add docstring."""
+
             @functools.wraps(func)
             def wrapper(*args, **kwargs) -> None:
                 """TODO: Add docstring."""

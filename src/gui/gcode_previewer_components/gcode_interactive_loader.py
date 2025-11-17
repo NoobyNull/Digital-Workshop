@@ -10,9 +10,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QHBoxLayout,
-    QApplication,
 )
 
+from src.core.logging_config import get_logger
 from .gcode_parser import GcodeParser, GcodeMove
 from .gcode_renderer import GcodeRenderer
 
@@ -38,24 +38,30 @@ class GcodeLoaderWorker(QThread):
         self.chunk_size = chunk_size
         self._is_cancelled = False
         self.parser = GcodeParser()
+        self.logger = get_logger(__name__)
         self._process_events_counter = 0
 
     def _maybe_process_events(self) -> None:
-        """Process events periodically to keep UI responsive."""
+        """No-op placeholder; UI responsiveness is handled on the main thread."""
         self._process_events_counter += 1
-        if self._process_events_counter >= 10:  # Every 10 operations
-            QApplication.processEvents()
-            self._process_events_counter = 0
 
     def cancel(self) -> None:
         """Cancel loading."""
         self._is_cancelled = True
+        # Log cancellation request (safe even if logger was not initialized for some reason)
+        if hasattr(self, "logger"):
+            self.logger.info("Interactive G-code load cancel requested for %s", self.filepath)
 
     def run(self) -> None:
         """Run the loading process with true streaming."""
         try:
             # Get file size for progress calculation
             file_size = os.path.getsize(self.filepath)
+            self.logger.info(
+                "Interactive G-code load started for %s (%s bytes)",
+                self.filepath,
+                file_size,
+            )
 
             # For validation
             if file_size == 0:
@@ -66,16 +72,20 @@ class GcodeLoaderWorker(QThread):
             all_moves = []
             lines_buffer = []
             bytes_processed = 0
+            last_reported_progress = -10
 
             with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     if self._is_cancelled:
+                        self.logger.info(
+                            "Interactive G-code load cancelled while reading %s", self.filepath
+                        )
                         return
 
                     bytes_processed += len(line.encode("utf-8"))
                     lines_buffer.append(line)
 
-                    # Process events periodically
+                    # Lightweight placeholder; UI responsiveness handled on main thread
                     self._maybe_process_events()
 
                     # Process when buffer reaches chunk size
@@ -86,6 +96,15 @@ class GcodeLoaderWorker(QThread):
                         # Emit progress
                         progress = int((bytes_processed / file_size) * 100)
                         self.progress_updated.emit(progress, f"Loading: {len(all_moves)} moves")
+
+                        # Log coarse-grained progress (every ~10%)
+                        if progress - last_reported_progress >= 10:
+                            self.logger.info(
+                                "Interactive G-code load progress: %d%% (%d moves)",
+                                progress,
+                                len(all_moves),
+                            )
+                            last_reported_progress = progress
 
                         # Emit chunk
                         if moves:
@@ -104,8 +123,18 @@ class GcodeLoaderWorker(QThread):
             # Final progress
             self.progress_updated.emit(100, "Loading complete")
             self.loading_complete.emit(all_moves)
+            self.logger.info(
+                "Interactive G-code load complete: %s moves from %s",
+                f"{len(all_moves):,}",
+                self.filepath,
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error(
+                "Interactive G-code load failed for %s: %s",
+                self.filepath,
+                e,
+            )
             self.error_occurred.emit(f"Failed to load G-code: {str(e)}")
 
 
@@ -161,7 +190,6 @@ class InteractiveGcodeLoader(QWidget):
         button_layout.setSpacing(8)
 
         self.load_button = QPushButton("Load G-code")
-        self.load_button.clicked.connect(self.load_file)
         button_layout.addWidget(self.load_button)
 
         self.cancel_button = QPushButton("Cancel")

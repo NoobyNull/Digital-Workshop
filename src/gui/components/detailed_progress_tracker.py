@@ -139,6 +139,16 @@ class DetailedProgressTracker:
         if self.progress_callback:
             self.progress_callback(progress, message)
 
+    def report(self, progress_percent: float, message: str = "") -> None:
+        """
+        Report progress update (compatibility method for progress callbacks).
+
+        Args:
+            progress_percent: Progress percentage (0-100)
+            message: Optional progress message
+        """
+        self._emit_progress(progress_percent, message)
+
     def get_estimated_total_time(self) -> float:
         """Get estimated total loading time in seconds."""
         return sum(self.estimated_times.values())

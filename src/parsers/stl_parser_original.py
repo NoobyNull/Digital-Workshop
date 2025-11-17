@@ -8,7 +8,6 @@ It includes memory-efficient processing, progress reporting, and comprehensive e
 import struct
 import time
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 import gc
@@ -53,6 +52,9 @@ from .base_parser import (
 )
 from src.core.hardware_acceleration import get_acceleration_manager, AccelBackend
 
+# Import from modular STL components
+from .stl_format_detector import STLFormat, STLFormatDetector
+
 # GPU acceleration imports (optional)
 try:
     from .stl_gpu_parser import STLGPUParser, GPUParseConfig
@@ -65,14 +67,6 @@ except ImportError:
     GPUParseConfig = None
     ProgressiveSTLLoader = None
     LODConfig = None
-
-
-class STLFormat(Enum):
-    """STL file format types."""
-
-    BINARY = "binary"
-    ASCII = "ascii"
-    UNKNOWN = "unknown"
 
 
 @dataclass
@@ -132,6 +126,8 @@ class STLParser(BaseParser):
         """
         Detect whether an STL file is binary or ASCII format.
 
+        Delegates to STLFormatDetector for format detection.
+
         Args:
             file_path: Path to the STL file
 
@@ -142,42 +138,10 @@ class STLParser(BaseParser):
             STLParseError: If format cannot be determined
         """
         try:
-            with open(file_path, "rb") as file:
-                # Read first 80 bytes (header) and check for ASCII indicators
-                header = file.read(self.BINARY_HEADER_SIZE)
-
-                # Check if header contains ASCII indicators
-                header_text = header.decode("utf-8", errors="ignore").lower()
-                if "solid" in header_text and header_text.count("\x00") < 5:
-                    # Likely ASCII, but verify by checking for "facet normal" keyword
-                    file.seek(0)
-                    first_line = file.readline().decode("utf-8", errors="ignore").strip()
-                    if first_line.lower().startswith("solid"):
-                        return STLFormat.ASCII
-
-                # Check if it's valid binary by attempting to read triangle count
-                file.seek(self.BINARY_HEADER_SIZE)
-                count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
-                if len(count_bytes) == self.BINARY_TRIANGLE_COUNT_SIZE:
-                    triangle_count = struct.unpack("<I", count_bytes)[0]
-
-                    # Verify file size matches expected binary format size
-                    file.seek(0, 2)  # Seek to end
-                    file_size = file.tell()
-                    expected_size = (
-                        self.BINARY_HEADER_SIZE
-                        + self.BINARY_TRIANGLE_COUNT_SIZE
-                        + (triangle_count * self.BINARY_TRIANGLE_SIZE)
-                    )
-
-                    if file_size == expected_size:
-                        return STLFormat.BINARY
-
-                return STLFormat.UNKNOWN
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            return STLFormatDetector.detect_format(file_path)
+        except Exception as e:
             self.logger.error("Error detecting STL format: %s", str(e))
-            raise STLParseError(f"Failed to detect STL format: {str(e)}")
+            raise STLParseError(f"Failed to detect STL format: {str(e)}") from e
 
     def _parse_binary_stl(
         self, file_path: Path, progress_callback: Optional[STLProgressCallback] = None
@@ -234,7 +198,14 @@ class STLParser(BaseParser):
                         [b.value for b in caps.available_backends],
                         [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
                     )
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as accel_err:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as accel_err:
                     self.logger.warning("Hardware acceleration probe failed: %s", accel_err)
                     backend = None
 
@@ -274,8 +245,17 @@ class STLParser(BaseParser):
                                 parsing_time_seconds=time.time() - start_time,
                             ),
                         )
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as gpu_error:
-                        self.logger.warning("GPU parsing failed, falling back to CPU: %s", gpu_error)
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as gpu_error:
+                        self.logger.warning(
+                            "GPU parsing failed, falling back to CPU: %s", gpu_error
+                        )
                         # Continue to CPU fallback below
 
                 # Decide path: array-based fast path for large models, else vectorized object path
@@ -544,7 +524,9 @@ class STLParser(BaseParser):
                     raise STLParseError("Invalid binary STL: cannot read triangle count")
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
-                self.logger.info("Parsing binary STL with %s triangles [array path]", triangle_count)
+                self.logger.info(
+                    "Parsing binary STL with %s triangles [array path]", triangle_count
+                )
 
                 if triangle_count <= 0:
                     raise STLParseError("Invalid triangle count in STL")
@@ -944,7 +926,11 @@ class STLParser(BaseParser):
                 file_path=str(file_path),
             )
 
-            self.logger.info("Parsed STL metadata: %s (%d triangles)", file_path, stats.triangle_count)
+            self.logger.info(
+                "Parsed STL metadata: %s (%d triangles)",
+                file_path,
+                stats.triangle_count,
+            )
             return model
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -955,27 +941,21 @@ class STLParser(BaseParser):
         """
         Get triangle count from binary STL without loading full geometry.
 
+        Delegates to STLFormatDetector for triangle counting.
+
         Args:
             file_path: Path to the binary STL file
 
         Returns:
             Triangle count
         """
-        with open(file_path, "rb") as file:
-            # Skip header
-            file.seek(self.BINARY_HEADER_SIZE)
-
-            # Read triangle count
-            count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
-            if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                raise STLParseError("Invalid binary STL: cannot read triangle count")
-
-            triangle_count = struct.unpack("<I", count_bytes)[0]
-            return triangle_count
+        return STLFormatDetector.get_triangle_count(file_path, STLFormat.BINARY)
 
     def _get_ascii_triangle_count(self, file_path: Path) -> int:
         """
         Get triangle count from ASCII STL without loading full geometry.
+
+        Delegates to STLFormatDetector for triangle counting.
 
         Args:
             file_path: Path to the ASCII STL file
@@ -983,14 +963,7 @@ class STLParser(BaseParser):
         Returns:
             Triangle count
         """
-        triangle_count = 0
-
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
-            for line in file:
-                if line.strip().lower().startswith("facet normal"):
-                    triangle_count += 1
-
-        return triangle_count
+        return STLFormatDetector.get_triangle_count(file_path, STLFormat.ASCII)
 
     def _load_low_res_geometry(
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None
@@ -1016,7 +989,14 @@ class STLParser(BaseParser):
                 loader = ProgressiveSTLLoader()
                 lod_model = loader.load_progressive(file_path, progress_callback)
                 return lod_model.active_model
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("GPU progressive loading failed, falling back to CPU: %s", e)
 
         # Fallback to CPU-based progressive loading

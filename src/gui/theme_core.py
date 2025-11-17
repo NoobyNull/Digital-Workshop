@@ -18,6 +18,7 @@ from typing import Optional
 from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtGui import QColor
 
+from src.gui.theme.color_helper import get_theme_color as _get_theme_hex
 
 def apply_theme(widget: Optional[QWidget] = None) -> None:
     """
@@ -47,31 +48,23 @@ def apply_theme(widget: Optional[QWidget] = None) -> None:
 
 
 def get_theme_color(color_name: str) -> QColor:
-    """
-    Get a color from the current qt-material theme.
+    """Get a QColor for the given logical theme color name.
 
-    This should only be used for VTK rendering or other non-Qt APIs.
-    For Qt widgets, let qt-material handle styling automatically.
-
-    Args:
-        color_name: Name of the color (e.g., 'primary', 'text', 'background')
-
-    Returns:
-        QColor object
+    This is intended for non-Qt rendering paths (e.g. QPainter, VTK) that
+    need a concrete color. Qt widgets themselves should rely on the
+    application palette provided by :class:`ThemeService`.
     """
     try:
-        from src.gui.theme.manager import ThemeManager
-
-        tm = ThemeManager.instance()
-        return tm.qcolor(color_name)
+        hex_color = _get_theme_hex(color_name)
+        return QColor(hex_color)
     except Exception:
         # Fallback to neutral colors
-        if "text" in color_name.lower():
+        lowered = color_name.lower()
+        if "text" in lowered:
             return QColor(0, 0, 0)
-        elif "bg" in color_name.lower() or "background" in color_name.lower():
+        if "bg" in lowered or "background" in lowered:
             return QColor(255, 255, 255)
-        else:
-            return QColor(128, 128, 128)
+        return QColor(128, 128, 128)
 
 
 def reload_theme() -> None:

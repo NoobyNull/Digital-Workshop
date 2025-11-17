@@ -19,7 +19,7 @@ Example:
 
 import time
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from enum import Enum
 
 from PySide6.QtWidgets import (
@@ -37,12 +37,14 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QSplitter,
+    QCheckBox,
 )
-from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize
+from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
+from src.core.application_config import ApplicationConfig
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
@@ -51,6 +53,16 @@ from src.core.import_file_manager import (
 )
 from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
+from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
+
+# Import modular pipeline
+from src.core.import_pipeline import (
+    create_pipeline,
+    ImportTask,
+    PipelineResult,
+)
+from src.core.database_manager import get_database_manager
+from src.core.thumbnail_generator import ThumbnailGenerator
 
 
 class ImportStage(Enum):
@@ -173,63 +185,7 @@ class ImportWorker(QThread):
                     "thumbnails",
                     f"Generating thumbnails for {len(files_to_process)} files...",
                 )
-                try:
-                    from src.core.application_config import ApplicationConfig
-                    from PySide6.QtCore import QSettings
-
-                    config = ApplicationConfig.get_default()
-                    settings = QSettings()
-
-                    # Get current thumbnail preferences
-                    bg_image = settings.value(
-                        "thumbnail/background_image",
-                        config.thumbnail_bg_image,
-                        type=str,
-                    )
-                    material = settings.value(
-                        "thumbnail/material", config.thumbnail_material, type=str
-                    )
-                    bg_color = settings.value(
-                        "thumbnail/background_color",
-                        config.thumbnail_bg_color,
-                        type=str,
-                    )
-
-                    # Use background image if set, otherwise use background color
-                    background = bg_image if bg_image else bg_color
-
-                    self.logger.debug(
-                        f"Thumbnail preferences: bg_image={bg_image}, bg_color={bg_color}, background={background}, material={material}"
-                    )
-
-                    # Create and start thumbnail generation worker
-                    from src.gui.thumbnail_generation_worker import (
-                        ThumbnailGenerationWorker,
-                    )
-
-                    thumbnail_worker = ThumbnailGenerationWorker(
-                        files_to_process, background=background, material=material
-                    )
-
-                    # Connect signals
-                    thumbnail_worker.progress_updated.connect(
-                        lambda current, total, file: self.thumbnail_progress.emit(
-                            current, total, file
-                        )
-                    )
-                    thumbnail_worker.error_occurred.connect(
-                        lambda file, error: self.logger.warning(
-                            f"Thumbnail error for {file}: {error}"
-                        )
-                    )
-
-                    # Run worker and wait for completion
-                    thumbnail_worker.start()
-                    thumbnail_worker.wait()  # Block until thumbnails are done
-
-                    self.logger.info("Thumbnail generation completed")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.warning("Failed to generate thumbnails: %s", e)
+                self._generate_thumbnails_with_window(files_to_process)
 
             # Complete import session
             result = self.file_manager.complete_import_session(
@@ -259,6 +215,203 @@ class ImportWorker(QThread):
     def cancel(self) -> None:
         """Cancel the import operation."""
         self.cancellation_token.cancel()
+
+    def _generate_thumbnails_with_window(self, files_to_process: List[Tuple[str, str]]) -> None:
+        """
+        Generate thumbnails using dedicated window.
+
+        Args:
+            files_to_process: List of (model_path, file_hash) tuples
+        """
+        try:
+            config = ApplicationConfig.get_default()
+            settings = QSettings()
+
+            # Get current thumbnail preferences
+            bg_image = settings.value(
+                "thumbnail/background_image",
+                config.thumbnail_bg_image,
+                type=str,
+            )
+            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            bg_color = settings.value(
+                "thumbnail/background_color",
+                config.thumbnail_bg_color,
+                type=str,
+            )
+
+            # Use background image if set, otherwise use background color
+            background = bg_image if bg_image else bg_color
+
+            self.logger.debug(
+                "Thumbnail preferences: bg_image=%s, bg_color=%s, material=%s",
+                bg_image,
+                bg_color,
+                material,
+            )
+
+            # Create coordinator and generate thumbnails
+            coordinator = ThumbnailGenerationCoordinator()
+            coordinator.generate_thumbnails(
+                file_info_list=files_to_process,
+                background=background,
+                material=material,
+            )
+
+            # Wait for completion
+            coordinator.wait_for_completion()
+
+            self.logger.info("Thumbnail generation completed")
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.warning("Failed to generate thumbnails: %s", e)
+
+
+class PipelineImportWorker(QThread):
+    """
+    Pipeline-based import worker using the modular import pipeline.
+
+    This worker uses the complete pipeline system with:
+    - Database insertion
+    - File hashing
+    - Image pairing (automatic preview detection)
+    - Thumbnail generation
+    """
+
+    # Signals for progress communication
+    stage_changed = Signal(str, str)  # stage, message
+    file_progress = Signal(str, int, str)  # filename, percent, message
+    overall_progress = Signal(int, int, int)  # current, total, percent
+    thumbnail_progress = Signal(int, int, str)  # current, total, current_file
+    model_imported = Signal(int)  # model_id - emitted after each model is imported
+    import_completed = Signal(object)  # ImportResult
+    import_failed = Signal(str)  # error_message
+
+    def __init__(
+        self,
+        file_paths: List[str],
+        mode: FileManagementMode,
+        root_directory: Optional[str],
+        generate_thumbnails: bool,
+        run_analysis: bool,
+    ):
+        """Initialize pipeline import worker."""
+        super().__init__()
+        self.file_paths = file_paths
+        self.mode = mode
+        self.root_directory = root_directory
+        self.generate_thumbnails = generate_thumbnails
+        self.run_analysis = run_analysis
+
+        self.logger = get_logger(__name__)
+        self.cancellation_token = CancellationToken()
+
+        # Initialize file manager for session management
+        self.file_manager = ImportFileManager()
+
+        # Track pipeline results
+        self.session = None
+        self.pipeline_result = None
+
+    def run(self) -> None:
+        """Execute the pipeline-based import process."""
+        try:
+            self.stage_changed.emit("validation", "Validating files and settings...")
+
+            # Start import session (validates files, creates session)
+            success, error, session = self.file_manager.start_import_session(
+                self.file_paths, self.mode, self.root_directory, DuplicateAction.SKIP
+            )
+
+            if not success:
+                self.import_failed.emit(error)
+                return
+
+            self.session = session
+            total_files = len(session.files)
+            if total_files == 0:
+                self.import_failed.emit("No valid files to import")
+                return
+
+            self.logger.info("Starting pipeline import of %d files", total_files)
+
+            # Create pipeline
+            db_manager = get_database_manager()
+            thumbnail_generator = ThumbnailGenerator()
+            pipeline = create_pipeline(db_manager, thumbnail_generator)
+
+            # Connect pipeline signals
+            pipeline.signals.task_started.connect(self._on_task_started)
+            pipeline.signals.stage_started.connect(self._on_stage_started)
+            pipeline.signals.task_completed.connect(self._on_task_completed)
+            pipeline.signals.task_failed.connect(self._on_task_failed)
+            pipeline.signals.pipeline_completed.connect(self._on_pipeline_completed)
+            pipeline.signals.pipeline_failed.connect(self._on_pipeline_failed)
+
+            # Create import tasks from session files
+            tasks = []
+            for file_info in session.files:
+                file_path = file_info.managed_path or file_info.original_path
+                file_format = Path(file_path).suffix.lower().lstrip(".")
+                task = ImportTask(
+                    file_path=file_path,
+                    filename=Path(file_path).name,
+                    format=file_format,
+                    file_size=file_info.file_size,
+                    triangle_count=0,  # Will be determined during processing
+                )
+                tasks.append(task)
+
+            # Execute pipeline (async - results come via signals)
+            self.stage_changed.emit("processing", "Processing files through pipeline...")
+            pipeline.execute(tasks)
+
+        except Exception as e:
+            self.logger.error("Pipeline import failed: %s", e, exc_info=True)
+            self.import_failed.emit(str(e))
+
+    def _on_task_started(self, task: ImportTask) -> None:
+        """Handle task started signal."""
+        self.file_progress.emit(task.filename, 0, "Starting import...")
+
+    def _on_stage_started(self, task: ImportTask, stage_name: str) -> None:
+        """Handle stage started signal."""
+        stage_display = stage_name.replace("_", " ").title()
+        self.file_progress.emit(task.filename, 0, f"{stage_display}...")
+
+    def _on_task_completed(self, task: ImportTask) -> None:
+        """Handle task completed signal."""
+        self.file_progress.emit(task.filename, 100, "Completed")
+
+        # Emit model_imported signal so UI can refresh immediately
+        if task.model_id:
+            self.model_imported.emit(task.model_id)
+
+    def _on_task_failed(self, task: ImportTask, error: str) -> None:
+        """Handle task failed signal."""
+        self.logger.warning("Task failed for %s: %s", task.filename, error)
+        self.file_progress.emit(task.filename, 0, f"Failed: {error}")
+
+    def _on_pipeline_completed(self, result: PipelineResult) -> None:
+        """Handle pipeline completion signal."""
+        self.logger.info("Pipeline completed: %d/%d", result.successful_tasks, result.total_tasks)
+
+        # Complete session
+        if self.session:
+            import_result = self.file_manager.complete_import_session(
+                self.session, success=(result.failed_tasks == 0)
+            )
+            self.import_completed.emit(import_result)
+
+    def _on_pipeline_failed(self, error: str) -> None:
+        """Handle pipeline failure signal."""
+        self.logger.error("Pipeline failed: %s", error)
+        self.import_failed.emit(error)
+
+    def cancel(self) -> None:
+        """Cancel the import operation."""
+        self.cancellation_token.cancel()
+        self.logger.info("Import cancellation requested")
 
 
 class ImportDialog(QDialog):
@@ -295,7 +448,7 @@ class ImportDialog(QDialog):
         # State
         self.current_stage = ImportStage.IDLE
         self.import_result: Optional[ImportResult] = None
-        self.import_worker: Optional[ImportWorker] = None
+        self.import_worker: Optional[PipelineImportWorker] = None
         self.selected_files: List[str] = []
         self.start_time: Optional[float] = None
 
@@ -430,13 +583,7 @@ class ImportDialog(QDialog):
         self.keep_organized_radio.setChecked(True)
         layout.addWidget(self.keep_organized_radio)
 
-        self.leave_in_place_radio = QRadioButton("Leave in Place")
-        self.leave_in_place_radio.setToolTip(
-            "Track files in their original locations without copying"
-        )
-        layout.addWidget(self.leave_in_place_radio)
-
-        # Root directory selection (for keep organized mode)
+        # Root directory selection (for keep organized mode) - indented under Keep Organized
         root_layout = QHBoxLayout()
         root_layout.addSpacing(20)
         self.root_dir_label = QLabel("Root Directory:")
@@ -451,13 +598,17 @@ class ImportDialog(QDialog):
         root_layout.addWidget(self.root_dir_button)
         layout.addLayout(root_layout)
 
+        self.leave_in_place_radio = QRadioButton("Leave in Place")
+        self.leave_in_place_radio.setToolTip(
+            "Track files in their original locations without copying"
+        )
+        layout.addWidget(self.leave_in_place_radio)
+
         # Additional options
         layout.addSpacing(10)
         options_label = QLabel("Processing Options:")
         options_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(options_label)
-
-        from PySide6.QtWidgets import QCheckBox
 
         self.generate_thumbnails_check = QCheckBox("Generate Thumbnails")
         self.generate_thumbnails_check.setChecked(True)
@@ -808,7 +959,8 @@ class ImportDialog(QDialog):
         )
         root_dir = self.root_dir_path.text() if mode == FileManagementMode.KEEP_ORGANIZED else None
 
-        self.import_worker = ImportWorker(
+        # Use the new pipeline-based worker for complete import functionality
+        self.import_worker = PipelineImportWorker(
             self.selected_files,
             mode,
             root_dir,
@@ -821,8 +973,15 @@ class ImportDialog(QDialog):
         self.import_worker.file_progress.connect(self._on_file_progress)
         self.import_worker.overall_progress.connect(self._on_overall_progress)
         self.import_worker.thumbnail_progress.connect(self._on_thumbnail_progress)
+        self.import_worker.model_imported.connect(self._on_model_imported)
         self.import_worker.import_completed.connect(self._on_import_completed)
         self.import_worker.import_failed.connect(self._on_import_failed)
+
+        # Allow parent window to connect to model_imported signal for real-time updates
+        parent = self.parent()
+        if parent and hasattr(parent, "_on_model_imported_during_import"):
+            handler = getattr(parent, "_on_model_imported_during_import")
+            self.import_worker.model_imported.connect(handler)
 
         # Start worker
         self.import_worker.start()
@@ -851,6 +1010,20 @@ class ImportDialog(QDialog):
         self.thumbnail_progress_bar.setValue(percent)
         self.thumbnail_status_label.setText(f"{current}/{total}: {current_file}")
         self._log_message(f"✓ Thumbnail {current}/{total}: {current_file}")
+
+    def _on_model_imported(self, model_id: int) -> None:
+        """
+        Handle individual model import completion.
+
+        This is called after each model is successfully imported, allowing
+        the UI to refresh incrementally instead of waiting for all imports.
+
+        Args:
+            model_id: Database ID of the imported model
+        """
+        # Notify parent window to refresh model library
+        # The parent window should connect to the worker's model_imported signal
+        self.logger.debug("Model imported: ID %d", model_id)
 
     def _on_import_completed(self, result: ImportResult) -> None:
         """Handle successful import completion."""

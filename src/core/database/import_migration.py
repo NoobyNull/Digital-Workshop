@@ -256,7 +256,7 @@ def migrate_import_schema(db_manager) -> Tuple[bool, Optional[str]]:
         Tuple of (success, error_message)
     """
     logger.info("Starting import schema migration...")
-    connection = db_manager.conn
+    connection = db_manager.get_connection()
 
     # Check current migration version
     current_version = get_migration_version(connection)
@@ -306,7 +306,7 @@ def verify_import_schema(db_manager) -> Tuple[bool, list]:
         Tuple of (all_present, missing_tables)
     """
     try:
-        connection = db_manager.conn
+        connection = db_manager.get_connection()
 
         required_tables = ["import_sessions", "import_files", "model_analysis"]
 

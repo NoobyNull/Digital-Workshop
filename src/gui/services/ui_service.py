@@ -99,57 +99,13 @@ class NotificationWidget(QWidget):
         layout.addWidget(self.message_label)
 
     def _apply_styling(self) -> None:
-        """Apply styling based on notification type."""
-        # Try to get theme colors, fallback to defaults if theme system unavailable
-        try:
-            from src.gui.theme import COLORS
+        """Apply minimal styling; rely on Qt's native theming.
 
-            type_colors = {
-                NotificationType.INFO: COLORS.info,
-                NotificationType.WARNING: COLORS.warning,
-                NotificationType.ERROR: COLORS.error,
-                NotificationType.SUCCESS: COLORS.success,
-            }
-            shadow_color = COLORS.shadow
-            text_color = COLORS.notification_text
-        except (ImportError, AttributeError):
-            # Fallback to hardcoded colors if theme system unavailable
-            type_colors = {
-                NotificationType.INFO: "#2196F3",
-                NotificationType.WARNING: "#FF9800",
-                NotificationType.ERROR: "#F44336",
-                NotificationType.SUCCESS: "#4CAF50",
-            }
-            shadow_color = "#000000"
-            text_color = "white"
-
-        color = type_colors.get(
-            NotificationType(self.notification.type), type_colors[NotificationType.INFO]
-        )
-
-        self.setStyleSheet(
-            f"""
-            NotificationWidget {{
-                background-color: {color};
-                border-radius: 8px;
-                border: 1px solid {color};
-            }}
-            #notificationTitle {{
-                color: {text_color};
-                font-weight: bold;
-                font-size: 14px;
-            }}
-            #notificationMessage {{
-                color: {text_color};
-                font-size: 12px;
-            }}
+        This avoids custom palettes and stylesheets while still giving the
+        notification a slight sense of elevation via a drop shadow.
         """
-        )
-
-        # Add drop shadow
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(10)
-        shadow.setColor(shadow_color)
         shadow.setOffset(2, 2)
         self.setGraphicsEffect(shadow)
 
@@ -558,4 +514,4 @@ class NotificationService(INotificationService):
         self.notifications_enabled = enabled
         if not enabled:
             self.clear_all_notifications()
-        self.logger.info("Notifications %s", 'enabled' if enabled else 'disabled')
+        self.logger.info("Notifications %s", "enabled" if enabled else "disabled")

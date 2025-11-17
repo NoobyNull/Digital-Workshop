@@ -25,16 +25,16 @@ FALLBACK_COLOR = "#E31C79"
 def normalize_hex(h: str) -> str:
     """
     Return a normalized #rrggbb hex string for inputs that look like hex codes.
-    
-    If the input does not represent a hex color (e.g., 'rgba(255,255,255,0.8)' 
+
+    If the input does not represent a hex color (e.g., 'rgba(255,255,255,0.8)'
     or CSS keywords like 'transparent'), return it unchanged.
-    
+
     Args:
         h: Input color string (hex code, CSS function, or keyword)
-        
+
     Returns:
         Normalized #rrggbb hex string, or original string if not a hex color
-        
+
     Examples:
         >>> normalize_hex("#abc")
         '#aabbcc'
@@ -81,16 +81,16 @@ def normalize_hex(h: str) -> str:
 def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     """
     Convert #rrggbb hex color to integer RGB tuple (0-255).
-    
+
     Args:
         hex_code: Hex color code (e.g., "#a1b2c3" or "a1b2c3")
-        
+
     Returns:
         Tuple of (red, green, blue) as integers 0-255
-        
+
     Raises:
         ValueError: If hex_code is not a valid hex color
-        
+
     Examples:
         >>> hex_to_rgb("#ffffff")
         (255, 255, 255)
@@ -108,13 +108,13 @@ def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
 def hex_to_qcolor(hex_code: str) -> QColor:
     """
     Convert #rrggbb hex color to QColor object.
-    
+
     Args:
         hex_code: Hex color code (e.g., "#a1b2c3" or "a1b2c3")
-        
+
     Returns:
         QColor object
-        
+
     Examples:
         >>> color = hex_to_qcolor("#ff0000")
         >>> color.red(), color.green(), color.blue()
@@ -127,15 +127,15 @@ def hex_to_qcolor(hex_code: str) -> QColor:
 def rgb_to_hex(r: int, g: int, b: int) -> str:
     """
     Convert RGB tuple to #rrggbb hex color.
-    
+
     Args:
         r: Red component (0-255)
         g: Green component (0-255)
         b: Blue component (0-255)
-        
+
     Returns:
         Hex color string in #rrggbb format
-        
+
     Examples:
         >>> rgb_to_hex(255, 0, 0)
         '#ff0000'

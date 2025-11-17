@@ -87,7 +87,14 @@ class CentralWidgetManager:
                     self.main_window.lighting_manager.create_light()
                     try:
                         self._load_lighting_settings()
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as le:
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as le:
                         self.logger.warning("Failed to load lighting settings: %s", le)
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.main_window.lighting_manager = None

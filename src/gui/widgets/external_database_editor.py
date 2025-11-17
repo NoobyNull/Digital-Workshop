@@ -295,14 +295,14 @@ class ExternalDatabaseEditor(QDialog):
 
     def _edit_tool(self, tool) -> None:
         """Edit a tool's properties."""
-        self.logger.debug("Editing tool: %s", tool.get('guid'))
+        self.logger.debug("Editing tool: %s", tool.get("guid"))
         QMessageBox.information(
             self, "Edit Tool", f"Edit functionality for: {tool.get('description')}"
         )
 
     def _use_tool(self, tool) -> None:
         """Use selected tool (typically for feeding back to Feeds and Speeds)."""
-        self.logger.debug("Using tool: %s", tool.get('guid'))
+        self.logger.debug("Using tool: %s", tool.get("guid"))
         QMessageBox.information(self, "Tool Selected", f"Selected: {tool.get('description')}")
         self.accept()
 

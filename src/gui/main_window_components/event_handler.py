@@ -132,7 +132,7 @@ class EventHandler:
     def show_theme_manager(self) -> None:
         """Show the Theme Manager dialog."""
         try:
-            from src.gui.theme import ThemeDialog
+            from src.gui.theme.ui.theme_dialog import ThemeDialog
 
             dlg = ThemeDialog(self.main_window)
             dlg.theme_applied.connect(self.on_theme_applied)
@@ -243,7 +243,14 @@ class EventHandler:
                         try:
                             if hasattr(self.main_window.viewer_widget, "reset_save_view_button"):
                                 self.main_window.viewer_widget.reset_save_view_button()
-                        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                        except (
+                            OSError,
+                            IOError,
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            AttributeError,
+                        ) as e:
                             logger.warning("Failed to reset save view button: %s", e)
                         QTimer.singleShot(
                             3000, lambda: self.main_window.status_label.setText("Ready")

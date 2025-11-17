@@ -16,10 +16,11 @@ from enum import Enum
 import uuid
 
 from .logging_config import (
-    get_logger,
-    setup_logging,
+    LoggingProfile,
     JSONFormatter,
     TimestampRotatingFileHandler,
+    get_logger,
+    setup_logging,
 )
 from .enhanced_error_handler import (
     EnhancedErrorHandler,
@@ -204,7 +205,14 @@ class CentralizedLoggingService:
                 # Log as regular error message
                 self._log_with_context(logging.ERROR, str(error), **kwargs)
                 return True
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handling_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as handling_error:
             self.logger.error("Error logging failed: %s", str(handling_error), exc_info=True)
             return False
 
@@ -467,6 +475,7 @@ def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INF
 
     def decorator(func: Callable) -> Callable:
         """TODO: Add docstring."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
             """TODO: Add docstring."""
@@ -570,19 +579,19 @@ def set_logging_service(service: CentralizedLoggingService) -> None:
 
 def initialize_logging(
     config: Optional[Dict[str, Any]] = None,
+    profile: Optional[LoggingProfile] = None,
 ) -> CentralizedLoggingService:
     """Initialize the centralized logging system.
 
     Args:
-        config: Configuration for logging system
+        config: Configuration dict for logging service behavior
+        profile: Optional LoggingProfile/dict for core handler configuration
 
     Returns:
         Initialized logging service
     """
-    # Setup basic logging
-    setup_logging(config)
+    setup_logging(profile=profile or config)
 
-    # Create centralized service
     service = CentralizedLoggingService(config)
     set_logging_service(service)
 

@@ -192,7 +192,14 @@ class ErrorReporter:
 
             return error_report
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as reporting_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as reporting_error:
             # Fallback error handling if reporting itself fails
             self.logger.critical("Error reporting failed: %s", reporting_error, exc_info=True)
             raise
@@ -244,7 +251,14 @@ class ErrorReporter:
         if handler:
             try:
                 handler(error_report)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as handler_error:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as handler_error:
                 self.logger.error(
                     f"Error handler failed for category {category.value}: {handler_error}",
                     exc_info=True,
@@ -267,7 +281,14 @@ class ErrorReporter:
                 else:
                     self.reporting_stats["failed_recoveries"] += 1
             return success
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as recovery_error:
             self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
             with self._lock:
                 self.reporting_stats["failed_recoveries"] += 1

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QMessageBox,
+    QStyle,
 )
 
 from src.core.logging_config import get_logger
@@ -78,6 +79,14 @@ class MetadataEditorWidget(QWidget):
         self._load_categories()
 
         self.logger.info("Metadata editor widget initialized successfully")
+
+    def _std_icon(self, standard_pixmap) -> QIcon:
+        """Return a native Qt icon for the given standard pixmap."""
+        try:
+            style = self.style()
+            return style.standardIcon(standard_pixmap)
+        except Exception:
+            return QIcon()
 
     def _init_ui(self) -> None:
         """Initialize the user interface layout."""
@@ -162,17 +171,6 @@ class MetadataEditorWidget(QWidget):
         self.preview_image_label = ThumbnailInspectorLabel()
         self.preview_image_label.setAlignment(Qt.AlignCenter)
         self.preview_image_label.setMinimumHeight(200)
-        # Use theme-aware colors instead of hardcoded white background
-        self.preview_image_label.setStyleSheet(
-            """
-            QLabel {
-                border: 2px dashed #666;
-                border-radius: 8px;
-                background-color: #1E1E1E;
-                color: #999;
-            }
-        """
-        )
         self.preview_image_label.setText(
             "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one\n\n(Double-click to inspect at full resolution)"
         )
@@ -182,10 +180,12 @@ class MetadataEditorWidget(QWidget):
         preview_button_layout = QHBoxLayout()
 
         self.generate_preview_button = QPushButton("Generate Preview")
+        self.generate_preview_button.setIcon(self._std_icon(QStyle.SP_DesktopIcon))
         self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
         preview_button_layout.addWidget(self.generate_preview_button)
 
         self.run_ai_analysis_button = QPushButton("Run AI Analysis")
+        self.run_ai_analysis_button.setIcon(self._std_icon(QStyle.SP_MediaPlay))
         self.run_ai_analysis_button.clicked.connect(self._run_ai_analysis)
         self.run_ai_analysis_button.setToolTip(
             "Analyze the preview image with AI to generate metadata"
@@ -264,14 +264,17 @@ class MetadataEditorWidget(QWidget):
         # Save button
         self.save_button = QPushButton("Save")
         self.save_button.setDefault(True)
+        self.save_button.setIcon(self._std_icon(QStyle.SP_DialogSaveButton))
         button_layout.addWidget(self.save_button)
 
         # Cancel button
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setIcon(self._std_icon(QStyle.SP_DialogCancelButton))
         button_layout.addWidget(self.cancel_button)
 
         # Reset button
         self.reset_button = QPushButton("Reset")
+        self.reset_button.setIcon(self._std_icon(QStyle.SP_DialogResetButton))
         button_layout.addWidget(self.reset_button)
 
         parent_layout.addWidget(button_frame)
@@ -356,7 +359,7 @@ class MetadataEditorWidget(QWidget):
             # Reset dirty state
             self._reset_dirty_state()
 
-            self.logger.info("Metadata loaded for model: %s", model['filename'])
+            self.logger.info("Metadata loaded for model: %s", model["filename"])
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
@@ -664,15 +667,38 @@ class MetadataEditorWidget(QWidget):
                 self._clear_preview_image()
                 return
 
+            # First try to use thumbnail_path from database (fast path)
+            thumbnail_path_str = model.get("thumbnail_path")
+            if thumbnail_path_str:
+                thumbnail_path = Path(thumbnail_path_str)
+                if thumbnail_path.exists():
+                    # Load and display the thumbnail
+                    pixmap = QPixmap(str(thumbnail_path))
+                    if not pixmap.isNull():
+                        # Scale the image to fit the label while maintaining aspect ratio
+                        scaled_pixmap = pixmap.scaled(
+                            self.preview_image_label.size(),
+                            Qt.KeepAspectRatio,
+                            Qt.SmoothTransformation,
+                        )
+                        # Use set_thumbnail to store both scaled and full-resolution versions
+                        self.preview_image_label.set_thumbnail(scaled_pixmap, str(thumbnail_path))
+                        self.preview_image_label.setText("")  # Clear any placeholder text
+                        self.logger.debug("Loaded preview image for model %s", model_id)
+                        return
+
+            # Fallback: Try to find thumbnail by hashing the file (slow path)
             model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
                 self._clear_preview_image()
                 return
 
-            # Get file hash and thumbnail path
-            hasher = FastHasher()
-            hash_result = hasher.hash_file(model_path)
-            file_hash = hash_result.hash_value if hash_result.success else None
+            # Get file hash from database first, or compute it
+            file_hash = model.get("file_hash")
+            if not file_hash:
+                hasher = FastHasher()
+                hash_result = hasher.hash_file(model_path)
+                file_hash = hash_result.hash_value if hash_result.success else None
 
             if not file_hash:
                 self._clear_preview_image()
@@ -701,7 +727,7 @@ class MetadataEditorWidget(QWidget):
                 self._clear_preview_image()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to load preview image for model %s: {str(e)}", model_id)
+            self.logger.error("Failed to load preview image for model %s: %s", model_id, e)
             self._clear_preview_image()
 
     def _clear_preview_image(self) -> None:
@@ -709,17 +735,6 @@ class MetadataEditorWidget(QWidget):
         self.preview_image_label.clear()
         self.preview_image_label.setText(
             "No preview available\n\nClick 'Generate Preview' in the library\ncontext menu to create one"
-        )
-        # Use theme-aware colors instead of hardcoded white background
-        self.preview_image_label.setStyleSheet(
-            """
-            QLabel {
-                border: 2px dashed #666;
-                border-radius: 8px;
-                background-color: #1E1E1E;
-                color: #999;
-            }
-        """
         )
 
     def _generate_preview_for_current_model(self) -> None:
@@ -754,6 +769,7 @@ class MetadataEditorWidget(QWidget):
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
+            from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 
             config = ApplicationConfig.get_default()
             settings = QSettings()
@@ -770,34 +786,33 @@ class MetadataEditorWidget(QWidget):
             # Use background image if set, otherwise use background color
             background = bg_image if bg_image else bg_color
 
-            # Generate thumbnail with current preferences
-            thumbnail_service = ImportThumbnailService()
-            result = thumbnail_service.generate_thumbnail(
-                model_path=model_path,
-                file_hash=file_hash,
-                material=material,
-                background=background,
-                force_regenerate=True,
-            )
+            # Generate thumbnail using coordinator with dedicated window
+            coordinator = ThumbnailGenerationCoordinator(parent=self)
 
-            if result.success:
-                # Save thumbnail path to database
-                if result.thumbnail_path:
-                    self.db_manager.update_model_thumbnail(
-                        self.current_model_id, str(result.thumbnail_path)
-                    )
-                    self.logger.info("Saved thumbnail path to database: %s", result.thumbnail_path)
-
+            # Connect completion signal to refresh display
+            def on_generation_completed():
+                self.logger.info("Preview generated for model %s", self.current_model_id)
                 # Reload the preview image
                 self._load_preview_image(self.current_model_id)
+                # Save thumbnail path to database
+                model = self.db_manager.get_model(self.current_model_id)
+                if model:
+                    thumbnail_path = model.get("thumbnail_path")
+                    if thumbnail_path:
+                        self.db_manager.update_model_thumbnail(
+                            self.current_model_id, str(thumbnail_path)
+                        )
+                        self.logger.info("Saved thumbnail path to database: %s", thumbnail_path)
                 QMessageBox.information(self, "Success", "Preview generated successfully!")
-                self.logger.info("Preview generated for model %s", self.current_model_id)
-            else:
-                error_msg = result.error or "Unknown error"
-                QMessageBox.warning(self, "Error", f"Failed to generate preview: {error_msg}")
-                self.logger.error(
-                    f"Preview generation failed for model {self.current_model_id}: {error_msg}"
-                )
+
+            coordinator.generation_completed.connect(on_generation_completed)
+
+            # Generate thumbnail
+            coordinator.generate_thumbnails(
+                file_info_list=[(model_path, file_hash)],
+                background=background,
+                material=material,
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"
@@ -851,7 +866,9 @@ class MetadataEditorWidget(QWidget):
             # Use the first available provider if current_provider is not set
             if not ai_service.current_provider:
                 ai_service.current_provider = next(iter(ai_service.providers.values()))
-                self.logger.info("Set current provider to: %s", list(ai_service.providers.keys())[0])
+                self.logger.info(
+                    "Set current provider to: %s", list(ai_service.providers.keys())[0]
+                )
 
             # Check if provider is configured
             if not ai_service.current_provider.is_configured():
@@ -916,12 +933,12 @@ class MetadataEditorWidget(QWidget):
             # Update title if provided
             if "title" in result and result["title"]:
                 self.title_field.setText(result["title"])
-                self.logger.info("Updated title: %s", result['title'])
+                self.logger.info("Updated title: %s", result["title"])
 
             # Update description if provided
             if "description" in result and result["description"]:
                 self.description_field.setPlainText(result["description"])
-                self.logger.info("Updated description: %s...", result['description'][:50])
+                self.logger.info("Updated description: %s...", result["description"][:50])
 
             # Update keywords if provided
             if "metadata_keywords" in result and result["metadata_keywords"]:

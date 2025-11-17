@@ -119,7 +119,10 @@ class ModelLoader:
                 render_progress_callback = lambda progress, message: self.update_loading_progress(
                     progress, message
                 )
-                success = self.main_window.viewer_widget.load_model(model, render_progress_callback)
+                # Pass model_id if available for optimal camera view
+                success = self.main_window.viewer_widget.load_model(
+                    model, render_progress_callback, model_id=self.current_model_id
+                )
                 self.finish_model_loading(
                     file_path,
                     success,

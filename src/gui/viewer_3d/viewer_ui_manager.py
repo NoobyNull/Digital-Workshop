@@ -248,6 +248,28 @@ class ViewerUIManager:
         if self.progress_label and message:
             self.progress_label.setText(message)
 
+    def set_coordinate_rotation_buttons_visible(self, visible: bool) -> None:
+        """
+        Show or hide coordinate rotation buttons (X+, X-, Y+, Y-, Z+, Z-).
+
+        Args:
+            visible: True to show buttons, False to hide them
+        """
+        buttons = [
+            getattr(self, "rotate_x_pos_button", None),
+            getattr(self, "rotate_x_neg_button", None),
+            getattr(self, "rotate_y_pos_button", None),
+            getattr(self, "rotate_y_neg_button", None),
+            getattr(self, "rotate_z_pos_button", None),
+            getattr(self, "rotate_z_neg_button", None),
+        ]
+
+        for button in buttons:
+            if button is not None:
+                button.setVisible(visible)
+
+        logger.debug("Coordinate rotation buttons %s", "shown" if visible else "hidden")
+
     def apply_theme(self) -> None:
         """Apply theme styling."""
         try:

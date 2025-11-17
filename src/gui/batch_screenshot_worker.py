@@ -102,7 +102,7 @@ class BatchScreenshotWorker(QThread):
                     self.progress_updated.emit(idx + 1, total)
 
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.error("Error processing model %s: {e}", model.get('id'))
+                    self.logger.error("Error processing model %s: {e}", model.get("id"))
                     self.error_occurred.emit(f"Error processing model: {e}")
 
             self.logger.info("Batch screenshot generation completed")

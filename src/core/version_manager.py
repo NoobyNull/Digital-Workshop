@@ -26,7 +26,7 @@ class VersionManager:
     def __init__(self) -> None:
         """Initialize the version manager."""
         self._base_name = "DigitalWorkshop"
-        self._base_version = "0.1.5"
+        self._base_version = "0.1.6"
         self._version_cache: Optional[VersionInfo] = None
 
     def get_version_info(self) -> VersionInfo:

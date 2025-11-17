@@ -7,7 +7,7 @@ converting between different color formats (hex, RGB, QColor, VTK RGB).
 
 # Import color utilities from shared utils module
 # These are re-exported for backward compatibility with existing code
-from utils.color_utils import (
+from src.utils.color_utils import (
     FALLBACK_COLOR,  # noqa: F401 - Re-exported for backward compatibility
     normalize_hex as _normalize_hex,  # noqa: F401 - Re-exported for backward compatibility
     hex_to_rgb,  # noqa: F401 - Re-exported for backward compatibility
@@ -24,3 +24,11 @@ SPACING_8 = 8
 SPACING_12 = 12
 SPACING_16 = 16
 SPACING_24 = 24
+
+# ============================================================
+# Widget size constraints (px)
+# ============================================================
+
+# Minimum widget size to prevent zero-width/zero-height widgets
+# This protects against layout issues and ensures widgets remain visible
+MIN_WIDGET_SIZE = 25

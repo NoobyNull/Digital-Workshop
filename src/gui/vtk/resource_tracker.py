@@ -219,7 +219,9 @@ class VTKResourceTracker:
                 self.stats["total_created"] += 1
                 self.stats["by_type"][resource_type.value] += 1
 
-                self.logger.debug("Registered VTK resource: %s ({resource_type.value})", resource_id)
+                self.logger.debug(
+                    "Registered VTK resource: %s ({resource_type.value})", resource_id
+                )
 
                 return resource_id
 
@@ -241,7 +243,9 @@ class VTKResourceTracker:
                         ]:
                             resource_info["state"] = ResourceState.LEAKED
                             self.stats["total_leaked"] += 1
-                            self.logger.debug("VTK resource finalized (not leaked): %s", resource_id)
+                            self.logger.debug(
+                                "VTK resource finalized (not leaked): %s", resource_id
+                            )
                         else:
                             # Resource was properly handled, just mark as destroyed
                             resource_info["state"] = ResourceState.DESTROYED

@@ -107,30 +107,80 @@ CREATE_MODEL_ANALYSIS_INDEXES = [
 # Model table extensions (ALTER TABLE statements)
 MODELS_TABLE_EXTENSIONS = [
     """
-    ALTER TABLE models 
-    ADD COLUMN file_management_mode TEXT 
+    ALTER TABLE models
+    ADD COLUMN file_management_mode TEXT
     CHECK(file_management_mode IN ('keep_organized', 'leave_in_place'));
     """,
     """
-    ALTER TABLE models 
-    ADD COLUMN import_session_id INTEGER 
+    ALTER TABLE models
+    ADD COLUMN import_session_id INTEGER
     REFERENCES import_sessions(id) ON DELETE SET NULL;
     """,
     """
-    ALTER TABLE models 
+    ALTER TABLE models
     ADD COLUMN analysis_completed BOOLEAN DEFAULT 0;
     """,
     """
-    ALTER TABLE models 
+    ALTER TABLE models
     ADD COLUMN thumbnail_generated BOOLEAN DEFAULT 0;
     """,
     """
-    ALTER TABLE models 
+    ALTER TABLE models
     ADD COLUMN original_path TEXT;
     """,
     """
-    ALTER TABLE models 
+    ALTER TABLE models
     ADD COLUMN managed_path TEXT;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN thumbnail_source TEXT
+    CHECK(thumbnail_source IN ('generated', 'paired', 'manual', NULL))
+    DEFAULT NULL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN paired_image_path TEXT;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_position_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_focal_point_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_x REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_y REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_up_z REAL;
+    """,
+    """
+    ALTER TABLE models
+    ADD COLUMN camera_view_name TEXT;
     """,
 ]
 

@@ -29,6 +29,7 @@ from src.core.thumbnail_components import ThumbnailGenerator
 from src.core.thumbnail_components.thumbnail_resizer import ThumbnailResizer
 from src.core.fast_hasher import FastHasher
 from src.core.cancellation_token import CancellationToken
+from src.core.view_optimizer import CameraParameters
 
 
 class StorageLocation(Enum):
@@ -49,6 +50,7 @@ class ThumbnailGenerationResult:
     success: bool
     error: Optional[str] = None
     cached: bool = False
+    camera_params: Optional[CameraParameters] = None
 
 
 @dataclass
@@ -223,7 +225,7 @@ class ImportThumbnailService:
     def generate_thumbnail(
         self,
         model_path: str,
-        file_hash: str,
+        file_hash: Optional[str],
         background: Optional[str] = None,
         size: Optional[Tuple[int, int]] = None,
         material: Optional[str] = None,
@@ -234,7 +236,7 @@ class ImportThumbnailService:
 
         Args:
             model_path: Path to the 3D model file
-            file_hash: Hash of the model (from FastHasher)
+            file_hash: Hash of the model (from FastHasher), or None if not available
             background: Optional background color or image path
             size: Optional thumbnail size (width, height)
             material: Optional material name to apply
@@ -245,6 +247,19 @@ class ImportThumbnailService:
         """
         start_time = time.time()
         model_name = Path(model_path).name
+
+        # Handle None file_hash
+        if file_hash is None:
+            error_msg = "File hash is required for thumbnail generation"
+            self.logger.error("%s for %s", error_msg, model_name)
+            return ThumbnailGenerationResult(
+                file_path=model_path,
+                file_hash=None,
+                thumbnail_path=None,
+                generation_time=0.0,
+                success=False,
+                error=error_msg,
+            )
 
         try:
             # Check if thumbnail already exists (unless forced)
@@ -278,14 +293,14 @@ class ImportThumbnailService:
                 "thumbnail_generation_started",
                 {
                     "file": model_name,
-                    "hash": file_hash[:16] + "...",
+                    "hash": file_hash[:16] + "..." if file_hash else "None",
                     "force_regenerate": force_regenerate,
                 },
             )
 
             # Always generate at 1280x1280 (high quality)
             # Then resize to other sizes using Pillow
-            thumbnail_path = self.thumbnail_generator.generate_thumbnail(
+            thumbnail_path, camera_params = self.thumbnail_generator.generate_thumbnail(
                 model_path=model_path,
                 file_hash=file_hash,
                 output_dir=self._storage_dir,
@@ -329,6 +344,7 @@ class ImportThumbnailService:
                     generation_time=generation_time,
                     success=True,
                     cached=False,
+                    camera_params=camera_params,
                 )
             else:
                 error_msg = "Thumbnail generation returned None"
@@ -352,7 +368,7 @@ class ImportThumbnailService:
                 "thumbnail_generation_failed",
                 {
                     "file": model_name,
-                    "hash": file_hash[:16] + "...",
+                    "hash": file_hash[:16] + "..." if file_hash else "None",
                     "error": str(e),
                     "generation_time_seconds": round(generation_time, 3),
                 },

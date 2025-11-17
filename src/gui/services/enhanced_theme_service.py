@@ -158,7 +158,9 @@ class ThemeValidationWorker(QThread):
             if is_valid:
                 self.logger.info("Theme validation successful: %s", self.theme_name)
             else:
-                self.logger.warning("Theme validation failed: %s - {error_message}", self.theme_name)
+                self.logger.warning(
+                    "Theme validation failed: %s - {error_message}", self.theme_name
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error during theme validation: %s", e, exc_info=True)

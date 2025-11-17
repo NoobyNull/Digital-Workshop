@@ -10,6 +10,12 @@ import argparse
 import dataclasses
 import sys
 import os
+import time
+
+try:  # Windows-only, used for CLI nuclear reset countdown
+    import msvcrt  # type: ignore[import]
+except ImportError:  # pragma: no cover - non-Windows platforms
+    msvcrt = None  # type: ignore[assignment]
 
 # Add the parent directory to the Python path so we can import from src
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,7 +24,12 @@ sys.path.insert(0, parent_dir)
 from src.core.application import Application
 from src.core.application_config import ApplicationConfig
 from src.core.exception_handler import ExceptionHandler
-from src.core.logging_config import get_logger
+from src.core.logging_config import (
+    LoggingProfile,
+    get_logger,
+    setup_logging,
+)
+from src.core.nuclear_reset import NuclearReset
 
 
 def parse_arguments() -> None:
@@ -72,7 +83,7 @@ Examples:
     parser.add_argument(
         "--log-human",
         action="store_true",
-        help="Use human-readable log format instead of JSON (default: JSON format)",
+        help="Use human-readable log format instead of JSON (default: JSON format, implies --log-console)",
     )
 
     # Development-only: In-memory database
@@ -82,17 +93,113 @@ Examples:
         help="[DEVELOPMENT ONLY] Run entire database in memory (data not persisted)",
     )
 
+    # Nuclear reset (CLI shortcut)
+    parser.add_argument(
+        "--nuke",
+        action="store_true",
+        help="NUCLEAR RESET: destroy ALL application data after a 5 second cancel window",
+    )
+    parser.add_argument(
+        "--nuke-no-backup",
+        action="store_true",
+        help=(
+            "NUKE: do NOT create a final backup before deletion "
+            "(maximum risk, faster)"
+        ),
+    )
+
     return parser.parse_args()
+
+
+def _build_logging_profile(args, base_level: str) -> LoggingProfile:
+    """Construct the runtime logging profile from CLI arguments."""
+    enable_console = args.log_console or args.log_human
+    return LoggingProfile(
+        log_level=base_level,
+        enable_console=enable_console,
+        human_readable=args.log_human,
+    )
+
+
+def _confirm_nuclear_reset_with_timeout(timeout_seconds: int = 5) -> bool:
+    """Display a warning for nuclear reset and allow cancellation via any key.
+
+    Returns:
+        True if the reset should proceed, False if it was cancelled.
+    """
+    print("=" * 80)
+    print("⚠️  NUCLEAR RESET REQUESTED ⚠️")
+    print("=" * 80)
+    print("This will permanently delete ALL Digital Workshop application data, including:")
+    print("  • Databases")
+    print("  • Settings / registry entries")
+    print("  • Cache, logs, thumbnails, and temp files")
+    print("  • All AppData directories used by the application")
+    print()
+    print(f"Press ANY KEY within {timeout_seconds} seconds to CANCEL.")
+    print("If no key is pressed, the nuclear reset will proceed...", flush=True)
+
+    end_time = time.time() + timeout_seconds
+
+    if msvcrt is not None:
+        while time.time() < end_time:
+            if msvcrt.kbhit():
+                msvcrt.getch()
+                print("\nNuclear reset cancelled by user.")
+                return False
+            time.sleep(0.1)
+    else:
+        # Non-Windows fallback: simple timed delay without key detection
+        time.sleep(timeout_seconds)
+
+    print("\nProceeding with nuclear reset...")
+    return True
 
 
 def main() -> None:
     """Main function to start the Digital Workshop application."""
-    logger = get_logger(__name__)
-    logger.info("Digital Workshop application starting")
-
     args = parse_arguments()
     log_level = args.log_level if args.log_level is not None else "INFO"
+    profile = _build_logging_profile(args, log_level)
+    setup_logging(profile=profile)
+
+    logger = get_logger(__name__)
+    logger.info("Digital Workshop application starting")
     logger.info("Log level set to: %s", log_level)
+
+    # Handle nuclear reset shortcut before starting the application
+    if getattr(args, "nuke", False) or getattr(args, "nuke_no_backup", False):
+        create_backup = not getattr(args, "nuke_no_backup", False)
+
+        if not _confirm_nuclear_reset_with_timeout(5):
+            logger.warning("Nuclear reset requested but cancelled by user.")
+            return 0
+
+        logger.warning(
+            "Executing nuclear reset from command line (backup %s)",
+            "DISABLED" if not create_backup else "ENABLED",
+        )
+        reset_handler = NuclearReset()
+        results = reset_handler.execute_nuclear_reset(create_backup=create_backup)
+
+        if results.get("success"):
+            logger.warning(
+                "Nuclear reset completed successfully. Directories deleted: %s, files deleted: %s",
+                results.get("directories_deleted", 0),
+                results.get("files_deleted", 0),
+            )
+            backup_info = "YES" if results.get("backup_created") else "NO"
+            logger.warning("Nuclear reset backup created: %s", backup_info)
+            if results.get("backup_path"):
+                logger.warning("Nuclear reset backup path: %s", results["backup_path"])
+            return 0
+
+        errors = results.get("errors") or []
+        if errors:
+            logger.error("Nuclear reset failed with errors: %s", "; ".join(errors))
+        else:
+            logger.error("Nuclear reset failed for unknown reasons.")
+        return 1
 
     # Set environment variable for in-memory database if --mem-only flag is used
     if args.mem_only:
@@ -105,8 +212,9 @@ def main() -> None:
     config = dataclasses.replace(
         config,
         log_level=log_level,
-        enable_console_logging=args.log_console,
+        enable_console_logging=profile.enable_console,
         log_human_readable=args.log_human,
+        logging_profile=profile,
     )
 
     exception_handler = ExceptionHandler()
@@ -143,7 +251,7 @@ def main() -> None:
         exception_handler.handle_startup_error(e)
         return 1
 
-    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
         # Catch all other exceptions
         logger.error("Application startup failed: %s", str(e), exc_info=True)
         exception_handler.handle_startup_error(e)
@@ -156,7 +264,6 @@ def main() -> None:
                 app.cleanup()
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Cleanup failed: %s", str(e))
-
 
 if __name__ == "__main__":
     sys.exit(main())

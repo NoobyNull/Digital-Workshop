@@ -106,7 +106,9 @@ class ToolMigrationUtility:
                     progress = (idx + 1) / len(tools)
                     progress_callback(progress, f"Migrated {success_count}/{len(tools)}")
 
-            self.logger.info("Migration complete: %s successful, {fail_count} failed", success_count)
+            self.logger.info(
+                "Migration complete: %s successful, {fail_count} failed", success_count
+            )
             return success_count, fail_count, errors
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

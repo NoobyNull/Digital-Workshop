@@ -41,6 +41,11 @@ class VTKRenderingEngine:
         self.renderer = None
         self.camera = None
 
+        # Background image caching to avoid reloading same image multiple times
+        self._cached_bg_image_path = None
+        self._cached_bg_texture = None
+        self._cached_bg_actor = None
+
     def setup_render_window(self) -> bool:
         """
         Create and configure offscreen render window.
@@ -89,7 +94,10 @@ class VTKRenderingEngine:
 
     def set_background_image(self, image_path: str) -> None:
         """
-        Set background image with dynamic plane sizing.
+        Set background image with dynamic plane sizing and caching.
+
+        Caches the loaded texture to avoid reloading the same image multiple times
+        during batch thumbnail generation, significantly improving performance.
 
         Args:
             image_path: Path to background image file
@@ -99,20 +107,35 @@ class VTKRenderingEngine:
                 self.logger.warning("Background image not found: %s", image_path)
                 return
 
-            # Read image
-            reader = vtk.vtkPNGReader()
-            if image_path.lower().endswith((".jpg", ".jpeg")):
-                reader = vtk.vtkJPEGReader()
+            # Check if we can reuse cached texture
+            if self._cached_bg_image_path == image_path and self._cached_bg_texture:
+                self.logger.debug("Reusing cached background image: %s", image_path)
+                texture = self._cached_bg_texture
+            else:
+                # Load and cache new texture
+                self.logger.debug("Loading and caching background image: %s", image_path)
+                reader = vtk.vtkPNGReader()
+                if image_path.lower().endswith((".jpg", ".jpeg")):
+                    reader = vtk.vtkJPEGReader()
 
-            reader.SetFileName(image_path)
-            reader.Update()
+                reader.SetFileName(image_path)
+                reader.Update()
 
-            # Create texture
-            texture = vtk.vtkTexture()
-            texture.SetInputConnection(reader.GetOutputPort())
-            texture.InterpolateOn()
-            texture.EdgeClampOn()
-            texture.RepeatOn()
+                # Create texture
+                texture = vtk.vtkTexture()
+                texture.SetInputConnection(reader.GetOutputPort())
+                texture.InterpolateOn()
+                texture.EdgeClampOn()
+                texture.RepeatOn()
+
+                # Cache the texture
+                self._cached_bg_image_path = image_path
+                self._cached_bg_texture = texture
+
+            # Remove old background actor if exists
+            if self._cached_bg_actor and self.renderer:
+                self.renderer.RemoveActor(self._cached_bg_actor)
+                self._cached_bg_actor = None
 
             # Calculate dynamic plane size based on camera distance
             cam_pos = self.camera.GetPosition()
@@ -131,17 +154,45 @@ class VTKRenderingEngine:
             plane.SetPoint1(scale, -scale, cam_focal[2] - distance * 1.5)
             plane.SetPoint2(-scale, scale, cam_focal[2] - distance * 1.5)
             plane.SetResolution(1, 1)
+            plane.Update()
+
+            # Generate texture coordinates for the plane
+            plane_output = plane.GetOutput()
+            num_points = plane_output.GetNumberOfPoints()
+
+            # Create texture coordinates array
+            tcoords = vtk.vtkFloatArray()
+            tcoords.SetNumberOfComponents(2)
+            tcoords.SetNumberOfTuples(num_points)
+            tcoords.SetName("TextureCoordinates")
+
+            # Set UV coordinates for each point (4 corners of the plane)
+            # Bottom-left (0, 0)
+            tcoords.SetTuple2(0, 0.0, 0.0)
+            # Bottom-right (1, 0)
+            tcoords.SetTuple2(1, 1.0, 0.0)
+            # Top-left (0, 1)
+            tcoords.SetTuple2(2, 0.0, 1.0)
+            # Top-right (1, 1)
+            tcoords.SetTuple2(3, 1.0, 1.0)
+
+            # Add texture coordinates to the plane
+            plane_output.GetPointData().SetTCoords(tcoords)
 
             mapper = vtk.vtkPolyDataMapper()
-            mapper.SetInputConnection(plane.GetOutputPort())
+            mapper.SetInputData(plane_output)
+            mapper.ScalarVisibilityOff()  # Use texture coordinates, not scalar data
 
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
 
-            # Set texture on diffuse property (works better with LightingOff)
-            actor.GetProperty().SetTexture("map_d", texture)
+            # Apply texture directly to actor (standard VTK approach)
+            actor.SetTexture(texture)
             actor.GetProperty().LightingOff()
             actor.GetProperty().SetOpacity(1.0)
+
+            # Cache the actor for cleanup
+            self._cached_bg_actor = actor
 
             self.renderer.AddActor(actor)
             self.logger.debug("Background image set: %s", image_path)
@@ -246,11 +297,22 @@ class VTKRenderingEngine:
             return False
 
     def cleanup(self) -> None:
-        """Cleanup VTK resources."""
+        """Cleanup VTK resources including cached background image."""
         try:
+            # Remove cached background actor from renderer
+            if self._cached_bg_actor and self.renderer:
+                self.renderer.RemoveActor(self._cached_bg_actor)
+
+            # Clear background image cache
+            self._cached_bg_image_path = None
+            self._cached_bg_texture = None
+            self._cached_bg_actor = None
+
+            # Cleanup render window
             if self.render_window:
                 self.render_window.Finalize()
                 self.render_window = None
+
             self.renderer = None
             self.camera = None
             self.logger.debug("Cleanup complete")

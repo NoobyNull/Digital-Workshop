@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 
 class Ui_ModelLibraryWidget(object):
     """TODO: Add docstring."""
+
     def setupUi(self, ModelLibraryWidget) -> None:
         """TODO: Add docstring."""
         if not ModelLibraryWidget.objectName():

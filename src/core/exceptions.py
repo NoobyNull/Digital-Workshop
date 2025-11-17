@@ -43,7 +43,9 @@ class CandyCadenceException(Exception):
 class ParsingException(CandyCadenceException):
     """Base exception for all parsing-related errors."""
 
-    def __init__(self, message: str, file_path: str = None, format_type: str = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, file_path: str = None, format_type: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = "The file format is not supported or the file is corrupted."
         recovery_suggestions = [
@@ -97,7 +99,9 @@ class UnsupportedFormatError(ParsingException):
 class CorruptedFileError(ParsingException):
     """Raised when a file appears to be corrupted or malformed."""
 
-    def __init__(self, file_path: str, format_type: str, corruption_details: str = None, **kwargs) -> None:
+    def __init__(
+        self, file_path: str, format_type: str, corruption_details: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         message = f"Corrupted file detected: {file_path}"
         if corruption_details:
@@ -129,7 +133,9 @@ class CorruptedFileError(ParsingException):
 class DatabaseException(CandyCadenceException):
     """Base exception for all database-related errors."""
 
-    def __init__(self, message: str, operation: str = None, table_name: str = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, operation: str = None, table_name: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = "A database operation failed. Your data may be temporarily unavailable."
         recovery_suggestions = [
@@ -178,7 +184,9 @@ class DatabaseConnectionError(DatabaseException):
 class FileSystemException(CandyCadenceException):
     """Base exception for all file system-related errors."""
 
-    def __init__(self, message: str, file_path: str = None, operation: str = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, file_path: str = None, operation: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = "A file operation failed. Please check file permissions and paths."
         recovery_suggestions = [
@@ -255,7 +263,9 @@ ValidationError = ValidationException
 class MemoryException(CandyCadenceException):
     """Base exception for all memory-related errors."""
 
-    def __init__(self, message: str, operation: str = None, memory_usage: int = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, operation: str = None, memory_usage: int = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = "The application ran out of memory. Try closing other applications."
         recovery_suggestions = [
@@ -273,7 +283,9 @@ class MemoryException(CandyCadenceException):
 class OutOfMemoryError(MemoryException):
     """Raised when the application runs out of memory."""
 
-    def __init__(self, operation: str, memory_usage: int, available_memory: int = None, **kwargs) -> None:
+    def __init__(
+        self, operation: str, memory_usage: int, available_memory: int = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         message = f"Out of memory during {operation}. Usage: {memory_usage} bytes"
         if available_memory:
@@ -305,7 +317,9 @@ class OutOfMemoryError(MemoryException):
 class ConfigurationException(CandyCadenceException):
     """Base exception for all configuration-related errors."""
 
-    def __init__(self, message: str, config_key: str = None, config_source: str = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, config_key: str = None, config_source: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = "A configuration error occurred. Some features may not work correctly."
         recovery_suggestions = [
@@ -323,7 +337,9 @@ class ConfigurationException(CandyCadenceException):
 class InvalidConfigurationException(ConfigurationException):
     """Raised when configuration values are invalid."""
 
-    def __init__(self, config_key: str, config_value: Any, expected_type: str = None, **kwargs) -> None:
+    def __init__(
+        self, config_key: str, config_value: Any, expected_type: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         message = f"Invalid configuration value for {config_key}: {config_value}"
         if expected_type:
@@ -355,7 +371,9 @@ class InvalidConfigurationException(ConfigurationException):
 class PerformanceException(CandyCadenceException):
     """Base exception for all performance-related issues."""
 
-    def __init__(self, message: str, operation: str = None, duration: float = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, operation: str = None, duration: float = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         user_message = (
             "A performance issue was detected. The operation may take longer than expected."
@@ -432,7 +450,9 @@ class UIException(CandyCadenceException):
 class WidgetException(UIException):
     """Raised when a UI widget encounters an error."""
 
-    def __init__(self, widget_type: str, operation: str, widget_details: str = None, **kwargs) -> None:
+    def __init__(
+        self, widget_type: str, operation: str, widget_details: str = None, **kwargs
+    ) -> None:
         """TODO: Add docstring."""
         message = f"Widget error in {widget_type} during {operation}"
         if widget_details:

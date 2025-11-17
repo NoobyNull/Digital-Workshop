@@ -213,6 +213,8 @@ class ProjectRepository:
                 "original_path",
                 "structure_type",
                 "import_date",
+                "active_machine_id",
+                "feed_override_pct",
             }
 
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
@@ -283,3 +285,35 @@ class ProjectRepository:
         except sqlite3.Error as e:
             logger.error("Database error counting projects: %s", str(e))
             return 0
+
+    @log_function_call(logger)
+    def get_active_machine(self, project_id: str) -> Optional[int]:
+        """Get the active machine ID for a project, if set."""
+        project = self.get_project(project_id)
+        if not project:
+            return None
+        return project.get("active_machine_id")
+
+    @log_function_call(logger)
+    def set_active_machine(self, project_id: str, machine_id: Optional[int]) -> bool:
+        """Set or clear the active machine for a project."""
+        return self.update_project(project_id, active_machine_id=machine_id)
+
+    @log_function_call(logger)
+    def get_feed_override(self, project_id: str) -> float:
+        """Get the feed override percentage for a project (defaults to 100.0)."""
+        project = self.get_project(project_id)
+        if not project:
+            return 100.0
+        value = project.get("feed_override_pct")
+        try:
+            return float(value) if value is not None else 100.0
+        except (TypeError, ValueError):
+            logger.warning("Invalid feed_override_pct for project %s: %r", project_id, value)
+            return 100.0
+
+    @log_function_call(logger)
+    def set_feed_override(self, project_id: str, override_pct: float) -> bool:
+        """Set the feed override percentage for a project."""
+        return self.update_project(project_id, feed_override_pct=override_pct)
+

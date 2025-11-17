@@ -307,7 +307,7 @@ class SnappingSystem:
             if not enabled:
                 self.guide_renderer.clear_guides()
 
-            self.logger.info("Snapping system %s", 'enabled' if enabled else 'disabled')
+            self.logger.info("Snapping system %s", "enabled" if enabled else "disabled")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set snapping enabled: %s", e)
 

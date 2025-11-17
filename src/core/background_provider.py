@@ -98,6 +98,99 @@ class BackgroundProvider:
             self.logger.error("Error listing default backgrounds: %s", e, exc_info=True)
             return []
 
+    def get_background_by_name(self, name: str) -> Path:
+        """
+        Get background path by name (without extension).
+
+        Args:
+            name: Background name (e.g., "Brick", "Blue", "Gray")
+
+        Returns:
+            Path to background image
+
+        Raises:
+            FileNotFoundError: If background not found
+        """
+        try:
+            self.logger.debug("Looking for background: '%s'", name)
+
+            # Check in default backgrounds directory
+            if self.DEFAULT_BACKGROUNDS_DIR.exists():
+                # Try PNG first
+                png_path = self.DEFAULT_BACKGROUNDS_DIR / f"{name}.png"
+                if png_path.exists():
+                    self.logger.info("Found background '%s' at: %s", name, png_path)
+                    return png_path
+
+                # Try JPG
+                jpg_path = self.DEFAULT_BACKGROUNDS_DIR / f"{name}.jpg"
+                if jpg_path.exists():
+                    self.logger.info("Found background '%s' at: %s", name, jpg_path)
+                    return jpg_path
+
+                # Try JPEG
+                jpeg_path = self.DEFAULT_BACKGROUNDS_DIR / f"{name}.jpeg"
+                if jpeg_path.exists():
+                    self.logger.info("Found background '%s' at: %s", name, jpeg_path)
+                    return jpeg_path
+
+            # Not found
+            error_msg = f"Background '{name}' not found in {self.DEFAULT_BACKGROUNDS_DIR}"
+            self.logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
+
+        except FileNotFoundError:
+            raise
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error getting background '%s': %s", name, e, exc_info=True)
+            raise FileNotFoundError(f"Failed to get background '{name}': {e}")
+
+    def resolve_background(self, background: Union[str, Path]) -> Union[str, Path]:
+        """
+        Resolve a background reference to an absolute path.
+
+        If the input is an absolute path that exists, return it as-is.
+        If the input is a name (no path separators), look it up in resources.
+
+        Args:
+            background: Background name or path
+
+        Returns:
+            Resolved absolute path or original value if it's a color
+        """
+        try:
+            # If it's a hex color, return as-is
+            if isinstance(background, str) and background.startswith("#"):
+                return background
+
+            # Convert to Path for easier handling
+            bg_path = Path(background) if isinstance(background, str) else background
+
+            # If it's an absolute path that exists, return it
+            if bg_path.is_absolute() and bg_path.exists():
+                self.logger.debug("Background is absolute path: %s", bg_path)
+                return bg_path
+
+            # If it contains path separators, it's a path (might be invalid)
+            if "/" in str(background) or "\\" in str(background):
+                if bg_path.exists():
+                    return bg_path
+                else:
+                    self.logger.warning("Background path does not exist: %s", background)
+                    return background
+
+            # Otherwise, treat it as a name and look it up
+            self.logger.debug("Treating '%s' as background name, looking up...", background)
+            return self.get_background_by_name(str(background))
+
+        except FileNotFoundError:
+            # Return original value if lookup fails
+            self.logger.warning("Could not resolve background '%s', returning as-is", background)
+            return background
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error resolving background: %s", e, exc_info=True)
+            return background
+
     def _validate_image_path(self, path: Union[str, Path]) -> bool:
         """
         Validate that an image path exists and is a supported format.

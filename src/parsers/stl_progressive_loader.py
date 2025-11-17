@@ -175,7 +175,9 @@ class ProgressiveSTLLoader:
             triangle_count = self._get_triangle_count(file_path_obj)
             file_size = file_path_obj.stat().st_size
 
-            self.logger.info("Progressive loading: %s triangles ({file_size} bytes)", triangle_count)
+            self.logger.info(
+                "Progressive loading: %s triangles ({file_size} bytes)", triangle_count
+            )
 
             # Phase 2: Load lowest LOD first for immediate preview
             lod_models = {}

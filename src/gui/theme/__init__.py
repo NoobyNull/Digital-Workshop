@@ -37,18 +37,10 @@ Benefits:
 # Core theme system - using simple PySide6 styling
 from .simple_service import ThemeService
 
-# Import COLORS and other constants from theme_api for backward compatibility
-try:
-    from .theme_api import COLORS
-except ImportError:
-    # Fallback: create a simple COLORS proxy
-    class _SimpleColorsProxy:
-        """TODO: Add docstring."""
-        def __getattr__(self, name) -> None:
-            """TODO: Add docstring."""
-            return "#E31C79"  # Fallback color
-
-    COLORS = _SimpleColorsProxy()
+# Legacy COLORS mapping retained as an empty dict for backward compatibility.
+# No dynamic theme colors are provided here; callers should rely on ThemeService
+# or src.gui.theme.color_helper instead.
+COLORS: dict[str, str] = {}
 
 # Import constants
 from .theme_constants import (
@@ -58,10 +50,11 @@ from .theme_constants import (
     SPACING_12,
     SPACING_16,
     SPACING_24,
+    MIN_WIDGET_SIZE,
 )
 
-# Import VTK color function
-from .theme_service import vtk_rgb
+# Import VTK color integration helpers
+from .vtk_color_provider import get_vtk_color_provider, vtk_rgb
 
 # Backward compatibility - ThemeManager alias for ThemeService
 ThemeManager = ThemeService
@@ -79,13 +72,13 @@ __all__ = [
     # Backward compatibility alias for ThemeService
     "ThemeManager",
     # Colors and constants
-    "COLORS",
     "FALLBACK_COLOR",
     "SPACING_4",
     "SPACING_8",
     "SPACING_12",
     "SPACING_16",
     "SPACING_24",
+    "MIN_WIDGET_SIZE",
     # VTK integration
     "vtk_rgb",
 ]
@@ -175,9 +168,9 @@ def log_theme_system_status() -> None:
     logger = get_logger(__name__)
 
     logger.debug("Theme System Status:")
-    logger.debug("  Architecture: %s", info['architecture'])
-    logger.debug("  Version: %s", info['version'])
-    logger.debug("  Current Theme: %s", info['current_theme'])
+    logger.debug("  Architecture: %s", info["architecture"])
+    logger.debug("  Version: %s", info["version"])
+    logger.debug("  Current Theme: %s", info["current_theme"])
 
 
 # ============================================================
@@ -246,20 +239,13 @@ def apply_theme_preset(theme_name: str) -> bool:
 
 
 def qss_tabs_lists_labels() -> str:
-    """
-    Get QSS stylesheet for tabs, lists, and labels.
+    """Deprecated QSS helper.
 
-    Backward compatibility function for UI styling.
-
-    Returns:
-        QSS stylesheet string
+    This function is retained only for backward compatibility. The
+    application no longer uses custom stylesheets, so this now returns
+    an empty string.
     """
-    # Return basic fallback styling
-    return """
-    QTabWidget::pane { border: 1px solid #333; background: #121212; }
-    QListWidget { background: #121212; color: #1976D2; }
-    QLabel { color: #1976D2; }
-    """
+    return ""
 
 
 # Additional backward compatibility functions

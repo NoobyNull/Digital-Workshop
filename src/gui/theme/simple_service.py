@@ -324,6 +324,10 @@ class ThemeService:
         """Get current theme and library."""
         return self._current_theme, self._current_library
 
+    def reset_to_default(self) -> None:
+        """Reset theme to the default dark configuration."""
+        self.apply_theme("dark")
+
     def _save_theme(self) -> None:
         """Save current theme to settings."""
         self.settings.setValue("theme", self._current_theme)

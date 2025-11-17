@@ -176,7 +176,9 @@ class ResourceCleanupHandler(CleanupHandler):
                     if hasattr(resource, "cleanup"):
                         resource.cleanup()
                         resources_cleaned += 1
-                        self.logger.debug("Cleaned up tracked resource: %s", type(resource).__name__)
+                        self.logger.debug(
+                            "Cleaned up tracked resource: %s", type(resource).__name__
+                        )
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                     self.logger.warning(
                         f"Failed to cleanup tracked resource {type(resource).__name__}: {e}"

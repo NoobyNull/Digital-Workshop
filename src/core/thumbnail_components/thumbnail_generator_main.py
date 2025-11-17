@@ -74,7 +74,7 @@ class ThumbnailGenerator:
         size: Optional[Tuple[int, int]] = None,
         material: Optional[str] = None,
         force_regenerate: bool = False,
-    ) -> Optional[Path]:
+    ) -> Tuple[Optional[Path], Optional["CameraParameters"]]:
         """
         Generate a thumbnail for a 3D model.
 
@@ -88,7 +88,7 @@ class ThumbnailGenerator:
             force_regenerate: If True, regenerate even if thumbnail already exists
 
         Returns:
-            Path to generated thumbnail PNG, or None on failure
+            Tuple of (thumbnail_path, camera_params) where camera_params contains optimal view settings
         """
         start_time = time.time()
 
@@ -103,7 +103,7 @@ class ThumbnailGenerator:
             # Check if thumbnail already exists (unless forced)
             if thumbnail_path.exists() and not force_regenerate:
                 self.logger.info("Thumbnail already exists: %s", thumbnail_path)
-                return thumbnail_path
+                return thumbnail_path, None
 
             # If force regenerating, remove the old thumbnail
             if force_regenerate and thumbnail_path.exists():
@@ -112,7 +112,14 @@ class ThumbnailGenerator:
                     self.logger.info(
                         f"Removed existing thumbnail for regeneration: {thumbnail_path}"
                     )
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to remove existing thumbnail: %s", e)
 
             self.logger.info("Generating thumbnail for: %s", model_path)
@@ -121,14 +128,14 @@ class ThumbnailGenerator:
             model = self._load_model(model_path)
             if model is None:
                 self.logger.error("Failed to load model: %s", model_path)
-                return None
+                return None, None
 
             # Set thumbnail size
             if size is None:
                 size = self.thumbnail_size
 
             # Render thumbnail
-            success = self._render_thumbnail(
+            success, camera_params = self._render_thumbnail(
                 model=model,
                 output_path=thumbnail_path,
                 background=background,
@@ -141,24 +148,28 @@ class ThumbnailGenerator:
                 self.logger.info(
                     f"Thumbnail generated successfully in {elapsed:.2f}s: {thumbnail_path}"
                 )
-                return thumbnail_path
+                return thumbnail_path, camera_params
             else:
                 self.logger.error("Thumbnail rendering failed")
-                return None
+                return None, None
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             elapsed = time.time() - start_time
             self.logger.error(
                 f"Failed to generate thumbnail after {elapsed:.2f}s: {e}", exc_info=True
             )
-            return None
+            return None, None
         finally:
             # Force garbage collection to free VTK resources
             gc.collect()
 
     def _load_model(self, model_path: str) -> Optional[Model]:
         """
-        Load a 3D model from file using Trimesh (fast) with fallback.
+        Load a 3D model from file using Trimesh (fast) with simplified fallback.
+
+        For thumbnail generation, we prioritize speed:
+        1. Try Trimesh first (fastest, optimized for rendering)
+        2. Fallback to STL parser with lazy loading (faster than full load)
 
         Args:
             model_path: Path to model file
@@ -167,7 +178,7 @@ class ThumbnailGenerator:
             Loaded Model object or None on failure
         """
         try:
-            # Try Trimesh first for fast loading
+            # Try Trimesh first for fast loading (PREFERRED for thumbnails)
             from src.parsers.trimesh_loader import get_trimesh_loader
 
             trimesh_loader = get_trimesh_loader()
@@ -175,11 +186,18 @@ class ThumbnailGenerator:
 
             if trimesh_loader.is_trimesh_available():
                 model = trimesh_loader.load_model(model_path)
+                if model:
+                    self.logger.debug(
+                        "Loaded model via Trimesh: %s triangles",
+                        model.stats.triangle_count,
+                    )
+                    return model
 
-            # Fallback to standard parser if Trimesh failed or unavailable
-            if model is None:
-                parser = STLParser()
-                model = parser.parse_file(model_path, lazy_loading=False)
+            # Fallback to standard parser with LAZY LOADING for speed
+            # Lazy loading is sufficient for thumbnail generation
+            self.logger.debug("Trimesh unavailable, using STL parser with lazy loading")
+            parser = STLParser()
+            model = parser.parse_file(model_path, lazy_loading=True)
 
             if model is None:
                 self.logger.error("Parser returned None for: %s", model_path)
@@ -203,7 +221,7 @@ class ThumbnailGenerator:
         background: Optional[Union[str, Tuple[float, float, float]]],
         size: Tuple[int, int],
         material: Optional[str] = None,
-    ) -> bool:
+    ) -> Tuple[bool, Optional["CameraParameters"]]:
         """
         Render a model to a PNG thumbnail using VTK offscreen rendering.
 
@@ -215,20 +233,21 @@ class ThumbnailGenerator:
             material: Optional wood species name for texture application
 
         Returns:
-            True if successful, False otherwise
+            Tuple of (success, camera_params) where camera_params contains the optimal view settings
         """
         engine = None
+        camera_params = None
         try:
             # Create rendering engine
             engine = VTKRenderingEngine(width=size[0], height=size[1])
             if not engine.setup_render_window():
-                return False
+                return False, None
 
             # Create polydata from model
             polydata = self._create_polydata(model)
             if polydata is None:
                 self.logger.error("Failed to create VTK polydata")
-                return False
+                return False, None
 
             # Create mapper and actor
             mapper = vtk.vtkPolyDataMapper()
@@ -287,15 +306,30 @@ class ThumbnailGenerator:
                 if background.startswith("#"):
                     self.logger.debug("Background is hex color: %s", background)
                     engine.set_background_color(background)
-                elif Path(background).exists():
-                    self.logger.info("Background image exists, using: %s", background)
-                    engine.set_background_image(background)
                 else:
-                    self.logger.warning(
-                        f"Background path does not exist: {background}, using default color"
-                    )
-                    # Professional studio background: dark teal-gray
-                    engine.set_background_color((0.25, 0.35, 0.40))
+                    # Resolve background name to path using BackgroundProvider
+                    from src.core.background_provider import BackgroundProvider
+
+                    bg_provider = BackgroundProvider()
+
+                    try:
+                        # Try to resolve as a background name
+                        resolved_path = bg_provider.get_background_by_name(background)
+                        self.logger.info(
+                            "Resolved background '%s' to: %s", background, resolved_path
+                        )
+                        engine.set_background_image(str(resolved_path))
+                    except FileNotFoundError:
+                        # Not a valid background name, check if it's a path
+                        if Path(background).exists():
+                            self.logger.info("Background is path: %s", background)
+                            engine.set_background_image(background)
+                        else:
+                            self.logger.warning(
+                                f"Background '{background}' not found, using default color"
+                            )
+                            # Professional studio background: dark teal-gray
+                            engine.set_background_color((0.25, 0.35, 0.40))
             elif isinstance(background, (tuple, list)) and len(background) == 3:
                 self.logger.debug("Background is RGB tuple: %s", background)
                 engine.set_background_color(background)
@@ -313,11 +347,11 @@ class ThumbnailGenerator:
                 f"Thumbnail rendered with {camera_params.view_name} view at {size[0]}x{size[1]}"
             )
 
-            return success
+            return success, camera_params
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error rendering thumbnail: %s", e, exc_info=True)
-            return False
+            return False, None
         finally:
             if engine:
                 engine.cleanup()

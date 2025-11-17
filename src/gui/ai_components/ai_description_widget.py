@@ -97,7 +97,7 @@ class AIProviderConfigWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """TODO: Add docstring."""
+        """Set up the provider configuration UI."""
         layout = QVBoxLayout(self)
 
         # Provider selection
@@ -111,13 +111,20 @@ class AIProviderConfigWidget(QWidget):
         # Configuration fields
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.Password)
+        self.api_key_edit.setPlaceholderText("Enter API key (optional for local providers)")
         provider_layout.addRow("API Key:", self.api_key_edit)
 
         self.model_combo = QComboBox()
         provider_layout.addRow("Model:", self.model_combo)
 
         self.base_url_edit = QLineEdit()
+        self.base_url_edit.setPlaceholderText("Endpoint URL (required for local providers)")
         provider_layout.addRow("Base URL:", self.base_url_edit)
+
+        # Reset provider button (affects only the selected provider)
+        self.reset_provider_button = QPushButton("Reset Provider to Defaults")
+        self.reset_provider_button.clicked.connect(self._reset_current_provider)
+        provider_layout.addRow("", self.reset_provider_button)
 
         # Test connection button
         self.test_button = QPushButton("Test Connection")
@@ -154,13 +161,34 @@ class AIProviderConfigWidget(QWidget):
         layout.addStretch()
 
     def set_providers(self, providers: List[str]) -> None:
-        """Set available providers."""
+        """Set available providers.
+
+        Local providers (Ollama, AI Studio) are shown first and selected by
+        default when available.
+        """
         self.provider_combo.clear()
-        self.provider_combo.addItems(providers)
-        self.providers = {name: {} for name in providers}
+
+        preferred_order = ["Ollama Local", "Google AI Studio"]
+        ordered = sorted(
+            providers,
+            key=lambda name: (
+                name not in preferred_order,
+                preferred_order.index(name) if name in preferred_order else name.lower(),
+            ),
+        )
+
+        self.provider_combo.addItems(ordered)
+        self.providers = {name: {} for name in ordered}
+
+        # Prefer local providers as defaults when present
+        for preferred in preferred_order:
+            index = self.provider_combo.findText(preferred)
+            if index >= 0:
+                self.provider_combo.setCurrentIndex(index)
+                break
 
     def load_provider_config(self, provider_name: str, config: Dict[str, Any]) -> None:
-        """Load configuration for a specific provider."""
+        """Load configuration for a specific provider into the UI."""
         self.current_provider = provider_name
 
         # Update UI with provider config
@@ -180,26 +208,121 @@ class AIProviderConfigWidget(QWidget):
         self.cache_size_spin.setValue(config.get("cache_size", 1000))
 
     def _get_provider_models(self, provider_name: str) -> List[str]:
-        """Get available models for a provider."""
+        """Get available models for a provider.
+
+        Keys must match the display names exposed by the service.
+        """
         models_map = {
-            "OpenAI": ["gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini"],
-            "Anthropic": ["claude-3-opus-20240229", "claude-3-sonnet-20240229"],
-            "Google Gemini": ["gemini-pro-vision", "gemini-pro"],
-            "OpenRouter": ["openai/gpt-4-vision-preview", "anthropic/claude-3-opus"],
-            "xAI": ["grok-beta"],
-            "ZAI": ["zai-model"],
-            "Perplexity": ["pplx-70b-online"],
-            "Ollama": ["llava", "llava:13b", "bakllava"],
-            "AI Studio": ["aistudio-model"],
+            "OpenAI GPT-4 Vision": ["gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini"],
+            "Anthropic Claude Vision": [
+                "claude-3-5-sonnet-20241022",
+                "claude-3-opus-20240229",
+                "claude-3-sonnet-20240229",
+            ],
+            "Google Gemini Vision": [
+                "gemini-2.5-flash",
+                "gemini-2.5-pro-preview-03-25",
+                "gemini-2.5-flash-lite-preview-06-17",
+            ],
+            "OpenRouter": [
+                "openai/gpt-4o",
+                "openai/gpt-4-vision-preview",
+            ],
+            "xAI Grok Vision": ["grok-vision-beta"],
+            "ZAI Vision": ["zai-vision-1"],
+            "Perplexity Vision": ["llava-7b", "llava-13b"],
+            "Ollama Local": ["llava", "bakllava"],
+            "Google AI Studio": ["gemini-1.5-pro-vision-001"],
         }
         return models_map.get(provider_name, ["default"])
 
     def _on_provider_changed(self, provider_name: str) -> None:
         """Handle provider selection change."""
-        if provider_name in self.providers:
-            # Load provider configuration
-            config = self.providers[provider_name]
-            self.load_provider_config(provider_name, config)
+        self.current_provider = provider_name
+
+        local_providers = {"Ollama Local", "Google AI Studio"}
+        is_local = provider_name in local_providers
+
+        if is_local:
+            self.api_key_edit.setPlaceholderText(
+                "Optional: API key (not required for local providers)"
+            )
+            self.base_url_edit.setPlaceholderText(
+                "Required: Local endpoint URL, e.g. http://localhost:11434/v1"
+            )
+        else:
+            self.api_key_edit.setPlaceholderText("Enter API key for selected provider")
+            self.base_url_edit.setPlaceholderText(
+                "Optional: Override default endpoint URL"
+            )
+
+        # Load provider configuration (or defaults if none stored yet)
+        config = self.providers.get(provider_name, {})
+        self.load_provider_config(provider_name, config)
+
+    def _reset_current_provider(self) -> None:
+        """Reset only the currently selected provider to its defaults."""
+        if not self.current_provider:
+            return
+
+        default_configs: Dict[str, Dict[str, Any]] = {
+            "OpenAI GPT-4 Vision": {
+                "api_key": "",
+                "model": "gpt-4-vision-preview",
+                "base_url": "",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+            "Anthropic Claude Vision": {
+                "api_key": "",
+                "model": "claude-3-5-sonnet-20241022",
+                "base_url": "",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+            "Google Gemini Vision": {
+                "api_key": "",
+                "model": "gemini-2.5-flash",
+                "base_url": "",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+            "OpenRouter": {
+                "api_key": "",
+                "model": "openai/gpt-4o",
+                "base_url": "https://openrouter.io/api/v1",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+            "Ollama Local": {
+                "api_key": "",
+                "model": "llava",
+                "base_url": "http://localhost:11434/v1",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+            "Google AI Studio": {
+                "api_key": "",
+                "model": "gemini-1.5-pro-vision-001",
+                "base_url": "http://localhost:1234/v1",
+                "cache_enabled": True,
+                "cache_size": 1000,
+            },
+        }
+
+        default_config = default_configs.get(self.current_provider)
+        if not default_config:
+            return
+
+        # Update in-memory config and UI for this provider only
+        self.providers[self.current_provider] = default_config
+        self.load_provider_config(self.current_provider, default_config)
+
+        QMessageBox.information(
+            self,
+            "Provider Reset",
+            f"{self.current_provider} has been reset to its default settings.",
+        )
 
     def _test_connection(self) -> None:
         """Test connection to the selected provider."""

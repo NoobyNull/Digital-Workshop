@@ -149,9 +149,11 @@ class Viewer3DWidget(QWidget):
         self.renderer = self.scene_manager.renderer
         self.model_renderer = ModelRenderer(self.renderer)
 
-        # Camera controller
+        # Camera controller (pass ui_manager for button visibility control)
         self.render_window = self.scene_manager.render_window
-        self.camera_controller = CameraController(self.renderer, self.render_window)
+        self.camera_controller = CameraController(
+            self.renderer, self.render_window, self.ui_manager
+        )
 
         # Expose commonly used attributes
         self.interactor = self.scene_manager.interactor
@@ -255,13 +257,16 @@ class Viewer3DWidget(QWidget):
         """Rotate view around axis."""
         self.camera_controller.rotate_around_view_axis(degrees)
 
-    def load_model(self, model: Model, progress_callback=None) -> bool:
+    def load_model(
+        self, model: Model, progress_callback=None, model_id: Optional[int] = None
+    ) -> bool:
         """
         Load a model into the viewer with optional progress tracking.
 
         Args:
             model: The model to load
             progress_callback: Optional callback for progress updates (progress_pct, message)
+            model_id: Optional model ID for loading saved camera view
         """
         try:
             self.logger.info("Loading model with %s triangles", model.stats.triangle_count)
@@ -312,6 +317,7 @@ class Viewer3DWidget(QWidget):
                 self.actor,
                 update_grid_callback=self.scene_manager.update_grid,
                 update_ground_callback=self.scene_manager.create_ground_plane,
+                model_id=model_id,
             )
 
             # Complete
@@ -334,7 +340,7 @@ class Viewer3DWidget(QWidget):
         self.scene_manager.render()
 
     def reset_view(self) -> None:
-        """Reset camera view."""
+        """Reset camera view and show coordinate rotation buttons."""
         if self.current_model and self.actor:
             self.camera_controller.fit_camera_to_model(
                 self.current_model,
@@ -344,6 +350,10 @@ class Viewer3DWidget(QWidget):
             )
         else:
             self.camera_controller.reset_view()
+
+        # Show coordinate rotation buttons when manually resetting view
+        if self.ui_manager and hasattr(self.ui_manager, "set_coordinate_rotation_buttons_visible"):
+            self.ui_manager.set_coordinate_rotation_buttons_visible(True)
 
     def get_model_info(self) -> Optional[dict]:
         """Get current model information."""
@@ -916,7 +926,14 @@ class Viewer3DWidget(QWidget):
 
                 self.logger.warning("Material manager not found, creating fallback instance")
                 return MaterialManager(get_database_manager())
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as fallback_error:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as fallback_error:
                 self.logger.debug("Could not create fallback material manager: %s", fallback_error)
 
             self.logger.debug("Material manager not found in any location")

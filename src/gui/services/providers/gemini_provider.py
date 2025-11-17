@@ -12,7 +12,9 @@ from .base_provider import BaseProvider
 class GeminiProvider(BaseProvider):
     """Google Gemini vision provider."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.5-flash", **kwargs) -> None:
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "gemini-2.5-flash", **kwargs
+    ) -> None:
         """
         Initialize Gemini provider.
 

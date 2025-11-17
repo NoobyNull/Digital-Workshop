@@ -85,7 +85,7 @@ class BackgroundHasher(QThread):
                         self.model_hashed.emit(model["id"], file_hash)
 
                 except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.main_window.logger.warning("Failed to hash model %s: {e}", model['id'])
+                    self.main_window.logger.warning("Failed to hash model %s: {e}", model["id"])
 
             # Signal completion
             self.all_complete.emit()

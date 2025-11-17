@@ -82,8 +82,8 @@ class GcodeTimeline(QWidget):
         controls_layout = QHBoxLayout()
         controls_layout.setSpacing(8)
 
-        self.play_button = QPushButton("▶ Play")
-        self.play_button.setMaximumWidth(80)
+        self.play_button = QPushButton("▶ Run Simulation")
+        self.play_button.setMaximumWidth(120)
         controls_layout.addWidget(self.play_button)
 
         self.pause_button = QPushButton("⏸ Pause")

@@ -9,7 +9,7 @@ Shows:
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QFileInfo
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget,
@@ -21,6 +21,8 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
+    QFileIconProvider,
+    QStyle,
 )
 
 from src.core.logging_config import get_logger
@@ -56,7 +58,6 @@ class ProjectDetailsWidget(QWidget):
         # Scroll area for content
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; }")
 
         scroll_widget = QWidget()
         scroll_layout = QVBoxLayout(scroll_widget)
@@ -244,9 +245,20 @@ class ProjectDetailsWidget(QWidget):
             self.logger.error("Failed to add resource row: %s", e)
 
     def _get_file_icon(self, file_path: Path) -> QIcon:
-        """Get appropriate icon for file type."""
-        # Return empty icon for now - can be enhanced with file type icons
-        return QIcon()
+        """Get an appropriate native icon for the given file path."""
+        try:
+            provider = QFileIconProvider()
+            file_info = QFileInfo(str(file_path))
+            icon = provider.icon(file_info)
+            if not icon.isNull():
+                return icon
+        except Exception as e:
+            self.logger.debug("Falling back to default file icon for %s: %s", file_path, e)
+        # Fallback: generic file icon from the current style
+        try:
+            return self.style().standardIcon(QStyle.SP_FileIcon)
+        except Exception:
+            return QIcon()
 
     def clear(self) -> None:
         """Clear all displayed information."""

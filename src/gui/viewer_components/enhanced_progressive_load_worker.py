@@ -121,6 +121,7 @@ class EnhancedProgressiveLoadWorker(QThread):
             # Create progress callback for the parser
             class ParserProgressCallback:
                 """TODO: Add docstring."""
+
                 def __init__(self, tracker) -> None:
                     """TODO: Add docstring."""
                     self.tracker = tracker

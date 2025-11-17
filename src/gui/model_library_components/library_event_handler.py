@@ -14,7 +14,6 @@ from PySide6.QtWidgets import QMenu, QMessageBox, QFileDialog, QInputDialog
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager
-from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.fast_hasher import FastHasher
 from src.core.database_manager import get_database_manager
 
@@ -193,8 +192,19 @@ class LibraryEventHandler:
                     # Add separator before file-specific actions
                     menu.addSeparator()
 
-                    # File/folder specific actions
-                    import_action = menu.addAction("Import")
+                    # Differentiate between files and folders
+                    path_obj = Path(file_path)
+                    if path_obj.is_file():
+                        # Check if it's a supported model file
+                        if path_obj.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                            import_action = menu.addAction("Import File")
+                        else:
+                            import_action = None
+                    elif path_obj.is_dir():
+                        import_action = menu.addAction("Import Folder")
+                    else:
+                        import_action = None
+
                     open_action = menu.addAction("Open in Explorer")
 
                     # Execute menu
@@ -202,7 +212,7 @@ class LibraryEventHandler:
 
                     if action == add_root_action:
                         self._add_root_folder()
-                    elif action == import_action:
+                    elif import_action and action == import_action:
                         self.library_widget._import_from_context_menu(file_path)
                     elif action == open_action:
                         self.library_widget._open_in_native_app(file_path)
@@ -289,7 +299,7 @@ class LibraryEventHandler:
                     ]:
                         files.append(p)
             if files:
-                self.library_widget.model_manager.load_models(files)
+                self.library_widget.facade.model_manager.load_models(files)
 
     def _generate_preview(self, model_id: int) -> None:
         """Generate preview image for a model."""
@@ -321,6 +331,7 @@ class LibraryEventHandler:
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
+            from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 
             config = ApplicationConfig.get_default()
             settings = QSettings()
@@ -337,35 +348,28 @@ class LibraryEventHandler:
             # Use background image if set, otherwise use background color
             background = bg_image if bg_image else bg_color
 
-            # Generate thumbnail with current preferences
-            thumbnail_service = ImportThumbnailService()
-            result = thumbnail_service.generate_thumbnail(
-                model_path=model_path,
-                file_hash=file_hash,
-                material=material,
-                background=background,
-                force_regenerate=True,
-            )
+            # Generate thumbnail using coordinator with dedicated window
+            coordinator = ThumbnailGenerationCoordinator(parent=self.library_widget)
 
-            if result.success:
+            # Connect completion signal to refresh display
+            def on_generation_completed():
+                self.logger.info("Preview generated for model %s", model_id)
+                if hasattr(self.library_widget, "_refresh_model_display"):
+                    self.library_widget._refresh_model_display(model_id)
                 QMessageBox.information(
                     self.library_widget,
                     "Success",
-                    f"Preview generated successfully!\nSaved to: {result.thumbnail_path}",
+                    "Preview generated successfully!",
                 )
-                self.logger.info("Preview generated for model %s: {result.thumbnail_path}", model_id)
 
-                # Refresh the library view to show updated thumbnail
-                if hasattr(self.library_widget, "_refresh_model_display"):
-                    self.library_widget._refresh_model_display(model_id)
-            else:
-                error_msg = result.error or "Unknown error"
-                QMessageBox.warning(
-                    self.library_widget,
-                    "Error",
-                    f"Failed to generate preview: {error_msg}",
-                )
-                self.logger.error("Preview generation failed for model %s: {error_msg}", model_id)
+            coordinator.generation_completed.connect(on_generation_completed)
+
+            # Generate thumbnail
+            coordinator.generate_thumbnails(
+                file_info_list=[(model_path, file_hash)],
+                background=background,
+                material=material,
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"

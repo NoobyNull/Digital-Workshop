@@ -1,0 +1,136 @@
+# Simplified GitLab CI Configuration
+# Use this if you don't have specific runners available
+
+stages:
+  - build
+
+variables:
+  # Cache directory for pip downloads
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Use GitLab's per-project sequential pipeline IID as our build number
+  BUILD_NUMBER: "$CI_PIPELINE_IID"
+  # Controls whether tests are run before building EXE ("true" / "false")
+  RUN_TESTS: "false"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip/
+
+build_windows_exe:
+  stage: build
+  # Remove tags restriction - allows any available runner
+  script:
+    - $ErrorActionPreference = "Stop"
+
+    python --version
+
+    # Install core and dev dependencies
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt -r requirements-dev.txt
+
+    # Install optional AI/utility dependencies
+    python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
+    
+    # Install security scanning tools
+    python -m pip install bandit safety semgrep
+    
+    # Run security scans
+    Write-Host "🔒 Running security scans..."
+    
+    # Safety check
+    python -m safety check --json --output safety-report.json
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Safety check failed"
+      exit 1
+    }
+    
+    # Bandit security scan
+    python -m bandit -r src/ -f json -o bandit-report.json
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Bandit security scan failed"
+      exit 1
+    }
+    
+    # Semgrep security scan
+    semgrep --config=auto --json --output=semgrep-report.json src/
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "❌ Semgrep security scan failed"
+      exit 1
+    }
+    
+    # Run automatic security fixes
+    Write-Host "🔒 Running automatic security fixes..."
+    python scripts/auto_security_fix.py --project-root .
+    
+    # Optionally run tests before building, controlled by RUN_TESTS variable
+    if ("$Env:RUN_TESTS" -eq "true") { 
+      python -m pytest 
+    }
+
+    # Build EXE using PyInstaller spec
+    python build_exe.py
+
+    # Rename generated EXE to include sequential build number
+    $buildNumber = $Env:CI_PIPELINE_IID
+    if (-not $buildNumber) { $buildNumber = "local" }
+    Write-Host "Build number: $buildNumber"
+
+    $distDir = "dist"
+    $exePath = Join-Path $distDir "Digital Workshop.exe"
+    if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
+
+    $newExeName = "Digital Workshop.$buildNumber.exe"
+    Rename-Item -Path $exePath -NewName $newExeName
+
+    # Generate change log
+    python scripts/generate_changelog.py --build-number $buildNumber --output "dist/changes-$buildNumber.txt"
+
+    # Write build metadata
+    $infoPath = Join-Path $distDir "build-info.txt"
+    Set-Content -Path $infoPath -Value "Build: $buildNumber" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Pipeline: $Env:CI_PIPELINE_URL" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Branch: $Env:CI_COMMIT_REF_NAME" -Encoding utf8
+    Add-Content -Path $infoPath -Value "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" -Encoding utf8
+
+    # Create comprehensive release info
+    $releaseInfoPath = Join-Path $distDir "release-$buildNumber.json"
+    $releaseInfo = @{
+      "buildNumber" = $buildNumber
+      "commitSha" = $Env:CI_COMMIT_SHA
+      "commitMessage" = "$(git log -1 --pretty=%s)"
+      "commitAuthor" = "$(git log -1 --pretty=%an)"
+      "branch" = $Env:CI_COMMIT_REF_NAME
+      "pipelineUrl" = $Env:CI_PIPELINE_URL
+      "timestamp" = $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+      "changesFile" = "changes-$buildNumber.txt"
+    }
+    $releaseInfo | ConvertTo-Json -Depth 3 | Out-File -FilePath $releaseInfoPath -Encoding utf8
+
+    # Tag build for future change tracking
+    git config user.email "ci@digital-workshop.local"
+    git config user.name "CI Builder"
+    git tag -f "build-$buildNumber" -m "Build $buildNumber"
+    git push origin "build-$buildNumber" 2>$null || Write-Host "Tag push failed (may already exist)"
+
+  artifacts:
+    name: "digital-workshop-build-$CI_PIPELINE_IID"
+    when: always
+    expire_in: never  # Keep all artifacts permanently
+    paths:
+      - dist/
+      - safety-report.json
+      - bandit-report.json
+      - semgrep-report.json
+      - security-fixes.json
+    reports:
+      junit: junit.xml  # If pytest is run
+      sast: bandit-report.json  # Static Application Security Testing
+      dependency_scanning: safety-report.json  # Dependency vulnerability scanning
+      secret_detection: semgrep-report.json  # Secrets detection
+
+  # Allow manual trigger and main branch
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'  # Manual trigger from GitLab UI

@@ -35,6 +35,24 @@ class CameraController:
         self.initial_position = self.camera.GetPosition()
         self.initial_focal_point = self.camera.GetFocalPoint()
         self.initial_view_up = self.camera.GetViewUp()
+        # Keep clipping range reasonable as the camera moves to avoid
+        # near-plane clipping when zoomed in close to the toolpath.
+        self._update_clipping_range()
+
+    def _update_clipping_range(self) -> None:
+        """Ensure the camera clipping range fits the visible geometry.
+
+        VTK's default clipping range can leave geometry clipped when the
+        camera is moved or zoomed aggressively. Resetting it relative to
+        the current bounds keeps the toolpath fully visible.
+        """
+        try:
+            self.renderer.ResetCameraClippingRange()
+        except Exception:
+            # Clipping is a visual aid only; never allow failures here to
+            # break interaction.
+            pass
+
 
     def handle_mouse_press(self, event: QMouseEvent) -> None:
         """Handle mouse press event."""
@@ -99,6 +117,9 @@ class CameraController:
         self.camera.Elevation(elevation)
         self.camera.OrthogonalizeViewUp()
 
+        # Keep clipping range in sync so geometry is not clipped when zoomed in
+        self._update_clipping_range()
+
     def _pan_camera(self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]) -> None:
         """Pan camera in the view plane."""
         # Get camera parameters
@@ -125,12 +146,14 @@ class CameraController:
         """Zoom camera in/out."""
         zoom_factor = 1.0 + (delta * self.zoom_speed)
         self.camera.Zoom(zoom_factor)
+        self._update_clipping_range()
 
     def reset_camera(self) -> None:
         """Reset camera to initial state."""
         self.camera.SetPosition(self.initial_position)
         self.camera.SetFocalPoint(self.initial_focal_point)
         self.camera.SetViewUp(self.initial_view_up)
+        self._update_clipping_range()
 
     def fit_all(self) -> None:
         """Fit all actors in view."""
@@ -138,27 +161,32 @@ class CameraController:
         self.initial_position = self.camera.GetPosition()
         self.initial_focal_point = self.camera.GetFocalPoint()
         self.initial_view_up = self.camera.GetViewUp()
+        self._update_clipping_range()
 
     def set_view_front(self) -> None:
         """Set camera to front view."""
         self.camera.SetPosition(0, 0, 100)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.SetViewUp(0, 1, 0)
+        self._update_clipping_range()
 
     def set_view_top(self) -> None:
         """Set camera to top view."""
         self.camera.SetPosition(0, 100, 0)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.SetViewUp(0, 0, -1)
+        self._update_clipping_range()
 
     def set_view_side(self) -> None:
         """Set camera to side view."""
         self.camera.SetPosition(100, 0, 0)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.SetViewUp(0, 1, 0)
+        self._update_clipping_range()
 
     def set_view_isometric(self) -> None:
         """Set camera to isometric view."""
         self.camera.SetPosition(100, 100, 100)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.SetViewUp(0, 1, 0)
+        self._update_clipping_range()

@@ -6,6 +6,7 @@ the functionality of 4 overlapping cleanup systems into a unified architecture
 with clear boundaries and responsibilities.
 """
 
+import logging
 import time
 import threading
 from typing import Dict, List, Optional, Any, Set
@@ -167,7 +168,7 @@ class CleanupHandler:
     def set_enabled(self, enabled: bool) -> None:
         """Enable or disable this handler."""
         self.enabled = enabled
-        self.logger.debug("Handler {self.name} %s", 'enabled' if enabled else 'disabled')
+        self.logger.debug("Handler {self.name} %s", "enabled" if enabled else "disabled")
 
 
 class UnifiedCleanupCoordinator:
@@ -328,8 +329,12 @@ class UnifiedCleanupCoordinator:
             verification_report = self._run_verification()
             self._stats.verification_report = verification_report
 
-            # Log verification results
-            self.logger.info(verification_report.get_summary())
+            # Log verification results - basic summary at INFO, detailed stats at DEBUG
+            self.logger.info(verification_report.get_summary(include_details=False))
+
+            # Log detailed stats only at DEBUG level
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(verification_report.get_summary(include_details=True))
 
             return self._stats
 

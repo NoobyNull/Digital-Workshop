@@ -1,8 +1,7 @@
-"""
-DWW (Digital Wood Works) Export Manager
+"""PJCT (Project File) Export Manager
 
-Handles exporting projects to DWW archive format with JSON metadata and integrity verification.
-DWW files are ZIP archives containing:
+Handles exporting projects to PJCT archive format with JSON metadata and integrity verification.
+PJCT files are ZIP archives containing:
 - manifest.json: Project metadata and file listing
 - files/: Directory containing all project files
 - integrity.json: Hash verification data
@@ -21,11 +20,11 @@ from src.core.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-class DWWExportManager:
-    """Manager for exporting projects to DWW format."""
+class PJCTExportManager:
+    """Manager for exporting projects to PJCT format."""
 
-    # DWW format version
-    DWW_VERSION = "1.0"
+    # PJCT format version
+    PJCT_VERSION = "1.0"
 
     # Salt length for hash verification (32 bytes = 256 bits)
     SALT_LENGTH = 32
@@ -50,11 +49,11 @@ class DWWExportManager:
         progress_callback=None,
     ) -> Tuple[bool, str]:
         """
-        Export a project to DWW format.
+        Export a project to PJCT format.
 
         Args:
             project_id: ID of the project to export
-            output_path: Path where DWW file will be saved
+            output_path: Path where PJCT file will be saved
             include_metadata: Whether to include project metadata
             include_thumbnails: Whether to include model thumbnails
             include_renderings: Whether to include rendered images
@@ -113,7 +112,14 @@ class DWWExportManager:
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
                                     dww_archive.write(thumbnail_path, arcname=thumb_arcname)
-                                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                                except (
+                                    OSError,
+                                    IOError,
+                                    ValueError,
+                                    TypeError,
+                                    KeyError,
+                                    AttributeError,
+                                ) as e:
                                     self.logger.debug("Failed to add thumbnail: %s", e)
 
                         if progress_callback:
@@ -176,8 +182,8 @@ class DWWExportManager:
     def _create_manifest(self, project: Dict, files: List[Dict]) -> Dict:
         """Create project manifest."""
         return {
-            "version": self.DWW_VERSION,
-            "format": "Digital Wood Works",
+            "version": self.PJCT_VERSION,
+            "format": "PJCT",
             "created_at": datetime.now().isoformat(),
             "project": {
                 "id": project.get("id"),
@@ -233,28 +239,27 @@ class DWWExportManager:
         salted_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
 
         return {
-            "version": self.DWW_VERSION,
+            "version": self.PJCT_VERSION,
             "salt": salt,
             "hash": salted_hash,
             "algorithm": "SHA256",
             "file_hashes": file_hashes,
         }
 
-    def verify_dww_file(self, dww_path: str) -> Tuple[bool, str]:
-        """
-        Verify integrity of a DWW file.
+    def verify_pjct_file(self, pjct_path: str) -> Tuple[bool, str]:
+        """Verify integrity of a PJCT file.
 
         Args:
-            dww_path: Path to DWW file to verify
+            pjct_path: Path to PJCT file to verify
 
         Returns:
             Tuple of (is_valid, message)
         """
         try:
-            with zipfile.ZipFile(dww_path, "r") as dww_archive:
+            with zipfile.ZipFile(pjct_path, "r") as pjct_archive:
                 # Read manifest and integrity data
-                manifest_json = dww_archive.read("manifest.json").decode("utf-8")
-                integrity_json = dww_archive.read("integrity.json").decode("utf-8")
+                manifest_json = pjct_archive.read("manifest.json").decode("utf-8")
+                integrity_json = pjct_archive.read("integrity.json").decode("utf-8")
 
                 manifest = json.loads(manifest_json)
                 integrity_data = json.loads(integrity_json)
@@ -275,12 +280,12 @@ class DWWExportManager:
                 calculated_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
 
                 if calculated_hash == stored_hash:
-                    return True, "DWW file integrity verified successfully"
-                else:
-                    return (
-                        False,
-                        "DWW file integrity check failed - file may be corrupted",
-                    )
+                    return True, "PJCT file integrity verified successfully"
+
+                return (
+                    False,
+                    "PJCT file integrity check failed - file may be corrupted",
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            return False, f"Failed to verify DWW file: {str(e)}"
+            return False, f"Failed to verify PJCT file: {str(e)}"

@@ -46,6 +46,7 @@ Digital Workshop is a modular, layered application designed for 3D modeling, vis
 - **SystemInitializer.py** - System setup and validation
 - **ExceptionHandler.py** - Global exception handling
 - **LoggingConfig.py** - Logging configuration
+- **CentralizedLoggingService.py** - Unified logging service with structured output
 
 ### 2. **Database Layer** (`src/core/database/`)
 - **DatabaseManager.py** - Main database interface
@@ -309,7 +310,7 @@ models (1) ──→ (many) files
 ## 🛠️ Maintenance & Support
 
 ### Monitoring
-- **Logging** - Comprehensive logging system
+- **Logging** - Comprehensive logging system with structured JSON output
 - **Error Tracking** - Exception handling and reporting
 - **Performance Metrics** - Performance monitoring
 - **Database Health** - Database maintenance checks
@@ -332,11 +333,48 @@ models (1) ──→ (many) files
 
 ---
 
-## 📞 Architecture Support
+## 🪵 Operational Notes: Logging System
+
+### LoggingManager Architecture
+
+The application uses a singleton `LoggingManager` that owns the entire logging infrastructure. This centralized approach ensures:
+
+1. **Consistent Handler Configuration**: All components share the same formatters, filters, and handlers
+2. **Structured Metadata Injection**: Automatic enrichment of log entries with correlation IDs, app version, and system context
+3. **Resource Lifecycle Management**: Proper initialization and cleanup of logging resources
+
+### Startup Sequence
+
+During application startup, the logging system is initialized in this order:
+
+1. **CLI Parsing** ([`src/main.py`](src/main.py)): Command-line flags are parsed into a `LoggingProfile`
+2. **Profile Hydration**: The profile is created once with all logging preferences
+3. **System Initialization** ([`src/core/system_initializer.py`](src/core/system_initializer.py)): Calls `setup_logging(profile=...)` to configure the manager
+4. **Service Integration**: Other services receive loggers via `get_logger()` calls
+
+### Important Usage Guidelines
+
+- **DO** use `get_logger(name)` to obtain logger instances in your modules
+- **DO** use `get_activity_logger(name)` for user-facing operations that should always be visible
+- **DO NOT** reconfigure handlers or formatters in individual modules
+- **DO NOT** call `logging.basicConfig()` or similar global configuration functions
+- **DO** use `set_correlation_id()` when processing related operations
+
+### Specialized Log Streams
+
+The system maintains dedicated log streams for different concerns:
+
+- **Main Application**: Rotating JSON logs with metadata injection
+- **Security Events**: Separate security.log for audit trails
+- **Performance Metrics**: Dedicated performance.log for monitoring
+- **Error Tracking**: Isolated errors.log for error analysis
+
+All streams share the same structured formatter and context filter, ensuring consistency across the entire application.
 
 For questions about:
 - **System Design**: See SYSTEM_ARCHITECTURE.md
 - **Installation**: See MODULAR_INSTALLER_START_HERE.md
 - **Development**: See INSTALLER_IMPLEMENTATION.md
 - **Database**: See README.md (Database section)
+- **Logging Configuration**: See README.md (Logging Configuration section)
 

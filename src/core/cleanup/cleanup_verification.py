@@ -5,11 +5,12 @@ This module provides comprehensive verification of cleanup operations,
 resource leak detection, and detailed statistics collection.
 """
 
-import time
 import gc
-from typing import Dict, List, Any, Optional
+import json
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from src.core.logging_config import get_logger
 
@@ -104,8 +105,81 @@ class CleanupVerificationReport:
         """Check if verification was successful (no failures)."""
         return self.failed_checks == 0
 
-    def get_summary(self) -> str:
-        """Get a summary of verification results."""
+    def _format_value(self, value: Any) -> str:
+        """
+        Format a value for display in logs.
+
+        Args:
+            value: The value to format
+
+        Returns:
+            Formatted string representation
+        """
+        if isinstance(value, (dict, list, tuple)):
+            # Use JSON formatting for complex structures
+            try:
+                # Convert to JSON with compact formatting
+                json_str = json.dumps(value, indent=None, separators=(",", ":"))
+                # For very long strings, truncate
+                if len(json_str) > 200:
+                    return json_str[:197] + "..."
+                return json_str
+            except (TypeError, ValueError):
+                # Fallback to string representation if JSON fails
+                return str(value)
+        else:
+            # For simple types, just convert to string
+            return str(value)
+
+    def _format_value_compact(self, value: Any) -> str:
+        """
+        Format a value in a compact, single-line format suitable for logs.
+
+        Args:
+            value: The value to format
+
+        Returns:
+            Compact string representation
+        """
+        if isinstance(value, dict):
+            if not value:
+                return "{}"
+            # Format dict as key=value pairs
+            items = []
+            for k, v in value.items():
+                if isinstance(v, dict):
+                    # Nested dict: show count
+                    items.append(f"{k}={{{len(v)} items}}")
+                elif isinstance(v, (list, tuple)):
+                    # List/tuple: show as compact representation
+                    if len(v) <= 3:
+                        items.append(f"{k}={v}")
+                    else:
+                        items.append(f"{k}=[{len(v)} items]")
+                else:
+                    items.append(f"{k}={v}")
+            return "{" + ", ".join(items) + "}"
+        elif isinstance(value, (list, tuple)):
+            if not value:
+                return "[]"
+            # For short lists, show all items
+            if len(value) <= 5:
+                return str(value)
+            # For long lists, show first few and count
+            return f"[{value[0]}, {value[1]}, ... ({len(value)} total)]"
+        else:
+            return str(value)
+
+    def get_summary(self, include_details: bool = False) -> str:
+        """
+        Get a summary of verification results.
+
+        Args:
+            include_details: Whether to include detailed memory/resource stats (default: False)
+
+        Returns:
+            Summary string
+        """
         lines = [
             "=== Cleanup Verification Summary ===",
             f"Total checks: {self.total_checks}",
@@ -114,27 +188,32 @@ class CleanupVerificationReport:
             f"Failed: {self.failed_checks}",
             f"Skipped: {self.skipped_checks}",
             f"Duration: {self.total_duration:.3f}s",
-            "",
         ]
 
+        # Always show resource leaks if present (critical info)
         if self.resource_leaks:
-            lines.append(f"Resource Leaks: {len(self.resource_leaks)}")
+            lines.append("")
+            lines.append(f"⚠ Resource Leaks: {len(self.resource_leaks)}")
             for leak in self.resource_leaks:
                 lines.append(f"  {leak}")
-            lines.append("")
 
-        if self.memory_stats:
-            lines.append("Memory Statistics:")
-            for key, value in self.memory_stats.items():
-                lines.append(f"  {key}: {value}")
-            lines.append("")
+        # Only include detailed stats if requested (DEBUG level)
+        if include_details:
+            if self.memory_stats:
+                lines.append("")
+                lines.append("Memory Statistics:")
+                for key, value in self.memory_stats.items():
+                    formatted = self._format_value_compact(value)
+                    lines.append(f"  {key}: {formatted}")
 
-        if self.resource_stats:
-            lines.append("Resource Statistics:")
-            for key, value in self.resource_stats.items():
-                lines.append(f"  {key}: {value}")
-            lines.append("")
+            if self.resource_stats:
+                lines.append("")
+                lines.append("Resource Statistics:")
+                for key, value in self.resource_stats.items():
+                    formatted = self._format_value_compact(value)
+                    lines.append(f"  {key}: {formatted}")
 
+        lines.append("")
         status = "VERIFICATION PASSED ✓" if self.is_successful() else "VERIFICATION FAILED ✗"
         lines.append(status)
 
@@ -177,7 +256,7 @@ class CleanupVerifier:
         start_time = time.time()
 
         try:
-            self.logger.info("Starting cleanup verification")
+            self.logger.debug("Starting cleanup verification")
 
             # Run verification checks
             self._verify_phase_completion(stats)
@@ -188,8 +267,8 @@ class CleanupVerifier:
 
             self.report.total_duration = time.time() - start_time
 
-            # Log summary
-            self.logger.info(self.report.get_summary())
+            # Don't log summary here - let the coordinator log it to avoid duplication
+            self.logger.debug("Cleanup verification completed")
 
             return self.report
 

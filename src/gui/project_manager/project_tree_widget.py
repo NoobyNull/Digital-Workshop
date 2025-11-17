@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QInputDialog,
     QMenu,
+    QSizePolicy,
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -26,7 +27,7 @@ from ...core.services.project_manager import ProjectManager
 from ...core.services.project_importer import ProjectImporter
 from ...core.services.dry_run_analyzer import DryRunAnalyzer
 from ...core.database.database_manager import DatabaseManager
-from ...core.export.dww_export_manager import DWWExportManager
+from ...core.export.dww_export_manager import PJCTExportManager
 from ...core.export.dww_import_manager import DWWImportManager
 from ...core.logging_config import get_logger
 
@@ -88,6 +89,14 @@ class ProjectTreeWidget(QWidget):
             parent: Parent widget
         """
         super().__init__(parent)
+
+        # Set flexible size policy to allow shrinking when tabbed with other widgets
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        # Set minimum size to prevent zero-width/zero-height widgets
+        from src.gui.theme import MIN_WIDGET_SIZE
+
+        self.setMinimumSize(MIN_WIDGET_SIZE, MIN_WIDGET_SIZE)
+
         self.db_manager = db_manager
         self.project_manager = ProjectManager(db_manager)
         self.project_importer = ProjectImporter(db_manager)
@@ -132,13 +141,13 @@ class ProjectTreeWidget(QWidget):
         delete_btn.clicked.connect(self._delete_selected_project)
         button_layout.addWidget(delete_btn)
 
-        export_btn = QPushButton("Export as DWW")
-        export_btn.clicked.connect(self._export_project_as_dww)
+        export_btn = QPushButton("Export Project")
+        export_btn.clicked.connect(self._export_project_as_pjct)
         button_layout.addWidget(export_btn)
 
-        import_dww_btn = QPushButton("Import DWW")
-        import_dww_btn.clicked.connect(self._import_dww_project)
-        button_layout.addWidget(import_dww_btn)
+        import_project_btn = QPushButton("Import Project")
+        import_project_btn.clicked.connect(self._import_pjct_project)
+        button_layout.addWidget(import_project_btn)
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
@@ -264,8 +273,8 @@ class ProjectTreeWidget(QWidget):
                 open_action = menu.addAction("Open Project")
                 open_action.triggered.connect(lambda: self._open_project(item.data(0, Qt.UserRole)))
 
-                export_action = menu.addAction("Export as DWW")
-                export_action.triggered.connect(self._export_project_as_dww)
+                export_action = menu.addAction("Export Project")
+                export_action.triggered.connect(self._export_project_as_pjct)
 
                 menu.addSeparator()
 
@@ -513,8 +522,8 @@ class ProjectTreeWidget(QWidget):
             logger.error("Failed to delete project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to delete project: {str(e)}")
 
-    def _export_project_as_dww(self) -> None:
-        """Export selected project as DWW (Digital Wood Works) archive."""
+    def _export_project_as_pjct(self) -> None:
+        """Export selected project as PJCT (project) archive."""
         try:
             current_item = self.tree_widget.currentItem()
             if not current_item:
@@ -532,21 +541,21 @@ class ProjectTreeWidget(QWidget):
             # Get save location
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "Export Project as DWW",
-                f"{project_name}.dww",
-                "Digital Wood Works (*.dww);;All Files (*)",
+                "Export Project",
+                f"{project_name}.pjct",
+                "Project File (*.pjct);;All Files (*)",
             )
 
             if not file_path:
                 return
 
             # Export project
-            export_manager = DWWExportManager(self.db_manager)
+            export_manager = PJCTExportManager(self.db_manager)
             success, message = export_manager.export_project(project_id, file_path)
 
             if success:
                 QMessageBox.information(self, "Export Successful", message)
-                logger.info("Exported project %s to {file_path}", project_name)
+                logger.info("Exported project %s to %s", project_name, file_path)
             else:
                 QMessageBox.critical(self, "Export Failed", message)
                 logger.error("Failed to export project: %s", message)
@@ -555,15 +564,15 @@ class ProjectTreeWidget(QWidget):
             logger.error("Failed to export project: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to export project: {str(e)}")
 
-    def _import_dww_project(self) -> None:
-        """Import a project from DWW (Digital Wood Works) archive."""
+    def _import_pjct_project(self) -> None:
+        """Import a project from PJCT (project) archive."""
         try:
-            # Get DWW file to import
+            # Get PJCT file to import
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
-                "Import DWW Project",
+                "Import Project",
                 "",
-                "Digital Wood Works (*.dww);;All Files (*)",
+                "Project File (*.pjct);;All Files (*)",
             )
 
             if not file_path:
@@ -583,7 +592,7 @@ class ProjectTreeWidget(QWidget):
             file_count = manifest.get("file_count", 0)
 
             preview_text = (
-                f"Import DWW Project\n\n"
+                f"Import Project\n\n"
                 f"Project: {project_name}\n"
                 f"Files: {file_count}\n"
                 f"Created: {project_info.get('created_at', 'Unknown')}\n\n"
@@ -592,7 +601,7 @@ class ProjectTreeWidget(QWidget):
 
             reply = QMessageBox.question(
                 self,
-                "Import DWW Project",
+                "Import Project",
                 preview_text,
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -602,7 +611,7 @@ class ProjectTreeWidget(QWidget):
 
             # Ask for project name
             import_name, ok = QInputDialog.getText(
-                self, "Import DWW Project", "Project name:", text=project_name
+                self, "Import Project", "Project name:", text=project_name
             )
 
             if not ok or not import_name:

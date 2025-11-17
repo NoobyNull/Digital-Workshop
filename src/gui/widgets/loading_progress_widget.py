@@ -34,7 +34,9 @@ class LoadingProgressWidget(QWidget):
     # Signals
     cancel_requested = Signal()  # Emitted when user clicks cancel button
 
-    def __init__(self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, parent: Optional[QWidget] = None, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the loading progress widget.
 

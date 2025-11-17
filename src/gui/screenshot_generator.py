@@ -114,7 +114,14 @@ class ScreenshotGenerator:
                                 self.logger.debug("Mapper updated with latest data")
                     else:
                         self.logger.warning(f"Failed to apply material '{mat_to_apply}'")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to apply material: %s", e)
 
             # Setup lighting and camera
@@ -163,12 +170,40 @@ class ScreenshotGenerator:
                 engine.cleanup()
 
     def _load_model(self, model_path: str) -> Optional[STLModel]:
-        """Load a model from file."""
+        """
+        Load a model from file using Trimesh (fast) with fallback.
+
+        For screenshot generation, we prioritize speed:
+        1. Try Trimesh first (fastest, optimized for rendering)
+        2. Fallback to STL parser with lazy loading
+
+        Args:
+            model_path: Path to model file
+
+        Returns:
+            Loaded Model object or None on failure
+        """
         try:
+            # Try Trimesh first for fast loading (PREFERRED for screenshots)
+            from src.parsers.trimesh_loader import get_trimesh_loader
+
+            trimesh_loader = get_trimesh_loader()
+
+            if trimesh_loader.is_trimesh_available():
+                model = trimesh_loader.load_model(model_path)
+                if model:
+                    self.logger.debug(
+                        "Loaded model via Trimesh: %s triangles",
+                        len(model.triangles) if hasattr(model, "triangles") else 0,
+                    )
+                    return model
+
+            # Fallback to standard parser with lazy loading for speed
+            self.logger.debug("Trimesh unavailable, using STL parser with lazy loading")
             parser = STLParser()
-            # Force full geometry loading for screenshots (disable lazy loading)
-            model = parser.parse_file(model_path, lazy_loading=False)
+            model = parser.parse_file(model_path, lazy_loading=True)
             return model
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load model %s: {e}", model_path)
             return None
@@ -234,7 +269,14 @@ class ScreenshotGenerator:
                     normals.InsertNextTuple(normal)
                     normals.InsertNextTuple(normal)
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as tri_error:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as tri_error:
                     self.logger.warning("Error processing triangle %s: {tri_error}", i)
                     continue
 

@@ -497,7 +497,7 @@ class VSyncManager:
     def set_vsync_enabled(self, enabled: bool) -> None:
         """Manually set VSync enabled state."""
         self._vsync_enabled = enabled
-        logger.info("VSync %s", 'enabled' if enabled else 'disabled')
+        logger.info("VSync %s", "enabled" if enabled else "disabled")
 
     def get_vsync_enabled(self) -> bool:
         """Get current VSync state."""
@@ -881,7 +881,9 @@ class RenderingPerformanceManager:
         # Create LOD levels if needed
         if triangle_count > self.config.max_triangles // 2:
             # This would typically be called with the actual mesh object
-            logger.info("Creating LOD levels for model %s with {triangle_count} triangles", model_id)
+            logger.info(
+                "Creating LOD levels for model %s with {triangle_count} triangles", model_id
+            )
 
     def shutdown(self) -> None:
         """Shutdown the rendering performance manager."""
