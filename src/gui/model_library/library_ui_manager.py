@@ -83,19 +83,24 @@ class LibraryUIManager:
             "Library",
         )
 
-        # Files tab
-        files_container = QWidget()
+        # Files tab (hidden - file browser created for internal use only)
+        # Parent the container to the main library widget so the underlying Qt
+        # objects (file_tree, models, etc.) stay alive even though the tab is
+        # not visible.
+        files_container = QWidget(self.library_widget)
         files_layout = QVBoxLayout(files_container)
         files_layout.setContentsMargins(0, 0, 0, 0)
         files_layout.setSpacing(SPACING_8)
 
         self.create_file_browser(files_layout)
 
-        self.library_widget.internal_tabs.addTab(
-            files_container,
-            self._std_icon(QStyle.SP_DirOpenIcon),
-            "Files",
-        )
+        # Do not add the Files tab to internal_tabs; root-folder configuration now lives
+        # in Preferences, and file imports are handled via the main File -> Import flow.
+        # self.library_widget.internal_tabs.addTab(
+        #     files_container,
+        #     self._std_icon(QStyle.SP_DirOpenIcon),
+        #     "Files",
+        # )
 
         self.apply_styling()
 

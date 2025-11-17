@@ -400,6 +400,9 @@ class MainWindow(QMainWindow):
                 self.project_manager_widget.project_opened.connect(self._on_project_opened)
                 self.project_manager_widget.project_created.connect(self._on_project_created)
                 self.project_manager_widget.project_deleted.connect(self._on_project_deleted)
+                self.project_manager_widget.file_selected.connect(
+                    self._on_project_file_selected
+                )
                 self.project_manager_widget.tab_switch_requested.connect(
                     self._on_tab_switch_requested
                 )
@@ -2182,6 +2185,17 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
 
+            if hasattr(self, "viewer_widget") and self.viewer_widget:
+                try:
+                    if hasattr(self.viewer_widget, "set_current_project"):
+                        self.viewer_widget.set_current_project(project_id)
+                        self.logger.debug(
+                            f"Set current project for Model Viewer: {project_id}"
+                        )
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Model Viewer: {e}")
+
+
             # Attach the project to the G-code previewer so that timing
             # calculations use the correct machine and feed override.
             if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget:
@@ -2212,8 +2226,7 @@ class MainWindow(QMainWindow):
             self.logger.error("Failed to handle project created event: %s", str(e))
 
     def _on_project_deleted(self, project_id: str) -> None:
-        """
-        Handle project deleted event from project manager.
+        """Handle project deleted event from project manager.
 
         Args:
             project_id: ID of the deleted project
@@ -2225,6 +2238,58 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error("Failed to handle project deleted event: %s", str(e))
+
+    def _on_project_file_selected(self, file_path: str, tab_name: str) -> None:
+        """Handle file selection from the project tree.
+
+        This is triggered when a file is activated in the Project Manager.
+        The project tree already decides which hero tab should be used and
+        emits that as ``tab_name``. Here we just perform the actual load.
+        """
+        try:
+            if not file_path:
+                return
+
+            path_obj = Path(file_path)
+            if not path_obj.exists():
+                self.logger.warning("Selected project file does not exist: %s", file_path)
+                QMessageBox.warning(
+                    self,
+                    "File Not Found",
+                    f"The selected file no longer exists on disk:\n{file_path}",
+                )
+                return
+
+            # For model files, mirror the behaviour of the model library path
+            # (status text + indeterminate progress). G-code previewer manages
+            # its own progress UI internally.
+            if tab_name == "Model Previewer":
+                filename = path_obj.name
+                self.status_label.setText(f"Loading: {filename}")
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setRange(0, 0)
+
+                # This is a project file, not a library model; clear any
+                # library model id and load directly from path.
+                self.current_model_id = None
+                if hasattr(self, "model_loader_manager") and self.model_loader_manager:
+                    self.model_loader_manager.load_stl_model(file_path)
+
+            elif tab_name == "G Code Previewer":
+                if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget:
+                    self.gcode_previewer_widget.load_gcode_file(file_path)
+
+        except Exception as e:  # noqa: BLE001
+            self.logger.error("Failed to open project file %s: %s", file_path, e)
+            QMessageBox.critical(
+                self,
+                "Open File Error",
+                f"Failed to open the selected file:\n{file_path}\n\n{e}",
+            )
+            if hasattr(self, "progress_bar"):
+                self.progress_bar.setVisible(False)
+            if hasattr(self, "status_label"):
+                self.status_label.setText("Ready")
 
     def _update_project_manager_action_state(self) -> None:
         """Update project manager action state based on dock visibility."""
@@ -2370,6 +2435,29 @@ class MainWindow(QMainWindow):
         """Handle theme change notification."""
         # Theme is managed by ThemeService and applied globally
         self.logger.info("Theme changed: %s", preset_name)
+
+
+    def _add_to_project(self) -> None:
+        """Dispatch Add to Project to the active hero tab."""
+        try:
+            current_widget = self.hero_tabs.currentWidget()
+            if current_widget is None:
+                QMessageBox.warning(self, "Add to Project", "No tab is currently selected.")
+                return
+
+            save_method = getattr(current_widget, "save_to_project", None)
+            if callable(save_method):
+                save_method()
+            else:
+                tab_name = self.hero_tabs.tabText(self.hero_tabs.currentIndex())
+                QMessageBox.information(
+                    self,
+                    "Add to Project",
+                    f"The '{tab_name}' tab does not support saving to a project.",
+                )
+        except Exception as exc:
+            self.logger.error("Add to Project failed: %s", exc)
+            QMessageBox.critical(self, "Add to Project", f"Failed to save to project:\n{exc}")
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""

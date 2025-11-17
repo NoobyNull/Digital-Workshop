@@ -6,6 +6,8 @@ Shows:
 - Attached resources/files (list of files associated with the model)
 """
 
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any
 
@@ -23,12 +25,31 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QFileIconProvider,
     QStyle,
+    QMenu,
+    QMessageBox,
+    QFileDialog,
 )
 
+from src.core.database_manager import get_database_manager
 from src.core.logging_config import get_logger
+from src.utils.file_hash import calculate_file_hash
 
 
 logger = get_logger(__name__)
+
+# Mapping from file extensions to hero tab names.
+# Keep this in sync with FILE_TYPE_TAB_MAP in
+# src.gui.project_manager.project_tree_widget.ProjectTreeWidget.
+RESOURCE_TAB_MAP = {
+    ".nc": "G Code Previewer",
+    ".gcode": "G Code Previewer",
+    ".stl": "Model Previewer",
+    ".obj": "Model Previewer",
+    ".step": "Model Previewer",
+    ".stp": "Model Previewer",
+    ".3mf": "Model Previewer",
+    ".ply": "Model Previewer",
+}
 
 
 class ProjectDetailsWidget(QWidget):
@@ -101,11 +122,9 @@ class ProjectDetailsWidget(QWidget):
             h_layout = QHBoxLayout()
 
             label = QLabel(f"{label_text}:")
-            label.setStyleSheet("font-weight: bold; min-width: 100px;")
 
             value = QLabel("-")
             value.setWordWrap(True)
-            value.setStyleSheet("color: #666666;")
 
             self.info_labels[field_key] = value
 
@@ -134,6 +153,11 @@ class ProjectDetailsWidget(QWidget):
         self.resources_table.setMaximumHeight(200)
         self.resources_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.resources_table.setSelectionMode(QTableWidget.SingleSelection)
+        self.resources_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.resources_table.customContextMenuRequested.connect(
+            self._on_resources_context_menu
+        )
+        self.resources_table.itemDoubleClicked.connect(self._on_resource_activated)
 
         layout.addWidget(self.resources_table)
 
@@ -219,6 +243,7 @@ class ProjectDetailsWidget(QWidget):
             # File name
             name_item = QTableWidgetItem(file_path.name)
             name_item.setIcon(self._get_file_icon(file_path))
+            name_item.setData(Qt.UserRole, str(file_path))
             self.resources_table.setItem(row, 0, name_item)
 
             # File size
@@ -230,7 +255,7 @@ class ProjectDetailsWidget(QWidget):
                     size_str = f"{size / 1024:.2f} KB"
                 else:
                     size_str = f"{size} B"
-            except:
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
                 size_str = "-"
 
             size_item = QTableWidgetItem(size_str)
@@ -244,6 +269,91 @@ class ProjectDetailsWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add resource row: %s", e)
 
+    def _on_resource_activated(self, item: QTableWidgetItem) -> None:
+        """Handle double-click on a resource row to open it in the appropriate tab."""
+        if item is None:
+            return
+
+        try:
+            row = item.row()
+            name_item = self.resources_table.item(row, 0)
+            if name_item is None:
+                return
+
+            file_path_str = name_item.data(Qt.UserRole)
+            if not file_path_str:
+                return
+
+            file_path = Path(file_path_str)
+            if not file_path.exists():
+                QMessageBox.warning(
+                    self,
+                    "File Not Found",
+                    f"The selected file no longer exists on disk:\n{file_path_str}",
+                )
+                return
+
+            file_ext = file_path.suffix.lower()
+            tab_name = RESOURCE_TAB_MAP.get(file_ext)
+
+            main_window = self.window()
+
+            # Switch hero tab first if we know where this file should open
+            if tab_name and main_window is not None and hasattr(
+                main_window, "_on_tab_switch_requested"
+            ):
+                try:
+                    main_window._on_tab_switch_requested(tab_name)
+                except Exception:  # noqa: BLE001
+                    self.logger.warning(
+                        "Failed to switch tab for resource %s", file_path_str
+                    )
+
+            if main_window is None:
+                return
+
+            if tab_name == "Model Previewer":
+                self._open_model_resource(main_window, file_path)
+            elif tab_name == "G Code Previewer":
+                self._open_gcode_resource(main_window, file_path)
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to open resource from Project Details: %s", e)
+
+    def _open_model_resource(self, main_window, file_path: Path) -> None:
+        """Open a model-type resource in the main viewer.
+
+        Prefer using the current model ID so we get consistent behaviour with
+        the model library (camera restore, status messages, etc.).
+        """
+        try:
+            # If we know which model this is, delegate to the main window handler
+            if getattr(self, "current_model_id", None) is not None and hasattr(
+                main_window, "_on_model_double_clicked"
+            ):
+                main_window._on_model_double_clicked(self.current_model_id)  # type: ignore[arg-type]
+                return
+
+            # Fallback: load directly from the file path
+            model_loader = getattr(main_window, "model_loader_manager", None)
+            if model_loader is not None:
+                model_loader.load_stl_model(str(file_path))
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to open model resource %s: %s", file_path, e)
+
+    def _open_gcode_resource(self, main_window, file_path: Path) -> None:
+        """Open a G-code resource in the G Code Previewer tab."""
+        try:
+            gcode_widget = getattr(main_window, "gcode_previewer_widget", None)
+            if gcode_widget is None:
+                return
+
+            gcode_widget.load_gcode_file(str(file_path))
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Failed to open G-code resource %s: %s", file_path, e)
+
     def _get_file_icon(self, file_path: Path) -> QIcon:
         """Get an appropriate native icon for the given file path."""
         try:
@@ -252,13 +362,209 @@ class ProjectDetailsWidget(QWidget):
             icon = provider.icon(file_info)
             if not icon.isNull():
                 return icon
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.logger.debug("Falling back to default file icon for %s: %s", file_path, e)
         # Fallback: generic file icon from the current style
         try:
             return self.style().standardIcon(QStyle.SP_FileIcon)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return QIcon()
+
+    def _on_resources_context_menu(self, pos) -> None:
+        """Show context menu for the resources table."""
+        if not self.current_model_data:
+            return
+
+        index = self.resources_table.indexAt(pos)
+        if not index.isValid():
+            return
+
+        # Currently we only support operations on the primary model file.
+        file_path_str = self.resources_table.item(index.row(), 0).data(Qt.UserRole)
+        if not file_path_str:
+            return
+
+        menu = QMenu(self)
+
+        replace_action = menu.addAction("Replace File...")
+        put_back_action = menu.addAction("Put Back to Original Location")
+
+        # Only enable "Put Back" if we have an original path recorded.
+        original_path = self.current_model_data.get("original_path")
+        put_back_action.setEnabled(bool(original_path))
+
+        chosen_action = menu.exec(self.resources_table.viewport().mapToGlobal(pos))
+        if chosen_action is replace_action:
+            self._replace_model_file(Path(file_path_str))
+        elif chosen_action is put_back_action:
+            self._restore_model_file()
+
+    def _replace_model_file(self, current_path: Path) -> None:
+        """Replace the current model file with a new one.
+
+        This updates the underlying model record in the database and refreshes the UI.
+        """
+        db = get_database_manager()
+
+        if not self.current_model_data or self.current_model_id is None:
+            return
+
+        # Ask user for replacement file
+        dialog_caption = "Select Replacement File"
+        start_dir = str(current_path.parent) if current_path and current_path.exists() else ""
+        new_path_str, _ = QFileDialog.getOpenFileName(
+            self,
+            dialog_caption,
+            start_dir,
+            "All Files (*.*)",
+        )
+        if not new_path_str:
+            return
+
+        new_path = Path(new_path_str)
+        if not new_path.exists():
+            QMessageBox.warning(self, "Replace File", "Selected file does not exist.")
+            return
+
+        # Confirm replacement
+        confirm = QMessageBox.question(
+            self,
+            "Replace File",
+            "Replace the current model file with the selected file?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        try:
+            # Preserve the original path if we have not recorded it yet.
+            updates = {}
+            if not self.current_model_data.get("original_path"):
+                updates["original_path"] = str(current_path)
+
+            # For now, we treat the selected file as the new path directly.
+            # If a managed storage scheme is introduced, this is the place to
+            # copy into that area.
+            updates["file_path"] = str(new_path)
+            updates["file_size"] = new_path.stat().st_size
+
+            file_hash = calculate_file_hash(str(new_path))
+            if file_hash:
+                updates["file_hash"] = file_hash
+
+            # Apply updates to the model record
+            if updates:
+                if not db.update_model(self.current_model_id, **updates):
+                    QMessageBox.warning(
+                        self,
+                        "Replace File",
+                        "Failed to update model record in the database.",
+                    )
+                    return
+
+            # Refresh cached model data and UI
+            model_data = db.get_model(self.current_model_id)
+            if model_data:
+                self.set_model(model_data)
+
+            QMessageBox.information(self, "Replace File", "Model file replaced successfully.")
+
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error("Failed to replace model file: %s", exc)
+            QMessageBox.critical(
+                self,
+                "Replace File",
+                "An unexpected error occurred while replacing the model file.",
+            )
+
+    def _restore_model_file(self) -> None:
+        """Restore the model's file_path from its original_path if available."""
+        db = get_database_manager()
+
+        if not self.current_model_data or self.current_model_id is None:
+            return
+
+        original_path = self.current_model_data.get("original_path")
+        current_path_str = self.current_model_data.get("file_path")
+
+        if not original_path:
+            QMessageBox.information(
+                self,
+                "Put Back to Original Location",
+                "No original location is recorded for this model.",
+            )
+            return
+
+        current_path = Path(current_path_str) if current_path_str else None
+        original_path_obj = Path(original_path)
+
+        if not original_path_obj.parent.exists():
+            QMessageBox.warning(
+                self,
+                "Put Back to Original Location",
+                "The original directory no longer exists.",
+            )
+            return
+
+        # Confirm restoration
+        confirm = QMessageBox.question(
+            self,
+            "Put Back to Original Location",
+            "Move the model file back to its original location?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        try:
+            # Ensure destination directory exists
+            original_path_obj.parent.mkdir(parents=True, exist_ok=True)
+
+            if current_path and current_path.exists():
+                # If a file already exists at the original path, back it up to a
+                # uniquely named temporary file in the same directory.
+                if original_path_obj.exists() and original_path_obj.resolve() != current_path.resolve():
+                    backup_dir = tempfile.gettempdir()
+                    backup_path = Path(backup_dir) / f"dww_backup_{original_path_obj.name}"
+                    shutil.move(str(original_path_obj), str(backup_path))
+
+                shutil.move(str(current_path), str(original_path_obj))
+
+            updates = {
+                "file_path": str(original_path_obj),
+            }
+
+            # Once we have restored to the original location, clear original_path
+            # so that subsequent operations treat this as the canonical path.
+            updates["original_path"] = None
+
+            if not db.update_model(self.current_model_id, **updates):
+                QMessageBox.warning(
+                    self,
+                    "Put Back to Original Location",
+                    "Failed to update model record in the database.",
+                )
+                return
+
+            model_data = db.get_model(self.current_model_id)
+            if model_data:
+                self.set_model(model_data)
+
+            QMessageBox.information(
+                self,
+                "Put Back to Original Location",
+                "Model file restored to its original location.",
+            )
+
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error("Failed to restore model file: %s", exc)
+            QMessageBox.critical(
+                self,
+                "Put Back to Original Location",
+                "An unexpected error occurred while restoring the model file.",
+            )
 
     def clear(self) -> None:
         """Clear all displayed information."""

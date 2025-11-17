@@ -20,6 +20,8 @@ from src.gui.preferences.tabs import (
     ThumbnailSettingsTab,
     ViewerSettingsTab,
 )
+from src.gui.files_components.files_tab_widget import FilesTab
+
 
 
 class PreferencesDialog(QDialog):
@@ -57,6 +59,7 @@ class PreferencesDialog(QDialog):
         self.general_tab = GeneralTab(on_reset_layout=self.on_reset_layout)
         self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
+        self.files_tab = FilesTab()
         self.ai_tab = AITab()
         self.advanced_tab = AdvancedTab()
 
@@ -64,6 +67,7 @@ class PreferencesDialog(QDialog):
         self.tabs.addTab(self.general_tab, "General")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
         self.tabs.addTab(self.thumbnail_settings_tab, "Content")
+        self.tabs.addTab(self.files_tab, "Model Library")
         self.tabs.addTab(self.ai_tab, "AI")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
@@ -163,11 +167,12 @@ class PreferencesDialog(QDialog):
             if reply == QMessageBox.Yes:
                 # Reset each tab
                 self.general_tab._load_settings()
-                self.theming_tab.reload_from_current()
                 self.viewer_settings_tab._load_settings()
                 self.thumbnail_settings_tab._load_settings()
                 self.ai_tab._load_settings()
                 self.advanced_tab._load_settings()
+                # Reload model library files tab from current root folder configuration
+                self.files_tab._load_folders()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
                 from src.core.logging_config import get_logger

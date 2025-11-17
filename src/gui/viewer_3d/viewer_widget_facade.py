@@ -6,10 +6,10 @@ while maintaining backward compatibility with the original API.
 """
 
 import gc
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget, QDialog
+from PySide6.QtWidgets import QWidget, QDialog, QMessageBox
 
 
 from src.core.logging_config import get_logger, get_activity_logger
@@ -18,6 +18,9 @@ from src.core.model_cache import get_model_cache
 from src.parsers.stl_parser import STLModel
 from src.core.data_structures import Model
 from src.gui.material_picker_widget import MaterialPickerWidget
+from src.core.database_manager import get_database_manager
+from src.core.services.tab_data_manager import TabDataManager
+
 from src.gui.components.detailed_progress_tracker import (
     DetailedProgressTracker,
     LoadingStage,
@@ -77,6 +80,11 @@ class Viewer3DWidget(QWidget):
         self.current_model = None
         self.loading_in_progress = False
         self.z_up_pending_save = False  # Track if Z-up was just set and needs saving
+        self.current_project_id: Optional[str] = None
+
+        # Services
+        self._db_manager = get_database_manager()
+        self._tab_data_manager = TabDataManager(self._db_manager)
 
         # Performance settings
         self.adaptive_quality = True
@@ -332,6 +340,67 @@ class Viewer3DWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load model: %s", e, exc_info=True)
             return False
+
+    def set_current_project(self, project_id: Optional[str]) -> None:
+        """Set or clear the active project for this viewer."""
+        self.current_project_id = project_id
+
+    def save_to_project(self) -> None:
+        """Save the current model view state to the active project.
+
+        This captures the model reference and current camera/rendering state
+        so the view can be reconstructed later from the project.
+        """
+        if not self.current_project_id:
+            QMessageBox.warning(self, "Add to Project", "Please select a project first.")
+            return
+
+        if not self.current_model:
+            QMessageBox.warning(self, "Add to Project", "No model is currently loaded.")
+            return
+
+        # Derive a reasonable file identifier
+        model_path = getattr(self.current_model, "file_path", "") or ""
+        model_filename = getattr(self.current_model, "filename", "") or ""
+
+        # Camera state
+        camera_state: Dict[str, Any] = {}
+        try:
+            if self.camera is not None:
+                pos = self.camera.GetPosition()
+                focal = self.camera.GetFocalPoint()
+                view_up = self.camera.GetViewUp()
+                camera_state = {
+                    "position": tuple(pos),
+                    "focal_point": tuple(focal),
+                    "view_up": tuple(view_up),
+                }
+        except Exception:
+            camera_state = {}
+
+        payload: Dict[str, Any] = {
+            "model_id": getattr(self.current_model, "id", None),
+            "model_path": model_path,
+            "model_filename": model_filename,
+            "render_mode": getattr(self, "render_mode", None).name
+            if hasattr(self, "render_mode") and self.render_mode is not None
+            else None,
+            "camera": camera_state,
+            "z_up_pending_save": self.z_up_pending_save,
+        }
+
+        success, message = self._tab_data_manager.save_tab_data_to_project(
+            project_id=self.current_project_id,
+            tab_name="Model Viewer",
+            data=payload,
+            filename="model_view.json",
+            category="Model Views",
+        )
+
+        if success:
+            QMessageBox.information(self, "Add to Project", message)
+        else:
+            QMessageBox.critical(self, "Add to Project", message)
 
     def clear_scene(self) -> None:
         """Clear the scene."""

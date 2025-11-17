@@ -687,7 +687,10 @@ class ModelCache:
             # Check if we're using too much memory
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
-                self.logger.info("High memory usage (%s), evicting entries", memory_usage_ratio:.1%)
+                self.logger.info(
+                    "High memory usage (%0.1f%%), evicting entries",
+                    memory_usage_ratio * 100.0,
+                )
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
             # Clean up old disk cache entries if enabled

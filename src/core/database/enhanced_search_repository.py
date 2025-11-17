@@ -7,6 +7,7 @@ with improved performance, transaction management, and error handling.
 
 import sqlite3
 import re
+import ast
 from typing import Any, Dict, List, Optional
 from contextlib import contextmanager
 
@@ -400,10 +401,14 @@ class EnhancedSearchRepository(ISearchRepository):
 
                 for row in rows:
                     search = dict(row)
-                    # Parse filters string back to dict
-                    try:
-                        search["filters"] = # SECURITY: eval() removed - search["filters"]) if search["filters"] else {}
-                    except:
+                    # Parse filters string back to dict (safe alternative to eval)
+                    filters_str = search.get("filters")
+                    if filters_str:
+                        try:
+                            search["filters"] = ast.literal_eval(filters_str)
+                        except (ValueError, SyntaxError):
+                            search["filters"] = {}
+                    else:
                         search["filters"] = {}
                     searches.append(search)
 

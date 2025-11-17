@@ -199,10 +199,6 @@ class LibraryEventHandler:
 
             menu = QMenu(self.library_widget)
 
-            # Add Root Folder action - always available
-            add_root_action = menu.addAction("Add Root Folder")
-            self.logger.info("Added 'Add Root Folder' action to menu")
-
             # Check if clicking on a valid file/folder
             if index.isValid():
                 source_index = self.library_widget.file_proxy_model.mapToSource(index)
@@ -230,18 +226,14 @@ class LibraryEventHandler:
                     # Execute menu
                     action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
 
-                    if action == add_root_action:
-                        self._add_root_folder()
-                    elif import_action and action == import_action:
+                    if import_action and action == import_action:
                         self.library_widget._import_from_context_menu(file_path)
                     elif action == open_action:
                         self.library_widget._open_in_native_app(file_path)
                     return
 
-            # If no valid file/folder, just show Add Root Folder option
-            action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
-            if action == add_root_action:
-                self._add_root_folder()
+            # If no valid file/folder, don't show a context menu
+            return
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show file tree context menu: %s", e, exc_info=True)

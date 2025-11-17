@@ -28,6 +28,7 @@ from PySide6.QtCore import Qt, Signal, QThread
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
+from src.core.services.tab_data_manager import TabDataManager
 from src.core.kinematics.gcode_timing import analyze_gcode_moves
 from src.gui.widgets.add_tool_dialog import AddToolDialog
 from .gcode_parser import GcodeParser
@@ -133,6 +134,7 @@ class GcodePreviewerWidget(QWidget):
         # Database access for machine configuration and project-level
         # settings such as feed override.
         self.db_manager = get_database_manager()
+        self.tab_data_manager = TabDataManager(self.db_manager)
 
         self.parser = GcodeParser()
         self.renderer = None  # Defer VTK initialization
@@ -197,6 +199,59 @@ class GcodePreviewerWidget(QWidget):
         # timing summary reflects the newly selected project.
         if self.moves:
             self._update_statistics(include_timing=True)
+
+    def save_to_project(self) -> None:
+        """Save G-code timing summary and tool selection to the current project."""
+        if not self.current_project_id:
+            QMessageBox.warning(self, "No Project", "Please select a project first.")
+            return
+
+        if not self.current_file:
+            QMessageBox.warning(self, "No G-code Loaded", "Load a G-code file before saving.")
+            return
+
+        if not self.current_timing:
+            QMessageBox.warning(
+                self,
+                "No Timing Data",
+                "No timing results are available yet. Run a timing analysis before saving.",
+            )
+            return
+
+        timing_summary = {
+            "total_time_seconds": self.current_timing.get("total_time_seconds"),
+            "cutting_time_seconds": self.current_timing.get("cutting_time_seconds"),
+            "rapid_time_seconds": self.current_timing.get("rapid_time_seconds"),
+        }
+
+        tool_label_text = ""
+        if self.tool_label is not None:
+            try:
+                tool_label_text = self.tool_label.text()
+            except Exception:
+                tool_label_text = ""
+
+        payload: Dict[str, Any] = {
+            "gcode_file": self.current_file,
+            "timing": timing_summary,
+            "tool_label": tool_label_text,
+            "operation_id": self.current_operation_id,
+            "version_id": self.current_version_id,
+        }
+
+        success, message = self.tab_data_manager.save_tab_data_to_project(
+            project_id=self.current_project_id,
+            tab_name="G Code Previewer",
+            data=payload,
+            filename="gcode_timing.json",
+            category="G-code Timing",
+        )
+
+        if success:
+            QMessageBox.information(self, "Saved", message)
+        else:
+            QMessageBox.critical(self, "Error", message)
+
 
     def _init_ui(self) -> None:
         """Initialize the user interface."""

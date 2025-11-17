@@ -159,7 +159,7 @@ class LibraryFileBrowser:
                     "Inaccessible Root Folders",
                     f"The following configured root folders are not accessible:\n\n{folder_list}\n\n"
                     "Please check that the folders exist and you have permission to access them.\n"
-                    "You can update root folder settings in Preferences > Files.",
+                    "You can update root folder settings in Preferences > Model Library.",
                 )
             else:
                 self.logger.debug("All %s root folders are accessible", len(enabled_folders))

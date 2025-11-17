@@ -6,10 +6,10 @@ Provides functionality for exporting projects to various formats including:
 - CSV, JSON: Standard formats for data export
 """
 
-from .dww_export_manager import DWWExportManager
+from .dww_export_manager import PJCTExportManager
 from .dww_import_manager import DWWImportManager
 
 __all__ = [
-    "DWWExportManager",
+    "PJCTExportManager",
     "DWWImportManager",
 ]

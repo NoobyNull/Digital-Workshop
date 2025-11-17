@@ -1,1 +1,1 @@
-"""Package initializer."""\n
+"""Package initializer."""

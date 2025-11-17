@@ -125,6 +125,15 @@ class ToolbarManager:
             "Analyze model for errors and fix them",
         )
         self.edit_model_action.setEnabled(False)
+        # Add to Project
+        self.add_to_project_action = _add_action(
+            "Add to Project",
+            "fa5s.save",
+            self._add_to_project,
+            "Save current tab data to the active project",
+        )
+
+
 
         toolbar.addSeparator()
 
@@ -178,6 +187,11 @@ class ToolbarManager:
         """Handle zoom in action."""
         if hasattr(self.main_window, "_zoom_in"):
             self.main_window._zoom_in()
+
+    def _add_to_project(self) -> None:
+        """Handle Add to Project action."""
+        if hasattr(self.main_window, "_add_to_project"):
+            self.main_window._add_to_project()
 
     def _zoom_out(self) -> None:
         """Handle zoom out action."""

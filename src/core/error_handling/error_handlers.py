@@ -315,7 +315,7 @@ def specific_error_handler(
             recovery_strategy=ErrorRecoveryStrategy.GRACEFUL_SHUTDOWN
         )
         def cleanup_vtk_resources() -> None:
-            """TODO: Add docstring."""
+            # TODO: Add docstring.
             # Cleanup code here
             pass
     """
@@ -341,7 +341,7 @@ def shutdown_safe(func: Callable) -> Callable:
     Usage:
         @shutdown_safe
         def cleanup_vtk() -> None:
-            """TODO: Add docstring."""
+            # TODO: Add docstring.
             # VTK cleanup code
             pass
     """
@@ -361,7 +361,7 @@ def vtk_safe(func: Callable) -> Callable:
     Usage:
         @vtk_safe
         def render_scene() -> None:
-            """TODO: Add docstring."""
+            # TODO: Add docstring.
             # VTK rendering code
             pass
     """
@@ -381,7 +381,7 @@ def file_io_safe(operation: str, file_path: Optional[Path] = None) -> None:
     Usage:
         @file_io_safe("load_model", Path("model.stl"))
         def load_model_file() -> None:
-            """TODO: Add docstring."""
+            # TODO: Add docstring.
             # File loading code
             pass
     """
@@ -415,7 +415,7 @@ def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.
     Usage:
         @monitor_operation("model_loading", ErrorContext.FILE_LOADING)
         def load_model() -> None:
-            """TODO: Add docstring."""
+            # TODO: Add docstring.
             # Model loading code
             pass
     """

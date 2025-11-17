@@ -555,7 +555,10 @@ class OptimizedVTKCleanupCoordinator:
 
             # Check cleanup metrics
             success_rate = self.successful_cleanups / max(1, self.cleanup_operations)
-            self.logger.info("Cleanup success rate: %s", success_rate:.2%)
+            self.logger.info(
+                "Cleanup success rate: %0.2f%%",
+                success_rate * 100.0,
+            )
 
             # Check for context loss
             if self.context_lost_detected:

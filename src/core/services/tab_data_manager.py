@@ -65,29 +65,37 @@ class TabDataManager:
             tab_dir = project_dir / tab_name.lower().replace(" ", "_")
             tab_dir.mkdir(parents=True, exist_ok=True)
 
-            # Add timestamp to data
+            # Add timestamp and metadata to data
             data_with_timestamp = {
                 **data,
                 "saved_at": datetime.now().isoformat(),
                 "tab_name": tab_name,
             }
+            if category:
+                data_with_timestamp["category"] = category
 
             # Save JSON file
             file_path = tab_dir / filename
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data_with_timestamp, f, indent=2)
 
-            self.logger.info("Saved %s data to {file_path}", tab_name)
+            self.logger.info("Saved %s data to %s", tab_name, file_path)
 
-            # Link file to project
+            # Link file to project for tracking.
             try:
-                self.db_manager.add_file_to_project(
+                try:
+                    file_size = file_path.stat().st_size
+                except (OSError, IOError):
+                    file_size = None
+
+                self.db_manager.add_file(
                     project_id=project_id,
                     file_path=str(file_path),
                     file_name=filename,
-                    category=category or tab_name,
+                    file_size=file_size,
+                    status="imported",
                 )
-                self.logger.info("Linked %s to project {project_id}", filename)
+                self.logger.info("Linked %s to project %s", filename, project_id)
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.warning("Could not link file to project: %s", e)
                 # File was saved successfully, so don't fail
@@ -125,7 +133,7 @@ class TabDataManager:
 
             # Find file in project
             file_path = None
-            for root, dirs, files in os.walk(project_dir):
+            for root, _, files in os.walk(project_dir):
                 if filename in files:
                     file_path = Path(root) / filename
                     break
@@ -137,7 +145,7 @@ class TabDataManager:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.logger.info("Loaded %s from {file_path}", filename)
+            self.logger.info("Loaded %s from %s", filename, file_path)
             return True, data, f"Data loaded from {filename}"
 
         except json.JSONDecodeError as e:
@@ -171,7 +179,7 @@ class TabDataManager:
             project_dir = Path(project["base_path"])
 
             # Find file in project
-            for root, dirs, files in os.walk(project_dir):
+            for root, _, files in os.walk(project_dir):
                 if filename in files:
                     return Path(root) / filename
 
@@ -204,7 +212,7 @@ class TabDataManager:
             files = []
 
             # Find all JSON files
-            for root, dirs, filenames in os.walk(project_dir):
+            for root, _, filenames in os.walk(project_dir):
                 for filename in filenames:
                     if filename.endswith(".json"):
                         file_path = Path(root) / filename
