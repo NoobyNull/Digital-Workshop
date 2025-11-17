@@ -20,8 +20,8 @@ cache:
 build_windows_exe:
   stage: build
   # Remove tags restriction - allows any available runner
-  script:
-    - $ErrorActionPreference = "Stop"
+  script: |
+    $ErrorActionPreference = "Stop"
 
     python --version
 
