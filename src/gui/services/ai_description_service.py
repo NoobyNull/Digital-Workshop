@@ -663,7 +663,14 @@ Return ONLY valid JSON, no additional text.""",
             self.progress_updated.emit(30)
 
             # Perform analysis
-            result = provider.analyze_image(image_path, analysis_prompt)
+            try:
+                result = provider.analyze_image(image_path, analysis_prompt)
+            except Exception as e:
+                # Normalize provider-level failures into a clear configuration error
+                error_msg = f"AI provider error: {e}"
+                self.logger.error(error_msg)
+                self.analysis_failed.emit(error_msg)
+                raise ValueError(error_msg) from e
 
             self.progress_updated.emit(90)
 

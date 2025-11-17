@@ -8,32 +8,31 @@ import argparse
 import subprocess
 import sys
 import json
+import os
 from pathlib import Path
 import requests
 import time
 
+
 def get_gitlab_token():
     """Get GitLab token from environment or user input."""
-    token = "glpat-ZDqK9Fh6qb61jRLaKUtkqm86MQp1OjQH.01.0w0ffoze2"
-    
     # Try to get from environment
-    import os
-    token = os.getenv('GITLAB_TOKEN')
+    token = os.getenv("GITLAB_TOKEN")
     if token:
-        print(f"✅ Found GitLab token in environment")
+        print("✅ Found GitLab token in environment")
         return token
-    
+
     # If not in environment, ask user
     print("❌ No GITLAB_TOKEN environment variable found")
     print("Please set GITLAB_TOKEN environment variable with your GitLab personal access token")
     print("You can create one at: https://gitlab.yax.family/-/profile/personal_access_tokens")
     print()
-    
+
     token = input("Enter your GitLab personal access token: ").strip()
     if not token:
         print("❌ No token provided")
         sys.exit(1)
-    
+
     return token
 
 def get_gitlab_url():
@@ -166,12 +165,12 @@ def main():
     
     if args.dry_run:
         print("🔍 DRY RUN MODE - No changes will be made")
-        print("Would clean up jobs older than {args.keep_recent} most recent")
+        print(f"Would clean up jobs older than {args.keep_recent} most recent")
         print("Would cancel all failed/cancelled jobs")
         if not args.cleanup_only:
             print("Would trigger new pipeline to restart build process")
         return
-    
+
     # Step 1: Clean up old/failed jobs
     print("\n🧹 Step 1: Cleaning up old/failed jobs...")
     if not cleanup_artifacts(gitlab_url, token, args.keep_recent):
