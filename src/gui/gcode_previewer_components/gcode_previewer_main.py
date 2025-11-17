@@ -231,12 +231,10 @@ class GcodePreviewerWidget(QWidget):
             except Exception:
                 tool_label_text = ""
 
+        # Persist only the timing summary and tool label per requirements
         payload: Dict[str, Any] = {
-            "gcode_file": self.current_file,
             "timing": timing_summary,
             "tool_label": tool_label_text,
-            "operation_id": self.current_operation_id,
-            "version_id": self.current_version_id,
         }
 
         success, message = self.tab_data_manager.save_tab_data_to_project(

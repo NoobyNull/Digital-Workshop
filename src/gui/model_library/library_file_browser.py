@@ -32,7 +32,7 @@ class LibraryFileBrowser:
             p = Path(path)
             if p.is_file():
                 if p.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
-                    self.library_widget.model_manager.load_models([path])
+                    self._request_import([str(p)])
                 else:
                     QMessageBox.warning(
                         self.library_widget,
@@ -47,7 +47,7 @@ class LibraryFileBrowser:
 
                 if files_to_import:
                     files_to_import = [str(f) for f in files_to_import]
-                    self.library_widget.facade.model_manager.load_models(files_to_import)
+                    self._request_import(files_to_import)
                 else:
                     QMessageBox.information(
                         self.library_widget,
@@ -169,7 +169,26 @@ class LibraryFileBrowser:
 
     def import_models(self) -> None:
         """Import models (stub for tests)."""
-        self.library_widget.status_label.setText("Use drag-and-drop to import models.")
+        self.library_widget.status_label.setText(
+            "Use drag-and-drop or the main Import dialog."
+        )
+
+    def _request_import(self, files: list[str]) -> None:
+        """Request a unified import for the given files via the main import pipeline."""
+        try:
+            if not files:
+                return
+            # Emit signal to main window if available; fall back to direct load for safety
+            if hasattr(self.library_widget, "import_requested"):
+                self.library_widget.import_requested.emit(files)
+            else:
+                # Legacy fallback
+                self.library_widget.facade.model_manager.load_models(files)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            self.logger.error("Error requesting import: %s", e)
+            QMessageBox.critical(
+                self.library_widget, "Import Error", f"Failed to start import: {e}"
+            )
 
     def import_selected_files(self) -> None:
         """Import selected files from the file tree."""
@@ -196,7 +215,7 @@ class LibraryFileBrowser:
                         files_to_import.append(file_path)
 
             if files_to_import:
-                self.library_widget.facade.model_manager.load_models(files_to_import)
+                self._request_import(files_to_import)
             else:
                 QMessageBox.warning(
                     self.library_widget, "Import", "No supported model files selected."
@@ -234,12 +253,12 @@ class LibraryFileBrowser:
             if files_to_import:
                 # Remove duplicates and convert to strings
                 files_to_import = list(set(str(f) for f in files_to_import))
-                self.library_widget.facade.model_manager.load_models(files_to_import)
+                self._request_import(files_to_import)
             else:
                 QMessageBox.information(
                     self.library_widget,
                     "Import",
-                    f"No supported model files found in folder.",
+                    "No supported model files found in folder.",
                 )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

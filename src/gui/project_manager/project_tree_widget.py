@@ -11,7 +11,6 @@ import tempfile
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
     QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
@@ -22,6 +21,8 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 from PySide6.QtCore import Qt, Signal
+
+from ..layout.flow_layout import FlowLayout
 
 from ...core.services.project_manager import ProjectManager
 from ...core.services.project_importer import ProjectImporter
@@ -119,7 +120,7 @@ class ProjectTreeWidget(QWidget):
         layout.addWidget(self.tree_widget)
 
         # Buttons
-        button_layout = QHBoxLayout()
+        button_layout = FlowLayout(self)
 
         new_btn = QPushButton("New Project")
         new_btn.clicked.connect(self._create_new_project)

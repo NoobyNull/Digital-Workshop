@@ -39,6 +39,10 @@ from src.gui.preferences import PreferencesDialog
 from src.gui.window.dock_snapping import DockDragHandler
 from src.gui.project_details_widget import ProjectDetailsWidget
 from src.gui.theme import MIN_WIDGET_SIZE
+from src.gui.main_window_components.project_manager_controller import ProjectManagerController
+from src.gui.main_window_components.model_viewer_controller import ModelViewerController
+from src.gui.main_window_components.gcode_previewer_controller import GcodePreviewController
+from src.gui.main_window_components.project_details_controller import ProjectDetailsController
 
 
 class MainWindow(QMainWindow):
@@ -189,6 +193,12 @@ class MainWindow(QMainWindow):
         self.show_metadata_action = self.menu_manager.show_metadata_action
         self.show_model_library_action = self.menu_manager.show_model_library_action
 
+        # Initialize controllers
+        self.project_manager_controller = ProjectManagerController(self)
+        self.model_viewer_controller = ModelViewerController(self)
+        self.gcode_previewer_controller = GcodePreviewController(self)
+        self.project_details_controller = ProjectDetailsController(self)
+
         # Use native Qt dock system instead of custom dock manager
         self._setup_native_dock_widgets()
 
@@ -264,8 +274,8 @@ class MainWindow(QMainWindow):
             tab_bar.setExpanding(True)
             tab_bar.setUsesScrollButtons(False)
 
-        # Set up 3D viewer as the primary tab
-        self._setup_viewer_widget()
+        # Set up 3D viewer as the primary tab via controller
+        self.model_viewer_controller.setup_viewer_widget()
 
         # Add placeholder tabs for other features
         self._add_placeholder_tabs()
@@ -341,9 +351,14 @@ class MainWindow(QMainWindow):
                 # Connect native Qt signals
                 self.model_library_widget.model_selected.connect(self._on_model_selected)
                 self.model_library_widget.model_double_clicked.connect(
-                    self._on_model_double_clicked
+                    self.model_viewer_controller.on_model_double_clicked
                 )
                 self.model_library_widget.models_added.connect(self._on_models_added)
+
+                if hasattr(self.model_library_widget, "import_requested"):
+                    self.model_library_widget.import_requested.connect(
+                        self._on_model_library_import_requested
+                    )
 
                 self.model_library_dock.setWidget(self.model_library_widget)
                 self.logger.info("Model library dock created successfully")
@@ -374,115 +389,15 @@ class MainWindow(QMainWindow):
             self.logger.error("Failed to setup model library dock: %s", e)
 
     def _setup_project_manager_dock(self) -> None:
-        """Set up project manager dock using native Qt."""
-        try:
-            self.project_manager_dock = QDockWidget("Project Manager", self)
-            self.project_manager_dock.setObjectName("ProjectManagerDock")
-
-            # Configure with native Qt dock features
-            self.project_manager_dock.setAllowedAreas(
-                Qt.LeftDockWidgetArea
-                | Qt.RightDockWidgetArea
-                | Qt.TopDockWidgetArea
-                | Qt.BottomDockWidgetArea
-            )
-            # Start with layout locked (only closable, not movable)
-            self.project_manager_dock.setFeatures(QDockWidget.DockWidgetClosable)
-
-            # Create project manager widget
-            try:
-                from src.gui.project_manager import ProjectTreeWidget
-
-                db_manager = get_database_manager()
-                self.project_manager_widget = ProjectTreeWidget(db_manager, self)
-
-                # Connect signals
-                self.project_manager_widget.project_opened.connect(self._on_project_opened)
-                self.project_manager_widget.project_created.connect(self._on_project_created)
-                self.project_manager_widget.project_deleted.connect(self._on_project_deleted)
-                self.project_manager_widget.file_selected.connect(
-                    self._on_project_file_selected
-                )
-                self.project_manager_widget.tab_switch_requested.connect(
-                    self._on_tab_switch_requested
-                )
-
-                self.project_manager_dock.setWidget(self.project_manager_widget)
-                self.logger.info("Project manager dock created successfully")
-
-            except Exception as e:
-                self.logger.warning("Failed to create project manager widget: %s", e)
-                # Native Qt fallback
-                fallback_widget = QLabel("Project Manager\n\nComponent unavailable.")
-                fallback_widget.setAlignment(Qt.AlignCenter)
-                self.project_manager_dock.setWidget(fallback_widget)
-
-            # Add to main window using native Qt dock system
-            self.addDockWidget(Qt.LeftDockWidgetArea, self.project_manager_dock)
-
-            # Tabify with model library dock using native Qt
-            # This ensures they start tabbed together, preventing the "jump" effect
-            try:
-                if hasattr(self, "model_library_dock") and self.model_library_dock:
-                    self.tabifyDockWidget(self.model_library_dock, self.project_manager_dock)
-                    self.logger.info(
-                        "Model Library and Project Manager docks tabified using native Qt"
-                    )
-            except Exception as e:
-                self.logger.debug("Could not tabify docks: %s", e)
-
-            # Set minimum width to prevent zero-width widgets
-            self.project_manager_dock.setMinimumWidth(MIN_WIDGET_SIZE)
-
-            # Register for snapping functionality
-            try:
-                self._register_dock_for_snapping(self.project_manager_dock)
-            except Exception as e:
-                self.logger.debug("Failed to register dock for snapping: %s", e)
-
-            # Connect visibility signal for menu synchronization
-            self.project_manager_dock.visibilityChanged.connect(
-                lambda visible: self._update_project_manager_action_state()
-            )
-
-        except Exception as e:
-            self.logger.error("Failed to setup project manager dock: %s", e)
+        """Set up project manager dock using dedicated controller."""
+        # Delegate to controller so the main window stays thinner.
+        if hasattr(self, "project_manager_controller") and self.project_manager_controller:
+            self.project_manager_controller.setup_project_manager_dock()
 
     def _setup_properties_dock(self) -> None:
-        """Set up properties dock using native Qt."""
-        try:
-            self.properties_dock = QDockWidget("Project Details", self)
-            self.properties_dock.setObjectName("PropertiesDock")
-
-            # Configure with native Qt dock features
-            self.properties_dock.setAllowedAreas(
-                Qt.LeftDockWidgetArea
-                | Qt.RightDockWidgetArea
-                | Qt.TopDockWidgetArea
-                | Qt.BottomDockWidgetArea
-            )
-            # Start with layout locked (only closable, not movable)
-            self.properties_dock.setFeatures(QDockWidget.DockWidgetClosable)
-
-            # Create project details widget
-            self.project_details_widget = ProjectDetailsWidget(self)
-            self.properties_dock.setWidget(self.project_details_widget)
-
-            # Add to main window using native Qt dock system
-            self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-
-            # Register for snapping functionality
-            try:
-                self._register_dock_for_snapping(self.properties_dock)
-            except Exception as e:
-                self.logger.debug("Failed to register dock for snapping: %s", e)
-
-            # Set minimum width to prevent zero-width widgets
-            self.properties_dock.setMinimumWidth(MIN_WIDGET_SIZE)
-            self.properties_dock.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-
-        except Exception as e:
-            self.logger.error("Failed to setup properties dock: %s", e)
+        """Set up Project Details dock using dedicated controller."""
+        if hasattr(self, "project_details_controller") and self.project_details_controller:
+            self.project_details_controller.setup_project_details_dock()
 
     def _setup_metadata_dock(self) -> None:
         """Set up metadata dock using native Qt."""
@@ -573,64 +488,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to setup metadata dock: %s", e)
 
-    def _setup_gcode_tools_dock(self) -> None:
-        """Set up G-code tools dock using native Qt dock system.
-
-        This dock hosts the G-code tools widget that lives alongside the
-        G-code previewer tab and can be detached/tabified like the other
-        docks.
-        """
-        try:
-            from src.gui.gcode_previewer_components.gcode_tools_widget import GcodeToolsWidget
-
-            self.gcode_tools_dock = QDockWidget("G-code Tools", self)
-            self.gcode_tools_dock.setObjectName("GcodeToolsDock")
-
-            # Configure with native Qt dock features
-            self.gcode_tools_dock.setAllowedAreas(
-                Qt.LeftDockWidgetArea
-                | Qt.RightDockWidgetArea
-                | Qt.TopDockWidgetArea
-                | Qt.BottomDockWidgetArea
-            )
-            # Start with layout locked (only closable, not movable)
-            self.gcode_tools_dock.setFeatures(QDockWidget.DockWidgetClosable)
-
-            # Use the renderer from the G-code previewer widget if available.
-            renderer = None
-            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget is not None:
-                renderer = getattr(self.gcode_previewer_widget, "renderer", None)
-
-            self.gcode_tools_widget = GcodeToolsWidget(renderer, self)
-            self.gcode_tools_dock.setWidget(self.gcode_tools_widget)
-
-            # Add to main window using native Qt dock system
-            self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
-
-            # Register for snapping functionality
-            try:
-                self._register_dock_for_snapping(self.gcode_tools_dock)
-            except Exception as e:
-                self.logger.debug("Failed to register G-code tools dock for snapping: %s", e)
-
-            # The G-code tools dock is now independent; its visibility is
-            # controlled purely via the native dock system (close button,
-            # context menu, and layout reset). No coupling to the previewer
-            # widget's UI is required here.
-
-            # Attach this tools widget to the previewer so its signals are wired
-            # up when the docked configuration is in use.
-            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget is not None:
-                try:
-                    self.gcode_previewer_widget.attach_tools_widget(self.gcode_tools_widget)
-                except Exception as e:
-                    self.logger.warning("Failed to attach G-code tools widget to previewer: %s", e)
-
-        except Exception as e:
-            self.logger.error("Failed to setup G-code tools dock: %s", e)
-
-
-
     def _load_native_dock_layout(self) -> None:
         """Load saved dock layout using native Qt methods.
 
@@ -644,116 +501,6 @@ class MainWindow(QMainWindow):
         """Connect native Qt dock signals for layout persistence."""
         # Qt handles dock layout persistence automatically through QSettings
         self.logger.debug("Native Qt dock system handles layout persistence automatically")
-
-    def _setup_viewer_widget(self) -> None:
-        """Set up the 3D viewer widget using native Qt integration."""
-        try:
-            # Try to load the VTK viewer widget
-            try:
-                from src.gui.viewer_widget_vtk import Viewer3DWidget
-            except ImportError:
-                try:
-                    from src.gui.viewer_widget import Viewer3DWidget
-                except ImportError:
-                    Viewer3DWidget = None
-
-            if Viewer3DWidget is not None:
-                self.viewer_widget = Viewer3DWidget(self)
-                self.logger.info("3D viewer widget created successfully")
-            else:
-                # Native Qt fallback
-                self.viewer_widget = QLabel("3D Viewer not available")
-                self.viewer_widget.setAlignment(Qt.AlignCenter)
-                self.logger.warning("Viewer3DWidget not available, using native Qt placeholder")
-
-            # Connect viewer signals
-            if hasattr(self.viewer_widget, "model_loaded"):
-                self.viewer_widget.model_loaded.connect(self._on_model_loaded)
-            # FPS counter removed - performance_updated signal no longer connected
-
-            # Set up managers
-            self._setup_viewer_managers()
-
-            # Connect lighting panel signal after managers are set up
-            if hasattr(self.viewer_widget, "lighting_panel_requested"):
-                self.viewer_widget.lighting_panel_requested.connect(self._toggle_lighting_panel)
-                self.logger.info("Lighting panel signal connected to main window")
-
-        except Exception as e:
-            self.logger.warning("Failed to setup viewer widget: %s", e)
-            # Native Qt fallback
-            self.viewer_widget = QLabel("3D Model Viewer\n\nComponent unavailable.")
-            self.viewer_widget.setAlignment(Qt.AlignCenter)
-
-        # Add to hero tabs
-        self.hero_tabs.addTab(self.viewer_widget, "Model Previewer")
-
-    def _setup_viewer_managers(self) -> None:
-        """Set up viewer-related managers using native Qt integration."""
-        try:
-            from src.core.database_manager import get_database_manager
-            from src.gui.material_manager import MaterialManager
-            from src.gui.lighting_manager import LightingManager
-
-            # Material manager
-            try:
-                self.material_manager = MaterialManager(get_database_manager())
-            except Exception as e:
-                self.material_manager = None
-                self.logger.warning("MaterialManager unavailable: %s", e)
-
-            # Lighting manager
-            try:
-                renderer = getattr(self.viewer_widget, "renderer", None)
-                self.lighting_manager = LightingManager(renderer) if renderer else None
-                if self.lighting_manager:
-                    self.lighting_manager.create_light()
-            except Exception as e:
-                self.lighting_manager = None
-                self.logger.warning("LightingManager unavailable: %s", e)
-
-            # Create lighting control panel
-            try:
-                from src.gui.lighting_control_panel import LightingControlPanel
-
-                self.lighting_panel = LightingControlPanel(self)
-                self.lighting_panel.setObjectName("LightingDialog")
-                self.lighting_panel.hide()
-                self.logger.info("Lighting control panel created as floating dialog")
-
-                # Connect lighting panel signals to main window handlers
-                if self.lighting_manager:
-                    self.lighting_panel.position_changed.connect(self._update_light_position)
-                    self.lighting_panel.color_changed.connect(self._update_light_color)
-                    self.lighting_panel.intensity_changed.connect(self._update_light_intensity)
-                    self.lighting_panel.cone_angle_changed.connect(self._update_light_cone_angle)
-
-                    # Initialize panel with current lighting properties
-                    props = self.lighting_manager.get_properties()
-                    self.lighting_panel.set_values(
-                        position=tuple(props.get("position", (100.0, 100.0, 100.0))),
-                        color=tuple(props.get("color", (1.0, 1.0, 1.0))),
-                        intensity=float(props.get("intensity", 0.8)),
-                        cone_angle=float(props.get("cone_angle", 30.0)),
-                        emit_signals=False,
-                    )
-                    self.logger.info("Lighting panel signals connected to main window handlers")
-            except Exception as e:
-                self.lighting_panel = None
-                self.logger.warning("Failed to create LightingControlPanel: %s", e)
-
-            # Material-Lighting integration
-            try:
-                from src.gui.materials.integration import MaterialLightingIntegrator
-
-                self.material_lighting_integrator = MaterialLightingIntegrator(self)
-                self.logger.info("MaterialLightingIntegrator created successfully")
-            except Exception as e:
-                self.material_lighting_integrator = None
-                self.logger.warning("MaterialLightingIntegrator unavailable: %s", e)
-
-        except Exception as e:
-            self.logger.warning("Failed to setup viewer managers: %s", e)
 
     def _add_placeholder_tabs(self) -> None:
         """Add placeholder tabs for other features using native Qt widgets."""
@@ -772,31 +519,8 @@ class MainWindow(QMainWindow):
 
             return widget
 
-        # Try to add G-code Previewer widget
-        try:
-            self.logger.info("Attempting to create G-code Previewer widget...")
-            from src.gui.gcode_previewer_components import GcodePreviewerWidget
-
-            # Use external tools mode so the right-hand tools live in their
-            # own detachable dock widget rather than inside the splitter.
-            self.gcode_previewer_widget = GcodePreviewerWidget(self, use_external_tools=True)
-            self.hero_tabs.addTab(self.gcode_previewer_widget, "G Code Previewer")
-            self.logger.info("G-code Previewer widget created successfully")
-
-            # Once the previewer exists, set up the detachable G-code tools dock
-            # that hosts the tools widget.
-            try:
-                self._setup_gcode_tools_dock()
-            except Exception as dock_error:
-                self.logger.warning("Failed to initialize G-code tools dock: %s", dock_error)
-        except Exception as e:
-            self.logger.error(f"Failed to create G-code Previewer widget: {e}", exc_info=True)
-            self.hero_tabs.addTab(
-                create_placeholder(
-                    "G Code Previewer", "G-code Previewer\n\nComponent unavailable."
-                ),
-                "G Code Previewer",
-            )
+        # Create G-code Previewer tab via controller
+        self.gcode_previewer_controller.setup_gcode_previewer()
 
         # Try to add Cut List Optimizer widget
         try:
@@ -1784,6 +1508,36 @@ class MainWindow(QMainWindow):
 
     def _import_models(self) -> None:
         """Show the import models dialog."""
+        self._open_import_dialog()
+
+    def _on_model_library_import_requested(self, file_paths: List[str]) -> None:
+        """Handle import requests initiated from the model library."""
+        try:
+            cleaned_paths: List[str] = []
+            for path in file_paths or []:
+                if not path:
+                    continue
+                p = Path(path)
+                if p.exists() and p.is_file():
+                    cleaned_paths.append(str(p))
+
+            if cleaned_paths:
+                self._open_import_dialog(cleaned_paths)
+            else:
+                # If nothing valid, fall back to opening an empty dialog
+                self._open_import_dialog()
+        except Exception as e:
+            self.logger.error(
+                "Failed to handle model library import request: %s", e, exc_info=True
+            )
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to start import for selected files:\n\n{str(e)}",
+            )
+
+    def _open_import_dialog(self, initial_files: Optional[List[str]] = None) -> None:
+        """Open the unified import dialog, optionally pre-populated with files."""
         try:
             from src.gui.import_components.import_dialog import ImportDialog
             from src.core.root_folder_manager import RootFolderManager
@@ -1798,6 +1552,25 @@ class MainWindow(QMainWindow):
             # Create and show import dialog
             root_folder_mgr = RootFolderManager.get_instance()
             dialog = ImportDialog(self, root_folder_mgr)
+
+            # Pre-populate with initial files if provided
+            if initial_files:
+                try:
+                    cleaned: List[str] = []
+                    for path in initial_files:
+                        if not path:
+                            continue
+                        p = Path(path)
+                        if p.exists() and p.is_file():
+                            cleaned.append(str(p))
+                    if cleaned:
+                        dialog._add_files(cleaned)
+                except Exception as e:
+                    self.logger.warning(
+                        "Failed to pre-populate ImportDialog with initial files: %s",
+                        e,
+                        exc_info=True,
+                    )
 
             if dialog.exec():
                 # Import completed successfully
@@ -1820,7 +1593,11 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error("Failed to show import dialog: %s", e, exc_info=True)
-            QMessageBox.critical(self, "Import Error", f"Failed to open import dialog:\n\n{str(e)}")
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to open import dialog:\n\n{str(e)}",
+            )
 
     # Menu action handlers
 
@@ -1831,44 +1608,6 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Material Design theme active", 2000)
 
     # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
-
-    def _on_model_double_clicked(self, model_id: int) -> None:
-        """
-        Handle model double-click from the model library.
-
-        Args:
-            model_id: ID of the double-clicked model
-        """
-        try:
-            # Get model information from database
-            db_manager = get_database_manager()
-            model = db_manager.get_model(model_id)
-
-            if model:
-                file_path = model["file_path"]
-                self.logger.info("Loading model from library: %s", file_path)
-
-                # Update status
-                from pathlib import Path
-
-                filename = Path(file_path).name
-                self.status_label.setText(f"Loading: {filename}")
-                self.progress_bar.setVisible(True)
-                self.progress_bar.setRange(0, 0)  # Indeterminate progress
-
-                # Store model ID for save view functionality
-                self.current_model_id = model_id
-
-                # Load the model using the model loader
-                self.model_loader_manager.load_stl_model(file_path)
-
-                # After model loads, restore saved camera orientation if available
-                QTimer.singleShot(500, lambda: self._restore_saved_camera(model_id))
-            else:
-                self.logger.warning("Model with ID %s not found in database", model_id)
-
-        except Exception as e:
-            self.logger.error("Failed to handle model double-click: %s", str(e))
 
     # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
 
@@ -2198,12 +1937,7 @@ class MainWindow(QMainWindow):
 
             # Attach the project to the G-code previewer so that timing
             # calculations use the correct machine and feed override.
-            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget:
-                try:
-                    self.gcode_previewer_widget.set_current_project(project_id)
-                    self.logger.debug(f"Set current project for G-code Previewer: {project_id}")
-                except Exception as e:
-                    self.logger.warning(f"Failed to set project for G-code Previewer: {e}")
+            self.gcode_previewer_controller.set_current_project(project_id)
 
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
@@ -2276,8 +2010,7 @@ class MainWindow(QMainWindow):
                     self.model_loader_manager.load_stl_model(file_path)
 
             elif tab_name == "G Code Previewer":
-                if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget:
-                    self.gcode_previewer_widget.load_gcode_file(file_path)
+                self.gcode_previewer_controller.open_gcode_file(file_path)
 
         except Exception as e:  # noqa: BLE001
             self.logger.error("Failed to open project file %s: %s", file_path, e)
@@ -2607,45 +2340,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to save current view: %s", e)
             QMessageBox.warning(self, "Save View", f"Failed to save view: {str(e)}")
-
-    def _restore_saved_camera(self, model_id: int) -> None:
-        """Restore saved camera orientation for a model."""
-        try:
-            db_manager = get_database_manager()
-            camera_data = db_manager.get_camera_orientation(model_id)
-
-            if camera_data and hasattr(self.viewer_widget, "renderer"):
-                camera = self.viewer_widget.renderer.GetActiveCamera()
-                if camera:
-                    # Restore camera position, focal point, and view up
-                    camera.SetPosition(
-                        camera_data["camera_position_x"],
-                        camera_data["camera_position_y"],
-                        camera_data["camera_position_z"],
-                    )
-                    camera.SetFocalPoint(
-                        camera_data["camera_focal_x"],
-                        camera_data["camera_focal_y"],
-                        camera_data["camera_focal_z"],
-                    )
-                    camera.SetViewUp(
-                        camera_data["camera_view_up_x"],
-                        camera_data["camera_view_up_y"],
-                        camera_data["camera_view_up_z"],
-                    )
-
-                    # Update clipping range and render
-                    self.viewer_widget.renderer.ResetCameraClippingRange()
-                    self.viewer_widget.vtk_widget.GetRenderWindow().Render()
-
-                    self.logger.info(f"Restored saved camera view for model ID {model_id}")
-                    self.status_label.setText("Restored saved view")
-                    QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
-            else:
-                self.logger.debug("No saved camera view for model ID %s", model_id)
-
-        except Exception as e:
-            self.logger.warning("Failed to restore saved camera: %s", e)
 
     def _show_help(self) -> None:
         """Show searchable help dialog."""

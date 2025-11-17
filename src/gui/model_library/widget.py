@@ -48,6 +48,7 @@ class ModelLibraryWidget(QWidget):
     model_selected = Signal(int)
     model_double_clicked = Signal(int)
     models_added = Signal(list)
+    import_requested = Signal(list)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """

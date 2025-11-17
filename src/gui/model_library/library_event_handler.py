@@ -311,7 +311,10 @@ class LibraryEventHandler:
                     ]:
                         files.append(p)
             if files:
-                self.library_widget.facade.model_manager.load_models(files)
+                if hasattr(self.library_widget, "import_requested"):
+                    self.library_widget.import_requested.emit(files)
+                else:
+                    self.library_widget.facade.model_manager.load_models(files)
 
     def _generate_preview(self, model_id: int) -> None:
         """Generate preview image for a model."""

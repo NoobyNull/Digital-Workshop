@@ -327,12 +327,23 @@ class ProjectDetailsWidget(QWidget):
         the model library (camera restore, status messages, etc.).
         """
         try:
-            # If we know which model this is, delegate to the main window handler
-            if getattr(self, "current_model_id", None) is not None and hasattr(
-                main_window, "_on_model_double_clicked"
+            controller = getattr(main_window, "model_viewer_controller", None)
+
+            # If we know which model this is, delegate to the model viewer
+            # controller so we reuse the same pipeline (camera restore, status
+            # messages, etc.) as the model library.
+            if (
+                getattr(self, "current_model_id", None) is not None
+                and controller is not None
             ):
-                main_window._on_model_double_clicked(self.current_model_id)  # type: ignore[arg-type]
-                return
+                try:
+                    controller.on_model_double_clicked(self.current_model_id)  # type: ignore[arg-type]
+                    return
+                except Exception:  # noqa: BLE001
+                    self.logger.warning(
+                        "Failed to delegate model resource open to controller; "
+                        "falling back to direct file load.",
+                    )
 
             # Fallback: load directly from the file path
             model_loader = getattr(main_window, "model_loader_manager", None)
