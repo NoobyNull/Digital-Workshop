@@ -400,7 +400,7 @@ class DatabaseOperations:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
                 logger.info("files table created successfully")
 
-            # Migration 7: Ensure new timing columns exist on gcode_metrics
+            # Migration 7: Ensure new timing and metadata columns exist on gcode_metrics
             cursor.execute("PRAGMA table_info(gcode_metrics)")
             metrics_columns = cursor.fetchall()
             metrics_col_names = [col[1] for col in metrics_columns]
@@ -415,6 +415,16 @@ class DatabaseOperations:
                     logger.info("Adding time_correction_factor column to gcode_metrics table")
                     cursor.execute(
                         "ALTER TABLE gcode_metrics ADD COLUMN time_correction_factor REAL"
+                    )
+                if "machine_id" not in metrics_col_names:
+                    logger.info("Adding machine_id column to gcode_metrics table")
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN machine_id INTEGER"
+                    )
+                if "feed_override_pct" not in metrics_col_names:
+                    logger.info("Adding feed_override_pct column to gcode_metrics table")
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL"
                     )
 
         except sqlite3.Error as e:
@@ -607,6 +617,8 @@ class DatabaseOperations:
                 warnings TEXT,
                 best_case_time_seconds REAL,
                 time_correction_factor REAL,
+                machine_id INTEGER,
+                feed_override_pct REAL,
                 FOREIGN KEY (version_id) REFERENCES gcode_versions(id) ON DELETE CASCADE
             )
         """

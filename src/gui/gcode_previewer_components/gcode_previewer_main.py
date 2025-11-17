@@ -1,7 +1,8 @@
 """G-code Previewer Widget - Main UI for CNC toolpath visualization."""
 
-from typing import Optional
+from typing import Optional, Dict, Any
 from pathlib import Path
+import json
 import os
 
 from PySide6.QtWidgets import (
@@ -23,9 +24,12 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QCheckBox,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QThread
 
 from src.core.logging_config import get_logger
+from src.core.database_manager import get_database_manager
+from src.core.kinematics.gcode_timing import analyze_gcode_moves
+from src.gui.widgets.add_tool_dialog import AddToolDialog
 from .gcode_parser import GcodeParser
 from .gcode_renderer import GcodeRenderer
 from .vtk_widget import VTKWidget
@@ -62,6 +66,50 @@ class GcodeToolsPanelContainer(QWidget):
 
 
 
+class GcodeTimingThread(QThread):
+    """Background worker that computes aggregate timing for a set of moves.
+
+    This runs a single pass of ``analyze_gcode_moves`` off the GUI thread and
+    returns the aggregated metrics as a plain dictionary.
+    """
+
+    finished = Signal(dict)
+    error_occurred = Signal(str)
+
+    def __init__(
+        self,
+        moves,
+        max_feed_mm_min: float,
+        accel_mm_s2: float,
+        feed_override_pct: float,
+        parent: Optional[QWidget] = None,
+    ) -> None:
+        super().__init__(parent)
+        # Copy the moves list so that subsequent UI actions (such as clearing
+        # or reloading) do not race with the timing computation.
+        self._moves = list(moves)
+        self._max_feed_mm_min = float(max_feed_mm_min)
+        self._accel_mm_s2 = float(accel_mm_s2)
+        self._feed_override_pct = float(feed_override_pct)
+        self._logger = get_logger(__name__)
+
+    def run(self) -> None:  # pragma: no cover - UI thread helper
+        try:
+            timing = analyze_gcode_moves(
+                self._moves,
+                max_feed_mm_min=self._max_feed_mm_min,
+                accel_mm_s2=self._accel_mm_s2,
+                feed_override_pct=self._feed_override_pct,
+            )
+            self.finished.emit(timing)
+        except Exception as exc:  # pragma: no cover - defensive
+            self._logger.warning("Timing computation failed: %s", exc)
+            self.error_occurred.emit(str(exc))
+
+
+
+
+
 class GcodePreviewerWidget(QWidget):
     """Main widget for G-code preview and visualization."""
 
@@ -82,6 +130,10 @@ class GcodePreviewerWidget(QWidget):
 
         self.use_external_tools = use_external_tools
 
+        # Database access for machine configuration and project-level
+        # settings such as feed override.
+        self.db_manager = get_database_manager()
+
         self.parser = GcodeParser()
         self.renderer = None  # Defer VTK initialization
         self.animation_controller = AnimationController()
@@ -101,21 +153,50 @@ class GcodePreviewerWidget(QWidget):
         self.tools_panel_container: Optional[GcodeToolsPanelContainer] = None
         self.stats_label: Optional[QLabel] = None
         self.moves_table: Optional[QTableWidget] = None
+        # Per-path tool selection UI (lives in the Statistics tab of the tools widget)
+        self.tool_label: Optional[QLabel] = None
+        self.select_tool_button: Optional[QPushButton] = None
         self.viz_mode_combo: Optional[QComboBox] = None
         self.camera_controls_checkbox: Optional[QCheckBox] = None
         self.layer_combo: Optional[QComboBox] = None
         self.show_all_layers_btn: Optional[QPushButton] = None
         self.progress_bar: Optional[QProgressBar] = None
 
-        self.current_file = None
+        self.current_file: Optional[str] = None
         self.moves = []
         self.current_layer = 0
         self.visualization_mode = "default"  # "default", "feed_rate", "spindle_speed"
         self.total_file_lines = 0
+        self.current_project_id: Optional[str] = None
+
+        # Background timing worker and cached timing for the currently
+        # loaded toolpath.
+        self.timing_thread: Optional[GcodeTimingThread] = None
+        self.current_timing: Optional[Dict[str, float]] = None
+
+        # Optional links into the G-code operations/versions tables so that
+        # timing results can be cached per-project and per-file.
+        self.current_operation_id: Optional[str] = None
+        self.current_version_id: Optional[int] = None
 
         self._init_ui()
         self._connect_signals()
         self.logger.info("G-code Previewer Widget initialized")
+
+
+    def set_current_project(self, project_id: str) -> None:
+        """Attach a project to the previewer for machine-aware timing.
+
+        The project identifier is used to resolve the active machine and
+        feed override when computing cutting-time estimates for the
+        currently loaded toolpath.
+        """
+        self.current_project_id = project_id
+
+        # If a file is already loaded, refresh statistics so that the
+        # timing summary reflects the newly selected project.
+        if self.moves:
+            self._update_statistics(include_timing=True)
 
     def _init_ui(self) -> None:
         """Initialize the user interface."""
@@ -168,6 +249,9 @@ class GcodePreviewerWidget(QWidget):
         self.progress_bar = self.tools_widget.progress_bar
         self.stats_label = self.tools_widget.stats_label
         self.moves_table = self.tools_widget.moves_table
+        # Per-path tool selection UI
+        self.tool_label = self.tools_widget.tool_label
+        self.select_tool_button = self.tools_widget.select_tool_button
         self.viz_mode_combo = self.tools_widget.viz_mode_combo
         self.camera_controls_checkbox = self.tools_widget.camera_controls_checkbox
         self.layer_combo = self.tools_widget.layer_combo
@@ -204,6 +288,9 @@ class GcodePreviewerWidget(QWidget):
         self.progress_bar = tools_widget.progress_bar
         self.stats_label = tools_widget.stats_label
         self.moves_table = tools_widget.moves_table
+        # Per-path tool selection UI
+        self.tool_label = tools_widget.tool_label
+        self.select_tool_button = tools_widget.select_tool_button
         self.viz_mode_combo = tools_widget.viz_mode_combo
         self.camera_controls_checkbox = tools_widget.camera_controls_checkbox
         self.layer_combo = tools_widget.layer_combo
@@ -275,6 +362,10 @@ class GcodePreviewerWidget(QWidget):
         if self.show_all_layers_btn is not None:
             self.show_all_layers_btn.clicked.connect(self._on_show_all_layers)
 
+        # Per-path tool selection
+        if self.select_tool_button is not None:
+            self.select_tool_button.clicked.connect(self._on_select_tool_for_current_path)
+
         if getattr(self, "tools_widget", None) is not None and getattr(
             self.tools_widget, "edit_gcode_button", None
         ):
@@ -298,6 +389,57 @@ class GcodePreviewerWidget(QWidget):
                 "Failed to show status message in main window status bar",
                 exc_info=True,
             )
+
+    def _on_select_tool_for_current_path(self) -> None:
+        """Allow the user to pick a tool for the currently loaded G-code.
+
+        The selected tool is persisted against the current G-code version so it
+        can be restored when the file is re-opened.
+        """
+        if self.current_file is None:
+            QMessageBox.information(
+                self,
+                "No G-code Loaded",
+                "Load a G-code file before selecting a tool.",
+            )
+            return
+
+        if self.db_manager is None or not self.current_project_id:
+            QMessageBox.information(
+                self,
+                "No Project Selected",
+                "Select a project in the main window before attaching a tool.",
+            )
+            return
+
+        # Make sure we have an operation/version pair to attach the tool to.
+        self._ensure_gcode_version_for_current_file()
+        if self.current_version_id is None:
+            QMessageBox.warning(
+                self,
+                "Tool Selection Unavailable",
+                "Could not prepare a database record for this G-code file.",
+            )
+            return
+
+        # Reuse the existing AddToolDialog so the same tool libraries and
+        # personal toolbox are available here.
+        tools_db_path = Path.home() / ".digital_workshop" / "tools.db"
+        dialog = AddToolDialog(str(tools_db_path), self)
+        if dialog.exec() != dialog.Accepted:
+            return
+
+        tool_data = dialog.get_selected_tool()
+        if not tool_data:
+            return
+
+        # Normalise fields used by the label and snapshot.
+        if "vendor" not in tool_data and tool_data.get("provider_name"):
+            tool_data["vendor"] = tool_data["provider_name"]
+
+        self._update_tool_label(tool_data)
+        self._persist_tool_snapshot_for_current_version(tool_data)
+
 
     def _on_load_file(self) -> None:
         """Handle load file button click with security validation."""
@@ -425,25 +567,563 @@ class GcodePreviewerWidget(QWidget):
             self._show_status_message(f"Error starting load: {e}", 5000)
             self.progress_bar.setVisible(False)
 
-    def _update_statistics(self) -> None:
-        """Update statistics display."""
+
+    def _compute_file_fingerprint(self) -> str:
+        """Return a lightweight fingerprint for the currently loaded file.
+
+        We deliberately avoid hashing the full contents and instead combine
+        modification time and size. This is fast, stable, and sufficient for
+        deciding when cached timing metrics are stale.
+        """
+        if not self.current_file:
+            return ""
+
+        try:
+            file_path = Path(self.current_file)
+            stat_result = file_path.stat()
+        except (OSError, IOError):  # pragma: no cover - defensive
+            return ""
+
+        return f"{stat_result.st_mtime_ns}:{stat_result.st_size}"
+
+    def _resolve_machine_and_override(self):
+        """Resolve machine kinematics and feed override for the current project.
+
+        Returns a tuple ``(machine, feed_override_pct)`` where ``machine`` is a
+        mapping with at least ``max_feed_mm_min`` and ``accel_mm_s2`` keys, or
+        ``None`` if no machine configuration is available.
+        """
+        if self.db_manager is None:
+            return None, 100.0
+
+        machine = None
+        feed_override_pct = 100.0
+
+        # Prefer the project-specific configuration when a project is attached
+        # to the previewer.
+        if self.current_project_id:
+            try:
+                machine_id = self.db_manager.get_project_active_machine(self.current_project_id)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to get active machine for project %s: %s",
+                    self.current_project_id,
+                    exc,
+                )
+                machine_id = None
+
+            if machine_id is not None:
+                try:
+                    machine = self.db_manager.get_machine(machine_id)
+                except Exception as exc:  # pragma: no cover - defensive
+                    self.logger.warning("Failed to load machine %s: %s", machine_id, exc)
+                    machine = None
+
+            try:
+                feed_override_pct = float(self.db_manager.get_project_feed_override(self.current_project_id))
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to get feed override for project %s: %s",
+                    self.current_project_id,
+                    exc,
+                )
+
+        # Fall back to the default machine when none is configured for this
+        # project.
+        if machine is None:
+            try:
+                machine = self.db_manager.get_default_machine()
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("Failed to get default machine: %s", exc)
+                machine = None
+
+        if machine is None:
+            return None, feed_override_pct
+
+        try:
+            max_feed_mm_min = float(machine.get("max_feed_mm_min", 600.0))
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            max_feed_mm_min = 600.0
+
+        try:
+            accel_mm_s2 = float(machine.get("accel_mm_s2", 100.0))
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            accel_mm_s2 = 100.0
+
+        return {"max_feed_mm_min": max_feed_mm_min, "accel_mm_s2": accel_mm_s2}, feed_override_pct
+
+    def _ensure_gcode_version_for_current_file(self) -> None:
+        """Ensure there is an operation/version row for the current file.
+
+        On success, ``current_operation_id`` and ``current_version_id`` are
+        populated. On failure, the method logs and leaves them as ``None``.
+        """
+        # Reset any previously associated identifiers; these belong to the
+        # currently loaded file only.
+        self.current_operation_id = None
+        self.current_version_id = None
+
+        if self.db_manager is None or not self.current_project_id or not self.current_file:
+            return
+
+        file_path_str = str(self.current_file)
+
+        # First, try to find an existing version whose file_path matches the
+        # current file.
+        try:
+            operations = self.db_manager.list_gcode_operations(project_id=self.current_project_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to list G-code operations for project %s: %s",
+                self.current_project_id,
+                exc,
+            )
+            return
+
+        for op in operations:
+            op_id = op.get("id")
+            if not op_id:
+                continue
+
+            try:
+                versions = self.db_manager.list_gcode_versions(op_id)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to list G-code versions for operation %s: %s",
+                    op_id,
+                    exc,
+                )
+                continue
+
+            for version in versions:
+                if version.get("file_path") == file_path_str:
+                    self.current_operation_id = op_id
+                    try:
+                        self.current_version_id = int(version["id"])
+                    except (KeyError, TypeError, ValueError):  # pragma: no cover - defensive
+                        self.current_version_id = None
+                    break
+
+            if self.current_version_id is not None:
+                break
+
+        # If there is no existing version, create a minimal operation/version
+        # pair so that timing metrics can be cached.
+        if self.current_operation_id is None:
+            try:
+                op_name = Path(file_path_str).name
+            except Exception:  # pragma: no cover - defensive
+                op_name = file_path_str
+
+            try:
+                self.current_operation_id = self.db_manager.create_gcode_operation(
+                    project_id=self.current_project_id,
+                    name=op_name,
+                    status="draft",
+                    notes="Auto-created by G-code Previewer",
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to create G-code operation for project %s: %s",
+                    self.current_project_id,
+                    exc,
+                )
+                self.current_operation_id = None
+                return
+
+        if self.current_version_id is None:
+            try:
+                version_id = self.db_manager.create_gcode_version(
+                    operation_id=self.current_operation_id,
+                    file_path=file_path_str,
+                    file_hash=self._compute_file_fingerprint(),
+                    status="draft",
+                )
+                self.current_version_id = version_id
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to create G-code version for operation %s: %s",
+                    self.current_operation_id,
+                    exc,
+                )
+                self.current_version_id = None
+
+    def _update_tool_label(self, tool_data: Dict[str, Any]) -> None:
+        """Update the per-path tool label in the tools panel.
+
+        The label is intentionally compact so it works both when the tools
+        panel is docked and when it is floating.
+        """
+        if self.tool_label is None:
+            return
+
+        description = tool_data.get("description") or "Tool selected"
+        diameter = tool_data.get("diameter")
+        unit = (tool_data.get("unit") or "").strip()
+        vendor = tool_data.get("vendor") or tool_data.get("provider_name")
+
+        parts = [str(description)]
+
+        try:
+            if isinstance(diameter, (int, float)):
+                diameter_value = float(diameter)
+                if diameter_value > 0:
+                    dim_text = f"Ø {diameter_value:.3f}"
+                    if unit:
+                        dim_text += f" {unit}"
+                    parts.append(dim_text)
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            # If diameter is not numeric, we simply omit it from the label.
+            pass
+
+        if vendor:
+            parts.append(str(vendor))
+
+        self.tool_label.setText(" - ".join(parts))
+
+    def _refresh_tool_label_for_current_version(self) -> None:
+        """Refresh tool label from any persisted snapshot for current version."""
+        if self.tool_label is None:
+            return
+
+        if self.db_manager is None or self.current_version_id is None:
+            self.tool_label.setText("No tool selected")
+            return
+
+        try:
+            snapshots = self.db_manager.list_gcode_tool_snapshots(self.current_version_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to list tool snapshots for version %s: %s",
+                self.current_version_id,
+                exc,
+            )
+            self.tool_label.setText("No tool selected")
+            return
+
+        if not snapshots:
+            self.tool_label.setText("No tool selected")
+            return
+
+        snapshot = snapshots[0]
+        metadata_raw = snapshot.get("metadata_json") or snapshot.get("metadata")
+        tool_data: Dict[str, Any] = {}
+
+        if metadata_raw:
+            try:
+                if isinstance(metadata_raw, str):
+                    tool_data = json.loads(metadata_raw)
+                elif isinstance(metadata_raw, dict):
+                    tool_data = metadata_raw
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to parse tool snapshot metadata for version %s: %s",
+                    self.current_version_id,
+                    exc,
+                )
+
+        if not tool_data:
+            tool_data = {
+                "description": snapshot.get("notes") or "Tool selected",
+                "vendor": snapshot.get("provider_name"),
+            }
+
+        self._update_tool_label(tool_data)
+
+    def _persist_tool_snapshot_for_current_version(self, tool_data: Dict[str, Any]) -> None:
+        """Persist selected tool metadata for the current version.
+
+        The full tool data dictionary is stored as JSON in the metadata field so
+        it can evolve without requiring schema changes.
+        """
+        if self.db_manager is None or self.current_version_id is None:
+            return
+
+        try:
+            # Clear any previous tool snapshots for this version so we keep one
+            # current selection.
+            self.db_manager.delete_gcode_tool_snapshots(self.current_version_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to clear existing tool snapshots for version %s: %s",
+                self.current_version_id,
+                exc,
+            )
+
+        try:
+            metadata = dict(tool_data)
+            self.db_manager.add_gcode_tool_snapshot(
+                version_id=self.current_version_id,
+                tool_number=None,
+                tool_id=tool_data.get("id"),
+                provider_name=tool_data.get("vendor") or tool_data.get("provider_name"),
+                tool_db_source=tool_data.get("tool_db_source", "tool_database"),
+                feed_rate=None,
+                plunge_rate=None,
+                spindle_speed=None,
+                stepdown=None,
+                stepover=None,
+                notes=tool_data.get("description"),
+                metadata=metadata,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to persist tool snapshot for version %s: %s",
+                self.current_version_id,
+                exc,
+            )
+
+    def _load_cached_timing_if_available(self) -> bool:
+        """Load cached timing metrics from the database when still valid.
+
+        Returns True when ``current_timing`` was populated from cache.
+        """
+        if (
+            self.db_manager is None
+            or self.current_version_id is None
+            or not self.current_file
+        ):
+            return False
+
+        try:
+            metrics = self.db_manager.get_gcode_metrics(self.current_version_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to load cached metrics for version %s: %s",
+                self.current_version_id,
+                exc,
+            )
+            return False
+
+        if not metrics:
+            return False
+
+        # Ensure that the cached metrics were computed for the same machine
+        # and feed override that are currently configured for this project.
+        machine, feed_override_pct = self._resolve_machine_and_override()
+        current_machine_id = machine.get("id") if machine is not None else None
+
+        fingerprint = self._compute_file_fingerprint()
+        if not fingerprint:
+            return False
+
+        try:
+            version_row = self.db_manager.get_gcode_version(self.current_version_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning(
+                "Failed to load version %s when validating metrics: %s",
+                self.current_version_id,
+                exc,
+            )
+            return False
+
+        if not version_row:
+            return False
+
+        stored_hash = str(version_row.get("file_hash") or "").strip()
+        if stored_hash != fingerprint:
+            self.logger.info(
+                "Ignoring cached timing for version %s because file hash changed",
+                self.current_version_id,
+            )
+            return False
+
+        stored_machine_id = metrics.get("machine_id")
+        stored_override = metrics.get("feed_override_pct")
+
+        if stored_machine_id is not None and current_machine_id is not None:
+            try:
+                stored_machine_id_int = int(stored_machine_id)
+            except (TypeError, ValueError):  # pragma: no cover - defensive
+                stored_machine_id_int = None
+            if stored_machine_id_int is not None and stored_machine_id_int != current_machine_id:
+                self.logger.info(
+                    "Ignoring cached timing for version %s because machine changed",
+                    self.current_version_id,
+                )
+                return False
+
+        if stored_override is not None:
+            try:
+                stored_override_val = float(stored_override)
+            except (TypeError, ValueError):  # pragma: no cover - defensive
+                stored_override_val = None
+            if (
+                stored_override_val is not None
+                and abs(stored_override_val - feed_override_pct) > 1e-3
+            ):
+                self.logger.info(
+                    "Ignoring cached timing for version %s because feed override changed",
+                    self.current_version_id,
+                )
+                return False
+
+        timing_keys = (
+            "total_time_seconds",
+            "cutting_time_seconds",
+            "rapid_time_seconds",
+            "distance_cut",
+            "distance_rapid",
+            "best_case_time_seconds",
+            "time_correction_factor",
+        )
+        timing: Dict[str, float] = {}
+        for key in timing_keys:
+            value = metrics.get(key)
+            if value is None:
+                continue
+            try:
+                timing[key] = float(value)
+            except (TypeError, ValueError):  # pragma: no cover - defensive
+                continue
+
+        if not timing:
+            return False
+
+        self.current_timing = timing
+        self.logger.info(
+            "Loaded cached timing for version %s (k=%.3f)",
+            self.current_version_id,
+            timing.get("time_correction_factor", 1.0),
+        )
+        return True
+
+    def _start_timing_job(self) -> None:
+        """Kick off a background timing computation for the current moves."""
+        if not self.moves:
+            return
+
+        machine, feed_override_pct = self._resolve_machine_and_override()
+        if machine is None:
+            # No machine configured; we still keep geometric statistics.
+            return
+
+        worker = GcodeTimingThread(
+            self.moves,
+            max_feed_mm_min=machine["max_feed_mm_min"],
+            accel_mm_s2=machine["accel_mm_s2"],
+            feed_override_pct=feed_override_pct,
+            parent=self,
+        )
+        worker.finished.connect(self._on_timing_finished)
+        worker.error_occurred.connect(self._on_timing_error)
+        self.timing_thread = worker
+        worker.start()
+
+    def _on_timing_finished(self, timing: Dict[str, float]) -> None:
+        """Handle completion of the background timing computation."""
+        sender = self.sender()
+        if sender is not None and sender is not self.timing_thread:
+            # Result from an obsolete worker; ignore it.
+            return
+
+        self.timing_thread = None
+        self.current_timing = timing
+
+        if self.db_manager is not None and self.current_version_id is not None:
+            try:
+                machine, feed_override_pct = self._resolve_machine_and_override()
+                machine_id = machine.get("id") if machine is not None else None
+
+                metrics_payload: Dict[str, Any] = dict(timing)
+                metrics_payload.update(
+                    machine_id=machine_id,
+                    feed_override_pct=feed_override_pct,
+                )
+
+                self.db_manager.upsert_gcode_metrics(self.current_version_id, **metrics_payload)
+                fingerprint = self._compute_file_fingerprint()
+                if fingerprint:
+                    self.db_manager.update_gcode_version(
+                        self.current_version_id,
+                        file_hash=fingerprint,
+                    )
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning(
+                    "Failed to persist timing metrics for version %s: %s",
+                    self.current_version_id,
+                    exc,
+                )
+
+        self._update_statistics(include_timing=True)
+        self._show_status_message("Cutting-time estimate updated", 3000)
+
+    def _on_timing_error(self, message: str) -> None:
+        """Handle timing worker errors without disrupting the UI."""
+        sender = self.sender()
+        if sender is not None and sender is not self.timing_thread:
+            return
+
+        self.timing_thread = None
+        self.logger.warning("Timing worker reported an error: %s", message)
+        self._show_status_message(f"Timing calculation failed: {message}", 5000)
+
+
+    def _update_statistics(self, include_timing: bool = False) -> None:
+        """Update statistics display.
+
+        Geometric statistics are always shown. When ``include_timing`` is
+        True and ``current_timing`` is populated, a timing summary based on
+        the most recent background calculation or cached metrics is appended.
+        """
         stats = self.parser.get_statistics()
         bounds = stats["bounds"]
 
-        stats_text = f"""
-        <b>Toolpath Statistics</b><br>
-        Total Moves: {stats['total_moves']}<br>
-        Rapid Moves: {stats['rapid_moves']}<br>
-        Cutting Moves: {stats['cutting_moves']}<br>
-        Arc Moves: {stats['arc_moves']}<br>
-        <br>
-        <b>Bounds</b><br>
-        X: {bounds['min_x']:.2f} to {bounds['max_x']:.2f}<br>
-        Y: {bounds['min_y']:.2f} to {bounds['max_y']:.2f}<br>
-        Z: {bounds['min_z']:.2f} to {bounds['max_z']:.2f}
-        """
+        stats_text = (
+            "<b>Toolpath Statistics</b><br>"
+            f"Total Moves: {stats['total_moves']}<br>"
+            f"Rapid Moves: {stats['rapid_moves']}<br>"
+            f"Cutting Moves: {stats['cutting_moves']}<br>"
+            f"Arc Moves: {stats['arc_moves']}<br>"
+            "<br>"
+            "<b>Bounds</b><br>"
+            f"X: {bounds['min_x']:.2f} to {bounds['max_x']:.2f}<br>"
+            f"Y: {bounds['min_y']:.2f} to {bounds['max_y']:.2f}<br>"
+            f"Z: {bounds['min_z']:.2f} to {bounds['max_z']:.2f}"
+        )
 
-        self.stats_label.setText(stats_text)
+        timing = self.current_timing if include_timing and self.current_timing else None
+
+        if timing:
+            try:
+                stats_text += (
+                    "<br><br>"
+                    "<b>Path Length</b><br>"
+                    f"Cutting: {timing['distance_cut']:.2f} mm<br>"
+                    f"Rapid: {timing['distance_rapid']:.2f} mm<br>"
+                    "<br>"
+                    "<b>Timing</b><br>"
+                    f"Best-case (no accel): {self._format_duration(timing['best_case_time_seconds'])}<br>"
+                    f"Kinematic (accel): {self._format_duration(timing['total_time_seconds'])}<br>"
+                    f"Rapid time: {self._format_duration(timing['rapid_time_seconds'])}<br>"
+                    f"Cutting time: {self._format_duration(timing['cutting_time_seconds'])}<br>"
+                    f"Time correction factor k: {timing['time_correction_factor']:.3f}"
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("Failed to format timing summary: %s", exc)
+
+        if self.stats_label is not None:
+            self.stats_label.setText(stats_text)
+
+
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        """Format a duration in seconds as a compact H:MM:SS string.
+
+        This keeps the statistics panel readable even for long jobs while
+        still making it easy to compare best-case and kinematic times.
+        """
+        try:
+            total_seconds = max(0, int(round(float(seconds))))
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            total_seconds = 0
+
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, secs = divmod(remainder, 60)
+
+        if hours > 0:
+            return f"{hours:d}:{minutes:02d}:{secs:02d}"
+        return f"{minutes:d}:{secs:02d}"
 
     def _update_moves_table(self) -> None:
         """Update moves table with first 50 moves."""
@@ -611,9 +1291,20 @@ class GcodePreviewerWidget(QWidget):
             self.renderer.render_toolpath(self.moves)
             self.vtk_widget.update_render()
 
-            # Update statistics and table
-            self._update_statistics()
+            # Reset timing and either use cache or kick off a new job.
+            self.current_timing = None
+            from_cache = False
+            if self.db_manager is not None and self.current_project_id:
+                self._ensure_gcode_version_for_current_file()
+                # Editing the file typically invalidates the hash; this will
+                # normally return False, but we keep the call for completeness.
+                from_cache = self._load_cached_timing_if_available()
+
+            self._update_statistics(include_timing=from_cache)
             self._update_moves_table()
+
+            if not from_cache and self.db_manager is not None:
+                self._start_timing_job()
 
             self.logger.info("G-code reloaded and re-rendered")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -658,13 +1349,34 @@ class GcodePreviewerWidget(QWidget):
         self.layer_analyzer.analyze(self.moves)
         self._update_layer_combo()
 
+        # Prepare DB linkage for timing cache if we have a project context.
+        self.current_timing = None
+        if self.db_manager is not None and self.current_project_id:
+            self._ensure_gcode_version_for_current_file()
+            # Refresh tool selection label from any stored snapshots for this version.
+            self._refresh_tool_label_for_current_version()
+            from_cache = self._load_cached_timing_if_available()
+        else:
+            from_cache = False
+            # Without a project/version context we cannot persist tool selection.
+            if self.tool_label is not None:
+                self.tool_label.setText("No tool selected")
+
         # Update UI - detailed text in the status bar
         file_name = Path(self.current_file).name
         file_size_mb = Path(self.current_file).stat().st_size / (1024 * 1024)
         info_text = (
-            f"Loaded G-code: {file_name} ({file_size_mb:.1f}MB, {self.total_file_lines:,} lines, {len(self.moves):,} moves)"
+            f"Loaded G-code: {file_name} ({file_size_mb:.1f}MB, "
+            f"{self.total_file_lines:,} lines, {len(self.moves):,} moves)"
         )
         self._show_status_message(info_text, 5000)
+
+        # Update statistics; include timing only when we have cached results.
+        self._update_statistics(include_timing=from_cache)
+
+        # Kick off background timing computation when no valid cache exists.
+        if not from_cache and self.db_manager is not None:
+            self._start_timing_job()
 
         # Update moves table
         self._update_moves_table()
@@ -688,7 +1400,7 @@ class GcodePreviewerWidget(QWidget):
         """Handle frame change from timeline."""
         if frame_index < len(self.moves):
             # Update animation controller
-            self.animation_controller.set_current_frame(frame_index)
+            self.animation_controller.set_frame(frame_index)
 
             self.logger.debug("Timeline frame changed to %s", frame_index)
 
@@ -718,6 +1430,25 @@ class GcodePreviewerWidget(QWidget):
         # Analyze layers
         self.layer_analyzer.analyze(self.moves)
         self._update_layer_combo()
+
+        # Prepare DB linkage for timing cache and tool snapshots when we have
+        # a project context.
+        self.current_timing = None
+        if self.db_manager is not None and self.current_project_id:
+            self._ensure_gcode_version_for_current_file()
+            self._refresh_tool_label_for_current_version()
+            from_cache = self._load_cached_timing_if_available()
+        else:
+            from_cache = False
+            if self.tool_label is not None:
+                self.tool_label.setText("No tool selected")
+
+        # Update statistics; include timing only when we have cached results.
+        self._update_statistics(include_timing=from_cache)
+
+        # Kick off background timing computation when no valid cache exists.
+        if not from_cache and self.db_manager is not None:
+            self._start_timing_job()
 
         # Update moves table
         self._update_moves_table()

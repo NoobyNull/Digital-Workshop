@@ -762,11 +762,13 @@ class ThumbnailSettingsTab(QWidget):
                     settings_dict['material']
                 )
 
-            # Save to QSettings (persistent storage)
+            # Save to QSettings (persistent storage). We intentionally avoid an
+            # explicit sync() call here to keep the UI responsive even when the
+            # backing store is slow (e.g. network paths). QSettings will flush
+            # changes automatically.
             settings.setValue("thumbnail/background_image", settings_dict["background_image"])
             settings.setValue("thumbnail/material", settings_dict["material"])
             settings.setValue("thumbnail/background_color", settings_dict["background_color"])
-            settings.sync()  # Force immediate write to disk
 
             # Also update ApplicationConfig for runtime compatibility
             config.thumbnail_bg_image = settings_dict["background_image"]

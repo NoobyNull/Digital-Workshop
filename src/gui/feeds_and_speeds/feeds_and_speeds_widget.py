@@ -1,7 +1,7 @@
 """Feeds & Speeds Calculator Widget."""
 
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import json
 import os
 
@@ -358,6 +358,10 @@ class FeedsAndSpeedsWidget(QWidget):
 
         # Setup UI
         self._setup_ui()
+
+        # Initialize machine label and override controls based on the
+        # currently selected project (if any).
+        self._refresh_machine_and_override_from_project()
 
     def _load_default_library(self) -> None:
         """Load bundled vendor tool libraries into the database on first run.
@@ -912,6 +916,27 @@ class FeedsAndSpeedsWidget(QWidget):
         self.selected_tool_label = QLabel("No tool selected")
         layout.addWidget(self.selected_tool_label)
 
+        # Machine and overrides group (per-project settings)
+        machine_group = QGroupBox("Machine && Overrides")
+        machine_layout = QFormLayout()
+
+        self.machine_combo = QComboBox()
+        self.machine_combo.setEditable(False)
+        self.machine_combo.currentIndexChanged.connect(self._on_machine_changed)
+        machine_layout.addRow("Machine:", self.machine_combo)
+
+        self.feed_override_spin = QDoubleSpinBox()
+        self.feed_override_spin.setRange(10.0, 200.0)
+        self.feed_override_spin.setDecimals(1)
+        self.feed_override_spin.setSingleStep(5.0)
+        self.feed_override_spin.setSuffix(" %")
+        self.feed_override_spin.setValue(100.0)
+        self.feed_override_spin.valueChanged.connect(self._on_feed_override_changed)
+        machine_layout.addRow("Feed override:", self.feed_override_spin)
+
+        machine_group.setLayout(machine_layout)
+        layout.addWidget(machine_group)
+
         # Geometry group
         geometry_group = QGroupBox("Tool Geometry")
         geometry_layout = QFormLayout()
@@ -1006,6 +1031,198 @@ class FeedsAndSpeedsWidget(QWidget):
         self._update_calculator_unit_suffixes()
 
         return panel
+
+    def _refresh_machine_and_override_from_project(self) -> None:
+        """Refresh machine selection and feed override from the current project.
+
+        This uses the project-level machine settings stored in the database
+        when a project is active, falling back to the default generic CNC
+        machine and 100% override when no project is selected or the
+        database is unavailable.
+        """
+        # Machine controls are created in _create_calculator_panel; guard
+        # against calls during early construction.
+        if not hasattr(self, "machine_combo") or not hasattr(
+            self, "feed_override_spin"
+        ):
+            return
+
+        db_manager = getattr(self.tab_data_manager, "db_manager", None)
+
+        # Defaults that match the generic built-in CNC profile.
+        machine_name = "Generic CNC (metric)"
+        max_feed_mm_min = 600.0
+        accel_mm_s2 = 100.0
+        override_pct = 100.0
+
+        machines: List[Dict[str, Any]] = []
+        active_machine_id: Optional[int] = None
+
+        try:
+            if db_manager is not None:
+                try:
+                    machines = db_manager.list_machines() or []
+                except Exception as exc:
+                    self.logger.warning("Failed to list machines: %s", exc)
+                    machines = []
+
+                # Resolve active machine for the current project if available.
+                if self.current_project_id:
+                    try:
+                        active_machine_id = db_manager.get_project_active_machine(
+                            self.current_project_id
+                        )
+                    except Exception as exc:
+                        self.logger.warning(
+                            "Failed to get active machine for project %s: %s",
+                            self.current_project_id,
+                            exc,
+                        )
+                        active_machine_id = None
+
+                # Fall back to default machine when no project-specific
+                # machine is configured.
+                if active_machine_id is None:
+                    try:
+                        default_machine = db_manager.get_default_machine()
+                    except Exception as exc:
+                        self.logger.warning("Failed to get default machine: %s", exc)
+                        default_machine = None
+
+                    if default_machine is not None:
+                        try:
+                            active_machine_id = int(default_machine.get("id"))
+                        except (TypeError, ValueError):
+                            active_machine_id = None
+
+                # Populate combo box with available machines.
+                self.machine_combo.blockSignals(True)
+                self.machine_combo.clear()
+
+                selected_index = -1
+                for machine in machines:
+                    mid = machine.get("id")
+                    name = machine.get("name") or "Unnamed machine"
+                    index = self.machine_combo.count()
+                    self.machine_combo.addItem(name, mid)
+                    if active_machine_id is not None and mid == active_machine_id:
+                        selected_index = index
+
+                if self.machine_combo.count() == 0:
+                    # Fallback placeholder when no machines exist in DB.
+                    self.machine_combo.addItem("Generic CNC (metric)", None)
+
+                if selected_index >= 0:
+                    self.machine_combo.setCurrentIndex(selected_index)
+                else:
+                    self.machine_combo.setCurrentIndex(0)
+
+                self.machine_combo.blockSignals(False)
+
+                # Determine current machine parameters from the selected entry.
+                current_data = self.machine_combo.currentData()
+                current_machine: Optional[Dict[str, Any]] = None
+                if current_data is not None:
+                    for machine in machines:
+                        if machine.get("id") == current_data:
+                            current_machine = machine
+                            break
+
+                if current_machine:
+                    machine_name = current_machine.get("name", machine_name)
+                    try:
+                        max_feed_mm_min = float(
+                            current_machine.get("max_feed_mm_min", max_feed_mm_min)
+                        )
+                    except (TypeError, ValueError):
+                        pass
+                    try:
+                        accel_mm_s2 = float(
+                            current_machine.get("accel_mm_s2", accel_mm_s2)
+                        )
+                    except (TypeError, ValueError):
+                        pass
+
+                # Fetch project-specific feed override percentage.
+                if self.current_project_id:
+                    try:
+                        override_pct = float(
+                            db_manager.get_project_feed_override(self.current_project_id)
+                        )
+                    except Exception as exc:
+                        self.logger.warning(
+                            "Failed to get feed override for project %s: %s",
+                            self.current_project_id,
+                            exc,
+                        )
+        except Exception as exc:  # Final safety net; keep UI responsive.
+            self.logger.warning("Failed to refresh machine info: %s", exc)
+
+        # Update tooltip with resolved machine parameters so the user can
+        # see the effective kinematic limits at a glance.
+        try:
+            tooltip = (
+                f"{machine_name} "
+                f"({max_feed_mm_min:.0f} mm/min, {accel_mm_s2:.0f} mm/s²)"
+            )
+            self.machine_combo.setToolTip(tooltip)
+        except Exception:
+            # Tooltip is non-critical; never allow it to break the UI.
+            self.logger.debug(
+                "Failed to update machine tooltip",
+                exc_info=True,
+            )
+
+        # Update feed override spin while keeping existing value-change logic.
+        try:
+            self.feed_override_spin.blockSignals(True)
+            self.feed_override_spin.setValue(override_pct)
+        finally:
+            self.feed_override_spin.blockSignals(False)
+
+    def _on_machine_changed(self, index: int) -> None:
+        """Persist active machine selection to the current project when possible."""
+        db_manager = getattr(self.tab_data_manager, "db_manager", None)
+
+        if not db_manager or not self.current_project_id:
+            return
+
+        machine_id = self.machine_combo.itemData(index)
+        if machine_id is None:
+            # Placeholder / no-selection entry; nothing to persist.
+            return
+
+        try:
+            db_manager.set_project_active_machine(
+                self.current_project_id,
+                int(machine_id),
+            )
+        except Exception as exc:
+            self.logger.warning(
+                "Failed to persist active machine %s for project %s: %s",
+                machine_id,
+                self.current_project_id,
+                exc,
+            )
+
+    def _on_feed_override_changed(self, value: float) -> None:
+        """Persist feed override changes to the current project when possible."""
+        db_manager = getattr(self.tab_data_manager, "db_manager", None)
+
+        if not db_manager or not self.current_project_id:
+            # Nothing to persist yet (no project or DB). The spinbox still
+            # reflects the current UI state so the user gets feedback.
+            return
+
+        try:
+            db_manager.set_project_feed_override(self.current_project_id, float(value))
+        except Exception as exc:
+            self.logger.warning(
+                "Failed to persist feed override %.1f%% for project %s: %s",
+                float(value),
+                self.current_project_id,
+                exc,
+            )
 
     def _update_calculator_unit_suffixes(self) -> None:
         """Update suffixes for calculator fields based on current unit system."""
@@ -1586,8 +1803,14 @@ Calculated:
         return results.strip()
 
     def set_current_project(self, project_id: str) -> None:
-        """Set the current project for saving/loading data."""
+        """Set the current project for saving/loading data.
+
+        This also refreshes the machine label and feed override controls so
+        they reflect the project-level machine configuration and override
+        stored in the database.
+        """
         self.current_project_id = project_id
+        self._refresh_machine_and_override_from_project()
 
     def save_to_project(self) -> None:
         """Save feeds and speeds data to current project."""
@@ -1630,6 +1853,10 @@ Calculated:
         success, data, message = self.tab_data_manager.load_tab_data_from_project(
             project_id=self.current_project_id, filename="feeds_and_speeds.json"
         )
+
+        # Refresh machine label and feed override from the project-level
+        # settings even if there is no dedicated tab data yet.
+        self._refresh_machine_and_override_from_project()
 
         if not success:
             QMessageBox.warning(self, "Load Failed", message)

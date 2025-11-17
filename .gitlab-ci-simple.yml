@@ -83,11 +83,6 @@ build_windows_exe:
     $newExeName = "Digital Workshop.$buildNumber.exe"
     Rename-Item -Path $exePath -NewName $newExeName
 
-    # Also provide a stable "latest" executable name for this build
-    $versionedExePath = Join-Path $distDir $newExeName
-    $latestExePath = Join-Path $distDir "Digital Workshop.latest.exe"
-    Copy-Item -Path $versionedExePath -Destination $latestExePath -Force
-
     # Generate change log
     python scripts/generate_changelog.py --build-number $buildNumber --output "dist/changes-$buildNumber.txt"
 
@@ -135,10 +130,7 @@ build_windows_exe:
       dependency_scanning: safety-report.json  # Dependency vulnerability scanning
       secret_detection: semgrep-report.json  # Secrets detection
 
-  # Allow builds on main, develop, release branches, tags, and manual triggers
+  # Allow manual trigger and main branch
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH =~ /^release\//'
-    - if: '$CI_COMMIT_TAG'
     - if: '$CI_PIPELINE_SOURCE == "web"'  # Manual trigger from GitLab UI

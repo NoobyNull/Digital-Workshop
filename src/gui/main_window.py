@@ -2182,6 +2182,15 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
 
+            # Attach the project to the G-code previewer so that timing
+            # calculations use the correct machine and feed override.
+            if hasattr(self, "gcode_previewer_widget") and self.gcode_previewer_widget:
+                try:
+                    self.gcode_previewer_widget.set_current_project(project_id)
+                    self.logger.debug(f"Set current project for G-code Previewer: {project_id}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for G-code Previewer: {e}")
+
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
 
         except Exception as e:

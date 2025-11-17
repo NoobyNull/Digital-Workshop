@@ -91,12 +91,23 @@ class GcodeToolsWidget(QWidget):
         self._init_visualization_controls(timeline_loader_layout)
         tabs.addTab(timeline_loader_widget, "Timeline & Loader")
 
-        # Tab 2: Statistics and Moves
+        # Tab 2: Statistics, Tool selection, and Moves
         stats_moves_widget = QWidget()
         stats_moves_layout = QVBoxLayout(stats_moves_widget)
         stats_moves_layout.setContentsMargins(0, 0, 0, 0)
         stats_moves_layout.setSpacing(8)
 
+        # Per-path tool selection and summary
+        tool_group = QGroupBox("Tool")
+        tool_layout = QVBoxLayout(tool_group)
+        self.tool_label = QLabel("No tool selected")
+        self.tool_label.setWordWrap(True)
+        tool_layout.addWidget(self.tool_label)
+        self.select_tool_button = QPushButton("Select Tool")
+        tool_layout.addWidget(self.select_tool_button)
+        stats_moves_layout.addWidget(tool_group)
+
+        # Aggregate toolpath statistics
         stats_group = QGroupBox("Toolpath Statistics")
         stats_layout = QVBoxLayout(stats_group)
         self.stats_label = QLabel("Load a G-code file to see statistics")
@@ -104,6 +115,7 @@ class GcodeToolsWidget(QWidget):
         stats_layout.addWidget(self.stats_label)
         stats_moves_layout.addWidget(stats_group)
 
+        # Per-move table
         moves_group = QGroupBox("G-code Moves")
         moves_layout = QVBoxLayout(moves_group)
 

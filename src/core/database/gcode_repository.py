@@ -294,6 +294,8 @@ class GcodeRepository:
             "warnings",
             "best_case_time_seconds",
             "time_correction_factor",
+            "machine_id",
+            "feed_override_pct",
         }
         payload = {k: v for k, v in metrics.items() if k in fields}
 
