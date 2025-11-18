@@ -116,6 +116,24 @@ class DatabaseOperations:
                 """
                 )
 
+                # Create MRU table for recent models
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_recent_usage (
+                        model_id INTEGER PRIMARY KEY,
+                        last_accessed DATETIME NOT NULL,
+                        is_favorite INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+                    )
+                """
+                )
+                cursor.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_model_recent_usage_last_accessed
+                    ON model_recent_usage(last_accessed DESC)
+                """
+                )
+
                 # Create categories table
                 cursor.execute(
                     """

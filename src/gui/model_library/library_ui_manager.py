@@ -7,6 +7,7 @@ Handles UI creation, layout, and styling.
 from PySide6.QtCore import Qt, QSize, QSettings
 from PySide6.QtGui import QStandardItemModel, QAction, QIcon
 from PySide6.QtWidgets import (
+    QComboBox,
     QFrame,
     QGroupBox,
     QHeaderView,
@@ -34,6 +35,7 @@ from src.gui.multi_root_file_system_model import MultiRootFileSystemModel
 from .file_system_proxy import FileSystemProxyModel
 from .grid_icon_delegate import GridIconDelegate
 from .numeric_sort_proxy import NumericSortProxyModel
+from .recent_models_panel import RecentModelsPanel
 
 
 logger = get_logger(__name__)
@@ -76,6 +78,7 @@ class LibraryUIManager:
         library_layout.setContentsMargins(0, 0, 0, 0)
         library_layout.setSpacing(SPACING_8)
 
+        self.create_recent_models_panel(library_layout)
         self.create_model_view_area(library_layout)
         self.create_status_bar(library_layout)
 
@@ -113,12 +116,53 @@ class LibraryUIManager:
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(SPACING_8)
 
+        # Free-text search box
         self.library_widget.search_box = QLineEdit()
         self.library_widget.search_box.setPlaceholderText("Search models...")
         controls_layout.addWidget(QLabel("Search:"))
         controls_layout.addWidget(self.library_widget.search_box)
 
+        # Category filter
+        self.library_widget.category_filter = QComboBox()
+        self.library_widget.category_filter.setEditable(False)
+        self.library_widget.category_filter.addItem("All Categories", userData=None)
+        try:
+            categories = self.library_widget.db_manager.get_categories()
+            for category in categories:
+                name = category.get("name")
+                if not name:
+                    continue
+                self.library_widget.category_filter.addItem(name, userData=name)
+        except Exception:
+            # If categories cannot be loaded, keep the filter with only the default option
+            logger.warning("Failed to load categories for model library filter", exc_info=True)
+
+        controls_layout.addWidget(QLabel("Category:"))
+        controls_layout.addWidget(self.library_widget.category_filter)
+
+        # Dirty/clean status filter
+        self.library_widget.dirty_filter = QComboBox()
+        self.library_widget.dirty_filter.setEditable(False)
+        self.library_widget.dirty_filter.addItem("All Models", userData=None)
+        self.library_widget.dirty_filter.addItem("Only Dirty", userData="dirty")
+        self.library_widget.dirty_filter.addItem("Only Clean", userData="clean")
+
+        controls_layout.addWidget(QLabel("Status:"))
+        controls_layout.addWidget(self.library_widget.dirty_filter)
+
         parent_layout.addWidget(controls_frame)
+
+    def create_recent_models_panel(self, parent_layout: QVBoxLayout) -> None:
+        """Create the MRU list panel that surfaces recently opened models."""
+
+        try:
+            panel = RecentModelsPanel()
+            panel.setMaximumHeight(220)
+            parent_layout.addWidget(panel)
+            self.library_widget.recent_models_panel = panel
+        except Exception:
+            self.library_widget.recent_models_panel = None
+            logger.warning("Failed to create recent models panel", exc_info=True)
 
     def create_file_browser(self, parent_layout: QVBoxLayout) -> None:
         """Create file browser UI."""
@@ -191,10 +235,19 @@ class LibraryUIManager:
         self.library_widget.list_view = QTableView()
         self.library_widget.list_model = QStandardItemModel()
         self.library_widget.list_model.setHorizontalHeaderLabels(
-            ["Thumbnail", "Name", "Format", "Size", "Triangles", "Category", "Added Date"]
+            [
+                "Thumbnail",
+                "Name",
+                "Format",
+                "Size",
+                "Triangles",
+                "Category",
+                "Added Date",
+                "Dirty",
+            ]
         )
 
-        # Use custom numeric sort proxy model for proper sorting
+        # Use custom numeric sort proxy model for proper sorting and filtering
         self.library_widget.proxy_model = NumericSortProxyModel()
         self.library_widget.proxy_model.setSourceModel(self.library_widget.list_model)
         self.library_widget.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -220,11 +273,11 @@ class LibraryUIManager:
 
         # Set default resize modes BEFORE restoring sizes
         # All columns: interactive (user can resize and sizes persist)
-        for col in range(7):
+        for col in range(8):
             header.setSectionResizeMode(col, QHeaderView.Interactive)
 
         # Restore column sizes from settings
-        for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
+        for col in range(8):  # Now 8 columns (Thumbnail + 7 others)
             width = settings.value(f"column_{col}_width", type=int)
             if width:
                 header.resizeSection(col, width)
@@ -234,6 +287,8 @@ class LibraryUIManager:
                     header.resizeSection(col, 100)
                 elif col == 1:  # Name - wider default
                     header.resizeSection(col, 250)
+                elif col == 7:  # Dirty status column - narrow
+                    header.resizeSection(col, 80)
 
         # Save column sizes when they change
         header.sectionResized.connect(self._save_column_size)

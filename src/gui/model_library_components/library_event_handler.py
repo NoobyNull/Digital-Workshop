@@ -351,8 +351,21 @@ class LibraryEventHandler:
             # Generate thumbnail using coordinator with dedicated window
             coordinator = ThumbnailGenerationCoordinator(parent=self.library_widget)
 
+            # Save thumbnail path to database when generated
+            def on_thumbnail_generated(file_path: str, thumbnail_path: str) -> None:
+                if file_path != model_path:
+                    return
+                db_manager.update_model_thumbnail(model_id, thumbnail_path)
+                self.logger.info(
+                    "Saved thumbnail path to database for model %s: %s",
+                    model_id,
+                    thumbnail_path,
+                )
+
+            coordinator.thumbnail_generated.connect(on_thumbnail_generated)
+
             # Connect completion signal to refresh display
-            def on_generation_completed():
+            def on_generation_completed() -> None:
                 self.logger.info("Preview generated for model %s", model_id)
                 if hasattr(self.library_widget, "_refresh_model_display"):
                     self.library_widget._refresh_model_display(model_id)
@@ -369,6 +382,7 @@ class LibraryEventHandler:
                 file_info_list=[(model_path, file_hash)],
                 background=background,
                 material=material,
+                force_regenerate=True,
             )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

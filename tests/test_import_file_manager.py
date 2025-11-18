@@ -107,11 +107,11 @@ class TestImportFileManager(unittest.TestCase):
     def test_get_organized_subdir(self):
         """Test subdirectory determination by file extension."""
         test_cases = {
-            "model.stl": "STL_Files",
-            "mesh.obj": "OBJ_Files",
-            "part.step": "STEP_Files",
-            "assembly.3mf": "3MF_Files",
-            "unknown.xyz": "Other_Files"
+            "model.stl": "Models",
+            "mesh.obj": "Models",
+            "part.step": "Models",
+            "assembly.3mf": "Models",
+            "unknown.xyz": "Other_Files",
         }
 
         for filename, expected_subdir in test_cases.items():
@@ -119,35 +119,68 @@ class TestImportFileManager(unittest.TestCase):
             subdir = self.manager._get_organized_subdir(file_path)
             self.assertEqual(subdir, expected_subdir)
 
-    def test_create_organized_path(self):
-        """Test organized path creation."""
-        test_file = "model.stl"
+    def test_create_organized_path_prefers_original_name(self):
+        """Organized path should use the original filename when there is no conflict."""
+        source_path = Path(self.temp_dir) / "model.stl"
+        source_path.touch()
+
         organized_path = self.manager._create_organized_path(
             self.temp_dir,
-            test_file,
-            "abc123def456"
+            str(source_path),
+            "abc123def456",
         )
 
-        self.assertIn("STL_Files", str(organized_path))
-        self.assertTrue(str(organized_path).endswith(".stl"))
+        # Stays in the Models subfolder and keeps the human-friendly name
+        self.assertIn("Models", str(organized_path))
+        self.assertEqual(organized_path.name, "model.stl")
 
-    def test_create_organized_path_handles_conflicts(self):
-        """Test organized path creation handles filename conflicts."""
-        # Create first file
-        subdir = Path(self.temp_dir) / "STL_Files"
+    def test_create_organized_path_uses_hash_when_original_conflicts(self):
+        """When the original name collides, fall back to a hash-based filename."""
+        root = Path(self.temp_dir)
+        subdir = root / "Models"
         subdir.mkdir()
-        existing = subdir / "hash123.stl"
+
+        # Existing file with the human-friendly name
+        existing = subdir / "model.stl"
         existing.touch()
 
-        # Try to create another with same hash
+        source_path = root / "model.stl"
+        source_path.touch()
+
         organized_path = self.manager._create_organized_path(
             self.temp_dir,
-            "model.stl",
-            "hash123"
+            str(source_path),
+            "hash123",
         )
 
-        # Should have conflict resolution (e.g., hash123_1.stl)
-        self.assertNotEqual(str(organized_path), str(existing))
+        # Collision on model.stl should switch to hash-based naming
+        self.assertEqual(organized_path.name, "hash123.stl")
+
+    def test_create_organized_path_appends_suffix_when_name_and_hash_conflict(self):
+        """
+        If both the original name and the hash-based candidate exist (legacy libraries),
+        use a suffixed human name to avoid overwriting legacy hash-named files.
+        """
+        root = Path(self.temp_dir)
+        subdir = root / "Models"
+        subdir.mkdir()
+
+        # Legacy library may already contain both a human and a hash-based file
+        (subdir / "model.stl").touch()
+        (subdir / "hash123.stl").touch()
+
+        source_path = root / "model.stl"
+        source_path.touch()
+
+        organized_path = self.manager._create_organized_path(
+            self.temp_dir,
+            str(source_path),
+            "hash123",
+        )
+
+        self.assertTrue(organized_path.name.startswith("model_"))
+        self.assertTrue(organized_path.name.endswith(".stl"))
+        self.assertNotIn(organized_path.name, {"model.stl", "hash123.stl"})
 
     def test_start_import_session_leave_in_place(self):
         """Test starting import session in leave in place mode."""

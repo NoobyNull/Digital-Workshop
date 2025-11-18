@@ -12,6 +12,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QLabel, QMessageBox
 
 from src.core.database_manager import get_database_manager
+from src.core.model_recent_service import record_model_access
 
 if TYPE_CHECKING:  # pragma: no cover - for type checkers only
     from src.gui.main_window import MainWindow
@@ -150,6 +151,9 @@ class ModelViewerController:
             model = db_manager.get_model(model_id)
 
             if model:
+                record_model_access(model_id)
+                self._refresh_recent_panel()
+
                 file_path = model["file_path"]
                 self.logger.info("Loading model from library: %s", file_path)
 
@@ -210,3 +214,13 @@ class ModelViewerController:
 
         except Exception as e:  # pragma: no cover - defensive
             self.logger.warning("Failed to restore saved camera: %s", e)
+
+    def _refresh_recent_panel(self) -> None:
+        """Refresh the MRU widget if it exists."""
+
+        widget = getattr(self.main_window, "model_library_widget", None)
+        if widget and hasattr(widget, "refresh_recent_models"):
+            try:
+                widget.refresh_recent_models()
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.debug("Failed to refresh MRU panel: %s", exc)

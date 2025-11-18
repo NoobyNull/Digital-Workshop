@@ -116,8 +116,11 @@ class ThumbnailGenerationWindow(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
         left_layout.setSpacing(SPACING_12)
 
-        # Batch progress section
+        # Batch progress section (or single-item progress)
         batch_section = self._create_batch_progress_section()
+        if self.total_items == 1:
+            batch_section.setTitle("Preview Progress")
+            self.batch_label.setText("Generating preview image...")
         left_layout.addWidget(batch_section)
 
         # Individual progress section
@@ -395,7 +398,12 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.logger.info("Thumbnail generation completed")
 
     def show_and_raise(self) -> None:
-        """Show window and bring it to front."""
+        """Show window and bring it to front and start timing."""
         self.show()
         self.raise_()
         self.activateWindow()
+
+        # Start elapsed time tracking when the window becomes visible
+        self.operation_start_time = time.time()
+        if not self.time_update_timer.isActive():
+            self.time_update_timer.start()

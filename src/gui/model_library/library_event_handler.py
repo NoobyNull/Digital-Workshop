@@ -61,7 +61,12 @@ class LibraryEventHandler:
         self.library_widget.grid_view.clicked.connect(self.on_model_clicked)
         self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
 
+        # Search and filter controls
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
+        if hasattr(self.library_widget, "category_filter"):
+            self.library_widget.category_filter.currentIndexChanged.connect(self.apply_filters)
+        if hasattr(self.library_widget, "dirty_filter"):
+            self.library_widget.dirty_filter.currentIndexChanged.connect(self.apply_filters)
 
         self.library_widget.setAcceptDrops(True)
         self.library_widget.list_view.setAcceptDrops(True)
@@ -103,20 +108,39 @@ class LibraryEventHandler:
             pass
 
     def apply_filters(self) -> None:
-        """Apply search and category filters."""
+        """Apply search, category, and dirty/clean filters."""
         if self.library_widget._disposed or not hasattr(self.library_widget, "proxy_model"):
             return
+
         text = (
             self.library_widget.search_box.text()
             if hasattr(self.library_widget, "search_box")
             else ""
         )
+
+        # Free-text search uses the proxy model's regular expression filter
         try:
             self.library_widget.proxy_model.setFilterRegularExpression(
                 QRegularExpression(text, QRegularExpression.CaseInsensitiveOption)
             )
         except Exception:
             self.library_widget.proxy_model.setFilterFixedString(text or "")
+
+        # Apply category filter via the proxy model
+        category_value = None
+        if hasattr(self.library_widget, "category_filter"):
+            category_value = self.library_widget.category_filter.currentData()
+
+        # Apply dirty/clean filter via the proxy model
+        dirty_filter_value = None
+        if hasattr(self.library_widget, "dirty_filter"):
+            dirty_filter_value = self.library_widget.dirty_filter.currentData()
+
+        proxy_model = self.library_widget.proxy_model
+        if hasattr(proxy_model, "set_category_filter"):
+            proxy_model.set_category_filter(category_value)
+        if hasattr(proxy_model, "set_dirty_filter"):
+            proxy_model.set_dirty_filter(dirty_filter_value)
 
     def on_model_clicked(self, index: QModelIndex) -> None:
         """Handle model click."""

@@ -789,20 +789,27 @@ class MetadataEditorWidget(QWidget):
             # Generate thumbnail using coordinator with dedicated window
             coordinator = ThumbnailGenerationCoordinator(parent=self)
 
-            # Connect completion signal to refresh display
-            def on_generation_completed():
-                self.logger.info("Preview generated for model %s", self.current_model_id)
-                # Reload the preview image
-                self._load_preview_image(self.current_model_id)
-                # Save thumbnail path to database
+            # Save thumbnail path to database as soon as it is generated
+            def on_thumbnail_generated(file_path: str, thumbnail_path: str) -> None:
                 model = self.db_manager.get_model(self.current_model_id)
-                if model:
-                    thumbnail_path = model.get("thumbnail_path")
-                    if thumbnail_path:
-                        self.db_manager.update_model_thumbnail(
-                            self.current_model_id, str(thumbnail_path)
-                        )
-                        self.logger.info("Saved thumbnail path to database: %s", thumbnail_path)
+                if not model:
+                    return
+                if model.get("file_path") != file_path:
+                    return
+                self.db_manager.update_model_thumbnail(self.current_model_id, thumbnail_path)
+                self.logger.info(
+                    "Saved thumbnail path to database for model %s: %s",
+                    self.current_model_id,
+                    thumbnail_path,
+                )
+
+            coordinator.thumbnail_generated.connect(on_thumbnail_generated)
+
+            # Connect completion signal to refresh display
+            def on_generation_completed() -> None:
+                self.logger.info("Preview generated for model %s", self.current_model_id)
+                # Reload the preview image (will now use the stored thumbnail path)
+                self._load_preview_image(self.current_model_id)
                 QMessageBox.information(self, "Success", "Preview generated successfully!")
 
             coordinator.generation_completed.connect(on_generation_completed)
@@ -812,6 +819,7 @@ class MetadataEditorWidget(QWidget):
                 file_info_list=[(model_path, file_hash)],
                 background=background,
                 material=material,
+                force_regenerate=True,
             )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -833,6 +841,27 @@ class MetadataEditorWidget(QWidget):
                 return
 
             thumbnail_path = model.get("thumbnail_path")
+
+            # If the database does not yet know about the thumbnail, fall back to
+            # the hash-based thumbnail location and self-heal the database entry.
+            if not thumbnail_path or not Path(thumbnail_path).exists():
+                file_path = model.get("file_path")
+                file_hash = model.get("file_hash")
+
+                if file_path and not file_hash:
+                    hasher = FastHasher()
+                    hash_result = hasher.hash_file(file_path)
+                    file_hash = hash_result.hash_value if hash_result.success else None
+
+                if file_hash:
+                    thumbnail_service = ImportThumbnailService()
+                    thumb_path = thumbnail_service.get_thumbnail_path(file_hash)
+                    if thumb_path and thumb_path.exists():
+                        thumbnail_path = str(thumb_path)
+                        self.db_manager.update_model_thumbnail(
+                            self.current_model_id, thumbnail_path
+                        )
+
             if not thumbnail_path or not Path(thumbnail_path).exists():
                 QMessageBox.warning(
                     self,
@@ -940,9 +969,23 @@ class MetadataEditorWidget(QWidget):
                 self.description_field.setPlainText(result["description"])
                 self.logger.info("Updated description: %s...", result["description"][:50])
 
-            # Update keywords if provided
+            # Update taxonomy (category + keywords) if provided
             if "metadata_keywords" in result and result["metadata_keywords"]:
-                keywords_str = ", ".join(result["metadata_keywords"])
+                from src.core.taxonomy_utils import split_category_and_keywords
+
+                category, keywords = split_category_and_keywords(result["metadata_keywords"])
+
+                # Update category if we inferred one
+                if category:
+                    try:
+                        self.category_field.setCurrentText(category)
+                        self.logger.info("Updated category: %s", category)
+                    except Exception:
+                        # Category is a user-facing hint; failure here should
+                        # not prevent keyword updates.
+                        self.logger.warning("Failed to update category field", exc_info=True)
+
+                keywords_str = ", ".join(keywords)
                 self.keywords_field.setText(keywords_str)
                 self.logger.info("Updated keywords: %s", keywords_str)
 

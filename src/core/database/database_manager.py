@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..logging_config import get_logger, log_function_call
+from ..model_tags import TAG_DIRTY
 from .db_operations import DatabaseOperations
 from .model_repository import ModelRepository
 from .metadata_repository import MetadataRepository
@@ -25,6 +26,7 @@ from .material_repository import MaterialRepository
 from .machine_repository import MachineRepository
 from .background_repository import BackgroundRepository
 from .model_resources_repository import ModelResourcesRepository
+from .recent_models_repository import RecentModelsRepository
 
 logger = get_logger(__name__)
 
@@ -65,6 +67,7 @@ class DatabaseManager:
         self._material_repo = MaterialRepository(get_conn)
         self._background_repo = BackgroundRepository(get_conn)
         self._model_resources_repo = ModelResourcesRepository(get_conn)
+        self._recent_models_repo = RecentModelsRepository(get_conn)
 
         # Initialize database schema and default resources
         self._db_ops.initialize_schema()
@@ -172,6 +175,60 @@ class DatabaseManager:
     def update_model_metadata(self, model_id: int, **kwargs) -> bool:
         """Update model metadata."""
         return self._metadata_repo.update_model_metadata(model_id, **kwargs)
+
+    def mark_model_dirty(self, model_id: int) -> bool:
+        """Mark a model's metadata as not in sync (dirty).
+
+        This ensures the reserved TAG_DIRTY value is present in the
+        model_metadata.keywords field for the given model.
+        """
+        return self._metadata_repo.update_keywords_tags(model_id, add_tags=[TAG_DIRTY])
+
+    def mark_model_clean(self, model_id: int) -> bool:
+        """Clear the dirty/not-in-sync flag for a model.
+
+        This removes TAG_DIRTY from the model_metadata.keywords field while
+        leaving all other user-defined tags intact.
+        """
+        return self._metadata_repo.update_keywords_tags(model_id, remove_tags=[TAG_DIRTY])
+
+    def update_model_keywords_tags(
+        self,
+        model_id: int,
+        add_tags: Optional[List[str]] = None,
+        remove_tags: Optional[List[str]] = None,
+    ) -> bool:
+        """Apply tag updates to a model's keywords."""
+
+        return self._metadata_repo.update_keywords_tags(
+            model_id, add_tags=add_tags, remove_tags=remove_tags
+        )
+
+    def record_recent_model_access(self, model_id: int, limit: Optional[int]) -> List[int]:
+        """Insert or update an MRU entry for a model and enforce the limit."""
+
+        return self._recent_models_repo.record_access(model_id, limit)
+
+    def set_recent_model_favorite(self, model_id: int, is_favorite: bool) -> bool:
+        """Toggle the favorite flag for an MRU entry."""
+
+        return self._recent_models_repo.set_favorite(model_id, is_favorite)
+
+    def get_recent_models(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Fetch MRU entries ordered by last access."""
+
+        return self._recent_models_repo.get_recent_models(limit)
+
+    def get_recent_model_entry(self, model_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single MRU entry."""
+
+        return self._recent_models_repo.get_entry(model_id)
+
+    def trim_recent_models(self, limit: int) -> List[int]:
+        """Trim the MRU list down to a specific length."""
+
+        return self._recent_models_repo.trim(limit)
+
 
     def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
         """Save camera orientation for a model."""

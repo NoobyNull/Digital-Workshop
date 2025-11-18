@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from src.core.logging_config import get_logger, get_activity_logger
 from src.core.database_manager import get_database_manager
+from src.core.model_recent_service import record_model_access
 from src.parsers.stl_parser import STLParser, STLProgressCallback
 
 
@@ -266,6 +267,9 @@ class ModelLoader:
             model = db_manager.get_model(model_id)
 
             if model:
+                record_model_access(model_id)
+                self._refresh_recent_panel()
+
                 file_path = model["file_path"]
                 self.logger.info("Loading model from library: %s", file_path)
 
@@ -393,6 +397,16 @@ class ModelLoader:
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to restore saved camera: %s", e)
+
+    def _refresh_recent_panel(self) -> None:
+        """Refresh MRU UI when this loader opens a model."""
+
+        widget = getattr(self.main_window, "model_library_widget", None)
+        if widget and hasattr(widget, "refresh_recent_models"):
+            try:
+                widget.refresh_recent_models()
+            except Exception as exc:
+                self.logger.debug("Failed to refresh MRU panel: %s", exc)
 
     def _start_background_hasher(self) -> None:
         """Start background hasher to process new models."""

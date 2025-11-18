@@ -42,20 +42,22 @@ class ThumbnailGenerationWorker(QThread):
         file_info_list: List[Tuple[str, str]],
         background: Optional[str] = None,
         material: Optional[str] = None,
+        force_regenerate: bool = False,
     ):
-        """
-        Initialize the thumbnail generation worker.
+        """Initialize the thumbnail generation worker.
 
         Args:
             file_info_list: List of (model_path, file_hash) tuples
             background: Background color or image path for thumbnails
             material: Material name to apply to thumbnails
+            force_regenerate: If True, always regenerate thumbnails even when a cached one exists
         """
         super().__init__()
         self.logger = get_logger(__name__)
         self.file_info_list = file_info_list
         self.background = background
         self.material = material
+        self.force_regenerate = force_regenerate
         self.thumbnail_service = ImportThumbnailService()
         self._stop_requested = False
 
@@ -110,6 +112,7 @@ class ThumbnailGenerationWorker(QThread):
                 file_hash=file_hash,
                 background=self.background,
                 material=self.material,
+                force_regenerate=self.force_regenerate,
             )
 
             # Emit individual progress - rendering stage

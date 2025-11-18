@@ -29,7 +29,7 @@ from ...core.services.project_importer import ProjectImporter
 from ...core.services.dry_run_analyzer import DryRunAnalyzer
 from ...core.database.database_manager import DatabaseManager
 from ...core.export.dww_export_manager import PJCTExportManager
-from ...core.export.dww_import_manager import DWWImportManager
+from ...core.export.dww_import_manager import PJCTImportManager
 from ...core.logging_config import get_logger
 from ...core.services.file_type_registry import (
     get_tab_for_extension,
@@ -524,8 +524,8 @@ class ProjectTreeWidget(QWidget):
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Export Project",
-                f"{project_name}.pjct",
-                "Project File (*.pjct);;All Files (*)",
+                f"{project_name}.pjt",
+                "Project File (*.pjt);;All Files (*)",
             )
 
             if not file_path:
@@ -554,18 +554,20 @@ class ProjectTreeWidget(QWidget):
                 self,
                 "Import Project",
                 "",
-                "Project File (*.pjct);;All Files (*)",
+                "Project File (*.pjt);;All Files (*)",
             )
 
             if not file_path:
                 return
 
-            # Get project info from DWW file
-            import_manager = DWWImportManager(self.db_manager)
-            success, manifest = import_manager.get_dww_info(file_path)
+            # Get project info from project file
+            import_manager = PJCTImportManager(self.db_manager)
+            success, manifest = import_manager.get_pjct_info(file_path)
 
             if not success or not manifest:
-                QMessageBox.critical(self, "Import Failed", "Could not read DWW file information.")
+                QMessageBox.critical(
+                    self, "Import Failed", "Could not read project file information."
+                )
                 return
 
             # Show import preview
@@ -610,14 +612,14 @@ class ProjectTreeWidget(QWidget):
 
             # Create temporary directory for extraction
             with tempfile.TemporaryDirectory() as temp_dir:
-                # Import DWW file
+                # Import project file
                 success, message, _ = import_manager.import_project(
                     file_path, temp_dir, verify_integrity=True, import_thumbnails=True
                 )
 
                 if not success:
                     QMessageBox.critical(self, "Import Failed", message)
-                    logger.error("Failed to import DWW: %s", message)
+                    logger.error("Failed to import project file: %s", message)
                     return
 
                 # Import extracted files as a new project
@@ -633,7 +635,7 @@ class ProjectTreeWidget(QWidget):
                         "Import Complete",
                         f"Project '{import_name}' imported successfully with {file_count} files.",
                     )
-                    logger.info("Imported DWW project: %s", import_name)
+                    logger.info("Imported project: %s", import_name)
                 else:
                     QMessageBox.critical(
                         self,
@@ -643,5 +645,5 @@ class ProjectTreeWidget(QWidget):
                     logger.error("Failed to import project files: %s", import_report.error)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            logger.error("Failed to import DWW project: %s", str(e))
-            QMessageBox.critical(self, "Error", f"Failed to import DWW project: {str(e)}")
+            logger.error("Failed to import project: %s", str(e))
+            QMessageBox.critical(self, "Error", f"Failed to import project: {str(e)}")

@@ -19,6 +19,9 @@ from src.core.logging_config import get_logger
 logger = get_logger(__name__)
 
 
+RECENT_MAX_ENTRIES_DEFAULT = 20
+
+
 class LibraryMode(str, Enum):
     """Global behavior for how imported files are handled.
 
@@ -178,3 +181,34 @@ class LibrarySettings:
         finally:
             self._settings.endGroup()
 
+    # ------------------------------------------------------------------
+    # Recent models (MRU) preferences
+    # ------------------------------------------------------------------
+    def get_recent_max_entries(self) -> int:
+        """Return the configured MRU length for recent models."""
+
+        self._settings.beginGroup(self.GROUP)
+        try:
+            raw = self._settings.value(
+                "recent_max_entries", RECENT_MAX_ENTRIES_DEFAULT, type=int
+            )
+        finally:
+            self._settings.endGroup()
+
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            value = RECENT_MAX_ENTRIES_DEFAULT
+
+        return max(1, value)
+
+    def set_recent_max_entries(self, limit: int) -> None:
+        """Persist the MRU length for recent models."""
+
+        limit = max(1, int(limit))
+
+        self._settings.beginGroup(self.GROUP)
+        try:
+            self._settings.setValue("recent_max_entries", limit)
+        finally:
+            self._settings.endGroup()

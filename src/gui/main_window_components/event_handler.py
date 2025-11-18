@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QMessageBox
 
 from src.core.logging_config import get_logger, get_activity_logger, log_function_call
 from src.core.database_manager import get_database_manager
+from src.core.model_recent_service import record_model_access
 from src.gui.preferences import PreferencesDialog
 
 
@@ -44,6 +45,9 @@ class EventHandler:
             model = db_manager.get_model(model_id)
 
             if model:
+                record_model_access(model_id)
+                self._refresh_recent_panel()
+
                 file_path = model["file_path"]
                 logger.info("Loading model from library: %s", file_path)
 
@@ -410,3 +414,13 @@ class EventHandler:
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to handle screenshots finished: %s", e)
+
+    def _refresh_recent_panel(self) -> None:
+        """Refresh the MRU panel on the main window."""
+
+        widget = getattr(self.main_window, "model_library_widget", None)
+        if widget and hasattr(widget, "refresh_recent_models"):
+            try:
+                widget.refresh_recent_models()
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("Failed to refresh MRU panel: %s", exc)

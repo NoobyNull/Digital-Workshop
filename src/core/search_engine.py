@@ -11,13 +11,156 @@ import re
 import sqlite3
 import threading
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .database_manager import get_database_manager
 from .logging_config import get_logger, log_function_call
 
 # Initialize logger
 logger = get_logger(__name__)
+
+
+def parse_search_query_language(raw_query: str) -> Tuple[str, Dict[str, Any]]:
+    """Parse the mini search language from a raw query string.
+
+    The supported constructs are::
+
+        tag=foo      # include tag "foo"
+        tag!=bar     # exclude tag "bar"
+        inProject    # only models that belong to at least one project
+        !inProject   # only models that are not linked to any project
+        LAT>=N       # last accessed at least N days ago (stale models)
+
+    Everything that does not match these constructs is treated as free-text
+    and passed unchanged to the FTS layer.
+
+    Args:
+        raw_query: Full query string as typed by the user.
+
+    Returns:
+        A tuple of (free_text_query, extra_filters_dict).
+    """
+    if not raw_query or not raw_query.strip():
+        return "", {}
+
+    tokens = raw_query.strip().split()
+    tags_include: List[str] = []
+    tags_exclude: List[str] = []
+    in_project: Optional[bool] = None
+    lat_days: Optional[int] = None
+    filter_indices: Set[int] = set()
+
+    # First pass: identify and extract filter tokens
+    for idx, token in enumerate(tokens):
+        stripped = token.strip()
+        if not stripped:
+            continue
+
+        upper = stripped.upper()
+        lower = stripped.lower()
+
+        # inProject / !inProject
+        if upper == "INPROJECT":
+            in_project = True
+            filter_indices.add(idx)
+            continue
+        if upper == "!INPROJECT":
+            in_project = False
+            filter_indices.add(idx)
+            continue
+
+        # LAT comparisons, currently only LAT>=N is supported
+        # Accept forms like "LAT>=30" (case-insensitive, no spaces)
+        lat_match = re.match(r"(?i)LAT\s*(>=)\s*(\d+)$", stripped)
+        if lat_match:
+            try:
+                lat_days = int(lat_match.group(2))
+                filter_indices.add(idx)
+                continue
+            except ValueError:
+                # Fall through and treat as free-text if parsing fails
+                pass
+
+        # Tag inclusion / exclusion
+        # Check exclusion first so "tag!=foo" does not match the "tag=" prefix
+        if lower.startswith("tag!="):
+            value = stripped[5:].strip().strip('\"\'')
+            if value:
+                tags_exclude.append(value)
+                filter_indices.add(idx)
+                continue
+
+        if lower.startswith("tag="):
+            value = stripped[4:].strip().strip('\"\'')
+            if value:
+                tags_include.append(value)
+                filter_indices.add(idx)
+                continue
+
+    # Deduplicate while preserving order
+    def _dedupe(values: List[str]) -> List[str]:
+        seen: Set[str] = set()
+        result: List[str] = []
+        for v in values:
+            key = v.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(v)
+        return result
+
+    tags_include = _dedupe(tags_include)
+    tags_exclude = _dedupe(tags_exclude)
+
+    # Second pass: rebuild the free-text part, skipping filter tokens.
+    # We only keep boolean connectors (AND/OR/NOT) when they sit between
+    # two non-filter, non-connector tokens so that the resulting FTS
+    # expression stays well-formed.
+    free_text_tokens: List[str] = []
+
+    def _is_connector(tok: str) -> bool:
+        return tok.upper() in {"AND", "OR", "NOT"}
+
+    for idx, token in enumerate(tokens):
+        if idx in filter_indices:
+            continue
+
+        if _is_connector(token):
+            left_ok = (
+                idx > 0
+                and idx - 1 not in filter_indices
+                and not _is_connector(tokens[idx - 1])
+            )
+            right_ok = (
+                idx + 1 < len(tokens)
+                and idx + 1 not in filter_indices
+                and not _is_connector(tokens[idx + 1])
+            )
+            if left_ok and right_ok:
+                free_text_tokens.append(token)
+            continue
+
+        free_text_tokens.append(token)
+
+    free_text_query = " ".join(free_text_tokens).strip()
+
+    # If free text consists solely of connectors, drop it entirely
+    if free_text_query:
+        parts = free_text_query.split()
+        if all(_is_connector(p) for p in parts):
+            free_text_query = ""
+
+    extra_filters: Dict[str, Any] = {}
+    if tags_include:
+        extra_filters["tags_include"] = tags_include
+    if tags_exclude:
+        extra_filters["tags_exclude"] = tags_exclude
+    if in_project is not None:
+        extra_filters["in_project"] = in_project
+    if lat_days is not None:
+        extra_filters["lat_days"] = lat_days
+
+    return free_text_query, extra_filters
 
 
 class SearchEngine:
@@ -52,7 +195,7 @@ class SearchEngine:
         triggers to keep them synchronized with the main tables.
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 # Create FTS5 virtual table for models
@@ -217,7 +360,7 @@ class SearchEngine:
         start_time = datetime.now()
 
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
@@ -354,6 +497,62 @@ class SearchEngine:
                 sql += " AND m.file_size <= ?"
                 params.append(filters["max_file_size"])
 
+            # Tag filters (from mini-language or other callers)
+            tags_include = filters.get("tags_include") or []
+            tags_exclude = filters.get("tags_exclude") or []
+
+            if isinstance(tags_include, str):
+                tags_include = [tags_include]
+            if isinstance(tags_exclude, str):
+                tags_exclude = [tags_exclude]
+
+            for tag in tags_include:
+                tag_value = str(tag).strip()
+                if not tag_value:
+                    continue
+                sql += (
+                    " AND mm.keywords IS NOT NULL"
+                    " AND (',' || LOWER(REPLACE(mm.keywords, ' ', '')) || ',') LIKE ?"
+                )
+                params.append(f"%,{tag_value.lower().replace(' ', '')},%")
+
+            for tag in tags_exclude:
+                tag_value = str(tag).strip()
+                if not tag_value:
+                    continue
+                sql += (
+                    " AND (mm.keywords IS NULL"
+                    " OR (',' || LOWER(REPLACE(mm.keywords, ' ', '')) || ',') NOT LIKE ?)"
+                )
+                params.append(f"%,{tag_value.lower().replace(' ', '')},%")
+
+            # Project membership filter (inProject / !inProject)
+            in_project = filters.get("in_project")
+            if in_project is True:
+                sql += """
+                    AND EXISTS (
+                        SELECT 1
+                        FROM project_models pm
+                        WHERE pm.model_id = m.id
+                    )
+                """
+            elif in_project is False:
+                sql += """
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM project_models pm
+                        WHERE pm.model_id = m.id
+                    )
+                """
+
+            # LAT filter: LAT>=N means last accessed at least N days ago
+            lat_days = filters.get("lat_days")
+            if isinstance(lat_days, (int, float)) and lat_days > 0:
+                cutoff = datetime.now() - timedelta(days=int(lat_days))
+                cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
+                sql += " AND (mm.last_viewed IS NULL OR mm.last_viewed <= ?)"
+                params.append(cutoff_str)
+
         return sql, params
 
     @log_function_call(logger)
@@ -464,7 +663,7 @@ class SearchEngine:
             result_count: Number of results
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 # Create search_history table if it doesn't exist
@@ -507,7 +706,7 @@ class SearchEngine:
             List of search history items
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
@@ -549,7 +748,7 @@ class SearchEngine:
             ID of the saved search
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 # Create saved_searches table if it doesn't exist
@@ -594,7 +793,7 @@ class SearchEngine:
             List of saved searches
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
@@ -632,7 +831,7 @@ class SearchEngine:
             True if deletion was successful
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 cursor.execute("DELETE FROM saved_searches WHERE id = ?", (search_id,))
@@ -664,7 +863,7 @@ class SearchEngine:
             return []
 
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 suggestions = set()
@@ -739,7 +938,7 @@ class SearchEngine:
             Number of records deleted
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 cutoff_date = datetime.now() - timedelta(days=older_than_days)
@@ -770,7 +969,7 @@ class SearchEngine:
         This operation can be time-consuming for large databases.
         """
         try:
-            with self.db_manager._get_connection() as conn:
+            with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
 
                 # Drop existing FTS tables

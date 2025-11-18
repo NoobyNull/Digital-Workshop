@@ -39,6 +39,7 @@ class ThumbnailGenerationCoordinator(QObject):
     generation_completed = Signal()
     generation_cancelled = Signal()
     generation_failed = Signal(str)  # error_message
+    thumbnail_generated = Signal(str, str)  # file_path, thumbnail_path
 
     def __init__(self, parent=None):
         """
@@ -59,14 +60,15 @@ class ThumbnailGenerationCoordinator(QObject):
         file_info_list: List[Tuple[str, str]],
         background: Optional[str] = None,
         material: Optional[str] = None,
+        force_regenerate: bool = False,
     ) -> None:
-        """
-        Generate thumbnails with dedicated window.
+        """Generate thumbnails with dedicated window.
 
         Args:
             file_info_list: List of (model_path, file_hash) tuples
             background: Background color or image path
             material: Material name to apply
+            force_regenerate: If True, always regenerate thumbnails even when a cached one exists
         """
         if not file_info_list:
             self.logger.warning("No files to process")
@@ -81,7 +83,10 @@ class ThumbnailGenerationCoordinator(QObject):
 
         # Create worker
         self.worker = ThumbnailGenerationWorker(
-            file_info_list=file_info_list, background=background, material=material
+            file_info_list=file_info_list,
+            background=background,
+            material=material,
+            force_regenerate=force_regenerate,
         )
 
         # Connect worker signals to window
@@ -109,6 +114,9 @@ class ThumbnailGenerationCoordinator(QObject):
 
         # File changes
         self.worker.current_file_changed.connect(self._on_current_file_changed)
+
+        # Thumbnail results
+        self.worker.thumbnail_generated.connect(self.thumbnail_generated.emit)
 
         # Completion
         self.worker.finished_batch.connect(self._on_generation_completed)

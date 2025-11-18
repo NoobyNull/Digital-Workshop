@@ -2,14 +2,14 @@
 Export module for Digital Workshop.
 
 Provides functionality for exporting projects to various formats including:
-- DWW (Digital Wood Works): Custom archive format with integrity verification
+- PJCT (Project Archive): Custom archive format with integrity verification
 - CSV, JSON: Standard formats for data export
 """
 
 from .dww_export_manager import PJCTExportManager
-from .dww_import_manager import DWWImportManager
+from .dww_import_manager import PJCTImportManager
 
 __all__ = [
     "PJCTExportManager",
-    "DWWImportManager",
+    "PJCTImportManager",
 ]

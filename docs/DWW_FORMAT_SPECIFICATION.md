@@ -1,15 +1,15 @@
-# DWW (Digital Wood Works) Format Specification
+# PJT Project Archive (PJCT) Format Specification
 
 ## Overview
 
-DWW is a custom archive format designed for Digital Workshop to export and share projects with integrity verification. It combines the portability of ZIP archives with JSON metadata and cryptographic hash verification.
+PJT project files (.pjt) are Digital Workshop's native project archive. They combine the portability of ZIP archives with JSON metadata and cryptographic hash verification so entire projects can be exported and shared safely.
 
 ## File Structure
 
-A DWW file is a ZIP archive with the following structure:
+A PJT file is a ZIP archive with the following structure:
 
 ```
-project.dww
+project.pjt
 ├── manifest.json                    # Project metadata and file listing
 ├── integrity.json                   # Hash verification data with salt
 ├── files/                           # Directory containing all project files
@@ -28,7 +28,7 @@ project.dww
 ## Format Version
 
 - **Current Version**: 1.0
-- **Format Name**: Digital Wood Works
+- **Format Name**: PJCT
 
 ## File Specifications
 
@@ -39,7 +39,7 @@ Contains project metadata and file information.
 ```json
 {
   "version": "1.0",
-  "format": "Digital Wood Works",
+  "format": "PJCT",
   "created_at": "2024-01-15T10:30:00.123456",
   "project": {
     "id": "project-uuid-here",
@@ -135,7 +135,7 @@ Contains cryptographic hash verification data to ensure file integrity.
 
 ## Supported File Types
 
-DWW can contain any file type, but Digital Workshop recognizes:
+PJT project archives can contain any file type, but Digital Workshop recognizes:
 
 - **Models**: .stl, .obj, .step, .stp, .3mf, .ply
 - **G-Code**: .nc, .gcode
@@ -149,12 +149,12 @@ DWW can contain any file type, but Digital Workshop recognizes:
 ### Exporting a Project
 
 ```python
-from src.core.export.dww_export_manager import DWWExportManager
+from src.core.export.dww_export_manager import PJCTExportManager
 
-export_manager = DWWExportManager(db_manager)
+export_manager = PJCTExportManager(db_manager)
 success, message = export_manager.export_project(
     project_id="project-uuid",
-    output_path="/path/to/export.dww",
+    output_path="/path/to/export.pjt",
     include_metadata=True,           # Include file metadata
     include_thumbnails=True,         # Include model thumbnails
     include_renderings=True,         # Include rendered images
@@ -165,11 +165,11 @@ success, message = export_manager.export_project(
 ### Importing a Project
 
 ```python
-from src.core.export.dww_import_manager import DWWImportManager
+from src.core.export.dww_import_manager import PJCTImportManager
 
-import_manager = DWWImportManager(db_manager)
+import_manager = PJCTImportManager(db_manager)
 success, message, manifest = import_manager.import_project(
-    dww_path="/path/to/export.dww",
+    pjct_path="/path/to/export.pjt",
     import_dir="/path/to/import/directory",
     verify_integrity=True,           # Verify file integrity
     import_thumbnails=True,          # Extract thumbnails
@@ -180,15 +180,15 @@ success, message, manifest = import_manager.import_project(
 ### Verifying Integrity
 
 ```python
-export_manager = DWWExportManager()
-is_valid, message = export_manager.verify_dww_file("/path/to/export.dww")
+export_manager = PJCTExportManager()
+is_valid, message = export_manager.verify_pjct_file("/path/to/export.pjt")
 ```
 
 ### Getting Project Info
 
 ```python
-import_manager = DWWImportManager()
-success, manifest = import_manager.get_dww_info("/path/to/export.dww")
+import_manager = PJCTImportManager()
+success, manifest = import_manager.get_pjct_info("/path/to/export.pjt")
 ```
 
 ## Advantages

@@ -9,6 +9,7 @@ from pathlib import Path
 from PySide6.QtCore import Signal, QThread
 
 from src.core.logging_config import get_logger
+from src.core.model_sidecar_service import regenerate_sidecars_for_dirty_models
 
 
 class FileMaintenanceWorker(QThread):
@@ -40,6 +41,14 @@ class FileMaintenanceWorker(QThread):
                 result = self._match_files(db_manager, calculate_file_hash)
             elif self.operation == "regenerate_thumbnails":
                 result = self._regenerate_thumbnails(db_manager)
+            elif self.operation == "regenerate_dirty_sidecars":
+                result = regenerate_sidecars_for_dirty_models(
+                    db_manager,
+                    progress_callback=lambda current, total, message: self.progress.emit(
+                        current, total, message
+                    ),
+                    stop_flag_getter=lambda: self._stop_requested,
+                )
             elif self.operation == "full_maintenance":
                 result = self._recalculate_hashes(db_manager, calculate_file_hash)
                 if not self._stop_requested:

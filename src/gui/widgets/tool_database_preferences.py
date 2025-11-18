@@ -68,7 +68,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         ext_db_layout.addWidget(self.paths_list)
 
         # Path management buttons
-        path_button_layout = FlowLayout(self)
+        path_button_layout = FlowLayout()
         self.add_path_btn = QPushButton("Add Path")
         self.add_path_btn.clicked.connect(self._add_external_path)
         path_button_layout.addWidget(self.add_path_btn)
@@ -105,7 +105,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         layout.addWidget(settings_group)
 
         # Dialog buttons
-        button_layout = FlowLayout(self)
+        button_layout = FlowLayout()
         self.ok_btn = QPushButton("OK")
         self.ok_btn.clicked.connect(self._save_and_close)
         button_layout.addWidget(self.ok_btn)

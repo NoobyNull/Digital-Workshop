@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont
 
-from src.core.search_engine import get_search_engine
+from src.core.search_engine import get_search_engine, parse_search_query_language
 from src.core.logging_config import get_logger
 from .search_workers import SearchWorker, SearchSuggestionWorker
 from .saved_search_dialog import SavedSearchDialog
@@ -221,11 +221,28 @@ class SearchWidget(QWidget):
         self.advanced_search.setVisible(checked)
 
     def perform_search(self) -> None:
-        """Perform the current search."""
-        query = self.search_edit.text().strip()
-        filters = self.advanced_search.get_current_filters()
+        """Perform the current search.
 
-        if not query and not filters:
+        This method also understands the mini search language implemented in
+        :func:`parse_search_query_language`, which allows expressions like
+        ``tag=dirty``, ``tag!=Vehicle``, ``inProject``, ``!inProject``, and
+        ``LAT>=50`` to be embedded directly in the search box.
+        """
+        raw_query = self.search_edit.text().strip()
+        base_filters = self.advanced_search.get_current_filters()
+
+        # Parse the mini-language portion of the query and merge filters
+        parsed_query, language_filters = parse_search_query_language(raw_query)
+        merged_filters: Dict[str, Any] = dict(base_filters) if base_filters else {}
+        for key, value in language_filters.items():
+            # Do not insert empty values so we keep the filters dict compact
+            if value is None:
+                continue
+            if isinstance(value, list) and not value:
+                continue
+            merged_filters[key] = value
+
+        if not parsed_query and not merged_filters:
             return
 
         # Show progress
@@ -237,7 +254,7 @@ class SearchWidget(QWidget):
             self.search_worker.terminate()
 
         # Start new search worker
-        self.search_worker = SearchWorker(query, filters)
+        self.search_worker = SearchWorker(parsed_query, merged_filters)
         self.search_worker.search_completed.connect(self.display_results)
         self.search_worker.search_failed.connect(self.search_failed)
         self.search_worker.start()

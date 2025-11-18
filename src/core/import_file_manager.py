@@ -103,16 +103,16 @@ class ImportFileManager:
 
     # Directory structure for organized mode
     ORGANIZED_SUBDIRS = {
-        "stl": "STL_Files",
-        "obj": "OBJ_Files",
-        "step": "STEP_Files",
-        "stp": "STEP_Files",
-        "3mf": "3MF_Files",
-        "ply": "PLY_Files",
-        "fbx": "FBX_Files",
-        "dae": "Collada_Files",
-        "gltf": "GLTF_Files",
-        "glb": "GLTF_Files",
+        "stl": "Models",
+        "obj": "Models",
+        "step": "Models",
+        "stp": "Models",
+        "3mf": "Models",
+        "ply": "Models",
+        "fbx": "Models",
+        "dae": "Models",
+        "gltf": "Models",
+        "glb": "Models",
         "other": "Other_Files",
     }
 
@@ -248,25 +248,31 @@ class ImportFileManager:
         # Create directory structure: root/subdir/filename
         target_dir = root_path / subdir
 
-        # Generate filename (preserve original or use hash-based)
-        if file_hash:
-            # Use hash-based naming with original extension
-            filename = f"{file_hash}{original_path.suffix}"
-        else:
-            filename = original_path.name
+        # Prefer the original, human-friendly filename when possible
+        stem = original_path.stem
+        suffix = original_path.suffix
 
-        # Handle filename conflicts
+        # First choice: original filename
+        filename = original_path.name
         target_path = target_dir / filename
-        counter = 1
-        while target_path.exists():
-            stem = original_path.stem
-            if file_hash:
-                stem = file_hash
-            filename = f"{stem}_{counter}{original_path.suffix}"
-            target_path = target_dir / filename
-            counter += 1
+        if not target_path.exists():
+            return target_path
 
-        return target_path
+        # If there is a conflict and we have a hash, try a hash-based filename next
+        if file_hash:
+            hash_filename = f"{file_hash}{suffix}"
+            hash_path = target_dir / hash_filename
+            if not hash_path.exists():
+                return hash_path
+
+        # Final fallback: append a numeric suffix to the original stem
+        counter = 1
+        while True:
+            filename = f"{stem}_{counter}{suffix}"
+            target_path = target_dir / filename
+            if not target_path.exists():
+                return target_path
+            counter += 1
 
     def _copy_file_with_progress(
         self,

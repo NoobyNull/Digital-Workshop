@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QComboBox,
     QMenu,
+    QSpinBox,
 )
 
 from src.core.logging_config import get_logger
@@ -30,6 +31,7 @@ from src.core.root_folder_manager import RootFolderManager, RootFolder
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12
 from src.gui.files_components.file_maintenance_worker import FileMaintenanceWorker
 from src.gui.components.auto_close_message_box import show_auto_close_message
+from src.core.model_recent_service import get_recent_limit, set_recent_limit
 
 
 class FilesTab(QWidget):
@@ -132,6 +134,9 @@ class FilesTab(QWidget):
         self.operation_combo.addItem("Recalculate File Hashes", "recalculate_hashes")
         self.operation_combo.addItem("Match Files to Models", "match_files")
         self.operation_combo.addItem("Regenerate Thumbnails", "regenerate_thumbnails")
+        self.operation_combo.addItem(
+            "Regenerate Sidecars (Dirty Models Only)", "regenerate_dirty_sidecars"
+        )
         self.operation_combo.addItem("Full Maintenance (All)", "full_maintenance")
         operation_layout.addWidget(self.operation_combo)
         operation_layout.addStretch()
@@ -164,6 +169,32 @@ class FilesTab(QWidget):
 
         layout.addWidget(maintenance_group)
 
+        # Recent models preference group
+        recent_group = QGroupBox("Recent Models (MRU)")
+        recent_layout = QVBoxLayout(recent_group)
+
+        recent_desc = QLabel(
+            "Choose how many recently opened models the app should remember. "
+            "Entries beyond this limit are removed automatically."
+        )
+        recent_desc.setWordWrap(True)
+        recent_layout.addWidget(recent_desc)
+
+        controls_row = QHBoxLayout()
+        controls_row.addWidget(QLabel("Maximum recent models:"))
+
+        self.recent_spin = QSpinBox()
+        self.recent_spin.setRange(5, 100)
+        self.recent_spin.setValue(self._load_recent_limit())
+        controls_row.addWidget(self.recent_spin)
+        controls_row.addStretch()
+        recent_layout.addLayout(controls_row)
+
+        self.recent_status_label = QLabel()
+        recent_layout.addWidget(self.recent_status_label)
+        self._update_recent_status(self.recent_spin.value(), persisted=True)
+
+        layout.addWidget(recent_group)
         layout.addStretch()
 
     def _connect_signals(self) -> None:
@@ -177,6 +208,7 @@ class FilesTab(QWidget):
         self.folders_list.customContextMenuRequested.connect(self._show_context_menu)
         self.start_maintenance_button.clicked.connect(self._start_maintenance)
         self.cancel_maintenance_button.clicked.connect(self._cancel_maintenance)
+        self.recent_spin.valueChanged.connect(self._on_recent_limit_changed)
 
     def _load_folders(self) -> None:
         """Load folders from the manager and populate the list."""
@@ -184,6 +216,35 @@ class FilesTab(QWidget):
 
         for folder in self.root_folder_manager.get_folders():
             self._add_folder_item(folder)
+
+    def _load_recent_limit(self) -> int:
+        """Load the persisted MRU limit."""
+
+        try:
+            return get_recent_limit()
+        except Exception:
+            return 20
+
+    def _on_recent_limit_changed(self, value: int) -> None:
+        """Persist MRU preference whenever the spin box changes."""
+
+        try:
+            set_recent_limit(int(value))
+            self._update_recent_status(value, persisted=True)
+        except Exception as exc:
+            self.logger.warning("Failed to persist recent model limit: %s", exc)
+            self._update_recent_status(value, persisted=False)
+
+    def _update_recent_status(self, limit: int, *, persisted: bool) -> None:
+        """Update the helper label for MRU settings."""
+
+        if persisted:
+            text = f"Remembering up to {limit} recently opened models."
+        else:
+            text = (
+                "Unable to update MRU preference right now. The previous value will remain in use."
+            )
+        self.recent_status_label.setText(text)
 
     def _add_folder_item(self, folder: RootFolder) -> None:
         """Add a folder item to the list widget."""

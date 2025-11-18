@@ -10,6 +10,8 @@ import logging
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
+from src.core.fast_hasher import FastHasher
+
 
 class ThumbnailManager:
     """Manages screenshot and thumbnail generation operations."""
@@ -51,15 +53,35 @@ class ThumbnailManager:
             background = config.thumbnail_bg_image
             material = config.thumbnail_material
 
-            # Prepare file info list
+            # Prepare file info list as (model_path, file_hash) tuples
             file_info_list = []
+            hasher = FastHasher()
             for model in models:
-                file_info_list.append(
-                    {
-                        "file_path": model.get("file_path"),
-                        "model_id": model.get("id"),
-                    }
+                model_path = model.get("file_path")
+                if not model_path:
+                    continue
+
+                file_hash = model.get("file_hash")
+                if not file_hash:
+                    hash_result = hasher.hash_file(model_path)
+                    file_hash = hash_result.hash_value if hash_result.success else None
+
+                if not file_hash:
+                    self.logger.warning(
+                        "Skipping model %s due to missing hash for thumbnail generation",
+                        model.get("id"),
+                    )
+                    continue
+
+                file_info_list.append((model_path, file_hash))
+
+            if not file_info_list:
+                QMessageBox.information(
+                    self.main_window,
+                    "No Models",
+                    "No valid models found in the library for thumbnail generation.",
                 )
+                return
 
             # Create coordinator and generate thumbnails
             coordinator = ThumbnailGenerationCoordinator(parent=self.main_window)
@@ -90,6 +112,7 @@ class ThumbnailManager:
                 file_info_list=file_info_list,
                 background=background,
                 material=material,
+                force_regenerate=False,
             )
 
             # Connect completion signal to reload library

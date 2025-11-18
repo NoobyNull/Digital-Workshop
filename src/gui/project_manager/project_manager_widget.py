@@ -59,7 +59,7 @@ class ProjectManagerWidget(QWidget):
         layout.addWidget(self.project_list)
 
         # Buttons
-        button_layout = FlowLayout(self)
+        button_layout = FlowLayout()
 
         new_btn = QPushButton("New Project")
         new_btn.clicked.connect(self._create_new_project)

@@ -16,6 +16,7 @@ from typing import Dict, List, Tuple
 from datetime import datetime
 
 from src.core.logging_config import get_logger
+from src.core.services.file_type_registry import get_tree_category_for_extension
 
 logger = get_logger(__name__)
 
@@ -31,7 +32,7 @@ class PJCTExportManager:
 
     def __init__(self, db_manager=None) -> None:
         """
-        Initialize DWW export manager.
+        Initialize PJCT export manager.
 
         Args:
             db_manager: Optional database manager for retrieving project data
@@ -78,12 +79,12 @@ class PJCTExportManager:
             if not files:
                 return False, "Project has no files to export"
 
-            # Create DWW archive
-            with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as dww_archive:
+            # Create PJCT archive
+            with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as pjct_archive:
                 # Create manifest
                 manifest = self._create_manifest(project, files)
                 manifest_json = json.dumps(manifest, indent=2)
-                dww_archive.writestr("manifest.json", manifest_json)
+                pjct_archive.writestr("manifest.json", manifest_json)
 
                 # Add project files
                 file_hashes = {}
@@ -103,7 +104,7 @@ class PJCTExportManager:
 
                         # Add file to archive
                         arcname = f"files/{file_name}"
-                        dww_archive.write(file_path, arcname=arcname)
+                        pjct_archive.write(file_path, arcname=arcname)
 
                         # Add thumbnail if available
                         if include_thumbnails:
@@ -111,7 +112,7 @@ class PJCTExportManager:
                             if thumbnail_path and Path(thumbnail_path).exists():
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
-                                    dww_archive.write(thumbnail_path, arcname=thumb_arcname)
+                                    pjct_archive.write(thumbnail_path, arcname=thumb_arcname)
                                 except (
                                     OSError,
                                     IOError,
@@ -127,33 +128,40 @@ class PJCTExportManager:
                             progress_callback(progress, f"Exported {i + 1}/{total_items} files")
 
                     except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                        self.logger.error("Failed to add file to archive: %s: {e}", file_path)
+                        self.logger.error("Failed to add file to archive %s: %s", file_path, e)
                         continue
 
                 # Add metadata if requested
                 if include_metadata:
-                    self._add_metadata_to_archive(dww_archive, project_id, files)
+                    self._add_metadata_to_archive(pjct_archive, project_id, files)
 
                 # Create integrity verification
                 integrity_data = self._create_integrity_data(manifest, file_hashes)
                 integrity_json = json.dumps(integrity_data, indent=2)
-                dww_archive.writestr("integrity.json", integrity_json)
+                pjct_archive.writestr("integrity.json", integrity_json)
 
-            self.logger.info("Successfully exported project to DWW: %s", output_path)
+            self.logger.info("Successfully exported project to PJCT: %s", output_path)
             return True, f"Project exported successfully to {output_file.name}"
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            error_msg = f"Failed to export project to DWW: {str(e)}"
+            error_msg = f"Failed to export project to PJCT: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg
 
     def _add_metadata_to_archive(
-        self, dww_archive: zipfile.ZipFile, project_id: str, files: List[Dict]
+        self, archive: zipfile.ZipFile, project_id: str, files: List[Dict]
     ) -> None:
-        """Add metadata files to the archive."""
+        """Add metadata files to the archive.
+
+        This includes both per-file metadata and a compact summary section
+        describing the state of the main hero tabs. The additional hero tab
+        summary is intentionally lightweight and derived only from filenames
+        and extensions so that export remains robust even when some files are
+        missing on disk.
+        """
         try:
             # Create metadata directory structure
-            metadata = {
+            metadata: Dict[str, object] = {
                 "project_id": project_id,
                 "export_date": datetime.now().isoformat(),
                 "files_metadata": [],
@@ -172,12 +180,98 @@ class PJCTExportManager:
                 }
                 metadata["files_metadata"].append(file_metadata)
 
-            # Write metadata to archive
+            # Write per-file metadata to archive
             metadata_json = json.dumps(metadata, indent=2)
-            dww_archive.writestr("metadata/files_metadata.json", metadata_json)
+            archive.writestr("metadata/files_metadata.json", metadata_json)
+
+            # Build and write hero tab summary metadata
+            try:
+                hero_tabs = self._build_hero_tabs_metadata(project_id, files)
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                self.logger.warning("Failed to build hero tab metadata: %s", exc)
+            else:
+                try:
+                    hero_tabs_json = json.dumps(hero_tabs, indent=2)
+                    archive.writestr("metadata/hero_tabs.json", hero_tabs_json)
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                    self.logger.warning("Failed to add hero tab metadata to archive: %s", exc)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to add metadata to archive: %s", e)
+
+    def _build_hero_tabs_metadata(self, project_id: str, files: List[Dict]) -> Dict:
+        """Build summary metadata for the main hero tabs.
+
+        The goal here is not to duplicate the full tab JSON payloads (those
+        are already exported as regular project files via TabDataManager) but
+        to provide a compact, easy-to-inspect summary that callers can use to
+        quickly understand which parts of the project are populated.
+        """
+        model_files: List[str] = []
+        gcode_files: List[str] = []
+        has_cut_list = False
+        has_feeds_and_speeds = False
+        has_cost_estimate = False
+        has_model_view = False
+        has_gcode_timing = False
+
+        for file_info in files:
+            file_name = file_info.get("file_name") or ""
+            file_path = file_info.get("file_path") or ""
+
+            if not file_name and file_path:
+                file_name = Path(file_path).name
+
+            ext = Path(file_name).suffix.lower()
+            tree_category = None
+            if ext:
+                try:
+                    tree_category = get_tree_category_for_extension(ext)
+                except Exception:
+                    tree_category = None
+
+            if tree_category == "Models":
+                if file_name not in model_files:
+                    model_files.append(file_name)
+            elif tree_category == "Gcode":
+                if file_name not in gcode_files:
+                    gcode_files.append(file_name)
+
+            lower_name = file_name.lower()
+            if lower_name == "cut_list.json":
+                has_cut_list = True
+            elif lower_name == "feeds_and_speeds.json":
+                has_feeds_and_speeds = True
+            elif lower_name == "cost_estimate.json":
+                has_cost_estimate = True
+            elif lower_name == "model_view.json":
+                has_model_view = True
+            elif lower_name == "gcode_timing.json":
+                has_gcode_timing = True
+
+        return {
+            "project_id": project_id,
+            "model_previewer": {
+                "model_files": model_files,
+                "has_view_state": has_model_view,
+            },
+            "gcode_previewer": {
+                "gcode_files": gcode_files,
+                "has_timing_data": has_gcode_timing,
+            },
+            "cut_list_optimizer": {
+                "has_tab_data": has_cut_list,
+                "filename": "cut_list.json" if has_cut_list else None,
+            },
+            "feeds_and_speeds": {
+                "has_tab_data": has_feeds_and_speeds,
+                "filename": "feeds_and_speeds.json" if has_feeds_and_speeds else None,
+            },
+            "project_cost_estimator": {
+                "has_tab_data": has_cost_estimate,
+                "filename": "cost_estimate.json" if has_cost_estimate else None,
+            },
+        }
 
     def _create_manifest(self, project: Dict, files: List[Dict]) -> Dict:
         """Create project manifest."""

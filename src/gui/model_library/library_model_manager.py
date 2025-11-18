@@ -13,6 +13,7 @@ from PySide6.QtGui import QIcon, QStandardItem
 from PySide6.QtWidgets import QMessageBox
 
 from src.core.logging_config import get_logger, log_function_call
+from src.core.model_tags import TAG_DIRTY
 from src.core.performance_monitor import monitor_operation
 from .async_tasks import CombinedModelProcessingTask
 from .progress_throttler import BatchProgressTracker
@@ -67,8 +68,18 @@ class LibraryModelManager:
         """Populate list/grid views from current_models."""
         self.library_widget.list_model.clear()
         self.library_widget.list_model.setHorizontalHeaderLabels(
-            ["Thumbnail", "Name", "Format", "Size", "Triangles", "Category", "Added Date"]
+            [
+                "Thumbnail",
+                "Name",
+                "Format",
+                "Size",
+                "Triangles",
+                "Category",
+                "Added Date",
+                "Dirty",
+            ]
         )
+
         for model in self.library_widget.current_models:
             # Create thumbnail item (first column)
             thumbnail_item = QStandardItem()
@@ -122,8 +133,20 @@ class LibraryModelManager:
 
             category_item = QStandardItem(model.get("category", "Uncategorized"))
             category_item.setEditable(False)
+
             date_item = QStandardItem(str(model.get("date_added", "Unknown")))
             date_item.setEditable(False)
+
+            # Dirty status column - based on TAG_DIRTY presence in keywords
+            keywords_value = model.get("keywords") or ""
+            keyword_tags = [
+                tag.strip() for tag in str(keywords_value).split(",") if tag and tag.strip()
+            ]
+            is_dirty = TAG_DIRTY in keyword_tags
+
+            dirty_item = QStandardItem("Dirty" if is_dirty else "")
+            dirty_item.setEditable(False)
+            dirty_item.setData(is_dirty, Qt.UserRole)
 
             self.library_widget.list_model.appendRow(
                 [
@@ -134,6 +157,7 @@ class LibraryModelManager:
                     triangles_item,
                     category_item,
                     date_item,
+                    dirty_item,
                 ]
             )
 

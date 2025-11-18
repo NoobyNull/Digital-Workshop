@@ -5,7 +5,7 @@ Handles model metadata, camera orientation, and category management.
 """
 
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from ..logging_config import get_logger, log_function_call
 
@@ -119,6 +119,8 @@ class MetadataRepository:
             "category",
             "source",
             "rating",
+            "view_count",
+            "last_viewed",
         }
         metadata_updates = {k: v for k, v in kwargs.items() if k in valid_fields}
 
@@ -155,6 +157,55 @@ class MetadataRepository:
         except sqlite3.Error as e:
             logger.error("Failed to update metadata for model %s: {str(e)}", model_id)
             raise
+    @log_function_call(logger)
+    def update_keywords_tags(
+        self,
+        model_id: int,
+        add_tags: Optional[Iterable[str]] = None,
+        remove_tags: Optional[Iterable[str]] = None,
+    ) -> bool:
+        """Add and/or remove tag strings from the keywords field for a model.
+
+        Existing user-defined keywords are preserved. Tags listed in
+        ``remove_tags`` are removed, and tags from ``add_tags`` are appended if
+        they are not already present.
+        """
+        add_list = [str(t).strip() for t in (add_tags or []) if str(t).strip()]
+        remove_set = {str(t).strip() for t in (remove_tags or []) if str(t).strip()}
+
+        if not add_list and not remove_set:
+            return True
+
+        keywords_value = ""
+        metadata = self.get_model_metadata(model_id)
+        if metadata and metadata.get("keywords"):
+            keywords_value = str(metadata["keywords"])
+
+        existing = [k.strip() for k in keywords_value.split(",") if k.strip()]
+        seen = set()
+
+        # Remove tags requested for removal while preserving order.
+        filtered: List[str] = []
+        for tag in existing:
+            if tag not in remove_set and tag not in seen:
+                filtered.append(tag)
+                seen.add(tag)
+
+        # Append new tags, avoiding duplicates.
+        for tag in add_list:
+            if tag not in seen:
+                filtered.append(tag)
+                seen.add(tag)
+
+        new_keywords = ", ".join(filtered)
+
+        if metadata:
+            return self.update_model_metadata(model_id, keywords=new_keywords)
+
+        # No metadata row yet; create one with the keywords column populated.
+        self.add_metadata(model_id, keywords=new_keywords)
+        return True
+
 
     @log_function_call(logger)
     def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:

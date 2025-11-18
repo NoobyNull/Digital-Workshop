@@ -15,6 +15,7 @@ from src.core.database_manager import get_database_manager
 from src.core.performance_monitor import get_performance_monitor
 from src.core.model_cache import get_model_cache
 from src.core.root_folder_manager import RootFolderManager
+from src.core.model_recent_service import get_recent_models, set_recent_favorite
 from src.gui.theme import MIN_WIDGET_SIZE
 
 from .model_library_facade import ModelLibraryFacade
@@ -80,12 +81,15 @@ class ModelLibraryWidget(QWidget):
         self.view_mode = ViewMode.LIST
         self.loading_in_progress = False
         self._disposed = False
+        self.recent_models_panel = None
 
         # Initialize facade (coordinates all components)
         self.facade = ModelLibraryFacade(self)
 
         # Initialize UI and load data
         self.facade.initialize()
+        self._connect_recent_panel_signals()
+        self.refresh_recent_models()
 
         # Schedule column visibility restoration after a delay to ensure dock layout is restored first
         from PySide6.QtCore import QTimer
@@ -101,7 +105,7 @@ class ModelLibraryWidget(QWidget):
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
 
         self.logger.debug("[DELAYED] Restoring column visibility from settings...")
-        for col in range(7):  # Now 7 columns (Thumbnail + 6 others)
+        for col in range(8):  # Now 8 columns (Thumbnail + 7 others)
             # Get visibility setting - default to True (visible)
             visible_value = settings.value(f"column_{col}_visible", True)
             # Convert to bool explicitly (QSettings may return string "true"/"false")
@@ -160,6 +164,47 @@ class ModelLibraryWidget(QWidget):
             List of model IDs
         """
         return self.facade.get_selected_models()
+
+    def refresh_recent_models(self) -> None:
+        """Refresh the MRU panel with the latest database entries."""
+
+        panel = getattr(self, "recent_models_panel", None)
+        if not panel:
+            return
+
+        try:
+            entries = get_recent_models()
+            panel.set_entries(entries)
+        except Exception as exc:
+            self.logger.debug("Failed to refresh recent models panel: %s", exc)
+            panel.set_entries([])
+
+    def _connect_recent_panel_signals(self) -> None:
+        """Wire MRU panel interactions to library signals."""
+
+        panel = getattr(self, "recent_models_panel", None)
+        if not panel:
+            return
+
+        try:
+            panel.entry_activated.connect(self._handle_recent_entry_activated)
+            panel.favorite_toggled.connect(self._handle_recent_favorite_toggled)
+        except Exception as exc:
+            self.logger.debug("Recent models panel unavailable: %s", exc)
+
+    def _handle_recent_entry_activated(self, model_id: int) -> None:
+        """Forward MRU double-clicks to the same signal as the main list."""
+
+        self.model_double_clicked.emit(model_id)
+
+    def _handle_recent_favorite_toggled(self, model_id: int, is_favorite: bool) -> None:
+        """Persist favorite changes from the MRU panel."""
+
+        try:
+            if set_recent_favorite(model_id, is_favorite):
+                self.refresh_recent_models()
+        except Exception as exc:
+            self.logger.warning("Failed to update favorite state for model %s: %s", model_id, exc)
 
     def cleanup(self) -> None:
         """Clean up resources before closing."""
