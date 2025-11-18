@@ -19,6 +19,7 @@ import json
 import logging
 import time
 import gc
+import shutil
 from pathlib import Path
 from typing import Optional, Callable, List, Dict, Tuple
 from dataclasses import dataclass
@@ -221,6 +222,108 @@ class ImportThumbnailService:
 
         self._stats["cache_misses"] += 1
         return False
+
+    def register_existing_thumbnail(
+        self,
+        model_path: str,
+        thumbnail_path: str,
+        file_hash: Optional[str] = None,
+    ) -> "ThumbnailGenerationResult":
+        """Register an externally provided thumbnail image for a model.
+
+        This is used by the library consolidation pipeline when it finds a
+        thumbnail next to the model on disk and wants to treat it as if the
+        import pipeline had generated it.
+        """
+
+        start_time = time.time()
+        model_name = Path(model_path).name
+
+        if file_hash is None:
+            try:
+                hash_result = self.hasher.hash_file(model_path)
+                if not hash_result.success or not hash_result.hash_value:
+                    error_msg = f"Failed to hash model for external thumbnail: {hash_result.error or 'unknown error'}"
+                    self.logger.error("%s for %s", error_msg, model_name)
+                    return ThumbnailGenerationResult(
+                        file_path=model_path,
+                        file_hash=None,
+                        thumbnail_path=None,
+                        generation_time=time.time() - start_time,
+                        success=False,
+                        error=error_msg,
+                    )
+                file_hash = hash_result.hash_value
+            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                error_msg = f"Failed to hash model for external thumbnail: {exc}"
+                self.logger.error("%s for %s", error_msg, model_name)
+                return ThumbnailGenerationResult(
+                    file_path=model_path,
+                    file_hash=None,
+                    thumbnail_path=None,
+                    generation_time=time.time() - start_time,
+                    success=False,
+                    error=error_msg,
+                )
+
+        dest_path = self.get_thumbnail_path(file_hash)
+
+        try:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(thumbnail_path, dest_path)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            generation_time = time.time() - start_time
+            error_msg = f"Failed to register external thumbnail: {exc}"
+            self.logger.error("%s for %s", error_msg, model_name)
+            return ThumbnailGenerationResult(
+                file_path=model_path,
+                file_hash=file_hash,
+                thumbnail_path=None,
+                generation_time=generation_time,
+                success=False,
+                error=error_msg,
+            )
+
+        # Optionally generate resized variants using the resizer. Any
+        # failure here is non-fatal because the primary thumbnail already
+        # exists at dest_path.
+        try:
+            self.thumbnail_resizer.resize_and_save(
+                source_image_path=dest_path,
+                file_hash=file_hash,
+                output_dir=self._storage_dir,
+            )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            self.logger.warning(
+                "Failed to generate resized thumbnails for external image %s: %s",
+                dest_path,
+                exc,
+            )
+
+        generation_time = time.time() - start_time
+        self._thumbnail_cache[file_hash] = dest_path
+        self._stats["thumbnails_generated"] += 1
+        self._stats["total_generation_time"] += generation_time
+
+        self._log_json(
+            "thumbnail_registered_external",
+            {
+                "file": model_name,
+                "hash": (file_hash[:16] + "...") if file_hash else None,
+                "path": str(dest_path),
+                "generation_time_seconds": round(generation_time, 3),
+            },
+        )
+
+        return ThumbnailGenerationResult(
+            file_path=model_path,
+            file_hash=file_hash,
+            thumbnail_path=dest_path,
+            generation_time=generation_time,
+            success=True,
+            cached=False,
+        )
+
 
     def generate_thumbnail(
         self,

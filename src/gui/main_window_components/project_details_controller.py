@@ -62,4 +62,3 @@ class ProjectDetailsController:
 
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error("Failed to setup Project Details dock: %s", e)
-

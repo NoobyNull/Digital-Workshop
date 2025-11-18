@@ -9,7 +9,6 @@ from typing import Dict, Any
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
-    QHBoxLayout,
     QGroupBox,
     QPushButton,
     QLineEdit,
@@ -21,6 +20,8 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
 )
 from PySide6.QtCore import pyqtSignal
+
+from src.gui.layout.flow_layout import FlowLayout
 
 from src.core.logging_config import get_logger
 from src.core.database.tool_preferences_repository import ToolPreferencesRepository
@@ -67,7 +68,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         ext_db_layout.addWidget(self.paths_list)
 
         # Path management buttons
-        path_button_layout = QHBoxLayout()
+        path_button_layout = FlowLayout(self)
         self.add_path_btn = QPushButton("Add Path")
         self.add_path_btn.clicked.connect(self._add_external_path)
         path_button_layout.addWidget(self.add_path_btn)
@@ -104,7 +105,7 @@ class ToolDatabasePreferencesDialog(QDialog):
         layout.addWidget(settings_group)
 
         # Dialog buttons
-        button_layout = QHBoxLayout()
+        button_layout = FlowLayout(self)
         self.ok_btn = QPushButton("OK")
         self.ok_btn.clicked.connect(self._save_and_close)
         button_layout.addWidget(self.ok_btn)

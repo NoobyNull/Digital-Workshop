@@ -108,4 +108,3 @@ def trapezoidal_move_time_seconds(
     # Total time for symmetric triangular motion over distance d is:
     #   t_total = 2 * sqrt(d / a)
     return 2.0 * math.sqrt(distance_mm / accel_mm_s2)
-

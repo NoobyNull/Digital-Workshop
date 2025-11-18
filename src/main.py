@@ -11,6 +11,7 @@ import dataclasses
 import sys
 import os
 import time
+import subprocess
 
 try:  # Windows-only, used for CLI nuclear reset countdown
     import msvcrt  # type: ignore[import]
@@ -102,10 +103,12 @@ Examples:
     parser.add_argument(
         "--nuke-no-backup",
         action="store_true",
-        help=(
-            "NUKE: do NOT create a final backup before deletion "
-            "(maximum risk, faster)"
-        ),
+        help=("NUKE: do NOT create a final backup before deletion " "(maximum risk, faster)"),
+    )
+    parser.add_argument(
+        "--nuke-exec",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
 
     return parser.parse_args()
@@ -160,25 +163,31 @@ def main() -> None:
     """Main function to start the Digital Workshop application."""
     args = parse_arguments()
     log_level = args.log_level if args.log_level is not None else "INFO"
-    profile = _build_logging_profile(args, log_level)
-    setup_logging(profile=profile)
 
-    logger = get_logger(__name__)
-    logger.info("Digital Workshop application starting")
-    logger.info("Log level set to: %s", log_level)
+    # Special case: background nuclear reset executor
+    if getattr(args, "nuke_exec", False):
+        # Use a minimal logging profile that avoids locking application data directories
+        from tempfile import gettempdir
 
-    # Handle nuclear reset shortcut before starting the application
-    if getattr(args, "nuke", False) or getattr(args, "nuke_no_backup", False):
+        temp_log_dir = os.path.join(gettempdir(), "DigitalWorkshop_NukeLogs")
+        nuke_profile = LoggingProfile(
+            log_level=log_level,
+            enable_console=True,
+            human_readable=True,
+            log_dir=temp_log_dir,
+        )
+        setup_logging(profile=nuke_profile)
+        logger = get_logger(__name__)
+
         create_backup = not getattr(args, "nuke_no_backup", False)
-
-        if not _confirm_nuclear_reset_with_timeout(5):
-            logger.warning("Nuclear reset requested but cancelled by user.")
-            return 0
-
         logger.warning(
-            "Executing nuclear reset from command line (backup %s)",
+            "Executing nuclear reset in background worker (backup %s)",
             "DISABLED" if not create_backup else "ENABLED",
         )
+
+        # Small delay so any launching process can fully exit before deletion begins
+        time.sleep(2.0)
+
         reset_handler = NuclearReset()
         results = reset_handler.execute_nuclear_reset(create_backup=create_backup)
 
@@ -200,6 +209,56 @@ def main() -> None:
         else:
             logger.error("Nuclear reset failed for unknown reasons.")
         return 1
+
+    # Normal application startup logging
+    profile = _build_logging_profile(args, log_level)
+    setup_logging(profile=profile)
+
+    logger = get_logger(__name__)
+    logger.info("Digital Workshop application starting")
+    logger.info("Log level set to: %s", log_level)
+
+    # Handle nuclear reset shortcut before starting the application
+    if getattr(args, "nuke", False) or getattr(args, "nuke_no_backup", False):
+        create_backup = not getattr(args, "nuke_no_backup", False)
+
+        if not _confirm_nuclear_reset_with_timeout(5):
+            logger.warning("Nuclear reset requested but cancelled by user.")
+            return 0
+
+        logger.warning(
+            "Scheduling nuclear reset in background process (backup %s)",
+            "DISABLED" if not create_backup else "ENABLED",
+        )
+
+        # Build command for background worker process
+        cmd = [sys.executable, os.path.abspath(__file__)]
+        if getattr(args, "nuke_no_backup", False):
+            cmd.append("--nuke-no-backup")
+        cmd.append("--nuke-exec")
+
+        try:
+            creationflags = 0
+            if os.name == "nt":
+                creationflags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(
+                    subprocess, "CREATE_NEW_PROCESS_GROUP", 0
+                )
+
+            subprocess.Popen(
+                cmd,
+                close_fds=True,
+                creationflags=creationflags,
+                cwd=os.path.dirname(os.path.abspath(__file__)),
+            )
+            logger.warning("Background nuclear reset process started.")
+        except Exception as exc:
+            logger.error(
+                "Failed to start background nuclear reset process: %s", exc, exc_info=True
+            )
+            return 1
+
+        # Launcher process can exit immediately after scheduling the reset
+        return 0
 
     # Set environment variable for in-memory database if --mem-only flag is used
     if args.mem_only:
@@ -264,6 +323,7 @@ def main() -> None:
                 app.cleanup()
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Cleanup failed: %s", str(e))
+
 
 if __name__ == "__main__":
     sys.exit(main())

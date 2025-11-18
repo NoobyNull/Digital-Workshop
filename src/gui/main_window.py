@@ -14,6 +14,7 @@ from PySide6.QtCore import (
     Signal,
     QSettings,
 )
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow,
     QApplication,
@@ -146,6 +147,9 @@ class MainWindow(QMainWindow):
         # Set application style for Windows desktop
         QApplication.setStyle("Fusion")  # Modern look and feel
 
+        # Apply application icon for desktop and Start menu when available
+        self._apply_window_icon()
+
         # Use native title bar (removed frameless window flag)
         # This allows the OS to handle the title bar and window controls
 
@@ -247,6 +251,26 @@ class MainWindow(QMainWindow):
         self.logger.info(
             "Main window initialized successfully - PySide6 handling all layout management"
         )
+
+    def _apply_window_icon(self) -> None:
+        """Set the main window icon from installed resources when available."""
+        try:
+            from src.core.path_manager import PathManager
+        except Exception:
+            return
+
+        try:
+            path_manager = PathManager()
+            resources_dir = path_manager.get_resource_directory()
+            icon_path = resources_dir / "icons" / "app_icon.ico"
+            if icon_path.exists():
+                self.setWindowIcon(QIcon(str(icon_path)))
+                if self.logger:
+                    self.logger.info("Window icon set from %s", icon_path)
+        except Exception:
+            # Never allow icon resolution issues to break window initialization
+            if self.logger:
+                self.logger.debug("Failed to set window icon", exc_info=True)
 
     def _setup_native_central_widget(self) -> None:
         """Set up native Qt central widget with built-in layout management."""
@@ -1527,9 +1551,7 @@ class MainWindow(QMainWindow):
                 # If nothing valid, fall back to opening an empty dialog
                 self._open_import_dialog()
         except Exception as e:
-            self.logger.error(
-                "Failed to handle model library import request: %s", e, exc_info=True
-            )
+            self.logger.error("Failed to handle model library import request: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Import Error",
@@ -1928,12 +1950,9 @@ class MainWindow(QMainWindow):
                 try:
                     if hasattr(self.viewer_widget, "set_current_project"):
                         self.viewer_widget.set_current_project(project_id)
-                        self.logger.debug(
-                            f"Set current project for Model Viewer: {project_id}"
-                        )
+                        self.logger.debug(f"Set current project for Model Viewer: {project_id}")
                 except Exception as e:
                     self.logger.warning(f"Failed to set project for Model Viewer: {e}")
-
 
             # Attach the project to the G-code previewer so that timing
             # calculations use the correct machine and feed override.
@@ -2168,7 +2187,6 @@ class MainWindow(QMainWindow):
         """Handle theme change notification."""
         # Theme is managed by ThemeService and applied globally
         self.logger.info("Theme changed: %s", preset_name)
-
 
     def _add_to_project(self) -> None:
         """Dispatch Add to Project to the active hero tab."""

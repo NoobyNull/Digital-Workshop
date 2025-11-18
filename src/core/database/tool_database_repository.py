@@ -382,7 +382,6 @@ class ToolDatabaseRepository:
             self.logger.error("Failed to get tool count: %s", e)
             return 0
 
-
     def delete_tools_by_provider(self, provider_id: int) -> int:
         """Delete all tools for a provider.
 

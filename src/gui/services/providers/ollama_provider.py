@@ -55,4 +55,3 @@ class OllamaProvider(OpenAIProvider):
         exists, regardless of whether the user supplied an API key or not.
         """
         return self.client is not None
-

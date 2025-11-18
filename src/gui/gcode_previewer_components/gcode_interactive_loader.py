@@ -72,7 +72,8 @@ class GcodeLoaderWorker(QThread):
             all_moves = []
             lines_buffer = []
             bytes_processed = 0
-            last_reported_progress = -10
+            ui_last_progress = -1
+            log_last_progress = -10
 
             with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
@@ -85,6 +86,20 @@ class GcodeLoaderWorker(QThread):
                     bytes_processed += len(line.encode("utf-8"))
                     lines_buffer.append(line)
 
+                    # Update progress based on bytes read so the bar moves smoothly
+                    progress = int((bytes_processed / file_size) * 100)
+                    if progress != ui_last_progress:
+                        ui_last_progress = progress
+                        self.progress_updated.emit(progress, f"Loading G-code ({progress}%)")
+
+                        # Log coarse-grained progress (every ~10%)
+                        if progress - log_last_progress >= 10:
+                            self.logger.info(
+                                "Interactive G-code load progress: %d%%",
+                                progress,
+                            )
+                            log_last_progress = progress
+
                     # Lightweight placeholder; UI responsiveness handled on main thread
                     self._maybe_process_events()
 
@@ -93,20 +108,7 @@ class GcodeLoaderWorker(QThread):
                         moves = self.parser.parse_lines(lines_buffer)
                         all_moves.extend(moves)
 
-                        # Emit progress
-                        progress = int((bytes_processed / file_size) * 100)
-                        self.progress_updated.emit(progress, f"Loading: {len(all_moves)} moves")
-
-                        # Log coarse-grained progress (every ~10%)
-                        if progress - last_reported_progress >= 10:
-                            self.logger.info(
-                                "Interactive G-code load progress: %d%% (%d moves)",
-                                progress,
-                                len(all_moves),
-                            )
-                            last_reported_progress = progress
-
-                        # Emit chunk
+                        # Emit chunk for incremental visualization
                         if moves:
                             self.chunk_loaded.emit(moves)
 
@@ -145,6 +147,8 @@ class InteractiveGcodeLoader(QWidget):
     loading_started = Signal()
     loading_complete = Signal(list)  # Emits all moves
     chunk_loaded = Signal(list)  # Emits chunk of moves
+    progress_updated = Signal(int, str)  # (percentage, message)
+    error_occurred = Signal(str)  # Emits error message
 
     def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None) -> None:
         """Initialize the interactive loader.
@@ -245,6 +249,8 @@ class InteractiveGcodeLoader(QWidget):
         """Handle progress update."""
         self.progress_bar.setValue(progress)
         self.status_label.setText(message)
+        # Re-emit for external listeners such as the main previewer widget.
+        self.progress_updated.emit(progress, message)
 
     def _on_chunk_loaded(self, moves: List[GcodeMove]) -> None:
         """Handle chunk loaded - update visualization incrementally."""
@@ -284,6 +290,8 @@ class InteractiveGcodeLoader(QWidget):
         self.progress_bar.setVisible(False)
         self.load_button.setEnabled(True)
         self.cancel_button.setEnabled(False)
+        # Propagate to any external listeners so they can update their UI.
+        self.error_occurred.emit(error_message)
 
     @staticmethod
     def _calculate_statistics(moves: List[GcodeMove]) -> dict:

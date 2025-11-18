@@ -84,7 +84,7 @@ class DatabaseInsertTask(QRunnable):
             # Insert model record
             model_id = self.db_manager.add_model(
                 filename=self.model_info["filename"],
-                format=self.model_info["format"],
+                model_format=self.model_info["format"],
                 file_path=self.model_info["file_path"],
                 file_size=self.model_info.get("file_size"),
                 file_hash=self.model_info.get("file_hash"),
@@ -266,7 +266,7 @@ class CombinedModelProcessingTask(QRunnable):
             # Step 1: Database operations
             model_id = self.db_manager.add_model(
                 filename=self.model_info["filename"],
-                format=self.model_info["format"],
+                model_format=self.model_info["format"],
                 file_path=self.model_info["file_path"],
                 file_size=self.model_info.get("file_size"),
                 file_hash=self.model_info.get("file_hash"),

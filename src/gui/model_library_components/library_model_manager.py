@@ -166,7 +166,7 @@ class LibraryModelManager:
         try:
             model_id = self.library_widget.db_manager.add_model(
                 filename=model_info["filename"],
-                format=model_info["format"],
+                model_format=model_info["format"],
                 file_path=model_info["file_path"],
                 file_size=model_info["file_size"],
                 file_hash=None,

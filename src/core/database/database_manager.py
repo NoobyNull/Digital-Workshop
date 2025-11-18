@@ -83,9 +83,7 @@ class DatabaseManager:
         file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
-        return self._model_repo.add_model(
-            filename, model_format, file_path, file_size, file_hash
-        )
+        return self._model_repo.add_model(filename, model_format, file_path, file_size, file_hash)
 
     def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find a model by its file hash."""
@@ -428,7 +426,6 @@ class DatabaseManager:
         """Set the feed override percentage for a project."""
         return self._project_repo.set_feed_override(project_id, override_pct)
 
-
     # ===== File Operations (delegated to FileRepository) =====
 
     def add_file(
@@ -618,7 +615,6 @@ class DatabaseManager:
     def list_cutlist_sequence(self, scenario_id: int) -> List[Dict[str, Any]]:
         return self._cutlist_repo.list_sequence(scenario_id)
 
-
     # ===== Machine Profiles / Kinematics =====
 
     def add_machine(self, **kwargs: Any) -> int:
@@ -803,7 +799,6 @@ class DatabaseManager:
 
     def get_models_using_background(self, background_id: int) -> List[Dict[str, Any]]:
         return self._model_resources_repo.get_models_using_background(background_id)
-
 
     # ===== Connection Management =====
 

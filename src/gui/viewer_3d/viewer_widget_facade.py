@@ -382,9 +382,11 @@ class Viewer3DWidget(QWidget):
             "model_id": getattr(self.current_model, "id", None),
             "model_path": model_path,
             "model_filename": model_filename,
-            "render_mode": getattr(self, "render_mode", None).name
-            if hasattr(self, "render_mode") and self.render_mode is not None
-            else None,
+            "render_mode": (
+                getattr(self, "render_mode", None).name
+                if hasattr(self, "render_mode") and self.render_mode is not None
+                else None
+            ),
             "camera": camera_state,
             "z_up_pending_save": self.z_up_pending_save,
         }

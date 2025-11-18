@@ -21,6 +21,7 @@ from src.core.fast_hasher import FastHasher
 from src.core.root_folder_manager import RootFolderManager
 from src.core.cancellation_token import CancellationToken
 from src.core.security import PathValidator, SecurityEventLogger
+from src.core.services.file_type_filter import FileTypeFilter
 
 
 class FileManagementMode(Enum):
@@ -120,6 +121,7 @@ class ImportFileManager:
         self.logger = get_logger(__name__)
         self.fast_hasher = FastHasher()
         self.root_folder_manager = RootFolderManager.get_instance()
+        self.file_type_filter = FileTypeFilter()
         self._active_session: Optional[ImportSession] = None
 
         self._log_json(
@@ -187,28 +189,34 @@ class ImportFileManager:
             try:
                 test_file.touch()
                 test_file.unlink()
-            except (PermissionError, OSError) as e:
+            except (PermissionError, OSError) as exc:
                 error = f"No write permission for directory: {root_directory}"
-                self.logger.warning("%s: {e}", error)
+                self.logger.warning("%s: %s", error, exc)
                 return False, error
 
-            # Check if it's a configured root folder
+            # Ensure this directory is registered as a library root so that
+            # the file browser can access it consistently. If it is not yet
+            # configured, try to add it automatically instead of failing.
             configured_roots = self.root_folder_manager.get_folder_paths(enabled_only=True)
-            is_configured_root = str(root_path) in [
-                str(Path(p).resolve()) for p in configured_roots
-            ]
+            normalized_roots = {Path(p).resolve() for p in configured_roots}
 
-            if not is_configured_root:
-                error = f"Directory is not a configured root folder: {root_directory}"
-                self.logger.warning(error)
-                return False, error
+            if root_path not in normalized_roots:
+                added = self.root_folder_manager.add_folder(str(root_path))
+                if not added:
+                    error = f"Directory is not a configured root folder: {root_directory}"
+                    self.logger.warning(error)
+                    return False, error
 
             self._log_json("root_directory_valid", {"root_directory": str(root_path)})
 
             return True, None
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            error = f"Error validating root directory: {e}"
+            self._log_json("root_directory_valid", {"root_directory": str(root_path)})
+
+            return True, None
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            error = f"Error validating root directory: {exc}"
             self.logger.error(error, exc_info=True)
             return False, error
 
@@ -348,6 +356,19 @@ class ImportFileManager:
                 if PathValidator.is_system_file(file_path):
                     security_logger.log_system_file_blocked(file_path)
                     self.logger.warning("System file blocked: %s", file_path)
+                    continue
+
+                # Apply file type filter (additional security layer)
+                filter_result = self.file_type_filter.filter_file(file_path)
+                if not filter_result.is_allowed:
+                    security_logger.log_invalid_file_type(
+                        file_path, filter_result.extension or "unknown"
+                    )
+                    self.logger.warning(
+                        "File blocked by type filter (%s): %s",
+                        filter_result.reason,
+                        file_path,
+                    )
                     continue
 
                 path = Path(file_path)
@@ -517,8 +538,10 @@ class ImportFileManager:
                     if path.exists():
                         path.unlink()
                         self.logger.info("Rolled back copied file: %s", file_path)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.error("Failed to remove file during rollback: %s: {e}", file_path)
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                    self.logger.error(
+                        "Failed to remove file during rollback: %s: %s", file_path, exc
+                    )
                     rollback_success = False
 
             # Remove created directories (if empty)

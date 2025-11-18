@@ -24,6 +24,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QStyle,
 )
+from src.gui.layout.flow_layout import FlowLayout
+
 
 from src.core.logging_config import get_logger
 from src.gui.theme import SPACING_8
@@ -143,7 +145,7 @@ class LibraryUIManager:
         layout.addWidget(self.library_widget.file_tree)
 
         import_frame = QFrame()
-        import_layout = QHBoxLayout(import_frame)
+        import_layout = FlowLayout(import_frame)
         import_layout.setContentsMargins(0, SPACING_8, 0, 0)
 
         self.library_widget.refresh_button = QPushButton("Refresh")
@@ -154,13 +156,11 @@ class LibraryUIManager:
         )
         import_layout.addWidget(self.library_widget.refresh_button)
 
-        import_layout.addStretch()
+
 
         self.library_widget.import_selected_button = QPushButton("Import Selected")
         self.library_widget.import_selected_button.setToolTip("Import selected file(s)")
-        self.library_widget.import_selected_button.setIcon(
-            self._std_icon(QStyle.SP_ArrowDown)
-        )
+        self.library_widget.import_selected_button.setIcon(self._std_icon(QStyle.SP_ArrowDown))
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
@@ -481,9 +481,7 @@ class LibraryUIManager:
             checked,
             saved_value,
         )
-        logger.info(
-            "Saved and verified column_%s_visible", column
-        )
+        logger.info("Saved and verified column_%s_visible", column)
 
     def apply_styling(self) -> None:
         """Apply CSS styling (no-op - qt-material handles this)."""

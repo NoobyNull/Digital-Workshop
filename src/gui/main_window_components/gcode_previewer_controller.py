@@ -44,13 +44,9 @@ class GcodePreviewController:
             try:
                 self._setup_gcode_tools_dock()
             except Exception as dock_error:  # pragma: no cover - defensive
-                self.logger.warning(
-                    "Failed to initialize G-code tools dock: %s", dock_error
-                )
+                self.logger.warning("Failed to initialize G-code tools dock: %s", dock_error)
         except Exception as e:  # pragma: no cover - defensive
-            self.logger.error(
-                "Failed to create G-code Previewer widget: %s", e, exc_info=True
-            )
+            self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
             placeholder = self._create_placeholder(
                 "G Code Previewer",
                 "G-code Previewer\n\nComponent unavailable.",
@@ -113,9 +109,7 @@ class GcodePreviewController:
                     self.main_window.gcode_tools_dock
                 )
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.debug(
-                    "Failed to register G-code tools dock for snapping: %s", e
-                )
+                self.logger.debug("Failed to register G-code tools dock for snapping: %s", e)
 
             # Attach this tools widget to the previewer so its signals are wired
             # up when the docked configuration is in use.
@@ -128,9 +122,7 @@ class GcodePreviewController:
                         self.main_window.gcode_tools_widget
                     )
                 except Exception as e:  # pragma: no cover - defensive
-                    self.logger.warning(
-                        "Failed to attach G-code tools widget to previewer: %s", e
-                    )
+                    self.logger.warning("Failed to attach G-code tools widget to previewer: %s", e)
 
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error("Failed to setup G-code tools dock: %s", e)
@@ -146,13 +138,9 @@ class GcodePreviewController:
         if self.main_window.gcode_previewer_widget:
             try:
                 self.main_window.gcode_previewer_widget.set_current_project(project_id)
-                self.logger.debug(
-                    "Set current project for G-code Previewer: %s", project_id
-                )
+                self.logger.debug("Set current project for G-code Previewer: %s", project_id)
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.warning(
-                    "Failed to set project for G-code Previewer: %s", e
-                )
+                self.logger.warning("Failed to set project for G-code Previewer: %s", e)
 
     def open_gcode_file(self, file_path: str) -> None:
         """Load a G-code file into the previewer."""
@@ -163,7 +151,4 @@ class GcodePreviewController:
             try:
                 self.main_window.gcode_previewer_widget.load_gcode_file(file_path)
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.error(
-                    "Failed to load G-code file %s in previewer: %s", file_path, e
-                )
-
+                self.logger.error("Failed to load G-code file %s in previewer: %s", file_path, e)

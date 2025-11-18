@@ -85,7 +85,7 @@ class GcodeRenderer:
                 cls._vtk_module = vtk_module
             except ImportError as e:
                 raise ImportError(
-                    "VTK is required for G-code rendering. " "Install with: pip install vtk"
+                    "VTK is required for G-code rendering. Install with: pip install vtk"
                 ) from e
 
     @property
@@ -106,10 +106,10 @@ class GcodeRenderer:
 
         # Reset move data
         vtk_module = self.vtk
-        for move_type in self.move_data:
-            self.move_data[move_type]["points"] = vtk_module.vtkPoints()
-            self.move_data[move_type]["lines"] = vtk_module.vtkCellArray()
-            self.move_data[move_type]["actor"] = None
+        for move_type, data in self.move_data.items():
+            data["points"] = vtk_module.vtkPoints()
+            data["lines"] = vtk_module.vtkCellArray()
+            data["actor"] = None
 
         prev_point = None
 
@@ -162,7 +162,7 @@ class GcodeRenderer:
                 self.actors[move_type] = actor
 
         # Add axes
-        self._add_axes()
+        self.add_axes()
 
         # Reset camera
         self.renderer.ResetCamera()
@@ -193,7 +193,7 @@ class GcodeRenderer:
 
         return actor
 
-    def _add_axes(self) -> None:
+    def add_axes(self) -> None:
         """Add coordinate axes to the scene."""
         axes = self.vtk.vtkAxesActor()
         axes.SetScale(10.0)
@@ -224,16 +224,16 @@ class GcodeRenderer:
 
     def clear_incremental(self) -> None:
         """Clear incremental rendering data."""
-        for move_type in self.move_data:
-            self.move_data[move_type]["points"] = self.vtk.vtkPoints()
-            self.move_data[move_type]["lines"] = self.vtk.vtkCellArray()
+        for data in self.move_data.values():
+            data["points"] = self.vtk.vtkPoints()
+            data["lines"] = self.vtk.vtkCellArray()
 
             # Remove old actor if exists
-            if self.move_data[move_type]["actor"]:
-                self.renderer.RemoveActor(self.move_data[move_type]["actor"])
+            if data["actor"]:
+                self.renderer.RemoveActor(data["actor"])
                 # Properly cleanup VTK resources
-                self.move_data[move_type]["actor"].ReleaseGraphicsResources(self.render_window)
-            self.move_data[move_type]["actor"] = None
+                data["actor"].ReleaseGraphicsResources(self.render_window)
+            data["actor"] = None
 
         self.prev_point = None
         self._incremental_update_counter = 0
@@ -282,41 +282,44 @@ class GcodeRenderer:
         # Throttle actor rebuilds to avoid UI stalls on very large files
         self._incremental_update_counter += 1
         if self._incremental_update_counter >= 10:
-            self._update_incremental_actors()
+            self.update_incremental_actors()
             self._incremental_update_counter = 0
 
-    def _update_incremental_actors(self) -> None:
+    def update_incremental_actors(self) -> None:
         """Update the incremental rendering actors with proper cleanup."""
-        for move_type in self.move_data:
+        for data in self.move_data.values():
             # Proper VTK cleanup sequence
-            old_actor = self.move_data[move_type]["actor"]
+            old_actor = data["actor"]
             if old_actor:
                 self.renderer.RemoveActor(old_actor)
                 # Clean up the actor's internal resources
                 old_actor.ReleaseGraphicsResources(self.render_window)
                 del old_actor  # Explicit deletion
 
-            self.move_data[move_type]["actor"] = None
+            data["actor"] = None
 
         # Create new actors
-        for move_type in ["rapid", "cutting", "arc"]:
-            if self.move_data[move_type]["points"].GetNumberOfPoints() > 0:
+        for move_type, data in self.move_data.items():
+            if move_type not in ("rapid", "cutting", "arc"):
+                continue
+
+            if data["points"].GetNumberOfPoints() > 0:
                 actor = self._create_actor(
-                    self.move_data[move_type]["points"],
-                    self.move_data[move_type]["lines"],
+                    data["points"],
+                    data["lines"],
                     self.colors[move_type],
                     self.line_widths[move_type],
                 )
                 self.renderer.AddActor(actor)
-                self.move_data[move_type]["actor"] = actor
+                data["actor"] = actor
 
     def cleanup(self) -> None:
         """Cleanup all VTK resources before destruction."""
         # Remove all actors
-        for move_type in self.move_data:
-            if self.move_data[move_type]["actor"]:
-                self.renderer.RemoveActor(self.move_data[move_type]["actor"])
-                self.move_data[move_type]["actor"].ReleaseGraphicsResources(self.render_window)
+        for data in self.move_data.values():
+            if data["actor"]:
+                self.renderer.RemoveActor(data["actor"])
+                data["actor"].ReleaseGraphicsResources(self.render_window)
 
         # Clear data structures
         self.move_data.clear()

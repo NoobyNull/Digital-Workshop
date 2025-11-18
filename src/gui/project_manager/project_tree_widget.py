@@ -31,45 +31,12 @@ from ...core.database.database_manager import DatabaseManager
 from ...core.export.dww_export_manager import PJCTExportManager
 from ...core.export.dww_import_manager import DWWImportManager
 from ...core.logging_config import get_logger
+from ...core.services.file_type_registry import (
+    get_tab_for_extension,
+    get_tree_category_for_extension,
+)
 
 logger = get_logger(__name__)
-
-# File type to tab mapping - must match actual tab names in main_window.py
-FILE_TYPE_TAB_MAP = {
-    ".nc": "G Code Previewer",
-    ".gcode": "G Code Previewer",
-    ".stl": "Model Previewer",
-    ".obj": "Model Previewer",
-    ".step": "Model Previewer",
-    ".stp": "Model Previewer",
-    ".3mf": "Model Previewer",
-    ".ply": "Model Previewer",
-}
-
-# File type to category mapping for tree organization
-FILE_TYPE_CATEGORY_MAP = {
-    # Models
-    ".stl": "Models",
-    ".obj": "Models",
-    ".step": "Models",
-    ".stp": "Models",
-    ".3mf": "Models",
-    ".ply": "Models",
-    # G-Code
-    ".nc": "Gcode",
-    ".gcode": "Gcode",
-    # Cut Lists
-    ".csv": "Cut Lists",
-    ".xlsx": "Cut Lists",
-    ".xls": "Cut Lists",
-    # Cost Sheets
-    ".pdf": "Cost Sheets",
-    ".docx": "Cost Sheets",
-    ".doc": "Cost Sheets",
-    # Other documents
-    ".txt": "Documents",
-    ".md": "Documents",
-}
 
 
 class ProjectTreeWidget(QWidget):
@@ -120,7 +87,7 @@ class ProjectTreeWidget(QWidget):
         layout.addWidget(self.tree_widget)
 
         # Buttons
-        button_layout = FlowLayout(self)
+        button_layout = FlowLayout()
 
         new_btn = QPushButton("New Project")
         new_btn.clicked.connect(self._create_new_project)
@@ -159,6 +126,20 @@ class ProjectTreeWidget(QWidget):
             self.tree_widget.clear()
             self.project_items.clear()
             projects = self.project_manager.list_projects()
+
+            if not projects:
+                placeholder_item = QTreeWidgetItem()
+                placeholder_item.setText(
+                    0,
+                    "No projects found. Use 'New Project' or 'Import Project' above.",
+                )
+                placeholder_item.setFlags(Qt.NoItemFlags)
+                self.tree_widget.addTopLevelItem(placeholder_item)
+                self.tree_widget.setRootIsDecorated(False)
+                logger.info("Refreshed project tree: no projects found")
+                return
+
+            self.tree_widget.setRootIsDecorated(True)
 
             for project in projects:
                 project_id = project["id"]
@@ -202,8 +183,8 @@ class ProjectTreeWidget(QWidget):
                 file_name = Path(file_path).name
                 file_ext = Path(file_path).suffix.lower()
 
-                # Determine category
-                category = FILE_TYPE_CATEGORY_MAP.get(file_ext, "Other")
+                # Determine category via central registry
+                category = get_tree_category_for_extension(file_ext)
 
                 if category not in categories:
                     categories[category] = []
@@ -305,7 +286,7 @@ class ProjectTreeWidget(QWidget):
 
             # Determine tab based on file extension
             file_ext = Path(file_path).suffix.lower()
-            tab_name = FILE_TYPE_TAB_MAP.get(file_ext)
+            tab_name = get_tab_for_extension(file_ext)
 
             if tab_name:
                 self.file_selected.emit(file_path, tab_name)

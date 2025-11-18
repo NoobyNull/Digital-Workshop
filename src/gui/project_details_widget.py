@@ -32,24 +32,11 @@ from PySide6.QtWidgets import (
 
 from src.core.database_manager import get_database_manager
 from src.core.logging_config import get_logger
+from src.core.services.file_type_registry import get_tab_for_extension
 from src.utils.file_hash import calculate_file_hash
 
 
 logger = get_logger(__name__)
-
-# Mapping from file extensions to hero tab names.
-# Keep this in sync with FILE_TYPE_TAB_MAP in
-# src.gui.project_manager.project_tree_widget.ProjectTreeWidget.
-RESOURCE_TAB_MAP = {
-    ".nc": "G Code Previewer",
-    ".gcode": "G Code Previewer",
-    ".stl": "Model Previewer",
-    ".obj": "Model Previewer",
-    ".step": "Model Previewer",
-    ".stp": "Model Previewer",
-    ".3mf": "Model Previewer",
-    ".ply": "Model Previewer",
-}
 
 
 class ProjectDetailsWidget(QWidget):
@@ -154,9 +141,7 @@ class ProjectDetailsWidget(QWidget):
         self.resources_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.resources_table.setSelectionMode(QTableWidget.SingleSelection)
         self.resources_table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.resources_table.customContextMenuRequested.connect(
-            self._on_resources_context_menu
-        )
+        self.resources_table.customContextMenuRequested.connect(self._on_resources_context_menu)
         self.resources_table.itemDoubleClicked.connect(self._on_resource_activated)
 
         layout.addWidget(self.resources_table)
@@ -294,20 +279,20 @@ class ProjectDetailsWidget(QWidget):
                 return
 
             file_ext = file_path.suffix.lower()
-            tab_name = RESOURCE_TAB_MAP.get(file_ext)
+            tab_name = get_tab_for_extension(file_ext)
 
             main_window = self.window()
 
             # Switch hero tab first if we know where this file should open
-            if tab_name and main_window is not None and hasattr(
-                main_window, "_on_tab_switch_requested"
+            if (
+                tab_name
+                and main_window is not None
+                and hasattr(main_window, "_on_tab_switch_requested")
             ):
                 try:
                     main_window._on_tab_switch_requested(tab_name)
                 except Exception:  # noqa: BLE001
-                    self.logger.warning(
-                        "Failed to switch tab for resource %s", file_path_str
-                    )
+                    self.logger.warning("Failed to switch tab for resource %s", file_path_str)
 
             if main_window is None:
                 return
@@ -332,10 +317,7 @@ class ProjectDetailsWidget(QWidget):
             # If we know which model this is, delegate to the model viewer
             # controller so we reuse the same pipeline (camera restore, status
             # messages, etc.) as the model library.
-            if (
-                getattr(self, "current_model_id", None) is not None
-                and controller is not None
-            ):
+            if getattr(self, "current_model_id", None) is not None and controller is not None:
                 try:
                     controller.on_model_double_clicked(self.current_model_id)  # type: ignore[arg-type]
                     return
@@ -536,7 +518,10 @@ class ProjectDetailsWidget(QWidget):
             if current_path and current_path.exists():
                 # If a file already exists at the original path, back it up to a
                 # uniquely named temporary file in the same directory.
-                if original_path_obj.exists() and original_path_obj.resolve() != current_path.resolve():
+                if (
+                    original_path_obj.exists()
+                    and original_path_obj.resolve() != current_path.resolve()
+                ):
                     backup_dir = tempfile.gettempdir()
                     backup_path = Path(backup_dir) / f"dww_backup_{original_path_obj.name}"
                     shutil.move(str(original_path_obj), str(backup_path))

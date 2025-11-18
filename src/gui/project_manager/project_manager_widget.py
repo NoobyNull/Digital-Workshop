@@ -7,7 +7,6 @@ Provides UI for creating, opening, and managing projects.
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
     QPushButton,
     QListWidget,
     QListWidgetItem,
@@ -17,6 +16,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
+from ..layout.flow_layout import FlowLayout
 from ...core.services.project_manager import ProjectManager
 from ...core.services.project_importer import ProjectImporter
 from ...core.services.dry_run_analyzer import DryRunAnalyzer
@@ -59,7 +59,7 @@ class ProjectManagerWidget(QWidget):
         layout.addWidget(self.project_list)
 
         # Buttons
-        button_layout = QHBoxLayout()
+        button_layout = FlowLayout(self)
 
         new_btn = QPushButton("New Project")
         new_btn.clicked.connect(self._create_new_project)

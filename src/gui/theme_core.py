@@ -20,6 +20,7 @@ from PySide6.QtGui import QColor
 
 from src.gui.theme.color_helper import get_theme_color as _get_theme_hex
 
+
 def apply_theme(widget: Optional[QWidget] = None) -> None:
     """
     Apply qt-material theme to a widget or the entire application.

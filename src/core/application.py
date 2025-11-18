@@ -19,6 +19,8 @@ from .application_bootstrap import ApplicationBootstrap
 from .exception_handler import ExceptionHandler
 from .logging_config import get_logger
 from .system_initializer import SystemInitializer
+from src.core.services.library_root_monitor import LibraryRootMonitor
+from src.gui.dialogs.library_setup_dialog import run_first_launch_setup
 from src.gui.main_window import MainWindow
 
 
@@ -40,6 +42,11 @@ class Application:
         self.bootstrap: Optional[ApplicationBootstrap] = None
         self._is_initialized = False
         self._is_running = False
+
+        # Startup splash screen (shown while core systems initialize).
+        self._startup_splash = None
+        self._startup_progress_bar = None
+        self._startup_status_label = None
 
     def initialize(self, argv: Optional[list] = None) -> bool:
         """Initialize the application and all its components.
@@ -63,27 +70,56 @@ class Application:
             # Apply theme EARLY so all widgets created after this get the theme
             self._apply_theme_early()
 
+            # First-launch library setup (runs only once per user)
+            run_first_launch_setup()
+
+            # Show a lightweight startup splash while core systems initialize.
+            self._show_startup_splash()
+            self._update_startup_splash(5, "Initializing system components...")
+
             # Initialize system components
             if not self._initialize_system():
+                self._hide_startup_splash()
                 return False
+
+            # System components are up; give this a bigger chunk of the bar.
+            self._update_startup_splash(30, "Installing exception handlers...")
 
             # Install exception handler
             if not self._install_exception_handler():
+                self._hide_startup_splash()
                 return False
 
-            # Bootstrap application services
+            # Exception handlers are cheap; keep this as a smaller step.
+            self._update_startup_splash(45, "Starting application services...")
+
+            # Bootstrap application services (often one of the heavier stages)
             if not self._bootstrap_services():
+                self._hide_startup_splash()
                 return False
 
-            # Create main window
+            self._update_startup_splash(70, "Checking project library root...")
+
+            # Monitor consolidated library root and handle DB failover
+            monitor = LibraryRootMonitor()
+            monitor.check_on_startup()
+
+            self._update_startup_splash(85, "Creating main window...")
+
+            # Create main window (final heavy step before showing UI)
             if not self._create_main_window():
+                self._hide_startup_splash()
                 return False
+
+            self._update_startup_splash(100, "Ready")
 
             # Connect signals
             self._connect_signals()
 
             self._is_initialized = True
-            self.logger.info("Application initialization completed successfully")
+            if self.logger:
+                self.logger.info("Application initialization completed successfully")
+            self._hide_startup_splash()
             return True
 
         except RuntimeError as e:
@@ -91,6 +127,7 @@ class Application:
                 self.logger.error("Application initialization failed: %s", str(e))
             else:
                 print(f"Application initialization failed: {str(e)}")
+            self._hide_startup_splash()
             return False
 
     def run(self) -> int:
@@ -340,6 +377,111 @@ class Application:
             if self.logger:
                 self.logger.error("Failed to create main window: %s", str(e))
             return False
+
+    def _show_startup_splash(self) -> None:
+        """Show a simple startup splash with a progress indicator.
+
+        The splash uses standard Qt widgets so it respects the active theme.
+        """
+        if self.qt_app is None:
+            return
+
+        # Avoid creating multiple splash screens if initialize() is called twice.
+        if getattr(self, "_startup_splash", None) is not None:
+            return
+
+        try:
+            from PySide6.QtCore import Qt
+            from PySide6.QtGui import QFont, QPixmap
+            from PySide6.QtWidgets import QLabel, QProgressBar, QSplashScreen, QVBoxLayout
+        except Exception:
+            return
+
+        pixmap = QPixmap(640, 320)
+        pixmap.fill(self.qt_app.palette().window().color())
+
+        splash = QSplashScreen(pixmap, Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(12)
+
+        title_label = QLabel(self.config.display_name or "Digital Workshop")
+        title_font = QFont()
+        title_font.setPointSize(14)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setAlignment(Qt.AlignCenter)
+
+        status_label = QLabel("Starting...")
+        status_label.setAlignment(Qt.AlignCenter)
+
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(0)
+        progress_bar.setTextVisible(False)
+        progress_bar.setMinimumHeight(16)
+
+        layout.addWidget(title_label)
+        layout.addWidget(status_label)
+        layout.addWidget(progress_bar)
+
+        splash.setLayout(layout)
+
+        screen = self.qt_app.primaryScreen()
+        if screen is not None:
+            geometry = splash.geometry()
+            center = screen.availableGeometry().center()
+            geometry.moveCenter(center)
+            splash.setGeometry(geometry)
+
+        splash.show()
+        self.qt_app.processEvents()
+
+        self._startup_splash = splash
+        self._startup_progress_bar = progress_bar
+        self._startup_status_label = status_label
+
+    def _update_startup_splash(self, progress: int, message: str) -> None:
+        """Update progress and message on the startup splash, if it is visible."""
+        if self._startup_splash is None or self.qt_app is None:
+            return
+
+        try:
+            if self._startup_progress_bar is not None:
+                clamped = max(0, min(100, int(progress)))
+                self._startup_progress_bar.setValue(clamped)
+            if self._startup_status_label is not None:
+                self._startup_status_label.setText(message)
+            self.qt_app.processEvents()
+        except RuntimeError:
+            # Splash may have been closed while initializing; ignore.
+            self._startup_splash = None
+            self._startup_progress_bar = None
+            self._startup_status_label = None
+
+    def _hide_startup_splash(self) -> None:
+        """Hide and clean up the startup splash if it was created."""
+        splash = getattr(self, "_startup_splash", None)
+        if splash is None:
+            return
+
+        try:
+            splash.close()
+            splash.deleteLater()
+        except RuntimeError:
+            pass
+
+        self._startup_splash = None
+        self._startup_progress_bar = None
+        self._startup_status_label = None
+
+        if self.qt_app is not None:
+            try:
+                self.qt_app.processEvents()
+            except RuntimeError:
+                pass
+
 
     def _apply_theme_early(self) -> None:
         """Apply theme early, right after QApplication is created."""

@@ -96,10 +96,7 @@ class FlowLayout(QLayout):
             hint = item.sizeHint()
             next_x = x + hint.width() + self._h_spacing
 
-            if (
-                next_x - self._h_spacing > effective_rect.right()
-                and line_height > 0
-            ):
+            if next_x - self._h_spacing > effective_rect.right() and line_height > 0:
                 # Wrap to next line
                 x = effective_rect.x()
                 y += line_height + self._v_spacing
@@ -113,4 +110,3 @@ class FlowLayout(QLayout):
             line_height = max(line_height, hint.height())
 
         return y + line_height - rect.y() + bottom
-

@@ -84,7 +84,9 @@ class ToolDatabaseManager:
 
         return f"meta:{desc}|{tool_type}|{vendor}|{product_id}|{diameter:.5f}"
 
-    def _select_parser_for_file(self, path: Path) -> tuple[Optional[BaseToolParser], Optional[str], Optional[str]]:
+    def _select_parser_for_file(
+        self, path: Path
+    ) -> tuple[Optional[BaseToolParser], Optional[str], Optional[str]]:
         """Select an appropriate parser for the given file.
 
         This uses a hybrid strategy:
@@ -132,7 +134,9 @@ class ToolDatabaseManager:
 
         return None, None, "Unsupported or unrecognized tool database format"
 
-    def _detect_parser_by_content(self, path: Path) -> tuple[Optional[BaseToolParser], Optional[str]]:
+    def _detect_parser_by_content(
+        self, path: Path
+    ) -> tuple[Optional[BaseToolParser], Optional[str]]:
         """Detect parser based on file contents instead of extension.
 
         This is intentionally conservative and only recognizes formats that
@@ -220,7 +224,6 @@ class ToolDatabaseManager:
             pass
 
         return None, None
-
 
     def import_tools_from_file(
         self,
@@ -341,9 +344,7 @@ class ToolDatabaseManager:
                         f"Successfully updated {provider_name}: imported {imported_count} tools"
                     )
                 else:
-                    message = (
-                        f"Successfully merged {imported_count} new tools into {provider_name}"
-                    )
+                    message = f"Successfully merged {imported_count} new tools into {provider_name}"
             else:
                 message = f"Successfully imported {imported_count} tools from {provider_name}"
 

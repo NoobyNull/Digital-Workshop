@@ -82,7 +82,9 @@ class ProjectModelRepository:
             )
             conn.commit()
             record_id = cursor.lastrowid
-            logger.info("Linked model %s to project %s (record %s)", model_id, project_id, record_id)
+            logger.info(
+                "Linked model %s to project %s (record %s)", model_id, project_id, record_id
+            )
             return record_id
 
     @log_function_call(logger)

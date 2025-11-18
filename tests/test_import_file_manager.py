@@ -88,15 +88,21 @@ class TestImportFileManager(unittest.TestCase):
         self.assertFalse(is_valid)
         self.assertIsNotNone(error)
 
-    def test_validate_root_directory_not_configured(self):
-        """Test root directory validation fails for non-configured root."""
+    def test_validate_root_directory_auto_adds_new_root(self):
+        """Test that a valid but non-configured root is auto-added and accepted."""
+        temp_root = Path(self.temp_dir).resolve()
+
         is_valid, error = self.manager.validate_root_directory(
-            self.temp_dir,
-            FileManagementMode.KEEP_ORGANIZED
+            str(temp_root),
+            FileManagementMode.KEEP_ORGANIZED,
         )
-        self.assertFalse(is_valid)
-        self.assertIsNotNone(error)
-        self.assertIn("configured root folder", error.lower())
+
+        self.assertTrue(is_valid)
+        self.assertIsNone(error)
+
+        # The temporary root should now be present in the configured roots
+        configured = [Path(p).resolve() for p in self.manager.root_folder_manager.get_folder_paths(enabled_only=True)]
+        self.assertIn(temp_root, configured)
 
     def test_get_organized_subdir(self):
         """Test subdirectory determination by file extension."""

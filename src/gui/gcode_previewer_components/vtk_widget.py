@@ -7,9 +7,7 @@ from PySide6.QtGui import QMouseEvent, QWheelEvent, QIcon, QShowEvent
 from .gcode_renderer import GcodeRenderer
 from .camera_controller import CameraController
 
-# Defer VTK imports to avoid initialization issues
-vtk = None
-QVTKRenderWindowInteractor = None
+# VTK integration is provided via GcodeRenderer; the Qt interactor is loaded lazily at runtime.
 
 
 class VTKWidget(QWidget):
@@ -19,15 +17,10 @@ class VTKWidget(QWidget):
         """Initialize the VTK widget."""
         super().__init__(parent)
 
-        global vtk, QVTKRenderWindowInteractor
-        if vtk is None:
-            import vtk as vtk_module
-            from vtk.qt.QVTKRenderWindowInteractor import (
-                QVTKRenderWindowInteractor as QVTKInteractor,
-            )
-
-            vtk = vtk_module
-            QVTKRenderWindowInteractor = QVTKInteractor
+        # Reuse the renderer's VTK module to avoid duplicate imports.
+        vtk_module = renderer.vtk
+        # Import the Qt interactor lazily to avoid VTK initialization issues at module import time.
+        from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
         self.renderer = renderer
         self.gcode_renderer = renderer
@@ -45,7 +38,7 @@ class VTKWidget(QWidget):
         self.vtk_widget.GetRenderWindow().AddRenderer(renderer.get_renderer())
 
         # Setup interactor style (custom trackball)
-        interactor_style = vtk.vtkInteractorStyleTrackballCamera()
+        interactor_style = vtk_module.vtkInteractorStyleTrackballCamera()
         self.vtk_widget.SetInteractorStyle(interactor_style)
 
         # Initialize interactor
@@ -75,14 +68,10 @@ class VTKWidget(QWidget):
         super().showEvent(event)
         self.update_render()
 
-
     def _std_icon(self, standard_pixmap) -> QIcon:
         """Return a native Qt icon for a given standard pixmap."""
-        try:
-            style = self.style()
-            return style.standardIcon(standard_pixmap)
-        except Exception:
-            return QIcon()
+        style = self.style()
+        return style.standardIcon(standard_pixmap)
 
     def _create_camera_toolbar(self, parent_layout: QVBoxLayout, toolbar: QFrame) -> None:
         """Create toolbar with camera control buttons."""

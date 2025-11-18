@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
     QWidget,
     QTreeView,
 )
+from src.gui.layout.flow_layout import FlowLayout
+
 
 from src.core.logging_config import get_logger
 from src.gui.theme import SPACING_8
@@ -120,7 +122,7 @@ class LibraryUIManager:
         layout.addWidget(self.library_widget.file_tree)
 
         import_frame = QFrame()
-        import_layout = QHBoxLayout(import_frame)
+        import_layout = FlowLayout(import_frame)
         import_layout.setContentsMargins(0, SPACING_8, 0, 0)
 
         self.library_widget.refresh_button = QPushButton("Refresh")
@@ -130,7 +132,7 @@ class LibraryUIManager:
         )
         import_layout.addWidget(self.library_widget.refresh_button)
 
-        import_layout.addStretch()
+
 
         self.library_widget.import_selected_button = QPushButton("Import Selected")
         self.library_widget.import_selected_button.setToolTip("Import selected file(s)")

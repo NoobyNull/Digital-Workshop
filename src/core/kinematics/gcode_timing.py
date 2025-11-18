@@ -157,4 +157,3 @@ def analyze_gcode_moves(
         "best_case_time_seconds": best_case_time_seconds,
         "time_correction_factor": time_correction_factor,
     }
-

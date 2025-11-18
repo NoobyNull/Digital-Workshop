@@ -15,11 +15,13 @@ This module provides a NUCLEAR RESET that destroys ALL application data:
 WARNING: This is IRREVERSIBLE. All data will be permanently deleted.
 """
 
+import logging
 import os
-import shutil
 import platform
+import shutil
+import tempfile
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 from PySide6.QtCore import QSettings
 
 from src.core.logging_config import get_logger
@@ -189,55 +191,25 @@ class NuclearReset:
         return results
 
     def _get_all_appdata_directories(self) -> List[Path]:
-        """Get all AppData directories used by the application."""
-        directories = []
+        """Get all AppData directories used by the application.
+
+        This is intentionally aggressive: it returns every directory tree that
+        is known to contain *application-owned* data, including migration
+        backups under AppData. User content (model files, project folders,
+        etc.) is *not* included here.
+        """
+        directories: List[Path] = []
 
         # Use PathManager to get the correct paths based on installation type
         # PathManager automatically detects RAW (source) vs installed and uses:
         # - RAW: %LOCALAPPDATA%\DigitalWorkshop-Dev\
         # - Installed: %LOCALAPPDATA%\DigitalWorkshop\
         try:
-            directories.extend(
-                [
-                    self.path_manager.get_cache_directory().parent,  # Get base app directory
-                    self.path_manager.get_log_directory(),
-                    self.path_manager.get_data_directory(),
-                    self.path_manager.get_config_directory(),
-                ]
-            )
-        except Exception as e:
-            self.logger.warning("Failed to get directories from PathManager: %s", e)
+            # Base application directory (parent of cache/data/log/config)
+            base_dir = self.path_manager.get_cache_directory().parent
+            directories.append(base_dir)
 
-        # Also check for alternate names (in case of migration)
-        if self.system == "Windows":
-            local_appdata = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
-            roaming_appdata = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
-
-            # Check both LOCALAPPDATA and APPDATA
-            for base_dir in [local_appdata, roaming_appdata]:
-                # Check for both regular and -Dev versions
-                for suffix in ["", "-Dev"]:
-                    app_dir = base_dir / f"{self.app_name}{suffix}"
-                    if app_dir.exists() and app_dir not in directories:
-                        directories.append(app_dir)
-
-                # Also check for "DigitalWorkshop" (in case app_name is different)
-                dw_dir = base_dir / "DigitalWorkshop"
-                if dw_dir.exists() and dw_dir not in directories:
-                    directories.append(dw_dir)
-
-        elif self.system == "Darwin":  # macOS
-            app_support = Path.home() / "Library" / "Application Support" / self.app_name
-            if app_support.exists():
-                directories.append(app_support)
-
-        else:  # Linux
-            local_share = Path.home() / ".local" / "share" / self.app_name
-            if local_share.exists():
-                directories.append(local_share)
-
-        # Add directories from PathManager
-        try:
+            # Explicit well-known subdirectories
             directories.extend(
                 [
                     self.path_manager.get_cache_directory(),
@@ -246,14 +218,52 @@ class NuclearReset:
                     self.path_manager.get_config_directory(),
                 ]
             )
-        except Exception as e:
-            self.logger.warning("Failed to get some directories from PathManager: %s", e)
+        except Exception as exc:
+            self.logger.warning("Failed to get directories from PathManager: %s", exc)
 
-        # Remove duplicates
-        unique_dirs = []
-        for d in directories:
-            if d not in unique_dirs:
-                unique_dirs.append(d)
+        # Also check for alternate names and backup directories (in case of migration)
+        if self.system == "Windows":
+            local_appdata = Path(
+                os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+            )
+            roaming_appdata = Path(
+                os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")
+            )
+
+            # Check both LOCALAPPDATA and APPDATA
+            for base_dir in (local_appdata, roaming_appdata):
+                # Check for both regular and -Dev versions
+                for suffix in ("", "-Dev"):
+                    app_dir = base_dir / f"{self.app_name}{suffix}"
+                    if app_dir.exists():
+                        directories.append(app_dir)
+
+                    # Migration/installer backups created by SettingsMigrator and installers
+                    # e.g. DigitalWorkshop_backup_YYYYMMDD_HHMMSS
+                    for backup_dir in base_dir.glob(f"{self.app_name}{suffix}_backup_*"):
+                        if backup_dir.is_dir():
+                            directories.append(backup_dir)
+
+                # Also check for plain "DigitalWorkshop" root (defensive)
+                dw_dir = base_dir / "DigitalWorkshop"
+                if dw_dir.exists():
+                    directories.append(dw_dir)
+
+        elif self.system == "Darwin":  # macOS
+            app_support = Path.home() / "Library" / "Application Support" / self.app_name
+            if app_support.exists():
+                directories.append(app_support)
+
+        else:  # Linux and other Unix-like systems
+            local_share = Path.home() / ".local" / "share" / self.app_name
+            if local_share.exists():
+                directories.append(local_share)
+
+        # Remove duplicates while preserving order
+        unique_dirs: List[Path] = []
+        for path in directories:
+            if path not in unique_dirs:
+                unique_dirs.append(path)
 
         return unique_dirs
 
@@ -271,9 +281,7 @@ class NuclearReset:
 
     def _get_temp_directories(self) -> List[Path]:
         """Get temporary directories used by the application."""
-        directories = []
-
-        import tempfile
+        directories: List[Path] = []
 
         temp_base = Path(tempfile.gettempdir())
 
@@ -292,8 +300,7 @@ class NuclearReset:
         return directories
 
     def _calculate_directory_size(self, directory: Path) -> tuple[float, int]:
-        """
-        Calculate total size and file count of a directory.
+        """Calculate total size and file count of a directory.
 
         Args:
             directory: Directory to calculate
@@ -309,21 +316,20 @@ class NuclearReset:
                 if item.is_file():
                     total_size += item.stat().st_size
                     file_count += 1
-        except Exception as e:
-            self.logger.warning("Failed to calculate size for %s: {e}", directory)
+        except Exception as exc:  # pragma: no cover - best-effort diagnostics
+            self.logger.warning(
+                "Failed to calculate size for %s: %s", directory, exc
+            )
 
         size_mb = total_size / (1024 * 1024)
         return size_mb, file_count
 
     def _create_final_backup(self) -> Path:
-        """
-        Create a final backup before nuclear reset.
+        """Create a final backup before nuclear reset.
 
         Returns:
             Path to backup directory
         """
-        from datetime import datetime
-
         try:
             # Create backup in user's Documents folder (safer than AppData)
             if self.system == "Windows":
@@ -345,53 +351,77 @@ class NuclearReset:
                     dest_dir = backup_dir / source_dir.name
                     try:
                         shutil.copytree(source_dir, dest_dir, ignore_dangling_symlinks=True)
-                        self.logger.info("Backed up: %s -> {dest_dir}", source_dir)
-                    except Exception as e:
-                        self.logger.warning("Failed to backup %s: {e}", source_dir)
+                        self.logger.info("Backed up: %s -> %s", source_dir, dest_dir)
+                    except Exception as exc:  # pragma: no cover - best-effort diagnostics
+                        self.logger.warning("Failed to backup %s: %s", source_dir, exc)
 
             self.logger.info("Final backup created: %s", backup_dir)
             return backup_dir
 
-        except Exception as e:
-            self.logger.error("Failed to create backup: %s", e, exc_info=True)
+        except Exception as exc:  # pragma: no cover - best-effort diagnostics
+            self.logger.error("Failed to create backup: %s", exc, exc_info=True)
             return None
 
     def _clear_qsettings(self) -> bool:
-        """
-        Clear ALL QSettings / Registry entries.
+        """Clear ALL QSettings / Registry entries.
 
         Returns:
-            True if successful
+            True if successful.
         """
         try:
             settings = QSettings()
 
-            # Clear ALL keys
+            # Clear ALL keys for the current org/app pair.
             settings.clear()
             settings.sync()
 
             self.logger.info("QSettings cleared")
 
-            # On Windows, also try to delete registry keys directly
+            # On Windows, also delete the backing registry tree explicitly.
+            # QSettings.clear() in the background NUKE process may point at
+            # a default Qt org/app instead of our real keys, so we remove
+            # HKCU\Software\<org_name> recursively as a safety net.
             if self.system == "Windows":
                 try:
                     import winreg
 
-                    # Try to delete organization key (this deletes all app keys under it)
-                    try:
-                        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.org_name}")
-                        self.logger.info("Deleted registry key: Software\\%s", self.org_name)
-                    except FileNotFoundError:
-                        pass  # Key doesn't exist
-                    except Exception as e:
-                        self.logger.warning("Failed to delete registry key: %s", e)
+                    def _delete_tree(root_key, sub_key: str) -> None:
+                        """Recursively delete a registry key tree."""
+                        try:
+                            handle = winreg.OpenKey(
+                                root_key,
+                                sub_key,
+                                0,
+                                winreg.KEY_READ | winreg.KEY_WRITE,
+                            )
+                        except FileNotFoundError:
+                            return
 
+                        try:
+                            while True:
+                                try:
+                                    child = winreg.EnumKey(handle, 0)
+                                except OSError:
+                                    break
+                                _delete_tree(root_key, f"{sub_key}\\{child}")
+                        finally:
+                            winreg.CloseKey(handle)
+
+                        winreg.DeleteKey(root_key, sub_key)
+                        self.logger.info("Deleted registry key tree: %s", sub_key)
+
+                    org_subkey = f"Software\\{self.org_name}"
+                    _delete_tree(winreg.HKEY_CURRENT_USER, org_subkey)
                 except ImportError:
-                    self.logger.warning("winreg not available, skipping direct registry deletion")
+                    self.logger.warning(
+                        "winreg not available, skipping direct registry deletion",
+                    )
+                except Exception as e:  # pragma: no cover - defensive logging
+                    self.logger.warning("Failed to delete registry key tree: %s", e)
 
             return True
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - best-effort diagnostics
             self.logger.error("Failed to clear QSettings: %s", e, exc_info=True)
             return False
 
@@ -438,8 +468,6 @@ class NuclearReset:
     def _clean_temp_files(self) -> None:
         """Clean any remaining temp files."""
         try:
-            import tempfile
-
             temp_base = Path(tempfile.gettempdir())
 
             # Clean VTK temp files
@@ -449,19 +477,17 @@ class NuclearReset:
                         vtk_temp.unlink()
                     elif vtk_temp.is_dir():
                         shutil.rmtree(vtk_temp)
-                except Exception as e:
-                    self.logger.debug("Failed to clean %s: {e}", vtk_temp)
+                except Exception as exc:  # pragma: no cover - best-effort diagnostics
+                    self.logger.debug("Failed to clean %%s: %%s", vtk_temp, exc)
 
             self.logger.info("Temp files cleaned")
 
-        except Exception as e:
-            self.logger.warning("Failed to clean temp files: %s", e)
+        except Exception as exc:  # pragma: no cover - best-effort diagnostics
+            self.logger.warning("Failed to clean temp files: %s", exc)
 
     def _close_log_handlers(self) -> None:
         """Close all log handlers to release file locks."""
         try:
-            import logging
-
             # Get the root logger
             root_logger = logging.getLogger()
 
@@ -470,8 +496,8 @@ class NuclearReset:
                 try:
                     handler.close()
                     root_logger.removeHandler(handler)
-                except Exception as e:
-                    # Can't log this since we're closing loggers
+                except Exception:
+                    # Can't reliably log handler-close failures here
                     pass
 
             # Also close handlers for our logger
@@ -479,10 +505,10 @@ class NuclearReset:
                 try:
                     handler.close()
                     self.logger.removeHandler(handler)
-                except Exception as e:
+                except Exception:
                     pass
 
-        except Exception as e:
+        except Exception:
             # Can't log this since we're closing loggers
             pass
 

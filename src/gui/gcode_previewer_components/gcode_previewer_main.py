@@ -1,14 +1,16 @@
 """G-code Previewer Widget - Main UI for CNC toolpath visualization."""
 
+# pylint: disable=too-many-lines
+
 from typing import Optional, Dict, Any
 from pathlib import Path
 import json
 import os
+import sqlite3
 
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
     QStackedLayout,
     QPushButton,
     QLabel,
@@ -17,10 +19,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QSplitter,
     QProgressBar,
-    QSlider,
-    QSpinBox,
     QComboBox,
-    QTabWidget,
     QMessageBox,
     QCheckBox,
 )
@@ -42,6 +41,10 @@ from .gcode_loader_thread import GcodeLoaderThread
 from .gcode_timeline import GcodeTimeline
 from .gcode_interactive_loader import InteractiveGcodeLoader
 from .gcode_tools_widget import GcodeToolsWidget
+
+
+MAX_GCODE_FILE_SIZE_BYTES = 500 * 1024 * 1024  # 500MB
+MAX_EDITOR_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
 
 
 class GcodeToolsPanelContainer(QWidget):
@@ -66,7 +69,6 @@ class GcodeToolsPanelContainer(QWidget):
         self._stack.setCurrentWidget(self._tools_widget if visible else self._empty_widget)
 
 
-
 class GcodeTimingThread(QThread):
     """Background worker that computes aggregate timing for a set of moves.
 
@@ -79,7 +81,8 @@ class GcodeTimingThread(QThread):
 
     def __init__(
         self,
-        moves,
+        moves: list,
+        *,
         max_feed_mm_min: float,
         accel_mm_s2: float,
         feed_override_pct: float,
@@ -103,12 +106,11 @@ class GcodeTimingThread(QThread):
                 feed_override_pct=self._feed_override_pct,
             )
             self.finished.emit(timing)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (ValueError, ZeroDivisionError, OverflowError, TypeError) as exc:
+            # Numerical or data-related issues in timing analysis: log and report
+            # to the UI so the user can adjust machine parameters or toolpath.
             self._logger.warning("Timing computation failed: %s", exc)
             self.error_occurred.emit(str(exc))
-
-
-
 
 
 class GcodePreviewerWidget(QWidget):
@@ -185,7 +187,6 @@ class GcodePreviewerWidget(QWidget):
         self._connect_signals()
         self.logger.info("G-code Previewer Widget initialized")
 
-
     def set_current_project(self, project_id: str) -> None:
         """Attach a project to the previewer for machine-aware timing.
 
@@ -226,10 +227,7 @@ class GcodePreviewerWidget(QWidget):
 
         tool_label_text = ""
         if self.tool_label is not None:
-            try:
-                tool_label_text = self.tool_label.text()
-            except Exception:
-                tool_label_text = ""
+            tool_label_text = self.tool_label.text()
 
         # Persist only the timing summary and tool label per requirements
         payload: Dict[str, Any] = {
@@ -250,13 +248,11 @@ class GcodePreviewerWidget(QWidget):
         else:
             QMessageBox.critical(self, "Error", message)
 
-
     def _init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
-
 
         # If the tools live in their own dock widget, only create the VTK
         # viewer here and let the main window own the tools side.
@@ -322,8 +318,6 @@ class GcodePreviewerWidget(QWidget):
         # naturally starts wider than the tools panel without forcing pixel sizes.
         layout.addWidget(self.splitter)
 
-
-
     def attach_tools_widget(self, tools_widget: GcodeToolsWidget) -> None:
         """Attach an externally created tools widget.
 
@@ -351,9 +345,6 @@ class GcodePreviewerWidget(QWidget):
 
         # Now that tools widgets are available, wire up their signals.
         self._connect_tools_signals()
-
-
-
 
     def _on_camera_controls_toggled(self, checked: bool) -> None:
         """Show or hide the camera toolbar in the VTK viewer."""
@@ -397,6 +388,8 @@ class GcodePreviewerWidget(QWidget):
             self.interactive_loader.load_button.clicked.connect(self._on_load_file)
             self.interactive_loader.loading_complete.connect(self._on_interactive_loader_complete)
             self.interactive_loader.chunk_loaded.connect(self._on_interactive_loader_chunk_loaded)
+            self.interactive_loader.progress_updated.connect(self._on_loader_progress_updated)
+            self.interactive_loader.error_occurred.connect(self._on_loader_error)
 
         # Connect editor signals
         if self.editor:
@@ -424,6 +417,22 @@ class GcodePreviewerWidget(QWidget):
         ):
             self.tools_widget.edit_gcode_button.clicked.connect(self._on_edit_gcode)
 
+    def _on_loader_progress_updated(self, progress: int, message: str) -> None:
+        """Update the tools-panel progress bar and status message during load."""
+        if self.progress_bar is not None:
+            self.progress_bar.setMaximum(100)
+            if not self.progress_bar.isVisible():
+                self.progress_bar.setVisible(True)
+            self.progress_bar.setValue(progress)
+        # Keep the main window status bar in sync with loader status text.
+        self._show_status_message(message)
+
+    def _on_loader_error(self, message: str) -> None:
+        """Handle loader errors and reset the tools-panel progress UI."""
+        if self.progress_bar is not None:
+            self.progress_bar.setVisible(False)
+        self._show_status_message(f"G-code load error: {message}", 5000)
+
     def _show_status_message(self, message: str, timeout_ms: int = 0) -> None:
         """Show a message in the main window status bar, if available.
 
@@ -436,8 +445,8 @@ class GcodePreviewerWidget(QWidget):
                 status_bar = window.statusBar()
                 if status_bar is not None:
                     status_bar.showMessage(message, timeout_ms)
-        except Exception:
-            # Never allow status-bar issues to break the previewer
+        except (RuntimeError, AttributeError):
+            # Never allow status-bar issues (e.g. window already deleted) to break the previewer
             self.logger.debug(
                 "Failed to show status message in main window status bar",
                 exc_info=True,
@@ -493,7 +502,6 @@ class GcodePreviewerWidget(QWidget):
         self._update_tool_label(tool_data)
         self._persist_tool_snapshot_for_current_version(tool_data)
 
-
     def _on_load_file(self) -> None:
         """Handle load file button click with security validation."""
         filepath, _ = QFileDialog.getOpenFileName(
@@ -510,14 +518,13 @@ class GcodePreviewerWidget(QWidget):
                 self.load_gcode_file(validated_path)
 
     def _validate_file_path(self, filepath: str) -> Optional[str]:
-        """
-        Validate file path for security and accessibility.
+        """Validate file path for security and accessibility.
 
         Args:
-            filepath: Path to validate
+            filepath: Path to validate.
 
         Returns:
-            Validated absolute path or None if invalid
+            Validated absolute path or ``None`` if invalid.
         """
         try:
             # Convert to Path object for safe manipulation
@@ -541,6 +548,8 @@ class GcodePreviewerWidget(QWidget):
                 QMessageBox.warning(self, "Access Denied", "Cannot read file.")
                 return None
 
+            user_cancelled = False
+
             # Validate file extension
             valid_extensions = {".nc", ".gcode", ".gco", ".tap", ".txt"}
             if file_path.suffix.lower() not in valid_extensions:
@@ -552,23 +561,26 @@ class GcodePreviewerWidget(QWidget):
                     QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply != QMessageBox.Yes:
-                    return None
+                    user_cancelled = True
 
-            # Check file size (warn for very large files)
-            MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
-            file_size = file_path.stat().st_size
+            if not user_cancelled:
+                # Check file size (warn for very large files)
+                file_size = file_path.stat().st_size
 
-            if file_size > MAX_FILE_SIZE:
-                self.logger.warning("Very large file: %s bytes", file_size)
-                reply = QMessageBox.question(
-                    self,
-                    "Large File",
-                    f"File is {file_size / (1024*1024):.1f}MB. "
-                    "This may take a while to load. Continue?",
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if reply != QMessageBox.Yes:
-                    return None
+                if file_size > MAX_GCODE_FILE_SIZE_BYTES:
+                    self.logger.warning("Very large file: %s bytes", file_size)
+                    reply = QMessageBox.question(
+                        self,
+                        "Large File",
+                        f"File is {file_size / (1024*1024):.1f}MB. "
+                        "This may take a while to load. Continue?",
+                        QMessageBox.Yes | QMessageBox.No,
+                    )
+                    if reply != QMessageBox.Yes:
+                        user_cancelled = True
+
+            if user_cancelled:
+                return None
 
             return str(file_path)
 
@@ -620,7 +632,6 @@ class GcodePreviewerWidget(QWidget):
             self._show_status_message(f"Error starting load: {e}", 5000)
             self.progress_bar.setVisible(False)
 
-
     def _compute_file_fingerprint(self) -> str:
         """Return a lightweight fingerprint for the currently loaded file.
 
@@ -657,7 +668,7 @@ class GcodePreviewerWidget(QWidget):
         if self.current_project_id:
             try:
                 machine_id = self.db_manager.get_project_active_machine(self.current_project_id)
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to get active machine for project %s: %s",
                     self.current_project_id,
@@ -668,13 +679,15 @@ class GcodePreviewerWidget(QWidget):
             if machine_id is not None:
                 try:
                     machine = self.db_manager.get_machine(machine_id)
-                except Exception as exc:  # pragma: no cover - defensive
+                except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                     self.logger.warning("Failed to load machine %s: %s", machine_id, exc)
                     machine = None
 
             try:
-                feed_override_pct = float(self.db_manager.get_project_feed_override(self.current_project_id))
-            except Exception as exc:  # pragma: no cover - defensive
+                feed_override_pct = float(
+                    self.db_manager.get_project_feed_override(self.current_project_id)
+                )
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to get feed override for project %s: %s",
                     self.current_project_id,
@@ -686,7 +699,7 @@ class GcodePreviewerWidget(QWidget):
         if machine is None:
             try:
                 machine = self.db_manager.get_default_machine()
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning("Failed to get default machine: %s", exc)
                 machine = None
 
@@ -725,7 +738,7 @@ class GcodePreviewerWidget(QWidget):
         # current file.
         try:
             operations = self.db_manager.list_gcode_operations(project_id=self.current_project_id)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to list G-code operations for project %s: %s",
                 self.current_project_id,
@@ -740,7 +753,7 @@ class GcodePreviewerWidget(QWidget):
 
             try:
                 versions = self.db_manager.list_gcode_versions(op_id)
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to list G-code versions for operation %s: %s",
                     op_id,
@@ -765,7 +778,7 @@ class GcodePreviewerWidget(QWidget):
         if self.current_operation_id is None:
             try:
                 op_name = Path(file_path_str).name
-            except Exception:  # pragma: no cover - defensive
+            except (TypeError, ValueError):  # pragma: no cover - defensive
                 op_name = file_path_str
 
             try:
@@ -775,7 +788,7 @@ class GcodePreviewerWidget(QWidget):
                     status="draft",
                     notes="Auto-created by G-code Previewer",
                 )
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to create G-code operation for project %s: %s",
                     self.current_project_id,
@@ -793,7 +806,7 @@ class GcodePreviewerWidget(QWidget):
                     status="draft",
                 )
                 self.current_version_id = version_id
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to create G-code version for operation %s: %s",
                     self.current_operation_id,
@@ -845,7 +858,7 @@ class GcodePreviewerWidget(QWidget):
 
         try:
             snapshots = self.db_manager.list_gcode_tool_snapshots(self.current_version_id)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to list tool snapshots for version %s: %s",
                 self.current_version_id,
@@ -868,7 +881,7 @@ class GcodePreviewerWidget(QWidget):
                     tool_data = json.loads(metadata_raw)
                 elif isinstance(metadata_raw, dict):
                     tool_data = metadata_raw
-            except Exception as exc:  # pragma: no cover - defensive
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to parse tool snapshot metadata for version %s: %s",
                     self.current_version_id,
@@ -896,7 +909,7 @@ class GcodePreviewerWidget(QWidget):
             # Clear any previous tool snapshots for this version so we keep one
             # current selection.
             self.db_manager.delete_gcode_tool_snapshots(self.current_version_id)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to clear existing tool snapshots for version %s: %s",
                 self.current_version_id,
@@ -919,7 +932,7 @@ class GcodePreviewerWidget(QWidget):
                 notes=tool_data.get("description"),
                 metadata=metadata,
             )
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to persist tool snapshot for version %s: %s",
                 self.current_version_id,
@@ -931,16 +944,12 @@ class GcodePreviewerWidget(QWidget):
 
         Returns True when ``current_timing`` was populated from cache.
         """
-        if (
-            self.db_manager is None
-            or self.current_version_id is None
-            or not self.current_file
-        ):
+        if self.db_manager is None or self.current_version_id is None or not self.current_file:
             return False
 
         try:
             metrics = self.db_manager.get_gcode_metrics(self.current_version_id)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to load cached metrics for version %s: %s",
                 self.current_version_id,
@@ -962,7 +971,7 @@ class GcodePreviewerWidget(QWidget):
 
         try:
             version_row = self.db_manager.get_gcode_version(self.current_version_id)
-        except Exception as exc:  # pragma: no cover - defensive
+        except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to load version %s when validating metrics: %s",
                 self.current_version_id,
@@ -1091,7 +1100,7 @@ class GcodePreviewerWidget(QWidget):
                         self.current_version_id,
                         file_hash=fingerprint,
                     )
-            except Exception as exc:  # pragma: no cover - defensive
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
                 self.logger.warning(
                     "Failed to persist timing metrics for version %s: %s",
                     self.current_version_id,
@@ -1110,7 +1119,6 @@ class GcodePreviewerWidget(QWidget):
         self.timing_thread = None
         self.logger.warning("Timing worker reported an error: %s", message)
         self._show_status_message(f"Timing calculation failed: {message}", 5000)
-
 
     def _update_statistics(self, include_timing: bool = False) -> None:
         """Update statistics display.
@@ -1152,12 +1160,11 @@ class GcodePreviewerWidget(QWidget):
                     f"Cutting time: {self._format_duration(timing['cutting_time_seconds'])}<br>"
                     f"Time correction factor k: {timing['time_correction_factor']:.3f}"
                 )
-            except Exception as exc:  # pragma: no cover - defensive
+            except (KeyError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
                 self.logger.warning("Failed to format timing summary: %s", exc)
 
         if self.stats_label is not None:
             self.stats_label.setText(stats_text)
-
 
     @staticmethod
     def _format_duration(seconds: float) -> str:
@@ -1278,7 +1285,6 @@ class GcodePreviewerWidget(QWidget):
         self.renderer.render_toolpath(self.moves)
         self.vtk_widget.update_render()
 
-
     def _on_edit_gcode(self) -> None:
         """Handle edit G-code with proper validation and limits."""
         if not self.current_file:
@@ -1293,10 +1299,9 @@ class GcodePreviewerWidget(QWidget):
                 return
 
             # Check file size (limit to 10MB for editor)
-            MAX_EDITOR_SIZE = 10 * 1024 * 1024  # 10MB
             file_size = os.path.getsize(self.current_file)
 
-            if file_size > MAX_EDITOR_SIZE:
+            if file_size > MAX_EDITOR_FILE_SIZE_BYTES:
                 self.logger.warning("File too large for editor: %s bytes", file_size)
                 reply = QMessageBox.question(
                     self,
@@ -1435,7 +1440,7 @@ class GcodePreviewerWidget(QWidget):
         self._update_moves_table()
 
         # Add axes
-        self.renderer._add_axes()
+        self.renderer.add_axes()
         self.renderer.reset_camera()
         self.vtk_widget.update_render()
 
@@ -1507,12 +1512,18 @@ class GcodePreviewerWidget(QWidget):
         self._update_moves_table()
 
         # Ensure final incremental actors are built before we adjust camera/axes
-        self.renderer._update_incremental_actors()
+        self.renderer.update_incremental_actors()
 
         # Add axes and fit view
-        self.renderer._add_axes()
+        self.renderer.add_axes()
         self.renderer.reset_camera()
         self.vtk_widget.update_render()
+
+        if self.progress_bar is not None:
+            self.progress_bar.setValue(100)
+            self.progress_bar.setVisible(False)
+
+        self._show_status_message("G-code load complete", 3000)
 
         self.gcode_loaded.emit(self.current_file)
         self.logger.info("Interactive loader finished: %s moves", f"{len(self.moves):,}")

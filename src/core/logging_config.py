@@ -17,6 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+import functools
+
 from .installation_detector import get_installation_type
 from .path_manager import get_log_directory
 from .version_manager import get_logger_name
@@ -394,12 +396,26 @@ def _coerce_profile(
     candidate: Optional[Union[LoggingProfile, Dict[str, Any]]],
     defaults: Dict[str, Any],
 ) -> LoggingProfile:
+    """Coerce various profile inputs into a concrete :class:`LoggingProfile`.
+
+    When a concrete :class:`LoggingProfile` instance is provided, we *respect it
+    as-is* and do not merge in defaults. Callers that need to start from
+    defaults and override individual fields should pass a ``dict`` instead.
+    """
+
     defaults = {k: v for k, v in defaults.items() if k != "profile"}
+
+    # Explicit profile: use it directly, do not overwrite fields like
+    # ``log_level`` or ``enable_console`` with function defaults.
     if isinstance(candidate, LoggingProfile):
-        return candidate.merged(**defaults)
+        return candidate
+
+    # Dict profile: merge with defaults so callers can override specific keys.
     if isinstance(candidate, dict):
         combined = {**defaults, **candidate}
         return LoggingProfile(**combined)
+
+    # No explicit profile: construct from defaults only.
     return LoggingProfile(**defaults)
 
 
@@ -472,16 +488,28 @@ def clear_correlation_id() -> None:
     LoggingManager.get_instance().clear_correlation_id()
 
 
-def log_function_call(logger: logging.Logger, enable_logging: bool = False):
-    """
-    Decorator to automatically log function calls with parameters and return values.
+def log_function_call(*decorator_args, **decorator_kwargs):
+    """Flexible function-call logging decorator.
+
+    This decorator intentionally supports multiple usage patterns so older
+    call sites remain valid:
+
+    - ``@log_function_call``                        -> derive logger from function's module
+    - ``@log_function_call(enable_logging=True)``   -> same, with verbose logging
+    - ``@log_function_call(logger)``                -> explicit logger instance
+    - ``@log_function_call(logger, enable_logging=True)``
 
     Args:
-        logger: Logger instance to use for logging
-        enable_logging: Whether to enable function call logging
+        decorator_args: Positional arguments (either a logger or the function).
+        decorator_kwargs: Keyword arguments, may include ``enable_logging``.
     """
 
-    def decorator(func):
+    enable_logging = decorator_kwargs.get("enable_logging", False)
+
+    def _make_wrapper(func, logger: logging.Logger):
+        """Create the actual wrapper around *func* using *logger*."""
+
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if enable_logging:
                 try:
@@ -495,6 +523,7 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                         },
                     )
                 except Exception:
+                    # Logging must never break the wrapped function.
                     pass
 
             try:
@@ -529,5 +558,24 @@ def log_function_call(logger: logging.Logger, enable_logging: bool = False):
                 raise
 
         return wrapper
+
+    # Case 1: Used directly as ``@log_function_call`` (no parentheses).
+    if decorator_args and callable(decorator_args[0]) and not isinstance(
+        decorator_args[0], logging.Logger
+    ):
+        func = decorator_args[0]
+        derived_logger = logging.getLogger(func.__module__)
+        return _make_wrapper(func, derived_logger)
+
+    # Case 2: Used as ``@log_function_call(logger, ...)`` or
+    # ``@log_function_call()``. In these cases we return a classic decorator
+    # that will receive *func* later.
+    explicit_logger = None
+    if decorator_args and isinstance(decorator_args[0], logging.Logger):
+        explicit_logger = decorator_args[0]
+
+    def decorator(func):
+        logger_to_use = explicit_logger or logging.getLogger(func.__module__)
+        return _make_wrapper(func, logger_to_use)
 
     return decorator

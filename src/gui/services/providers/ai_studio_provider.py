@@ -55,4 +55,3 @@ class AIStudioProvider(OpenAIProvider):
         client exists, regardless of whether the user supplied an API key.
         """
         return self.client is not None
-

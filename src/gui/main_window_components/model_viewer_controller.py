@@ -47,9 +47,7 @@ class ModelViewerController:
                 # Native Qt fallback
                 self.main_window.viewer_widget = QLabel("3D Viewer not available")
                 self.main_window.viewer_widget.setAlignment(Qt.AlignCenter)
-                self.logger.warning(
-                    "Viewer3DWidget not available, using native Qt placeholder"
-                )
+                self.logger.warning("Viewer3DWidget not available, using native Qt placeholder")
 
             # Connect viewer signals
             if hasattr(self.main_window.viewer_widget, "model_loaded"):
@@ -70,9 +68,7 @@ class ModelViewerController:
         except Exception as e:  # pragma: no cover - defensive fallback
             self.logger.warning("Failed to setup viewer widget: %s", e)
             # Native Qt fallback
-            self.main_window.viewer_widget = QLabel(
-                "3D Model Viewer\n\nComponent unavailable."
-            )
+            self.main_window.viewer_widget = QLabel("3D Model Viewer\n\nComponent unavailable.")
             self.main_window.viewer_widget.setAlignment(Qt.AlignCenter)
 
         # Always add the viewer widget as the first hero tab
@@ -95,9 +91,7 @@ class ModelViewerController:
             # Lighting manager
             try:
                 renderer = getattr(self.main_window.viewer_widget, "renderer", None)
-                self.main_window.lighting_manager = (
-                    LightingManager(renderer) if renderer else None
-                )
+                self.main_window.lighting_manager = LightingManager(renderer) if renderer else None
                 if self.main_window.lighting_manager:
                     self.main_window.lighting_manager.create_light()
             except Exception as e:  # pragma: no cover - defensive
@@ -208,16 +202,11 @@ class ModelViewerController:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info(
-                        "Restored saved camera view for model ID %s", model_id
-                    )
+                    self.logger.info("Restored saved camera view for model ID %s", model_id)
                     self.main_window.status_label.setText("Restored saved view")
-                    QTimer.singleShot(
-                        2000, lambda: self.main_window.status_label.setText("Ready")
-                    )
+                    QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
             else:
                 self.logger.debug("No saved camera view for model ID %s", model_id)
 
         except Exception as e:  # pragma: no cover - defensive
             self.logger.warning("Failed to restore saved camera: %s", e)
-

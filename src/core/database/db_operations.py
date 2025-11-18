@@ -418,14 +418,10 @@ class DatabaseOperations:
                     )
                 if "machine_id" not in metrics_col_names:
                     logger.info("Adding machine_id column to gcode_metrics table")
-                    cursor.execute(
-                        "ALTER TABLE gcode_metrics ADD COLUMN machine_id INTEGER"
-                    )
+                    cursor.execute("ALTER TABLE gcode_metrics ADD COLUMN machine_id INTEGER")
                 if "feed_override_pct" not in metrics_col_names:
                     logger.info("Adding feed_override_pct column to gcode_metrics table")
-                    cursor.execute(
-                        "ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL"
-                    )
+                    cursor.execute("ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL")
 
         except sqlite3.Error as e:
             logger.error("Failed to migrate database schema: %s", str(e))
@@ -482,7 +478,9 @@ class DatabaseOperations:
             """
         )
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_backgrounds_name ON backgrounds(name)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_backgrounds_default ON backgrounds(is_default)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_backgrounds_default ON backgrounds(is_default)"
+        )
 
         # Model resource associations table to link models with materials and backgrounds
         cursor.execute(
@@ -501,8 +499,12 @@ class DatabaseOperations:
             )
             """
         )
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_resources_model ON model_resources(model_id)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_resources_type ON model_resources(resource_type)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_model_resources_model ON model_resources(model_id)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_model_resources_type ON model_resources(resource_type)"
+        )
 
     def _create_extended_workflow_tables(self, cursor: sqlite3.Cursor) -> None:
         """

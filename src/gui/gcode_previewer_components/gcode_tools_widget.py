@@ -121,9 +121,7 @@ class GcodeToolsWidget(QWidget):
 
         self.moves_table = QTableWidget()
         self.moves_table.setColumnCount(7)
-        self.moves_table.setHorizontalHeaderLabels(
-            ["Line", "Type", "X", "Y", "Z", "Feed", "Speed"]
-        )
+        self.moves_table.setHorizontalHeaderLabels(["Line", "Type", "X", "Y", "Z", "Feed", "Speed"])
         self.moves_table.setMaximumHeight(200)
         moves_layout.addWidget(self.moves_table)
 
@@ -174,4 +172,3 @@ class GcodeToolsWidget(QWidget):
 
         viz_layout.setColumnStretch(1, 1)
         parent_layout.addWidget(viz_group)
-

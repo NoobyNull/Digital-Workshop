@@ -52,14 +52,14 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # If this is a primary resource, ensure no other primary resource of same type exists
                 if is_primary:
                     cursor.execute(
                         "UPDATE model_resources SET is_primary = 0 WHERE model_id = ? AND resource_type = ?",
                         (model_id, resource_type),
                     )
-                
+
                 cursor.execute(
                     """
                     INSERT INTO model_resources (
@@ -74,7 +74,7 @@ class ModelResourcesRepository:
                         str(metadata) if metadata else None,
                     ),
                 )
-                
+
                 association_id = cursor.lastrowid
                 conn.commit()
                 self.logger.info(
@@ -110,7 +110,7 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Get material associations
                 cursor.execute(
                     """
@@ -129,7 +129,7 @@ class ModelResourcesRepository:
                     (model_id,),
                 )
                 material_rows = cursor.fetchall()
-                
+
                 # Get background associations
                 cursor.execute(
                     """
@@ -148,35 +148,39 @@ class ModelResourcesRepository:
                     (model_id,),
                 )
                 background_rows = cursor.fetchall()
-                
+
                 # Combine and process results
                 associations = []
-                
+
                 for row in material_rows + background_rows:
                     association = dict(row)
-                    
+
                     # Parse metadata if it exists
                     if association.get("metadata_json"):
                         try:
                             import json
+
                             association["metadata"] = json.loads(association["metadata_json"])
                         except (json.JSONDecodeError, TypeError):
                             association["metadata"] = {}
-                    
+
                     # Parse properties if they exist
                     if association.get("properties_json"):
                         try:
                             import json
-                            association["resource_properties"] = json.loads(association["properties_json"])
+
+                            association["resource_properties"] = json.loads(
+                                association["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             association["resource_properties"] = {}
-                    
+
                     # Clean up JSON fields
                     association.pop("metadata_json", None)
                     association.pop("properties_json", None)
-                    
+
                     associations.append(association)
-                
+
                 return associations
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -197,7 +201,7 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     """
                     SELECT 
@@ -217,23 +221,24 @@ class ModelResourcesRepository:
                     (model_id,),
                 )
                 rows = cursor.fetchall()
-                
+
                 materials = []
                 for row in rows:
                     material = dict(row)
-                    
+
                     # Parse properties if they exist
                     if material.get("properties_json"):
                         try:
                             import json
+
                             material["properties"] = json.loads(material["properties_json"])
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
-                    
+
                     # Clean up JSON field
                     material.pop("properties_json", None)
                     materials.append(material)
-                
+
                 return materials
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -254,7 +259,7 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     """
                     SELECT 
@@ -272,7 +277,7 @@ class ModelResourcesRepository:
                     (model_id,),
                 )
                 rows = cursor.fetchall()
-                
+
                 return [dict(row) for row in rows]
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -295,7 +300,7 @@ class ModelResourcesRepository:
             for material in materials:
                 if material.get("is_primary"):
                     return material
-            
+
             # If no primary material found, return the first one
             return materials[0] if materials else None
 
@@ -319,7 +324,7 @@ class ModelResourcesRepository:
             for background in backgrounds:
                 if background.get("is_primary"):
                     return background
-            
+
             # If no primary background found, return the first one
             return backgrounds[0] if backgrounds else None
 
@@ -348,24 +353,24 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Get current association to determine type
                 cursor.execute(
                     "SELECT model_id, resource_type FROM model_resources WHERE id = ?",
                     (association_id,),
                 )
                 row = cursor.fetchone()
-                
+
                 if not row:
                     self.logger.warning("Association %s not found for update", association_id)
                     return False
-                
+
                 model_id, resource_type = row
-                
+
                 # Build update query dynamically
                 updates = []
                 params = []
-                
+
                 if is_primary is not None:
                     # If setting as primary, clear other primary resources of same type
                     if is_primary:
@@ -375,29 +380,30 @@ class ModelResourcesRepository:
                         )
                     updates.append("is_primary = ?")
                     params.append(is_primary)
-                
+
                 if metadata is not None:
                     import json
+
                     updates.append("metadata_json = ?")
                     params.append(json.dumps(metadata))
-                
+
                 if not updates:
                     return False
-                
+
                 updates.append("created_at = CURRENT_TIMESTAMP")  # Update timestamp
                 params.append(association_id)
-                
+
                 query = f"UPDATE model_resources SET {', '.join(updates)} WHERE id = ?"
                 cursor.execute(query, params)
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info("Updated association %s", association_id)
                 else:
                     self.logger.warning("Association %s not found for update", association_id)
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -405,7 +411,9 @@ class ModelResourcesRepository:
             return False
 
     @log_function_call(logger)
-    def remove_resource_association(self, model_id: int, resource_type: str, resource_id: int) -> bool:
+    def remove_resource_association(
+        self, model_id: int, resource_type: str, resource_id: int
+    ) -> bool:
         """
         Remove a resource association from a model.
 
@@ -420,15 +428,15 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     "DELETE FROM model_resources WHERE model_id = ? AND resource_type = ? AND resource_id = ?",
                     (model_id, resource_type, resource_id),
                 )
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info(
                         "Removed %s %s from model %s",
@@ -443,7 +451,7 @@ class ModelResourcesRepository:
                         resource_type,
                         resource_id,
                     )
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -470,21 +478,21 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     "DELETE FROM model_resources WHERE model_id = ?",
                     (model_id,),
                 )
-                
+
                 removed_count = cursor.rowcount
                 conn.commit()
-                
+
                 self.logger.info(
                     "Removed %s resource associations from model %s",
                     removed_count,
                     model_id,
                 )
-                
+
                 return removed_count
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -505,7 +513,7 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     """
                     SELECT 
@@ -522,7 +530,7 @@ class ModelResourcesRepository:
                     (material_id,),
                 )
                 rows = cursor.fetchall()
-                
+
                 return [dict(row) for row in rows]
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -543,7 +551,7 @@ class ModelResourcesRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute(
                     """
                     SELECT 
@@ -560,7 +568,7 @@ class ModelResourcesRepository:
                     (background_id,),
                 )
                 rows = cursor.fetchall()
-                
+
                 return [dict(row) for row in rows]
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

@@ -56,11 +56,12 @@ class BackgroundRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Calculate file hash and size if file exists
                 file_hash = None
                 if Path(file_path).exists():
                     from src.utils.file_hash import calculate_file_hash
+
                     file_hash = calculate_file_hash(file_path)
                     if file_size is None:
                         file_size = Path(file_path).stat().st_size
@@ -83,7 +84,7 @@ class BackgroundRepository:
                         is_deletable,
                     ),
                 )
-                
+
                 background_id = cursor.lastrowid
                 conn.commit()
                 self.logger.info("Added background '%s' with ID %s", name, background_id)
@@ -160,16 +161,14 @@ class BackgroundRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 if include_deletable:
-                    cursor.execute(
-                        "SELECT * FROM backgrounds ORDER BY is_default DESC, name ASC"
-                    )
+                    cursor.execute("SELECT * FROM backgrounds ORDER BY is_default DESC, name ASC")
                 else:
                     cursor.execute(
                         "SELECT * FROM backgrounds WHERE is_default = 1 ORDER BY name ASC"
                     )
-                
+
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
 
@@ -208,36 +207,36 @@ class BackgroundRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Build update query dynamically
                 updates = []
                 params = []
-                
+
                 if display_name is not None:
                     updates.append("display_name = ?")
                     params.append(display_name)
-                
+
                 if description is not None:
                     updates.append("description = ?")
                     params.append(description)
-                
+
                 if not updates:
                     return False
-                
+
                 updates.append("updated_at = CURRENT_TIMESTAMP")
                 params.append(background_id)
-                
+
                 query = f"UPDATE backgrounds SET {', '.join(updates)} WHERE id = ?"
                 cursor.execute(query, params)
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info("Updated background %s", background_id)
                 else:
                     self.logger.warning("Background %s not found for update", background_id)
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -258,30 +257,30 @@ class BackgroundRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Check if background is deletable
                 cursor.execute("SELECT is_default FROM backgrounds WHERE id = ?", (background_id,))
                 row = cursor.fetchone()
-                
+
                 if not row:
                     self.logger.warning("Background %s not found for deletion", background_id)
                     return False
-                
+
                 if row[0]:  # is_default is True
                     self.logger.error("Cannot delete default background %s", background_id)
                     return False
-                
+
                 # Delete the background
                 cursor.execute("DELETE FROM backgrounds WHERE id = ?", (background_id,))
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info("Deleted background %s", background_id)
                 else:
                     self.logger.warning("Background %s not found for deletion", background_id)
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -298,11 +297,11 @@ class BackgroundRepository:
         """
         try:
             backgrounds_dir = Path(__file__).parent.parent.parent / "resources" / "backgrounds"
-            
+
             if not backgrounds_dir.exists():
                 self.logger.warning("Backgrounds directory not found: %s", backgrounds_dir)
                 return
-            
+
             # Find all image files
             image_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             background_files = [
@@ -310,19 +309,19 @@ class BackgroundRepository:
                 for f in backgrounds_dir.iterdir()
                 if f.is_file() and f.suffix.lower() in image_extensions
             ]
-            
+
             added_count = 0
-            
+
             for background_file in background_files:
                 background_name = background_file.stem
-                
+
                 # Check if background already exists
                 if self.get_background_by_name(background_name):
                     continue
-                
+
                 # Get file size
                 file_size = background_file.stat().st_size
-                
+
                 # Add background to database
                 self.add_background(
                     name=background_name,
@@ -334,9 +333,9 @@ class BackgroundRepository:
                     is_deletable=False,
                 )
                 added_count += 1
-            
+
             self.logger.info("Initialized %s default backgrounds from filesystem", added_count)
-            
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize default backgrounds: %s", e)
             raise

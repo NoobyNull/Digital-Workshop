@@ -252,9 +252,7 @@ class AIProviderConfigWidget(QWidget):
             )
         else:
             self.api_key_edit.setPlaceholderText("Enter API key for selected provider")
-            self.base_url_edit.setPlaceholderText(
-                "Optional: Override default endpoint URL"
-            )
+            self.base_url_edit.setPlaceholderText("Optional: Override default endpoint URL")
 
         # Load provider configuration (or defaults if none stored yet)
         config = self.providers.get(provider_name, {})

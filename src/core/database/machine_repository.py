@@ -100,9 +100,7 @@ class MachineRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM machines ORDER BY is_default DESC, name ASC"
-                )
+                cursor.execute("SELECT * FROM machines ORDER BY is_default DESC, name ASC")
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
@@ -242,4 +240,3 @@ class MachineRepository:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
             self.logger.error("Failed to initialize default machine: %s", exc)
             raise
-

@@ -27,22 +27,20 @@ from PySide6.QtCore import Qt, Signal, QTimer, QSettings
 from PySide6.QtGui import QCloseEvent, QFont
 
 from src.core.logging_config import get_logger
+from src.gui.layout.flow_layout import FlowLayout
 from src.gui.theme import (
     MIN_WIDGET_SIZE,
-    SPACING_8,
     SPACING_12,
     SPACING_16,
 )
 
 
 class ThumbnailGenerationWindow(QMainWindow):
-    """
-    Dedicated window for non-blocking thumbnail generation.
+    """Dedicated window for non-blocking thumbnail generation.
 
     Features:
     - Separate QMainWindow (not modal)
     - Dual progress indicators (batch + individual)
-    - Live VTK preview panel
     - Clear close warning
     - Minimize to background
     - Window state persistence
@@ -79,10 +77,10 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.is_completed = False
         self.operation_start_time = time.time()
 
-        # Timer for time updates
+        # Timer for time updates (started lazily on first progress update)
         self.time_update_timer = QTimer(self)
+        self.time_update_timer.setInterval(1000)
         self.time_update_timer.timeout.connect(self._update_time_display)
-        self.time_update_timer.start(1000)
 
         # UI components
         self.batch_progress_bar: Optional[QProgressBar] = None
@@ -93,8 +91,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.time_label: Optional[QLabel] = None
         self.pause_button: Optional[QPushButton] = None
         self.cancel_button: Optional[QPushButton] = None
-        self.preview_label: Optional[QLabel] = None
-        self.preview_widget: Optional[QWidget] = None
 
         # Setup UI
         self._setup_ui()
@@ -151,12 +147,8 @@ class ThumbnailGenerationWindow(QMainWindow):
 
         left_layout.addStretch()
 
-        # Add left panel to main layout
+        # Add left panel to main layout (full width; preview panel removed)
         main_layout.addWidget(left_panel, stretch=1)
-
-        # Right side: VTK Preview
-        preview_panel = self._create_preview_panel()
-        main_layout.addWidget(preview_panel, stretch=2)
 
         self.logger.debug("UI setup complete")
 
@@ -211,32 +203,17 @@ class ThumbnailGenerationWindow(QMainWindow):
         section.setLayout(layout)
         return section
 
-    def _create_preview_panel(self) -> QGroupBox:
-        """Create VTK preview panel."""
-        section = QGroupBox("Model Preview")
-        layout = QVBoxLayout()
 
-        # Preview label showing current file
-        self.preview_label = QLabel("Waiting for model...")
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setWordWrap(True)
-        preview_font = QFont()
-        preview_font.setPointSize(9)
-        self.preview_label.setFont(preview_font)
-        layout.addWidget(self.preview_label)
+    def _create_button_layout(self) -> FlowLayout:
+        """Create control button layout.
 
-        # Placeholder for VTK preview (will be populated when rendering)
-        self.preview_widget = QLabel("Preview will appear here during rendering")
-        self.preview_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_widget.setMinimumSize(400, 400)
-        layout.addWidget(self.preview_widget)
-
-        section.setLayout(layout)
-        return section
-
-    def _create_button_layout(self) -> QHBoxLayout:
-        """Create control button layout."""
-        layout = QHBoxLayout()
+        Important: the FlowLayout must not be parented directly to a QWidget
+        that already has its own layout (such as the main window or left
+        panel), otherwise Qt will attempt to call setLayout() on that
+        widget and emit warnings. We create it without a parent and let
+        the containing layout take ownership via addLayout().
+        """
+        layout = FlowLayout()
         layout.setSpacing(SPACING_12)
 
         self.pause_button = QPushButton("Pause")
@@ -250,8 +227,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         self.cancel_button.setMinimumHeight(MIN_WIDGET_SIZE)
         self.cancel_button.clicked.connect(self._on_cancel_clicked)
         layout.addWidget(self.cancel_button)
-
-        layout.addStretch()
 
         minimize_button = QPushButton("Minimize to Background")
         minimize_button.setMinimumWidth(180)
@@ -385,13 +360,7 @@ class ThumbnailGenerationWindow(QMainWindow):
             self.logger.debug("Window state restored")
 
     def update_batch_progress(self, current: int, total: int) -> None:
-        """
-        Update batch progress.
-
-        Args:
-            current: Current item index (1-based)
-            total: Total items
-        """
+        """Update batch progress and ensure the time display is active."""
         self.current_index = current
         percent = int((current / total) * 100) if total > 0 else 0
 
@@ -401,15 +370,12 @@ class ThumbnailGenerationWindow(QMainWindow):
         if self.batch_label:
             self.batch_label.setText(f"Batch: {current} of {total} images")
 
-    def update_individual_progress(self, current_file: str, percent: int, stage: str) -> None:
-        """
-        Update individual image progress.
+        # Start timer lazily on first real progress update
+        if not self.time_update_timer.isActive():
+            self.time_update_timer.start()
 
-        Args:
-            current_file: Name of current file
-            percent: Progress percentage (0-100)
-            stage: Current stage (loading, material, rendering, saving)
-        """
+    def update_individual_progress(self, current_file: str, percent: int, stage: str) -> None:
+        """Update individual image progress labels and progress bar."""
         if self.individual_label:
             self.individual_label.setText(f"Current: {current_file}")
 
@@ -418,10 +384,6 @@ class ThumbnailGenerationWindow(QMainWindow):
 
         if self.stage_label:
             self.stage_label.setText(f"Stage: {stage}")
-
-        # Update preview label
-        if self.preview_label:
-            self.preview_label.setText(f"Rendering: {current_file}\n{stage}")
 
     def mark_operation_completed(self) -> None:
         """Mark the entire operation as completed."""

@@ -246,35 +246,68 @@ class BuildManager:
             logger.warning("Please install NSIS from https://nsis.sourceforge.io/")
     
     def create_app_icon(self):
-        """Create a placeholder application icon if it doesn't exist."""
+        """Create a placeholder application icon if it doesn't exist.
+
+        The placeholder uses a CNC/toolpath-inspired design that matches the
+        Digital Workshop branding so Start menu and desktop shortcuts look
+        consistent out of the box.
+        """
         icon_path = self.project_root / "resources" / "icons" / "app_icon.ico"
-        
+
         if not icon_path.exists():
             logger.info("Creating placeholder application icon...")
             icon_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Create a simple placeholder icon using PIL if available
+
+            # Create a simple CNC-themed icon using PIL if available
             try:
-                from PIL import Image, ImageDraw
-                
-                # Create a simple 256x256 icon
-                img = Image.new('RGBA', (256, 256), (0, 123, 255, 255))
+                from PIL import Image, ImageDraw, ImageFont
+
+                size = 256
+                img = Image.new("RGBA", (size, size), (2, 6, 23, 255))
                 draw = ImageDraw.Draw(img)
-                
-                # Draw a simple 3D cube shape
-                draw.rectangle([50, 50, 206, 206], fill=(255, 255, 255, 255), outline=(0, 0, 0, 255))
-                draw.polygon([(50, 50), (20, 20), (176, 20), (206, 50)], fill=(200, 200, 200, 255), outline=(0, 0, 0, 255))
-                draw.polygon([(206, 50), (176, 20), (176, 176), (206, 206)], fill=(150, 150, 150, 255), outline=(0, 0, 0, 255))
-                
+
+                # Inner panel to suggest a machine control enclosure
+                panel_margin = 32
+                draw.rectangle(
+                    [panel_margin, panel_margin, size - panel_margin, size - panel_margin],
+                    fill=(15, 23, 42, 255),
+                )
+
+                # Toolpath polyline across the work area
+                path_points = [
+                    (52, 196),
+                    (112, 120),
+                    (168, 140),
+                    (210, 84),
+                ]
+                draw.line(path_points, fill=(34, 211, 238, 255), width=6)
+
+                # Spindle/tool block at the end of the path
+                draw.rectangle([203, 74, 222, 98], fill=(34, 211, 238, 255))
+
+                # DW monogram for "Digital Workshop" in the lower-left
+                text_color = (226, 232, 240, 255)
+                try:
+                    font = ImageFont.truetype("arial.ttf", 80)
+                except Exception:
+                    font = ImageFont.load_default()
+
+                draw.text((70, 72), "D", font=font, fill=text_color)
+                draw.text((108, 136), "W", font=font, fill=text_color)
+
                 # Save as ICO with multiple sizes
-                img.save(icon_path, format='ICO', sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
+                img.save(
+                    icon_path,
+                    format="ICO",
+                    sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)],
+                )
                 logger.info(f"Created placeholder icon: {icon_path}")
             except ImportError:
                 logger.warning("PIL not available. Skipping icon creation.")
                 logger.warning("Please create app_icon.ico manually in resources/icons/")
             except Exception as e:
                 logger.error(f"Failed to create icon: {e}")
-    
+
     def run_pyinstaller(self):
         """Run PyInstaller to create the executable."""
         logger.info("Running PyInstaller...")

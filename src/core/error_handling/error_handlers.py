@@ -113,14 +113,28 @@ class SpecificErrorHandler:
 
             return True
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as reporting_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as reporting_error:
             # If error reporting itself fails, log and continue
             self.logger.error("Error reporting failed: %s", reporting_error, exc_info=True)
 
             # In case of reporting failure, still attempt recovery
             try:
                 self._attempt_recovery(exc_val)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as recovery_error:
                 self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
 
             # Reraise original error if requested
@@ -150,7 +164,14 @@ class SpecificErrorHandler:
 
             return False
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as recovery_error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as recovery_error:
             self.logger.error("Recovery strategy failed: %s", recovery_error, exc_info=True)
             return False
 
@@ -234,7 +255,9 @@ class MemoryErrorHandler(SpecificErrorHandler):
 
 # Context managers for specific operations
 @contextmanager
-def handle_shutdown_errors(operation_name: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+def handle_shutdown_errors(
+    operation_name: str, context_info: Optional[Dict[str, Any]] = None
+) -> None:
     """
     Context manager for shutdown operations with specific error handling.
 
@@ -408,7 +431,9 @@ def file_io_safe(operation: str, file_path: Optional[Path] = None) -> None:
 
 
 # Performance monitoring wrapper
-def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION) -> None:
+def monitor_operation(
+    operation_name: str, context: ErrorContext = ErrorContext.NORMAL_OPERATION
+) -> None:
     """
     Decorator to monitor operation performance and handle errors.
 
@@ -422,6 +447,7 @@ def monitor_operation(operation_name: str, context: ErrorContext = ErrorContext.
 
     def decorator(func: Callable) -> Callable:
         """TODO: Add docstring."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
             """TODO: Add docstring."""

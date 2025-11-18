@@ -133,8 +133,6 @@ class ToolbarManager:
             "Save current tab data to the active project",
         )
 
-
-
         toolbar.addSeparator()
 
         # Zoom controls

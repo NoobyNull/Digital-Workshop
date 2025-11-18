@@ -53,7 +53,6 @@ class CameraController:
             # break interaction.
             pass
 
-
     def handle_mouse_press(self, event: QMouseEvent) -> None:
         """Handle mouse press event."""
         self.last_mouse_pos = (event.x(), event.y())

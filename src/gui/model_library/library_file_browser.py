@@ -6,9 +6,10 @@ Handles file browsing, importing, and file operations.
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QProgressDialog
 
 from src.core.logging_config import get_logger
+from src.gui.workers.folder_scan_worker import FolderScanWorker
 
 logger = get_logger(__name__)
 
@@ -17,14 +18,15 @@ class LibraryFileBrowser:
     """Manages file browser functionality."""
 
     def __init__(self, library_widget) -> None:
-        """
-        Initialize file browser.
+        """Initialize file browser.
 
         Args:
             library_widget: The model library widget
         """
         self.library_widget = library_widget
         self.logger = get_logger(__name__)
+        self._folder_scan_worker = None
+        self._folder_scan_dialog = None
 
     def import_from_context_menu(self, path: str) -> None:
         """Import files/folders from context menu selection."""
@@ -40,20 +42,7 @@ class LibraryFileBrowser:
                         f"Unsupported file format: {p.suffix}",
                     )
             elif p.is_dir():
-                files_to_import = []
-                supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
-                for ext in supported_extensions:
-                    files_to_import.extend(p.rglob(f"*{ext}"))
-
-                if files_to_import:
-                    files_to_import = [str(f) for f in files_to_import]
-                    self._request_import(files_to_import)
-                else:
-                    QMessageBox.information(
-                        self.library_widget,
-                        "Import",
-                        f"No supported model files found in {p.name}",
-                    )
+                self._start_folder_import_scan(str(p))
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error importing from context menu: %s", e)
@@ -169,9 +158,7 @@ class LibraryFileBrowser:
 
     def import_models(self) -> None:
         """Import models (stub for tests)."""
-        self.library_widget.status_label.setText(
-            "Use drag-and-drop or the main Import dialog."
-        )
+        self.library_widget.status_label.setText("Use drag-and-drop or the main Import dialog.")
 
     def _request_import(self, files: list[str]) -> None:
         """Request a unified import for the given files via the main import pipeline."""
@@ -244,25 +231,102 @@ class LibraryFileBrowser:
                 QMessageBox.warning(self.library_widget, "Import", "Please select a folder.")
                 return
 
-            files_to_import = []
-            supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
-            for ext in supported_extensions:
-                files_to_import.extend(Path(folder_path).rglob(f"*{ext}"))
-                files_to_import.extend(Path(folder_path).rglob(f"*{ext.upper()}"))
-
-            if files_to_import:
-                # Remove duplicates and convert to strings
-                files_to_import = list(set(str(f) for f in files_to_import))
-                self._request_import(files_to_import)
-            else:
-                QMessageBox.information(
-                    self.library_widget,
-                    "Import",
-                    "No supported model files found in folder.",
-                )
+            self._start_folder_import_scan(folder_path)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error importing folder: %s", e)
+            self.logger.error("Error importing selected folder: %s", e)
             QMessageBox.critical(
-                self.library_widget, "Import Error", f"Failed to import folder: {e}"
+                self.library_widget,
+                "Import Error",
+                f"Failed to import folder: {e}",
             )
+
+
+    def _start_folder_import_scan(self, folder_path: str) -> None:
+        """Start background scan for models in a folder and trigger import."""
+        if self._folder_scan_worker is not None and self._folder_scan_worker.isRunning():
+            self.logger.info("Folder scan already in progress")
+            return
+
+        supported_extensions = [".stl", ".obj", ".3mf", ".step", ".stp"]
+        self._folder_scan_worker = FolderScanWorker(folder_path, supported_extensions)
+        self._folder_scan_worker.progress_updated.connect(self._on_folder_scan_progress)
+        self._folder_scan_worker.scan_completed.connect(self._on_folder_scan_completed)
+        self._folder_scan_worker.error_occurred.connect(self._on_folder_scan_error)
+        self._folder_scan_worker.cancelled.connect(self._on_folder_scan_cancelled)
+
+        self._folder_scan_dialog = QProgressDialog(
+            "Scanning folder for 3D model files...",
+            "Cancel",
+            0,
+            0,
+            self.library_widget,
+        )
+        self._folder_scan_dialog.setMinimumDuration(0)
+        self._folder_scan_dialog.setAutoClose(False)
+        self._folder_scan_dialog.setAutoReset(False)
+        self._folder_scan_dialog.canceled.connect(self._on_folder_scan_dialog_canceled)
+        self._folder_scan_dialog.show()
+
+        self._folder_scan_worker.start()
+
+    def _on_folder_scan_progress(self, count: int, current_path: str) -> None:
+        """Update progress dialog during folder scan."""
+        if self._folder_scan_dialog is None:
+            return
+
+        if current_path:
+            self._folder_scan_dialog.setLabelText(
+                f"Scanning folder for 3D model files...\n"
+                f"Found {count} files so far in:\n{current_path}"
+            )
+        else:
+            self._folder_scan_dialog.setLabelText(
+                f"Scanning folder for 3D model files...\nFound {count} files so far..."
+            )
+
+    def _on_folder_scan_completed(self, files: list[str]) -> None:
+        """Handle completion of folder scan for library import."""
+        if self._folder_scan_dialog is not None:
+            self._folder_scan_dialog.close()
+            self._folder_scan_dialog = None
+
+        self._folder_scan_worker = None
+
+        if files:
+            unique_files = list(dict.fromkeys(files))
+            self._request_import(unique_files)
+        else:
+            QMessageBox.information(
+                self.library_widget,
+                "Import",
+                "No supported model files found in folder.",
+            )
+
+    def _on_folder_scan_error(self, error: str) -> None:
+        """Handle errors during folder scan for library import."""
+        if self._folder_scan_dialog is not None:
+            self._folder_scan_dialog.close()
+            self._folder_scan_dialog = None
+
+        self._folder_scan_worker = None
+        QMessageBox.critical(
+            self.library_widget,
+            "Folder Scan Error",
+            f"Failed to scan folder for model files:\n{error}",
+        )
+
+    def _on_folder_scan_cancelled(self) -> None:
+        """Handle cancellation of folder scan for library import."""
+        if self._folder_scan_dialog is not None:
+            self._folder_scan_dialog.close()
+            self._folder_scan_dialog = None
+
+        self._folder_scan_worker = None
+        self.library_widget.status_label.setText("Folder scan cancelled")
+
+    def _on_folder_scan_dialog_canceled(self) -> None:
+        """Handle cancel request from the progress dialog."""
+        if self._folder_scan_worker is not None:
+            self._folder_scan_worker.cancel()
+

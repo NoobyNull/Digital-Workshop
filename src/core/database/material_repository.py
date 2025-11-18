@@ -60,11 +60,12 @@ class MaterialRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Calculate file hash if file exists
                 file_hash = None
                 if Path(file_path).exists():
                     from src.utils.file_hash import calculate_file_hash
+
                     file_hash = calculate_file_hash(file_path)
 
                 cursor.execute(
@@ -87,7 +88,7 @@ class MaterialRepository:
                         is_deletable,
                     ),
                 )
-                
+
                 material_id = cursor.lastrowid
                 conn.commit()
                 self.logger.info("Added material '%s' with ID %s", name, material_id)
@@ -119,18 +120,19 @@ class MaterialRepository:
                     (material_id,),
                 )
                 row = cursor.fetchone()
-                
+
                 if row:
                     material = dict(row)
                     if material.get("properties_json"):
                         try:
                             # Convert string back to dict if it's JSON
                             import json
+
                             material["properties"] = json.loads(material["properties_json"])
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     return material
-                
+
                 return None
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -156,17 +158,18 @@ class MaterialRepository:
                     (name,),
                 )
                 row = cursor.fetchone()
-                
+
                 if row:
                     material = dict(row)
                     if material.get("properties_json"):
                         try:
                             import json
+
                             material["properties"] = json.loads(material["properties_json"])
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     return material
-                
+
                 return None
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -187,29 +190,26 @@ class MaterialRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 if include_deletable:
-                    cursor.execute(
-                        "SELECT * FROM materials ORDER BY is_default DESC, name ASC"
-                    )
+                    cursor.execute("SELECT * FROM materials ORDER BY is_default DESC, name ASC")
                 else:
-                    cursor.execute(
-                        "SELECT * FROM materials WHERE is_default = 1 ORDER BY name ASC"
-                    )
-                
+                    cursor.execute("SELECT * FROM materials WHERE is_default = 1 ORDER BY name ASC")
+
                 rows = cursor.fetchall()
                 materials = []
-                
+
                 for row in rows:
                     material = dict(row)
                     if material.get("properties_json"):
                         try:
                             import json
+
                             material["properties"] = json.loads(material["properties_json"])
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     materials.append(material)
-                
+
                 return materials
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -253,49 +253,50 @@ class MaterialRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Build update query dynamically
                 updates = []
                 params = []
-                
+
                 if display_name is not None:
                     updates.append("display_name = ?")
                     params.append(display_name)
-                
+
                 if description is not None:
                     updates.append("description = ?")
                     params.append(description)
-                
+
                 if texture_path is not None:
                     updates.append("texture_path = ?")
                     params.append(texture_path)
-                
+
                 if mtl_path is not None:
                     updates.append("mtl_path = ?")
                     params.append(mtl_path)
-                
+
                 if properties is not None:
                     import json
+
                     updates.append("properties_json = ?")
                     params.append(json.dumps(properties))
-                
+
                 if not updates:
                     return False
-                
+
                 updates.append("updated_at = CURRENT_TIMESTAMP")
                 params.append(material_id)
-                
+
                 query = f"UPDATE materials SET {', '.join(updates)} WHERE id = ?"
                 cursor.execute(query, params)
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info("Updated material %s", material_id)
                 else:
                     self.logger.warning("Material %s not found for update", material_id)
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -316,30 +317,30 @@ class MaterialRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Check if material is deletable
                 cursor.execute("SELECT is_default FROM materials WHERE id = ?", (material_id,))
                 row = cursor.fetchone()
-                
+
                 if not row:
                     self.logger.warning("Material %s not found for deletion", material_id)
                     return False
-                
+
                 if row[0]:  # is_default is True
                     self.logger.error("Cannot delete default material %s", material_id)
                     return False
-                
+
                 # Delete the material
                 cursor.execute("DELETE FROM materials WHERE id = ?", (material_id,))
-                
+
                 success = cursor.rowcount > 0
                 conn.commit()
-                
+
                 if success:
                     self.logger.info("Deleted material %s", material_id)
                 else:
                     self.logger.warning("Material %s not found for deletion", material_id)
-                
+
                 return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -364,20 +365,21 @@ class MaterialRepository:
                     "SELECT * FROM materials WHERE type = ? ORDER BY name ASC",
                     (material_type,),
                 )
-                
+
                 rows = cursor.fetchall()
                 materials = []
-                
+
                 for row in rows:
                     material = dict(row)
                     if material.get("properties_json"):
                         try:
                             import json
+
                             material["properties"] = json.loads(material["properties_json"])
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     materials.append(material)
-                
+
                 return materials
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -394,11 +396,11 @@ class MaterialRepository:
         """
         try:
             materials_dir = Path(__file__).parent.parent.parent / "resources" / "materials"
-            
+
             if not materials_dir.exists():
                 self.logger.warning("Materials directory not found: %s", materials_dir)
                 return
-            
+
             # Find all texture files
             image_extensions = {".png", ".jpg", ".jpeg"}
             texture_files = [
@@ -406,27 +408,27 @@ class MaterialRepository:
                 for f in materials_dir.iterdir()
                 if f.is_file() and f.suffix.lower() in image_extensions
             ]
-            
+
             added_count = 0
-            
+
             for texture_file in texture_files:
                 material_name = texture_file.stem
-                
+
                 # Check if material already exists
                 if self.get_material_by_name(material_name):
                     continue
-                
+
                 # Check for MTL file
                 mtl_file = texture_file.with_suffix(".mtl")
                 mtl_path = str(mtl_file) if mtl_file.exists() else None
-                
+
                 # Parse MTL properties if available
                 properties = None
                 if mtl_path and mtl_file.exists():
                     # Simple MTL parsing - just check for basic properties
                     properties = {}
                     try:
-                        with open(mtl_file, 'r') as f:
+                        with open(mtl_file, "r") as f:
                             for line in f:
                                 line = line.strip()
                                 if line.startswith("newmtl"):
@@ -441,24 +443,36 @@ class MaterialRepository:
                                 elif line.startswith("Ka"):
                                     try:
                                         parts = line.split()
-                                        properties["ambient"] = (float(parts[1]), float(parts[2]), float(parts[3]))
+                                        properties["ambient"] = (
+                                            float(parts[1]),
+                                            float(parts[2]),
+                                            float(parts[3]),
+                                        )
                                     except (IndexError, ValueError):
                                         pass
                                 elif line.startswith("Kd"):
                                     try:
                                         parts = line.split()
-                                        properties["diffuse"] = (float(parts[1]), float(parts[2]), float(parts[3]))
+                                        properties["diffuse"] = (
+                                            float(parts[1]),
+                                            float(parts[2]),
+                                            float(parts[3]),
+                                        )
                                     except (IndexError, ValueError):
                                         pass
                                 elif line.startswith("Ks"):
                                     try:
                                         parts = line.split()
-                                        properties["specular"] = (float(parts[1]), float(parts[2]), float(parts[3]))
+                                        properties["specular"] = (
+                                            float(parts[1]),
+                                            float(parts[2]),
+                                            float(parts[3]),
+                                        )
                                     except (IndexError, ValueError):
                                         pass
                     except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
                         pass
-                
+
                 # Add material to database
                 self.add_material(
                     name=material_name,
@@ -472,9 +486,9 @@ class MaterialRepository:
                     is_deletable=False,
                 )
                 added_count += 1
-            
+
             self.logger.info("Initialized %s default materials from filesystem", added_count)
-            
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize default materials: %s", e)
             raise

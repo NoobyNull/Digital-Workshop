@@ -316,4 +316,3 @@ class ProjectRepository:
     def set_feed_override(self, project_id: str, override_pct: float) -> bool:
         """Set the feed override percentage for a project."""
         return self.update_project(project_id, feed_override_pct=override_pct)
-

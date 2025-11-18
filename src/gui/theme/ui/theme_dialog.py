@@ -141,8 +141,6 @@ class ThemeDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-
-
     def _create_system_detection_tab(self) -> QWidget:
         """Create the system information tab.
 
@@ -171,7 +169,6 @@ class ThemeDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-
     def _on_apply_preset(self) -> None:
         """Apply the selected theme using :class:`ThemeService`."""
         theme_name = self.preset_combo.currentData()
@@ -187,9 +184,6 @@ class ThemeDialog(QDialog):
             self.system_theme_label.setText(f"Current Theme: {theme_name.title()}")
 
         self.theme_applied.emit(theme_name)
-
-
-
 
     def _on_reset(self) -> None:
         """Reset to the default dark theme."""
@@ -224,4 +218,3 @@ class ThemeDialog(QDialog):
                 self.showMaximized()
         except Exception:
             pass
-

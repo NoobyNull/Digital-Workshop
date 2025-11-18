@@ -378,7 +378,6 @@ Return ONLY valid JSON, no additional text.""",
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize AI Studio provider: %s", e)
 
-
         # Set current provider
         default_provider = self.config.get("settings", {}).get("default_provider", "ollama")
         if default_provider in self.providers:

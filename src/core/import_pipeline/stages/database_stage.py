@@ -95,7 +95,7 @@ class DatabaseStage(BaseStage):
             # Insert model
             model_id = self.db_manager.add_model(
                 filename=task.filename,
-                format=task.format,
+                model_format=task.format,
                 file_path=task.file_path,
                 file_size=task.file_size,
                 file_hash=task.file_hash,  # May be None at this stage

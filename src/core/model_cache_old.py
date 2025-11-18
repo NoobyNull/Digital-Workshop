@@ -262,7 +262,9 @@ class ModelCache:
             self.stats.eviction_count += 1
 
         if entries_to_evict:
-            self.logger.debug("Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict))
+            self.logger.debug(
+                "Evicted %s entries, freed {bytes_freed} bytes", len(entries_to_evict)
+            )
 
     def _store_to_disk_cache(self, key: str, entry: CacheEntry) -> None:
         """

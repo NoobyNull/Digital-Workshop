@@ -50,6 +50,7 @@ TREE_GROUPING_CHOICES = [
     ("number_of_flutes", "Number of Flutes"),
 ]
 
+
 def _find_vectric_tool_databases() -> list[tuple[str, str, str]]:
     """Find Vectric tool databases under ProgramData.
 
@@ -134,13 +135,9 @@ class VectricToolImportDialog(QDialog):
         layout.setSpacing(8)
 
         if not self._installations:
-            layout.addWidget(
-                QLabel("No Vectric tool databases were found under ProgramData.")
-            )
+            layout.addWidget(QLabel("No Vectric tool databases were found under ProgramData."))
         else:
-            layout.addWidget(
-                QLabel("Select which Vectric tool databases to import:")
-            )
+            layout.addWidget(QLabel("Select which Vectric tool databases to import:"))
             for product, version, db_path in self._installations:
                 checkbox = QCheckBox(f"Import {product} - {version} tools")
                 checkbox.setToolTip(db_path)
@@ -169,7 +166,6 @@ class VectricToolImportDialog(QDialog):
             if checkbox.isChecked():
                 selected.append(self._installations[index])
         return selected
-
 
 
 class ToolTreeLayoutDialog(QDialog):
@@ -247,12 +243,8 @@ class ToolTreeLayoutDialog(QDialog):
             level1 = self.settings.value(
                 "feeds_and_speeds/tree_group_level1", "tool_type", type=str
             )
-            level2 = self.settings.value(
-                "feeds_and_speeds/tree_group_level2", "none", type=str
-            )
-            level3 = self.settings.value(
-                "feeds_and_speeds/tree_group_level3", "none", type=str
-            )
+            level2 = self.settings.value("feeds_and_speeds/tree_group_level2", "none", type=str)
+            level3 = self.settings.value("feeds_and_speeds/tree_group_level3", "none", type=str)
             self._set_combo_value(self.level1_combo, level1 or "tool_type")
             self._set_combo_value(self.level2_combo, level2 or "none")
             self._set_combo_value(self.level3_combo, level3 or "none")
@@ -312,16 +304,13 @@ class ToolTreeLayoutDialog(QDialog):
             parts: list[str] = []
             for col in range(6):
                 parts.append(f"{col}:{1 if visible.get(col, True) else 0}")
-            self.settings.setValue(
-                "feeds_and_speeds/tool_tree_visible_columns", ",".join(parts)
-            )
+            self.settings.setValue("feeds_and_speeds/tool_tree_visible_columns", ",".join(parts))
             self.settings.sync()
         except Exception:
             # If saving fails, do not block closing the dialog
             pass
 
         super().accept()
-
 
 
 class FeedsAndSpeedsWidget(QWidget):
@@ -379,7 +368,9 @@ class FeedsAndSpeedsWidget(QWidget):
             # On first run, import all bundled libraries from resources/ToolLib
             resources_root = Path(__file__).parents[2] / "resources" / "ToolLib"
             if not resources_root.exists():
-                self.logger.warning("Tool library resources directory not found: %s", resources_root)
+                self.logger.warning(
+                    "Tool library resources directory not found: %s", resources_root
+                )
                 return
 
             imported_any = False
@@ -497,14 +488,16 @@ class FeedsAndSpeedsWidget(QWidget):
         self.tool_tree = QTreeWidget()
         # Columns: 0=Tool, 1=Type, 2=Diameter, 3=Vendor, 4=Product ID, 5=Custom
         self.tool_tree.setColumnCount(6)
-        self.tool_tree.setHeaderLabels([
-            "Tool",
-            "Type",
-            "Diameter",
-            "Vendor",
-            "Product ID",
-            "Custom",
-        ])
+        self.tool_tree.setHeaderLabels(
+            [
+                "Tool",
+                "Type",
+                "Diameter",
+                "Vendor",
+                "Product ID",
+                "Custom",
+            ]
+        )
         self.tool_tree.setSelectionMode(QTreeWidget.SingleSelection)
         self.tool_tree.itemSelectionChanged.connect(self._on_tool_selected)
         self.tool_tree.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -535,7 +528,6 @@ class FeedsAndSpeedsWidget(QWidget):
 
         return panel
 
-
     def _restore_tool_tree_column_visibility(self) -> None:
         """Restore tool tree column visibility from QSettings.
 
@@ -544,9 +536,7 @@ class FeedsAndSpeedsWidget(QWidget):
         """
         try:
             settings = QSettings()
-            raw_value = settings.value(
-                "feeds_and_speeds/tool_tree_visible_columns", "", type=str
-            )
+            raw_value = settings.value("feeds_and_speeds/tool_tree_visible_columns", "", type=str)
             visible: dict[int, bool]
             if raw_value:
                 parts = [p for p in raw_value.split(",") if ":" in p]
@@ -576,12 +566,9 @@ class FeedsAndSpeedsWidget(QWidget):
             for col in range(self.tool_tree.columnCount()):
                 visible = not self.tool_tree.isColumnHidden(col)
                 parts.append(f"{col}:{1 if visible else 0}")
-            settings.setValue(
-                "feeds_and_speeds/tool_tree_visible_columns", ",".join(parts)
-            )
+            settings.setValue("feeds_and_speeds/tool_tree_visible_columns", ",".join(parts))
         except Exception as e:  # pragma: no cover - defensive
             self.logger.debug("Failed to save tool tree column visibility: %s", e)
-
 
     def _on_open_tool_tree_layout(self) -> None:
         """Open the Tool Tree Layout dialog and refresh the tree if accepted."""
@@ -634,7 +621,9 @@ class FeedsAndSpeedsWidget(QWidget):
         level3 = _value("feeds_and_speeds/tree_group_level3", "none")
         return [level1, level2, level3]
 
-    def _extract_geometry_property(self, tool_data: Dict[str, Any], prop_name: str) -> Optional[Any]:
+    def _extract_geometry_property(
+        self, tool_data: Dict[str, Any], prop_name: str
+    ) -> Optional[Any]:
         """Extract a geometry property from tool data.
 
         Supports both database-backed tools (with properties.geometry) and
@@ -658,6 +647,7 @@ class FeedsAndSpeedsWidget(QWidget):
         for alias in alias_map.get(prop_name, []):
             if alias in geometry:
                 return geometry.get(alias)
+
     def _get_custom_column_text(self, tool_data: Dict[str, Any]) -> str:
         """Return text for the Custom column.
 
@@ -1042,9 +1032,7 @@ class FeedsAndSpeedsWidget(QWidget):
         """
         # Machine controls are created in _create_calculator_panel; guard
         # against calls during early construction.
-        if not hasattr(self, "machine_combo") or not hasattr(
-            self, "feed_override_spin"
-        ):
+        if not hasattr(self, "machine_combo") or not hasattr(self, "feed_override_spin"):
             return
 
         db_manager = getattr(self.tab_data_manager, "db_manager", None)
@@ -1137,9 +1125,7 @@ class FeedsAndSpeedsWidget(QWidget):
                     except (TypeError, ValueError):
                         pass
                     try:
-                        accel_mm_s2 = float(
-                            current_machine.get("accel_mm_s2", accel_mm_s2)
-                        )
+                        accel_mm_s2 = float(current_machine.get("accel_mm_s2", accel_mm_s2))
                     except (TypeError, ValueError):
                         pass
 
@@ -1161,10 +1147,7 @@ class FeedsAndSpeedsWidget(QWidget):
         # Update tooltip with resolved machine parameters so the user can
         # see the effective kinematic limits at a glance.
         try:
-            tooltip = (
-                f"{machine_name} "
-                f"({max_feed_mm_min:.0f} mm/min, {accel_mm_s2:.0f} mm/s²)"
-            )
+            tooltip = f"{machine_name} " f"({max_feed_mm_min:.0f} mm/min, {accel_mm_s2:.0f} mm/s²)"
             self.machine_combo.setToolTip(tooltip)
         except Exception:
             # Tooltip is non-critical; never allow it to break the UI.
@@ -1316,10 +1299,7 @@ class FeedsAndSpeedsWidget(QWidget):
             diameter_value = 0.0
 
         flutes = (
-            geometry.get("number_of_flutes")
-            or geometry.get("NOF")
-            or geometry.get("flutes")
-            or 2
+            geometry.get("number_of_flutes") or geometry.get("NOF") or geometry.get("flutes") or 2
         )
         try:
             flutes_value = int(float(flutes))
@@ -1368,7 +1348,6 @@ class FeedsAndSpeedsWidget(QWidget):
         self._update_calculator_unit_suffixes()
         self._recalculate_metrics()
 
-
     def _recalculate_metrics(self) -> None:
         """Recompute chip load, surface speed, and material removal rate."""
         if not hasattr(self, "results_display"):
@@ -1402,18 +1381,10 @@ class FeedsAndSpeedsWidget(QWidget):
             surface_speed_label = f"{surface_speed:.1f} ft/min"
             mrr_label = f"{(stepdown * stepover * feed):.2f} in^3/min"
 
-        diameter_label = self.unit_converter.format_value(
-            diameter, self.is_metric, "length"
-        )
-        stepdown_label = self.unit_converter.format_value(
-            stepdown, self.is_metric, "length"
-        )
-        stepover_label = self.unit_converter.format_value(
-            stepover, self.is_metric, "length"
-        )
-        feed_label = self.unit_converter.format_value(
-            feed, self.is_metric, "feed_rate", decimals=2
-        )
+        diameter_label = self.unit_converter.format_value(diameter, self.is_metric, "length")
+        stepdown_label = self.unit_converter.format_value(stepdown, self.is_metric, "length")
+        stepover_label = self.unit_converter.format_value(stepover, self.is_metric, "length")
+        feed_label = self.unit_converter.format_value(feed, self.is_metric, "feed_rate", decimals=2)
         plunge_label = self.unit_converter.format_value(
             plunge, self.is_metric, "feed_rate", decimals=2
         )
@@ -1439,8 +1410,6 @@ class FeedsAndSpeedsWidget(QWidget):
         )
 
         self.results_display.setText(text)
-
-
 
     def _load_providers(self) -> None:
         """Refresh the tool tree from providers and personal toolbox."""
@@ -1513,7 +1482,6 @@ class FeedsAndSpeedsWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to import: {str(e)}")
             self.logger.error("Import error: %s", e)
-
 
     def _on_import_from_vectric(self) -> None:
         """Import tool databases discovered under Vectric's ProgramData folder."""
@@ -1685,9 +1653,7 @@ class FeedsAndSpeedsWidget(QWidget):
         else:
             self.selected_provider_id = None
 
-        self.selected_tool_label.setText(
-            f"Selected: {tool_data.get('description', '')}"
-        )
+        self.selected_tool_label.setText(f"Selected: {tool_data.get('description', '')}")
         self._update_calculator()
 
     def _on_tool_context_menu(self, pos) -> None:

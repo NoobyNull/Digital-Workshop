@@ -38,6 +38,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSplitter,
     QCheckBox,
+    QProgressDialog,
 )
 from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
@@ -45,6 +46,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
 from src.core.application_config import ApplicationConfig
+from src.core.services.library_settings import LibraryMode, LibrarySettings
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
@@ -54,11 +56,13 @@ from src.core.import_file_manager import (
 from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
 from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
+from src.gui.workers.folder_scan_worker import FolderScanWorker
 
 # Import modular pipeline
 from src.core.import_pipeline import (
     create_pipeline,
     ImportTask,
+    PipelineProgress,
     PipelineResult,
 )
 from src.core.database_manager import get_database_manager
@@ -304,7 +308,11 @@ class PipelineImportWorker(QThread):
         self.run_analysis = run_analysis
 
         self.logger = get_logger(__name__)
+
+        # Explicit cancellation tracking so that "cancelled" status
+        # is only reported when a real cancel request occurs.
         self.cancellation_token = CancellationToken()
+        self._cancel_requested: bool = False
 
         # Initialize file manager for session management
         self.file_manager = ImportFileManager()
@@ -314,7 +322,15 @@ class PipelineImportWorker(QThread):
         self.pipeline_result = None
 
     def run(self) -> None:
-        """Execute the pipeline-based import process."""
+        """Execute the pipeline-based import process.
+
+        This worker intentionally reuses ImportFileManager.process_file to
+        perform the actual file-management work (hashing + keep-organized
+        copying) *before* handing the files off to the modular pipeline for
+        database/image/thumbnail processing. That way, Keep Organized behaves
+        exactly like the older import path while still benefiting from the
+        new pipeline.
+        """
         try:
             self.stage_changed.emit("validation", "Validating files and settings...")
 
@@ -333,7 +349,59 @@ class PipelineImportWorker(QThread):
                 self.import_failed.emit("No valid files to import")
                 return
 
-            self.logger.info("Starting pipeline import of %d files", total_files)
+            # Log initial cancellation state for diagnostics but do not
+            # treat it as a user cancellation.
+            initial_cancelled = self.cancellation_token.is_cancelled()
+            self.logger.debug(
+                "Starting file preparation: total_files=%d, cancellation_token_initial=%s, cancel_flag=%s",
+                total_files,
+                initial_cancelled,
+                self._cancel_requested,
+            )
+
+            self.logger.info("Preparing %d files for import (file management stage)", total_files)
+
+            # === Pre-pipeline file management (hashing + KEEP_ORGANIZED copies) ===
+            processed_any = False
+            for idx, file_info in enumerate(session.files):
+                if self._cancel_requested:
+                    self.logger.info(
+                        "Cancellation requested before processing file index %d; stopping preparation loop",
+                        idx,
+                    )
+                    break
+
+                file_name = Path(file_info.original_path).name
+
+                # Report preparation progress to the UI
+                self.stage_changed.emit("hashing", f"Processing {file_name}...")
+
+                def file_progress_callback(message: str, percent: int) -> None:
+                    """Forward per-file progress to the dialog."""
+                    self.file_progress.emit(file_name, percent, message)
+
+                success, error = self.file_manager.process_file(
+                    file_info,
+                    session,
+                    progress_callback=file_progress_callback,
+                    cancellation_token=self.cancellation_token,
+                )
+
+                if not success:
+                    self.logger.warning("Failed to process %s: %s", file_name, error)
+                    continue
+
+                processed_any = True
+
+            if self._cancel_requested:
+                self.logger.info("Import cancelled during file preparation")
+                self.import_failed.emit("Import cancelled during file preparation")
+                return
+
+            if not processed_any:
+                self.logger.warning("No files could be prepared for pipeline import")
+                self.import_failed.emit("No valid files to import after preparation")
+                return
 
             # Create pipeline
             db_manager = get_database_manager()
@@ -341,6 +409,8 @@ class PipelineImportWorker(QThread):
             pipeline = create_pipeline(db_manager, thumbnail_generator)
 
             # Connect pipeline signals
+            pipeline.signals.pipeline_started.connect(self._on_pipeline_started)
+            pipeline.signals.progress_updated.connect(self._on_progress_updated)
             pipeline.signals.task_started.connect(self._on_task_started)
             pipeline.signals.stage_started.connect(self._on_stage_started)
             pipeline.signals.task_completed.connect(self._on_task_completed)
@@ -348,9 +418,12 @@ class PipelineImportWorker(QThread):
             pipeline.signals.pipeline_completed.connect(self._on_pipeline_completed)
             pipeline.signals.pipeline_failed.connect(self._on_pipeline_failed)
 
-            # Create import tasks from session files
+            # Create import tasks from successfully processed session files
             tasks = []
             for file_info in session.files:
+                if file_info.import_status != "completed":
+                    continue
+
                 file_path = file_info.managed_path or file_info.original_path
                 file_format = Path(file_path).suffix.lower().lstrip(".")
                 task = ImportTask(
@@ -362,13 +435,39 @@ class PipelineImportWorker(QThread):
                 )
                 tasks.append(task)
 
-            # Execute pipeline (async - results come via signals)
+            if not tasks:
+                self.logger.warning(
+                    "All files failed during preparation; skipping pipeline execution",
+                )
+                self.import_failed.emit("All files failed during preparation")
+                return
+
+            self.logger.info("Starting pipeline import of %d prepared files", len(tasks))
+
+            # Execute pipeline (results come via signals)
             self.stage_changed.emit("processing", "Processing files through pipeline...")
             pipeline.execute(tasks)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive logging
             self.logger.error("Pipeline import failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
+
+    def _on_pipeline_started(self, total_tasks: int) -> None:
+        """Handle pipeline started signal and initialize overall progress."""
+        # At the very beginning, nothing has been processed yet.
+        self.overall_progress.emit(0, total_tasks, 0)
+
+    def _on_progress_updated(self, progress: PipelineProgress) -> None:
+        """Handle pipeline progress updates and forward to the UI.
+
+        We treat "current" as the number of tasks that are no longer pending
+        (completed + failed), so the user sees how many files have been fully
+        processed out of the total.
+        """
+        total = progress.total_tasks
+        processed = progress.completed_tasks + progress.failed_tasks
+        percent = int(progress.progress_percentage) if total > 0 else 0
+        self.overall_progress.emit(processed, total, percent)
 
     def _on_task_started(self, task: ImportTask) -> None:
         """Handle task started signal."""
@@ -409,7 +508,13 @@ class PipelineImportWorker(QThread):
         self.import_failed.emit(error)
 
     def cancel(self) -> None:
-        """Cancel the import operation."""
+        """Cancel the import operation.
+
+        This sets an explicit flag in addition to cancelling the shared
+        CancellationToken so that we never report a cancellation unless a
+        real cancel request was issued.
+        """
+        self._cancel_requested = True
         self.cancellation_token.cancel()
         self.logger.info("Import cancellation requested")
 
@@ -434,8 +539,7 @@ class ImportDialog(QDialog):
     """
 
     def __init__(self, parent=None, root_folder_manager=None) -> None:
-        """
-        Initialize the import dialog.
+        """Initialize the import dialog.
 
         Args:
             parent: Parent widget
@@ -451,15 +555,45 @@ class ImportDialog(QDialog):
         self.import_worker: Optional[PipelineImportWorker] = None
         self.selected_files: List[str] = []
         self.start_time: Optional[float] = None
+        self.folder_scan_worker: Optional[FolderScanWorker] = None
+        self.folder_scan_dialog = None
 
         # Setup UI
         self._setup_ui()
         self._connect_signals()
+        self._apply_library_preferences()
 
         # Enable drag and drop
         self.setAcceptDrops(True)
 
         self.logger.info("ImportDialog initialized")
+
+    def _apply_library_preferences(self) -> None:
+        """Initialize mode/root directory from global library settings.
+
+        This keeps the import dialog aligned with the first-launch
+        library configuration (leave-in-place vs consolidated).
+        """
+        try:
+            settings = LibrarySettings()
+            mode = settings.get_mode()
+            base_root = settings.get_base_root()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self.logger.warning("Failed to read library settings: %s", exc)
+            return
+
+        if mode == LibraryMode.CONSOLIDATED and base_root is not None:
+            # Consolidated mode: keep files organized under the configured root
+            self.keep_organized_radio.setChecked(True)
+            self.leave_in_place_radio.setChecked(False)
+            self.root_dir_path.setText(str(base_root))
+        else:
+            # Leave-in-place mode (or missing root): no managed root required
+            self.keep_organized_radio.setChecked(False)
+            self.leave_in_place_radio.setChecked(True)
+            self.root_dir_path.setText("Not selected")
+
+        self._update_import_button_state()
 
     def _setup_ui(self) -> None:
         """Setup the dialog user interface."""
@@ -508,7 +642,6 @@ class ImportDialog(QDialog):
 
         # === Status bar ===
         self.status_label = QLabel("Ready to import")
-        self.status_label.setStyleSheet("color: #666; font-style: italic;")
         main_layout.addWidget(self.status_label)
 
         # === Buttons ===
@@ -561,7 +694,6 @@ class ImportDialog(QDialog):
 
         # Drop zone hint
         hint_label = QLabel("💡 Tip: You can drag and drop files or folders here")
-        hint_label.setStyleSheet("color: #666; font-style: italic; padding: 5px;")
         layout.addWidget(hint_label)
 
         return group
@@ -573,7 +705,6 @@ class ImportDialog(QDialog):
 
         # File Management Mode
         mode_label = QLabel("File Management:")
-        mode_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(mode_label)
 
         self.keep_organized_radio = QRadioButton("Keep Organized")
@@ -590,7 +721,6 @@ class ImportDialog(QDialog):
         root_layout.addWidget(self.root_dir_label)
 
         self.root_dir_path = QLabel("Not selected")
-        self.root_dir_path.setStyleSheet("color: #666; font-style: italic;")
         root_layout.addWidget(self.root_dir_path, 1)
 
         self.root_dir_button = QPushButton("Browse...")
@@ -607,7 +737,6 @@ class ImportDialog(QDialog):
         # Additional options
         layout.addSpacing(10)
         options_label = QLabel("Processing Options:")
-        options_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(options_label)
 
         self.generate_thumbnails_check = QCheckBox("Generate Thumbnails")
@@ -657,7 +786,6 @@ class ImportDialog(QDialog):
         thumbnail_layout.addWidget(QLabel("Thumbnails:"))
 
         self.thumbnail_status_label = QLabel("Waiting...")
-        self.thumbnail_status_label.setStyleSheet("color: #666;")
         thumbnail_layout.addWidget(self.thumbnail_status_label, 1)
 
         self.thumbnail_progress_bar = QProgressBar()
@@ -673,7 +801,6 @@ class ImportDialog(QDialog):
         stage_layout.addWidget(QLabel("Stage:"))
 
         self.stage_label = QLabel("Idle")
-        self.stage_label.setStyleSheet("font-weight: bold;")
         stage_layout.addWidget(self.stage_label, 1)
 
         self.time_label = QLabel("")
@@ -730,24 +857,96 @@ class ImportDialog(QDialog):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder Containing Model Files")
 
         if folder:
-            # Find all model files in folder
-            folder_path = Path(folder)
-            model_extensions = {".stl", ".obj", ".step", ".stp", ".3mf", ".ply"}
-            files = []
+            self._start_folder_scan(folder)
 
-            for ext in model_extensions:
-                files.extend(str(p) for p in folder_path.rglob(f"*{ext}"))
-                files.extend(str(p) for p in folder_path.rglob(f"*{ext.upper()}"))
+    def _start_folder_scan(self, folder: str) -> None:
+        """Start background scan for model files in the selected folder."""
+        if self.folder_scan_worker is not None and self.folder_scan_worker.isRunning():
+            self.logger.info("Folder scan already in progress")
+            return
 
-            if files:
-                self._add_files(files)
-                self._log_message(f"Found {len(files)} model files in folder")
-            else:
-                QMessageBox.warning(
-                    self,
-                    "No Files Found",
-                    "No 3D model files found in the selected folder.",
-                )
+        model_extensions = [".stl", ".obj", ".step", ".stp", ".3mf", ".ply"]
+        self.folder_scan_worker = FolderScanWorker(folder, model_extensions)
+        self.folder_scan_worker.progress_updated.connect(self._on_folder_scan_progress)
+        self.folder_scan_worker.scan_completed.connect(self._on_folder_scan_completed)
+        self.folder_scan_worker.error_occurred.connect(self._on_folder_scan_error)
+        self.folder_scan_worker.cancelled.connect(self._on_folder_scan_cancelled)
+
+        self.folder_scan_dialog = QProgressDialog(
+            "Scanning folder for 3D model files...",
+            "Cancel",
+            0,
+            0,
+            self,
+        )
+        self.folder_scan_dialog.setWindowModality(Qt.WindowModal)
+        self.folder_scan_dialog.setMinimumDuration(0)
+        self.folder_scan_dialog.setAutoClose(False)
+        self.folder_scan_dialog.setAutoReset(False)
+        self.folder_scan_dialog.canceled.connect(self._on_folder_scan_dialog_canceled)
+        self.folder_scan_dialog.show()
+
+        self.folder_scan_worker.start()
+
+    def _on_folder_scan_progress(self, count: int, current_path: str) -> None:
+        """Update progress dialog during folder scan."""
+        if self.folder_scan_dialog is None:
+            return
+
+        if current_path:
+            self.folder_scan_dialog.setLabelText(
+                f"Scanning folder for 3D model files...\n"
+                f"Found {count} files so far in:\n{current_path}"
+            )
+        else:
+            self.folder_scan_dialog.setLabelText(
+                f"Scanning folder for 3D model files...\nFound {count} files so far..."
+            )
+
+    def _on_folder_scan_completed(self, files: List[str]) -> None:
+        """Handle completion of folder scan."""
+        if self.folder_scan_dialog is not None:
+            self.folder_scan_dialog.close()
+            self.folder_scan_dialog = None
+
+        self.folder_scan_worker = None
+
+        if files:
+            self._add_files(files)
+            self._log_message(f"Found {len(files)} model files in folder")
+        else:
+            QMessageBox.warning(
+                self,
+                "No Files Found",
+                "No 3D model files found in the selected folder.",
+            )
+
+    def _on_folder_scan_error(self, error: str) -> None:
+        """Handle errors during folder scan."""
+        if self.folder_scan_dialog is not None:
+            self.folder_scan_dialog.close()
+            self.folder_scan_dialog = None
+
+        self.folder_scan_worker = None
+        QMessageBox.critical(
+            self,
+            "Folder Scan Error",
+            f"Failed to scan folder for model files:\n{error}",
+        )
+
+    def _on_folder_scan_cancelled(self) -> None:
+        """Handle cancellation of folder scan."""
+        if self.folder_scan_dialog is not None:
+            self.folder_scan_dialog.close()
+            self.folder_scan_dialog = None
+
+        self.folder_scan_worker = None
+        self._log_message("Folder scan cancelled by user")
+
+    def _on_folder_scan_dialog_canceled(self) -> None:
+        """Handle cancel request from the progress dialog."""
+        if self.folder_scan_worker is not None:
+            self.folder_scan_worker.cancel()
 
     def _add_files(self, files: List[str]) -> None:
         """
@@ -777,10 +976,10 @@ class ImportDialog(QDialog):
                     self.file_list.addItem(item)
 
                     added_count += 1
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
                     # Collect failed files instead of showing dialog
-                    failed_files.append((Path(file_path).name, str(e)))
-                    self.logger.warning("Failed to add file %s: {e}", file_path)
+                    failed_files.append((Path(file_path).name, str(exc)))
+                    self.logger.warning("Failed to add file %s: %s", file_path, exc)
 
         if added_count > 0:
             self._update_import_button_state()
@@ -870,7 +1069,6 @@ class ImportDialog(QDialog):
 
         if folder:
             self.root_dir_path.setText(folder)
-            self.root_dir_path.setStyleSheet("color: #000;")
             self._update_import_button_state()
 
     def _update_import_button_state(self) -> None:
@@ -1107,6 +1305,10 @@ class ImportDialog(QDialog):
 
     def _reset_controls(self) -> None:
         """Reset controls after import completion or failure."""
+        # Return to idle state so the user can restart the import
+        self.current_stage = ImportStage.IDLE
+        self.import_worker = None
+
         self.add_files_button.setEnabled(True)
         self.add_folder_button.setEnabled(True)
         self.remove_button.setEnabled(True)
