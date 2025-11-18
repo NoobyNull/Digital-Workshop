@@ -2,10 +2,10 @@
 
 stages:
   - build
+  - cleanup
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  BUILD_NUMBER: "$CI_PIPELINE_IID"
   RUN_TESTS: "false"
   WINDOWS_PYTHON_VERSION: "3.11.6"
   WINDOWS_RUNNER_TAGS: "windows,digital-workshop,pyinstaller"
@@ -14,6 +14,7 @@ variables:
   PYTHONUTF8: "1"
   PYTHONIOENCODING: "utf-8"
   PYTHONUNBUFFERED: "1"
+  REVISION_TAG_PREFIX: "revision-"
 
 cache:
   key: "$CI_COMMIT_REF_SLUG-windows"
@@ -56,6 +57,22 @@ build_windows_exe:
       }
     }
 
+    function Get-NextRevision {
+      $prefix = $Env:REVISION_TAG_PREFIX
+      if (-not $prefix) { $prefix = "revision-" }
+      git fetch --tags --force | Out-Null
+      $tags = git tag -l "$prefix*"
+      if (-not $tags) { return 1 }
+      $numbers = @()
+      foreach ($tag in $tags) {
+        if ($tag -match "^$([Regex]::Escape($prefix))(\d+)$") {
+          $numbers += [int]$matches[1]
+        }
+      }
+      if (-not $numbers) { return 1 }
+      return ([int]($numbers | Sort-Object | Select-Object -Last 1)) + 1
+    }
+
     Ensure-Python -Version $Env:WINDOWS_PYTHON_VERSION
     python --version
     python -m pip --version
@@ -80,44 +97,46 @@ build_windows_exe:
       python -m pytest --junitxml junit.xml
     }
 
+    Write-Host "== Determining revision number =="
+    $revision = Get-NextRevision
+    $revisionTag = "{0}{1}" -f $Env:REVISION_TAG_PREFIX, $revision
+    Write-Host "Revision: $revisionTag"
+
     Write-Host "== Building Windows executable via PyInstaller =="
     python build_exe.py
-
-    $buildNumber = $Env:CI_PIPELINE_IID
-    if (-not $buildNumber) { $buildNumber = "local" }
 
     $distDir = if ($Env:DIST_DIR) { $Env:DIST_DIR } else { "dist" }
     $exeBaseName = if ($Env:EXE_NAME) { $Env:EXE_NAME } else { "Digital Workshop" }
     $exePath = Join-Path $distDir "$exeBaseName.exe"
     if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
 
-    $versionedName = "$exeBaseName.$buildNumber.exe"
+    $versionedName = "$exeBaseName.$revision.exe"
     $versionedExePath = Join-Path $distDir $versionedName
     Rename-Item -Path $exePath -NewName $versionedName -Force
 
     $latestExePath = Join-Path $distDir "$exeBaseName.latest.exe"
     Copy-Item -Path $versionedExePath -Destination $latestExePath -Force
 
-    python scripts/generate_changelog.py --build-number $buildNumber --output (Join-Path $distDir "changes-$buildNumber.txt")
+    python scripts/generate_changelog.py --build-number $revision --output (Join-Path $distDir "changes-$revision.txt")
 
     $infoPath = Join-Path $distDir "build-info.txt"
-    Set-Content -Path $infoPath -Value "Build: $buildNumber" -Encoding utf8
+    Set-Content -Path $infoPath -Value "Revision: $revision" -Encoding utf8
     Add-Content -Path $infoPath -Value "Commit: $Env:CI_COMMIT_SHA" -Encoding utf8
     Add-Content -Path $infoPath -Value "Pipeline: $Env:CI_PIPELINE_URL" -Encoding utf8
     Add-Content -Path $infoPath -Value "Branch: $Env:CI_COMMIT_REF_NAME" -Encoding utf8
     Add-Content -Path $infoPath -Value "Runner: $Env:CI_RUNNER_DESCRIPTION" -Encoding utf8
     Add-Content -Path $infoPath -Value "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" -Encoding utf8
 
-    $releaseInfoPath = Join-Path $distDir "release-$buildNumber.json"
+    $releaseInfoPath = Join-Path $distDir "release-$revision.json"
     $releaseInfo = @{
-      "buildNumber" = $buildNumber
+      "revision" = $revision
       "commitSha" = $Env:CI_COMMIT_SHA
       "commitMessage" = "$(git log -1 --pretty=%s)"
       "commitAuthor" = "$(git log -1 --pretty=%an)"
       "branch" = $Env:CI_COMMIT_REF_NAME
       "pipelineUrl" = $Env:CI_PIPELINE_URL
       "timestamp" = $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-      "changesFile" = "changes-$buildNumber.txt"
+      "changesFile" = "changes-$revision.txt"
     }
     $releaseInfo | ConvertTo-Json -Depth 3 | Out-File -FilePath $releaseInfoPath -Encoding utf8
 
@@ -125,14 +144,53 @@ build_windows_exe:
     $hashLine = "{0}  {1}" -f $hash.Hash, (Split-Path -Leaf $hash.Path)
     Set-Content -Path (Join-Path $distDir "sha256.txt") -Value $hashLine -Encoding utf8
 
-    $zipPath = Join-Path $distDir "$exeBaseName.$buildNumber.zip"
+    $revisionRoot = Join-Path $distDir "revisions"
+    $revisionDir = Join-Path $revisionRoot $revisionTag
+    New-Item -ItemType Directory -Force -Path $revisionDir | Out-Null
+
+    $zipPath = Join-Path $distDir "$exeBaseName.$revision.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
     Compress-Archive -Path (Join-Path $distDir "*") -DestinationPath $zipPath -Force
+
+    Copy-Item -Path $versionedExePath -Destination (Join-Path $revisionDir $versionedName) -Force
+    Copy-Item -Path $latestExePath -Destination (Join-Path $revisionDir "$exeBaseName.latest.exe") -Force
+    Copy-Item -Path $zipPath -Destination (Join-Path $revisionDir (Split-Path -Leaf $zipPath)) -Force
+    Copy-Item -Path (Join-Path $distDir "changes-$revision.txt") -Destination (Join-Path $revisionDir "changes-$revision.txt") -Force
+    Copy-Item -Path $infoPath -Destination (Join-Path $revisionDir "build-info.txt") -Force
+    Copy-Item -Path $releaseInfoPath -Destination (Join-Path $revisionDir "release-$revision.json") -Force
+    Copy-Item -Path (Join-Path $distDir "sha256.txt") -Destination (Join-Path $revisionDir "sha256.txt") -Force
+
+    $manifestPath = Join-Path $revisionRoot "manifest.json"
+    $revisionPattern = "^$([Regex]::Escape($Env:REVISION_TAG_PREFIX))(\d+)$"
+    $manifest = @()
+    $existingTags = git tag -l "$($Env:REVISION_TAG_PREFIX)*"
+    foreach ($tag in $existingTags) {
+      if ($tag -match $revisionPattern) {
+        $number = [int]$matches[1]
+        $sha = (git rev-list -n 1 $tag).Trim()
+        $manifest += [pscustomobject]@{
+          revision = $number
+          tag = $tag
+          commit = $sha
+        }
+      }
+    }
+    $manifest = $manifest | Where-Object { $_.revision -ne $revision }
+    $manifest += [pscustomobject]@{
+      revision = $revision
+      tag = $revisionTag
+      exe = $versionedName
+      zip = (Split-Path -Leaf $zipPath)
+      commit = $Env:CI_COMMIT_SHA
+      pipeline = $Env:CI_PIPELINE_URL
+      timestamp = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+    }
+    ($manifest | Sort-Object revision) | ConvertTo-Json -Depth 4 | Out-File -FilePath $manifestPath -Encoding utf8
 
     git config user.email "ci@digital-workshop.local"
     git config user.name "CI Builder"
     git fetch --tags --force
-    git tag -f "build-$buildNumber" -m "Build $buildNumber"
+    git tag -f $revisionTag -m "Revision $revision"
 
     if ($Env:CI_JOB_TOKEN -and $Env:CI_SERVER_URL -and $Env:CI_PROJECT_PATH) {
       $remoteUri = New-Object System.UriBuilder("$($Env:CI_SERVER_URL.TrimEnd('/'))/$($Env:CI_PROJECT_PATH).git")
@@ -141,10 +199,10 @@ build_windows_exe:
       git remote set-url origin $remoteUri.Uri.AbsoluteUri
     }
 
-    git push origin "build-$buildNumber" 2>$null || Write-Host "Tag push failed (may already exist)"
+    git push origin $revisionTag 2>$null || Write-Host "Tag push failed (may already exist)"
 
   artifacts:
-    name: "digital-workshop-build-$CI_PIPELINE_IID"
+    name: "digital-workshop-revision-$CI_PIPELINE_ID"
     when: always
     expire_in: never
     paths:
@@ -161,7 +219,28 @@ build_windows_exe:
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH =~ /^release\//'
-    - if: '$CI_COMMIT_TAG'
     - if: '$CI_PIPELINE_SOURCE == "web"'
+
+cleanup_failed_pipeline:
+  stage: cleanup
+  tags:
+    - windows
+    - digital-workshop
+    - pyinstaller
+  when: on_failure
+  allow_failure: true
+  script: |
+    if (-not $Env:PIPELINE_DELETE_TOKEN) {
+      Write-Host "PIPELINE_DELETE_TOKEN is not set; skipping pipeline deletion."
+      exit 0
+    }
+    $uri = "$Env:CI_API_V4_URL/projects/$($Env:CI_PROJECT_ID)/pipelines/$($Env:CI_PIPELINE_ID)"
+    $headers = @{ "PRIVATE-TOKEN" = $Env:PIPELINE_DELETE_TOKEN }
+    try {
+      Invoke-RestMethod -Method Delete -Uri $uri -Headers $headers -TimeoutSec 30
+      Write-Host "Deleted failed pipeline $($Env:CI_PIPELINE_ID)"
+    } catch {
+      Write-Warning "Failed to delete pipeline: $_"
+    }
+  rules:
+    - if: '$CI_PIPELINE_SOURCE'

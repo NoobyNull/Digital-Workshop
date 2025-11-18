@@ -1,11 +1,11 @@
-# Digital Workshop – GitLab Windows CI/CD Setup
+# Digital Workshop - GitLab Windows CI/CD Setup
 
-This guide explains how to prepare the self‑hosted GitLab instance that runs at `http://192.168.0.40` so every push to `main`, `develop`, release branches, or manually triggered pipelines builds a signed Windows executable through `.gitlab-ci.yml`.
+This guide explains how to prepare the self-hosted GitLab instance that runs at `http://192.168.0.40` so every push to `main` (for example merges from `develop`) or manually triggered pipelines builds a signed Windows executable through `.gitlab-ci.yml`.
 
 The steps are split into two parts:
 
-1. **Infrastructure** – provision a Windows runner that is allowed to pick the `windows`/`digital-workshop` tagged jobs.
-2. **Project bootstrap** – configure CI/CD variables and defaults via the GitLab API so the pipeline has everything it needs to produce the EXE and publish artifacts.
+1. **Infrastructure** - provision a Windows runner that is allowed to pick the `windows`/`digital-workshop` tagged jobs.
+2. **Project bootstrap** - configure CI/CD variables and defaults via the GitLab API so the pipeline has everything it needs to produce the EXE and publish artifacts.
 
 ---
 
@@ -18,10 +18,10 @@ The steps are split into two parts:
   - .NET 4.8+ and Visual C++ redistributables (PyInstaller pulls native libs)
   - Minimum 16 GB RAM / 50 GB free disk.
 - Access tokens:
-  - **Runner registration token** – Obtain from **Admin Area → CI/CD → Runners → New runner**.
-  - **Personal access token** with `api` scope – Used by the bootstrap script to configure project variables.
+  - **Runner registration token** - Obtain from **Admin Area → CI/CD → Runners → New runner**.
+  - **Personal access token** with `api` scope - Used by the bootstrap script to configure project variables and by the pipeline cleanup job.
 
-> ℹ️ Derive the GitLab project ID from the project home page (`Project information → Details`). You will need this numeric ID in step 3.
+> ℹ️ Derive the GitLab project ID from the project home page (**Project information → Details**). You will need this numeric ID in step 3.
 
 ---
 
@@ -65,7 +65,6 @@ python scripts/gitlab_ci_bootstrap.py \
   --project-id 87 \
   --set RUN_TESTS=false \
   --set WINDOWS_RUNNER_TAGS=windows,digital-workshop \
-  --set BUILD_NUMBER_PREFIX=Digital_Workshop \
   --protect-branch main \
   --protect-branch develop
 ```
@@ -78,30 +77,42 @@ python scripts/gitlab_ci_bootstrap.py --help
 
 ---
 
-## 4. Validate the pipeline
+## 4. Sequential revisions & failure cleanup
 
-1. Push to `develop` or trigger **CI/CD → Pipelines → Run pipeline** in GitLab.
-2. Ensure the `build_windows_exe` job picks up the `windows` runner that was registered above.
-3. Confirm that the job uploads the following artifacts inside `dist/`:
-   - `Digital Workshop.<BUILD>.exe`
-   - `Digital Workshop.latest.exe`
-   - `Digital Workshop.<BUILD>.zip`
-   - `changes-<BUILD>.txt`, `release-<BUILD>.json`, `build-info.txt`, `sha256.txt`
-4. Download the `Digital Workshop.latest.exe` binary and smoke test it locally.
+1. **Revision numbering** – every successful `main` pipeline now issues a monotonically increasing `revision-N` tag (no dotted semantic versioning). All build artifacts are copied into `dist/revisions/revision-N/` and the generated `dist/revisions/manifest.json` lists every revision cut so far.
+2. **Failed pipeline deletion** – add a protected CI/CD variable named `PIPELINE_DELETE_TOKEN` that stores a GitLab personal access token with the `api` scope. The cleanup job runs with `when: on_failure` and calls `DELETE /projects/:id/pipelines/:pipeline_id` so failed pipelines and their artifacts never accumulate.
+   - In **Settings → CI/CD → Variables** add:
+     - `Key`: `PIPELINE_DELETE_TOKEN`
+     - `Value`: your GitLab PAT (the one shared with this team)
+     - Protect + Mask the variable so only the `main` pipelines can read it.
 
 ---
 
-## 5. Troubleshooting
+## 5. Validate the pipeline
+
+1. Merge `develop` into `main` or trigger **CI/CD → Pipelines → Run pipeline** against `main`.
+2. Ensure the `build_windows_exe` job picks up the `windows` runner that was registered above.
+3. Confirm that the job uploads the following artifacts inside `dist/revisions/revision-<N>/`:
+   - `Digital Workshop.<N>.exe`
+   - `Digital Workshop.latest.exe`
+   - `Digital Workshop.<N>.zip`
+   - `changes-<N>.txt`, `release-<N>.json`, `build-info.txt`, `sha256.txt`
+   - `manifest.json` describing every revision
+4. Download `Digital Workshop.<N>.exe` and smoke test it locally.
+
+---
+
+## 6. Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
 | Job is stuck in *Pending (no runners)* | Verify that the runner exposes the `windows` and `digital-workshop` tags. `gitlab-runner verify --name digital-workshop-windows-01` should report *online*. |
 | Job fails installing Python or dependencies | Ensure Chocolatey is installed and the runner process has permission to install applications. Re-run the setup script with `-ForcePythonInstall`. |
-| Tags push fails inside CI | The `.gitlab-ci.yml` job now rewrites `origin` to use `CI_JOB_TOKEN`. Ensure the job token has *write_repository* scope (enable it per project: **Settings → CI/CD → General pipelines → Allow jobs to access the repository**). |
-| API bootstrap fails with 401 | The personal access token must have the `api` scope and belong to a user with maintainer rights to the project. |
+| Tags push fails inside CI | The `.gitlab-ci.yml` job rewrites `origin` to use `CI_JOB_TOKEN`. Ensure the job token has *write_repository* scope (enable it per project: **Settings → CI/CD → General pipelines → Allow jobs to access the repository**). |
+| Pipeline deletion fails | Ensure the `PIPELINE_DELETE_TOKEN` CI/CD variable exists, is masked/protected, and has the `api` scope. Rotate the token if it expires. |
 
 For additional background see `SETUP_GITLAB_RUNNERS.md` and `BUILD_SYSTEM_README.md`.
 
 ---
 
-Once these steps are complete, every push to the GitLab remote at `192.168.0.40` automatically produces a Windows EXE artifact without manual intervention.
+Once these steps are complete, every push to the GitLab remote at `192.168.0.40` automatically produces a Windows EXE artifact without manual intervention, assigns the next revision number, and cleans up any failed pipelines.
