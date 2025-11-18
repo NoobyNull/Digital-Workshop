@@ -79,8 +79,8 @@ python scripts/gitlab_ci_bootstrap.py --help
 
 ## 4. Sequential revisions & failure cleanup
 
-1. **Revision numbering** – every successful `main` pipeline now issues a monotonically increasing `revision-N` tag (no dotted semantic versioning). All build artifacts are copied into `dist/revisions/revision-N/` and the generated `dist/revisions/manifest.json` lists every revision cut so far.
-2. **Failed pipeline deletion** – add a protected CI/CD variable named `PIPELINE_DELETE_TOKEN` that stores a GitLab personal access token with the `api` scope. The cleanup job runs with `when: on_failure` and calls `DELETE /projects/:id/pipelines/:pipeline_id` so failed pipelines and their artifacts never accumulate.
+1. **Revision numbering** - every successful `main` pipeline now issues a monotonically increasing `revision-N` tag (no dotted semantic versioning). All build artifacts are copied into `dist/revisions/revision-N/` and the generated `dist/revisions/manifest.json` lists every revision cut so far. To reproduce a previous revision, set the `REVISION_OVERRIDE` variable (either via **Run pipeline** or a manual job retry); the CI job rejects overrides if the tag already exists.
+2. **Failed/skipped pipeline deletion** - add a protected CI/CD variable named `PIPELINE_DELETE_TOKEN` that stores a GitLab personal access token with the `api` scope. The cleanup job now runs for every pipeline and deletes it (via `DELETE /projects/:id/pipelines/:pipeline_id`) any time the overall status is not `success`—that includes failed, canceled, or skipped pipelines.
    - In **Settings → CI/CD → Variables** add:
      - `Key`: `PIPELINE_DELETE_TOKEN`
      - `Value`: your GitLab PAT (the one shared with this team)
@@ -90,7 +90,7 @@ python scripts/gitlab_ci_bootstrap.py --help
 
 ## 5. Validate the pipeline
 
-1. Merge `develop` into `main` or trigger **CI/CD → Pipelines → Run pipeline** against `main`.
+1. Merge `develop` into `main` or trigger **CI/CD → Pipelines → Run pipeline** against `main` (pipelines are restricted to `main` or manual triggers so there are no dangling “skipped” entries on other branches).
 2. Ensure the `build_windows_exe` job picks up the `windows` runner that was registered above.
 3. Confirm that the job uploads the following artifacts inside `dist/revisions/revision-<N>/`:
    - `Digital Workshop.<N>.exe`
@@ -98,7 +98,8 @@ python scripts/gitlab_ci_bootstrap.py --help
    - `Digital Workshop.<N>.zip`
    - `changes-<N>.txt`, `release-<N>.json`, `build-info.txt`, `sha256.txt`
    - `manifest.json` describing every revision
-4. Download `Digital Workshop.<N>.exe` and smoke test it locally.
+4. (Optional) Set `REVISION_OVERRIDE=<N>` when manually re-running a pipeline to reproduce a specific revision number. The CI job verifies that `revision-<N>` does not already exist before rebuilding; omit the variable to let it auto-increment.
+5. Download `Digital Workshop.<N>.exe` and smoke test it locally.
 
 ---
 

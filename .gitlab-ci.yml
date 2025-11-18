@@ -1,5 +1,11 @@
 # Digital Workshop – GitLab CI configuration for Windows EXE builds
 
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
+
 stages:
   - build
   - cleanup
@@ -15,6 +21,7 @@ variables:
   PYTHONIOENCODING: "utf-8"
   PYTHONUNBUFFERED: "1"
   REVISION_TAG_PREFIX: "revision-"
+  REVISION_OVERRIDE: ""
 
 cache:
   key: "$CI_COMMIT_REF_SLUG-windows"
@@ -57,20 +64,35 @@ build_windows_exe:
       }
     }
 
-    function Get-NextRevision {
-      $prefix = $Env:REVISION_TAG_PREFIX
-      if (-not $prefix) { $prefix = "revision-" }
+    function Get-RevisionInfo {
+      $prefix = if ($Env:REVISION_TAG_PREFIX) { $Env:REVISION_TAG_PREFIX } else { "revision-" }
       git fetch --tags --force | Out-Null
+
+      if ($Env:REVISION_OVERRIDE) {
+        if ($Env:REVISION_OVERRIDE -notmatch '^\d+$') {
+          throw "REVISION_OVERRIDE must be a positive integer."
+        }
+        $override = [int]$Env:REVISION_OVERRIDE
+        if ($override -le 0) {
+          throw "REVISION_OVERRIDE must be greater than zero."
+        }
+        if (git tag -l "$prefix$override") {
+          throw "Revision tag $prefix$override already exists."
+        }
+        return [pscustomobject]@{ Number = $override; Tag = "$prefix$override" }
+      }
+
       $tags = git tag -l "$prefix*"
-      if (-not $tags) { return 1 }
+      if (-not $tags) { return [pscustomobject]@{ Number = 1; Tag = "$prefix1" } }
+
       $numbers = @()
       foreach ($tag in $tags) {
         if ($tag -match "^$([Regex]::Escape($prefix))(\d+)$") {
           $numbers += [int]$matches[1]
         }
       }
-      if (-not $numbers) { return 1 }
-      return ([int]($numbers | Sort-Object | Select-Object -Last 1)) + 1
+      $next = if ($numbers) { ([int]($numbers | Sort-Object | Select-Object -Last 1)) + 1 } else { 1 }
+      return [pscustomobject]@{ Number = $next; Tag = "$prefix$next" }
     }
 
     Ensure-Python -Version $Env:WINDOWS_PYTHON_VERSION
@@ -98,8 +120,9 @@ build_windows_exe:
     }
 
     Write-Host "== Determining revision number =="
-    $revision = Get-NextRevision
-    $revisionTag = "{0}{1}" -f $Env:REVISION_TAG_PREFIX, $revision
+    $revisionInfo = Get-RevisionInfo
+    $revision = $revisionInfo.Number
+    $revisionTag = $revisionInfo.Tag
     Write-Host "Revision: $revisionTag"
 
     Write-Host "== Building Windows executable via PyInstaller =="
@@ -162,21 +185,24 @@ build_windows_exe:
 
     $manifestPath = Join-Path $revisionRoot "manifest.json"
     $revisionPattern = "^$([Regex]::Escape($Env:REVISION_TAG_PREFIX))(\d+)$"
-    $manifest = @()
+    $manifestEntries = @()
     $existingTags = git tag -l "$($Env:REVISION_TAG_PREFIX)*"
     foreach ($tag in $existingTags) {
       if ($tag -match $revisionPattern) {
         $number = [int]$matches[1]
         $sha = (git rev-list -n 1 $tag).Trim()
-        $manifest += [pscustomobject]@{
+        $entry = [pscustomobject]@{
           revision = $number
           tag = $tag
           commit = $sha
         }
+        if ($number -eq $revision) {
+          continue
+        }
+        $manifestEntries += $entry
       }
     }
-    $manifest = $manifest | Where-Object { $_.revision -ne $revision }
-    $manifest += [pscustomobject]@{
+    $manifestEntries += [pscustomobject]@{
       revision = $revision
       tag = $revisionTag
       exe = $versionedName
@@ -185,7 +211,7 @@ build_windows_exe:
       pipeline = $Env:CI_PIPELINE_URL
       timestamp = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
     }
-    ($manifest | Sort-Object revision) | ConvertTo-Json -Depth 4 | Out-File -FilePath $manifestPath -Encoding utf8
+    ($manifestEntries | Sort-Object revision) | ConvertTo-Json -Depth 4 | Out-File -FilePath $manifestPath -Encoding utf8
 
     git config user.email "ci@digital-workshop.local"
     git config user.name "CI Builder"
@@ -217,30 +243,33 @@ build_windows_exe:
       dependency_scanning: safety-report.json
       secret_detection: semgrep-report.json
 
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-
-cleanup_failed_pipeline:
+cleanup_pipeline:
   stage: cleanup
   tags:
     - windows
     - digital-workshop
     - pyinstaller
-  when: on_failure
+  when: always
   allow_failure: true
   script: |
-    if (-not $Env:PIPELINE_DELETE_TOKEN) {
-      Write-Host "PIPELINE_DELETE_TOKEN is not set; skipping pipeline deletion."
+    $status = $Env:CI_PIPELINE_STATUS
+    if ($status -eq "success") {
+      Write-Host "Pipeline succeeded; nothing to delete."
       exit 0
     }
+
+    if (-not $Env:PIPELINE_DELETE_TOKEN) {
+      Write-Warning "PIPELINE_DELETE_TOKEN not set; cannot delete non-successful pipeline."
+      exit 0
+    }
+
     $uri = "$Env:CI_API_V4_URL/projects/$($Env:CI_PROJECT_ID)/pipelines/$($Env:CI_PIPELINE_ID)"
     $headers = @{ "PRIVATE-TOKEN" = $Env:PIPELINE_DELETE_TOKEN }
     try {
       Invoke-RestMethod -Method Delete -Uri $uri -Headers $headers -TimeoutSec 30
-      Write-Host "Deleted failed pipeline $($Env:CI_PIPELINE_ID)"
+      Write-Host "Deleted pipeline $($Env:CI_PIPELINE_ID) with status '$status'."
     } catch {
-      Write-Warning "Failed to delete pipeline: $_"
+      Write-Warning "Failed to delete pipeline $($Env:CI_PIPELINE_ID): $_"
     }
   rules:
     - if: '$CI_PIPELINE_SOURCE'
