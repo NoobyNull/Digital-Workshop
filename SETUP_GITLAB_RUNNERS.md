@@ -9,6 +9,8 @@ Your GitLab CI job is stuck because:
 
 ## 🔧 Solution: Set Up GitLab Runners
 
+> ✅ Prefer the turnkey instructions in `docs/builds/GITLAB_WINDOWS_CI_SETUP.md` – it references the helper scripts `scripts/setup_gitlab_windows_runner.ps1` (runner provisioning) and `scripts/gitlab_ci_bootstrap.py` (project CI/CD configuration) that target the GitLab server at `192.168.0.40`.
+
 ### Option 1: Self-Hosted Runner (Recommended for Development)
 
 #### Prerequisites
