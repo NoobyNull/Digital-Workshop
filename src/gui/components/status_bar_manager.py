@@ -109,6 +109,19 @@ class StatusBarManager:
         # Add with 0 stretch to ensure it's positioned on the far right
         self.status_bar.addPermanentWidget(self.dedup_status_widget, 0)
 
+        # Quick actions
+        self.thumb_button = QPushButton("Backfill thumbs")
+        self.thumb_button.setToolTip("Generate thumbnails for models missing them")
+        self.thumb_button.setMaximumWidth(150)
+        self.thumb_button.clicked.connect(self._trigger_thumbnail_backfill)
+        self.status_bar.addPermanentWidget(self.thumb_button, 0)
+
+        self.dup_button = QPushButton("Scan duplicates")
+        self.dup_button.setToolTip("Find and resolve duplicate models")
+        self.dup_button.setMaximumWidth(150)
+        self.dup_button.clicked.connect(self._trigger_duplicate_scan)
+        self.status_bar.addPermanentWidget(self.dup_button, 0)
+
         # Theme cycle button (far right)
         self.theme_button = QPushButton()
         self.theme_button.setFixedSize(24, 24)
@@ -331,6 +344,28 @@ class StatusBarManager:
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update theme icon: %s", e)
+
+    def _trigger_thumbnail_backfill(self) -> None:
+        """Start thumbnail backfill using managed library rebuild."""
+        if hasattr(self.main_window, "_backfill_thumbnails_library"):
+            self.main_window._backfill_thumbnails_library()
+        else:
+            QMessageBox.information(
+                self.main_window,
+                "Unavailable",
+                "Library rebuild service is not available in this build.",
+            )
+
+    def _trigger_duplicate_scan(self) -> None:
+        """Start duplicate scan and show dialog if duplicates exist."""
+        if hasattr(self.main_window, "_scan_duplicates"):
+            self.main_window._scan_duplicates()
+        else:
+            QMessageBox.information(
+                self.main_window,
+                "Unavailable",
+                "Duplicate scan is not available in this build.",
+            )
 
 
 # Convenience function for easy status bar setup

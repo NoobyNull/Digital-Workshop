@@ -41,7 +41,7 @@ class CameraController:
             self.fps_limit = config.fps_limit
             self.zoom_speed = config.zoom_speed
             self.pan_speed = config.pan_speed
-            self.auto_fit_on_load = config.auto_fit_on_load
+            self.auto_fit_on_load = True  # default ON
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.warning("Failed to load camera settings from config: %s", e)
             self.mouse_sensitivity = 1.0
@@ -72,6 +72,7 @@ class CameraController:
 
             # Check if camera parameters are saved
             if model_data.get("camera_position_x") is None:
+                # No saved view; consider auto-fit the default
                 return False
 
             # Get camera

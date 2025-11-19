@@ -25,7 +25,7 @@ from unittest.mock import patch, MagicMock
 import sys
 sys.path.insert(0, '.')
 
-from naming_validator import (
+from tools.maintenance.naming_validator import (
     AdjectiveDetector, 
     NamingConventionValidator, 
     NamingViolation, 

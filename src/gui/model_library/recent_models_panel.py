@@ -34,8 +34,8 @@ class RecentModelsPanel(QGroupBox):
         self.setObjectName("RecentModelsPanel")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(8)
 
         description = QLabel(
             "Double-click to reopen a model. Click the star to pin favorites "
@@ -43,6 +43,7 @@ class RecentModelsPanel(QGroupBox):
         )
         description.setWordWrap(True)
         layout.addWidget(description)
+        description.setStyleSheet("padding-bottom: 4px;")
 
         self.empty_label = QLabel("No models opened yet.")
         self.empty_label.setAlignment(Qt.AlignCenter)
@@ -51,6 +52,8 @@ class RecentModelsPanel(QGroupBox):
         self.list_widget = QListWidget()
         self.list_widget.setAlternatingRowColors(True)
         self.list_widget.setUniformItemSizes(True)
+        self.list_widget.setSpacing(2)
+        self.list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.list_widget.itemDoubleClicked.connect(self._on_item_double_clicked)
 
         layout.addWidget(self.list_widget)

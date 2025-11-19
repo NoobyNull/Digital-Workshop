@@ -1,218 +1,97 @@
 # Import Components Package
 
-Comprehensive UI components for the 3D model import process.
+Source: `src/gui/import_components/`  
+This package contains the UI+threading glue that powers Digital Workshop’s multi-file import workflow.
+
+---
 
 ## Components
 
-### ImportDialog
+| Name | File | Role |
+| --- | --- | --- |
+| `ImportDialog` | `import_dialog.py` | Rich PySide6 dialog that orchestrates file selection, validation, progress, and result summaries. |
+| `ImportWorker` | `import_worker.py` (spawned inside `import_dialog.py`) | Runs the import pipeline on a background thread so the UI stays responsive. |
+| `ImportFileManager` bridge | `import_dialog.py` → `src/core/import_file_manager.py` | Validates files, deduplicates with FastHasher, copies/links into managed storage. |
+| `ImportThumbnailService` | `src/core/services/import_thumbnail_service.py` | Generates VTK thumbnails off the GUI thread. |
+| `ImportAnalysisService` | `src/core/services/import_analysis_service.py` | Computes geometry metrics + insights. |
 
-Main dialog for importing 3D models with full-featured UI:
+---
 
-- **File Selection**: Drag-and-drop support for files and folders
-- **File Management**: "Keep Organized" vs "Leave in Place" modes
-- **Progress Tracking**: Multi-stage progress with real-time updates
-- **Background Processing**: Thumbnails, analysis, and hashing
-- **Cancellation**: Safe cancellation at any point
-- **Results Summary**: Detailed import statistics
+## User Flow
 
-### ImportWorker
+1. User launches `ImportDialog` (from toolbar/menu).
+2. Files drop in via drag/drop or file picker.
+3. Options selected (Keep Organized vs Leave in Place, background analysis, etc.).
+4. Dialog spawns `ImportWorker` (`QThread`), hands it a serialized job.
+5. Worker runs the pipeline, emitting stage + file progress.
+6. Dialog surfaces live progress, errors, and the final `ImportResult`.
+7. On completion, project tree updates automatically via the event bus.
 
-Background thread worker that handles all import operations:
+---
 
-- Non-blocking import processing
-- Progress signal emissions
-- Cancellation support
-- Service integration (FileManager, ThumbnailService, AnalysisService)
-
-## Quick Start
+## API Snapshot
 
 ```python
 from src.gui.import_components import ImportDialog
 
-# Create and show dialog
 dialog = ImportDialog(parent=main_window)
+dialog.set_project_context(project_id=current_project.id)
 
-if dialog.exec() == ImportDialog.Accepted:
+if dialog.exec() == dialog.Accepted:
     result = dialog.get_import_result()
-    print(f"Imported {result.processed_files} files")
+    print(result.processed_files, result.failures)
 ```
 
-## Features
+- `set_project_context` ensures “Keep Organized” knows where to copy files.
+- `get_import_result()` returns counts, warnings, errors, and a list of `ImportSessionItem` objects for analytics.
 
-### File Selection
+---
 
-- **Manual Selection**: Browse for files or folders
-- **Drag-and-Drop**: Drag files/folders directly onto dialog
-- **Supported Formats**: STL, OBJ, STEP, 3MF, PLY
-- **Batch Import**: Import multiple files at once
-- **File List Management**: Add, remove, clear files
+## Progress Model
 
-### File Management Modes
+Import stages run sequentially; the worker emits `(stage, percent, file_name)`:
 
-#### Keep Organized Mode
-- Copies files to managed directory
-- Organized by file type
-- Hash-based naming to prevent conflicts
-- Requires root directory selection
+1. **Validation** – format detection, file-access checks.
+2. **Hashing** – `FastHasher` dedup + naming.
+3. **Copy/Link** – copy to managed storage or register “leave in place”.
+4. **Thumbnails** – `ImportThumbnailService` offscreen renders.
+5. **Analysis** – optional, controlled via checkbox.
 
-#### Leave in Place Mode
-- Tracks files in original locations
-- No file copying
-- Best for project-based workflows
+Each stage writes structured logs so `logs/import/*.jsonl` can be replayed.
 
-### Progress Tracking
-
-**Multi-Stage Progress:**
-1. Validation - File and settings validation
-2. Hashing - Fast hash calculation for deduplication
-3. Copying - File copying (organized mode only)
-4. Thumbnails - Thumbnail generation
-5. Analysis - Background geometry analysis
-
-**Progress Displays:**
-- Overall progress bar (all files)
-- Current file progress bar
-- Stage indicator with elapsed time
-- Detailed progress log with timestamps
-
-### Background Services
-
-**FastHasher Integration:**
-- xxHash128 for optimal performance
-- Progress callbacks during hashing
-- Cancellation support
-
-**ImportFileManager Integration:**
-- File validation and management
-- Session tracking for rollback
-- Duplicate detection
-- Error recovery
-
-**ImportThumbnailService Integration:**
-- Hash-based thumbnail naming
-- Cache management
-- Progressive generation
-- VTK offscreen rendering
-
-**ImportAnalysisService Integration:**
-- Background geometry analysis
-- Non-blocking analysis
-- Detailed geometry metrics
-- Batch processing support
-
-## Architecture
-
-```
-ImportDialog (QDialog)
-    │
-    ├── UI Components
-    │   ├── File Selection Section
-    │   │   ├── File list widget
-    │   │   ├── Add files/folder buttons
-    │   │   └── Drag-and-drop support
-    │   │
-    │   ├── Options Section
-    │   │   ├── File management mode radio buttons
-    │   │   ├── Root directory selection
-    │   │   ├── Thumbnail generation checkbox
-    │   │   └── Background analysis checkbox
-    │   │
-    │   └── Progress Section
-    │       ├── Overall progress bar
-    │       ├── File progress bar
-    │       ├── Stage indicator
-    │       └── Progress log
-    │
-    └── ImportWorker (QThread)
-        ├── ImportFileManager
-        │   └── FastHasher
-        ├── ImportThumbnailService
-        │   └── ThumbnailGenerator
-        └── ImportAnalysisService
-            └── Parser (STL, OBJ, etc.)
-```
+---
 
 ## Error Handling
 
-**File Access Errors:**
-- Permission denied → Skip file, continue
-- File not found → Warning, skip file
-- Disk full → Error, stop import
+- Permission denials and missing files are downgraded to warnings (import continues).
+- Hashing, thumbnail, and analysis exceptions are logged per file; the worker never crashes the thread.
+- Fatal errors surface in the dialog header with remediation hints.
+- A cancellation token stops the worker within the current chunk so the dialog unlocks quickly.
 
-**Validation Errors:**
-- Invalid root directory → Error message
-- No write permission → Error message
-- Not configured root → Error message
-
-**Processing Errors:**
-- Hash failure → Warning, skip file
-- Thumbnail failure → Warning, continue
-- Analysis failure → Warning, continue
-
-## Performance
-
-**Responsive UI:**
-- All heavy operations in background thread
-- Never blocks UI thread
-- Smooth progress updates
-- Immediate user interaction
-
-**Memory Efficient:**
-- Stream-based file processing
-- Chunked reading (1MB chunks)
-- Automatic cleanup
-- Resource management
-
-**Fast Processing:**
-- Files < 100MB: Hash in < 1s
-- Files 100-500MB: Hash in < 3s
-- Files > 500MB: Hash in < 5s
-- Parallel processing support
-
-## Accessibility
-
-**Keyboard Navigation:**
-- Full keyboard accessibility
-- Tab order follows logical flow
-- Keyboard shortcuts supported
-
-**Screen Reader Support:**
-- ARIA labels for all controls
-- Progress announcements
-- Error message accessibility
-
-**Visual Accessibility:**
-- High contrast support
-- Clear visual hierarchy
-- Adequate font sizes
-- Tooltips for all buttons
+---
 
 ## Testing
 
-Run the test script:
+| Test | Coverage |
+| --- | --- |
+| `tests/test_import_file_manager.py` | Validation, dedup, storage policies. |
+| `tests/test_import_thumbnail_service.py` | Thumbnail generation and cache behavior. |
+| `tests/test_import_analysis_service.py` | Geometry metrics and background processing. |
+| `tests/test_import_settings.py` | User preference handling (Keep Organized roots, toggles). |
 
-```bash
-python test_import_dialog.py
-```
+Manual smoke: run the app, import a mix of STL/OBJ/STEP files, toggle background analysis, and verify Project Manager receives the new entries instantly.
 
-## Documentation
+---
 
-See [`IMPORT_DIALOG_GUIDE.md`](../../../documentation/IMPORT_DIALOG_GUIDE.md) for:
-- Detailed usage examples
-- Integration guide
-- Troubleshooting
-- Best practices
+## Extending
 
-## Requirements
+1. Add new options to `ImportDialog` ➜ wire them into the job payload.
+2. Update `ImportWorker` to consume the option and notify downstream services.
+3. Register any new telemetry fields inside `src/core/import_pipeline/pipeline_coordinator.py`.
+4. Extend `tests/test_import_*` to cover the new branch.
+5. Document the feature in `docs/features/import_pipeline/*.md`.
 
-- PySide6 >= 6.0.0
-- Python >= 3.8
-- Backend services:
-  - FastHasher
-  - ImportFileManager
-  - ImportThumbnailService
-  - ImportAnalysisService
+---
 
-## License
-
-Copyright (c) 2024 3D Model Manager Project
+**Owner:** Import Platform (`imports@digitalworkshop.app`)  
+**Status:** Production (Beta customers exercise it daily)

@@ -13,7 +13,7 @@ Essential Files Status:
 - pyproject.toml: PRESENT 
 - requirements.txt: PRESENT 
 - run.py: PRESENT 
-- build.py: PRESENT 
+- build_system/build.py: PRESENT 
  
 Cleanup completed successfully 
 Backup available at: ..\digital-workshop-backup-20251031-213805 

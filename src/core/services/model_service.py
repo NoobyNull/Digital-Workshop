@@ -288,7 +288,6 @@ class ModelService(IModelService):
         """
 
         def progress_callback(progress: float) -> None:
-            """TODO: Add docstring."""
             if model_id in self._progress_callbacks:
                 try:
                     self._progress_callbacks[model_id](progress)

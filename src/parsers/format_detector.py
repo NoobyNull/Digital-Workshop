@@ -321,3 +321,16 @@ class FormatDetector:
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
+
+
+class RefactoredFormatDetector(FormatDetector):
+    """
+    Thin compatibility layer used by the refactored parser test-suite.
+
+    It extends :class:`FormatDetector` but returns ``None`` instead of
+    :data:`ModelFormat.UNKNOWN` so the tests can easily detect failures.
+    """
+
+    def detect_format(self, file_path: Path):
+        detected = super().detect_format(file_path)
+        return None if detected == ModelFormat.UNKNOWN else detected

@@ -8,11 +8,11 @@ Traces:
 - Function/method calls (obj.method())
 
 Usage:
-    python tracer.py trace VTKWidget
-    python tracer.py trace main.py
-    python tracer.py trace src.gui.main_window
-    python tracer.py update
-    python tracer.py interactive
+    python tools/maintenance/tracer.py trace VTKWidget
+    python tools/maintenance/tracer.py trace main.py
+    python tools/maintenance/tracer.py trace src.gui.main_window
+    python tools/maintenance/tracer.py update
+    python tools/maintenance/tracer.py interactive
 """
 
 import os

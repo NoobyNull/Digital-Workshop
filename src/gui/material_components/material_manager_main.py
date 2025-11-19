@@ -24,7 +24,6 @@ from src.core.material_provider import MaterialProvider
 
 
 class MaterialManager:
-    """TODO: Add docstring."""
 
     def __init__(self, database_manager) -> None:
         """Initialize with database manager reference"""

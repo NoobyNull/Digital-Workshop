@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.database_manager import get_database_manager
+from src.core.materials import wood_catalog
 from src.core.logging_config import get_logger
 from src.core.services.file_type_registry import get_tab_for_extension
 from src.utils.file_hash import calculate_file_hash
@@ -49,11 +50,12 @@ class ProjectDetailsWidget(QWidget):
     """
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.current_model_id: Optional[int] = None
         self.current_model_data: Optional[Dict[str, Any]] = None
+        self.current_project_id: Optional[str] = None
+        self.db_manager = get_database_manager()
 
         self._init_ui()
 
@@ -71,6 +73,10 @@ class ProjectDetailsWidget(QWidget):
         scroll_layout = QVBoxLayout(scroll_widget)
         scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_layout.setSpacing(12)
+
+        # Project material section
+        self.project_material_group = self._create_project_material_section()
+        scroll_layout.addWidget(self.project_material_group)
 
         # Model Information Section
         self.model_info_group = self._create_model_info_section()
@@ -121,6 +127,24 @@ class ProjectDetailsWidget(QWidget):
 
         return group
 
+    def _create_project_material_section(self) -> QGroupBox:
+        """Create a section for project-level material selection."""
+        group = QGroupBox("Project Material")
+        layout = QVBoxLayout(group)
+        layout.setSpacing(6)
+
+        self.material_combo = QComboBox()
+        self.material_combo.setEditable(False)
+        self.material_combo.currentIndexChanged.connect(self._on_material_changed)
+        layout.addWidget(self.material_combo)
+
+        self.material_label = QLabel("No material selected")
+        self.material_label.setWordWrap(True)
+        layout.addWidget(self.material_label)
+
+        self._populate_materials()
+        return group
+
     def _create_resources_section(self) -> QGroupBox:
         """Create the resources/files section."""
         group = QGroupBox("Attached Resources")
@@ -165,6 +189,13 @@ class ProjectDetailsWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set model: %s", e)
             self.clear()
+        # Ensure widget is visible in its dock when data arrives
+        try:
+            parent_dock = self.parentWidget()
+            if parent_dock and hasattr(parent_dock, "show"):
+                parent_dock.show()
+        except Exception:
+            pass
 
     def _update_model_info(self, model_data: Dict[str, Any]) -> None:
         """Update model information display."""
@@ -213,7 +244,6 @@ class ProjectDetailsWidget(QWidget):
             if file_path.exists():
                 self._add_resource_row(file_path)
 
-            # TODO: Add support for related files (textures, materials, etc.)
             # This would require additional database schema to track related files
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -253,6 +283,75 @@ class ProjectDetailsWidget(QWidget):
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add resource row: %s", e)
+
+    def _populate_materials(self) -> None:
+        """Populate material combo with wood catalog entries."""
+        try:
+            self.material_combo.blockSignals(True)
+            self.material_combo.clear()
+            for material in wood_catalog.iter_materials():
+                label = f"{material.name} ({material.janka_lbf} lbf)"
+                self.material_combo.addItem(label, material)
+            if self.material_combo.count() > 0:
+                self.material_combo.setCurrentIndex(0)
+            self.material_combo.blockSignals(False)
+            self._update_material_label()
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.debug("Failed to populate materials: %s", exc)
+
+    def set_project_context(self, project_id: Optional[str]) -> None:
+        """Set the active project for material persistence."""
+        self.current_project_id = project_id
+        if not self.db_manager or not project_id:
+            return
+        try:
+            project = self.db_manager.get_project(project_id)
+            if project:
+                material_name = project.get("material_name") or project.get("material_tag") or ""
+                self._select_material(material_name)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.debug("Failed to set project context material: %s", exc)
+
+    def _select_material(self, name: str) -> None:
+        """Select a material in the combo by name or alias."""
+        target = wood_catalog.find_wood(name) if name else None
+        if target is None:
+            self._update_material_label()
+            return
+        for idx in range(self.material_combo.count()):
+            data = self.material_combo.itemData(idx)
+            if isinstance(data, wood_catalog.WoodMaterial) and data.name == target.name:
+                self.material_combo.blockSignals(True)
+                self.material_combo.setCurrentIndex(idx)
+                self.material_combo.blockSignals(False)
+                self._update_material_label()
+                break
+
+    def _on_material_changed(self, _index: int) -> None:
+        """Persist project material selection if a project is active."""
+        material = self.material_combo.currentData()
+        self._update_material_label()
+        if not self.db_manager or not self.current_project_id:
+            return
+        if isinstance(material, wood_catalog.WoodMaterial):
+            try:
+                self.db_manager.update_project(
+                    self.current_project_id,
+                    material_name=material.name,
+                    material_tag=material.name,
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.debug("Failed to persist project material: %s", exc)
+
+    def _update_material_label(self) -> None:
+        """Update helper label for selected material."""
+        material = self.material_combo.currentData()
+        if isinstance(material, wood_catalog.WoodMaterial):
+            self.material_label.setText(
+                f"Selected: {material.name} | Janka {material.janka_lbf} lbf | SG {material.specific_gravity:.2f}"
+            )
+        else:
+            self.material_label.setText("No material selected")
 
     def _on_resource_activated(self, item: QTableWidgetItem) -> None:
         """Handle double-click on a resource row to open it in the appropriate tab."""

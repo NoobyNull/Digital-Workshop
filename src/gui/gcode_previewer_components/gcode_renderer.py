@@ -161,9 +161,6 @@ class GcodeRenderer:
                 self.renderer.AddActor(actor)
                 self.actors[move_type] = actor
 
-        # Add axes
-        self.add_axes()
-
         # Reset camera
         self.renderer.ResetCamera()
 
@@ -194,16 +191,8 @@ class GcodeRenderer:
         return actor
 
     def add_axes(self) -> None:
-        """Add coordinate axes to the scene."""
-        axes = self.vtk.vtkAxesActor()
-        axes.SetScale(10.0)
-
-        # Create a transform to position the axes
-        transform = self.vtk.vtkTransform()
-        transform.Translate(0, 0, 0)
-        axes.SetUserTransform(transform)
-
-        self.renderer.AddActor(axes)
+        """Add coordinate axes to the scene (disabled in favor of corner marker)."""
+        return
 
     def get_renderer(self) -> None:
         """Get the VTK renderer."""

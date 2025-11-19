@@ -290,7 +290,6 @@ class ImportCoordinatorWorker(QThread):
 
             # Create progress callback
             def file_progress(message: str, percent: int) -> None:
-                """TODO: Add docstring."""
                 progress = ImportProgress(
                     stage=ImportWorkflowStage.HASHING,
                     overall_percent=(idx / total_files) * 100,
@@ -459,7 +458,6 @@ class ImportCoordinatorWorker(QThread):
         stored_models = []
 
         try:
-            # TODO: Implement actual database storage
             # For now, just prepare the data structure
             for file_info in processed_files:
                 if file_info.import_status == "completed":

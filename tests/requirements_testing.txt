@@ -34,7 +34,7 @@ bandit>=1.7.0
 pre-commit>=2.20.0
 tox>=4.0.0
 
-# Note: The monolithic_detector.py itself uses only built-in Python modules:
+# Note: The tools/maintenance/monolithic_detector.py module uses only built-in Python modules:
 # - ast (built-in)
 # - json (built-in)
 # - logging (built-in)

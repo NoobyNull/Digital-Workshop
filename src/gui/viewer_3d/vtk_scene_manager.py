@@ -430,6 +430,19 @@ class VTKSceneManager:
         """Reset camera to default position."""
         if self.renderer:
             self.renderer.ResetCamera()
+            # Apply 10% padding by dollying back slightly
+            cam = self.renderer.GetActiveCamera()
+            try:
+                bounds = self.renderer.ComputeVisiblePropBounds()
+                if bounds and len(bounds) == 6:
+                    dx = bounds[1] - bounds[0]
+                    dy = bounds[3] - bounds[2]
+                    dz = bounds[5] - bounds[4]
+                    radius = max(dx, dy, dz) * 0.5
+                    if radius > 0:
+                        cam.Dolly(0.9)  # zoom out ~10%
+            except Exception:
+                pass
             self.render()
 
     def cleanup(self) -> None:

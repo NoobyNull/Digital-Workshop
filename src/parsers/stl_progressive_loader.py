@@ -44,7 +44,6 @@ class LODConfig:
     max_triangles_per_level: Dict[LODLevel, int] = None
 
     def __post_init__(self) -> None:
-        """TODO: Add docstring."""
         if self.levels is None:
             self.levels = [
                 LODLevel.ULTRA_LOW,
@@ -83,7 +82,6 @@ class LODModel:
     lod_stats: Dict[LODLevel, Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
-        """TODO: Add docstring."""
         if self.lod_stats is None:
             self.lod_stats = {}
 

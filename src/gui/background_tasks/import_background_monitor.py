@@ -31,7 +31,7 @@ class ImportBackgroundMonitor(QObject):
         worker.import_cancelled.connect(self._on_import_cancelled)
         worker.import_failed.connect(self._on_import_failed)
 
-        self._show_status("Import running in background…")
+        self._show_status("Import running in background...")
 
     # ------------------------------------------------------------------ helpers
     def _status_bar(self):
@@ -58,7 +58,7 @@ class ImportBackgroundMonitor(QObject):
         percent = self._percent
 
         detail = self._last_message or stage
-        text = f"Importing models ({detail}) – {current}/{total} ({percent}%)"
+        text = f"Importing models ({detail}) - {current}/{total} ({percent}%)"
         self._show_status(text)
 
     # ------------------------------------------------------------------ slots

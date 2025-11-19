@@ -34,6 +34,10 @@ class MachineRepository:
         name: str,
         max_feed_mm_min: float,
         accel_mm_s2: float,
+        drive_type: Optional[str] = "ball_screw",
+        max_spindle_rpm: Optional[float] = None,
+        max_bit_diameter_mm: Optional[float] = None,
+        spindle_power_w: Optional[float] = None,
         notes: Optional[str] = None,
         is_default: bool = False,
     ) -> int:
@@ -48,10 +52,23 @@ class MachineRepository:
                 cursor.execute(
                     """
                     INSERT INTO machines (
-                        name, max_feed_mm_min, accel_mm_s2, notes, is_default
-                    ) VALUES (?, ?, ?, ?, ?)
+                        name, max_feed_mm_min, accel_mm_s2,
+                        drive_type,
+                        max_spindle_rpm, max_bit_diameter_mm, spindle_power_w,
+                        notes, is_default
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (name, max_feed_mm_min, accel_mm_s2, notes, int(is_default)),
+                    (
+                        name,
+                        max_feed_mm_min,
+                        accel_mm_s2,
+                        drive_type,
+                        max_spindle_rpm,
+                        max_bit_diameter_mm,
+                        spindle_power_w,
+                        notes,
+                        int(is_default),
+                    ),
                 )
                 machine_id = cursor.lastrowid
                 conn.commit()
@@ -131,6 +148,10 @@ class MachineRepository:
         name: Optional[str] = None,
         max_feed_mm_min: Optional[float] = None,
         accel_mm_s2: Optional[float] = None,
+        drive_type: Optional[str] = None,
+        max_spindle_rpm: Optional[float] = None,
+        max_bit_diameter_mm: Optional[float] = None,
+        spindle_power_w: Optional[float] = None,
         notes: Optional[str] = None,
         is_default: Optional[bool] = None,
     ) -> bool:
@@ -152,6 +173,18 @@ class MachineRepository:
                 if accel_mm_s2 is not None:
                     updates.append("accel_mm_s2 = ?")
                     params.append(accel_mm_s2)
+                if drive_type is not None:
+                    updates.append("drive_type = ?")
+                    params.append(drive_type)
+                if max_spindle_rpm is not None:
+                    updates.append("max_spindle_rpm = ?")
+                    params.append(max_spindle_rpm)
+                if max_bit_diameter_mm is not None:
+                    updates.append("max_bit_diameter_mm = ?")
+                    params.append(max_bit_diameter_mm)
+                if spindle_power_w is not None:
+                    updates.append("spindle_power_w = ?")
+                    params.append(spindle_power_w)
                 if notes is not None:
                     updates.append("notes = ?")
                     params.append(notes)

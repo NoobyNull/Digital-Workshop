@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.logging_config import get_logger, get_activity_logger
+from src.core.fast_hasher import FastHasher
 from src.core.database_manager import get_database_manager
 from src.core.data_structures import ModelFormat
 from src.core.model_cache import get_model_cache, CacheLevel
@@ -40,6 +41,8 @@ from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
 from src.gui.window.dock_snapping import DockDragHandler, SnapOverlayLayer
 from src.gui.project_details_widget import ProjectDetailsWidget
+from src.core.deduplication_manager import DeduplicationManager
+from src.gui.deduplication_dialog import DeduplicationDialog
 from src.gui.theme import MIN_WIDGET_SIZE
 from src.gui.main_window_components.project_manager_controller import ProjectManagerController
 from src.gui.main_window_components.model_viewer_controller import ModelViewerController
@@ -182,10 +185,24 @@ class MainWindow(QMainWindow):
         self.menu_manager = MenuManager(self, self.logger)
         self.toolbar_manager = ToolbarManager(self, self.logger)
         self.status_bar_manager = StatusBarManager(self, self.logger)
+        self.dedup_manager = DeduplicationManager(get_database_manager())
 
         self.menu_manager.setup_menu_bar()
         self.toolbar_manager.setup_toolbar()
         self.status_bar_manager.setup_status_bar()
+        # Ensure menubar is not obscured by toolbars
+        try:
+            self.menuBar().raise_()
+            self.menuBar().setContentsMargins(4, 6, 4, 2)
+            self.menuBar().setStyleSheet("QMenuBar { padding-left: 6px; padding-right: 6px; }")
+        except Exception:
+            pass
+        # Drop toolbars slightly below the menubar hit area
+        try:
+            if hasattr(self.toolbar_manager, "toolbar") and self.toolbar_manager.toolbar:
+                self.toolbar_manager.toolbar.setContentsMargins(4, 4, 4, 4)
+        except Exception:
+            pass
 
         # Expose theme button for easy access
         self.theme_button = self.status_bar_manager.theme_button
@@ -198,6 +215,7 @@ class MainWindow(QMainWindow):
         self.progress_bar = self.status_bar_manager.progress_bar
         self.hash_indicator = self.status_bar_manager.hash_indicator
         self.memory_label = self.status_bar_manager.memory_label
+        self.library_rebuild_service = None
 
         # Expose menu manager actions for easy access
         self.toggle_layout_edit_action = self.menu_manager.toggle_layout_edit_action
@@ -397,6 +415,10 @@ class MainWindow(QMainWindow):
                 if hasattr(self.model_library_widget, "import_requested"):
                     self.model_library_widget.import_requested.connect(
                         self._on_model_library_import_requested
+                    )
+                if hasattr(self.model_library_widget, "import_url_requested"):
+                    self.model_library_widget.import_url_requested.connect(
+                        self._open_import_from_url_dialog
                     )
 
                 self.model_library_dock.setWidget(self.model_library_widget)
@@ -679,6 +701,12 @@ class MainWindow(QMainWindow):
                     continue
                 if not dock.isVisible():
                     dock.show()
+                try:
+                    # Guard against zero-width docks that look "invisible"
+                    if dock.width() < MIN_WIDGET_SIZE // 2:
+                        self.resizeDocks([dock], [max(MIN_WIDGET_SIZE, 320)], Qt.Horizontal)
+                except Exception:
+                    pass
                 try:
                     dock.raise_()
                 except Exception:
@@ -1659,8 +1687,6 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
-        # TODO: Add material roughness/metallic sliders in picker
-        # TODO: Add export material presets feature
 
     def _on_model_imported_during_import(self, model_id: int) -> None:
         """
@@ -1778,6 +1804,109 @@ class MainWindow(QMainWindow):
                 "Import Error",
                 f"Failed to open import dialog:\n\n{str(e)}",
             )
+
+    def _open_import_from_url_dialog(self) -> None:
+        """Open the URL importer dialog."""
+
+        try:
+            from src.gui.import_components.url_import_dialog import UrlImportDialog
+
+            dialog = UrlImportDialog(self)
+            dialog.exec()
+        except Exception as exc:
+            self.logger.error("Failed to open Import from URL dialog: %s", exc, exc_info=True)
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to open Import from URL dialog:\n\n{exc}",
+            )
+
+    def _start_library_rebuild(self) -> None:
+        """Kick off the managed library rebuild workflow."""
+
+        try:
+            from src.gui.background_tasks.library_rebuild_service import LibraryRebuildService
+
+            if self.library_rebuild_service is None:
+                self.library_rebuild_service = LibraryRebuildService(self)
+            self.library_rebuild_service.start()
+        except Exception as exc:
+            self.logger.error("Failed to start managed library rebuild: %s", exc, exc_info=True)
+            QMessageBox.critical(
+                self,
+                "Rebuild Error",
+                f"Failed to start managed library rebuild:\n\n{exc}",
+            )
+
+    def _backfill_thumbnails_library(self) -> None:
+        """Generate thumbnails for any model in the database missing one (entire library)."""
+        try:
+            db_manager = get_database_manager()
+            models = db_manager.get_all_models()
+            missing = [m for m in models if not m.get("thumbnail_path")]
+            if not missing:
+                QMessageBox.information(self, "Thumbnails", "All models already have thumbnails.")
+                return
+
+            from src.core.import_thumbnail_service import ImportThumbnailService
+            service = ImportThumbnailService()
+
+            for idx, m in enumerate(missing, 1):
+                file_path = m.get("file_path")
+                if not file_path or not Path(file_path).exists():
+                    continue
+                try:
+                    hasher = FastHasher()
+                    hash_result = hasher.hash_file(file_path)
+                    file_hash = hash_result.hash_value if hash_result.success else None
+                    if not file_hash:
+                        continue
+                    service.generate_thumbnail(
+                        model_path=file_path,
+                        file_hash=file_hash,
+                        material="default",
+                        background=None,
+                        force_regenerate=False,
+                    )
+                except Exception as exc:  # pragma: no cover - best effort
+                    self.logger.debug("Thumbnail backfill failed for %s: %s", file_path, exc)
+                if idx % 10 == 0:
+                    self.statusBar().showMessage(
+                        f"Backfilling thumbnails ({idx}/{len(missing)})", 2000
+                    )
+
+            self.statusBar().showMessage("Thumbnail backfill complete", 3000)
+            QMessageBox.information(
+                self, "Thumbnails", f"Backfilled thumbnails for {len(missing)} model(s)."
+            )
+            # Refresh model library if present
+            if hasattr(self, "model_library_widget"):
+                self.model_library_widget._refresh_model_display()
+        except Exception as exc:
+            self.logger.error("Thumbnail backfill failed: %s", exc, exc_info=True)
+            QMessageBox.critical(self, "Thumbnails", f"Backfill failed:\n{exc}")
+
+    def _scan_duplicates(self) -> None:
+        """Run duplicate scan and let the user resolve collisions."""
+        try:
+            duplicates = self.dedup_manager.find_all_duplicates()
+            total_dups = sum(len(group) - 1 for group in duplicates.values())
+            if total_dups <= 0:
+                QMessageBox.information(self, "Duplicates", "No duplicate models found.")
+                return
+
+            for models in duplicates.values():
+                dialog = DeduplicationDialog(models, self)
+                if dialog.exec() == DeduplicationDialog.Accepted:
+                    strategy = dialog.get_keep_strategy()
+                    if strategy:
+                        self.dedup_manager.deduplicate_group(models, strategy)
+            QMessageBox.information(
+                self, "Duplicates", "Duplicate scan completed. Refresh the library to see changes."
+            )
+        except Exception as exc:
+            QMessageBox.critical(self, "Duplicate Scan Failed", str(exc))
+            self.logger.error("Duplicate scan failed: %s", exc)
 
     # Menu action handlers
 
@@ -2742,6 +2871,11 @@ class MainWindow(QMainWindow):
     def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
         """Register a dock widget for snapping + context controls."""
         try:
+            # Allow bypassing snapping for freer placement (default: disabled)
+            settings = QSettings()
+            if not settings.value("dock_snapping/enabled", False, type=bool):
+                return
+
             dock.setAllowedAreas(
                 Qt.LeftDockWidgetArea
                 | Qt.RightDockWidgetArea

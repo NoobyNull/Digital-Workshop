@@ -52,6 +52,7 @@ def create_pipeline(
     db_manager,
     thumbnail_generator,
     thread_pool=None,
+    max_workers: int | None = None,
 ) -> PipelineCoordinator:
     """
     Factory function to create a complete import pipeline.
@@ -60,6 +61,7 @@ def create_pipeline(
         db_manager: DatabaseManager instance
         thumbnail_generator: ThumbnailGenerator instance
         thread_pool: Optional QThreadPool for async operations
+        max_workers: Maximum number of tasks processed in parallel
 
     Returns:
         Configured PipelineCoordinator ready to execute
@@ -80,6 +82,7 @@ def create_pipeline(
         stages=stages,
         resume_detector=resume_detector,
         thread_pool=thread_pool,
+        max_workers=max_workers or 1,
     )
 
 

@@ -58,7 +58,7 @@ def quick_build():
         return False
     
     # Clean previous builds
-    if not run_command("python build_exe.py", "Cleaning and building"):
+    if not run_command("python build_system/build_exe.py", "Cleaning and building"):
         return False
     
     # Verify build
@@ -84,7 +84,7 @@ def full_build():
         print("⚠️ Tests failed, but continuing with build...")
     
     # Build
-    if not run_command("python build_exe.py", "Building application"):
+    if not run_command("python build_system/build_exe.py", "Building application"):
         return False
     
     # Verify build

@@ -18,6 +18,7 @@ Example:
 """
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional, List, Tuple
 from enum import Enum
@@ -47,12 +48,15 @@ from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
 from src.core.application_config import ApplicationConfig
 from src.core.services.library_settings import LibraryMode, LibrarySettings
+from src.core.services.import_settings import ImportSettings
 from src.core.root_folder_manager import RootFolderManager
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
     DuplicateAction,
     ImportResult,
+    ImportFileInfo,
+    ImportSession,
 )
 from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
@@ -131,6 +135,7 @@ class ImportWorker(QThread):
 
         # Initialize services
         self.file_manager = ImportFileManager()
+        self.import_settings = ImportSettings()
         self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
         self.analysis_service = ImportAnalysisService() if run_analysis else None
 
@@ -165,7 +170,6 @@ class ImportWorker(QThread):
                 self.stage_changed.emit("hashing", f"Processing {file_name}...")
 
                 def file_progress_callback(message, percent) -> None:
-                    """TODO: Add docstring."""
                     self.file_progress.emit(file_name, percent, message)
 
                 success, error = self.file_manager.process_file(
@@ -319,6 +323,7 @@ class PipelineImportWorker(QThread):
 
         # Initialize file manager for session management
         self.file_manager = ImportFileManager()
+        self.import_settings = ImportSettings()
 
         # Track pipeline results
         self.session = None
@@ -366,46 +371,20 @@ class PipelineImportWorker(QThread):
                 self._cancel_requested,
             )
 
-            self.logger.info("Preparing %d files for import (file management stage)", total_files)
-
-            # === Pre-pipeline file management (hashing + KEEP_ORGANIZED copies) ===
-            processed_any = False
-            for idx, file_info in enumerate(session.files):
-                if self._cancel_requested:
-                    self.logger.info(
-                        "Cancellation requested before processing file index %d; stopping preparation loop",
-                        idx,
-                    )
-                    break
-
-                file_name = Path(file_info.original_path).name
-
-                # Report preparation progress to the UI
-                self.stage_changed.emit("hashing", f"Processing {file_name}...")
-
-                def file_progress_callback(message: str, percent: int) -> None:
-                    """Forward per-file progress to the dialog."""
-                    self.file_progress.emit(file_name, percent, message)
-
-                success, error = self.file_manager.process_file(
-                    file_info,
-                    session,
-                    progress_callback=file_progress_callback,
-                    cancellation_token=self.cancellation_token,
-                )
-
-                if not success:
-                    self.logger.warning("Failed to process %s: %s", file_name, error)
-                    continue
-
-                processed_any = True
+            concurrency = self.import_settings.get_concurrency()
+            self.logger.info(
+                "Preparing %d files with up to %s workers",
+                total_files,
+                concurrency.prep_workers,
+            )
+            prepared_count = self._prepare_files_concurrently(session, concurrency.prep_workers)
 
             if self._cancel_requested:
                 self.logger.info("Import cancelled during file preparation")
                 self._emit_cancelled_result("Import cancelled during file preparation")
                 return
 
-            if not processed_any:
+            if prepared_count == 0:
                 self.logger.warning("No files could be prepared for pipeline import")
                 self.import_failed.emit("No valid files to import after preparation")
                 return
@@ -413,7 +392,12 @@ class PipelineImportWorker(QThread):
             # Create pipeline
             db_manager = get_database_manager()
             thumbnail_generator = ThumbnailGenerator()
-            pipeline = create_pipeline(db_manager, thumbnail_generator)
+            pipeline_workers = max(1, min(concurrency.queue_limit, concurrency.thumbnail_workers))
+            pipeline = create_pipeline(
+                db_manager,
+                thumbnail_generator,
+                max_workers=pipeline_workers,
+            )
             self._pipeline = pipeline
 
             # Connect pipeline signals
@@ -461,6 +445,60 @@ class PipelineImportWorker(QThread):
         except Exception as e:  # pragma: no cover - defensive logging
             self.logger.error("Pipeline import failed: %s", e, exc_info=True)
             self.import_failed.emit(str(e))
+
+    def _prepare_files_concurrently(self, session: ImportSession, max_workers: int) -> int:
+        """Hash and copy files using multiple workers."""
+
+        max_workers = max(1, int(max_workers))
+        self.stage_changed.emit("hashing", "Preparing files...")
+        prepared_count = 0
+        processed_count = 0
+        total_files = len(session.files)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(self._prepare_single_file, file_info, session)
+                for file_info in session.files
+            ]
+
+            for future in as_completed(futures):
+                success, message = future.result()
+                processed_count += 1
+                if success:
+                    prepared_count += 1
+                elif message and message != "cancelled":
+                    self.logger.warning("Failed to prepare file: %s", message)
+
+                percent = int((processed_count / total_files) * 100) if total_files else 0
+                self.overall_progress.emit(processed_count, total_files, percent)
+
+                if self._cancel_requested:
+                    break
+
+        return prepared_count
+
+    def _prepare_single_file(
+        self, file_info: ImportFileInfo, session: ImportSession
+    ) -> Tuple[bool, Optional[str]]:
+        """Prepare a single file for import."""
+
+        if self._cancel_requested or self.cancellation_token.is_cancelled():
+            return False, "cancelled"
+
+        file_name = Path(file_info.original_path).name
+
+        def file_progress_callback(message: str, percent: int) -> None:
+            self.file_progress.emit(file_name, percent, message)
+
+        success, error = self.file_manager.process_file(
+            file_info,
+            session,
+            progress_callback=file_progress_callback,
+            cancellation_token=self.cancellation_token,
+        )
+        if success:
+            return True, None
+        return False, error
 
     def _on_pipeline_started(self, total_tasks: int) -> None:
         """Handle pipeline started signal and initialize overall progress."""
@@ -637,8 +675,9 @@ class ImportDialog(QDialog):
     def _setup_ui(self) -> None:
         """Setup the dialog user interface."""
         self.setWindowTitle("Import 3D Models")
-        self.setMinimumSize(800, 600)
-        self.resize(900, 700)
+        # Default to the attached reference image height (820x768) so the progress area is visible.
+        self.setMinimumSize(820, 768)
+        self.resize(980, 768)
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -661,23 +700,26 @@ class ImportDialog(QDialog):
         main_layout.addWidget(desc_label)
 
         # Create splitter for file list and options
-        splitter = QSplitter(Qt.Vertical)
+        self.splitter = QSplitter(Qt.Vertical)
 
         # === File Selection Section ===
         file_section = self._create_file_selection_section()
-        splitter.addWidget(file_section)
+        self.splitter.addWidget(file_section)
 
         # === Options Section ===
         options_section = self._create_options_section()
-        splitter.addWidget(options_section)
+        self.splitter.addWidget(options_section)
 
         # === Progress Section ===
         progress_section = self._create_progress_section()
-        splitter.addWidget(progress_section)
+        self.splitter.addWidget(progress_section)
 
         # Set splitter sizes
-        splitter.setSizes([300, 150, 150])
-        main_layout.addWidget(splitter, 1)
+        self.splitter.setStretchFactor(0, 2)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setStretchFactor(2, 3)
+        self.splitter.setSizes([320, 170, 320])
+        main_layout.addWidget(self.splitter, 1)
 
         # === Status bar ===
         self.status_label = QLabel("Ready to import")
@@ -859,7 +901,7 @@ class ImportDialog(QDialog):
         # Status/Error display
         self.progress_text = QTextEdit()
         self.progress_text.setReadOnly(True)
-        self.progress_text.setMaximumHeight(100)
+        self.progress_text.setMinimumHeight(200)
         self.progress_text.setPlaceholderText("Import progress will be shown here...")
         layout.addWidget(self.progress_text)
 
@@ -868,6 +910,28 @@ class ImportDialog(QDialog):
         self.progress_section = group
 
         return group
+
+    def _expand_progress_section(self) -> None:
+        """Ensure the progress pane is visible with a reasonable size."""
+
+        if not hasattr(self, "splitter"):
+            return
+
+        sizes = self.splitter.sizes()
+        if len(sizes) < 3:
+            self.splitter.setSizes([320, 180, 240])
+            return
+
+        # If the progress panel was hidden, its size can collapse to 0.
+        # Guarantee it gets a sensible share of space when shown.
+        progress_min = 260
+        if sizes[2] < progress_min:
+            new_sizes = [
+                max(220, sizes[0]),
+                max(170, sizes[1]),
+                progress_min,
+            ]
+            self.splitter.setSizes(new_sizes)
 
     def _connect_signals(self) -> None:
         """Connect widget signals."""
@@ -1295,6 +1359,7 @@ class ImportDialog(QDialog):
 
         # Show progress section
         self.progress_section.setVisible(True)
+        self._expand_progress_section()
         self._background_mode = False
         self._background_monitor = None
 
@@ -1308,7 +1373,13 @@ class ImportDialog(QDialog):
         self.overall_progress_bar.setValue(0)
         self.file_progress_bar.setValue(0)
         self.thumbnail_progress_bar.setValue(0)
-        self.thumbnail_status_label.setText("Waiting...")
+        if self.generate_thumbnails_check.isChecked():
+            self.thumbnail_status_label.setText("Waiting...")
+        else:
+            self.thumbnail_status_label.setText("Disabled")
+
+        # Move archive files (.zip) to the end of the queue and confirm handling with the user.
+        self.selected_files = self._handle_archives(self.selected_files)
 
         # Create and start worker
         mode = (
@@ -1429,7 +1500,6 @@ class ImportDialog(QDialog):
         """Return True if the dialog handed the import off to the background."""
 
         return self._background_mode
-        self._log_message(f"✓ Thumbnail {current}/{total}: {current_file}")
 
     def _on_model_imported(self, model_id: int) -> None:
         """
@@ -1442,8 +1512,51 @@ class ImportDialog(QDialog):
             model_id: Database ID of the imported model
         """
         # Notify parent window to refresh model library
-        # The parent window should connect to the worker's model_imported signal
-        self.logger.debug("Model imported: ID %d", model_id)
+        parent = self.parent()
+        if parent and hasattr(parent, "_on_model_imported_during_import"):
+            try:
+                handler = getattr(parent, "_on_model_imported_during_import")
+                handler(model_id)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("Failed to notify parent of model import: %s", exc)
+
+    def _handle_archives(self, files: List[str]) -> List[str]:
+        """Move archives to the end of the queue and ask user how to handle them."""
+
+        zips = [f for f in files if Path(f).suffix.lower() == ".zip"]
+        if not zips:
+            return files
+
+        base_list = [f for f in files if f not in zips]
+
+        message_lines = [
+            "Archive files were detected in the import list.",
+            "",
+            "How would you like to handle them?",
+            " - Continue: unzip archives with the built-in importer.",
+            " - Ignore: skip these archives and import the other files.",
+            "",
+            "Archives:",
+            *[f" • {Path(z).name}" for z in zips],
+        ]
+        message = "\n".join(message_lines)
+
+        reply = QMessageBox.question(
+            self,
+            "Archive Detected",
+            message,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+
+        if reply == QMessageBox.No:
+            # Skip archives entirely
+            self._log_message("User chose to ignore archive files; skipping them.")
+            return base_list
+
+        # Keep archives, but push them to the end so regular files finish first.
+        self._log_message("Archives moved to end of queue; will be unpacked when reached.")
+        return base_list + zips
 
     def _on_import_completed(self, result: ImportResult) -> None:
         """Handle successful import completion."""

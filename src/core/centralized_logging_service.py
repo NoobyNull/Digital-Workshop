@@ -9,10 +9,11 @@ import logging.handlers
 import time
 import threading
 import functools
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable, Union
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Callable, Union
 import uuid
 
 from .logging_config import (
@@ -25,6 +26,7 @@ from .logging_config import (
 from .enhanced_error_handler import (
     EnhancedErrorHandler,
 )
+from .path_manager import get_log_directory
 
 
 class LogLevel(Enum):
@@ -140,12 +142,10 @@ class CentralizedLoggingService:
             return
 
         # Configure security logger
+        security_dir = Path(get_log_directory()) / "security"
         security_handler = TimestampRotatingFileHandler(
-            "logs/security.log",
-            when="midnight",
-            interval=1,
-            backupCount=30,
-            encoding="utf-8",
+            log_dir=str(security_dir),
+            backup_count=30,
         )
         security_handler.setFormatter(JSONFormatter())
         security_handler.setLevel(logging.WARNING)
@@ -160,12 +160,10 @@ class CentralizedLoggingService:
             return
 
         # Configure performance logger
+        performance_dir = Path(get_log_directory()) / "performance"
         performance_handler = TimestampRotatingFileHandler(
-            "logs/performance.log",
-            when="midnight",
-            interval=1,
-            backupCount=7,
-            encoding="utf-8",
+            log_dir=str(performance_dir),
+            backup_count=7,
         )
         performance_handler.setFormatter(JSONFormatter())
         performance_handler.setLevel(logging.INFO)
@@ -474,11 +472,9 @@ def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INF
     """
 
     def decorator(func: Callable) -> Callable:
-        """TODO: Add docstring."""
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
-            """TODO: Add docstring."""
             operation = operation_name or f"{func.__module__}.{func.__name__}"
             start_time = time.time()
 

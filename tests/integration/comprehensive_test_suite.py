@@ -124,31 +124,31 @@ class ComprehensiveTestSuite:
         # Tool configurations
         self.tools = {
             'monolithic_detector': {
-                'script': 'monolithic_detector.py',
+                'script': 'tools/maintenance/monolithic_detector.py',
                 'enabled': self.config.get('tools', {}).get('monolithic_detector', {}).get('enabled', True),
                 'args': self._get_monolithic_args(),
                 'timeout': self.config.get('tools', {}).get('monolithic_detector', {}).get('timeout', 300)
             },
             'naming_validator': {
-                'script': 'naming_validator.py',
+                'script': 'tools/maintenance/naming_validator.py',
                 'enabled': self.config.get('tools', {}).get('naming_validator', {}).get('enabled', True),
                 'args': self._get_naming_args(),
                 'timeout': self.config.get('tools', {}).get('naming_validator', {}).get('timeout', 300)
             },
             'unified_test_runner': {
-                'script': 'unified_test_runner.py',
+                'script': 'tools/maintenance/unified_test_runner.py',
                 'enabled': self.config.get('tools', {}).get('unified_test_runner', {}).get('enabled', True),
                 'args': self._get_test_runner_args(),
                 'timeout': self.config.get('tools', {}).get('unified_test_runner', {}).get('timeout', 1800)
             },
             'code_quality_validator': {
-                'script': 'code_quality_validator.py',
+                'script': 'tools/maintenance/code_quality_validator.py',
                 'enabled': self.config.get('tools', {}).get('code_quality_validator', {}).get('enabled', True),
                 'args': self._get_quality_args(),
                 'timeout': self.config.get('tools', {}).get('code_quality_validator', {}).get('timeout', 600)
             },
             'quality_gate_enforcer': {
-                'script': 'quality_gate_enforcer.py',
+                'script': 'tools/maintenance/quality_gate_enforcer.py',
                 'enabled': self.config.get('tools', {}).get('quality_gate_enforcer', {}).get('enabled', True),
                 'args': self._get_gate_args(),
                 'timeout': self.config.get('tools', {}).get('quality_gate_enforcer', {}).get('timeout', 300)

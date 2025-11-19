@@ -35,8 +35,8 @@ class ReleaseManager:
     """Manages the release process for Digital Workshop."""
 
     def __init__(self):
-        self.project_root = Path.cwd()
-        self.build_py_path = self.project_root / "build.py"
+        self.project_root = Path(__file__).resolve().parents[1]
+        self.build_py_path = self.project_root / "build_system" / "build.py"
         self.scripts_dir = self.project_root / "scripts"
         self.pending_version = None
         self.pending_bump_type = None
@@ -263,7 +263,7 @@ class ReleaseManager:
             self.update_version_in_files(new_version)
 
             # Commit version changes
-            files_to_add = ["build.py"]
+            files_to_add = ["build_system/build.py"]
             if (self.project_root / "installer" / "inno_setup.iss").exists():
                 files_to_add.append("installer/inno_setup.iss")
 

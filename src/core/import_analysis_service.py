@@ -467,7 +467,6 @@ class ImportAnalysisService:
         file_ext = Path(file_path).suffix.lower()
 
         # For now, we support STL files
-        # TODO: Add support for OBJ, STEP, 3MF, etc.
         if file_ext == ".stl":
             parser = STLParser()
 
@@ -476,16 +475,13 @@ class ImportAnalysisService:
             if progress_callback:
 
                 def parser_progress_wrapper(percent, message) -> None:
-                    """TODO: Add docstring."""
                     # Map parser progress (0-100) to our range (0-40)
                     mapped_percent = int(percent * 0.4)
                     progress_callback(mapped_percent, 100, message)
 
                 class ProgressWrapper:
-                    """TODO: Add docstring."""
 
                     def report(self, percent, message) -> None:
-                        """TODO: Add docstring."""
                         parser_progress_wrapper(percent, message)
 
                 parser_progress = ProgressWrapper()
@@ -905,7 +901,6 @@ class ImportAnalysisService:
             result: GeometryAnalysisResult to store
         """
         try:
-            # TODO: Implement database storage when model_analysis table is created
             # For now, just cache it
             self._results_cache[result.model_id] = result
 

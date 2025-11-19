@@ -44,7 +44,6 @@ class StreamingProgressCallback:
     """Enhanced progress callback for streaming operations."""
 
     def __init__(self, callback_func: Optional[Callable[[float, str], None]] = None) -> None:
-        """TODO: Add docstring."""
         self.callback_func = callback_func
         self.last_report_time = 0
         self.report_interval = 0.05  # Report more frequently for streaming

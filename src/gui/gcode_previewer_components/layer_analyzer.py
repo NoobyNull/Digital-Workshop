@@ -17,7 +17,6 @@ class Layer:
     move_count: int
 
     def __repr__(self) -> str:
-        """TODO: Add docstring."""
         return f"Layer {self.layer_number} (Z={self.z_height:.2f}, moves={self.move_count})"
 
 

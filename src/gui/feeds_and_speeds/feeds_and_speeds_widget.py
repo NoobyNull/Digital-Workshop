@@ -25,8 +25,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QCheckBox,
     QDialogButtonBox,
+    QAbstractItemView,
+    QInputDialog,
+    QDialogButtonBox,
+    QListWidget,
 )
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QMimeData, QByteArray
+from PySide6.QtGui import QDrag
 
 from src.core.logging_config import get_logger
 from src.parsers.tool_database_manager import ToolDatabaseManager
@@ -38,6 +43,7 @@ from .personal_toolbox_manager import PersonalToolboxManager
 from .unit_converter import UnitConverter
 from src.core.services.tab_data_manager import TabDataManager
 from src.core.database_manager import get_database_manager
+from src.core.materials import wood_catalog
 
 logger = get_logger(__name__)
 
@@ -49,6 +55,299 @@ TREE_GROUPING_CHOICES = [
     ("shank_diameter", "Shank Diameter"),
     ("number_of_flutes", "Number of Flutes"),
 ]
+
+
+class ToolTreeWidget(QTreeWidget):
+    """Tree with optional drag/drop handling for tools."""
+
+    def __init__(self, *, accept_drops: bool = False, drop_handler=None, parent=None):
+        super().__init__(parent)
+        self._accept_drops = accept_drops
+        self._drop_handler = drop_handler
+        self.setDragEnabled(True)
+        if accept_drops:
+            self.setAcceptDrops(True)
+            self.setDragDropMode(QAbstractItemView.DropOnly)
+            self.setDefaultDropAction(Qt.CopyAction)
+
+    def startDrag(self, supportedActions: Qt.DropActions) -> None:  # type: ignore[override]
+        item = self.currentItem()
+        if item is None:
+            return
+        meta = item.data(0, Qt.UserRole)
+        if not isinstance(meta, dict) or meta.get("source") not in {"db", "my_tools"}:
+            return
+        tool_data = meta.get("tool_data")
+        if not isinstance(tool_data, dict):
+            return
+        payload = {
+            "source": meta.get("source"),
+            "tool": tool_data,
+        }
+        mime = QMimeData()
+        try:
+            encoded = json.dumps(payload).encode("utf-8")
+        except Exception:
+            return
+        mime.setData("application/x-dww-tool", QByteArray(encoded))
+        drag = QDrag(self)
+        drag.setMimeData(mime)
+        drag.exec(Qt.CopyAction)
+
+    def dragEnterEvent(self, event):  # type: ignore[override]
+        if self._accept_drops and event.mimeData().hasFormat("application/x-dww-tool"):
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):  # type: ignore[override]
+        if self._accept_drops and event.mimeData().hasFormat("application/x-dww-tool"):
+            event.acceptProposedAction()
+        else:
+            super().dragMoveEvent(event)
+
+    def dropEvent(self, event):  # type: ignore[override]
+        if not (self._accept_drops and event.mimeData().hasFormat("application/x-dww-tool")):
+            return super().dropEvent(event)
+
+        if self._drop_handler is None:
+            event.ignore()
+            return
+
+        try:
+            data = bytes(event.mimeData().data("application/x-dww-tool")).decode("utf-8")
+            payload = json.loads(data)
+        except Exception:
+            event.ignore()
+            return
+
+        target_item = self.itemAt(event.position().toPoint()) if hasattr(event, "position") else self.itemAt(event.pos())
+        target_folder = None
+        if target_item:
+            meta = target_item.data(0, Qt.UserRole)
+            if isinstance(meta, dict) and meta.get("source") == "folder":
+                target_folder = meta.get("folder_name")
+
+        handled = False
+        try:
+            handled = bool(self._drop_handler(payload, target_folder))
+        except Exception:
+            handled = False
+
+        if handled:
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+
+class EditToolDialog(QDialog):
+    """Simple editor for personal tools."""
+
+    def __init__(self, tool: Tool, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Edit Tool")
+        self._tool = tool
+
+        layout = QFormLayout(self)
+
+        self.description_input = QLineEdit(tool.description)
+        layout.addRow("Description:", self.description_input)
+
+        self.type_input = QLineEdit(tool.tool_type)
+        layout.addRow("Type:", self.type_input)
+
+        self.diameter_input = QDoubleSpinBox()
+        self.diameter_input.setRange(0.001, 1000.0)
+        self.diameter_input.setDecimals(3)
+        self.diameter_input.setValue(float(tool.diameter) if tool.diameter else 0.0)
+        layout.addRow("Diameter:", self.diameter_input)
+
+        self.flutes_input = QSpinBox()
+        self.flutes_input.setRange(1, 20)
+        flutes = (
+            tool.geometry.get("number_of_flutes")
+            or tool.geometry.get("NOF")
+            or tool.geometry.get("flutes")
+            or 2
+        )
+        try:
+            self.flutes_input.setValue(int(float(flutes)))
+        except Exception:
+            self.flutes_input.setValue(2)
+        layout.addRow("Flutes:", self.flutes_input)
+
+        self.vendor_input = QLineEdit(tool.vendor)
+        layout.addRow("Vendor:", self.vendor_input)
+
+        self.product_input = QLineEdit(tool.product_id)
+        layout.addRow("Product ID:", self.product_input)
+
+        self.folder_input = QLineEdit(tool.folder)
+        layout.addRow("Folder:", self.folder_input)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addRow(buttons)
+
+    def updated_tool(self) -> Tool:
+        """Return a Tool with updated fields."""
+        geom = dict(self._tool.geometry)
+        geom["number_of_flutes"] = self.flutes_input.value()
+        return Tool(
+            guid=self._tool.guid,
+            description=self.description_input.text().strip(),
+            tool_type=self.type_input.text().strip(),
+            diameter=float(self.diameter_input.value()),
+            vendor=self.vendor_input.text().strip(),
+            product_id=self.product_input.text().strip(),
+            geometry=geom,
+            start_values=self._tool.start_values,
+            unit=self._tool.unit,
+            folder=self.folder_input.text().strip(),
+        )
+
+
+class ManageMachinesDialog(QDialog):
+    """Lightweight machine editor."""
+
+    def __init__(self, db_manager, parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Manage Machines")
+        self.db_manager = db_manager
+        self._machines: list[dict] = []
+
+        layout = QVBoxLayout(self)
+
+        self.list_widget = QListWidget()
+        self.list_widget.currentRowChanged.connect(self._on_selected)
+        layout.addWidget(self.list_widget)
+
+        form = QFormLayout()
+        self.name_input = QLineEdit()
+        form.addRow("Name:", self.name_input)
+
+        self.max_feed_input = QDoubleSpinBox()
+        self.max_feed_input.setRange(1.0, 50000.0)
+        self.max_feed_input.setSuffix(" mm/min")
+        self.max_feed_input.setValue(600.0)
+        form.addRow("Max feed:", self.max_feed_input)
+
+        self.accel_input = QDoubleSpinBox()
+        self.accel_input.setRange(1.0, 5000.0)
+        self.accel_input.setSuffix(" mm/s²")
+        self.accel_input.setValue(100.0)
+        form.addRow("Accel:", self.accel_input)
+
+        self.drive_combo = QComboBox()
+        self.drive_combo.addItem("Ball screw", "ball_screw")
+        self.drive_combo.addItem("GT2 belt", "gt2_belt")
+        self.drive_combo.addItem("Rack & pinion", "rack_pinion")
+        form.addRow("Drive type:", self.drive_combo)
+
+        self.spindle_rpm_input = QDoubleSpinBox()
+        self.spindle_rpm_input.setRange(0.0, 120000.0)
+        self.spindle_rpm_input.setSuffix(" RPM")
+        form.addRow("Max spindle RPM:", self.spindle_rpm_input)
+
+        self.bit_dia_input = QDoubleSpinBox()
+        self.bit_dia_input.setRange(0.0, 100.0)
+        self.bit_dia_input.setDecimals(3)
+        self.bit_dia_input.setSuffix(" mm")
+        form.addRow("Max bit Ø:", self.bit_dia_input)
+
+        self.power_input = QDoubleSpinBox()
+        self.power_input.setRange(0.0, 10000.0)
+        form.addRow("Spindle power (W):", self.power_input)
+
+        layout.addLayout(form)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        self.save_btn = button_box.button(QDialogButtonBox.Save)
+        button_box.accepted.connect(self._on_save)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        self._load()
+
+    def _load(self) -> None:
+        self._machines = self.db_manager.list_machines() if self.db_manager else []
+        self.list_widget.blockSignals(True)
+        self.list_widget.clear()
+        for machine in self._machines:
+            self.list_widget.addItem(machine.get("name") or "Unnamed")
+        self.list_widget.addItem("+ Add new")
+        self.list_widget.setCurrentRow(0 if self._machines else self.list_widget.count() - 1)
+        self.list_widget.blockSignals(False)
+        self._on_selected(self.list_widget.currentRow())
+
+    def _on_selected(self, row: int) -> None:
+        if row < 0:
+            return
+        if row >= len(self._machines):
+            # Add new
+            self.name_input.setText("")
+            self.max_feed_input.setValue(600.0)
+            self.accel_input.setValue(100.0)
+            self.spindle_rpm_input.setValue(0.0)
+            self.bit_dia_input.setValue(0.0)
+            self.power_input.setValue(0.0)
+            return
+        machine = self._machines[row]
+        self.name_input.setText(machine.get("name", ""))
+        self.max_feed_input.setValue(float(machine.get("max_feed_mm_min", 600.0) or 600.0))
+        self.accel_input.setValue(float(machine.get("accel_mm_s2", 100.0) or 100.0))
+        drive = machine.get("drive_type") or "ball_screw"
+        idx = self.drive_combo.findData(drive)
+        if idx >= 0:
+            self.drive_combo.setCurrentIndex(idx)
+        self.spindle_rpm_input.setValue(float(machine.get("max_spindle_rpm") or 0.0))
+        self.bit_dia_input.setValue(float(machine.get("max_bit_diameter_mm") or 0.0))
+        self.power_input.setValue(float(machine.get("spindle_power_w") or 0.0))
+
+    def _on_save(self) -> None:
+        if not self.db_manager:
+            self.reject()
+            return
+        name = self.name_input.text().strip() or "Unnamed"
+        max_feed = float(self.max_feed_input.value())
+        accel = float(self.accel_input.value())
+        drive_type = self.drive_combo.currentData() or "ball_screw"
+        rpm = float(self.spindle_rpm_input.value()) or None
+        bit_dia = float(self.bit_dia_input.value()) or None
+        power = float(self.power_input.value()) or None
+
+        idx = self.list_widget.currentRow()
+        try:
+            if idx >= 0 and idx < len(self._machines):
+                mid = self._machines[idx].get("id")
+                if mid is not None:
+                    self.db_manager.update_machine(
+                        mid,
+                        name=name,
+                        max_feed_mm_min=max_feed,
+                        accel_mm_s2=accel,
+                        drive_type=drive_type,
+                        max_spindle_rpm=rpm,
+                        max_bit_diameter_mm=bit_dia,
+                        spindle_power_w=power,
+                    )
+            else:
+                self.db_manager.add_machine(
+                    name=name,
+                    max_feed_mm_min=max_feed,
+                    accel_mm_s2=accel,
+                    drive_type=drive_type,
+                    max_spindle_rpm=rpm,
+                    max_bit_diameter_mm=bit_dia,
+                    spindle_power_w=power,
+                    notes=None,
+                    is_default=False,
+                )
+        except Exception:
+            QMessageBox.critical(self, "Save Failed", "Could not save machine.")
+            return
+        self.accept()
 
 
 def _find_vectric_tool_databases() -> list[tuple[str, str, str]]:
@@ -331,6 +630,11 @@ class FeedsAndSpeedsWidget(QWidget):
         self.personal_toolbox_manager = PersonalToolboxManager()
         self.unit_converter = UnitConverter()
         self.tab_data_manager = TabDataManager(get_database_manager())
+        self.machine_max_feed_mm_min: float = 600.0
+        self.machine_max_spindle_rpm: Optional[float] = None
+        self.machine_max_bit_diameter_mm: Optional[float] = None
+        self.machine_spindle_power_w: Optional[float] = None
+        self.machine_drive_type: str = "ball_screw"
 
         # Keep old manager for backward compatibility during migration
         self.tool_library_manager = ToolLibraryManager()
@@ -347,6 +651,7 @@ class FeedsAndSpeedsWidget(QWidget):
 
         # Setup UI
         self._setup_ui()
+        self._populate_material_dropdown()
 
         # Initialize machine label and override controls based on the
         # currently selected project (if any).
@@ -410,8 +715,8 @@ class FeedsAndSpeedsWidget(QWidget):
     def _setup_ui(self) -> None:
         """Setup the user interface."""
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(6, 6, 6, 6)
+        main_layout.setSpacing(6)
 
         # Header with title and unit toggle
         header_layout = QHBoxLayout()
@@ -453,6 +758,7 @@ class FeedsAndSpeedsWidget(QWidget):
         panel = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
 
         # Title
         title = QLabel("Tool Library")
@@ -484,8 +790,16 @@ class FeedsAndSpeedsWidget(QWidget):
         search_layout.addWidget(self.search_input)
         layout.addLayout(search_layout)
 
-        # Tool tree
-        self.tool_tree = QTreeWidget()
+        # Side-by-side tool trees (Vendors -> My Tools)
+        trees_splitter = QSplitter(Qt.Horizontal)
+
+        vendor_container = QWidget()
+        vendor_layout = QVBoxLayout(vendor_container)
+        vendor_layout.setContentsMargins(0, 0, 0, 0)
+        vendor_layout.setSpacing(4)
+        vendor_layout.addWidget(QLabel("Vendor Libraries"))
+
+        self.tool_tree = ToolTreeWidget(accept_drops=False)
         # Columns: 0=Tool, 1=Type, 2=Diameter, 3=Vendor, 4=Product ID, 5=Custom
         self.tool_tree.setColumnCount(6)
         self.tool_tree.setHeaderLabels(
@@ -501,10 +815,44 @@ class FeedsAndSpeedsWidget(QWidget):
         self.tool_tree.setSelectionMode(QTreeWidget.SingleSelection)
         self.tool_tree.itemSelectionChanged.connect(self._on_tool_selected)
         self.tool_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tool_tree.customContextMenuRequested.connect(self._on_tool_context_menu)
         header = self.tool_tree.header()
         header.setContextMenuPolicy(Qt.CustomContextMenu)
         header.customContextMenuRequested.connect(self._on_tool_header_context_menu)
-        layout.addWidget(self.tool_tree)
+        vendor_layout.addWidget(self.tool_tree)
+
+        trees_splitter.addWidget(vendor_container)
+
+        my_container = QWidget()
+        my_layout = QVBoxLayout(my_container)
+        my_layout.setContentsMargins(0, 0, 0, 0)
+        my_layout.setSpacing(4)
+        my_layout.addWidget(QLabel("My Tools"))
+
+        self.my_tools_tree = ToolTreeWidget(
+            accept_drops=True, drop_handler=self._handle_tool_drop
+        )
+        self.my_tools_tree.setColumnCount(6)
+        self.my_tools_tree.setHeaderLabels(
+            [
+                "Tool",
+                "Type",
+                "Diameter",
+                "Vendor",
+                "Product ID",
+                "Custom",
+            ]
+        )
+        self.my_tools_tree.setSelectionMode(QTreeWidget.SingleSelection)
+        self.my_tools_tree.itemSelectionChanged.connect(self._on_tool_selected)
+        self.my_tools_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.my_tools_tree.customContextMenuRequested.connect(self._on_my_tools_context_menu)
+        my_layout.addWidget(self.my_tools_tree)
+
+        trees_splitter.addWidget(my_container)
+        trees_splitter.setStretchFactor(0, 1)
+        trees_splitter.setStretchFactor(1, 1)
+        layout.addWidget(trees_splitter, 1)
 
         # Restore column visibility from settings
         self._restore_tool_tree_column_visibility()
@@ -555,6 +903,8 @@ class FeedsAndSpeedsWidget(QWidget):
             for col in range(self.tool_tree.columnCount()):
                 is_visible = visible.get(col, True)
                 self.tool_tree.setColumnHidden(col, not is_visible)
+                if hasattr(self, "my_tools_tree"):
+                    self.my_tools_tree.setColumnHidden(col, not is_visible)
         except Exception as e:  # pragma: no cover - defensive
             self.logger.debug("Failed to restore tool tree column visibility: %s", e)
 
@@ -826,33 +1176,15 @@ class FeedsAndSpeedsWidget(QWidget):
     def _rebuild_tool_tree(self, filter_text: str = "") -> None:
         """Rebuild the hierarchical tool tree using configured grouping settings."""
         try:
-            if not hasattr(self, "tool_tree"):
+            if not hasattr(self, "tool_tree") or not hasattr(self, "my_tools_tree"):
                 return
 
-            self.tool_tree.clear()
             filter_text = (filter_text or "").strip().lower()
 
             group_fields = self._get_tree_grouping_fields()
 
-            # My Tools branch (from QSettings-based personal toolbox)
-            my_tools_root = QTreeWidgetItem(["My Tools", "", "", "", "", ""])
-            my_tools_root.setData(
-                0,
-                Qt.UserRole,
-                {"source": "root", "name": "my_tools"},
-            )
-            self.tool_tree.addTopLevelItem(my_tools_root)
-
-            toolbox_tools = self.personal_toolbox_manager.get_toolbox()
-            self._populate_branch_with_grouping(
-                my_tools_root,
-                toolbox_tools,
-                group_fields,
-                filter_text,
-                source="my_tools",
-            )
-
-            # Provider branches (vendor libraries from tools.db)
+            # Vendor branches (vendor libraries from tools.db)
+            self.tool_tree.clear()
             providers = self.provider_repo.get_all_providers()
             for provider in providers:
                 provider_root = QTreeWidgetItem([provider["name"], "", "", "", "", ""])
@@ -884,8 +1216,53 @@ class FeedsAndSpeedsWidget(QWidget):
                 )
 
             self.tool_tree.expandAll()
+            self._rebuild_my_tools_tree(filter_text)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to rebuild tool tree: %s", e)
+
+    def _rebuild_my_tools_tree(self, filter_text: str = "") -> None:
+        """Rebuild the My Tools tree independently so copy operations are visible."""
+        try:
+            if not hasattr(self, "my_tools_tree"):
+                return
+            self.my_tools_tree.clear()
+            filter_text = (filter_text or "").strip().lower()
+            group_fields = self._get_tree_grouping_fields()
+
+            toolbox_tools = self.personal_toolbox_manager.get_toolbox()
+
+            # Collect folders from settings and any tools that already carry a folder.
+            folder_names = set(self.personal_toolbox_manager.list_folders())
+            for tool in toolbox_tools:
+                folder = getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                if folder:
+                    folder_names.add(folder)
+
+            folder_nodes: dict[str, QTreeWidgetItem] = {}
+            for name in sorted(folder_names):
+                node = QTreeWidgetItem([name, "", "", "", "", ""])
+                node.setData(0, Qt.UserRole, {"source": "folder", "folder_name": name})
+                self.my_tools_tree.addTopLevelItem(node)
+                folder_nodes[name] = node
+
+            groups: dict[str, list] = {}
+            for tool in toolbox_tools:
+                folder = getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                groups.setdefault(folder, []).append(tool)
+
+            for folder, tools in groups.items():
+                parent_item = folder_nodes.get(folder, self.my_tools_tree.invisibleRootItem())
+                self._populate_branch_with_grouping(
+                    parent_item,
+                    tools,
+                    group_fields,
+                    filter_text,
+                    source="my_tools",
+                )
+
+            self.my_tools_tree.expandAll()
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning("Failed to rebuild My Tools tree: %s", exc)
 
     def _create_calculator_panel(self) -> QWidget:
         """Create the calculator panel.
@@ -913,7 +1290,13 @@ class FeedsAndSpeedsWidget(QWidget):
         self.machine_combo = QComboBox()
         self.machine_combo.setEditable(False)
         self.machine_combo.currentIndexChanged.connect(self._on_machine_changed)
-        machine_layout.addRow("Machine:", self.machine_combo)
+        machine_row = QHBoxLayout()
+        machine_row.addWidget(self.machine_combo, 1)
+        self.manage_machines_btn = QPushButton("Manage...")
+        self.manage_machines_btn.setMaximumWidth(110)
+        self.manage_machines_btn.clicked.connect(self._on_manage_machines)
+        machine_row.addWidget(self.manage_machines_btn)
+        machine_layout.addRow("Machine:", machine_row)
 
         self.feed_override_spin = QDoubleSpinBox()
         self.feed_override_spin.setRange(10.0, 200.0)
@@ -926,6 +1309,22 @@ class FeedsAndSpeedsWidget(QWidget):
 
         machine_group.setLayout(machine_layout)
         layout.addWidget(machine_group)
+
+        # Material selection group
+        material_group = QGroupBox("Material")
+        material_layout = QFormLayout()
+
+        self.material_combo = QComboBox()
+        self.material_combo.setEditable(False)
+        self.material_combo.currentIndexChanged.connect(self._on_material_changed)
+        material_layout.addRow("Wood species:", self.material_combo)
+
+        self.material_info_label = QLabel("No material selected")
+        self.material_info_label.setWordWrap(True)
+        material_layout.addRow("Details:", self.material_info_label)
+
+        material_group.setLayout(material_layout)
+        layout.addWidget(material_group)
 
         # Geometry group
         geometry_group = QGroupBox("Tool Geometry")
@@ -1042,6 +1441,10 @@ class FeedsAndSpeedsWidget(QWidget):
         max_feed_mm_min = 600.0
         accel_mm_s2 = 100.0
         override_pct = 100.0
+        drive_type = "ball_screw"
+        max_spindle_rpm = None
+        max_bit_diameter_mm = None
+        spindle_power_w = None
 
         machines: List[Dict[str, Any]] = []
         active_machine_id: Optional[int] = None
@@ -1128,6 +1531,31 @@ class FeedsAndSpeedsWidget(QWidget):
                         accel_mm_s2 = float(current_machine.get("accel_mm_s2", accel_mm_s2))
                     except (TypeError, ValueError):
                         pass
+                    drive_type = (current_machine.get("drive_type") or "ball_screw").strip()
+                    try:
+                        max_spindle_rpm = (
+                            float(current_machine.get("max_spindle_rpm"))
+                            if current_machine.get("max_spindle_rpm") is not None
+                            else None
+                        )
+                    except (TypeError, ValueError):
+                        max_spindle_rpm = None
+                    try:
+                        max_bit_diameter_mm = (
+                            float(current_machine.get("max_bit_diameter_mm"))
+                            if current_machine.get("max_bit_diameter_mm") is not None
+                            else None
+                        )
+                    except (TypeError, ValueError):
+                        max_bit_diameter_mm = None
+                    try:
+                        spindle_power_w = (
+                            float(current_machine.get("spindle_power_w"))
+                            if current_machine.get("spindle_power_w") is not None
+                            else None
+                        )
+                    except (TypeError, ValueError):
+                        spindle_power_w = None
 
                 # Fetch project-specific feed override percentage.
                 if self.current_project_id:
@@ -1147,7 +1575,10 @@ class FeedsAndSpeedsWidget(QWidget):
         # Update tooltip with resolved machine parameters so the user can
         # see the effective kinematic limits at a glance.
         try:
-            tooltip = f"{machine_name} " f"({max_feed_mm_min:.0f} mm/min, {accel_mm_s2:.0f} mm/s²)"
+            tooltip = (
+                f"{machine_name} "
+                f"({max_feed_mm_min:.0f} mm/min, {accel_mm_s2:.0f} mm/s², {drive_type or 'ball_screw'})"
+            )
             self.machine_combo.setToolTip(tooltip)
         except Exception:
             # Tooltip is non-critical; never allow it to break the UI.
@@ -1155,6 +1586,18 @@ class FeedsAndSpeedsWidget(QWidget):
                 "Failed to update machine tooltip",
                 exc_info=True,
             )
+
+        # Cache resolved limits for downstream calculations.
+        drive_factor = {
+            "ball_screw": 1.0,
+            "gt2_belt": 0.7,
+            "rack_pinion": 0.85,
+        }.get(drive_type.lower(), 1.0 if drive_type else 1.0)
+        self.machine_max_feed_mm_min = max_feed_mm_min * drive_factor
+        self.machine_drive_type = drive_type or "ball_screw"
+        self.machine_max_spindle_rpm = max_spindle_rpm
+        self.machine_max_bit_diameter_mm = max_bit_diameter_mm
+        self.machine_spindle_power_w = spindle_power_w
 
         # Update feed override spin while keeping existing value-change logic.
         try:
@@ -1180,6 +1623,9 @@ class FeedsAndSpeedsWidget(QWidget):
                 self.current_project_id,
                 int(machine_id),
             )
+            # Refresh cached machine limits and reapply material recommendations.
+            self._refresh_machine_and_override_from_project()
+            self._apply_material_recommendation()
         except Exception as exc:
             self.logger.warning(
                 "Failed to persist active machine %s for project %s: %s",
@@ -1207,6 +1653,16 @@ class FeedsAndSpeedsWidget(QWidget):
                 exc,
             )
 
+    def _on_manage_machines(self) -> None:
+        """Open machine manager dialog."""
+        db_manager = getattr(self.tab_data_manager, "db_manager", None)
+        if not db_manager:
+            QMessageBox.warning(self, "Unavailable", "Database is not available.")
+            return
+        dialog = ManageMachinesDialog(db_manager, self)
+        if dialog.exec() == QDialog.Accepted:
+            self._refresh_machine_and_override_from_project()
+
     def _update_calculator_unit_suffixes(self) -> None:
         """Update suffixes for calculator fields based on current unit system."""
         if not hasattr(self, "unit_converter"):
@@ -1225,6 +1681,67 @@ class FeedsAndSpeedsWidget(QWidget):
             self.feed_input.setSuffix(f" {feed_label}")
         if hasattr(self, "plunge_input"):
             self.plunge_input.setSuffix(f" {feed_label}")
+
+    def _populate_material_dropdown(self) -> None:
+        """Populate material dropdown with wood catalog entries."""
+        if not hasattr(self, "material_combo"):
+            return
+        self.material_combo.blockSignals(True)
+        self.material_combo.clear()
+        for material in wood_catalog.iter_materials():
+            label = f"{material.name} ({material.janka_lbf} lbf)"
+            self.material_combo.addItem(label, material)
+        self.material_combo.setCurrentIndex(0 if self.material_combo.count() else -1)
+        self.material_combo.blockSignals(False)
+        self._on_material_changed()
+
+    def _selected_material(self) -> Optional[wood_catalog.WoodMaterial]:
+        """Return currently selected wood material."""
+        if not hasattr(self, "material_combo"):
+            return None
+        data = self.material_combo.currentData()
+        return data if isinstance(data, wood_catalog.WoodMaterial) else None
+
+    def _set_material_by_name(self, name: str) -> None:
+        """Select a material by its display name or alias."""
+        if not hasattr(self, "material_combo"):
+            return
+        target = wood_catalog.find_wood(name) if name else None
+        if target is None:
+            return
+        for idx in range(self.material_combo.count()):
+            mat = self.material_combo.itemData(idx)
+            if isinstance(mat, wood_catalog.WoodMaterial) and mat.name == target.name:
+                self.material_combo.setCurrentIndex(idx)
+                break
+
+    def _on_material_changed(self, _index: int = 0) -> None:
+        """Handle material selection change."""
+        material = self._selected_material()
+        if material:
+            details = (
+                f"Janka hardness: {material.janka_lbf} lbf | "
+                f"SG: {material.specific_gravity:.2f} | "
+                f"Band: {wood_catalog.hardness_band(material.janka_lbf)}"
+            )
+            self.material_info_label.setText(details)
+        else:
+            self.material_info_label.setText("No material selected")
+        self._apply_material_recommendation()
+
+    def _load_project_material_from_db(self) -> None:
+        """Pull preferred material from the project row when available."""
+        db_manager = getattr(self.tab_data_manager, "db_manager", None)
+        if not (db_manager and self.current_project_id):
+            return
+        try:
+            project = db_manager.get_project(self.current_project_id)
+            if project:
+                material_name = project.get("material_name") or project.get("material_tag")
+                if material_name:
+                    self._set_material_by_name(material_name)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.debug("Could not load project material: %s", exc)
 
     def _convert_current_calculator_units(self, to_metric: bool) -> None:
         """Convert calculator field values between SAE and metric.
@@ -1347,6 +1864,81 @@ class FeedsAndSpeedsWidget(QWidget):
 
         self._update_calculator_unit_suffixes()
         self._recalculate_metrics()
+        self._apply_material_recommendation()
+
+    def _apply_material_recommendation(self) -> None:
+        """Apply RPM/feed recommendations based on selected material and spindle limits."""
+        material = self._selected_material()
+        if material is None or not hasattr(self, "diameter_input"):
+            return
+
+        try:
+            diameter_val = float(self.diameter_input.value())
+        except (TypeError, ValueError):
+            diameter_val = 0.0
+
+        if self.is_metric:
+            diameter_in = self.unit_converter.mm_to_inch(diameter_val)
+        else:
+            diameter_in = diameter_val
+
+        diameter_in = max(diameter_in, 0.001)
+        flutes = max(1, int(self.flutes_input.value()))
+
+        # Surface speed target (SFM) -> RPM, clamped to spindle max.
+        sfm_target = wood_catalog.estimate_surface_speed_sfm(material.janka_lbf)
+        rpm_recommended = (sfm_target * 12.0) / (3.14159 * diameter_in)
+
+        if self.machine_max_spindle_rpm:
+            rpm_recommended = min(rpm_recommended, float(self.machine_max_spindle_rpm))
+
+        # Simple chipload -> feed (IPM), then clamp to machine max feed (mm/min).
+        chipload_in = wood_catalog.estimate_chipload_inches(material.janka_lbf, diameter_in, flutes)
+        feed_ipm = chipload_in * flutes * rpm_recommended
+
+        if self.is_metric:
+            feed_mmpm = self.unit_converter.ipm_to_mmpm(feed_ipm)
+            rpm_final = max(100.0, rpm_recommended)
+            feed_final = max(0.01, feed_mmpm)
+            max_feed = getattr(self, "machine_max_feed_mm_min", None)
+            if max_feed:
+                feed_final = min(feed_final, float(max_feed))
+        else:
+            rpm_final = max(100.0, rpm_recommended)
+            feed_final = max(0.01, feed_ipm)
+            max_feed_mm = getattr(self, "machine_max_feed_mm_min", None)
+            if max_feed_mm:
+                max_feed_ipm = self.unit_converter.mmpm_to_ipm(float(max_feed_mm))
+                feed_final = min(feed_final, max_feed_ipm)
+
+        # Apply into spinboxes without triggering cascades.
+        self.rpm_input.blockSignals(True)
+        self.feed_input.blockSignals(True)
+        self.rpm_input.setValue(rpm_final)
+        self.feed_input.setValue(feed_final)
+        self.rpm_input.blockSignals(False)
+        self.feed_input.blockSignals(False)
+
+        # Optional diameter limit hint
+        if self.machine_max_bit_diameter_mm and self.is_metric:
+            try:
+                if diameter_val > float(self.machine_max_bit_diameter_mm):
+                    self.material_info_label.setText(
+                        f"{self.material_info_label.text()} | Tool over machine bit diameter limit"
+                    )
+            except Exception:
+                pass
+        elif self.machine_max_bit_diameter_mm and not self.is_metric:
+            try:
+                max_in = self.unit_converter.mm_to_inch(float(self.machine_max_bit_diameter_mm))
+                if diameter_in > max_in:
+                    self.material_info_label.setText(
+                        f"{self.material_info_label.text()} | Tool over machine bit diameter limit"
+                    )
+            except Exception:
+                pass
+
+        self._recalculate_metrics()
 
     def _recalculate_metrics(self) -> None:
         """Recompute chip load, surface speed, and material removal rate."""
@@ -1408,6 +2000,12 @@ class FeedsAndSpeedsWidget(QWidget):
             f"  Surface speed: {surface_speed_label}\n"
             f"  Material removal rate: {mrr_label}\n"
         )
+        material = self._selected_material()
+        if material:
+            text += (
+                f"\nMaterial: {material.name} "
+                f"({material.janka_lbf} lbf Janka; SG {material.specific_gravity:.2f})"
+            )
 
         self.results_display.setText(text)
 
@@ -1621,6 +2219,10 @@ class FeedsAndSpeedsWidget(QWidget):
         self.search_input.clear()
         self._load_providers()
 
+    def _refresh_tool_list(self) -> None:
+        """Refresh tool trees to reflect current personal and vendor tools."""
+        self._rebuild_tool_tree(self.search_input.text() if hasattr(self, "search_input") else "")
+
     def _on_search_changed(self) -> None:
         """Handle search input change."""
         query = self.search_input.text()
@@ -1628,10 +2230,20 @@ class FeedsAndSpeedsWidget(QWidget):
 
     def _on_tool_selected(self) -> None:
         """Handle tool selection from the tree."""
-        if not hasattr(self, "tool_tree"):
+        vendor_tree = getattr(self, "tool_tree", None)
+        my_tree = getattr(self, "my_tools_tree", None)
+        if vendor_tree is None and my_tree is None:
             return
 
-        item = self.tool_tree.currentItem()
+        sender_tree = self.sender() if isinstance(self.sender(), QTreeWidget) else None
+        if sender_tree is vendor_tree:
+            item = vendor_tree.currentItem()
+        elif sender_tree is my_tree:
+            item = my_tree.currentItem()
+        else:
+            item = (vendor_tree.currentItem() if vendor_tree else None) or (
+                my_tree.currentItem() if my_tree else None
+            )
         if item is None:
             return
 
@@ -1655,6 +2267,60 @@ class FeedsAndSpeedsWidget(QWidget):
 
         self.selected_tool_label.setText(f"Selected: {tool_data.get('description', '')}")
         self._update_calculator()
+        if source == "my_tools":
+            self.my_tools_tree.setCurrentItem(item)
+        else:
+            self.tool_tree.setCurrentItem(item)
+
+    def _folder_for_item(self, item: Optional[QTreeWidgetItem]) -> str:
+        """Return folder name if the item is a folder node."""
+        if item is None:
+            return ""
+        meta = item.data(0, Qt.UserRole)
+        if isinstance(meta, dict) and meta.get("source") == "folder":
+            return meta.get("folder_name") or ""
+        return ""
+
+    def _prompt_folder_name(self, title: str, preset: str = "") -> Optional[str]:
+        """Show a text prompt for folder naming."""
+        text, ok = QInputDialog.getText(self, title, "Folder name:", text=preset)
+        if ok:
+            name = text.strip()
+            return name if name else None
+        return None
+
+    def _on_my_tools_context_menu(self, pos) -> None:
+        """Context menu for My Tools tree (folders)."""
+        if not hasattr(self, "my_tools_tree"):
+            return
+        item = self.my_tools_tree.itemAt(pos)
+        folder = self._folder_for_item(item)
+        meta = item.data(0, Qt.UserRole) if item else None
+        is_tool = isinstance(meta, dict) and meta.get("source") == "my_tools"
+
+        menu = QMenu(self)
+        add_action = menu.addAction("Add Folder...")
+        rename_action = menu.addAction("Rename Folder...") if folder else None
+        delete_action = menu.addAction("Delete Folder") if folder else None
+        edit_action = menu.addAction("Edit Tool...") if is_tool else None
+        remove_action = menu.addAction("Remove Tool") if is_tool else None
+
+        action = menu.exec(self.my_tools_tree.mapToGlobal(pos))
+        if action is add_action:
+            name = self._prompt_folder_name("Add Folder")
+            if name and self.personal_toolbox_manager.add_folder(name):
+                self._rebuild_my_tools_tree(self.search_input.text())
+        elif rename_action and action is rename_action:
+            new_name = self._prompt_folder_name("Rename Folder", preset=folder)
+            if new_name and self.personal_toolbox_manager.rename_folder(folder, new_name):
+                self._rebuild_my_tools_tree(self.search_input.text())
+        elif delete_action and action is delete_action:
+            if self.personal_toolbox_manager.delete_folder(folder):
+                self._rebuild_my_tools_tree(self.search_input.text())
+        elif edit_action and action is edit_action:
+            self._edit_selected_my_tool(item)
+        elif remove_action and action is remove_action:
+            self._remove_selected_my_tool(item)
 
     def _on_tool_context_menu(self, pos) -> None:
         """Handle right-click context menu on the tool tree."""
@@ -1682,6 +2348,72 @@ class FeedsAndSpeedsWidget(QWidget):
 
         if action == add_action:
             self._on_add_tool()
+
+    def _handle_tool_drop(self, payload: Dict[str, Any], target_folder: Optional[str]) -> bool:
+        """Handle drag/drop payloads into My Tools."""
+        source = payload.get("source")
+        tool_data = payload.get("tool")
+        if source not in {"db", "my_tools"} or not isinstance(tool_data, dict):
+            return False
+
+        folder = (target_folder or "").strip()
+        if folder:
+            self.personal_toolbox_manager.add_folder(folder)
+
+        if source == "db":
+            ui_tool = self._convert_db_tool_to_ui(tool_data)
+            ui_tool.folder = folder
+            if self.personal_toolbox_manager.add_tool(ui_tool):
+                QMessageBox.information(
+                    self,
+                    "Added",
+                    f"Added '{ui_tool.description}' to My Tools{f'/{folder}' if folder else ''}.",
+                )
+            else:
+                QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
+        else:
+            guid = tool_data.get("guid", "")
+            if not guid:
+                return False
+            # Update folder assignment for existing tool
+            if not self.personal_toolbox_manager.set_tool_folder(guid, folder):
+                return False
+
+        self._rebuild_my_tools_tree(self.search_input.text())
+        return True
+
+    def _edit_selected_my_tool(self, item: Optional[QTreeWidgetItem]) -> None:
+        """Edit a personal tool."""
+        if item is None:
+            return
+        meta = item.data(0, Qt.UserRole)
+        if not isinstance(meta, dict) or meta.get("source") != "my_tools":
+            return
+        tool_data = meta.get("tool_data") or {}
+        try:
+            tool_obj = Tool.from_dict(tool_data)
+        except Exception:
+            return
+        dialog = EditToolDialog(tool_obj, self)
+        if dialog.exec() == QDialog.Accepted:
+            updated = dialog.updated_tool()
+            if self.personal_toolbox_manager.update_tool(updated):
+                self._rebuild_my_tools_tree(self.search_input.text())
+                self._load_selected_tool_defaults()
+
+    def _remove_selected_my_tool(self, item: Optional[QTreeWidgetItem]) -> None:
+        """Remove a tool from My Tools."""
+        if item is None:
+            return
+        meta = item.data(0, Qt.UserRole)
+        if not isinstance(meta, dict) or meta.get("source") != "my_tools":
+            return
+        tool_data = meta.get("tool_data") or {}
+        guid = tool_data.get("guid")
+        if not guid:
+            return
+        if self.personal_toolbox_manager.remove_tool(guid):
+            self._rebuild_my_tools_tree(self.search_input.text())
 
     def _on_add_tool(self) -> None:
         """Add selected vendor tool to personal toolbox."""
@@ -1777,6 +2509,7 @@ Calculated:
         """
         self.current_project_id = project_id
         self._refresh_machine_and_override_from_project()
+        self._load_project_material_from_db()
 
     def save_to_project(self) -> None:
         """Save feeds and speeds data to current project."""
@@ -1794,6 +2527,13 @@ Calculated:
             "presets": presets_data,
             "is_metric": self.is_metric,
         }
+        material = self._selected_material()
+        if material:
+            feeds_speeds_data["material"] = {
+                "name": material.name,
+                "janka_lbf": material.janka_lbf,
+                "specific_gravity": material.specific_gravity,
+            }
 
         # Save to project
         success, message = self.tab_data_manager.save_tab_data_to_project(
@@ -1805,6 +2545,14 @@ Calculated:
         )
 
         if success:
+            try:
+                db_manager = getattr(self.tab_data_manager, "db_manager", None)
+                if db_manager and material:
+                    db_manager.update_project(
+                        self.current_project_id, material_name=material.name, material_tag=material.name
+                    )
+            except Exception as exc:  # pragma: no cover - best effort
+                self.logger.debug("Failed to persist project material tag: %s", exc)
             QMessageBox.information(self, "Success", message)
         else:
             QMessageBox.critical(self, "Error", message)
@@ -1832,6 +2580,7 @@ Calculated:
         try:
             tools_data = data.get("tools", [])
             presets_data = data.get("presets", [])
+            material_data = data.get("material") or {}
 
             # Clear existing tools and presets
             self.personal_toolbox_manager.clear_all()
@@ -1843,6 +2592,11 @@ Calculated:
             # Restore presets
             for preset in presets_data:
                 self.personal_toolbox_manager.add_preset(preset)
+
+            # Restore material selection if present
+            if isinstance(material_data, dict):
+                self._set_material_by_name(material_data.get("name", ""))
+                self._apply_material_recommendation()
 
             # Refresh UI
             self._refresh_tool_list()

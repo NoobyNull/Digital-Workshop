@@ -154,6 +154,16 @@ class BaseParser(ABC):
             )
             raise
 
+    # Backward-compatible alias (older callers expect ``parse``).
+    def parse(
+        self,
+        file_path: Union[str, Path],
+        progress_callback: Optional[ProgressCallback] = None,
+        lazy_loading: bool = True,
+    ) -> Model:
+        """Alias for parse_file to keep legacy call sites working."""
+        return self.parse_file(file_path, progress_callback=progress_callback, lazy_loading=lazy_loading)
+
     @abstractmethod
     def _parse_file_internal(
         self, file_path: str, progress_callback: Optional[ProgressCallback] = None

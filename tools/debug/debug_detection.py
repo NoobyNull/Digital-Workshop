@@ -4,7 +4,7 @@
 import sys
 sys.path.append('.')
 
-from naming_validator import AdjectiveDetector
+from tools.maintenance.naming_validator import AdjectiveDetector
 
 def test_detection():
     detector = AdjectiveDetector()

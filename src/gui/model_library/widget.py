@@ -50,6 +50,7 @@ class ModelLibraryWidget(QWidget):
     model_double_clicked = Signal(int)
     models_added = Signal(list)
     import_requested = Signal(list)
+    import_url_requested = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
@@ -281,6 +282,14 @@ class ModelLibraryWidget(QWidget):
             self.facade.file_browser._request_import([file_path])
         except Exception as exc:  # pragma: no cover - defensive
             self.logger.warning("Failed to request import from context menu: %s", exc)
+
+    def _request_import_from_url(self) -> None:
+        """Forward a request to import via URL to the main window."""
+
+        try:
+            self.import_url_requested.emit()
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning("Failed to emit import_url_requested: %s", exc)
 
     def _open_in_native_app(self, file_path: str) -> None:
         """Open file in native application."""

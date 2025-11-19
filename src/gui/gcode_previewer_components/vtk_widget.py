@@ -97,6 +97,7 @@ class VTKWidget(QWidget):
         main_layout.addWidget(self.vtk_widget)
 
         self.vtk_widget.GetRenderWindow().AddRenderer(renderer.get_renderer())
+        self._orientation_widget = None
 
         interactor_style = vtk_module.vtkInteractorStyleTrackballCamera()
         self.vtk_widget.SetInteractorStyle(interactor_style)
@@ -114,6 +115,8 @@ class VTKWidget(QWidget):
         if embed_camera_toolbar:
             self._inline_toolbar = self.create_camera_toolbar(self)
             main_layout.insertWidget(0, self._inline_toolbar)
+
+        self._init_orientation_marker()
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -172,3 +175,19 @@ class VTKWidget(QWidget):
     def set_view_isometric(self) -> None:
         self.camera_controller.set_view_isometric()
         self.update_render()
+
+    def _init_orientation_marker(self) -> None:
+        """Add a corner orientation marker similar to the model viewer."""
+        try:
+            vtk = self.gcode_renderer.vtk
+            axes = vtk.vtkAxesActor()
+            axes.SetTotalLength(12, 12, 12)
+            widget = vtk.vtkOrientationMarkerWidget()
+            widget.SetOrientationMarker(axes)
+            widget.SetInteractor(self.vtk_widget.GetInteractor())
+            widget.EnabledOn()
+            widget.InteractiveOff()
+            widget.SetViewport(0.8, 0.8, 1.0, 1.0)
+            self._orientation_widget = widget
+        except Exception:
+            self._orientation_widget = None

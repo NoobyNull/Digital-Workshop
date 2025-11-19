@@ -151,7 +151,6 @@ class WalkthroughDialog(QDialog):
     """Dialog for displaying walkthrough and tutorial content."""
 
     def __init__(self, parent=None, tip: Optional[TutorialTip] = None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Digital Workshop Tutorial")
         self.setMinimumWidth(500)

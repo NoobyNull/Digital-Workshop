@@ -119,6 +119,12 @@ class ProjectManager:
                 except Exception as e:
                     self.logger.warning(f"Failed to set project for Cost Estimator: {e}")
 
+            if hasattr(self.main_window, "project_details_widget") and self.main_window.project_details_widget:
+                try:
+                    self.main_window.project_details_widget.set_project_context(project_id)
+                except Exception as e:
+                    self.logger.warning(f"Failed to set project for Project Details: {e}")
+
             # Clear status after a delay
             QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
 

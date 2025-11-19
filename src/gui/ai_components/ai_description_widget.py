@@ -36,7 +36,6 @@ class AIProgressDialog(QWidget):
     """Progress dialog for AI description generation."""
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Generating AI Description")
         self.setModal(True)
@@ -63,7 +62,6 @@ class AIProgressDialog(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """TODO: Add docstring."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -90,7 +88,6 @@ class AIProviderConfigWidget(QWidget):
     provider_tested = Signal(str, bool)  # provider_name, success
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.providers = {}
         self.current_provider = None
@@ -391,7 +388,6 @@ class AIDescriptionWidget(QWidget):
     description_applied = Signal(str, dict)  # image_path, description_data
 
     def __init__(self, ai_service: AIDescriptionService, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.ai_service = ai_service
         self.current_image_path = None

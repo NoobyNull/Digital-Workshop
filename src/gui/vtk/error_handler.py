@@ -117,15 +117,12 @@ class VTKErrorHandler:
         try:
             # Create a custom error observer class that inherits from vtk.vtkCommand
             class VTKErrorObserver(vtk.vtkCommand):
-                """TODO: Add docstring."""
 
                 def __init__(self, handler) -> None:
-                    """TODO: Add docstring."""
                     super().__init__()
                     self.handler = handler
 
                 def Execute(self, obj, event, calldata) -> None:
-                    """TODO: Add docstring."""
                     if self.handler.suppress_errors:
                         return
 
@@ -342,7 +339,6 @@ class VTKErrorHandler:
         self.suppress_errors = True
 
         def reenable_errors() -> None:
-            """TODO: Add docstring."""
             self.suppress_errors = False
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("VTK error suppression ended")

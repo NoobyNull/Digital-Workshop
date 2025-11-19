@@ -67,6 +67,7 @@ class ToolbarManager:
                     "fa5s.search-plus",
                     "fa5s.search-minus",
                     "fa5s.sync",
+                    "fa5s.cloud-download-alt",
                 ]
                 for _name in icon_names:
                     test_icon = qta.icon(_name)
@@ -88,7 +89,6 @@ class ToolbarManager:
             self.logger.info("Toolbar in text-only mode (qtawesome unavailable)")
 
         def _icon(name: str) -> None:
-            """TODO: Add docstring."""
             if not icons_ok or qta is None:
                 return QIcon()
             try:
@@ -98,7 +98,6 @@ class ToolbarManager:
                 return QIcon()
 
         def _add_action(text: str, icon_name: str, slot, tooltip: str) -> QAction:
-            """TODO: Add docstring."""
             if icons_ok:
                 action = QAction(_icon(icon_name), text, self.main_window)
             else:
@@ -115,6 +114,13 @@ class ToolbarManager:
             "fa5s.folder-open",
             self._open_model,
             "Open a 3D model file",
+        )
+
+        _add_action(
+            "Import URL",
+            "fa5s.cloud-download-alt",
+            self._import_from_url,
+            "Download and import a model from a URL",
         )
 
         # Analyze Model
@@ -175,6 +181,11 @@ class ToolbarManager:
         """Handle open model action."""
         if hasattr(self.main_window, "_open_model"):
             self.main_window._open_model()
+
+    def _import_from_url(self) -> None:
+        """Handle toolbar import-from-URL action."""
+        if hasattr(self.main_window, "_open_import_from_url_dialog"):
+            self.main_window._open_import_from_url_dialog()
 
     def _edit_model(self) -> None:
         """Handle edit model action."""

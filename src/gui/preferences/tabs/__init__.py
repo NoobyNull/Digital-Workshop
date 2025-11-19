@@ -7,6 +7,7 @@ from src.gui.preferences.tabs.theming_tab import ThemingTab
 from src.gui.preferences.tabs.thumbnail_settings_tab import ThumbnailSettingsTab
 from src.gui.preferences.tabs.viewer_settings_tab import ViewerSettingsTab
 from src.gui.preferences.tabs.invoice_tab import InvoicePreferencesTab
+from src.gui.preferences.tabs.import_tab import ImportSettingsTab
 
 __all__ = [
     'GeneralTab',
@@ -16,4 +17,5 @@ __all__ = [
     'AdvancedTab',
     'AITab',
     'InvoicePreferencesTab',
+    'ImportSettingsTab',
 ]

@@ -45,7 +45,6 @@ class FilesTab(QWidget):
     """
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
@@ -502,7 +501,6 @@ class FilesTab(QWidget):
                 QMessageBox.warning(self, "Error", "Failed to remove folder.")
 
     def _edit_folder(self) -> None:
-        """Edit the selected folder."""
         current_item = self.folders_list.currentItem()
         if not current_item:
             return
@@ -556,7 +554,6 @@ class FilesTab(QWidget):
             # Add separator
             menu.addSeparator()
 
-            # Edit action for selected item
             edit_action = menu.addAction("Edit Folder Name")
             edit_action.triggered.connect(self._edit_folder)
 

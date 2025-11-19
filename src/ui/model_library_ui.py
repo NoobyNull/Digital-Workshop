@@ -34,10 +34,8 @@ from PySide6.QtWidgets import (
 
 
 class Ui_ModelLibraryWidget(object):
-    """TODO: Add docstring."""
 
     def setupUi(self, ModelLibraryWidget) -> None:
-        """TODO: Add docstring."""
         if not ModelLibraryWidget.objectName():
             ModelLibraryWidget.setObjectName("ModelLibraryWidget")
         ModelLibraryWidget.resize(1000, 700)
@@ -212,7 +210,6 @@ class Ui_ModelLibraryWidget(object):
     # setupUi
 
     def retranslateUi(self, ModelLibraryWidget) -> None:
-        """TODO: Add docstring."""
         ModelLibraryWidget.setWindowTitle(
             QCoreApplication.translate("ModelLibraryWidget", "Model Library", None)
         )

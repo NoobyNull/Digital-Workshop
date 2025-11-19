@@ -153,7 +153,6 @@ class BackgroundLoadingManager:
 
         # Add completion callback
         def on_completion(fut: Future) -> None:
-            """TODO: Add docstring."""
             try:
                 result = fut.result()
                 with self._lock:
@@ -337,7 +336,6 @@ class BackgroundLoadingManager:
 
                 # Coordinate parsing with enhanced progress tracking
                 def enhanced_progress_callback(progress: float, message: str) -> None:
-                    """TODO: Add docstring."""
                     self._update_job_progress(job, progress, message, progress_callback)
 
                     # Record performance metrics

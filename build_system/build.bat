@@ -1,6 +1,10 @@
 @echo off
 REM Easy build script for Digital Workshop on Windows
 
+setlocal
+set "SCRIPT_DIR=%~dp0"
+pushd "%SCRIPT_DIR%.."
+
 echo Digital Workshop - Easy Build Helper
 echo =====================================
 
@@ -63,3 +67,5 @@ goto end
 :end
 echo.
 echo Done!
+popd
+endlocal

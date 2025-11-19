@@ -601,7 +601,7 @@ sys.exit(0)
             mock_popen.return_value = mock_process
             
             result = suite.execute_tool('monolithic_detector', {
-                'script': 'monolithic_detector.py',
+                'script': 'tools/maintenance/monolithic_detector.py',
                 'args': [],
                 'timeout': 10
             })

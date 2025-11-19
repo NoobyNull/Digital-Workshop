@@ -131,16 +131,13 @@ class ModelLoadingWorker(QThread):
         try:
             # Create a simple model structure
             class DummyModel:
-                """TODO: Add docstring."""
 
                 def __init__(self) -> None:
-                    """TODO: Add docstring."""
                     self.filename = (
                         self.file_path.name if hasattr(self, "file_path") else "model.stl"
                     )
 
                 class Stats:
-                    """TODO: Add docstring."""
 
                     triangle_count = 1000
                     format_type = "STL"
@@ -235,7 +232,6 @@ class EnhancedViewerService(IEnhancedViewerService):
 
             # Create cancellation token
             def cancellation_check() -> None:
-                """TODO: Add docstring."""
                 return self.cancellation_requested or (cancellation_token and cancellation_token())
 
             # Create and start loading worker

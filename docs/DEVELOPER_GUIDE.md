@@ -70,7 +70,12 @@ digital-workshop/
 ├── config/                   # Configuration files
 ├── docs/                     # Documentation
 ├── requirements.txt          # Python dependencies
-├── build.py                  # Build script
+├── build_system/             # Build scripts, specs, helpers
+│   ├── build.py            # Primary build orchestrator
+│   ├── build_exe.py        # Lightweight PyInstaller wrapper
+│   └── pyinstaller.spec    # Main PyInstaller spec
+├── tools/                   # Developer tooling & maintenance scripts
+│   └── maintenance/       # QA validators, detectors, unified runner
 └── run.py                    # Quick start script
 ```
 

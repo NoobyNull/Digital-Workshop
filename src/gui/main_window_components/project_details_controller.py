@@ -45,6 +45,16 @@ class ProjectDetailsController:
 
             # Add to main window using native Qt dock system
             self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.main_window.properties_dock)
+            try:
+                # Ensure the dock starts visible with a sensible width
+                self.main_window.properties_dock.show()
+                self.main_window.resizeDocks(
+                    [self.main_window.properties_dock],
+                    [320],
+                    Qt.Horizontal,
+                )
+            except Exception:
+                pass
 
             # Register for snapping functionality
             try:

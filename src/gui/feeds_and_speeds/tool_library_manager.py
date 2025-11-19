@@ -23,6 +23,7 @@ class Tool:
     geometry: Dict[str, Any]
     start_values: Dict[str, Any]
     unit: str = "inches"
+    folder: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert tool to dictionary for storage."""
@@ -36,6 +37,7 @@ class Tool:
             "geometry": self.geometry,
             "start_values": self.start_values,
             "unit": self.unit,
+            "folder": self.folder,
         }
 
     @classmethod
@@ -51,6 +53,7 @@ class Tool:
             geometry=data.get("geometry", {}),
             start_values=data.get("start_values", {}),
             unit=data.get("unit", "inches"),
+            folder=data.get("folder", ""),
         )
 
 

@@ -42,7 +42,6 @@ class GeneralTab(QWidget):
         on_save_layout_default: Callable | None = None,
         parent=None,
     ) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.on_reset_layout = on_reset_layout
         self.on_save_layout_default = on_save_layout_default

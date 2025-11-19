@@ -223,7 +223,6 @@ class LoadingProgressWidget(QWidget):
             step_size = (to_value - from_value) / steps
 
             def animate_step(current_step: int = 0) -> None:
-                """TODO: Add docstring."""
                 if current_step >= steps:
                     self.progress_bar.setValue(to_value)
                     return

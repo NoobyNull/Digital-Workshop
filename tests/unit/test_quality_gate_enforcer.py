@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch, MagicMock
 import yaml
 
 # Import the quality gate enforcer
-from quality_gate_enforcer import (
+from tools.maintenance.quality_gate_enforcer import (
     QualityGateEnforcer,
     ToolResult,
     QualityGate,

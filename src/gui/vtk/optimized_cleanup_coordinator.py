@@ -154,7 +154,6 @@ class OptimizedVTKCleanupCoordinator:
                 """Minimal fallback resource tracker for emergency cleanup."""
 
                 def __init__(self) -> None:
-                    """TODO: Add docstring."""
                     self.logger = get_logger(__name__)
                     self.resources = {}
 

@@ -30,6 +30,23 @@ python scripts/easy_build.py clean
 python scripts/easy_build.py info
 ```
 
+## 🌐 GitHub Mirror Prep
+
+The same tooling used in GitLab CI works inside GitHub Actions when mirrored:
+
+1. **Cache Poetry/Pip artifacts:** Use `actions/setup-python` + `actions/cache` targeting `.venv` or `%LocalAppData%\pip\Cache`.
+2. **Build step:** `python scripts/easy_build.py full`.
+3. **Release packaging:**
+   ```bash
+   $env:DW_BUILD_NUMBER = $env:GITHUB_RUN_NUMBER
+   python scripts/generate_changelog.py --build-number $env:DW_BUILD_NUMBER --output dist/changes-$env:DW_BUILD_NUMBER.txt
+   Rename-Item "dist/Digital Workshop.exe" "Digital Workshop.$env:DW_BUILD_NUMBER.exe"
+   git tag build-$env:DW_BUILD_NUMBER
+   ```
+4. **Upload artifacts:** publish the renamed EXE + `dist/changes-*.txt` + `build-info.txt`.
+
+GitHub exposes `GITHUB_RUN_NUMBER`, which is monotonic per workflow; treating it as the build number keeps parity with GitLab’s `CI_PIPELINE_IID`.
+
 ## 📦 Build Number System
 
 Instead of semantic versioning (v0.1.5), we now use sequential build numbers:

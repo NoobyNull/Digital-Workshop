@@ -10,7 +10,7 @@ The GitHub builder creates **TWO separate artifacts**:
 ## Build Process Flow
 
 ### Step 1: PyInstaller Compilation
-**File**: `pyinstaller.spec`
+**File**: `build_system/pyinstaller.spec`
 
 ```
 Input: src/main.py + all dependencies
@@ -126,7 +126,7 @@ Triggered on: **Release published**
 3. Install dependencies (pip install -r requirements.txt)
 4. Install PyInstaller
 5. Install NSIS (via Chocolatey)
-6. Run `python build.py --no-tests`
+6. Run `python build_system/build.py --no-tests`
    - Cleans previous builds
    - Runs PyInstaller → creates `Digital Workshop.exe`
    - Runs NSIS → creates `Digital Workshop-Setup-1.0.0.exe`
@@ -142,7 +142,7 @@ Triggered on: **Manual workflow dispatch**
 1. Checkout code
 2. Setup Python 3.10
 3. Calculate new version (major/minor/patch bump)
-4. Update version in `build.py`
+4. Update version in `build_system/build.py`
 5. Update version in `config/installer.nsi`
 6. Create release branch
 7. Build application (same as Build Workflow)

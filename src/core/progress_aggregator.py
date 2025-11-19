@@ -52,7 +52,6 @@ class ChunkProgress:
     sub_operations: Dict[str, SubOperationProgress] = None
 
     def __post_init__(self) -> None:
-        """TODO: Add docstring."""
         if self.sub_operations is None:
             self.sub_operations = {}
 

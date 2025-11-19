@@ -428,6 +428,16 @@ class DatabaseOperations:
                 )
                 logger.info("feed_override_pct column added successfully")
 
+            if "material_name" not in project_col_names:
+                logger.info("Adding material_name column to projects table")
+                cursor.execute("ALTER TABLE projects ADD COLUMN material_name TEXT")
+                logger.info("material_name column added successfully")
+
+            if "material_tag" not in project_col_names:
+                logger.info("Adding material_tag column to projects table")
+                cursor.execute("ALTER TABLE projects ADD COLUMN material_tag TEXT")
+                logger.info("material_tag column added successfully")
+
             # Migration 6: Ensure files table exists (for file tracking)
             cursor.execute("PRAGMA table_info(files)")
             files_columns = cursor.fetchall()
@@ -481,6 +491,26 @@ class DatabaseOperations:
                 if "feed_override_pct" not in metrics_col_names:
                     logger.info("Adding feed_override_pct column to gcode_metrics table")
                     cursor.execute("ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL")
+
+            # Migration 8: Add spindle capability columns to machines
+            cursor.execute("PRAGMA table_info(machines)")
+            machine_columns = cursor.fetchall()
+            machine_col_names = [col[1] for col in machine_columns]
+            if machine_columns:
+                if "max_spindle_rpm" not in machine_col_names:
+                    logger.info("Adding max_spindle_rpm column to machines table")
+                    cursor.execute("ALTER TABLE machines ADD COLUMN max_spindle_rpm REAL")
+                if "max_bit_diameter_mm" not in machine_col_names:
+                    logger.info("Adding max_bit_diameter_mm column to machines table")
+                    cursor.execute("ALTER TABLE machines ADD COLUMN max_bit_diameter_mm REAL")
+                if "spindle_power_w" not in machine_col_names:
+                    logger.info("Adding spindle_power_w column to machines table")
+                    cursor.execute("ALTER TABLE machines ADD COLUMN spindle_power_w REAL")
+                if "drive_type" not in machine_col_names:
+                    logger.info("Adding drive_type column to machines table")
+                    cursor.execute(
+                        "ALTER TABLE machines ADD COLUMN drive_type TEXT DEFAULT 'ball_screw'"
+                    )
 
         except sqlite3.Error as e:
             logger.error("Failed to migrate database schema: %s", str(e))
@@ -577,6 +607,10 @@ class DatabaseOperations:
                 name TEXT NOT NULL UNIQUE,
                 max_feed_mm_min REAL NOT NULL DEFAULT 600.0,
                 accel_mm_s2 REAL NOT NULL DEFAULT 100.0,
+                drive_type TEXT DEFAULT 'ball_screw',
+                max_spindle_rpm REAL,
+                max_bit_diameter_mm REAL,
+                spindle_power_w REAL,
                 notes TEXT,
                 is_default INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -225,7 +225,6 @@ class ImagePairingService:
                 self.logger.warning("Unsupported image format: %s", path.suffix)
                 return False
 
-            # TODO: Could add PIL/Pillow validation to check if image is actually readable
             # For now, basic checks are sufficient
 
             return True

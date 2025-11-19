@@ -148,7 +148,6 @@ class ModelOperationManager:
             self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
 
     def edit_model(self, model_id: Optional[int] = None) -> None:
-        """Edit the selected model's metadata."""
         try:
             if model_id is None:
                 model_id = getattr(self.main_window, "current_model_id", None)

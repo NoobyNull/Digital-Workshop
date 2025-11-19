@@ -112,7 +112,7 @@ python scripts/gitlab_ci_bootstrap.py --help
 | Tags push fails inside CI | The `.gitlab-ci.yml` job rewrites `origin` to use `CI_JOB_TOKEN`. Ensure the job token has *write_repository* scope (enable it per project: **Settings → CI/CD → General pipelines → Allow jobs to access the repository**). |
 | Pipeline deletion fails | Ensure the `PIPELINE_DELETE_TOKEN` CI/CD variable exists, is masked/protected, and has the `api` scope. Rotate the token if it expires. |
 
-For additional background see `SETUP_GITLAB_RUNNERS.md` and `BUILD_SYSTEM_README.md`.
+For additional background see `SETUP_GITLAB_RUNNERS.md` and `build_system/README.md`.
 
 ---
 

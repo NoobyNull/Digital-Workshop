@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional, Callable, List, Dict, Tuple, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from threading import Lock
 
 from src.core.logging_config import get_logger
 from src.core.fast_hasher import FastHasher
@@ -130,6 +131,7 @@ class ImportFileManager:
         self.root_folder_manager = RootFolderManager.get_instance()
         self.file_type_filter = FileTypeFilter()
         self._active_session: Optional[ImportSession] = None
+        self._session_lock = Lock()
 
         self._log_json(
             "file_manager_initialized",
@@ -539,18 +541,19 @@ class ImportFileManager:
 
                 # Track directory creation for rollback
                 if not target_path.parent.exists():
-                    session.created_directories.append(str(target_path.parent))
+                    with self._session_lock:
+                        session.created_directories.append(str(target_path.parent))
 
                 # Copy file
                 def copy_progress(percent) -> None:
-                    """TODO: Add docstring."""
                     if progress_callback:
                         progress_callback(f"Copying {source_path.name}", 50 + (percent // 2))
 
                 self._copy_file_with_progress(source_path, target_path, copy_progress)
 
                 # Track for rollback
-                session.copied_files.append(str(target_path))
+                with self._session_lock:
+                    session.copied_files.append(str(target_path))
                 file_info.managed_path = str(target_path)
 
             else:  # LEAVE_IN_PLACE

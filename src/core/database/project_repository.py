@@ -218,6 +218,8 @@ class ProjectRepository:
                 "active_machine_id",
                 "feed_override_pct",
                 "group_id",
+                "material_name",
+                "material_tag",
             }
 
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}

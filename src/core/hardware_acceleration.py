@@ -31,7 +31,6 @@ from .logging_config import get_logger
 
 
 class AccelBackend(Enum):
-    """TODO: Add docstring."""
 
     CUDA = "cuda"
     OPENCL = "opencl"
@@ -41,7 +40,6 @@ class AccelBackend(Enum):
 
 @dataclass
 class GPUDevice:
-    """TODO: Add docstring."""
 
     name: str
     vendor: str
@@ -53,7 +51,6 @@ class GPUDevice:
 
 @dataclass
 class AccelCapabilities:
-    """TODO: Add docstring."""
 
     available_backends: List[AccelBackend] = field(default_factory=list)
     devices: List[GPUDevice] = field(default_factory=list)
@@ -63,16 +60,13 @@ class AccelCapabilities:
 
 
 class HardwareAccelerationManager:
-    """TODO: Add docstring."""
 
     def __init__(self) -> None:
-        """TODO: Add docstring."""
         self.logger = get_logger(__name__)
         self._caps: Optional[AccelCapabilities] = None
         self._detected: bool = False
 
     def detect(self, force: bool = False) -> AccelCapabilities:
-        """TODO: Add docstring."""
         if self._detected and self._caps and not force:
             return self._caps
         self._detected = True
@@ -105,11 +99,9 @@ class HardwareAccelerationManager:
         return caps
 
     def get_capabilities(self) -> AccelCapabilities:
-        """TODO: Add docstring."""
         return self.detect()
 
     def _detect_nvidia_cuda(self) -> Dict[str, object]:
-        """TODO: Add docstring."""
         devices: List[GPUDevice] = []
         notes: List[str] = []
         available = False
@@ -177,7 +169,6 @@ class HardwareAccelerationManager:
         return {"available": available, "devices": devices, "notes": notes}
 
     def _detect_opencl(self) -> Dict[str, object]:
-        """TODO: Add docstring."""
         devices: List[GPUDevice] = []
         notes: List[str] = []
         available = False
@@ -225,7 +216,6 @@ class HardwareAccelerationManager:
         return {"available": available, "devices": devices, "notes": notes}
 
     def _detect_opengl_compute(self) -> bool:
-        """TODO: Add docstring."""
         # Non-fatal best-effort detection; requires VTK OpenGL context
         try:
             if vtk is None:
@@ -258,7 +248,6 @@ class HardwareAccelerationManager:
         return False
 
     def _score(self, caps: AccelCapabilities) -> int:
-        """TODO: Add docstring."""
         score = 10
         has_cuda = any(d.backend == AccelBackend.CUDA for d in caps.devices)
         has_ocl_amd = any(
@@ -286,7 +275,6 @@ class HardwareAccelerationManager:
         return score
 
     def _select_backend(self, caps: AccelCapabilities) -> AccelBackend:
-        """TODO: Add docstring."""
         if any(d.backend == AccelBackend.CUDA for d in caps.devices):
             return AccelBackend.CUDA
         if any(d.backend == AccelBackend.OPENCL for d in caps.devices):
@@ -296,7 +284,6 @@ class HardwareAccelerationManager:
         return AccelBackend.CPU
 
     def get_acceleration_info(self) -> Dict[str, object]:
-        """TODO: Add docstring."""
         caps = self.get_capabilities()
         info: Dict[str, object] = {
             "recommended_backend": caps.recommended_backend.value,
@@ -308,7 +295,6 @@ class HardwareAccelerationManager:
         return info
 
     def warn_if_no_acceleration(self) -> None:
-        """TODO: Add docstring."""
         caps = self.get_capabilities()
         if caps.recommended_backend == AccelBackend.CPU:
             self.logger.warning("No GPU acceleration detected; using CPU path")
@@ -321,7 +307,6 @@ _accel_manager: Optional[HardwareAccelerationManager] = None  # type: ignore
 
 
 def get_acceleration_manager() -> HardwareAccelerationManager:
-    """TODO: Add docstring."""
     global _accel_manager
     if _accel_manager is None:
         _accel_manager = HardwareAccelerationManager()
@@ -329,7 +314,6 @@ def get_acceleration_manager() -> HardwareAccelerationManager:
 
 
 def check_acceleration_support() -> (bool, str):
-    """TODO: Add docstring."""
     mgr = get_acceleration_manager()
     caps = mgr.get_capabilities()
     return (
@@ -339,5 +323,4 @@ def check_acceleration_support() -> (bool, str):
 
 
 def warn_if_no_acceleration() -> None:
-    """TODO: Add docstring."""
     get_acceleration_manager().warn_if_no_acceleration()

@@ -105,6 +105,9 @@ build_windows_exe:
     python -m pip install openai anthropic google-generativeai zhipuai python-dotenv requests qdarkstyle
     python -m pip install bandit safety semgrep
 
+    Write-Host "== Pre-build cleanup and quality checks =="
+    python tools/prebuild_cleanup.py --ci
+
     Write-Host "== Running security scans =="
     python -m safety check --json --output safety-report.json
     python -m bandit -r src/ -f json -o bandit-report.json
@@ -126,7 +129,7 @@ build_windows_exe:
     Write-Host "Revision: $revisionTag"
 
     Write-Host "== Building Windows executable via PyInstaller =="
-    python build_exe.py
+    python build_system/build_exe.py
 
     $distDir = if ($Env:DIST_DIR) { $Env:DIST_DIR } else { "dist" }
     $exeBaseName = if ($Env:EXE_NAME) { $Env:EXE_NAME } else { "Digital Workshop" }

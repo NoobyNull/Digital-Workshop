@@ -596,7 +596,6 @@ class DatabaseCacheManager:
         """Start background cache cleanup thread."""
 
         def cleanup_worker() -> None:
-            """TODO: Add docstring."""
             while True:
                 try:
                     self._cleanup_expired_entries()

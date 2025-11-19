@@ -39,7 +39,6 @@ class CleanupError(Exception):
     """Exception raised during cleanup operations."""
 
     def __init__(self, message: str, phase: CleanupPhase, context: CleanupContext) -> None:
-        """TODO: Add docstring."""
         super().__init__(message)
         self.phase = phase
         self.context = context
@@ -86,7 +85,6 @@ class CleanupStats:
     verification_report: Optional[Any] = None
 
     def __post_init__(self) -> None:
-        """TODO: Add docstring."""
         if self.errors is None:
             self.errors = []
         if self.phase_errors is None:
@@ -147,7 +145,6 @@ class CleanupHandler:
     """Base class for specialized cleanup handlers."""
 
     def __init__(self, name: str) -> None:
-        """TODO: Add docstring."""
         self.name = name
         self.logger = get_logger(f"{__name__}.{name}")
         self.enabled = True

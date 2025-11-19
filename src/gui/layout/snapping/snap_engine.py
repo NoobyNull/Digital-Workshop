@@ -329,7 +329,6 @@ class SnapEngine:
         """Connect to configuration change signals."""
         # Note: In a real implementation, this would connect to config change signals
         # For now, we'll handle configuration updates manually
-        # TODO: Implement signal connections when configuration change signals are available
 
     def _rebuild_spatial_index(self) -> None:
         """

@@ -483,11 +483,9 @@ def transactional(max_retries: int = 3, retry_delay: float = 0.1) -> None:
     """
 
     def decorator(func: Callable) -> Callable:
-        """TODO: Add docstring."""
 
         @wraps(func)
         def wrapper(*args, **kwargs) -> None:
-            """TODO: Add docstring."""
             # This would need to be integrated with the transaction manager
             # For now, just execute the function with basic error handling
             try:

@@ -807,11 +807,9 @@ def handle_errors(operation_name: str = None, reraise: bool = True) -> None:
     """
 
     def decorator(func: Callable) -> Callable:
-        """TODO: Add docstring."""
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> None:
-            """TODO: Add docstring."""
             error_handler = EnhancedErrorHandler()
             operation = operation_name or f"{func.__module__}.{func.__name__}"
 

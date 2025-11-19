@@ -16,12 +16,15 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(f'build_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
+        logging.FileHandler(SCRIPT_DIR / f'build_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
     ]
 )
@@ -32,7 +35,7 @@ BUILD_CONFIG = {
     "app_name": "Digital Workshop",
     "version": "0.1.5",
     "main_script": "src/main.py",
-    "spec_file": "pyinstaller.spec",
+    "spec_file": "build_system/pyinstaller.spec",
     "installer_script": "config/installer.iss",
     "dist_dir": "dist",
     "build_dir": "build",
@@ -48,7 +51,7 @@ class ModularBuildManager:
     def __init__(self, config=None):
         """Initialize the modular build manager."""
         self.config = config or BUILD_CONFIG
-        self.project_root = Path.cwd()
+        self.project_root = PROJECT_ROOT
         self.start_time = datetime.now()
         self.modules_dir = self.project_root / "dist" / "modules"
 
@@ -194,7 +197,7 @@ class BuildManager:
     def __init__(self, config=None):
         """Initialize the build manager with configuration."""
         self.config = config or BUILD_CONFIG
-        self.project_root = Path.cwd()
+        self.project_root = PROJECT_ROOT
         self.start_time = datetime.now()
         
     def clean_build_dirs(self):

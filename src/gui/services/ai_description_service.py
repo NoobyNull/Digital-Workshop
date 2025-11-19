@@ -695,6 +695,15 @@ Return ONLY valid JSON, no additional text.""",
                 result = provider.analyze_image(image_path, analysis_prompt)
             except Exception as e:
                 # Normalize provider-level failures into a clear configuration error
+                msg = str(e)
+                if "API key" in msg or "key not valid" in msg.lower():
+                    friendly = (
+                        "AI provider rejected the request (API key invalid or missing). "
+                        "Check AI preferences or switch to the local Ollama provider."
+                    )
+                    self.logger.warning(friendly)
+                    self.analysis_failed.emit(friendly)
+                    raise ValueError(friendly) from e
                 error_msg = f"AI provider error: {e}"
                 self.logger.error(error_msg)
                 self.analysis_failed.emit(error_msg)

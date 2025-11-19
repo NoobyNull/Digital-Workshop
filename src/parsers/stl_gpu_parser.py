@@ -449,10 +449,8 @@ class STLGPUParser(BaseParser):
         if progress_callback:
 
             class STLCallbackAdapter:
-                """TODO: Add docstring."""
 
                 def report(self, progress: float, message: str) -> None:
-                    """TODO: Add docstring."""
                     progress_callback.report(progress, message)
 
             stl_callback = STLCallbackAdapter()

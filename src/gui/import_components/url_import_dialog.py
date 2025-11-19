@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
+import http.cookiejar
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Optional
-from urllib.parse import urlparse
+from typing import Callable, Optional
+from urllib.parse import (
+    parse_qs,
+    unquote,
+    urljoin,
+    urlencode,
+    urlparse,
+    urlsplit,
+    urlunsplit,
+)
 
+from bs4 import BeautifulSoup
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QDialog,
@@ -43,25 +54,32 @@ class UrlDownloadWorker(QThread):
     def run(self) -> None:
         try:
             self.destination.parent.mkdir(parents=True, exist_ok=True)
-            with urllib.request.urlopen(self.url) as response:
-                total = int(response.headers.get("Content-Length") or 0)
-                downloaded = 0
-                chunk_size = 1024 * 256
-
-                with self.destination.open("wb") as handle:
-                    while True:
-                        chunk = response.read(chunk_size)
-                        if not chunk:
-                            break
-                        handle.write(chunk)
-                        downloaded += len(chunk)
-                        if total:
-                            percent = int((downloaded / total) * 100)
-                            self.progress.emit(percent)
-
+            helper = GoogleDriveHelper()
+            if helper.can_handle(self.url):
+                helper.download(self.url, self.destination, self.progress.emit)
+            else:
+                self._standard_download(self.url, self.destination)
             self.completed.emit(str(self.destination))
-        except (urllib.error.URLError, OSError) as exc:
+        except (urllib.error.URLError, OSError, ValueError) as exc:
             self.failed.emit(str(exc))
+
+    def _standard_download(self, url: str, destination: Path) -> None:
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request) as response:
+            total = int(response.headers.get("Content-Length") or 0)
+            downloaded = 0
+            chunk_size = 1024 * 256
+
+            with destination.open("wb") as handle:
+                while True:
+                    chunk = response.read(chunk_size)
+                    if not chunk:
+                        break
+                    handle.write(chunk)
+                    downloaded += len(chunk)
+                    if total:
+                        percent = int((downloaded / total) * 100)
+                        self.progress.emit(percent)
 
 
 class UrlImportDialog(QDialog):
@@ -136,7 +154,7 @@ class UrlImportDialog(QDialog):
         self.download_worker.completed.connect(self._on_download_completed)
         self.download_worker.failed.connect(self._on_download_failed)
         self.download_button.setEnabled(False)
-        self.status_label.setText("Downloading…")
+        self.status_label.setText("Downloading...")
         self.progress_bar.setValue(0)
         self.download_worker.start()
 
@@ -205,6 +223,204 @@ class UrlImportDialog(QDialog):
         self.logger.error("URL import failed: %s", error)
         QMessageBox.critical(self, "Import Failed", error)
         self.download_button.setEnabled(True)
+
+
+class GoogleDriveHelper:
+    """Utility to handle Google Drive share links that require confirmation tokens."""
+
+    CONFIRM_PATTERN = re.compile(r"confirm=([0-9A-Za-z_]+)")
+
+    def __init__(self) -> None:
+        self.cookie_jar = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.cookie_jar)
+        )
+
+    def can_handle(self, url: str) -> bool:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        if "googleusercontent" in host:
+            return True
+        if "google.com" in host and "drive" in host:
+            return True
+        if "facebook.com" in host:
+            qs = parse_qs(parsed.query)
+            if "u" in qs:
+                return self.can_handle(unquote(qs["u"][0]))
+        return False
+
+    def download(self, url: str, destination: Path, progress_callback: Callable[[int], None]) -> None:
+        file_id = self._extract_file_id(url)
+        if not file_id:
+            raise ValueError("Unable to determine Google Drive file ID from the provided link.")
+
+        last_error: Optional[Exception] = None
+        for candidate in self._candidate_urls(url, file_id):
+            try:
+                response = self._open(candidate)
+                self._process_response(file_id, response, destination, progress_callback)
+                return
+            except ValueError as exc:
+                last_error = exc
+
+        if last_error is not None:
+            raise last_error
+        raise ValueError("Unable to download the Google Drive file.")
+
+    def _process_response(
+        self,
+        file_id: str,
+        response,
+        destination: Path,
+        progress_callback: Callable[[int], None],
+    ) -> None:
+        if self._is_binary_response(response):
+            self._stream_response(response, destination, progress_callback)
+            return
+
+        page_content = response.read().decode("utf-8", errors="ignore")
+        confirm_url = None
+        try:
+            confirm_url = self._extract_confirmation_url(page_content, response.geturl())
+        except ValueError as exc:
+            raise ValueError(
+                "Google Drive rejected the download request: "
+                f"{exc}"
+            ) from exc
+
+        if not confirm_url:
+            token = self._extract_confirm_token(page_content) or self._extract_cookie_token()
+            if token:
+                confirm_url = self._build_url(file_id, token)
+
+        if not confirm_url:
+            raise ValueError(
+                "Google Drive requires confirmation for this file. "
+                "Ensure the link is public or download it manually."
+            )
+
+        response = self._open(confirm_url)
+        self._process_response(file_id, response, destination, progress_callback)
+
+    def _candidate_urls(self, original_url: str, file_id: str):
+        """Yield URLs to try, avoiding duplicates."""
+
+        seen = set()
+        for candidate in (original_url, self._build_url(file_id)):
+            if candidate and candidate not in seen:
+                seen.add(candidate)
+                yield candidate
+
+    def _extract_file_id(self, url: str) -> Optional[str]:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+
+        if "facebook.com" in host:
+            qs = parse_qs(parsed.query)
+            if "u" in qs:
+                return self._extract_file_id(unquote(qs["u"][0]))
+
+        qs = parse_qs(parsed.query)
+        if "id" in qs:
+            return qs["id"][0]
+
+        match = re.search(r"/d/([^/]+)/", parsed.path)
+        if match:
+            return match.group(1)
+
+        if "googleusercontent" in host and "id" in qs:
+            return qs["id"][0]
+
+        return None
+
+    def _open(self, url: str):
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        return self.opener.open(request)
+
+    @staticmethod
+    def _is_binary_response(response) -> bool:
+        disposition = response.headers.get("Content-Disposition")
+        content_type = (response.headers.get("Content-Type") or "").lower()
+        return disposition is not None or not content_type.startswith("text/html")
+
+    @classmethod
+    def _extract_confirm_token(cls, page: str) -> Optional[str]:
+        match = cls.CONFIRM_PATTERN.search(page)
+        if match:
+            return match.group(1)
+        return None
+
+    def _extract_cookie_token(self) -> Optional[str]:
+        """Some downloads store the token in a download_warning cookie."""
+
+        for cookie in self.cookie_jar:
+            if cookie.name.startswith("download_warning"):
+                return cookie.value
+        return None
+
+    def _extract_confirmation_url(self, page: str, response_url: Optional[str]) -> Optional[str]:
+        """Parse HTML confirmation pages to find the redirect download URL."""
+
+        base = response_url or "https://docs.google.com"
+        for line in page.splitlines():
+            match = re.search(r'href="(\/uc\?export=download[^"]+)', line)
+            if match:
+                relative = match.group(1).replace("&amp;", "&")
+                return urljoin(base, relative)
+
+            soup = BeautifulSoup(line, "html.parser")
+            form = soup.select_one("#download-form")
+            if form is not None:
+                action = (form.get("action") or "").replace("&amp;", "&")
+                if not action:
+                    continue
+                action = urljoin(base, action)
+                url_components = urlsplit(action)
+                query_params = parse_qs(url_components.query)
+                for param in form.find_all("input", attrs={"type": "hidden"}):
+                    name = param.get("name")
+                    if not name:
+                        continue
+                    query_params[name] = param.get("value")
+                query = urlencode(query_params, doseq=True)
+                return urlunsplit(url_components._replace(query=query))
+
+            match = re.search('"downloadUrl":"([^"]+)', line)
+            if match:
+                url = match.group(1)
+                url = url.replace("\\u003d", "=").replace("\\u0026", "&")
+                return url
+
+            match = re.search('<p class="uc-error-subcaption">(.*)</p>', line)
+            if match:
+                raise ValueError(match.group(1))
+
+        return None
+
+    def _stream_response(
+        self, response, destination: Path, progress_callback: Callable[[int], None]
+    ) -> None:
+
+        total = int(response.headers.get("Content-Length") or 0)
+        downloaded = 0
+        chunk_size = 1024 * 256
+
+        with destination.open("wb") as handle:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                handle.write(chunk)
+                downloaded += len(chunk)
+                if total:
+                    progress_callback(int((downloaded / total) * 100))
+
+    @staticmethod
+    def _build_url(file_id: str, token: Optional[str] = None) -> str:
+        base = f"https://drive.google.com/uc?export=download&id={file_id}"
+        if token:
+            return f"{base}&confirm={token}"
+        return base
         self.status_label.setText("Import failed.")
 
     def _tag_downloaded_models(self, result: ImportCoordinatorResult) -> None:

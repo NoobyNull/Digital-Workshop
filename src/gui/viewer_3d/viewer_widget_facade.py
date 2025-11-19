@@ -291,7 +291,6 @@ class Viewer3DWidget(QWidget):
 
             # Set up progress callback
             def emit_progress(progress: float, message: str) -> None:
-                """TODO: Add docstring."""
                 if progress_callback:
                     progress_callback(progress, message)
 

@@ -140,7 +140,7 @@ build_windows_exe:
   stage: build
   # Remove tags restriction to allow any runner
   script:
-    - python build_exe.py
+    - python build_system/build_exe.py
 ```
 
 ### Use Shell Executor
@@ -151,7 +151,7 @@ build_windows_exe:
   tags:
     - shell  # or docker
   script:
-    - python build_exe.py
+    - python build_system/build_exe.py
 ```
 
 ### Use GitLab Hosted Runners

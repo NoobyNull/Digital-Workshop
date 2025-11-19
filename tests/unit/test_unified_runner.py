@@ -25,7 +25,7 @@ import pytest
 
 # Import the unified test runner
 sys.path.insert(0, str(Path(__file__).parent))
-from unified_test_runner import (
+from tools.maintenance.unified_test_runner import (
     UnifiedTestRunner, 
     TestSuiteConfig, 
     TestExecutionResult,
@@ -690,7 +690,7 @@ def regular_function():
 class TestMainFunction:
     """Test main function and CLI interface."""
     
-    @patch('sys.argv', ['unified_test_runner.py', '--help'])
+    @patch('sys.argv', ['tools/maintenance/unified_test_runner.py', '--help'])
     def test_main_help(self, capsys):
         """Test help message display."""
         with pytest.raises(SystemExit):
@@ -699,8 +699,8 @@ class TestMainFunction:
         captured = capsys.readouterr()
         assert "usage:" in captured.out.lower() or "unified test execution" in captured.out.lower()
     
-    @patch('unified_test_runner.UnifiedTestRunner')
-    @patch('sys.argv', ['unified_test_runner.py', '--output', 'test_report.json'])
+    @patch('tools.maintenance.unified_test_runner.UnifiedTestRunner')
+    @patch('sys.argv', ['tools/maintenance/unified_test_runner.py', '--output', 'test_report.json'])
     def test_main_basic_execution(self, mock_runner_class):
         """Test basic main function execution."""
         # Mock runner and its methods

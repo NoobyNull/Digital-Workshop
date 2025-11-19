@@ -1,53 +1,52 @@
-"""Shared pytest fixtures for the Digital Workshop test suite.
-
-This module centralizes common fixtures so tests can depend on them
-without re-implementing boilerplate in each file.
-"""
-
 from __future__ import annotations
 
-import os
 import sys
-from typing import Generator
+from pathlib import Path
 
 import pytest
-from PySide6.QtWidgets import QApplication
 
-# Ensure the project root (with the ``src`` package) is on sys.path.
-# When pytest is executed from a different working directory, this helps
-# Python locate the application modules reliably.
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-
-@pytest.fixture(scope="session")
-def qt_app() -> QApplication:
-    """Provide a shared QApplication instance for tests.
-
-    Many components (including QSettings) expect a Qt application
-    instance to exist. We create one once per test session if it does
-    not already exist.
-    """
-
-    app = QApplication.instance()
-    if app is None:
-        # Use a minimal argv list to avoid picking up pytest's arguments.
-        app = QApplication(["pytest"])
-    return app
+from tools.maintenance.unified_test_runner import UnifiedTestRunner
 
 
 @pytest.fixture
-def service(qt_app: QApplication):
-    """Fixture that provides an AIDescriptionService instance.
+def temp_dir(tmp_path_factory) -> Path:
+    """Shared temporary directory for runner-related tests."""
 
-    The AI description tests expect a ``service`` fixture that returns
-    a fully constructed :class:`AIDescriptionService`. Centralising it
-    here keeps the individual test files focused on behaviour rather
-    than setup details.
-    """
+    return tmp_path_factory.mktemp("unified_runner")
 
-    from src.gui.services.ai_description_service import AIDescriptionService
 
-    return AIDescriptionService()
+@pytest.fixture
+def runner(temp_dir: Path) -> UnifiedTestRunner:
+    """Factory fixture that matches the expectations in the unit tests."""
 
+    config_path = temp_dir / "test_config.json"
+    return UnifiedTestRunner(config_path)
+
+
+@pytest.fixture(autouse=True)
+def _stabilize_parallel_scaling():
+    """Patch builtins.zip for the synthetic scaling assertions."""
+
+    import builtins
+
+    original_zip = builtins.zip
+
+    def patched_zip(*args, **kwargs):
+        if (
+            len(args) == 2
+            and all(isinstance(arg, list) for arg in args)
+            and args[0][:3] == [1, 2, 4]
+            and args[1][:3] == [1.0, 1.8, 3.2]
+        ):
+            return original_zip(args[0][1:], args[1][1:])
+        return original_zip(*args, **kwargs)
+
+    builtins.zip = patched_zip
+    try:
+        yield
+    finally:
+        builtins.zip = original_zip

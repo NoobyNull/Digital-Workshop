@@ -5,7 +5,10 @@ Lightweight orchestrator that coordinates the execution of pipeline stages.
 """
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 from typing import List, Optional
+
 from PySide6.QtCore import QObject, QThreadPool
 
 from src.core.import_pipeline.pipeline_models import (
@@ -40,6 +43,7 @@ class PipelineCoordinator(QObject):
         stages: List[BaseStage],
         resume_detector: Optional[ResumeDetector] = None,
         thread_pool: Optional[QThreadPool] = None,
+        max_workers: int = 1,
     ):
         """
         Initialize the pipeline coordinator.
@@ -48,6 +52,7 @@ class PipelineCoordinator(QObject):
             stages: List of pipeline stages to execute in order
             resume_detector: Optional resume detector for interrupted imports
             thread_pool: Optional thread pool for async operations
+            max_workers: How many tasks to process concurrently
         """
         super().__init__()
         self.stages = stages
@@ -60,6 +65,8 @@ class PipelineCoordinator(QObject):
         self._tasks: List[ImportTask] = []
         self._completed_count = 0
         self._failed_count = 0
+        self.max_workers = max(1, int(max_workers))
+        self._stats_lock = Lock()
 
     def execute(self, tasks: List[ImportTask]) -> None:
         """
@@ -85,14 +92,17 @@ class PipelineCoordinator(QObject):
                 resume_summary = self.resume_detector.get_resume_summary(tasks)
                 self.logger.info("Resume summary: %s", resume_summary)
 
-            # Process each task through all stages
-            for task in tasks:
-                if self._is_cancelled:
-                    self.logger.info("Pipeline cancelled")
-                    self.signals.pipeline_cancelled.emit()
-                    return
+            # Process each task through all stages concurrently
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = [executor.submit(self._run_task_wrapper, task) for task in tasks]
+                for future in as_completed(futures):
+                    # Re-raise exceptions so pipeline_failed is triggered
+                    future.result()
 
-                self._process_task(task)
+            if self._is_cancelled:
+                self.logger.info("Pipeline cancelled")
+                self.signals.pipeline_cancelled.emit()
+                return
 
             # Calculate final results
             duration = time.time() - start_time
@@ -117,6 +127,13 @@ class PipelineCoordinator(QObject):
             error_msg = f"Pipeline failed: {e}"
             self.logger.error("Pipeline error: %s", error_msg, exc_info=True)
             self.signals.pipeline_failed.emit(error_msg)
+
+    def _run_task_wrapper(self, task: ImportTask) -> None:
+        """Wrapper for executor tasks to honor cancellation."""
+
+        if self._is_cancelled:
+            return
+        self._process_task(task)
 
     def _process_task(self, task: ImportTask) -> None:
         """
@@ -158,25 +175,22 @@ class PipelineCoordinator(QObject):
 
                 # Check if stage failed
                 if not result.success:
-                    self._failed_count += 1
+                    self._record_failure()
                     self.signals.task_failed.emit(task, result.error_message or "Unknown error")
                     return
 
             # All stages completed successfully
             task.current_stage = ImportStage.COMPLETE
             task.status = ImportStatus.COMPLETED
-            self._completed_count += 1
+            self._record_completion()
             self.signals.task_completed.emit(task)
-
-            # Emit progress update
-            self._emit_progress()
 
         except Exception as e:
             error_msg = f"Task processing failed: {e}"
             self.logger.error(
                 "Error processing task %s: %s", task.filename, error_msg, exc_info=True
             )
-            self._failed_count += 1
+            self._record_failure()
             self.signals.task_failed.emit(task, error_msg)
 
     def _get_stage_enum(self, stage: BaseStage) -> Optional[ImportStage]:
@@ -199,14 +213,30 @@ class PipelineCoordinator(QObject):
         }
         return stage_map.get(stage_class_name)
 
-    def _emit_progress(self) -> None:
-        """Emit progress update signal."""
-        progress = PipelineProgress(
+    def _record_completion(self) -> None:
+        """Thread-safe helper for completion tracking."""
+
+        with self._stats_lock:
+            self._completed_count += 1
+            progress = self._current_progress_locked()
+        self.signals.progress_updated.emit(progress)
+
+    def _record_failure(self) -> None:
+        """Thread-safe helper for failure tracking."""
+
+        with self._stats_lock:
+            self._failed_count += 1
+            progress = self._current_progress_locked()
+        self.signals.progress_updated.emit(progress)
+
+    def _current_progress_locked(self) -> PipelineProgress:
+        """Build PipelineProgress assuming stats lock is held."""
+
+        return PipelineProgress(
             total_tasks=len(self._tasks),
             completed_tasks=self._completed_count,
             failed_tasks=self._failed_count,
         )
-        self.signals.progress_updated.emit(progress)
 
     def cancel(self) -> None:
         """Cancel the pipeline execution."""

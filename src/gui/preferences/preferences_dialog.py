@@ -20,6 +20,7 @@ from src.gui.preferences.tabs import (
     ThumbnailSettingsTab,
     ViewerSettingsTab,
     InvoicePreferencesTab,
+    ImportSettingsTab,
 )
 from src.gui.files_components.files_tab_widget import FilesTab
 
@@ -44,13 +45,13 @@ class PreferencesDialog(QDialog):
         on_reset_layout: Callable | None = None,
         on_save_layout_default: Callable | None = None,
     ) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Preferences")
         self.setModal(True)
         self.setMinimumWidth(560)
         self.on_reset_layout = on_reset_layout
         self.on_save_layout_default = on_save_layout_default
+        self._was_saved = False
 
         self._setup_ui()
         self._restore_last_tab()
@@ -74,12 +75,14 @@ class PreferencesDialog(QDialog):
         self.ai_tab = AITab()
         self.advanced_tab = AdvancedTab()
         self.invoice_tab = InvoicePreferencesTab()
+        self.import_tab = ImportSettingsTab()
 
         # Add tabs
         self.tabs.addTab(self.general_tab, "General")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
         self.tabs.addTab(self.thumbnail_settings_tab, "Content")
         self.tabs.addTab(self.files_tab, "Model Library")
+        self.tabs.addTab(self.import_tab, "Imports")
         self.tabs.addTab(self.invoice_tab, "Invoices")
         self.tabs.addTab(self.ai_tab, "AI")
         self.tabs.addTab(self.advanced_tab, "Advanced")
@@ -150,6 +153,7 @@ class PreferencesDialog(QDialog):
             self.viewer_settings_tab.save_settings()
             self.thumbnail_settings_tab.save_settings()
             self.invoice_tab.save_settings()
+            self.import_tab.save_settings()
             self.ai_tab.save_settings()
             self.advanced_tab.save_settings()
 
@@ -157,6 +161,7 @@ class PreferencesDialog(QDialog):
             self.viewer_settings_changed.emit()
             self.ai_settings_changed.emit()
             self.general_settings_changed.emit()
+            self._was_saved = True
             self.accept()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
@@ -166,6 +171,24 @@ class PreferencesDialog(QDialog):
                 logger.error("Failed to save preferences: %s", e)
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
                 pass
+
+    def reject(self) -> None:
+        """Warn if the user closes without saving changes."""
+
+        from PySide6.QtWidgets import QMessageBox
+
+        if not self._was_saved:
+            reply = QMessageBox.warning(
+                self,
+                "Unsaved Changes",
+                "You have not saved your changes. Close without saving?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return
+
+        super().reject()
 
     def _reset_to_defaults(self) -> None:
         """Reset all settings to defaults."""
@@ -184,6 +207,7 @@ class PreferencesDialog(QDialog):
                 self.general_tab._load_settings()
                 self.viewer_settings_tab._load_settings()
                 self.thumbnail_settings_tab._load_settings()
+                self.import_tab.reset_to_defaults()
                 self.invoice_tab._load_settings()
                 self.ai_tab._load_settings()
                 self.advanced_tab._load_settings()

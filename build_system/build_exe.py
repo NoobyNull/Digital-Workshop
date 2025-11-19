@@ -9,6 +9,10 @@ import subprocess
 import shutil
 from pathlib import Path
 
+BUILD_SYSTEM_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BUILD_SYSTEM_DIR.parent
+SPEC_PATH = BUILD_SYSTEM_DIR / "build_exe.spec"
+
 def check_pyinstaller():
     """Check if PyInstaller is installed."""
     try:
@@ -24,15 +28,14 @@ def clean_build_artifacts():
     """Remove previous build artifacts."""
     print("\n[INFO] Cleaning previous build artifacts...")
     
-    dirs_to_remove = ['build', 'dist']
-    for dir_name in dirs_to_remove:
-        dir_path = Path(dir_name)
+    dirs_to_remove = [PROJECT_ROOT / 'build', PROJECT_ROOT / 'dist']
+    for dir_path in dirs_to_remove:
         if dir_path.exists():
-            print(f"[INFO] Removing {dir_name}/")
+            print(f"[INFO] Removing {dir_path.relative_to(PROJECT_ROOT)}")
             shutil.rmtree(dir_path)
     
     # Remove .spec file cache
-    spec_cache = Path('build_exe.spec.cache')
+    spec_cache = SPEC_PATH.with_suffix('.spec.cache')
     if spec_cache.exists():
         spec_cache.unlink()
     
@@ -47,11 +50,12 @@ def build_exe():
         result = subprocess.run(
             [
                 sys.executable, '-m', 'PyInstaller',
-                'build_exe.spec',
-                '--distpath', 'dist',
-                '--workpath', 'build',
+                str(SPEC_PATH),
+                '--distpath', str(PROJECT_ROOT / 'dist'),
+                '--workpath', str(PROJECT_ROOT / 'build'),
             ],
-            check=True
+            check=True,
+            cwd=PROJECT_ROOT
         )
         return result.returncode == 0
     except subprocess.CalledProcessError as e:
@@ -60,7 +64,7 @@ def build_exe():
 
 def verify_build():
     """Verify the EXE was created successfully."""
-    exe_path = Path('dist') / 'Digital Workshop.exe'
+    exe_path = PROJECT_ROOT / 'dist' / 'Digital Workshop.exe'
     
     if exe_path.exists():
         size_mb = exe_path.stat().st_size / (1024 * 1024)

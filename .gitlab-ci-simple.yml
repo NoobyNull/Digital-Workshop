@@ -35,6 +35,9 @@ build_windows_exe:
     # Install security scanning tools
     python -m pip install bandit safety semgrep
     
+    # Pre-build cleanup and quality checks
+    python tools/prebuild_cleanup.py --ci
+    
     # Run security scans
     Write-Host "🔒 Running security scans..."
     
@@ -69,7 +72,7 @@ build_windows_exe:
     }
 
     # Build EXE using PyInstaller spec
-    python build_exe.py
+    python build_system/build_exe.py
 
     # Rename generated EXE to include sequential build number
     $buildNumber = $Env:CI_PIPELINE_IID

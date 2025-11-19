@@ -79,6 +79,20 @@ class MenuManager:
         import_action.triggered.connect(self._import_models)
         file_menu.addAction(import_action)
 
+        import_url_action = QAction("Import from &URL...", self.main_window)
+        import_url_action.setStatusTip("Download a model from a URL and add it to the library")
+        import_url_action.setIcon(_std_icon(QStyle.SP_ArrowDown))
+        import_url_action.triggered.connect(self._import_from_url)
+        file_menu.addAction(import_url_action)
+
+        rebuild_action = QAction("Rebuild Managed Library...", self.main_window)
+        rebuild_action.setStatusTip(
+            "Scan the managed Projects folder and re-import existing files into the database"
+        )
+        rebuild_action.setIcon(_std_icon(QStyle.SP_FileDialogContentsView))
+        rebuild_action.triggered.connect(self._rebuild_managed_library)
+        file_menu.addAction(rebuild_action)
+
         file_menu.addSeparator()
 
         # Exit action
@@ -88,7 +102,6 @@ class MenuManager:
         exit_action.triggered.connect(self.main_window.close)
         file_menu.addAction(exit_action)
 
-        # Edit menu
         edit_menu = menubar.addMenu("&Edit")
 
         # Analyze Model action
@@ -247,6 +260,16 @@ class MenuManager:
         """Handle import models action."""
         if hasattr(self.main_window, "_import_models"):
             self.main_window._import_models()
+
+    def _import_from_url(self) -> None:
+        """Handle import from URL action."""
+        if hasattr(self.main_window, "_open_import_from_url_dialog"):
+            self.main_window._open_import_from_url_dialog()
+
+    def _rebuild_managed_library(self) -> None:
+        """Handle rebuild managed library action."""
+        if hasattr(self.main_window, "_start_library_rebuild"):
+            self.main_window._start_library_rebuild()
 
     def _edit_model(self) -> None:
         """Handle edit model action."""

@@ -28,7 +28,6 @@ class LightingControlPanel(QDialog):
     intensity_changed = Signal(float)  # 0-2.0
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Lighting Controls")
         self.setObjectName("LightingControlPanel")
@@ -294,28 +293,24 @@ class LightingControlPanel(QDialog):
         return (pos / (400.0 / 180.0)) + 90.0  # Maps -200->0, 0->90, 200->180
 
     def _on_x_position_changed(self, value: int) -> None:
-        """TODO: Add docstring."""
         angle = float(value)
         self._pos_x = self._angle_to_pos(angle)
         self.x_value.setText(f"{angle:.0f}°")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_y_position_changed(self, value: int) -> None:
-        """TODO: Add docstring."""
         angle = float(value)
         self._pos_y = self._angle_to_pos(angle)
         self.y_value.setText(f"{angle:.0f}°")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _on_z_position_changed(self, value: int) -> None:
-        """TODO: Add docstring."""
         angle = float(value)
         self._pos_z = self._angle_to_pos(angle)
         self.z_value.setText(f"{angle:.0f}°")
         self.position_changed.emit(self._pos_x, self._pos_y, self._pos_z)
 
     def _pick_color(self) -> None:
-        """TODO: Add docstring."""
         # Convert current normalized RGB to QColor
         r, g, b = self._color
         qr, qg, qb = int(r * 255.0), int(g * 255.0), int(b * 255.0)
@@ -329,13 +324,11 @@ class LightingControlPanel(QDialog):
         self.color_changed.emit(*self._color)
 
     def _on_intensity_changed(self, value: int) -> None:
-        """TODO: Add docstring."""
         self._intensity = float(value) / 100.0  # 0.0 .. 2.0
         self.intensity_value.setText(f"{self._intensity:.1f}")
         self.intensity_changed.emit(self._intensity)
 
     def _on_cone_angle_changed(self, value: int) -> None:
-        """TODO: Add docstring."""
         self._cone_angle = float(value)  # 1.0 .. 90.0 degrees
         self.cone_value.setText(f"{self._cone_angle:.0f}°")
         self.cone_angle_changed.emit(self._cone_angle)
@@ -387,7 +380,6 @@ class LightingControlPanel(QDialog):
         # Let qt-material handle the styling
 
     def _update_color_button_bg(self, color_norm: Tuple[float, float, float]) -> None:
-        """TODO: Add docstring."""
         # Convert normalized to hex
         r = max(0, min(255, int(round(color_norm[0] * 255.0))))
         g = max(0, min(255, int(round(color_norm[1] * 255.0))))

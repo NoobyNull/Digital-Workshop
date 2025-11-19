@@ -173,7 +173,13 @@ class LibraryEventHandler:
         offers an option to open the unified Import wizard.
         """
         try:
-            index = self.library_widget.list_view.indexAt(position)
+            sender_view = self.library_widget.sender()
+            view = (
+                sender_view
+                if sender_view in (self.library_widget.list_view, self.library_widget.grid_view)
+                else self.library_widget.list_view
+            )
+            index = view.indexAt(position)
             menu = QMenu(self.library_widget)
 
             model_id = None
@@ -466,6 +472,15 @@ class LibraryEventHandler:
             self.logger.info("Loading model for analysis: %s", file_path)
             parser = STLParser()
             model = parser.parse(file_path)
+
+            # Normalize triangles to a list to avoid numpy truth-value ambiguity
+            try:
+                import numpy as np  # type: ignore
+
+                if hasattr(model, "triangles") and isinstance(model.triangles, np.ndarray):
+                    model.triangles = model.triangles.tolist()
+            except Exception:
+                pass
 
             if not model or not model.triangles or len(model.triangles) == 0:
                 QMessageBox.warning(

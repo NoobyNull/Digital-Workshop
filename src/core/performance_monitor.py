@@ -822,10 +822,8 @@ def monitor_operation(operation_name: str) -> None:
     """
 
     def decorator(func) -> None:
-        """TODO: Add docstring."""
 
         def wrapper(*args, **kwargs) -> None:
-            """TODO: Add docstring."""
             monitor = get_performance_monitor()
             operation_id = monitor.start_operation(operation_name)
 

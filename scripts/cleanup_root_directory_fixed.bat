@@ -46,6 +46,7 @@ echo Backup created successfully
 REM Phase 2: Create directory structure
 echo.
 echo Phase 2: Creating new directory structure...
+if not exist "build_system" mkdir "build_system"
 if not exist "config" mkdir "config"
 if not exist "samples" mkdir "samples"
 if not exist "samples\code" mkdir "samples\code"
@@ -78,6 +79,7 @@ if not exist "tools\debug" mkdir "tools\debug"
 if not exist "tools\exceptions" mkdir "tools\exceptions"
 if not exist "tools\migration" mkdir "tools\migration"
 if not exist "tools\demos" mkdir "tools\demos"
+if not exist "tools\maintenance" mkdir "tools\maintenance"
 echo Directory structure created successfully
 
 REM Phase 3: File movement operations
@@ -156,7 +158,7 @@ if exist "comprehensive_test_suite_tests.py" (
 )
 
 if exist "unified_test_runner.py" (
-    move "unified_test_runner.py" "tests\runner.py" >nul 2>&1
+    move "unified_test_runner.py" "tools\maintenance\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: unified_test_runner.py
         set /a MOVED_COUNT+=1
@@ -193,7 +195,7 @@ if exist "test_framework_config.json" (
 )
 
 if exist "pyinstaller.spec" (
-    move "pyinstaller.spec" "config\" >nul 2>&1
+    move "pyinstaller.spec" "build_system\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: pyinstaller.spec
         set /a MOVED_COUNT+=1
@@ -396,7 +398,7 @@ for %%f in (test_results.*) do (
 REM Move development tools
 echo Moving development tools...
 if exist "code_quality_validator.py" (
-    move "code_quality_validator.py" "tools\quality\" >nul 2>&1
+    move "code_quality_validator.py" "tools\maintenance\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: code_quality_validator.py
         set /a MOVED_COUNT+=1
@@ -404,7 +406,7 @@ if exist "code_quality_validator.py" (
 )
 
 if exist "naming_validator.py" (
-    move "naming_validator.py" "tools\quality\" >nul 2>&1
+    move "naming_validator.py" "tools\maintenance\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: naming_validator.py
         set /a MOVED_COUNT+=1
@@ -412,7 +414,7 @@ if exist "naming_validator.py" (
 )
 
 if exist "quality_gate_enforcer.py" (
-    move "quality_gate_enforcer.py" "tools\quality\" >nul 2>&1
+    move "quality_gate_enforcer.py" "tools\maintenance\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: quality_gate_enforcer.py
         set /a MOVED_COUNT+=1
@@ -420,7 +422,7 @@ if exist "quality_gate_enforcer.py" (
 )
 
 if exist "monolithic_detector.py" (
-    move "monolithic_detector.py" "tools\analysis\" >nul 2>&1
+    move "monolithic_detector.py" "tools\maintenance\" >nul 2>&1
     if !errorlevel! equ 0 (
         echo Moved: monolithic_detector.py
         set /a MOVED_COUNT+=1
@@ -503,8 +505,8 @@ if not exist "run.py" (
     set /a MISSING_ESSENTIAL+=1
 )
 
-if not exist "build.py" (
-    echo ERROR: Essential file missing: build.py
+if not exist "build_system\build.py" (
+    echo ERROR: Essential file missing: build_system\build.py
     set /a MISSING_ESSENTIAL+=1
 )
 
@@ -534,7 +536,7 @@ if exist "README.md" (echo - README.md: PRESENT >> "%SUMMARY_FILE%") else (echo 
 if exist "pyproject.toml" (echo - pyproject.toml: PRESENT >> "%SUMMARY_FILE%") else (echo - pyproject.toml: MISSING >> "%SUMMARY_FILE%")
 if exist "requirements.txt" (echo - requirements.txt: PRESENT >> "%SUMMARY_FILE%") else (echo - requirements.txt: MISSING >> "%SUMMARY_FILE%")
 if exist "run.py" (echo - run.py: PRESENT >> "%SUMMARY_FILE%") else (echo - run.py: MISSING >> "%SUMMARY_FILE%")
-if exist "build.py" (echo - build.py: PRESENT >> "%SUMMARY_FILE%") else (echo - build.py: MISSING >> "%SUMMARY_FILE%")
+if exist "build_system\build.py" (echo - build_system\build.py: PRESENT >> "%SUMMARY_FILE%") else (echo - build_system\build.py: MISSING >> "%SUMMARY_FILE%")
 echo. >> "%SUMMARY_FILE%"
 echo Cleanup completed successfully! >> "%SUMMARY_FILE%"
 echo Backup available at: %BACKUP_DIR% >> "%SUMMARY_FILE%"

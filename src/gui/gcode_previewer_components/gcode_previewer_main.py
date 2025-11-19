@@ -250,7 +250,7 @@ class GcodePreviewerWidget(QWidget):
         # If a file is already loaded, refresh statistics so that the
         # timing summary reflects the newly selected project.
         if self.moves:
-            self._update_statistics(include_timing=True)
+            self._start_timing_job()
 
     def save_to_project(self) -> None:
         """Save G-code timing summary and tool selection to the current project."""
@@ -1023,7 +1023,23 @@ class GcodePreviewerWidget(QWidget):
         except (TypeError, ValueError):  # pragma: no cover - defensive
             accel_mm_s2 = 100.0
 
-        return {"max_feed_mm_min": max_feed_mm_min, "accel_mm_s2": accel_mm_s2}, feed_override_pct
+        drive_type = (machine.get("drive_type") or "ball_screw") if isinstance(machine, dict) else "ball_screw"
+        drive_factor = {
+            "ball_screw": 1.0,
+            "gt2_belt": 0.7,
+            "rack_pinion": 0.85,
+        }.get(str(drive_type).lower(), 1.0)
+        max_feed_mm_min *= drive_factor
+
+        return (
+            {
+                "id": machine.get("id"),
+                "max_feed_mm_min": max_feed_mm_min,
+                "accel_mm_s2": accel_mm_s2,
+                "drive_type": drive_type,
+            },
+            feed_override_pct,
+        )
 
     def _ensure_gcode_version_for_current_file(self) -> None:
         """Ensure there is an operation/version row for the current file.

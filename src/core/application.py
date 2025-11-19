@@ -6,10 +6,11 @@ This module contains the Application class that encapsulates
 the application lifecycle management and coordinates all components.
 """
 
-import sys
+import logging
 import os
-from typing import Optional
+import sys
 from pathlib import Path
+from typing import Optional
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QCoreApplication, QSettings

@@ -1,62 +1,79 @@
-# FastHasher Implementation
+# FastHasher Service
+
+`src/core/fast_hasher.py` implements the high-speed hashing pipeline used by imports, deduplication, and background analysis.  
+It wraps xxHash128 with cancellation, progress callbacks, and thread-friendly streaming so we can fingerprint multi‑GB datasets without blocking the GUI.
+
+---
 
 ## Quick Start
 
 ```python
 from src.core.fast_hasher import FastHasher
 
-# Create hasher instance
-hasher = FastHasher()
+hasher = FastHasher(chunk_size=1024 * 1024)  # 1 MB default
+result = hasher.hash_file("sample_models/fillet.step")
 
-# Hash a file
-result = hasher.hash_file("model.stl")
 if result.success:
-    print(f"Hash: {result.hash_value}")
+    print(result.hash_value)        # 128-bit hex string
+    print(result.duration_ms)       # precise timing for telemetry
+else:
+    print(result.error)
 ```
 
-## Files in This Implementation
+Key options:
+- `chunk_size`: tune when profiling giant STEP assemblies.
+- `progress_callback(bytes_read, total_bytes)`: emit UI updates.
+- `cancellation_token`: share `threading.Event()` so user cancellations propagate instantly.
 
-- **fast_hasher.py** - Core FastHasher class with xxHash128 implementation
-- **cancellation_token.py** - Cancellation support (existing)
+---
 
-## Integration Points
+## Integration Map
 
-- **src/gui/background_hasher.py** - Enhanced to use FastHasher
-- **src/utils/file_hash.py** - Backward-compatible wrapper
+| Consumer | Location | Usage |
+| --- | --- | --- |
+| Import pipeline | `src/core/import_file_manager.py` | Deduplicates incoming files, seeds thumbnail cache, and names managed copies. |
+| Background hashing | `src/gui/background_hasher.py` | Keeps the UI responsive while long-running imports finish. |
+| Tab data & project services | `src/core/services/tab_data_manager.py` | Uses hashes to detect stale JSON payloads before overwriting. |
+| Tests | `tests/test_fast_hasher.py` | Validates perf + checksum accuracy on sample fixtures. |
+
+---
+
+## Performance Targets
+
+| File Size | Target | Notes |
+| --- | --- | --- |
+| < 100 MB | < 1 s | Typical STL/OBJ imports. |
+| 100–500 MB | < 3 s | Dense STEP assemblies. |
+| > 500 MB | < 5 s | Rare, but still bounded with streaming I/O. |
+
+Benchmarks live in `tests/benchmark_fast_hasher.py`—run it when tweaking chunk size defaults.
+
+---
 
 ## Testing
 
 ```bash
-# Run unit tests
-python -m pytest tests/test_fast_hasher.py -v
-
-# Run performance benchmarks
-python tests/benchmark_fast_hasher.py
+pytest tests/test_fast_hasher.py -v
+python tests/benchmark_fast_hasher.py --file sample_models/large.step
 ```
 
-## Performance Targets
+These verify:
+- Hash matches xxHash128 reference values.
+- Cancellation interrupts within one chunk.
+- Progress callbacks fire monotonically.
 
-✓ Files under 100MB: < 1 second
-✓ Files 100-500MB: < 3 seconds  
-✓ Files over 500MB: < 5 seconds
+---
 
-## Documentation
+## Troubleshooting
 
-See [FAST_HASHER_GUIDE.md](../../documentation/FAST_HASHER_GUIDE.md) for comprehensive documentation.
+| Symptom | Resolution |
+| --- | --- |
+| Hashing never completes | Ensure the caller drains the generator—`hash_stream` returns a generator that must be iterated. |
+| Duplicate detection misses files | Confirm the database layer normalizes hash casing; FastHasher returns lowercase hex strings. |
+| UI freezes | Run hashing inside `QThread` or the background worker (`background_hasher.py`). Direct calls on the GUI thread will block. |
+| Hash mismatch across platforms | Verify both ends are using xxHash128 (not xxHash64); tests contain reference values for sanity. |
 
-## Key Features
+---
 
-- **xxHash128** - 10-20x faster than MD5
-- **Stream-based** - Constant memory usage
-- **Progress tracking** - Callback support
-- **Cancellation** - User-controlled interruption
-- **Batch processing** - Efficient multi-file hashing
-- **JSON logging** - Comprehensive performance metrics
-
-## Architecture Alignment
-
-Implements requirements from IMPORT_IMPLEMENTATION_SPECS.md:
-- Fast duplicate detection during import
-- Hash-based thumbnail naming
-- File identification in database
-- Performance optimization for import workflow
+**Owner:** Core services (`core@digitalworkshop.app`)  
+**Status:** Production – do not swap hash algorithms without updating every import test.

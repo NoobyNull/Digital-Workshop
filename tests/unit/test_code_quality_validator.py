@@ -17,7 +17,7 @@ import os
 # Add the current directory to the path so we can import the validator
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from code_quality_validator import (
+from tools.maintenance.code_quality_validator import (
     CodeQualityValidator,
     FormattingResult,
     LintingResult,

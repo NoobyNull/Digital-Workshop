@@ -23,10 +23,13 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
-    from monolithic_detector import MonolithicDetector, ModuleMetrics
+    from tools.maintenance.monolithic_detector import MonolithicDetector, ModuleMetrics
 except ImportError:
-    # If direct import fails, try relative import
-    from .monolithic_detector import MonolithicDetector, ModuleMetrics
+    try:
+        from monolithic_detector import MonolithicDetector, ModuleMetrics
+    except ImportError:
+        # Fall back to legacy relative import when running directly from tests
+        from .monolithic_detector import MonolithicDetector, ModuleMetrics
 
 class TestMonolithicDetector(unittest.TestCase):
     """Test cases for the MonolithicDetector class."""

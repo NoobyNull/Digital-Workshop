@@ -294,7 +294,6 @@ class ExternalDatabaseEditor(QDialog):
             QMessageBox.critical(self, "Error", f"Search failed: {str(e)}")
 
     def _edit_tool(self, tool) -> None:
-        """Edit a tool's properties."""
         self.logger.debug("Editing tool: %s", tool.get("guid"))
         QMessageBox.information(
             self, "Edit Tool", f"Edit functionality for: {tool.get('description')}"

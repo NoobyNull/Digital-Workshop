@@ -182,6 +182,7 @@ class LibraryEventHandler:
             # Add Root Folder action - always available
             add_root_action = menu.addAction("Add Root Folder")
             self.logger.info("Added 'Add Root Folder' action to menu")
+            import_url_action = menu.addAction("Import from URL...")
 
             # Check if clicking on a valid file/folder
             if index.isValid():
@@ -212,16 +213,23 @@ class LibraryEventHandler:
 
                     if action == add_root_action:
                         self._add_root_folder()
+                    elif action == import_url_action:
+                        if hasattr(self.library_widget, "_request_import_from_url"):
+                            self.library_widget._request_import_from_url()
                     elif import_action and action == import_action:
                         self.library_widget._import_from_context_menu(file_path)
                     elif action == open_action:
                         self.library_widget._open_in_native_app(file_path)
                     return
 
-            # If no valid file/folder, just show Add Root Folder option
+            # If no valid file/folder, just show generic options
             action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
             if action == add_root_action:
                 self._add_root_folder()
+            elif action == import_url_action and hasattr(
+                self.library_widget, "_request_import_from_url"
+            ):
+                self.library_widget._request_import_from_url()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show file tree context menu: %s", e, exc_info=True)

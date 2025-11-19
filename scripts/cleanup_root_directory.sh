@@ -57,11 +57,12 @@ fi
 
 # Phase 2: Create directory structure
 log "Phase 2: Creating new directory structure..."
+mkdir -p build_system
 mkdir -p config samples samples/code samples/reports build/installer build/logs archive
 mkdir -p docs/guides docs/architecture docs/reports
 mkdir -p tests/unit tests/integration tests/framework tests/parsers tests/persistence tests/themes tests/performance tests/runner
 mkdir -p reports/json reports/html reports/analysis reports/comprehensive reports/performance reports/quality reports/test_results
-mkdir -p tools/quality tools/analysis tools/debug tools/exceptions tools/migration tools/demos
+mkdir -p tools/quality tools/analysis tools/debug tools/exceptions tools/migration tools/demos tools/maintenance
 log "Directory structure created successfully"
 
 # Phase 3: File movement operations with error handling
@@ -100,7 +101,7 @@ safe_move "vtk_resource_tracker_fix_summary.md" "docs/reports/VTK_RESOURCE_TRACK
 log "Moving test files..."
 safe_move "comprehensive_test_suite.py" "tests/integration/" "comprehensive_test_suite.py"
 safe_move "comprehensive_test_suite_tests.py" "tests/integration/" "comprehensive_test_suite_tests.py"
-safe_move "unified_test_runner.py" "tests/runner.py" "unified_test_runner.py"
+safe_move "unified_test_runner.py" "tools/maintenance/" "unified_test_runner.py"
 
 # Move test_*.py files in batch
 test_files=$(find . -maxdepth 1 -name "test_*.py" -type f)
@@ -115,7 +116,7 @@ fi
 log "Moving configuration files..."
 safe_move "quality_config.yaml" "config/" "quality_config.yaml"
 safe_move "test_framework_config.json" "config/" "test_framework_config.json"
-safe_move "pyinstaller.spec" "config/" "pyinstaller.spec"
+safe_move "pyinstaller.spec" "build_system/" "pyinstaller.spec"
 safe_move "installer.nsi" "config/" "installer.nsi"
 
 # Sample files
@@ -195,10 +196,10 @@ done
 
 # Move development tools
 log "Moving development tools..."
-safe_move "code_quality_validator.py" "tools/quality/" "code_quality_validator.py"
-safe_move "naming_validator.py" "tools/quality/" "naming_validator.py"
-safe_move "quality_gate_enforcer.py" "tools/quality/" "quality_gate_enforcer.py"
-safe_move "monolithic_detector.py" "tools/analysis/" "monolithic_detector.py"
+safe_move "code_quality_validator.py" "tools/maintenance/" "code_quality_validator.py"
+safe_move "naming_validator.py" "tools/maintenance/" "naming_validator.py"
+safe_move "quality_gate_enforcer.py" "tools/maintenance/" "quality_gate_enforcer.py"
+safe_move "monolithic_detector.py" "tools/maintenance/" "monolithic_detector.py"
 safe_move "debug_detection.py" "tools/debug/" "debug_detection.py"
 safe_move "create_exceptions.py" "tools/exceptions/" "create_exceptions.py"
 safe_move "migrate_models.py" "tools/migration/" "migrate_models.py"
@@ -222,7 +223,7 @@ log "Root directory file count after cleanup: $AFTER_COUNT files"
 log "Files moved: $((BEFORE_COUNT - AFTER_COUNT))"
 
 # Check essential files are still present
-essential_files=("README.md" "pyproject.toml" "requirements.txt" "run.py" "build.py")
+essential_files=("README.md" "pyproject.toml" "requirements.txt" "run.py" "build_system/build.py")
 missing_essential=0
 for file in "${essential_files[@]}"; do
     if [ ! -f "$file" ]; then
@@ -255,7 +256,7 @@ else
 fi
 
 # Test build script
-if python build.py --help >/dev/null 2>&1; then
+if python build_system/build.py --help >/dev/null 2>&1; then
     log "Build script test: PASSED"
 else
     warn "Build script test: FAILED"

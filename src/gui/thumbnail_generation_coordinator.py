@@ -160,13 +160,11 @@ class ThumbnailGenerationCoordinator(QObject):
     def _on_pause_requested(self) -> None:
         """Handle pause request."""
         if self.worker:
-            # TODO: Implement pause in worker
             self.logger.info("Pause requested (not yet implemented)")
 
     def _on_resume_requested(self) -> None:
         """Handle resume request."""
         if self.worker:
-            # TODO: Implement resume in worker
             self.logger.info("Resume requested (not yet implemented)")
 
     def _on_cancel_requested(self) -> None:

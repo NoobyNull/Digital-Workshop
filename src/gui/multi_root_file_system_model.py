@@ -36,7 +36,6 @@ class TreeNode:
     root_folder: Optional[RootFolder] = None  # Reference to root folder for root nodes
 
     def __post_init__(self) -> None:
-        """TODO: Add docstring."""
         if self.children is None:
             self.children = []
 
@@ -75,14 +74,12 @@ class DirectoryIndexer(QThread):
     indexing_complete = Signal(dict)  # {node_path: [child_nodes]}
 
     def __init__(self, directories_to_index: List[str]) -> None:
-        """TODO: Add docstring."""
         super().__init__()
         self.directories_to_index = directories_to_index
         self.logger = get_logger(__name__)
         self._is_cancelled = False
 
     def cancel(self) -> None:
-        """TODO: Add docstring."""
         self._is_cancelled = True
 
     def run(self) -> None:
@@ -137,7 +134,6 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     indexing_completed = Signal()
 
     def __init__(self, parent=None) -> None:
-        """TODO: Add docstring."""
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
