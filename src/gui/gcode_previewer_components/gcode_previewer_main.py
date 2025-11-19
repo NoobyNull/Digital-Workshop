@@ -2,7 +2,7 @@
 
 # pylint: disable=too-many-lines
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 import json
 import os
@@ -23,13 +23,15 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QCheckBox,
 )
-from PySide6.QtCore import Qt, Signal, QThread
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt, Signal, QThread, QUrl
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.services.tab_data_manager import TabDataManager
 from src.core.kinematics.gcode_timing import analyze_gcode_moves
 from src.gui.widgets.add_tool_dialog import AddToolDialog
+from src.gui.dialogs.tool_snapshot_dialog import ToolSnapshotDialog
 from .gcode_parser import GcodeParser
 from .gcode_renderer import GcodeRenderer
 from .vtk_widget import VTKWidget
@@ -172,6 +174,22 @@ class GcodePreviewerWidget(QWidget):
         self.visualization_mode = "default"  # "default", "feed_rate", "spindle_speed"
         self.total_file_lines = 0
         self.current_project_id: Optional[str] = None
+        self.current_project_name: str = ""
+        self.current_project_path: Optional[Path] = None
+        self.current_project_gcode_dir: Optional[Path] = None
+        self._latest_tool_metadata: Dict[str, Any] = {}
+        self._current_snapshot_rows: List[Dict[str, Any]] = []
+        self._line_to_move_index: Dict[int, int] = {}
+        self._suppress_editor_sync = False
+        self._suppress_camera_checkbox = False
+        self._editor_reload_connected = False
+        self._editor_line_connected = False
+        self._snapshot_add_connected = False
+        self._snapshot_import_connected = False
+        self._snapshot_delete_connected = False
+        self._open_folder_connected = False
+        self._reload_file_connected = False
+        self._file_saved_connected = False
 
         # Background timing worker and cached timing for the currently
         # loaded toolpath.
@@ -195,6 +213,39 @@ class GcodePreviewerWidget(QWidget):
         currently loaded toolpath.
         """
         self.current_project_id = project_id
+        self.current_project_name = ""
+        self.current_project_path = None
+        self.current_project_gcode_dir = None
+        self._latest_tool_metadata = {}
+        self._current_snapshot_rows = []
+        self._set_snapshot_panel_enabled(False)
+
+        if self.db_manager is not None and project_id:
+            try:
+                project_row = self.db_manager.get_project(project_id)
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
+                self.logger.warning("Failed to load project context for %s: %s", project_id, exc)
+            else:
+                if project_row:
+                    self.current_project_name = str(project_row.get("name") or "")
+                    base_path_value = project_row.get("base_path")
+                    if base_path_value:
+                        base_path = Path(base_path_value)
+                        gcode_dir = base_path / "gcode"
+                        try:
+                            gcode_dir.mkdir(parents=True, exist_ok=True)
+                            self.current_project_path = base_path
+                            self.current_project_gcode_dir = gcode_dir
+                        except (OSError, IOError) as exc:  # pragma: no cover - defensive
+                            self.logger.warning(
+                                "Failed to prepare gcode directory %s: %s", gcode_dir, exc
+                            )
+                            self.current_project_path = base_path
+                else:  # pragma: no cover - defensive
+                    self.logger.info("Project %s not found when updating previewer context", project_id)
+
+        self._update_tools_project_directory()
+        self._update_loader_summary_panel()
 
         # If a file is already loaded, refresh statistics so that the
         # timing summary reflects the newly selected project.
@@ -261,7 +312,9 @@ class GcodePreviewerWidget(QWidget):
                 if self.renderer is None:
                     self.renderer = GcodeRenderer()
 
-                self.vtk_widget = VTKWidget(self.renderer)
+                self.vtk_widget = VTKWidget(
+                    self.renderer, embed_camera_toolbar=not self.use_external_tools
+                )
                 layout.addWidget(self.vtk_widget)
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize VTK viewer: %s", e)
@@ -279,7 +332,9 @@ class GcodePreviewerWidget(QWidget):
                 self.renderer = GcodeRenderer()
 
             # 3D VTK viewer
-            self.vtk_widget = VTKWidget(self.renderer)
+            self.vtk_widget = VTKWidget(
+                self.renderer, embed_camera_toolbar=not self.use_external_tools
+            )
             self.splitter.addWidget(self.vtk_widget)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize VTK viewer: %s", e)
@@ -345,11 +400,22 @@ class GcodePreviewerWidget(QWidget):
 
         # Now that tools widgets are available, wire up their signals.
         self._connect_tools_signals()
+        self._update_tools_project_directory()
+        if getattr(self.tools_widget, "snapshots_panel", None) is not None:
+            self.tools_widget.snapshots_panel.set_version_available(self.current_version_id is not None)
 
     def _on_camera_controls_toggled(self, checked: bool) -> None:
         """Show or hide the camera toolbar in the VTK viewer."""
+        if self._suppress_camera_checkbox:
+            return
         if self.vtk_widget is not None:
             self.vtk_widget.set_toolbar_visible(checked)
+
+        main_window = self.window()
+        if self.use_external_tools and hasattr(main_window, "camera_controls_dock"):
+            dock = getattr(main_window, "camera_controls_dock", None)
+            if dock is not None:
+                dock.setVisible(checked)
 
     def _connect_signals(self) -> None:
         """Connect animation controller and core UI signals."""
@@ -393,7 +459,82 @@ class GcodePreviewerWidget(QWidget):
 
         # Connect editor signals
         if self.editor:
+            if self._editor_reload_connected:
+                try:
+                    self.editor.reload_requested.disconnect(self._on_gcode_reload)
+                except (TypeError, RuntimeError):
+                    pass
+                self._editor_reload_connected = False
             self.editor.reload_requested.connect(self._on_gcode_reload)
+            self._editor_reload_connected = True
+
+            if self._editor_line_connected:
+                try:
+                    self.editor.line_selected.disconnect(self._on_editor_line_selected)
+                except (TypeError, RuntimeError):
+                    pass
+                self._editor_line_connected = False
+            self.editor.line_selected.connect(self._on_editor_line_selected)
+            self._editor_line_connected = True
+
+        if getattr(self.tools_widget, "snapshots_panel", None) is not None:
+            panel = self.tools_widget.snapshots_panel
+            if self._snapshot_add_connected:
+                try:
+                    panel.add_from_editor_requested.disconnect(self._on_snapshot_capture_requested)
+                except (TypeError, RuntimeError):
+                    pass
+                self._snapshot_add_connected = False
+            panel.add_from_editor_requested.connect(self._on_snapshot_capture_requested)
+            self._snapshot_add_connected = True
+
+            if self._snapshot_import_connected:
+                try:
+                    panel.snapshots_imported.disconnect(self._on_snapshot_imported)
+                except (TypeError, RuntimeError):
+                    pass
+                self._snapshot_import_connected = False
+            panel.snapshots_imported.connect(self._on_snapshot_imported)
+            self._snapshot_import_connected = True
+
+            if self._snapshot_delete_connected:
+                try:
+                    panel.delete_requested.disconnect(self._on_snapshot_delete_requested)
+                except (TypeError, RuntimeError):
+                    pass
+                self._snapshot_delete_connected = False
+            panel.delete_requested.connect(self._on_snapshot_delete_requested)
+            self._snapshot_delete_connected = True
+
+        if getattr(self.tools_widget, "open_folder_requested", None):
+            if self._open_folder_connected:
+                try:
+                    self.tools_widget.open_folder_requested.disconnect(self._on_open_folder_requested)
+                except (TypeError, RuntimeError):
+                    pass
+                self._open_folder_connected = False
+            self.tools_widget.open_folder_requested.connect(self._on_open_folder_requested)
+            self._open_folder_connected = True
+
+        if getattr(self.tools_widget, "reload_file_requested", None):
+            if self._reload_file_connected:
+                try:
+                    self.tools_widget.reload_file_requested.disconnect(self._on_reload_file_requested)
+                except (TypeError, RuntimeError):
+                    pass
+                self._reload_file_connected = False
+            self.tools_widget.reload_file_requested.connect(self._on_reload_file_requested)
+            self._reload_file_connected = True
+
+        if getattr(self.tools_widget, "file_saved", None):
+            if self._file_saved_connected:
+                try:
+                    self.tools_widget.file_saved.disconnect(self._on_editor_file_saved)
+                except (TypeError, RuntimeError):
+                    pass
+                self._file_saved_connected = False
+            self.tools_widget.file_saved.connect(self._on_editor_file_saved)
+            self._file_saved_connected = True
 
         # Connect visualization controls
         if self.viz_mode_combo is not None:
@@ -416,6 +557,22 @@ class GcodePreviewerWidget(QWidget):
             self.tools_widget, "edit_gcode_button", None
         ):
             self.tools_widget.edit_gcode_button.clicked.connect(self._on_edit_gcode)
+
+    def _update_tools_project_directory(self) -> None:
+        """Ensure the tools widget knows where project-local G-code lives."""
+        if getattr(self, "tools_widget", None) is None:
+            return
+
+        if self.current_project_gcode_dir is not None:
+            self.tools_widget.set_project_directory(str(self.current_project_gcode_dir))
+        else:
+            self.tools_widget.set_project_directory(None)
+
+    def _set_snapshot_panel_enabled(self, enabled: bool) -> None:
+        """Enable/disable the snapshots panel based on version availability."""
+        panel = getattr(self.tools_widget, "snapshots_panel", None)
+        if panel is not None:
+            panel.set_version_available(enabled)
 
     def _on_loader_progress_updated(self, progress: int, message: str) -> None:
         """Update the tools-panel progress bar and status message during load."""
@@ -500,7 +657,155 @@ class GcodePreviewerWidget(QWidget):
             tool_data["vendor"] = tool_data["provider_name"]
 
         self._update_tool_label(tool_data)
-        self._persist_tool_snapshot_for_current_version(tool_data)
+        self._persist_tool_snapshot_for_current_version(
+            tool_number=tool_data.get("tool_number"),
+            tool_id=tool_data.get("id"),
+            provider_name=tool_data.get("vendor") or tool_data.get("provider_name"),
+            description=tool_data.get("description"),
+            diameter=self._safe_float(tool_data.get("diameter")),
+            material=tool_data.get("material"),
+            notes=tool_data.get("description"),
+            metadata=tool_data,
+            replace_existing=True,
+        )
+
+    def _on_snapshot_capture_requested(self) -> None:
+        """Handle \"Add from Editor\" snapshot requests."""
+        if not self._ensure_snapshot_context():
+            return
+
+        defaults = self._build_snapshot_defaults()
+        dialog = ToolSnapshotDialog(defaults, self)
+        if dialog.exec() != dialog.Accepted:
+            return
+
+        snapshot_data = dialog.get_snapshot_data()
+        metadata = dict(self._latest_tool_metadata)
+        for key, value in snapshot_data.items():
+            if value is not None:
+                metadata[key] = value
+
+        snapshot_id = self._persist_tool_snapshot_for_current_version(
+            tool_number=snapshot_data.get("tool_number") or metadata.get("tool_number"),
+            description=metadata.get("description") or snapshot_data.get("notes"),
+            diameter=snapshot_data.get("diameter") or metadata.get("diameter"),
+            material=snapshot_data.get("material") or metadata.get("material"),
+            feed_rate=snapshot_data.get("feed_rate"),
+            plunge_rate=snapshot_data.get("plunge_rate"),
+            notes=snapshot_data.get("notes"),
+            metadata=metadata,
+        )
+
+        if snapshot_id is not None:
+            QMessageBox.information(
+                self,
+                "Snapshot Saved",
+                "Tool snapshot stored for this G-code version.",
+            )
+
+    def _on_snapshot_imported(self, rows: List[Dict[str, Any]]) -> None:
+        """Persist snapshot rows parsed from CSV import."""
+        if not rows:
+            return
+
+        if not self._ensure_snapshot_context():
+            return
+
+        added = 0
+        for row in rows:
+            snapshot_id = self._persist_tool_snapshot_for_current_version(
+                tool_number=row.get("tool_number") or row.get("tool"),
+                description=row.get("notes"),
+                diameter=self._safe_float(row.get("diameter")),
+                material=row.get("material"),
+                feed_rate=self._safe_float(row.get("feed_rate")),
+                plunge_rate=self._safe_float(row.get("plunge_rate")),
+                notes=row.get("notes"),
+                metadata=row,
+            )
+            if snapshot_id is not None:
+                added += 1
+
+        if added:
+            QMessageBox.information(self, "Import Complete", f"Added {added} snapshot(s).")
+        else:
+            QMessageBox.warning(self, "Import Failed", "Could not persist imported snapshots.")
+
+    def _on_snapshot_delete_requested(self, snapshot_ids: List[int]) -> None:
+        """Delete selected snapshot rows."""
+        if not snapshot_ids or self.db_manager is None:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Delete Snapshots",
+            f"Delete {len(snapshot_ids)} selected snapshot(s)?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        deleted = 0
+        for snapshot_id in snapshot_ids:
+            try:
+                if self.db_manager.delete_gcode_tool_snapshot(snapshot_id):
+                    deleted += 1
+            except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
+                self.logger.warning("Failed to delete snapshot %s: %s", snapshot_id, exc)
+
+        if deleted:
+            self._refresh_tool_label_for_current_version()
+            QMessageBox.information(self, "Snapshots Removed", f"Deleted {deleted} snapshot(s).")
+        else:
+            QMessageBox.information(self, "No Changes", "No snapshots were removed.")
+
+    def _ensure_snapshot_context(self) -> bool:
+        """Validate that snapshot operations are currently allowed."""
+        if self.current_file is None:
+            QMessageBox.information(
+                self,
+                "No G-code Loaded",
+                "Load a G-code file before capturing tool snapshots.",
+            )
+            return False
+
+        if self.db_manager is None or not self.current_project_id:
+            QMessageBox.information(
+                self,
+                "No Project Selected",
+                "Select a project in the Project Manager before saving snapshots.",
+            )
+            return False
+
+        self._ensure_gcode_version_for_current_file()
+        if self.current_version_id is None:
+            QMessageBox.warning(
+                self,
+                "Snapshot Unavailable",
+                "Could not prepare a database record for this G-code file.",
+            )
+            return False
+        return True
+
+    def _build_snapshot_defaults(self) -> Dict[str, Any]:
+        """Construct default values for the snapshot dialog."""
+        defaults = dict(self._latest_tool_metadata)
+
+        feed_value = defaults.get("feed_rate")
+        if feed_value is None:
+            for move in self.moves:
+                if getattr(move, "feed_rate", None):
+                    feed_value = move.feed_rate
+                    break
+
+        return {
+            "tool_number": defaults.get("tool_number") or defaults.get("tool"),
+            "diameter": defaults.get("diameter"),
+            "material": defaults.get("material"),
+            "feed_rate": feed_value,
+            "plunge_rate": defaults.get("plunge_rate"),
+            "notes": defaults.get("description"),
+        }
 
     def _on_load_file(self) -> None:
         """Handle load file button click with security validation."""
@@ -618,6 +923,8 @@ class GcodePreviewerWidget(QWidget):
 
             self.current_file = validated_path
             self.moves = []
+            self._line_to_move_index = {}
+            self._update_loader_summary_panel()
 
             # Clear renderer (quick operation)
             self.renderer.clear_incremental()
@@ -730,6 +1037,7 @@ class GcodePreviewerWidget(QWidget):
         self.current_version_id = None
 
         if self.db_manager is None or not self.current_project_id or not self.current_file:
+            self._set_snapshot_panel_enabled(False)
             return
 
         file_path_str = str(self.current_file)
@@ -813,6 +1121,7 @@ class GcodePreviewerWidget(QWidget):
                     exc,
                 )
                 self.current_version_id = None
+        self._set_snapshot_panel_enabled(self.current_version_id is not None)
 
     def _update_tool_label(self, tool_data: Dict[str, Any]) -> None:
         """Update the per-path tool label in the tools panel.
@@ -820,6 +1129,7 @@ class GcodePreviewerWidget(QWidget):
         The label is intentionally compact so it works both when the tools
         panel is docked and when it is floating.
         """
+        self._latest_tool_metadata = dict(tool_data)
         if self.tool_label is None:
             return
 
@@ -848,67 +1158,114 @@ class GcodePreviewerWidget(QWidget):
         self.tool_label.setText(" - ".join(parts))
 
     def _refresh_tool_label_for_current_version(self) -> None:
-        """Refresh tool label from any persisted snapshot for current version."""
-        if self.tool_label is None:
-            return
-
+        """Refresh tool label and snapshots table for the current version."""
+        panel = getattr(self.tools_widget, "snapshots_panel", None)
         if self.db_manager is None or self.current_version_id is None:
-            self.tool_label.setText("No tool selected")
+            self._current_snapshot_rows = []
+            self._latest_tool_metadata = {}
+            if self.tool_label is not None:
+                self.tool_label.setText("No tool selected")
+            if panel is not None:
+                panel.set_version_available(False)
             return
 
         try:
-            snapshots = self.db_manager.list_gcode_tool_snapshots(self.current_version_id)
+            raw_snapshots = self.db_manager.list_gcode_tool_snapshots(self.current_version_id)
         except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to list tool snapshots for version %s: %s",
                 self.current_version_id,
                 exc,
             )
-            self.tool_label.setText("No tool selected")
+            raw_snapshots = []
+
+        enriched_snapshots: List[Dict[str, Any]] = []
+        for snapshot in raw_snapshots:
+            enriched = dict(snapshot)
+            metadata_raw = snapshot.get("metadata_json") or snapshot.get("metadata")
+            metadata: Dict[str, Any] = {}
+            if metadata_raw:
+                try:
+                    if isinstance(metadata_raw, str):
+                        metadata = json.loads(metadata_raw)
+                    elif isinstance(metadata_raw, dict):
+                        metadata = metadata_raw
+                except (json.JSONDecodeError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
+                    self.logger.debug(
+                        "Failed to parse snapshot metadata %s: %s", snapshot.get("id"), exc
+                    )
+            for key in ("diameter", "material", "feed_rate", "plunge_rate", "notes"):
+                if enriched.get(key) in (None, "", 0):
+                    if key in metadata:
+                        enriched[key] = metadata.get(key)
+            enriched["metadata"] = metadata
+            enriched_snapshots.append(enriched)
+
+        self._current_snapshot_rows = enriched_snapshots
+
+        if panel is not None:
+            panel.set_version_available(True)
+            panel.set_snapshots(enriched_snapshots)
+
+        if not enriched_snapshots:
+            self._latest_tool_metadata = {}
+            if self.tool_label is not None:
+                self.tool_label.setText("No tool selected")
             return
 
-        if not snapshots:
-            self.tool_label.setText("No tool selected")
-            return
-
-        snapshot = snapshots[0]
-        metadata_raw = snapshot.get("metadata_json") or snapshot.get("metadata")
-        tool_data: Dict[str, Any] = {}
-
-        if metadata_raw:
-            try:
-                if isinstance(metadata_raw, str):
-                    tool_data = json.loads(metadata_raw)
-                elif isinstance(metadata_raw, dict):
-                    tool_data = metadata_raw
-            except (json.JSONDecodeError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
-                self.logger.warning(
-                    "Failed to parse tool snapshot metadata for version %s: %s",
-                    self.current_version_id,
-                    exc,
-                )
-
+        primary_snapshot = enriched_snapshots[0]
+        metadata = primary_snapshot.get("metadata") or {}
+        tool_data = dict(metadata)
         if not tool_data:
             tool_data = {
-                "description": snapshot.get("notes") or "Tool selected",
-                "vendor": snapshot.get("provider_name"),
+                "description": primary_snapshot.get("notes") or "Tool selected",
+                "vendor": primary_snapshot.get("provider_name"),
             }
+            if primary_snapshot.get("diameter") is not None:
+                tool_data["diameter"] = primary_snapshot.get("diameter")
 
+        self._latest_tool_metadata = dict(tool_data)
         self._update_tool_label(tool_data)
 
-    def _persist_tool_snapshot_for_current_version(self, tool_data: Dict[str, Any]) -> None:
-        """Persist selected tool metadata for the current version.
+    def _persist_tool_snapshot_for_current_version(
+        self,
+        *,
+        tool_number: Optional[str] = None,
+        tool_id: Optional[int] = None,
+        provider_name: Optional[str] = None,
+        description: Optional[str] = None,
+        diameter: Optional[Any] = None,
+        material: Optional[str] = None,
+        feed_rate: Optional[Any] = None,
+        plunge_rate: Optional[Any] = None,
+        spindle_speed: Optional[Any] = None,
+        notes: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        replace_existing: bool = False,
+    ) -> Optional[int]:
+        """Persist a snapshot for the current G-code version."""
+        if self.db_manager is None:
+            return None
 
-        The full tool data dictionary is stored as JSON in the metadata field so
-        it can evolve without requiring schema changes.
-        """
-        if self.db_manager is None or self.current_version_id is None:
-            return
+        self._ensure_gcode_version_for_current_file()
+        if self.current_version_id is None:
+            return None
+
+        metadata_payload = dict(metadata or {})
+        if material is not None:
+            metadata_payload["material"] = material
+        if diameter is not None:
+            metadata_payload["diameter"] = diameter
+        if description and "description" not in metadata_payload:
+            metadata_payload["description"] = description
+        if feed_rate is not None and "feed_rate" not in metadata_payload:
+            metadata_payload["feed_rate"] = feed_rate
+        if plunge_rate is not None and "plunge_rate" not in metadata_payload:
+            metadata_payload["plunge_rate"] = plunge_rate
 
         try:
-            # Clear any previous tool snapshots for this version so we keep one
-            # current selection.
-            self.db_manager.delete_gcode_tool_snapshots(self.current_version_id)
+            if replace_existing:
+                self.db_manager.delete_gcode_tool_snapshots(self.current_version_id)
         except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
                 "Failed to clear existing tool snapshots for version %s: %s",
@@ -917,20 +1274,19 @@ class GcodePreviewerWidget(QWidget):
             )
 
         try:
-            metadata = dict(tool_data)
-            self.db_manager.add_gcode_tool_snapshot(
+            snapshot_id = self.db_manager.add_gcode_tool_snapshot(
                 version_id=self.current_version_id,
-                tool_number=None,
-                tool_id=tool_data.get("id"),
-                provider_name=tool_data.get("vendor") or tool_data.get("provider_name"),
-                tool_db_source=tool_data.get("tool_db_source", "tool_database"),
-                feed_rate=None,
-                plunge_rate=None,
-                spindle_speed=None,
+                tool_number=tool_number,
+                tool_id=tool_id,
+                provider_name=provider_name,
+                tool_db_source=metadata_payload.get("tool_db_source", "tool_database"),
+                feed_rate=self._safe_float(feed_rate),
+                plunge_rate=self._safe_float(plunge_rate),
+                spindle_speed=self._safe_float(spindle_speed),
                 stepdown=None,
                 stepover=None,
-                notes=tool_data.get("description"),
-                metadata=metadata,
+                notes=notes or description,
+                metadata=metadata_payload,
             )
         except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:  # pragma: no cover - defensive
             self.logger.warning(
@@ -938,6 +1294,28 @@ class GcodePreviewerWidget(QWidget):
                 self.current_version_id,
                 exc,
             )
+            return None
+
+        self._latest_tool_metadata = metadata_payload
+        self._refresh_tool_label_for_current_version()
+        return snapshot_id
+
+    def _safe_float(self, value: Any) -> Optional[float]:
+        """Best-effort conversion of user-provided values to float."""
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return None
+        text = str(value).strip()
+        if not text or text == "-":
+            return None
+        try:
+            return float(text)
+        except (ValueError, TypeError):
+            return None
 
     def _load_cached_timing_if_available(self) -> bool:
         """Load cached timing metrics from the database when still valid.
@@ -1165,6 +1543,7 @@ class GcodePreviewerWidget(QWidget):
 
         if self.stats_label is not None:
             self.stats_label.setText(stats_text)
+        self._update_loader_summary_panel()
 
     @staticmethod
     def _format_duration(seconds: float) -> str:
@@ -1210,6 +1589,113 @@ class GcodePreviewerWidget(QWidget):
                 6,
                 QTableWidgetItem(f"{move.spindle_speed:.0f}" if move.spindle_speed else "-"),
             )
+        self._rebuild_line_lookup()
+
+    def _on_open_folder_requested(self, file_path: str) -> None:
+        """Open the folder containing the current G-code file."""
+        if not file_path:
+            return
+        try:
+            directory = Path(file_path).resolve().parent
+        except (OSError, IOError):
+            QMessageBox.warning(self, "Folder Unavailable", "Could not resolve file location.")
+            return
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(directory))):
+            QMessageBox.warning(self, "Open Folder Failed", f"Unable to open:\n{directory}")
+
+    def _on_reload_file_requested(self) -> None:
+        """Reload the currently loaded file from disk."""
+        if self.current_file:
+            self.load_gcode_file(self.current_file)
+
+    def _on_editor_file_saved(self, path: str) -> None:
+        """Link saved files into the active project."""
+        self.logger.info("Edited G-code saved to %s", path)
+        if not self.current_project_id:
+            return
+        link_gcode_file_to_project(self.db_manager, self.current_project_id, path, self.logger)
+
+    def _on_editor_line_selected(self, line_number: int) -> None:
+        """Highlight the corresponding move when a line is selected in the editor."""
+        if self._suppress_editor_sync or line_number < 1:
+            return
+
+        move_index = self._line_to_move_index.get(line_number)
+        if move_index is None:
+            return
+
+        try:
+            self.animation_controller.set_frame(move_index)
+            if self.timeline:
+                self.timeline.set_current_frame(move_index)
+        except (ValueError, RuntimeError):  # pragma: no cover - defensive
+            self.logger.debug("Failed to sync editor line %s to animation frame", line_number)
+
+    def _highlight_editor_for_frame(self, frame: int) -> None:
+        """Bring the corresponding line into view in the editor."""
+        if self.editor is None or self._suppress_editor_sync:
+            return
+        if frame < 0 or frame >= len(self.moves):
+            return
+        line_number = self.moves[frame].line_number
+        if not line_number:
+            return
+        try:
+            self._suppress_editor_sync = True
+            self.editor.highlight_line(line_number)
+        finally:
+            self._suppress_editor_sync = False
+
+    def sync_camera_controls_checkbox(self, visible: bool) -> None:
+        """Update the View Controls checkbox to match dock visibility."""
+        if self.camera_controls_checkbox is None:
+            return
+        if self._suppress_camera_checkbox:
+            return
+        current = self.camera_controls_checkbox.isChecked()
+        if current == visible:
+            return
+        self._suppress_camera_checkbox = True
+        try:
+            self.camera_controls_checkbox.setChecked(visible)
+        finally:
+            self._suppress_camera_checkbox = False
+
+    def _rebuild_line_lookup(self) -> None:
+        """Build a mapping of line numbers to move indices for editor sync."""
+        lookup: Dict[int, int] = {}
+        for idx, move in enumerate(self.moves):
+            if move.line_number is None:
+                continue
+            lookup.setdefault(move.line_number, idx)
+        self._line_to_move_index = lookup
+
+    def _update_loader_summary_panel(self) -> None:
+        """Push project/file summary details into the tools widget."""
+        if getattr(self.tools_widget, "update_loader_summary", None) is None:
+            return
+
+        runtime_text = "-"
+        distance_text = "-"
+        if self.current_timing:
+            try:
+                runtime_text = self._format_duration(self.current_timing.get("total_time_seconds"))
+                cut = float(self.current_timing.get("distance_cut") or 0.0)
+                rapid = float(self.current_timing.get("distance_rapid") or 0.0)
+                distance_text = f"{cut + rapid:.2f} mm"
+            except (TypeError, ValueError):
+                runtime_text = runtime_text or "-"
+
+        _, feed_override_pct = self._resolve_machine_and_override()
+        feed_override_text = f"{feed_override_pct:.0f}%" if feed_override_pct else "-"
+
+        self.tools_widget.update_loader_summary(
+            file_path=self.current_file,
+            project_name=self.current_project_name or None,
+            runtime_text=runtime_text,
+            distance_text=distance_text,
+            feed_override_text=feed_override_text,
+        )
 
     def _on_play(self) -> None:
         """Handle play button click."""
@@ -1238,6 +1724,7 @@ class GcodePreviewerWidget(QWidget):
         moves_to_show = self.animation_controller.get_moves_up_to_frame(frame)
         self.renderer.render_toolpath(moves_to_show)
         self.vtk_widget.update_render()
+        self._highlight_editor_for_frame(frame)
 
     def _on_animation_state_changed(self, state: PlaybackState) -> None:
         """Handle animation state change and reflect it in the timeline UI."""
@@ -1536,3 +2023,34 @@ class GcodePreviewerWidget(QWidget):
 
         # Update statistics
         self._update_statistics()
+
+
+def link_gcode_file_to_project(db_manager, project_id: str, file_path: str, logger) -> bool:
+    """Link an edited G-code file to a project record using the database manager.
+
+    Returns True when the file record was created successfully, False otherwise.
+    """
+    if db_manager is None or not project_id or not file_path:
+        return False
+
+    try:
+        file_size = Path(file_path).stat().st_size
+    except (OSError, IOError, ValueError):
+        file_size = None
+
+    try:
+        db_manager.add_file(
+            project_id,
+            file_path,
+            Path(file_path).name,
+            file_size=file_size,
+            status="gcode-editor",
+            link_type="gcode-editor",
+        )
+        if logger:
+            logger.info("Linked edited G-code file %s to project %s", file_path, project_id)
+        return True
+    except (sqlite3.Error, OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        if logger:
+            logger.warning("Failed to link edited G-code to project: %s", exc)
+        return False

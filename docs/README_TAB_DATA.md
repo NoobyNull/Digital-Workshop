@@ -40,10 +40,12 @@ Unified service for all tab data operations:
 - **File**: `feeds_and_speeds.json`
 
 #### Project Cost Estimator
-- `set_current_project(project_id)` - Set active project
-- `save_to_project()` - Save cost estimate data
-- `load_from_project()` - Load cost estimate data
-- **File**: `cost_estimate.json`
+- `set_current_project(project_id)` - Set active project and load live project data
+- `save_to_project()` - Persist invoice as XML + PDF (stored under `<project>/cost_estimator/invoices/`)
+- `load_from_project()` - Reload an existing invoice XML from the project folder
+- **Files**: `cost_estimator/invoices/invoice-*.xml` (regeneration), matching PDF exports for sharing
+- **Note**: No invoice content is written to the database; everything lives inside the project directory for white-label archiving.
+- **Preferences**: Configure default logo, business info, and terms under **Preferences → Invoices** so every new estimate is pre-populated with your branding.
 
 ### 3. Project Manager Integration
 **File**: `src/gui/main_window.py`

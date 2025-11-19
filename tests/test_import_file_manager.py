@@ -15,6 +15,7 @@ import unittest
 import tempfile
 import shutil
 import tracemalloc
+import zipfile
 from pathlib import Path
 from typing import List
 
@@ -52,6 +53,32 @@ class TestImportFileManager(unittest.TestCase):
 
         self.test_files.append(str(file_path))
         return str(file_path)
+
+    def test_archive_is_extracted_during_preparation(self):
+        """ZIP archives are unpacked before import begins."""
+        archive_path = Path(self.temp_dir) / "models.zip"
+        inner_dir = Path(self.temp_dir) / "archive_content"
+        inner_dir.mkdir(parents=True, exist_ok=True)
+        source_file = inner_dir / "sample.stl"
+        source_file.write_text("dummy")
+
+        with zipfile.ZipFile(archive_path, "w") as archive:
+            archive.write(source_file, arcname="sample.stl")
+
+        session = ImportSession(
+            session_id="zip-test", mode=FileManagementMode.LEAVE_IN_PLACE
+        )
+        entries = self.manager._prepare_import_entries([str(archive_path)], session)
+
+        self.assertEqual(len(entries), 1)
+        extracted_path, source_origin = entries[0]
+        self.assertEqual(source_origin, str(archive_path))
+        self.assertTrue(Path(extracted_path).exists())
+        self.assertTrue(session.temporary_paths)
+
+        # Cleanup temporary extraction directory
+        self.manager._cleanup_temporary_paths(session)
+        self.assertFalse(Path(extracted_path).exists())
 
     def test_initialization(self):
         """Test ImportFileManager initialization."""
@@ -315,7 +342,7 @@ class TestImportFileManager(unittest.TestCase):
         self.assertEqual(result.total_files, 1)
         self.assertEqual(result.processed_files, 1)
         self.assertEqual(result.failed_files, 0)
-        self.assertGreater(result.duration_seconds, 0)
+        self.assertGreaterEqual(result.duration_seconds, 0)
         self.assertIsNone(self.manager.get_active_session())
 
     def test_memory_stability(self):

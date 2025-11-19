@@ -34,6 +34,7 @@ class ProjectManager:
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
         structure_type: Optional[str] = None,
+        group_id: Optional[str] = None,
     ) -> str:
         """
         Create a new project.
@@ -55,6 +56,7 @@ class ProjectManager:
                 import_tag=import_tag,
                 original_path=original_path,
                 structure_type=structure_type,
+                group_id=group_id,
             )
             logger.info("Created project: %s ({project_id})", name)
             return project_id
@@ -148,6 +150,57 @@ class ProjectManager:
             return self.db_manager.update_project(project_id, **kwargs)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to update project: %s", str(e))
+            return False
+
+    @log_function_call(logger)
+    def assign_project_to_group(self, project_id: str, group_id: Optional[str]) -> bool:
+        """Assign a project to a logical group."""
+        try:
+            return self.db_manager.assign_project_to_group(project_id, group_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to assign project to group: %s", e)
+            return False
+
+    # ----- Group operations -----
+
+    @log_function_call(logger)
+    def list_project_groups(self) -> List[Dict[str, Any]]:
+        try:
+            return self.db_manager.list_project_groups()
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to list project groups: %s", e)
+            return []
+
+    @log_function_call(logger)
+    def create_project_group(self, name: str, parent_id: Optional[str] = None) -> str:
+        try:
+            return self.db_manager.create_project_group(name, parent_id=parent_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to create project group: %s", e)
+            raise
+
+    @log_function_call(logger)
+    def rename_project_group(self, group_id: str, new_name: str) -> bool:
+        try:
+            return self.db_manager.update_project_group(group_id, name=new_name)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to rename project group: %s", e)
+            return False
+
+    @log_function_call(logger)
+    def move_project_group(self, group_id: str, parent_id: Optional[str]) -> bool:
+        try:
+            return self.db_manager.update_project_group(group_id, parent_id=parent_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to move project group: %s", e)
+            return False
+
+    @log_function_call(logger)
+    def delete_project_group(self, group_id: str) -> bool:
+        try:
+            return self.db_manager.delete_project_group(group_id)
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Failed to delete project group: %s", e)
             return False
 
     @log_function_call(logger)

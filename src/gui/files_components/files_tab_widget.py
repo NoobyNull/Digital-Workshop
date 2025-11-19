@@ -24,10 +24,12 @@ from PySide6.QtWidgets import (
     QComboBox,
     QMenu,
     QSpinBox,
+    QRadioButton,
 )
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
+from src.core.services.library_settings import LibrarySettings, LibraryMode
 from src.gui.theme import SPACING_4, SPACING_8, SPACING_12
 from src.gui.files_components.file_maintenance_worker import FileMaintenanceWorker
 from src.gui.components.auto_close_message_box import show_auto_close_message
@@ -47,10 +49,13 @@ class FilesTab(QWidget):
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.root_folder_manager = RootFolderManager.get_instance()
+        self.library_settings = LibrarySettings()
+        self._mode_sync_in_progress = False
         self.maintenance_worker = None  # Initialize maintenance worker attribute
         self._setup_ui()
         self._load_folders()
         self._connect_signals()
+        self._apply_library_mode_to_ui()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -70,9 +75,36 @@ class FilesTab(QWidget):
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
+        self.mode_group = QGroupBox("Project Storage")
+        mode_layout = QVBoxLayout(self.mode_group)
+
+        self.managed_radio = QRadioButton("Managed Projects folder (recommended)")
+        self.leave_radio = QRadioButton("Leave files where they are")
+        mode_layout.addWidget(self.managed_radio)
+        mode_layout.addWidget(self.leave_radio)
+
+        projects_row = QHBoxLayout()
+        projects_label = QLabel("Projects folder:")
+        projects_row.addWidget(projects_label)
+        self.projects_path = QLabel()
+        self.projects_path.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        projects_row.addWidget(self.projects_path, 1)
+        self.change_projects_button = QPushButton("Change Folder...")
+        projects_row.addWidget(self.change_projects_button)
+        mode_layout.addLayout(projects_row)
+
+        mode_help = QLabel(
+            "Files imported in managed mode are copied into the Projects folder. "
+            "Choose \"Leave files where they are\" if you prefer to browse multiple "
+            "root folders without copying."
+        )
+        mode_help.setWordWrap(True)
+        mode_layout.addWidget(mode_help)
+        layout.addWidget(self.mode_group)
+
         # Root folders group
-        folders_group = QGroupBox("Root Folders")
-        folders_layout = QVBoxLayout(folders_group)
+        self.folders_group = QGroupBox("Root Folders")
+        folders_layout = QVBoxLayout(self.folders_group)
 
         # Folders list
         self.folders_list = QListWidget()
@@ -101,11 +133,11 @@ class FilesTab(QWidget):
         buttons_layout.addStretch()
         folders_layout.addLayout(buttons_layout)
 
-        layout.addWidget(folders_group)
+        layout.addWidget(self.folders_group)
 
         # Validation section
-        validation_group = QGroupBox("Folder Validation")
-        validation_layout = QVBoxLayout(validation_group)
+        self.validation_group = QGroupBox("Folder Validation")
+        validation_layout = QVBoxLayout(self.validation_group)
 
         self.validate_button = QPushButton("Validate All Folders")
         self.validate_button.setToolTip("Check if all configured folders are accessible")
@@ -114,11 +146,11 @@ class FilesTab(QWidget):
         self.validation_status = QLabel("Ready")
         validation_layout.addWidget(self.validation_status)
 
-        layout.addWidget(validation_group)
+        layout.addWidget(self.validation_group)
 
         # File matching and regeneration section
-        maintenance_group = QGroupBox("File & Model Maintenance")
-        maintenance_layout = QVBoxLayout(maintenance_group)
+        self.maintenance_group = QGroupBox("File & Model Maintenance")
+        maintenance_layout = QVBoxLayout(self.maintenance_group)
 
         maintenance_desc = QLabel(
             "Force check and match files to models, or regenerate thumbnails. "
@@ -167,7 +199,7 @@ class FilesTab(QWidget):
         maintenance_buttons.addStretch()
         maintenance_layout.addLayout(maintenance_buttons)
 
-        layout.addWidget(maintenance_group)
+        layout.addWidget(self.maintenance_group)
 
         # Recent models preference group
         recent_group = QGroupBox("Recent Models (MRU)")
@@ -209,6 +241,9 @@ class FilesTab(QWidget):
         self.start_maintenance_button.clicked.connect(self._start_maintenance)
         self.cancel_maintenance_button.clicked.connect(self._cancel_maintenance)
         self.recent_spin.valueChanged.connect(self._on_recent_limit_changed)
+        self.managed_radio.toggled.connect(self._on_mode_radio_changed)
+        self.leave_radio.toggled.connect(self._on_mode_radio_changed)
+        self.change_projects_button.clicked.connect(self._on_change_projects_folder)
 
     def _load_folders(self) -> None:
         """Load folders from the manager and populate the list."""
@@ -245,6 +280,106 @@ class FilesTab(QWidget):
                 "Unable to update MRU preference right now. The previous value will remain in use."
             )
         self.recent_status_label.setText(text)
+
+    def _apply_library_mode_to_ui(self) -> None:
+        """Synchronize library mode radio buttons, folder state, and labels."""
+
+        mode = self.library_settings.get_mode()
+        self._mode_sync_in_progress = True
+        self.managed_radio.setChecked(mode == LibraryMode.CONSOLIDATED)
+        self.leave_radio.setChecked(mode == LibraryMode.LEAVE_IN_PLACE)
+        root = None
+        try:
+            if mode == LibraryMode.CONSOLIDATED:
+                root = self.library_settings.ensure_projects_root()
+            else:
+                root = self.library_settings.get_base_root()
+        except OSError as exc:
+            self.logger.error("Failed to prepare projects folder: %s", exc)
+
+        self.projects_path.setText(str(root) if root else "Not configured")
+        self._mode_sync_in_progress = False
+        self._update_mode_sections()
+
+    def _update_mode_sections(self) -> None:
+        """Show/hide sections based on current mode selection."""
+
+        managed = self.managed_radio.isChecked()
+        self.change_projects_button.setEnabled(managed)
+        self.folders_group.setVisible(not managed)
+        self.validation_group.setVisible(not managed)
+
+    def _on_mode_radio_changed(self, checked: bool) -> None:
+        """Persist library mode changes and refresh folders."""
+
+        if self._mode_sync_in_progress or not checked:
+            return
+
+        managed = self.managed_radio.isChecked()
+        new_mode = LibraryMode.CONSOLIDATED if managed else LibraryMode.LEAVE_IN_PLACE
+        current_mode = self.library_settings.get_mode()
+
+        if new_mode == current_mode:
+            self._update_mode_sections()
+            return
+
+        self._mode_sync_in_progress = True
+        try:
+            self.library_settings.set_mode(new_mode)
+            if new_mode == LibraryMode.CONSOLIDATED:
+                try:
+                    self.library_settings.ensure_projects_root()
+                except OSError as exc:
+                    self.logger.error("Failed to create projects folder: %s", exc)
+                    QMessageBox.critical(
+                        self,
+                        "Projects Folder Error",
+                        f"Unable to create the projects folder:\n\n{exc}",
+                    )
+                    self.library_settings.set_mode(LibraryMode.LEAVE_IN_PLACE)
+                    self.managed_radio.setChecked(False)
+                    self.leave_radio.setChecked(True)
+                    new_mode = LibraryMode.LEAVE_IN_PLACE
+        finally:
+            self._mode_sync_in_progress = False
+
+        self.root_folder_manager.reload_from_settings()
+        self._apply_library_mode_to_ui()
+        self._load_folders()
+
+    def _on_change_projects_folder(self) -> None:
+        """Allow the user to pick a new managed Projects folder."""
+
+        current_root = self.library_settings.get_base_root()
+        start_dir = str(
+            current_root or self.library_settings.get_default_projects_root().parent
+        )
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Choose Projects Folder",
+            start_dir,
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
+        )
+
+        if not folder:
+            return
+
+        path = Path(folder)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.critical(
+                self,
+                "Projects Folder Error",
+                f"Unable to use the selected folder:\n\n{exc}",
+            )
+            return
+
+        self.library_settings.set_base_root(path)
+        self.library_settings.set_mode(LibraryMode.CONSOLIDATED)
+        self.root_folder_manager.reload_from_settings()
+        self._apply_library_mode_to_ui()
+        self._load_folders()
 
     def _add_folder_item(self, folder: RootFolder) -> None:
         """Add a folder item to the list widget."""

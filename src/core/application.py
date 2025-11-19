@@ -20,7 +20,9 @@ from .exception_handler import ExceptionHandler
 from .logging_config import get_logger
 from .system_initializer import SystemInitializer
 from src.core.services.library_root_monitor import LibraryRootMonitor
+from src.core.services.import_watch_service import ImportWatchService
 from src.gui.dialogs.library_setup_dialog import run_first_launch_setup
+from src.gui.dialogs.ai_setup_dialog import run_ai_first_launch_setup
 from src.gui.main_window import MainWindow
 
 
@@ -42,6 +44,7 @@ class Application:
         self.bootstrap: Optional[ApplicationBootstrap] = None
         self._is_initialized = False
         self._is_running = False
+        self.import_watch_service: Optional[ImportWatchService] = None
 
         # Startup splash screen (shown while core systems initialize).
         self._startup_splash = None
@@ -73,6 +76,9 @@ class Application:
             # First-launch library setup (runs only once per user)
             run_first_launch_setup()
 
+            # First-launch AI setup for local Ollama configuration (also once per user)
+            run_ai_first_launch_setup()
+
             # Show a lightweight startup splash while core systems initialize.
             self._show_startup_splash()
             self._update_startup_splash(5, "Initializing system components...")
@@ -103,6 +109,10 @@ class Application:
             # Monitor consolidated library root and handle DB failover
             monitor = LibraryRootMonitor()
             monitor.check_on_startup()
+
+            # Start background import watcher for the managed Projects inbox.
+            self.import_watch_service = ImportWatchService(self.qt_app)
+            self.import_watch_service.start()
 
             self._update_startup_splash(85, "Creating main window...")
 

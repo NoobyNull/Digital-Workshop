@@ -268,9 +268,19 @@ class ModelLibraryWidget(QWidget):
         """Remove a model."""
         self.facade.event_handler.remove_model(model_id)
 
-    def _import_from_context_menu(self) -> None:
-        """Import from context menu."""
-        self.facade.file_browser.import_selected_files()
+    def _import_from_context_menu(self, file_path: str) -> None:
+        """Import a specific file path from the file tree context menu.
+
+        This delegates to the file browser's unified import request helper,
+        which in turn raises the ``import_requested`` signal so the main
+        window can open the Import wizard.
+        """
+        try:
+            # Reuse the file browser's request mechanism to preserve the
+            # unified import pipeline and avoid duplicating logic here.
+            self.facade.file_browser._request_import([file_path])
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning("Failed to request import from context menu: %s", exc)
 
     def _open_in_native_app(self, file_path: str) -> None:
         """Open file in native application."""

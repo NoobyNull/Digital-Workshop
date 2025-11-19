@@ -34,6 +34,7 @@ class ProjectRepository:
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
         structure_type: Optional[str] = None,
+        group_id: Optional[str] = None,
     ) -> str:
         """
         Create a new project.
@@ -66,9 +67,9 @@ class ProjectRepository:
                     """
                     INSERT INTO projects (
                         id, name, base_path, import_tag, original_path,
-                        structure_type, created_at, updated_at
+                        structure_type, group_id, created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         project_id,
@@ -77,6 +78,7 @@ class ProjectRepository:
                         import_tag,
                         original_path,
                         structure_type,
+                        group_id,
                         now,
                         now,
                     ),
@@ -215,6 +217,7 @@ class ProjectRepository:
                 "import_date",
                 "active_machine_id",
                 "feed_override_pct",
+                "group_id",
             }
 
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}

@@ -251,8 +251,9 @@ class Ui_ModelLibraryWidget(object):
             QCoreApplication.translate("ModelLibraryWidget", "Refresh model library", None)
         )
         # endif // QT_CONFIG(tooltip)
+        # Use an unlabelled group box to avoid showing the legacy 'File Browser' caption
         self.file_browser_group.setTitle(
-            QCoreApplication.translate("ModelLibraryWidget", "File Browser", None)
+            QCoreApplication.translate("ModelLibraryWidget", "", None)
         )
         self.path_label.setText(QCoreApplication.translate("ModelLibraryWidget", "Path:", None))
         self.path_display.setText(QCoreApplication.translate("ModelLibraryWidget", "C:\\", None))

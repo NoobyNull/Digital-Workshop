@@ -148,6 +148,20 @@ class DatabaseOperations:
                 """
                 )
 
+                # Create project group table for logical organization
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS project_groups (
+                        id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        parent_id TEXT REFERENCES project_groups(id) ON DELETE CASCADE,
+                        sort_order INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """
+                )
+
                 # Create projects table for project management
                 cursor.execute(
                     """
@@ -159,10 +173,37 @@ class DatabaseOperations:
                         original_path TEXT,
                         structure_type TEXT,
                         import_date DATETIME,
+                        group_id TEXT REFERENCES project_groups(id) ON DELETE SET NULL,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 """
+                )
+
+                # Ensure group_id column exists for legacy databases
+                cursor.execute(
+                    """
+                    PRAGMA table_info(projects)
+                    """
+                )
+                columns = [row[1] for row in cursor.fetchall()]
+                if "group_id" not in columns:
+                    try:
+                        cursor.execute(
+                            """
+                            ALTER TABLE projects
+                            ADD COLUMN group_id TEXT REFERENCES project_groups(id) ON DELETE SET NULL
+                            """
+                        )
+                        logger.info("Added group_id column to projects table")
+                    except sqlite3.OperationalError:
+                        logger.debug("group_id column already exists on projects table")
+
+                cursor.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_projects_group
+                    ON projects(group_id)
+                    """
                 )
 
                 # Create files table for file tracking

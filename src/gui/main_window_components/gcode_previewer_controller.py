@@ -45,6 +45,11 @@ class GcodePreviewController:
                 self._setup_gcode_tools_dock()
             except Exception as dock_error:  # pragma: no cover - defensive
                 self.logger.warning("Failed to initialize G-code tools dock: %s", dock_error)
+
+            try:
+                self._setup_camera_controls_dock()
+            except Exception as dock_error:  # pragma: no cover - defensive
+                self.logger.warning("Failed to initialize camera controls dock: %s", dock_error)
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
             placeholder = self._create_placeholder(
@@ -127,6 +132,59 @@ class GcodePreviewController:
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error("Failed to setup G-code tools dock: %s", e)
 
+    def _setup_camera_controls_dock(self) -> None:
+        """Create a dockable camera toolbar for the VTK viewer."""
+        if (
+            not hasattr(self.main_window, "gcode_previewer_widget")
+            or self.main_window.gcode_previewer_widget is None
+        ):
+            return
+
+        vtk_widget = getattr(self.main_window.gcode_previewer_widget, "vtk_widget", None)
+        if vtk_widget is None:
+            return
+
+        toolbar = vtk_widget.create_camera_toolbar(self.main_window)
+        dock = QDockWidget("Camera Controls", self.main_window)
+        dock.setObjectName("CameraControlsDock")
+        dock.setAllowedAreas(
+            Qt.LeftDockWidgetArea
+            | Qt.RightDockWidgetArea
+            | Qt.TopDockWidgetArea
+            | Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QDockWidget.DockWidgetMovable
+            | QDockWidget.DockWidgetFloatable
+            | QDockWidget.DockWidgetClosable
+        )
+        dock.setWidget(toolbar)
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+        try:
+            if hasattr(self.main_window, "_register_dock_for_snapping"):
+                self.main_window._register_dock_for_snapping(dock)  # noqa: SLF001
+        except Exception:
+            self.logger.debug("Failed to register camera controls dock for snapping context")
+
+        if hasattr(self.main_window, "_register_dock_for_snapping"):
+            try:
+                self.main_window._register_dock_for_snapping(dock)  # noqa: SLF001
+            except Exception as e:  # pragma: no cover - defensive
+                self.logger.debug("Failed to register camera controls dock for snapping: %s", e)
+
+        self.main_window.camera_controls_dock = dock
+        dock.visibilityChanged.connect(self._on_camera_dock_visibility_changed)
+
+    def _on_camera_dock_visibility_changed(self, visible: bool) -> None:
+        previewer = getattr(self.main_window, "gcode_previewer_widget", None)
+        if previewer is None:
+            return
+        try:
+            previewer.sync_camera_controls_checkbox(visible)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.debug("Failed to sync camera controls checkbox: %s", exc)
+
     # ------------------------------------------------------------------
     # Project and file integration
     # ------------------------------------------------------------------
@@ -152,3 +210,8 @@ class GcodePreviewController:
                 self.main_window.gcode_previewer_widget.load_gcode_file(file_path)
             except Exception as e:  # pragma: no cover - defensive
                 self.logger.error("Failed to load G-code file %s in previewer: %s", file_path, e)
+        dock.visibilityChanged.connect(
+            lambda visible: self.main_window._set_layout_edit_mode(
+                self.main_window.layout_edit_mode, show_message=False
+            )
+        )

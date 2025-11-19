@@ -420,3 +420,16 @@ class GcodeRepository:
         if deleted:
             logger.info("Deleted %s tool snapshots for version %s", deleted, version_id)
         return deleted
+
+    @log_function_call(logger)
+    def delete_tool_snapshot(self, snapshot_id: int) -> bool:
+        """Delete a single snapshot by its identifier."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM gcode_tool_snapshots WHERE id = ?", (snapshot_id,))
+            conn.commit()
+            deleted = cursor.rowcount > 0
+
+        if deleted:
+            logger.info("Deleted tool snapshot %s", snapshot_id)
+        return deleted

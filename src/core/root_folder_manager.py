@@ -13,6 +13,7 @@ from PySide6.QtCore import QObject, Signal
 
 from src.core.logging_config import get_logger
 from PySide6.QtCore import QSettings
+from src.core.services.library_settings import LibrarySettings, LibraryMode
 
 
 @dataclass
@@ -50,6 +51,7 @@ class RootFolderManager(QObject):
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.settings = QSettings()
+        self.library_settings = LibrarySettings()
         self._folders: List[RootFolder] = []
         self._load_folders()
 
@@ -86,20 +88,34 @@ class RootFolderManager(QObject):
                     else:
                         self.logger.warning("Skipping invalid root folder: %s", folder.path)
 
-            # If no folders configured, add default user home
+            # If no folders configured, add default user home or projects root
             if not self._folders:
                 self._add_default_folders()
+
+            self._apply_library_mode_override()
 
             self.logger.info("Loaded %s root folders", len(self._folders))
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load root folders: %s", e)
             self._add_default_folders()
+            self._apply_library_mode_override()
 
     def _add_default_folders(self) -> None:
         """Add default root folders when none are configured."""
-        home_path = str(Path.home())
-        home_folder = RootFolder(path=home_path, display_name="Home", enabled=True)
+        mode = self.library_settings.get_mode()
+        if mode == LibraryMode.CONSOLIDATED:
+            try:
+                root_path = self.library_settings.ensure_projects_root()
+            except OSError as exc:
+                self.logger.error("Unable to prepare projects folder: %s", exc)
+                root_path = Path.home()
+            display_name = root_path.name or "Projects"
+        else:
+            root_path = Path.home()
+            display_name = "Home"
+
+        home_folder = RootFolder(path=str(root_path), display_name=display_name, enabled=True)
         self._folders = [home_folder]
         self._save_folders()
 
@@ -148,6 +164,10 @@ class RootFolderManager(QObject):
 
     def add_folder(self, path: str, display_name: Optional[str] = None) -> bool:
         """Add a new root folder."""
+        if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
+            self.logger.warning("Cannot add custom root folders while Projects mode is active.")
+            return False
+
         try:
             path_obj = Path(path).resolve()
             path_str = str(path_obj)
@@ -179,6 +199,10 @@ class RootFolderManager(QObject):
 
     def remove_folder(self, folder_id: int) -> bool:
         """Remove a root folder by ID."""
+        if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
+            self.logger.warning("Cannot remove root folders while Projects mode is active.")
+            return False
+
         try:
             for i, folder in enumerate(self._folders):
                 if folder.id == folder_id:
@@ -203,6 +227,10 @@ class RootFolderManager(QObject):
         enabled: Optional[bool] = None,
     ) -> bool:
         """Update properties of a root folder."""
+        if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
+            self.logger.warning("Cannot edit root folders while Projects mode is active.")
+            return False
+
         try:
             for folder in self._folders:
                 if folder.id == folder_id:
@@ -272,3 +300,24 @@ class RootFolderManager(QObject):
             self.folders_changed.emit()
 
         return removed_count
+
+    def reload_from_settings(self) -> None:
+        """Reload folder configuration and emit change notification."""
+
+        self._load_folders()
+        self.folders_changed.emit()
+
+    def _apply_library_mode_override(self) -> None:
+        """Force a single Projects root when consolidated mode is active."""
+
+        if self.library_settings.get_mode() != LibraryMode.CONSOLIDATED:
+            return
+
+        try:
+            root = self.library_settings.ensure_projects_root()
+        except OSError as exc:
+            self.logger.error("Failed to enforce Projects folder: %s", exc)
+            return
+
+        display_name = root.name or "Projects"
+        self._folders = [RootFolder(path=str(root), display_name=display_name, enabled=True)]

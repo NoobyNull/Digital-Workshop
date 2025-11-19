@@ -165,8 +165,13 @@ class LibraryUIManager:
             logger.warning("Failed to create recent models panel", exc_info=True)
 
     def create_file_browser(self, parent_layout: QVBoxLayout) -> None:
-        """Create file browser UI."""
-        group = QGroupBox("File Browser")
+        """Create file browser UI.
+
+        The underlying file tree and controls are kept for internal use, but the
+        group box itself is unlabelled so no "File Browser" title bar appears in
+        the UI.
+        """
+        group = QGroupBox("")
         layout = QVBoxLayout(group)
 
         self.library_widget.file_model = MultiRootFileSystemModel()

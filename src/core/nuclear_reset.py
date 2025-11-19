@@ -15,11 +15,15 @@ This module provides a NUCLEAR RESET that destroys ALL application data:
 WARNING: This is IRREVERSIBLE. All data will be permanently deleted.
 """
 
+import json
 import logging
 import os
 import platform
 import shutil
+import subprocess
 import tempfile
+import textwrap
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 from PySide6.QtCore import QSettings
@@ -157,24 +161,36 @@ class NuclearReset:
                     results["backup_path"] = str(backup_path)
                     self.logger.info("Backup created: %s", backup_path)
 
-            # Step 2: Close all log handlers to release file locks
+            # Step 2: Release runtime resources (DB connections, etc.)
+            self.logger.warning("Releasing runtime resources...")
+            self._release_runtime_resources()
+
+            # Step 3: Close all log handlers to release file locks
             self.logger.warning("Closing log handlers...")
             self._close_log_handlers()
 
-            # Step 3: Clear QSettings / Registry
+            # Step 4: Clear QSettings / Registry
             self.logger.warning("Clearing QSettings / Registry...")
             if self._clear_qsettings():
                 results["registry_cleared"] = True
                 self.logger.info("QSettings / Registry cleared")
 
-            # Step 4: Delete all directories
+            # Step 5: Delete all directories
             self.logger.warning("Deleting all application directories...")
-            dirs_deleted, files_deleted, errors = self._delete_all_directories()
+            (
+                dirs_deleted,
+                files_deleted,
+                errors,
+                pending_cleanup,
+            ) = self._delete_all_directories()
             results["directories_deleted"] = dirs_deleted
             results["files_deleted"] = files_deleted
             results["errors"].extend(errors)
+            if pending_cleanup:
+                results["pending_cleanup"] = [str(p) for p in pending_cleanup]
+                self._schedule_post_cleanup(pending_cleanup)
 
-            # Step 5: Clean temp files
+            # Step 6: Clean temp files
             self.logger.warning("Cleaning temporary files...")
             self._clean_temp_files()
 
@@ -425,7 +441,7 @@ class NuclearReset:
             self.logger.error("Failed to clear QSettings: %s", e, exc_info=True)
             return False
 
-    def _delete_all_directories(self) -> tuple[int, int, List[str]]:
+    def _delete_all_directories(self) -> tuple[int, int, List[str], List[Path]]:
         """
         Delete all application directories.
 
@@ -435,6 +451,7 @@ class NuclearReset:
         dirs_deleted = 0
         files_deleted = 0
         errors = []
+        pending_cleanup: List[Path] = []
 
         # Get all directories to delete
         all_dirs = []
@@ -458,12 +475,17 @@ class NuclearReset:
                     files_deleted += file_count
                     self.logger.info("Deleted: %s ({file_count} files)", directory)
 
+                except PermissionError as e:
+                    error_msg = f"Failed to delete {directory}: {e}"
+                    self.logger.warning(error_msg)
+                    errors.append(error_msg)
+                    pending_cleanup.append(directory)
                 except Exception as e:
                     error_msg = f"Failed to delete {directory}: {e}"
                     self.logger.error(error_msg)
                     errors.append(error_msg)
 
-        return dirs_deleted, files_deleted, errors
+        return dirs_deleted, files_deleted, errors, pending_cleanup
 
     def _clean_temp_files(self) -> None:
         """Clean any remaining temp files."""
@@ -511,6 +533,97 @@ class NuclearReset:
         except Exception:
             # Can't log this since we're closing loggers
             pass
+
+    def _release_runtime_resources(self) -> None:
+        """Release application runtime resources (database connections, etc.)."""
+        try:
+            from src.core.database_manager import close_database_manager
+
+            close_database_manager()
+            self.logger.info("Database connections closed for nuclear reset")
+        except Exception as exc:  # pragma: no cover - best-effort cleanup
+            self.logger.debug("Failed to close database manager: %s", exc)
+
+        try:
+            import gc
+
+            gc.collect()
+        except Exception:
+            pass
+
+    def _schedule_post_cleanup(self, pending_paths: List[Path]) -> None:
+        """Launch a helper process that retries deleting locked paths."""
+        if not pending_paths:
+            return
+
+        try:
+            helper_script = tempfile.NamedTemporaryFile(
+                "w", delete=False, suffix="_nuke_cleanup.py", encoding="utf-8"
+            )
+            script_path = Path(helper_script.name)
+            helper_script.write(
+                textwrap.dedent(
+                    """
+                    import json
+                    import pathlib
+                    import shutil
+                    import sys
+                    import time
+
+                    RETRY_DELAY = 0.5
+                    MAX_RETRIES = 240
+
+                    def remove_path(raw):
+                        path = pathlib.Path(raw)
+                        if not path.exists():
+                            return True
+                        try:
+                            if path.is_dir():
+                                shutil.rmtree(path)
+                            else:
+                                path.unlink()
+                            return True
+                        except Exception:
+                            return False
+
+                    def main():
+                        paths = json.loads(sys.argv[1])
+                        cleanup_file = pathlib.Path(sys.argv[2])
+                        pending = list(paths)
+                        for _ in range(MAX_RETRIES):
+                            remaining = []
+                            for p in pending:
+                                if not remove_path(p):
+                                    remaining.append(p)
+                            if not remaining:
+                                break
+                            pending = remaining
+                            time.sleep(RETRY_DELAY)
+                        try:
+                            cleanup_file.unlink()
+                        except Exception:
+                            pass
+
+                    if __name__ == "__main__":
+                        main()
+                    """
+                )
+            )
+            helper_script.flush()
+            helper_script.close()
+
+            cmd = [
+                sys.executable,
+                str(script_path),
+                json.dumps([str(p) for p in pending_paths]),
+                str(script_path),
+            ]
+            subprocess.Popen(cmd, close_fds=True)
+            self.logger.info(
+                "Scheduled post-reset cleanup for %s path(s)", len(pending_paths)
+            )
+        except Exception as exc:  # pragma: no cover - best-effort
+            self.logger.warning("Failed to schedule post cleanup: %s", exc)
 
 
 def create_nuclear_reset_handler() -> NuclearReset:

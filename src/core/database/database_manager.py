@@ -16,6 +16,7 @@ from .model_repository import ModelRepository
 from .metadata_repository import MetadataRepository
 from .db_maintenance import DatabaseMaintenance
 from .project_repository import ProjectRepository
+from .project_group_repository import ProjectGroupRepository
 from .file_repository import FileRepository
 from .project_model_repository import ProjectModelRepository
 from .gcode_repository import GcodeRepository
@@ -57,6 +58,7 @@ class DatabaseManager:
         self._metadata_repo = MetadataRepository(get_conn)
         self._maintenance = DatabaseMaintenance(get_conn)
         self._project_repo = ProjectRepository(get_conn)
+        self._project_group_repo = ProjectGroupRepository(get_conn)
         self._file_repo = FileRepository(get_conn)
         self._project_model_repo = ProjectModelRepository(get_conn)
         self._gcode_repo = GcodeRepository(get_conn)
@@ -433,10 +435,11 @@ class DatabaseManager:
         import_tag: Optional[str] = None,
         original_path: Optional[str] = None,
         structure_type: Optional[str] = None,
+        group_id: Optional[str] = None,
     ) -> str:
         """Create a new project."""
         return self._project_repo.create_project(
-            name, base_path, import_tag, original_path, structure_type
+            name, base_path, import_tag, original_path, structure_type, group_id=group_id
         )
 
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
@@ -458,6 +461,29 @@ class DatabaseManager:
     def update_project(self, project_id: str, **kwargs) -> bool:
         """Update project fields."""
         return self._project_repo.update_project(project_id, **kwargs)
+
+    def assign_project_to_group(self, project_id: str, group_id: Optional[str]) -> bool:
+        """Assign a project to a logical group."""
+        return self._project_repo.update_project(project_id, group_id=group_id)
+
+    # ===== Project Group Operations =====
+
+    def create_project_group(
+        self,
+        name: str,
+        parent_id: Optional[str] = None,
+        sort_order: int = 0,
+    ) -> str:
+        return self._project_group_repo.create_group(name, parent_id, sort_order)
+
+    def list_project_groups(self) -> List[Dict[str, Any]]:
+        return self._project_group_repo.list_groups()
+
+    def update_project_group(self, group_id: str, **kwargs) -> bool:
+        return self._project_group_repo.update_group(group_id, **kwargs)
+
+    def delete_project_group(self, group_id: str) -> bool:
+        return self._project_group_repo.delete_group(group_id)
 
     def delete_project(self, project_id: str) -> bool:
         """Delete project and associated files."""
@@ -628,6 +654,9 @@ class DatabaseManager:
 
     def delete_gcode_tool_snapshots(self, version_id: int) -> int:
         return self._gcode_repo.delete_tool_snapshots(version_id)
+
+    def delete_gcode_tool_snapshot(self, snapshot_id: int) -> bool:
+        return self._gcode_repo.delete_tool_snapshot(snapshot_id)
 
     # ===== Cut List Optimizer (Scenarios / Materials / Pieces / Sequences) =====
 

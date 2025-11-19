@@ -231,7 +231,7 @@ class AIProviderConfigWidget(QWidget):
             "xAI Grok Vision": ["grok-vision-beta"],
             "ZAI Vision": ["zai-vision-1"],
             "Perplexity Vision": ["llava-7b", "llava-13b"],
-            "Ollama Local": ["llava", "bakllava"],
+            "Ollama Local": ["moondream", "bakllava", "llava"],
             "Google AI Studio": ["gemini-1.5-pro-vision-001"],
         }
         return models_map.get(provider_name, ["default"])
@@ -240,19 +240,28 @@ class AIProviderConfigWidget(QWidget):
         """Handle provider selection change."""
         self.current_provider = provider_name
 
-        local_providers = {"Ollama Local", "Google AI Studio"}
-        is_local = provider_name in local_providers
-
-        if is_local:
+        if provider_name == "Ollama Local":
+            self.api_key_edit.setPlaceholderText(
+                "Optional: API key (not used by Ollama CLI)"
+            )
+            self.base_url_edit.setPlaceholderText(
+                "Not used for Ollama CLI (leave blank)"
+            )
+            self.base_url_edit.setEnabled(False)
+        elif provider_name == "Google AI Studio":
             self.api_key_edit.setPlaceholderText(
                 "Optional: API key (not required for local providers)"
             )
             self.base_url_edit.setPlaceholderText(
-                "Required: Local endpoint URL, e.g. http://localhost:11434/v1"
+                "Required: Local endpoint URL, e.g. http://localhost:1234/v1"
             )
+            self.base_url_edit.setEnabled(True)
         else:
             self.api_key_edit.setPlaceholderText("Enter API key for selected provider")
-            self.base_url_edit.setPlaceholderText("Optional: Override default endpoint URL")
+            self.base_url_edit.setPlaceholderText(
+                "Optional: Override default endpoint URL"
+            )
+            self.base_url_edit.setEnabled(True)
 
         # Load provider configuration (or defaults if none stored yet)
         config = self.providers.get(provider_name, {})
@@ -294,8 +303,8 @@ class AIProviderConfigWidget(QWidget):
             },
             "Ollama Local": {
                 "api_key": "",
-                "model": "llava",
-                "base_url": "http://localhost:11434/v1",
+                "model": "moondream",
+                "base_url": "",
                 "cache_enabled": True,
                 "cache_size": 1000,
             },

@@ -15,11 +15,15 @@ from typing import Optional
 from PySide6.QtCore import QSettings
 
 from src.core.logging_config import get_logger
+from src.core.path_manager import get_cache_directory
 
 logger = get_logger(__name__)
 
 
 RECENT_MAX_ENTRIES_DEFAULT = 20
+DEFAULT_PROJECTS_DIRNAME = "Digital Workshop Projects"
+WATCH_FOLDER_NAME = "_Inbox"
+DOWNLOADS_FOLDER_NAME = "Downloads"
 
 
 class LibraryMode(str, Enum):
@@ -127,6 +131,46 @@ class LibrarySettings:
                 self._settings.setValue("base_root", str(root))
         finally:
             self._settings.endGroup()
+
+    def get_default_projects_root(self) -> Path:
+        """Return the default projects folder under Documents."""
+
+        documents_dir = Path.home() / "Documents"
+        if not documents_dir.exists():
+            documents_dir = Path.home()
+        return documents_dir / DEFAULT_PROJECTS_DIRNAME
+
+    def ensure_projects_root(self) -> Path:
+        """Ensure the managed projects root exists and return it."""
+
+        root = self.get_base_root()
+        if root is None:
+            root = self.get_default_projects_root()
+            self.set_base_root(root)
+
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.error("Failed to create projects root %s: %s", root, exc)
+            raise
+
+        return root
+
+    def get_watch_folder(self) -> Path:
+        """Return the managed import watch folder path, creating it if needed."""
+
+        root = self.ensure_projects_root()
+        watch = root / WATCH_FOLDER_NAME
+        watch.mkdir(parents=True, exist_ok=True)
+        return watch
+
+    def get_downloads_cache(self) -> Path:
+        """Return the application downloads cache directory."""
+
+        cache_root = get_cache_directory()
+        downloads = cache_root / DOWNLOADS_FOLDER_NAME
+        downloads.mkdir(parents=True, exist_ok=True)
+        return downloads
 
     # ------------------------------------------------------------------
     # Offline database markers

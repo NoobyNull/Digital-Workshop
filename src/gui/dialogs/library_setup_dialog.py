@@ -57,7 +57,7 @@ class LibrarySetupDialog(QDialog):
         self._root_edit = QLineEdit(self)
         self._browse_button = QPushButton("Browse…", self)
 
-        default_root = Path.home() / "3D Objects"
+        default_root = self._settings.get_default_projects_root()
         self._root_edit.setText(str(default_root))
 
         root_row = QHBoxLayout()
@@ -126,7 +126,7 @@ class LibrarySetupDialog(QDialog):
             mode = LibraryMode.CONSOLIDATED
             text = self._root_edit.text().strip()
             if not text:
-                text = str(Path.home() / "3D Objects")
+                text = str(self._settings.get_default_projects_root())
                 self._root_edit.setText(text)
             base_root = Path(text)
             try:
@@ -150,4 +150,3 @@ def run_first_launch_setup(parent: Optional[QWidget] = None) -> None:
     dialog = LibrarySetupDialog(settings, parent)
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.exec()
-

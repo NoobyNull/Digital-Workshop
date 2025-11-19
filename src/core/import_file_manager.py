@@ -10,7 +10,10 @@ and rollback capability for failed imports.
 """
 
 import json
+import shutil
+import tempfile
 import time
+import zipfile
 from pathlib import Path
 from typing import Optional, Callable, List, Dict, Tuple, Any
 from dataclasses import dataclass, field
@@ -53,6 +56,7 @@ class ImportFileInfo:
     progress_percent: int = 0
     start_time: Optional[float] = None
     end_time: Optional[float] = None
+    source_origin: Optional[str] = None  # Archive or download origin
 
 
 @dataclass
@@ -65,6 +69,7 @@ class ImportSession:
     files: List[ImportFileInfo] = field(default_factory=list)
     copied_files: List[str] = field(default_factory=list)  # For rollback
     created_directories: List[str] = field(default_factory=list)  # For rollback
+    temporary_paths: List[str] = field(default_factory=list)  # Extracted archives
     start_time: Optional[float] = None
     end_time: Optional[float] = None
     status: str = "pending"
@@ -116,6 +121,8 @@ class ImportFileManager:
         "other": "Other_Files",
     }
 
+    ARCHIVE_EXTENSIONS = {".zip"}
+
     def __init__(self) -> None:
         """Initialize the import file manager."""
         self.logger = get_logger(__name__)
@@ -136,6 +143,66 @@ class ImportFileManager:
         """Log event in JSON format as required by quality standards."""
         log_entry = {"event": event, "timestamp": time.time(), **data}
         self.logger.debug(json.dumps(log_entry))
+
+    def _prepare_import_entries(
+        self, file_paths: List[str], session: ImportSession
+    ) -> List[Tuple[str, Optional[str]]]:
+        """Expand provided paths into individual files, extracting archives."""
+
+        entries: List[Tuple[str, Optional[str]]] = []
+
+        for raw_path in file_paths:
+            try:
+                path = Path(raw_path).resolve()
+            except (OSError, ValueError):
+                self.logger.warning("Skipping invalid import path: %s", raw_path)
+                continue
+
+            if not path.exists():
+                self.logger.warning("Import path does not exist: %s", path)
+                continue
+
+            if path.is_dir():
+                for candidate in path.rglob("*"):
+                    if candidate.is_file():
+                        entries.append((str(candidate), None))
+                continue
+
+            if self._is_archive(path):
+                extracted = self._extract_archive(path, session)
+                if extracted:
+                    for candidate in extracted.rglob("*"):
+                        if candidate.is_file():
+                            entries.append((str(candidate), str(path)))
+                else:
+                    self.logger.warning("Failed to extract archive: %s", path)
+                continue
+
+            entries.append((str(path), None))
+
+        return entries
+
+    def _is_archive(self, path: Path) -> bool:
+        """Return True if the file appears to be an importable archive."""
+
+        return path.suffix.lower() in self.ARCHIVE_EXTENSIONS
+
+    def _extract_archive(self, archive_path: Path, session: ImportSession) -> Optional[Path]:
+        """Extract the archive to a temporary staging directory."""
+
+        staging_root = Path(tempfile.gettempdir()) / "digital_workshop_imports"
+        staging_root.mkdir(parents=True, exist_ok=True)
+        target_dir = staging_root / f"{archive_path.stem}_{session.session_id}"
+
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                archive.extractall(target_dir)
+        except (zipfile.BadZipFile, OSError, ValueError) as exc:
+            self.logger.error("Unable to extract %s: %s", archive_path, exc)
+            return None
+
+        session.temporary_paths.append(str(target_dir))
+        return target_dir
 
     def _generate_session_id(self) -> str:
         """Generate unique session ID for tracking."""
@@ -351,10 +418,12 @@ class ImportFileManager:
             status="running",
         )
 
+        prepared_entries = self._prepare_import_entries(file_paths, session)
+
         # Create file info for each file
         security_logger = SecurityEventLogger()
 
-        for file_path in file_paths:
+        for file_path, source_origin in prepared_entries:
             try:
                 # Check for system files (security check)
                 # Note: We don't validate path traversal for imports since users
@@ -383,6 +452,7 @@ class ImportFileManager:
                         original_path=file_path,
                         file_size=path.stat().st_size,
                         start_time=time.time(),
+                        source_origin=source_origin,
                     )
                     session.files.append(file_info)
                 else:
@@ -632,6 +702,7 @@ class ImportFileManager:
             },
         )
 
+        self._cleanup_temporary_paths(session)
         self._active_session = None
 
         return result
@@ -656,3 +727,18 @@ class ImportFileManager:
         if file_hash in existing_hashes:
             return True, existing_hashes[file_hash]
         return False, None
+
+    def _cleanup_temporary_paths(self, session: ImportSession) -> None:
+        """Remove any temporary directories or files created during import."""
+
+        for temp_path in list(session.temporary_paths):
+            path = Path(temp_path)
+            try:
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path.exists():
+                    path.unlink()
+            except (OSError, IOError, ValueError) as exc:
+                self.logger.warning("Failed to clean temporary path %s: %s", path, exc)
+
+        session.temporary_paths.clear()

@@ -71,7 +71,7 @@ class LibraryUIManager:
 
         self.library_widget.internal_tabs.addTab(library_container, "Library")
 
-        # Files tab
+        # Files tab (hidden – used only for background file indexing and context operations)
         files_container = QWidget()
         files_layout = QVBoxLayout(files_container)
         files_layout.setContentsMargins(0, 0, 0, 0)
@@ -79,7 +79,10 @@ class LibraryUIManager:
 
         self.create_file_browser(files_layout)
 
-        self.library_widget.internal_tabs.addTab(files_container, "Files")
+        # Add the tab but keep it hidden so the UI no longer exposes a file browser
+        index = self.library_widget.internal_tabs.addTab(files_container, "Files")
+        if hasattr(self.library_widget.internal_tabs, "setTabVisible"):
+            self.library_widget.internal_tabs.setTabVisible(index, False)
 
         self.apply_styling()
 
@@ -99,7 +102,8 @@ class LibraryUIManager:
 
     def create_file_browser(self, parent_layout: QVBoxLayout) -> None:
         """Create file browser UI."""
-        group = QGroupBox("File Browser")
+        # Use an unlabelled container to avoid showing a legacy 'File Browser' title
+        group = QGroupBox("")
         layout = QVBoxLayout(group)
 
         self.library_widget.file_model = MultiRootFileSystemModel()

@@ -43,7 +43,7 @@ class ProjectManager:
 
             for i in range(self.main_window.hero_tabs.count()):
                 tab_text = self.main_window.hero_tabs.tabText(i)
-                if tab_text == "3D Viewer":
+                if tab_text in ("Model Previewer", "3D Viewer"):
                     model_previewer_index = i
                 elif tab_text == "Project Cost Estimator":
                     cost_estimator_index = i

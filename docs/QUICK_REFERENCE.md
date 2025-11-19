@@ -97,12 +97,12 @@ python -m src.installer.installer --mode clean
 4. Data saved automatically
 5. Reference during CNC
 
-### Calculate Costs
+### Create Invoice-Style Estimate
 1. Open project
 2. Click "Cost Estimator" tab
-3. Enter material and labor costs
-4. System calculates total
-5. Export cost report
+3. Import line items from resources/G-code/cut list or enter manually
+4. Adjust quantities, tax, shipping, and terms
+5. Save to project (XML + PDF) or export PDF for sharing
 
 ---
 

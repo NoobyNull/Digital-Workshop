@@ -19,6 +19,7 @@ from src.gui.preferences.tabs import (
     GeneralTab,
     ThumbnailSettingsTab,
     ViewerSettingsTab,
+    InvoicePreferencesTab,
 )
 from src.gui.files_components.files_tab_widget import FilesTab
 
@@ -35,14 +36,21 @@ class PreferencesDialog(QDialog):
     theme_changed = Signal()
     viewer_settings_changed = Signal()
     ai_settings_changed = Signal()
+    general_settings_changed = Signal()
 
-    def __init__(self, parent=None, on_reset_layout: Callable | None = None) -> None:
+    def __init__(
+        self,
+        parent=None,
+        on_reset_layout: Callable | None = None,
+        on_save_layout_default: Callable | None = None,
+    ) -> None:
         """TODO: Add docstring."""
         super().__init__(parent)
         self.setWindowTitle("Preferences")
         self.setModal(True)
         self.setMinimumWidth(560)
         self.on_reset_layout = on_reset_layout
+        self.on_save_layout_default = on_save_layout_default
 
         self._setup_ui()
         self._restore_last_tab()
@@ -56,18 +64,23 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.tabs)
 
         # Create tabs
-        self.general_tab = GeneralTab(on_reset_layout=self.on_reset_layout)
+        self.general_tab = GeneralTab(
+            on_reset_layout=self.on_reset_layout,
+            on_save_layout_default=self.on_save_layout_default,
+        )
         self.viewer_settings_tab = ViewerSettingsTab()
         self.thumbnail_settings_tab = ThumbnailSettingsTab()
         self.files_tab = FilesTab()
         self.ai_tab = AITab()
         self.advanced_tab = AdvancedTab()
+        self.invoice_tab = InvoicePreferencesTab()
 
         # Add tabs
         self.tabs.addTab(self.general_tab, "General")
         self.tabs.addTab(self.viewer_settings_tab, "3D Viewer")
         self.tabs.addTab(self.thumbnail_settings_tab, "Content")
         self.tabs.addTab(self.files_tab, "Model Library")
+        self.tabs.addTab(self.invoice_tab, "Invoices")
         self.tabs.addTab(self.ai_tab, "AI")
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
@@ -136,12 +149,14 @@ class PreferencesDialog(QDialog):
             self.general_tab.save_settings()
             self.viewer_settings_tab.save_settings()
             self.thumbnail_settings_tab.save_settings()
+            self.invoice_tab.save_settings()
             self.ai_tab.save_settings()
             self.advanced_tab.save_settings()
 
             self.theme_changed.emit()
             self.viewer_settings_changed.emit()
             self.ai_settings_changed.emit()
+            self.general_settings_changed.emit()
             self.accept()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
@@ -169,6 +184,7 @@ class PreferencesDialog(QDialog):
                 self.general_tab._load_settings()
                 self.viewer_settings_tab._load_settings()
                 self.thumbnail_settings_tab._load_settings()
+                self.invoice_tab._load_settings()
                 self.ai_tab._load_settings()
                 self.advanced_tab._load_settings()
                 # Reload model library files tab from current root folder configuration

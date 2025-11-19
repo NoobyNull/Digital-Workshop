@@ -167,39 +167,46 @@ class LibraryEventHandler:
             self.logger.warning("Failed to handle model double-click: %s", e)
 
     def show_context_menu(self, position) -> None:
-        """Show context menu for models."""
+        """Show context menu for models.
+
+        Provides model-specific actions when a row is clicked and always
+        offers an option to open the unified Import wizard.
+        """
         try:
             index = self.library_widget.list_view.indexAt(position)
-            if not index.isValid():
-                return
-
-            src_index = self.library_widget.proxy_model.mapToSource(index)
-            item = self.library_widget.list_model.item(src_index.row(), 0)
-            if not item:
-                return
-
-            model_id = item.data(Qt.UserRole)
-            if not model_id:
-                return
-
-            # Get model data for file path
-            from src.core.database_manager import get_database_manager
-
-            db_manager = get_database_manager()
-            model_data = db_manager.get_model(model_id)
-
-            if not model_data:
-                return
-
             menu = QMenu(self.library_widget)
 
-            # Model operations
-            analyze_action = menu.addAction("🔍 Analyze & Fix Errors")
-            open_native_action = menu.addAction("📂 Open in Native App")
-            menu.addSeparator()
-            generate_preview_action = menu.addAction("🖼️ Generate Preview")
-            menu.addSeparator()
-            remove_action = menu.addAction("🗑️ Remove from Library")
+            model_id = None
+            model_data = None
+
+            if index.isValid():
+                src_index = self.library_widget.proxy_model.mapToSource(index)
+                item = self.library_widget.list_model.item(src_index.row(), 0)
+                if item:
+                    model_id = item.data(Qt.UserRole)
+
+            if model_id:
+                # Get model data for file path
+                from src.core.database_manager import get_database_manager
+
+                db_manager = get_database_manager()
+                model_data = db_manager.get_model(model_id)
+
+            analyze_action = open_native_action = generate_preview_action = remove_action = None
+
+            if model_id and model_data:
+                # Model operations
+                analyze_action = menu.addAction("🔍 Analyze & Fix Errors")
+                open_native_action = menu.addAction("📂 Open in Native App")
+                menu.addSeparator()
+                generate_preview_action = menu.addAction("🖼️ Generate Preview")
+                menu.addSeparator()
+                remove_action = menu.addAction("🗑️ Remove from Library")
+
+            # Import wizard entry (available even when no model row is clicked)
+            if menu.actions():
+                menu.addSeparator()
+            import_action = menu.addAction("📥 Import Models…")
 
             action = menu.exec(self.library_widget.list_view.mapToGlobal(position))
 
@@ -211,6 +218,18 @@ class LibraryEventHandler:
                 self._generate_preview(model_id)
             elif action == remove_action:
                 self.library_widget._remove_model(model_id)
+            elif action == import_action:
+                # Trigger the unified Import wizard via the main window pipeline
+                try:
+                    if hasattr(self.library_widget, "import_requested"):
+                        # No initial files; the dialog will handle file selection
+                        self.library_widget.import_requested.emit([])
+                    else:
+                        parent = self.library_widget.parent()
+                        if parent is not None and hasattr(parent, "_open_import_dialog"):
+                            parent._open_import_dialog()
+                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                    self.logger.warning("Failed to open Import dialog from context menu: %s", exc)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to show context menu: %s", e)
 

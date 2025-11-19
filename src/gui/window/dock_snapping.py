@@ -136,6 +136,8 @@ class DockDragHandler(QObject):
         try:
             et = event.type()
             if et == QEvent.MouseButtonPress:
+                if not getattr(self._mw, "layout_edit_mode", False):
+                    return False
                 # Begin potential drag tracking when user interacts with dock.
                 self._tracking = True
             elif et == QEvent.MouseMove:

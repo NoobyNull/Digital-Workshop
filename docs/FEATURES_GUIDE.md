@@ -148,10 +148,10 @@ Digital Workshop provides comprehensive tools for 3D modeling, visualization, an
 - Reference during CNC
 
 **Cost Estimator Tab**
-- Calculate project costs
-- Track material costs
-- Estimate labor time
-- Generate cost reports
+- Invoice-style layout with logo, addresses, invoice numbers
+- Import line items from project resources, G-code timing, cut lists, and tool wear
+- Save invoices as XML and PDF inside the project folder (no database storage)
+- Export professional quotes ready to email or print
 
 **How to Use**
 1. Open project

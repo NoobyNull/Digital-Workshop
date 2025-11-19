@@ -47,6 +47,7 @@ from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
 from src.core.application_config import ApplicationConfig
 from src.core.services.library_settings import LibraryMode, LibrarySettings
+from src.core.root_folder_manager import RootFolderManager
 from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
@@ -57,6 +58,7 @@ from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
 from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 from src.gui.workers.folder_scan_worker import FolderScanWorker
+from src.gui.background_tasks.import_background_monitor import ImportBackgroundMonitor
 
 # Import modular pipeline
 from src.core.import_pipeline import (
@@ -289,6 +291,7 @@ class PipelineImportWorker(QThread):
     thumbnail_progress = Signal(int, int, str)  # current, total, current_file
     model_imported = Signal(int)  # model_id - emitted after each model is imported
     import_completed = Signal(object)  # ImportResult
+    import_cancelled = Signal(object, str)  # ImportResult | None, reason
     import_failed = Signal(str)  # error_message
 
     def __init__(
@@ -320,6 +323,7 @@ class PipelineImportWorker(QThread):
         # Track pipeline results
         self.session = None
         self.pipeline_result = None
+        self._pipeline = None
 
     def run(self) -> None:
         """Execute the pipeline-based import process.
@@ -348,6 +352,9 @@ class PipelineImportWorker(QThread):
             if total_files == 0:
                 self.import_failed.emit("No valid files to import")
                 return
+
+            # Initialize progress counters so the UI knows the total upfront.
+            self.overall_progress.emit(0, total_files, 0)
 
             # Log initial cancellation state for diagnostics but do not
             # treat it as a user cancellation.
@@ -395,7 +402,7 @@ class PipelineImportWorker(QThread):
 
             if self._cancel_requested:
                 self.logger.info("Import cancelled during file preparation")
-                self.import_failed.emit("Import cancelled during file preparation")
+                self._emit_cancelled_result("Import cancelled during file preparation")
                 return
 
             if not processed_any:
@@ -407,6 +414,7 @@ class PipelineImportWorker(QThread):
             db_manager = get_database_manager()
             thumbnail_generator = ThumbnailGenerator()
             pipeline = create_pipeline(db_manager, thumbnail_generator)
+            self._pipeline = pipeline
 
             # Connect pipeline signals
             pipeline.signals.pipeline_started.connect(self._on_pipeline_started)
@@ -417,6 +425,7 @@ class PipelineImportWorker(QThread):
             pipeline.signals.task_failed.connect(self._on_task_failed)
             pipeline.signals.pipeline_completed.connect(self._on_pipeline_completed)
             pipeline.signals.pipeline_failed.connect(self._on_pipeline_failed)
+            pipeline.signals.pipeline_cancelled.connect(self._on_pipeline_cancelled)
 
             # Create import tasks from successfully processed session files
             tasks = []
@@ -447,6 +456,7 @@ class PipelineImportWorker(QThread):
             # Execute pipeline (results come via signals)
             self.stage_changed.emit("processing", "Processing files through pipeline...")
             pipeline.execute(tasks)
+            self._pipeline = None
 
         except Exception as e:  # pragma: no cover - defensive logging
             self.logger.error("Pipeline import failed: %s", e, exc_info=True)
@@ -516,7 +526,23 @@ class PipelineImportWorker(QThread):
         """
         self._cancel_requested = True
         self.cancellation_token.cancel()
+        if self._pipeline:
+            self._pipeline.cancel()
         self.logger.info("Import cancellation requested")
+
+    def _on_pipeline_cancelled(self) -> None:
+        """Handle pipeline cancellation event."""
+
+        self.logger.info("Pipeline cancelled by request")
+        self._emit_cancelled_result("Import cancelled during processing")
+
+    def _emit_cancelled_result(self, reason: str) -> None:
+        """Emit the cancellation signal with session stats if available."""
+
+        result = None
+        if self.session:
+            result = self.file_manager.complete_import_session(self.session, success=False)
+        self.import_cancelled.emit(result, reason)
 
 
 class ImportDialog(QDialog):
@@ -558,6 +584,10 @@ class ImportDialog(QDialog):
         self.folder_scan_worker: Optional[FolderScanWorker] = None
         self.folder_scan_dialog = None
 
+        self._managed_mode_confirmed = False
+        self._background_monitor = None
+        self._background_mode = False
+
         # Setup UI
         self._setup_ui()
         self._connect_signals()
@@ -582,16 +612,25 @@ class ImportDialog(QDialog):
             self.logger.warning("Failed to read library settings: %s", exc)
             return
 
-        if mode == LibraryMode.CONSOLIDATED and base_root is not None:
+        if mode == LibraryMode.CONSOLIDATED:
             # Consolidated mode: keep files organized under the configured root
+            try:
+                projects_root = base_root or settings.ensure_projects_root()
+            except OSError as exc:
+                self.logger.error("Failed to prepare Projects folder: %s", exc)
+                projects_root = base_root
+
             self.keep_organized_radio.setChecked(True)
             self.leave_in_place_radio.setChecked(False)
-            self.root_dir_path.setText(str(base_root))
+            self.root_dir_path.setText(str(projects_root) if projects_root else "Not configured")
+            self.root_dir_button.setText("Change Folder...")
+            self._managed_mode_confirmed = True
         else:
             # Leave-in-place mode (or missing root): no managed root required
             self.keep_organized_radio.setChecked(False)
             self.leave_in_place_radio.setChecked(True)
             self.root_dir_path.setText("Not selected")
+            self.root_dir_button.setText("Browse...")
 
         self._update_import_button_state()
 
@@ -653,6 +692,11 @@ class ImportDialog(QDialog):
         self.import_button.setEnabled(False)
         button_layout.addWidget(self.import_button)
 
+        self.background_button = QPushButton("Run in Background")
+        self.background_button.setEnabled(False)
+        self.background_button.setToolTip("Start an import before sending it to the background.")
+        button_layout.addWidget(self.background_button)
+
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setMinimumWidth(120)
         button_layout.addWidget(self.cancel_button)
@@ -680,6 +724,10 @@ class ImportDialog(QDialog):
         self.add_folder_button = QPushButton("Add Folder...")
         self.add_folder_button.setToolTip("Select a folder containing model files")
         button_layout.addWidget(self.add_folder_button)
+
+        self.import_from_url_button = QPushButton("Import from URL...")
+        self.import_from_url_button.setToolTip("Download and import a model from the web")
+        button_layout.addWidget(self.import_from_url_button)
 
         self.remove_button = QPushButton("Remove Selected")
         self.remove_button.setEnabled(False)
@@ -825,6 +873,7 @@ class ImportDialog(QDialog):
         """Connect widget signals."""
         self.add_files_button.clicked.connect(self._on_add_files)
         self.add_folder_button.clicked.connect(self._on_add_folder)
+        self.import_from_url_button.clicked.connect(self._on_import_from_url)
         self.remove_button.clicked.connect(self._on_remove_selected)
         self.clear_button.clicked.connect(self._on_clear_all)
 
@@ -834,6 +883,7 @@ class ImportDialog(QDialog):
         self.root_dir_button.clicked.connect(self._on_select_root_directory)
 
         self.import_button.clicked.connect(self._on_start_import)
+        self.background_button.clicked.connect(self._send_to_background)
         self.cancel_button.clicked.connect(self._on_cancel)
 
         # Update time elapsed timer
@@ -858,6 +908,17 @@ class ImportDialog(QDialog):
 
         if folder:
             self._start_folder_scan(folder)
+
+    def _on_import_from_url(self) -> None:
+        """Open the URL import dialog and close when it finishes."""
+        from src.gui.import_components.url_import_dialog import UrlImportDialog
+
+        dialog = UrlImportDialog(self)
+        if dialog.exec():
+            result = dialog.get_import_result()
+            if result and result.import_result:
+                self.import_result = result.import_result
+                self.accept()
 
     def _start_folder_scan(self, folder: str) -> None:
         """Start background scan for model files in the selected folder."""
@@ -1050,26 +1111,123 @@ class ImportDialog(QDialog):
 
     def _on_mode_changed(self, checked: bool) -> None:
         """Handle file management mode change."""
-        if checked:  # Keep organized mode selected
-            self.root_dir_label.setEnabled(True)
-            self.root_dir_path.setEnabled(True)
-            self.root_dir_button.setEnabled(True)
+        if not checked:
+            return
+
+        managed = self.keep_organized_radio.isChecked()
+        self.root_dir_label.setEnabled(managed)
+        self.root_dir_path.setEnabled(managed)
+        self.root_dir_button.setEnabled(managed)
+
+        settings = LibrarySettings()
+        if managed:
+            settings.set_mode(LibraryMode.CONSOLIDATED)
+            try:
+                projects_root = settings.ensure_projects_root()
+            except OSError as exc:
+                self.logger.error("Unable to use Projects folder: %s", exc)
+                QMessageBox.critical(
+                    self,
+                    "Projects Folder Error",
+                    f"Unable to use the managed Projects folder:\n\n{exc}",
+                )
+                self.keep_organized_radio.setChecked(False)
+                self.leave_in_place_radio.setChecked(True)
+                self.root_dir_label.setEnabled(False)
+                self.root_dir_path.setEnabled(False)
+                self.root_dir_button.setEnabled(False)
+                self.root_dir_button.setText("Browse...")
+                self.root_dir_path.setText("Not selected")
+                self._update_import_button_state()
+                return
+
+            self.root_dir_path.setText(str(projects_root))
+            self.root_dir_button.setText("Change Folder...")
+            if not self._managed_mode_confirmed:
+                if not self._confirm_managed_mode(str(projects_root)):
+                    self._managed_mode_confirmed = False
+                    self.keep_organized_radio.setChecked(False)
+                    self.leave_in_place_radio.setChecked(True)
+                    self.root_dir_button.setText("Browse...")
+                    self.root_dir_path.setText("Not selected")
+                    self.root_dir_label.setEnabled(False)
+                    self.root_dir_path.setEnabled(False)
+                    self.root_dir_button.setEnabled(False)
+                    self._update_import_button_state()
+                    return
+                self._managed_mode_confirmed = True
         else:
-            self.root_dir_label.setEnabled(False)
-            self.root_dir_path.setEnabled(False)
-            self.root_dir_button.setEnabled(False)
+            settings.set_mode(LibraryMode.LEAVE_IN_PLACE)
+            self.root_dir_button.setText("Browse...")
+            self.root_dir_path.setText("Not selected")
+            self._managed_mode_confirmed = False
+
+        manager = self.root_folder_manager or RootFolderManager.get_instance()
+        if manager is not None:
+            manager.reload_from_settings()
 
         self._update_import_button_state()
 
     def _on_select_root_directory(self) -> None:
         """Handle root directory selection."""
         folder = QFileDialog.getExistingDirectory(
-            self, "Select Root Directory for Organized Storage"
+            self,
+            "Select Projects Folder",
+            self.root_dir_path.text()
+            if self.root_dir_path.text() not in {"", "Not selected"}
+            else str(LibrarySettings().get_default_projects_root()),
         )
 
-        if folder:
-            self.root_dir_path.setText(folder)
+        if not folder:
+            return
+
+        selected = Path(folder)
+        try:
+            selected.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.critical(
+                self, "Projects Folder Error", f"Unable to use that folder:\n\n{exc}"
+            )
+            return
+
+        settings = LibrarySettings()
+        settings.set_mode(LibraryMode.CONSOLIDATED)
+        settings.set_base_root(selected)
+        self.root_dir_path.setText(str(selected))
+        self.root_dir_button.setText("Change Folder...")
+        self._managed_mode_confirmed = False
+
+        if not self._confirm_managed_mode(str(selected)):
+            self.keep_organized_radio.setChecked(False)
+            self.leave_in_place_radio.setChecked(True)
+            self.root_dir_button.setText("Browse...")
+            self.root_dir_path.setText("Not selected")
             self._update_import_button_state()
+            return
+
+        manager = self.root_folder_manager or RootFolderManager.get_instance()
+        if manager is not None:
+            manager.reload_from_settings()
+
+        self._update_import_button_state()
+
+    def _confirm_managed_mode(self, target_path: str) -> bool:
+        """Prompt user before enabling managed storage."""
+
+        message = (
+            "Digital Workshop will take ownership of organizing your imports.\n\n"
+            f"All files brought in through this import dialog will be moved into:\n"
+            f"{target_path}\n\n"
+            "Any future imports will also be copied to this location. Continue?"
+        )
+        reply = QMessageBox.question(
+            self,
+            "Enable Managed Storage?",
+            message,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        return reply == QMessageBox.Yes
 
     def _update_import_button_state(self) -> None:
         """Update import button enabled state."""
@@ -1133,9 +1291,12 @@ class ImportDialog(QDialog):
         self.root_dir_button.setEnabled(False)
         self.generate_thumbnails_check.setEnabled(False)
         self.run_analysis_check.setEnabled(False)
+        self.background_button.setEnabled(False)
 
         # Show progress section
         self.progress_section.setVisible(True)
+        self._background_mode = False
+        self._background_monitor = None
 
         # Update UI state
         self.current_stage = ImportStage.VALIDATION
@@ -1173,6 +1334,7 @@ class ImportDialog(QDialog):
         self.import_worker.thumbnail_progress.connect(self._on_thumbnail_progress)
         self.import_worker.model_imported.connect(self._on_model_imported)
         self.import_worker.import_completed.connect(self._on_import_completed)
+        self.import_worker.import_cancelled.connect(self._on_import_cancelled)
         self.import_worker.import_failed.connect(self._on_import_failed)
 
         # Allow parent window to connect to model_imported signal for real-time updates
@@ -1186,6 +1348,8 @@ class ImportDialog(QDialog):
 
         self._log_message("Import started...")
         self.status_label.setText("Importing...")
+        self.background_button.setEnabled(True)
+        self.background_button.setToolTip("Hide this window and continue the import in the background.")
 
     def _on_stage_changed(self, stage: str, message: str) -> None:
         """Handle import stage change."""
@@ -1207,6 +1371,64 @@ class ImportDialog(QDialog):
         percent = int((current / total) * 100) if total > 0 else 0
         self.thumbnail_progress_bar.setValue(percent)
         self.thumbnail_status_label.setText(f"{current}/{total}: {current_file}")
+
+    def _send_to_background(self) -> None:
+        """Detach the running import and let it continue in the background."""
+
+        if self._background_mode or not self.import_worker or not self.import_worker.isRunning():
+            return
+
+        parent = self.parent()
+        if parent is None:
+            QMessageBox.warning(
+                self,
+                "Background Import Unavailable",
+                "A parent window is required to show background status updates.",
+            )
+            return
+
+        self._background_mode = True
+        self.background_button.setEnabled(False)
+        self.cancel_button.setEnabled(False)
+        self.time_timer.stop()
+        self.status_label.setText("Import running in background…")
+        self._log_message("Sending import to background...")
+
+        # Route progress updates to the main window status bar.
+        self._background_monitor = ImportBackgroundMonitor(parent, self.import_worker)
+
+        # Disconnect dialog slots so Qt does not emit to a closed dialog.
+        self._disconnect_worker_signals()
+
+        # Close the dialog without cancelling the worker.
+        self.done(QDialog.Rejected)
+
+    def _disconnect_worker_signals(self) -> None:
+        """Disconnect worker signals from dialog slots."""
+
+        if not self.import_worker:
+            return
+
+        signal_handlers = [
+            (self.import_worker.stage_changed, self._on_stage_changed),
+            (self.import_worker.file_progress, self._on_file_progress),
+            (self.import_worker.overall_progress, self._on_overall_progress),
+            (self.import_worker.thumbnail_progress, self._on_thumbnail_progress),
+            (self.import_worker.import_completed, self._on_import_completed),
+             (self.import_worker.import_cancelled, self._on_import_cancelled),
+            (self.import_worker.import_failed, self._on_import_failed),
+        ]
+
+        for signal, handler in signal_handlers:
+            try:
+                signal.disconnect(handler)
+            except TypeError:
+                pass
+
+    def was_backgrounded(self) -> bool:
+        """Return True if the dialog handed the import off to the background."""
+
+        return self._background_mode
         self._log_message(f"✓ Thumbnail {current}/{total}: {current_file}")
 
     def _on_model_imported(self, model_id: int) -> None:
@@ -1228,6 +1450,10 @@ class ImportDialog(QDialog):
         self.current_stage = ImportStage.COMPLETED
         self.import_result = result
         self.time_timer.stop()
+        self.background_button.setEnabled(False)
+
+        if self._background_mode:
+            return
 
         # Show results
         duration = result.duration_seconds
@@ -1261,10 +1487,46 @@ class ImportDialog(QDialog):
         # Close dialog
         self.accept()
 
+    def _on_import_cancelled(self, result: Optional[ImportResult], reason: str) -> None:
+        """Handle cancellation signal from the worker."""
+
+        self.current_stage = ImportStage.CANCELLED
+        self.time_timer.stop()
+        self.background_button.setEnabled(False)
+
+        if result:
+            self.import_result = result
+
+        summary = ""
+        if result:
+            summary = (
+                f"\nProcessed: {result.processed_files}\n"
+                f"Failed: {result.failed_files}\n"
+                f"Skipped: {result.skipped_files}"
+            )
+
+        self._log_message(f"Import cancelled: {reason}{summary}")
+        self.stage_label.setText("Cancelled")
+        self.status_label.setText("Import cancelled")
+
+        if self._background_mode:
+            return
+
+        QMessageBox.information(
+            self,
+            "Import Cancelled",
+            f"The import was cancelled:\n\n{reason}{summary}",
+        )
+        self._reset_controls()
+
     def _on_import_failed(self, error_message: str) -> None:
         """Handle import failure."""
         self.current_stage = ImportStage.FAILED
         self.time_timer.stop()
+        self.background_button.setEnabled(False)
+
+        if self._background_mode:
+            return
 
         self._log_message(f"\n❌ Import failed: {error_message}")
         self.stage_label.setText("Failed")
@@ -1292,13 +1554,6 @@ class ImportDialog(QDialog):
                 self.status_label.setText("Cancelling...")
                 self.import_worker.cancel()
                 self.import_worker.wait()
-
-                self.current_stage = ImportStage.CANCELLED
-                self.time_timer.stop()
-                self._log_message("Import cancelled by user")
-                self.stage_label.setText("Cancelled")
-
-                self._reset_controls()
         else:
             # Just close the dialog
             self.reject()
@@ -1318,6 +1573,8 @@ class ImportDialog(QDialog):
         self.root_dir_button.setEnabled(True)
         self.generate_thumbnails_check.setEnabled(True)
         self.run_analysis_check.setEnabled(True)
+        self.background_button.setEnabled(False)
+        self._background_mode = False
         self._update_import_button_state()
 
     def _update_time_elapsed(self) -> None:

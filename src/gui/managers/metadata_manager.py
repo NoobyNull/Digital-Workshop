@@ -62,7 +62,7 @@ class MetadataManager:
             # Find the Model Previewer tab index
             model_previewer_index = -1
             for i in range(self.main_window.hero_tabs.count()):
-                if self.main_window.hero_tabs.tabText(i) == "3D Viewer":
+                if self.main_window.hero_tabs.tabText(i) in ("Model Previewer", "3D Viewer"):
                     model_previewer_index = i
                     break
 

@@ -85,17 +85,18 @@ class AIDescriptionService(QObject):
                     "openrouter": "gpt-4-vision-preview",
                     "gemini": "gemini-2.5-flash",
                     "anthropic": "claude-3-5-sonnet-20241022",
-                    "ollama": "llava",
+                    # Ollama uses the local CLI; default to a small vision model.
+                    "ollama": "moondream",
                     "ai_studio": "gemini-1.5-pro-vision-001",
                 }
 
-                # Default endpoints for providers that support custom base URLs
+                # Default endpoints for providers that support custom base URLs.
+                # Ollama is CLI-only in this application and does not use a base URL.
                 default_base_urls = {
                     "openai": "https://api.openai.com/v1",
                     "openrouter": "https://openrouter.io/api/v1",
                     "gemini": "https://generativelanguage.googleapis.com/v1",
                     "anthropic": "https://api.anthropic.com",
-                    "ollama": "http://localhost:11434/v1",
                     "ai_studio": "http://localhost:1234/v1",
                 }
 
@@ -216,8 +217,10 @@ class AIDescriptionService(QObject):
                 },
                 "ollama": {
                     "api_key": "",
-                    "model": "llava",
-                    "base_url": "http://localhost:11434/v1",
+                    # Default to a small, vision-capable local model.
+                    "model": "moondream",
+                    # Ollama is CLI-only for this application and does not use a base URL.
+                    "base_url": "",
                     "enabled": True,
                 },
                 "ai_studio": {
@@ -348,7 +351,7 @@ Return ONLY valid JSON, no additional text.""",
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
-        # Initialize Ollama provider (local, optional API key)
+        # Initialize Ollama provider (local CLI, optional API key)
         ollama_config = providers_config.get("ollama", {})
         if ollama_config.get("enabled", False):
             try:
@@ -356,8 +359,7 @@ Return ONLY valid JSON, no additional text.""",
 
                 self.providers["ollama"] = OllamaProvider(
                     api_key=ollama_config.get("api_key") or None,
-                    model=ollama_config.get("model", "llava"),
-                    base_url=ollama_config.get("base_url") or "http://localhost:11434/v1",
+                    model=ollama_config.get("model", "moondream"),
                 )
                 self.logger.info("Ollama provider initialized")
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -439,7 +441,12 @@ Return ONLY valid JSON, no additional text.""",
             "xai": {"grok-vision-beta": "Grok Vision Beta"},
             "zai": {"zai-vision-1": "ZAI Vision 1"},
             "perplexity": {"llava-7b": "LLaVA 7B", "llava-13b": "LLaVA 13B"},
-            "ollama": {"llava": "LLaVA (Local)", "bakllava": "BakLLaVA (Local)"},
+            # Known small vision models available via Ollama's CLI runtime.
+            "ollama": {
+                "moondream": "Moondream (Local, small vision model)",
+                "bakllava": "BakLLaVA (Local)",
+                "llava": "LLaVA (Local)",
+            },
             "ai_studio": {"gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"},
             "openrouter": {
                 "openai/gpt-4o": "GPT-4o (via OpenRouter)",
@@ -458,8 +465,9 @@ Return ONLY valid JSON, no additional text.""",
         """Test provider connection with given credentials.
 
         For OpenAI-compatible providers, the ``base_url`` parameter allows
-        testing against custom endpoints such as local Ollama or LM Studio
-        instances.
+        testing against custom endpoints such as local LM Studio instances.
+        Ollama does not use HTTP in this application and is exercised via
+        its local CLI instead.
         """
         try:
             from .providers import get_provider_class
@@ -532,9 +540,11 @@ Return ONLY valid JSON, no additional text.""",
     ) -> bool:
         """Configure an AI provider.
 
-        For local OpenAI-compatible providers (Ollama, AI Studio / LM Studio),
-        the API key is optional and a default local endpoint is used when no
-        base URL is provided.
+        For OpenAI-compatible providers (OpenAI, OpenRouter, AI Studio / LM Studio),
+        the API key and base URL control the HTTP endpoint.
+
+        Ollama is integrated via the local CLI only; ``base_url`` is ignored for
+        that provider and exists purely for configuration compatibility.
         """
         try:
             if provider_name == "openai":
@@ -554,16 +564,15 @@ Return ONLY valid JSON, no additional text.""",
                 default_model = "gpt-4-vision-preview"
                 default_base_url = base_url or "https://openrouter.io/api/v1"
             elif provider_name == "ollama":
-                # Local Ollama provider: API key is optional, local endpoint by default
+                # Local Ollama provider: uses the CLI only, base_url is ignored
                 from .providers.ollama_provider import OllamaProvider
 
                 provider = OllamaProvider(
                     api_key=api_key or None,
-                    model=model or "llava",
-                    base_url=base_url or "http://localhost:11434/v1",
+                    model=model or "moondream",
                 )
-                default_model = "llava"
-                default_base_url = base_url or "http://localhost:11434/v1"
+                default_model = "moondream"
+                default_base_url = ""
             elif provider_name == "ai_studio":
                 # Local AI Studio / LM Studio provider: API key is optional
                 from .providers.ai_studio_provider import AIStudioProvider
@@ -635,15 +644,23 @@ Return ONLY valid JSON, no additional text.""",
         """
         # Select provider
         provider = None
+        effective_provider_name = provider_name
         if provider_name and provider_name in self.providers:
             provider = self.providers[provider_name]
         elif self.current_provider:
             provider = self.current_provider
+            # Try to recover the provider key for logging/metadata.
+            for name, instance in self.providers.items():
+                if instance is provider:
+                    effective_provider_name = name
+                    break
         else:
             raise ValueError("No AI provider configured")
 
         if not provider.is_configured():
-            raise ValueError(f"Provider {provider_name or 'current'} is not configured")
+            raise ValueError(
+                f"Provider {effective_provider_name or 'current'} is not configured"
+            )
 
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -658,6 +675,18 @@ Return ONLY valid JSON, no additional text.""",
                 # Check for custom prompts in config
                 custom_prompts = self.config.get("custom_prompts", {})
                 analysis_prompt = custom_prompts.get("default", provider.get_default_prompt())
+
+            provider_label = effective_provider_name or "current"
+            self.logger.info(
+                "AI analysis requested: provider=%s, image=%s",
+                provider_label,
+                image_path,
+            )
+            self.logger.debug(
+                "AI analysis prompt (%s): %s",
+                provider_label,
+                analysis_prompt,
+            )
 
             self.progress_updated.emit(30)
 
@@ -674,7 +703,7 @@ Return ONLY valid JSON, no additional text.""",
             self.progress_updated.emit(90)
 
             # Add metadata
-            result["provider_used"] = provider_name or "current"
+            result["provider_used"] = effective_provider_name or "current"
             result["image_path"] = image_path
 
             # Get timestamp safely (QApplication might not exist in tests)
@@ -690,6 +719,13 @@ Return ONLY valid JSON, no additional text.""",
                 from datetime import datetime
 
                 result["timestamp"] = datetime.now().isoformat()
+
+            provider_label = effective_provider_name or "current"
+            self.logger.debug(
+                "AI analysis result from %s: %s",
+                provider_label,
+                result,
+            )
 
             self.progress_updated.emit(100)
             self.analysis_completed.emit(result)

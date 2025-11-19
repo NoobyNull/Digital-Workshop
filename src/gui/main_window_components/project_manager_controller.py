@@ -83,6 +83,12 @@ class ProjectManagerController:
             # Add to main window using native Qt dock system
             mw.addDockWidget(Qt.LeftDockWidgetArea, mw.project_manager_dock)
 
+            try:
+                if hasattr(mw, "_register_dock_for_snapping"):
+                    mw._register_dock_for_snapping(mw.project_manager_dock)  # noqa: SLF001
+            except Exception:
+                logger.debug("Failed to register Project Manager dock for snapping")
+
             # Tabify with model library dock using native Qt. This ensures they
             # start tabbed together, preventing the "jump" effect.
             try:

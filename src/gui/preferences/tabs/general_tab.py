@@ -36,10 +36,16 @@ from PySide6.QtWidgets import (
 class GeneralTab(QWidget):
     """General settings tab: window, layout, and performance settings combined."""
 
-    def __init__(self, on_reset_layout: Callable | None = None, parent=None) -> None:
+    def __init__(
+        self,
+        on_reset_layout: Callable | None = None,
+        on_save_layout_default: Callable | None = None,
+        parent=None,
+    ) -> None:
         """TODO: Add docstring."""
         super().__init__(parent)
         self.on_reset_layout = on_reset_layout
+        self.on_save_layout_default = on_save_layout_default
         self.theme_service = None
         self.logger = None
         try:
@@ -152,10 +158,41 @@ class GeneralTab(QWidget):
         window_layout.addWidget(self.maximize_startup_check)
         window_layout.addWidget(self.remember_size_check)
 
+        workspace_section = QFrame()
+        workspace_layout = QVBoxLayout(workspace_section)
+
+        workspace_label = QLabel("<b>Workspace Behavior</b>")
+        workspace_label.setStyleSheet("font-size: 11pt;")
+        workspace_layout.addWidget(workspace_label)
+
+        workspace_desc = QLabel(
+            "Control how the project sidebars behave and which page appears when the app starts."
+        )
+        workspace_desc.setWordWrap(True)
+        workspace_layout.addWidget(workspace_desc)
+
+        self.sidebar_sync_check = QCheckBox("Transition sidebars with center tabs")
+        workspace_layout.addWidget(self.sidebar_sync_check)
+
+        startup_form = QFormLayout()
+        self.startup_page_combo = QComboBox()
+        self.startup_page_combo.addItem("Restore last view", "restore_last")
+        self.startup_page_combo.addItem("Model Previewer", "model")
+        self.startup_page_combo.addItem("G-code Previewer", "gcode")
+        self.startup_page_combo.addItem("Cut List Optimizer", "cutlist")
+        self.startup_page_combo.addItem("Feed and Speed", "feeds")
+        self.startup_page_combo.addItem("Project Cost Estimator", "cost")
+        startup_form.addRow("Startup page:", self.startup_page_combo)
+        workspace_layout.addLayout(startup_form)
+
+        layout.addWidget(workspace_section)
+
         # Layout reset
         reset_row = QHBoxLayout()
-        reset_row.addWidget(QLabel("Reset the window and dock layout to default positions."))
+        reset_row.addWidget(QLabel("Manage window and dock layout defaults."))
         reset_row.addStretch(1)
+        self.btn_save_default_layout = QPushButton("Use Current Layout as Default")
+        reset_row.addWidget(self.btn_save_default_layout)
         self.btn_reset_layout = QPushButton("Reset Layout")
         reset_row.addWidget(self.btn_reset_layout)
         window_layout.addLayout(reset_row)
@@ -251,6 +288,7 @@ class GeneralTab(QWidget):
 
         # Connect signals
         self.btn_reset_layout.clicked.connect(self._handle_reset)
+        self.btn_save_default_layout.clicked.connect(self._handle_save_layout_default)
         self.auto_radio.toggled.connect(self._on_mode_changed)
         self.manual_radio.toggled.connect(self._on_mode_changed)
         self.memory_slider.valueChanged.connect(self._on_slider_changed)
@@ -281,6 +319,14 @@ class GeneralTab(QWidget):
             self.min_height_spin.setValue(config.minimum_window_height)
             self.maximize_startup_check.setChecked(config.maximize_on_startup)
             self.remember_size_check.setChecked(config.remember_window_size)
+            sidebar_sync = settings.value("ui/sidebar_sync_enabled", True, type=bool)
+            self.sidebar_sync_check.setChecked(bool(sidebar_sync))
+            startup_mode = settings.value("ui/startup_tab_mode", "restore_last", type=str) or "restore_last"
+            startup_index = self.startup_page_combo.findData(startup_mode)
+            if startup_index >= 0:
+                self.startup_page_combo.setCurrentIndex(startup_index)
+            else:
+                self.startup_page_combo.setCurrentIndex(0)
 
             # Dock tab positions
             left_pos = settings.value("dock_tabs/left_position", "bottom", type=str)
@@ -333,6 +379,9 @@ class GeneralTab(QWidget):
             config.minimum_window_height = self.min_height_spin.value()
             config.maximize_on_startup = self.maximize_startup_check.isChecked()
             config.remember_window_size = self.remember_size_check.isChecked()
+            settings.setValue("ui/sidebar_sync_enabled", self.sidebar_sync_check.isChecked())
+            startup_data = self.startup_page_combo.currentData() or "restore_last"
+            settings.setValue("ui/startup_tab_mode", startup_data)
 
             # Save dock tab positions
             left_pos = self.left_tab_position_combo.currentData()
@@ -359,6 +408,23 @@ class GeneralTab(QWidget):
                 QMessageBox.information(self, "Layout Reset", "Window layout has been reset to defaults.")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
+
+    def _handle_save_layout_default(self) -> None:
+        """Save current layout as the default layout."""
+        try:
+            if callable(self.on_save_layout_default):
+                self.on_save_layout_default()
+                QMessageBox.information(
+                    self,
+                    "Default Layout Updated",
+                    "Current window and dock layout will be used as the reset default.",
+                )
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            QMessageBox.warning(
+                self,
+                "Save Failed",
+                f"Failed to save current layout as default:\n{e}",
+            )
 
     def _on_mode_changed(self) -> None:
         """Handle memory mode change."""

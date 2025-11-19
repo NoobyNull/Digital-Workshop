@@ -6,7 +6,7 @@ status bar, and dockable widgets for 3D model management.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from PySide6.QtCore import (
     Qt,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QTabWidget,
     QSizePolicy,
+    QMenu,
 )
 
 from src.core.logging_config import get_logger, get_activity_logger
@@ -37,7 +38,7 @@ from src.parsers.threemf_parser import ThreeMFParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.format_detector import FormatDetector
 from src.gui.preferences import PreferencesDialog
-from src.gui.window.dock_snapping import DockDragHandler
+from src.gui.window.dock_snapping import DockDragHandler, SnapOverlayLayer
 from src.gui.project_details_widget import ProjectDetailsWidget
 from src.gui.theme import MIN_WIDGET_SIZE
 from src.gui.main_window_components.project_manager_controller import ProjectManagerController
@@ -73,6 +74,12 @@ class MainWindow(QMainWindow):
         self.logger = get_logger(__name__)
         self.activity_logger = get_activity_logger(__name__)
         self.logger.info("Initializing main window")
+
+        # UI preference defaults (overridden via QSettings)
+        self.sidebar_sync_enabled: bool = True
+        self.startup_tab_mode: str = "restore_last"
+        self.layout_edit_mode: bool = False
+        self._dock_context_handlers: Dict[str, bool] = {}
 
         # Initialize AI Description Service
         try:
@@ -298,6 +305,8 @@ class MainWindow(QMainWindow):
             tab_bar.setExpanding(True)
             tab_bar.setUsesScrollButtons(False)
 
+        self._load_ui_preferences()
+
         # Set up 3D viewer as the primary tab via controller
         self.model_viewer_controller.setup_viewer_widget()
 
@@ -307,10 +316,16 @@ class MainWindow(QMainWindow):
         # Set as central widget - Qt will handle all layout automatically
         self.setCentralWidget(self.hero_tabs)
 
+        # Keep sidebars in sync with hero tab changes
+        self.hero_tabs.currentChanged.connect(self._on_hero_tab_changed)
+
         # Qt handles tab persistence automatically through QSettings
 
-        # Restore last active tab
+        # Restore last active tab / honor startup preference
         self._restore_active_tab()
+
+        # Ensure sidebars reflect the active tab after startup
+        self._sync_sidebars_with_active_tab()
 
         self.logger.info("Native central widget setup completed - Qt handling layout")
 
@@ -600,14 +615,120 @@ class MainWindow(QMainWindow):
             )
 
     def _restore_active_tab(self) -> None:
-        """Restore the last active tab using native Qt settings."""
+        """Restore the hero tab based on startup preference."""
         try:
             settings = QSettings()
-            active_tab = settings.value("ui/active_hero_tab_index", 0, type=int)
-            if isinstance(active_tab, int) and 0 <= active_tab < self.hero_tabs.count():
-                self.hero_tabs.setCurrentIndex(active_tab)
+            startup_mode = getattr(self, "startup_tab_mode", "restore_last")
+            if startup_mode == "restore_last":
+                active_tab = settings.value("ui/active_hero_tab_index", 0, type=int)
+                if isinstance(active_tab, int) and 0 <= active_tab < self.hero_tabs.count():
+                    self.hero_tabs.setCurrentIndex(active_tab)
+            else:
+                if not self._activate_startup_tab(startup_mode):
+                    fallback = settings.value("ui/active_hero_tab_index", 0, type=int)
+                    if isinstance(fallback, int) and 0 <= fallback < self.hero_tabs.count():
+                        self.hero_tabs.setCurrentIndex(fallback)
         except Exception as e:
-            self.logger.debug("Failed to restore active tab: %s", e)
+            self.logger.debug("Failed to restore startup tab: %s", e)
+
+    def _load_ui_preferences(self) -> None:
+        """Load sidebar sync and startup tab preferences from QSettings."""
+        try:
+            settings = QSettings()
+            self.sidebar_sync_enabled = settings.value(
+                "ui/sidebar_sync_enabled", True, type=bool
+            )
+            mode = settings.value("ui/startup_tab_mode", "restore_last", type=str)
+            self.startup_tab_mode = mode or "restore_last"
+        except Exception as e:
+            self.logger.debug("Failed to load UI preferences: %s", e)
+            self.sidebar_sync_enabled = True
+            self.startup_tab_mode = "restore_last"
+
+    def _on_hero_tab_changed(self, index: int) -> None:
+        """Handle hero tab changes."""
+        try:
+            # Persist the new index for restore-last mode
+            settings = QSettings()
+            settings.setValue("ui/active_hero_tab_index", index)
+        except Exception:
+            pass
+
+        self._sync_sidebars_with_active_tab()
+
+    def _sync_sidebars_with_active_tab(self) -> None:
+        """Ensure companion docks are visible when their hero tab is active."""
+        try:
+            if not getattr(self, "sidebar_sync_enabled", True):
+                return
+
+            if not hasattr(self, "hero_tabs"):
+                return
+
+            index = self.hero_tabs.currentIndex()
+            if index < 0:
+                return
+
+            tab_text = self.hero_tabs.tabText(index)
+            routes = self._get_sidebar_routes()
+            dock_attrs = routes.get(tab_text, [])
+
+            for attr in dock_attrs:
+                dock = getattr(self, attr, None)
+                if dock is None:
+                    continue
+                if not dock.isVisible():
+                    dock.show()
+                try:
+                    dock.raise_()
+                except Exception:
+                    pass
+        except Exception as e:
+            self.logger.debug("Failed to sync sidebars: %s", e)
+
+    def _get_sidebar_routes(self) -> Dict[str, List[str]]:
+        """Mapping of hero tabs to companion docks."""
+        return {
+            "Model Previewer": ["properties_dock", "metadata_dock"],
+            "G Code Previewer": ["gcode_tools_dock"],
+            "Cut List Optimizer": ["properties_dock"],
+            "Feed and Speed": [],
+            "Project Cost Estimator": ["properties_dock", "metadata_dock"],
+        }
+
+    def _activate_startup_tab(self, mode: str) -> bool:
+        """Activate the startup tab defined by mode."""
+        title = self._startup_tab_title_for_mode(mode)
+        if not title:
+            return False
+        tab_index = self._get_tab_index_by_title(title)
+        if tab_index is None:
+            return False
+        self.hero_tabs.setCurrentIndex(tab_index)
+        return True
+
+    def _startup_tab_title_for_mode(self, mode: str) -> Optional[str]:
+        """Map startup mode to hero tab title."""
+        mapping = {
+            "model": "Model Previewer",
+            "gcode": "G Code Previewer",
+            "cutlist": "Cut List Optimizer",
+            "feeds": "Feed and Speed",
+            "cost": "Project Cost Estimator",
+        }
+        if mode == "restore_last":
+            return None
+        return mapping.get(mode)
+
+    def _get_tab_index_by_title(self, title: str) -> Optional[int]:
+        """Return the hero tab index matching the given title."""
+        if not hasattr(self, "hero_tabs"):
+            return None
+
+        for i in range(self.hero_tabs.count()):
+            if self.hero_tabs.tabText(i) == title:
+                return i
+        return None
 
     # Manual layout management methods removed - Qt handles layout automatically
 
@@ -659,15 +780,14 @@ class MainWindow(QMainWindow):
             # Use native Qt dock features for layout edit mode
             for dock in self.findChildren(QDockWidget):
                 if self.layout_edit_mode:
-                    # Enable full dock features for editing
                     dock.setFeatures(
-                        QDockWidget.DockWidgetMovable
-                        | QDockWidget.DockWidgetFloatable
-                        | QDockWidget.DockWidgetClosable
+                        QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable
                     )
                 else:
-                    # Layout locked - only allow closing, no moving or floating
                     dock.setFeatures(QDockWidget.DockWidgetClosable)
+                if dock.isFloating():
+                    edge = dock.property("_last_dock_edge") or "right"
+                    self._snap_dock_to_edge(dock, edge)
 
             # Persist state for next launch
             settings = QSettings()
@@ -885,55 +1005,66 @@ class MainWindow(QMainWindow):
                     self.logger.debug("Cleared QSettings key: %s", key)
 
             # Restore default window size: 50% width, 100% height (snapped to middle wide, full height)
-            try:
-                from src.core.application_config import ApplicationConfig
+            applied_defaults = False
+            default_geometry = settings.value("ui/default_window_geometry")
+            default_state = settings.value("ui/default_window_state")
 
-                default_width, default_height = ApplicationConfig.calculate_default_window_size()
-                self.resize(default_width, default_height)
-                self.logger.info(f"Reset window size to default: {default_width}x{default_height}")
-            except Exception as e:
-                self.logger.warning("Failed to calculate default window size: %s", e)
-                self.resize(1200, 800)
+            if default_geometry:
+                if self.restoreGeometry(default_geometry):
+                    applied_defaults = True
+                    self.logger.info("Restored default window geometry from saved template")
 
-            # Restore default dock positions
-            # Model library to left
-            if hasattr(self, "model_library_dock") and self.model_library_dock:
-                self.removeDockWidget(self.model_library_dock)
-                self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+            if default_state and self.restoreState(default_state):
+                applied_defaults = True
+                self.logger.info("Restored default dock layout from saved template")
 
-            # Properties and metadata to right, tabified
-            if hasattr(self, "properties_dock") and self.properties_dock:
-                self.removeDockWidget(self.properties_dock)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                self.removeDockWidget(self.metadata_dock)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-                # Tabify with properties dock
+            if not applied_defaults:
                 try:
-                    self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
-                except Exception as e:
-                    self.logger.debug("Could not tabify docks: %s", e)
+                    from src.core.application_config import ApplicationConfig
 
-            # G-code tools dock to right, tabified with metadata if available
-            if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
-                self.removeDockWidget(self.gcode_tools_dock)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
-                try:
-                    if hasattr(self, "metadata_dock") and self.metadata_dock:
-                        self.tabifyDockWidget(self.metadata_dock, self.gcode_tools_dock)
+                    default_width, default_height = ApplicationConfig.calculate_default_window_size()
+                    self.resize(default_width, default_height)
+                    self.logger.info(f"Reset window size to default: {default_width}x{default_height}")
                 except Exception as e:
-                    self.logger.debug("Could not tabify G-code tools dock: %s", e)
+                    self.logger.warning("Failed to calculate default window size: %s", e)
+                    self.resize(1200, 800)
 
-            # Make sure all docks are visible
-            if hasattr(self, "model_library_dock") and self.model_library_dock:
-                self.model_library_dock.setVisible(True)
-            if hasattr(self, "properties_dock") and self.properties_dock:
-                self.properties_dock.setVisible(True)
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                self.metadata_dock.setVisible(True)
-            if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
-                self.gcode_tools_dock.setVisible(True)
+            if not applied_defaults:
+                # Restore default dock positions manually
+                if hasattr(self, "model_library_dock") and self.model_library_dock:
+                    self.removeDockWidget(self.model_library_dock)
+                    self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
+
+                if hasattr(self, "properties_dock") and self.properties_dock:
+                    self.removeDockWidget(self.properties_dock)
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
+
+                if hasattr(self, "metadata_dock") and self.metadata_dock:
+                    self.removeDockWidget(self.metadata_dock)
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
+                    try:
+                        self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
+                    except Exception as e:
+                        self.logger.debug("Could not tabify docks: %s", e)
+
+                if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
+                    self.removeDockWidget(self.gcode_tools_dock)
+                    self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
+                    try:
+                        if hasattr(self, "metadata_dock") and self.metadata_dock:
+                            self.tabifyDockWidget(self.metadata_dock, self.gcode_tools_dock)
+                    except Exception as e:
+                        self.logger.debug("Could not tabify G-code tools dock: %s", e)
+
+                for dock_attr in (
+                    "model_library_dock",
+                    "properties_dock",
+                    "metadata_dock",
+                    "gcode_tools_dock",
+                ):
+                    dock = getattr(self, dock_attr, None)
+                    if dock:
+                        dock.setVisible(True)
 
             # Save the new layout state
             self._save_window_settings()
@@ -944,6 +1075,25 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to reset dock layout: %s", e)
             self.statusBar().showMessage("Failed to reset layout", 3000)
+
+    def _save_current_layout_as_default(self) -> None:
+        """Persist the current window/dock layout as the default template."""
+        try:
+            geometry = self.saveGeometry()
+            state = self.saveState()
+            settings = QSettings()
+            settings.setValue("ui/default_window_geometry", geometry)
+            settings.setValue("ui/default_window_state", state)
+            settings.setValue("ui/default_window_width", self.width())
+            settings.setValue("ui/default_window_height", self.height())
+            settings.setValue("ui/default_window_x", self.x())
+            settings.setValue("ui/default_window_y", self.y())
+            settings.sync()
+            self.logger.info("Saved current layout as default reset template")
+            self.statusBar().showMessage("Current layout saved as default", 3000)
+        except Exception as exc:
+            self.logger.warning("Failed to save current layout as default: %s", exc)
+            self.statusBar().showMessage("Failed to save layout", 3000)
 
     def _restore_window_geometry_early(self) -> None:
         """Restore saved window geometry and state during initialization phase.
@@ -1594,7 +1744,15 @@ class MainWindow(QMainWindow):
                         exc_info=True,
                     )
 
-            if dialog.exec():
+            result = dialog.exec()
+            if dialog.was_backgrounded():
+                message = "Import running in background…"
+                self.status_label.setText(message)
+                if hasattr(self, "statusBar"):
+                    self.statusBar().showMessage(message, 5000)
+                return
+
+            if result:
                 # Import completed successfully
                 import_result = dialog.get_import_result()
                 if import_result:
@@ -2059,13 +2217,20 @@ class MainWindow(QMainWindow):
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
         self.logger.info("Opening preferences dialog")
-        dlg = PreferencesDialog(self, on_reset_layout=self._reset_dock_layout_and_save)
+        dlg = PreferencesDialog(
+            self,
+            on_reset_layout=self._reset_dock_layout_and_save,
+            on_save_layout_default=self._save_current_layout_as_default,
+        )
         # Connect theme change signal to update main window stylesheet
         dlg.theme_changed.connect(self._on_theme_changed)
         # Connect viewer settings change signal to update VTK scene
         dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
         # Connect AI settings change signal to reload AI service
         dlg.ai_settings_changed.connect(self._on_ai_settings_changed)
+        # React to general/workspace settings changes (sidebar sync, startup tab, etc.)
+        if hasattr(dlg, "general_settings_changed"):
+            dlg.general_settings_changed.connect(self._on_workspace_settings_changed)
         dlg.exec_()
 
     def _on_theme_changed(self) -> None:
@@ -2518,25 +2683,20 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.warning("Failed to toggle maximize: %s", e)
 
+    def _on_workspace_settings_changed(self) -> None:
+        """Handle updates to workspace/general settings from preferences."""
+        self._load_ui_preferences()
+        self._sync_sidebars_with_active_tab()
+
     def _on_tab_switch_requested(self, tab_name: str) -> None:
         """Handle tab switch request from project manager."""
         try:
-            # Map tab names to indices - must match actual tab names added in _add_placeholder_tabs
-            tab_map = {
-                "Model Previewer": 0,
-                "G Code Previewer": 1,
-                "Cut List Optimizer": 2,
-                "Feed and Speed": 3,  # Note: actual tab name is "Feed and Speed" not "Feeds & Speeds"
-                "Project Cost Estimator": 4,
-            }
-
-            tab_index = tab_map.get(tab_name)
-            if tab_index is not None and hasattr(self, "hero_tabs"):
+            tab_index = self._get_tab_index_by_title(tab_name)
+            if tab_index is not None:
                 self.hero_tabs.setCurrentIndex(tab_index)
                 self.logger.info("Switched to tab: %s", tab_name)
             else:
-                self.logger.warning("Unknown tab name: %s", tab_name)
-
+                self.logger.warning("Unknown tab name requested: %s", tab_name)
         except Exception as e:
             self.logger.error("Failed to switch tab: %s", e)
 
@@ -2569,6 +2729,7 @@ class MainWindow(QMainWindow):
             dock.setFloating(False)
             self.addDockWidget(target_area, dock)
             dock.raise_()
+            dock.setProperty("_last_dock_edge", edge)
 
             self.logger.info(f"Snapped dock '{dock.windowTitle()}' to {edge} area")
 
@@ -2579,35 +2740,105 @@ class MainWindow(QMainWindow):
             self.logger.warning("Failed to snap dock to %s: {e}", edge)
 
     def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
-        """Register a dock widget for snapping functionality.
-
-        This sets up the visual feedback and snapping behavior when dragging
-        floating dock widgets near the main window edges.
-
-        Args:
-            dock: The dock widget to register for snapping
-        """
+        """Register a dock widget for snapping + context controls."""
         try:
-            # Initialize snap system if not already done
-            if not hasattr(self, "_snap_layer"):
-                self._snap_layer, self._snap_handlers = setup_dock_snapping(self, self.logger)
-                self.logger.debug("Initialized dock snapping system")
+            dock.setAllowedAreas(
+                Qt.LeftDockWidgetArea
+                | Qt.RightDockWidgetArea
+                | Qt.TopDockWidgetArea
+                | Qt.BottomDockWidgetArea
+            )
+            dock.setObjectName(dock.objectName() or dock.windowTitle().replace(" ", ""))
+            dock.setContextMenuPolicy(Qt.CustomContextMenu)
 
-            # Create and register the drag handler for this dock
+            def _show_menu(point):
+                self._show_dock_context_menu(dock, point)
+
+            dock.customContextMenuRequested.connect(_show_menu)
+            dock.topLevelChanged.connect(
+                lambda floating, d=dock: self._on_dock_top_level_changed(d, floating)
+            )
+            self._on_dock_top_level_changed(dock, dock.isFloating())
+            # initialize overlay/handlers once
+            if not hasattr(self, "_snap_layer") or self._snap_layer is None:
+                self._snap_layer = SnapOverlayLayer(self)
+                self._snap_handlers = {}
+
             handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
-
-            # Store handler reference
             if not hasattr(self, "_snap_handlers"):
                 self._snap_handlers = {}
-            self._snap_handlers[dock.objectName() or id(dock)] = handler
-
-            # Install the event filter on the dock widget
+            self._snap_handlers[dock.objectName()] = handler
             dock.installEventFilter(handler)
 
-            self.logger.debug(f"Registered dock '{dock.windowTitle()}' for snapping")
+            self.logger.debug("Registered dock '%s' for snapping/context menus", dock.windowTitle())
+        except Exception as exc:
+            self.logger.warning("Failed to prepare dock context menu: %s", exc)
 
-        except Exception as e:
-            self.logger.warning("Failed to register dock for snapping: %s", e)
+    def _edge_from_area(self, area: Qt.DockWidgetArea) -> Optional[str]:
+        mapping = {
+            Qt.LeftDockWidgetArea: "left",
+            Qt.RightDockWidgetArea: "right",
+            Qt.TopDockWidgetArea: "top",
+            Qt.BottomDockWidgetArea: "bottom",
+        }
+        return mapping.get(area)
+
+    def _on_dock_top_level_changed(self, dock: QDockWidget, floating: bool) -> None:
+        if floating:
+            return
+        area = self.dockWidgetArea(dock)
+        edge = self._edge_from_area(area)
+        if edge:
+            dock.setProperty("_last_dock_edge", edge)
+
+    def _show_dock_context_menu(self, dock: QDockWidget, point) -> None:
+        menu = QMenu(dock)
+        edit_enabled = self.layout_edit_mode
+
+        def add_snap_action(text: str, edge: str) -> None:
+            action = menu.addAction(text, lambda e=edge: self._snap_dock_to_edge(dock, e))
+            action.setEnabled(edit_enabled)
+
+        add_snap_action("Dock Left", "left")
+        add_snap_action("Dock Right", "right")
+        add_snap_action("Dock Top", "top")
+        add_snap_action("Dock Bottom", "bottom")
+
+        menu.addSeparator()
+        last_edge = dock.property("_last_dock_edge") or "right"
+        re_dock_action = menu.addAction(
+            "Re-dock to Previous Edge", lambda: self._snap_dock_to_edge(dock, last_edge)
+        )
+        re_dock_action.setEnabled(edit_enabled)
+
+        tab_menu = menu.addMenu("Stack With...")
+        others = [d for d in self.findChildren(QDockWidget) if d is not dock]
+        if not others:
+            tab_menu.setEnabled(False)
+        else:
+            for other in others:
+                action = tab_menu.addAction(
+                    other.windowTitle(),
+                    lambda o=other: self._tabify_docks(o, dock),
+                )
+                action.setEnabled(edit_enabled)
+
+        menu.addSeparator()
+        reset_action = menu.addAction(
+            "Reset All Docks to Default Layout", self._reset_dock_layout_and_save
+        )
+        reset_action.setEnabled(True)
+
+        menu.exec(dock.mapToGlobal(point))
+
+    def _tabify_docks(self, base: QDockWidget, target: QDockWidget) -> None:
+        try:
+            if target.isFloating():
+                target.setFloating(False)
+            self.tabifyDockWidget(base, target)
+            target.raise_()
+        except Exception as exc:
+            self.logger.warning("Failed to tabify docks: %s", exc)
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 
