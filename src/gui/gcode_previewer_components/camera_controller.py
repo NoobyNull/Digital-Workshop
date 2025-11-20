@@ -121,25 +121,59 @@ class CameraController:
 
     def _pan_camera(self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]) -> None:
         """Pan camera in the view plane."""
-        # Get camera parameters
-        focal_point = self.camera.GetFocalPoint()
-        position = self.camera.GetPosition()
+        try:
+            focal_point = self.camera.GetFocalPoint()
+            position = self.camera.GetPosition()
 
-        # Calculate pan vectors
-        view_vector = (
-            focal_point[0] - position[0],
-            focal_point[1] - position[1],
-            focal_point[2] - position[2],
-        )
+            # Get orientation vectors
+            view_up = self.camera.GetViewUp()
+            view_plane_normal = self.camera.GetViewPlaneNormal()
 
-        # Get right and up vectors
-        view_up = self.camera.GetViewUp()
+            # Normalize vectors
+            def _normalize(vec):
+                length = (vec[0] ** 2 + vec[1] ** 2 + vec[2] ** 2) ** 0.5
+                if length == 0:
+                    return (0.0, 0.0, 0.0)
+                return (vec[0] / length, vec[1] / length, vec[2] / length)
 
-        # Calculate pan amount based on viewport size
-        pan_scale = self.pan_speed * (viewport_size[0] + viewport_size[1]) / 2.0
+            up_norm = _normalize(view_up)
 
-        # Pan in screen space
-        self.camera.Pan(-delta_x * pan_scale, -delta_y * pan_scale)
+            # Right vector = up x vpn
+            right_vec = (
+                up_norm[1] * view_plane_normal[2] - up_norm[2] * view_plane_normal[1],
+                up_norm[2] * view_plane_normal[0] - up_norm[0] * view_plane_normal[2],
+                up_norm[0] * view_plane_normal[1] - up_norm[1] * view_plane_normal[0],
+            )
+            right_norm = _normalize(right_vec)
+
+            # Scale pan based on viewport size
+            pan_scale = self.pan_speed * max(1.0, (viewport_size[0] + viewport_size[1]) / 2.0)
+
+            # Screen-space delta to world translation: left/right uses right vector, up/down uses up vector
+            translation = (
+                (-delta_x * pan_scale) * right_norm[0] + (delta_y * pan_scale) * up_norm[0],
+                (-delta_x * pan_scale) * right_norm[1] + (delta_y * pan_scale) * up_norm[1],
+                (-delta_x * pan_scale) * right_norm[2] + (delta_y * pan_scale) * up_norm[2],
+            )
+
+            # Apply translation to both camera position and focal point
+            new_position = (
+                position[0] + translation[0],
+                position[1] + translation[1],
+                position[2] + translation[2],
+            )
+            new_focal = (
+                focal_point[0] + translation[0],
+                focal_point[1] + translation[1],
+                focal_point[2] + translation[2],
+            )
+
+            self.camera.SetPosition(new_position)
+            self.camera.SetFocalPoint(new_focal)
+            self._update_clipping_range()
+        except Exception:
+            # Camera interaction should never fail hard; ignore when VTK does not support panning APIs.
+            pass
 
     def _zoom_camera(self, delta: float) -> None:
         """Zoom camera in/out."""

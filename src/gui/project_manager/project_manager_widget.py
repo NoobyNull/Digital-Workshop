@@ -130,70 +130,17 @@ class ProjectManagerWidget(QWidget):
     def _import_library(self) -> None:
         """Import existing library."""
         try:
-            folder = QFileDialog.getExistingDirectory(
-                self, "Select Library Folder", "", QFileDialog.ShowDirsOnly
+            from .import_helpers import import_existing_library
+
+            import_existing_library(
+                parent=self,
+                project_manager=self.project_manager,
+                dry_run_analyzer=self.dry_run_analyzer,
+                project_importer=self.project_importer,
+                on_created=self.project_created.emit,
+                refresh_ui=self._refresh_project_list,
+                logger=logger,
             )
-
-            if not folder:
-                return
-
-            # Get project name
-            name, ok = QInputDialog.getText(
-                self, "Import Library", "Project name:", text=folder.split("/")[-1]
-            )
-
-            if not ok or not name:
-                return
-
-            # Check for duplicate
-            if self.project_manager.check_duplicate(name):
-                QMessageBox.warning(self, "Duplicate Project", f"Project '{name}' already exists.")
-                return
-
-            # Dry run
-            dry_run = self.dry_run_analyzer.analyze(folder, name)
-
-            if not dry_run.can_proceed:
-                QMessageBox.warning(self, "Import Failed", "No files to import.")
-                return
-
-            # Show dry run report
-            report_text = (
-                f"Import Preview: {name}\n"
-                f"Files: {dry_run.allowed_files}\n"
-                f"Blocked: {dry_run.blocked_files}\n"
-                f"Size: {dry_run.total_size_mb:.2f} MB\n\n"
-                "Proceed with import?"
-            )
-
-            reply = QMessageBox.question(
-                self, "Import Library", report_text, QMessageBox.Yes | QMessageBox.No
-            )
-
-            if reply == QMessageBox.Yes:
-                # Execute import
-                import_report = self.project_importer.import_project(
-                    folder,
-                    name,
-                    structure_type=dry_run.structure_analysis.get("structure_type", "nested"),
-                )
-
-                if import_report.success:
-                    self.project_created.emit(import_report.project_id)
-                    self._refresh_project_list()
-                    QMessageBox.information(
-                        self,
-                        "Import Complete",
-                        f"Imported {import_report.files_imported} files.",
-                    )
-                    logger.info("Imported library: %s", name)
-                else:
-                    QMessageBox.critical(
-                        self,
-                        "Import Failed",
-                        f"Failed to import library: {import_report.errors[0] if import_report.errors else 'Unknown error'}",
-                    )
-
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import library: %s", str(e))
             QMessageBox.critical(self, "Error", f"Failed to import library: {str(e)}")

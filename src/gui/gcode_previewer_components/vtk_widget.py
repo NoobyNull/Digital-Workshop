@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 from PySide6.QtGui import QMouseEvent, QWheelEvent, QIcon, QShowEvent
+from PySide6.QtCore import QTimer
 
 from .gcode_renderer import GcodeRenderer
 from .camera_controller import CameraController
@@ -103,6 +104,11 @@ class VTKWidget(QWidget):
         self.vtk_widget.SetInteractorStyle(interactor_style)
         self.vtk_widget.Initialize()
         self.vtk_widget.Start()
+        # Force an initial render so the canvas is not blank until the first interaction.
+        self.update_render()
+        # And schedule follow-up renders once the event loop processes layout/resize.
+        QTimer.singleShot(0, self.update_render)
+        QTimer.singleShot(50, self.update_render)
 
         self.camera_controller = CameraController(renderer.get_renderer())
 
@@ -117,10 +123,16 @@ class VTKWidget(QWidget):
             main_layout.insertWidget(0, self._inline_toolbar)
 
         self._init_orientation_marker()
+        # Kick a first render once the event loop is running so the background
+        # is painted even before the user interacts.
+        QTimer.singleShot(0, self.update_render)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
+        # Render immediately and schedule a repeat after the event queue settles.
         self.update_render()
+        QTimer.singleShot(0, self.update_render)
+        QTimer.singleShot(50, self.update_render)
 
     def _std_icon(self, standard_pixmap) -> QIcon:
         style = self.style()

@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QFileDialog,
+    QComboBox,
 )
 
 from src.core.database_manager import get_database_manager

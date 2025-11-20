@@ -37,27 +37,33 @@ class GcodeRenderer:
             "rapid": {
                 "points": vtk.vtkPoints(),
                 "lines": vtk.vtkCellArray(),
+                "colors": [],
                 "actor": None,
             },
             "cutting": {
                 "points": vtk.vtkPoints(),
                 "lines": vtk.vtkCellArray(),
+                "colors": [],
                 "actor": None,
             },
             "arc": {
                 "points": vtk.vtkPoints(),
                 "lines": vtk.vtkCellArray(),
+                "colors": [],
                 "actor": None,
             },
             "tool_change": {
                 "points": vtk.vtkPoints(),
                 "lines": vtk.vtkCellArray(),
+                "colors": [],
                 "actor": None,
             },
         }
         self.prev_point = None
         # Counter to throttle how often we rebuild VTK actors during incremental loading
         self._incremental_update_counter = 0
+        # Persist per-move-type visibility so UI filters survive re-renders
+        self.visibility = {"rapid": True, "cutting": True, "arc": True, "tool_change": True}
 
         # Color scheme for different move types
         self.colors = {
@@ -93,7 +99,7 @@ class GcodeRenderer:
         """Access VTK module."""
         return self._vtk_module
 
-    def render_toolpath(self, moves: List[GcodeMove]) -> None:
+    def render_toolpath(self, moves: List[GcodeMove], *, fit_camera: bool = False) -> None:
         """Render a list of G-code moves as a 3D toolpath."""
         if not moves:
             return
@@ -109,9 +115,24 @@ class GcodeRenderer:
         for move_type, data in self.move_data.items():
             data["points"] = vtk_module.vtkPoints()
             data["lines"] = vtk_module.vtkCellArray()
+            data["colors"] = []
             data["actor"] = None
 
         prev_point = None
+
+        # Precompute cutting count defensively; avoid division by zero and unexpected attributes.
+        try:
+            total_cutting_segments = sum(
+                1
+                for m in moves
+                if getattr(m, "is_cutting", False)
+                and getattr(m, "x", None) is not None
+                and getattr(m, "y", None) is not None
+                and getattr(m, "z", None) is not None
+            )
+        except Exception:
+            total_cutting_segments = 0
+        cutting_index = 0
 
         for move in moves:
             # Handle tool changes and spindle commands (no coordinates)
@@ -125,27 +146,44 @@ class GcodeRenderer:
 
             if prev_point is not None:
                 # Add line segment based on move type
-                if move.is_rapid:
-                    self._add_line_segment(
-                        self.move_data["rapid"]["points"],
-                        self.move_data["rapid"]["lines"],
-                        prev_point,
-                        current_point,
-                    )
-                elif move.is_cutting:
-                    self._add_line_segment(
-                        self.move_data["cutting"]["points"],
-                        self.move_data["cutting"]["lines"],
-                        prev_point,
-                        current_point,
-                    )
-                elif move.is_arc:
-                    self._add_line_segment(
-                        self.move_data["arc"]["points"],
-                        self.move_data["arc"]["lines"],
-                        prev_point,
-                        current_point,
-                    )
+                try:
+                    if move.is_rapid:
+                        self._add_line_segment(
+                            self.move_data["rapid"]["points"],
+                            self.move_data["rapid"]["lines"],
+                            self.move_data["rapid"]["colors"],
+                            prev_point,
+                            current_point,
+                            self.colors["rapid"],
+                        )
+                    elif move.is_cutting:
+                        t = cutting_index / max(1, total_cutting_segments - 1)
+                        r = 0.5 * (1 - t)
+                        g = 0.5 + 0.5 * t
+                        b = 0.5 * (1 - t)
+                        gradient_color = (r, g, b)
+                        cutting_index += 1
+
+                        self._add_line_segment(
+                            self.move_data["cutting"]["points"],
+                            self.move_data["cutting"]["lines"],
+                            self.move_data["cutting"]["colors"],
+                            prev_point,
+                            current_point,
+                            gradient_color,
+                        )
+                    elif move.is_arc:
+                        self._add_line_segment(
+                            self.move_data["arc"]["points"],
+                            self.move_data["arc"]["lines"],
+                            self.move_data["arc"]["colors"],
+                            prev_point,
+                            current_point,
+                            self.colors["arc"],
+                        )
+                except Exception:
+                    # Skip malformed move entries and continue rendering the rest.
+                    pass
 
             prev_point = current_point
 
@@ -157,24 +195,36 @@ class GcodeRenderer:
                     self.move_data[move_type]["lines"],
                     self.colors[move_type],
                     self.line_widths[move_type],
+                    self.move_data[move_type]["colors"],
                 )
                 self.renderer.AddActor(actor)
                 self.actors[move_type] = actor
+                try:
+                    actor.SetVisibility(bool(self.visibility.get(move_type, True)))
+                except Exception:
+                    pass
 
-        # Reset camera
-        self.renderer.ResetCamera()
+        # Reset camera only when explicitly requested (initial fit)
+        if fit_camera:
+            self.renderer.ResetCamera()
+            self.renderer.ResetCameraClippingRange()
 
-    def _add_line_segment(self, points, lines, start: tuple, end: tuple) -> None:
+    def _add_line_segment(self, points, lines, colors, start: tuple, end: tuple, color: tuple) -> None:
         """Add a line segment to the polydata."""
-        start_id = points.InsertNextPoint(start)
-        end_id = points.InsertNextPoint(end)
+        try:
+            start_id = points.InsertNextPoint(start)
+            end_id = points.InsertNextPoint(end)
 
-        line = self.vtk.vtkLine()
-        line.GetPointIds().SetId(0, start_id)
-        line.GetPointIds().SetId(1, end_id)
-        lines.InsertNextCell(line)
+            line = self.vtk.vtkLine()
+            line.GetPointIds().SetId(0, start_id)
+            line.GetPointIds().SetId(1, end_id)
+            lines.InsertNextCell(line)
+            colors.append(color)
+        except Exception:
+            # Ignore invalid geometry
+            pass
 
-    def _create_actor(self, points, lines, color: tuple, line_width: float) -> None:
+    def _create_actor(self, points, lines, color: tuple, line_width: float, colors: list) -> None:
         """Create a VTK actor from points and lines."""
         polydata = self.vtk.vtkPolyData()
         polydata.SetPoints(points)
@@ -183,6 +233,20 @@ class GcodeRenderer:
         mapper = self.vtk.vtkPolyDataMapper()
         mapper.SetInputData(polydata)
 
+        # Per-cell coloring if colors were provided
+        if colors:
+            try:
+                color_array = self.vtk.vtkUnsignedCharArray()
+                color_array.SetNumberOfComponents(3)
+                color_array.SetNumberOfTuples(len(colors))
+                for idx, col in enumerate(colors):
+                    r, g, b = col
+                    color_array.SetTuple3(idx, int(r * 255), int(g * 255), int(b * 255))
+                polydata.GetCellData().SetScalars(color_array)
+                mapper.SetColorModeToDirectScalars()
+            except Exception:
+                # If coloring fails, fall back to default mapper color
+                pass
         actor = self.vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(*color)
@@ -216,6 +280,7 @@ class GcodeRenderer:
         for data in self.move_data.values():
             data["points"] = self.vtk.vtkPoints()
             data["lines"] = self.vtk.vtkCellArray()
+            data["colors"] = []
 
             # Remove old actor if exists
             if data["actor"]:
@@ -244,34 +309,48 @@ class GcodeRenderer:
             current_point = (move.x, move.y, move.z)
 
             if self.prev_point is not None:
-                if move.is_rapid:
-                    self._add_line_segment(
-                        self.move_data["rapid"]["points"],
-                        self.move_data["rapid"]["lines"],
-                        self.prev_point,
-                        current_point,
-                    )
-                elif move.is_cutting:
-                    self._add_line_segment(
-                        self.move_data["cutting"]["points"],
-                        self.move_data["cutting"]["lines"],
-                        self.prev_point,
-                        current_point,
-                    )
-                elif move.is_arc:
-                    self._add_line_segment(
-                        self.move_data["arc"]["points"],
-                        self.move_data["arc"]["lines"],
-                        self.prev_point,
-                        current_point,
-                    )
+                try:
+                    if move.is_rapid:
+                        self._add_line_segment(
+                            self.move_data["rapid"]["points"],
+                            self.move_data["rapid"]["lines"],
+                            self.move_data["rapid"]["colors"],
+                            self.prev_point,
+                            current_point,
+                            self.colors["rapid"],
+                        )
+                    elif move.is_cutting:
+                        self._add_line_segment(
+                            self.move_data["cutting"]["points"],
+                            self.move_data["cutting"]["lines"],
+                            self.move_data["cutting"]["colors"],
+                            self.prev_point,
+                            current_point,
+                            self.colors["cutting"],
+                        )
+                    elif move.is_arc:
+                        self._add_line_segment(
+                            self.move_data["arc"]["points"],
+                            self.move_data["arc"]["lines"],
+                            self.move_data["arc"]["colors"],
+                            self.prev_point,
+                            current_point,
+                            self.colors["arc"],
+                        )
+                except Exception:
+                    # Skip malformed move entries and continue rendering the rest.
+                    pass
 
             self.prev_point = current_point
 
         # Throttle actor rebuilds to avoid UI stalls on very large files
         self._incremental_update_counter += 1
         if self._incremental_update_counter >= 10:
-            self.update_incremental_actors()
+            try:
+                self.update_incremental_actors()
+            except Exception:
+                # Renderer errors should not break loading; skip update when VTK misbehaves.
+                pass
             self._incremental_update_counter = 0
 
     def update_incremental_actors(self) -> None:
@@ -298,9 +377,29 @@ class GcodeRenderer:
                     data["lines"],
                     self.colors[move_type],
                     self.line_widths[move_type],
+                    data["colors"],
                 )
                 self.renderer.AddActor(actor)
                 data["actor"] = actor
+                try:
+                    actor.SetVisibility(bool(self.visibility.get(move_type, True)))
+                except Exception:
+                    pass
+
+    def set_move_visibility(self, move_key: str, visible: bool) -> None:
+        """Set visibility for a given move group across both full and incremental actors."""
+        self.visibility[move_key] = bool(visible)
+        target_actor = None
+        if move_key in self.actors:
+            target_actor = self.actors.get(move_key)
+        if target_actor is None and move_key in self.move_data:
+            target_actor = self.move_data[move_key].get("actor")
+
+        if target_actor is not None:
+            try:
+                target_actor.SetVisibility(bool(visible))
+            except Exception:
+                pass
 
     def cleanup(self) -> None:
         """Cleanup all VTK resources before destruction."""

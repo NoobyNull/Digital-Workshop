@@ -210,8 +210,3 @@ class GcodePreviewController:
                 self.main_window.gcode_previewer_widget.load_gcode_file(file_path)
             except Exception as e:  # pragma: no cover - defensive
                 self.logger.error("Failed to load G-code file %s in previewer: %s", file_path, e)
-        dock.visibilityChanged.connect(
-            lambda visible: self.main_window._set_layout_edit_mode(
-                self.main_window.layout_edit_mode, show_message=False
-            )
-        )

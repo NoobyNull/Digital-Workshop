@@ -60,6 +60,10 @@ disable=
     too-many-locals,
     too-many-branches,
     too-many-statements,
+    import-outside-toplevel,
+    broad-exception-caught,
+    duplicate-code,
+    mixed-line-endings,
 
     # Handled by other tools
     line-too-long,

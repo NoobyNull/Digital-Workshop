@@ -166,7 +166,9 @@ class GcodePreviewerWidget(QWidget):
         self.camera_controls_checkbox: Optional[QCheckBox] = None
         self.layer_combo: Optional[QComboBox] = None
         self.show_all_layers_btn: Optional[QPushButton] = None
+        self.layer_filters: Dict[str, QCheckBox] = {}
         self.progress_bar: Optional[QProgressBar] = None
+        self._camera_fit_done: bool = False
 
         self.current_file: Optional[str] = None
         self.moves = []
@@ -360,6 +362,7 @@ class GcodePreviewerWidget(QWidget):
         self.camera_controls_checkbox = self.tools_widget.camera_controls_checkbox
         self.layer_combo = self.tools_widget.layer_combo
         self.show_all_layers_btn = self.tools_widget.show_all_layers_btn
+        self.layer_filters = getattr(self.tools_widget, "layer_filters", {})
 
         # Wrap the tools widget in a dedicated container so that we can switch
         # between the real tools UI and an empty page without removing the
@@ -397,6 +400,7 @@ class GcodePreviewerWidget(QWidget):
         self.camera_controls_checkbox = tools_widget.camera_controls_checkbox
         self.layer_combo = tools_widget.layer_combo
         self.show_all_layers_btn = tools_widget.show_all_layers_btn
+        self.layer_filters = getattr(tools_widget, "layer_filters", {})
 
         # Now that tools widgets are available, wire up their signals.
         self._connect_tools_signals()
@@ -548,6 +552,14 @@ class GcodePreviewerWidget(QWidget):
 
         if self.show_all_layers_btn is not None:
             self.show_all_layers_btn.clicked.connect(self._on_show_all_layers)
+
+        if self.layer_filters:
+            for key, checkbox in self.layer_filters.items():
+                checkbox.toggled.connect(
+                    lambda checked, k=key: self._on_layer_filter_changed(k, checked)
+                )
+                # Apply current visibility immediately
+                self._on_layer_filter_changed(key, checkbox.isChecked())
 
         # Per-path tool selection
         if self.select_tool_button is not None:
@@ -847,12 +859,6 @@ class GcodePreviewerWidget(QWidget):
                 QMessageBox.warning(self, "Invalid File", "Path must be a file.")
                 return None
 
-            # Check file is readable
-            if not os.access(file_path, os.R_OK):
-                self.logger.error("File not readable: %s", filepath)
-                QMessageBox.warning(self, "Access Denied", "Cannot read file.")
-                return None
-
             user_cancelled = False
 
             # Validate file extension
@@ -924,6 +930,7 @@ class GcodePreviewerWidget(QWidget):
             self.current_file = validated_path
             self.moves = []
             self._line_to_move_index = {}
+            self._camera_fit_done = False
             self._update_loader_summary_panel()
 
             # Clear renderer (quick operation)
@@ -1739,6 +1746,7 @@ class GcodePreviewerWidget(QWidget):
         # Update visualization to show moves up to current frame
         moves_to_show = self.animation_controller.get_moves_up_to_frame(frame)
         self.renderer.render_toolpath(moves_to_show)
+        self._apply_layer_filters()
         self.vtk_widget.update_render()
         self._highlight_editor_for_frame(frame)
 
@@ -1763,6 +1771,7 @@ class GcodePreviewerWidget(QWidget):
         else:
             self.renderer.render_toolpath(self.moves)
             self.visualization_mode = "default"
+            self._apply_layer_filters()
             self.vtk_widget.update_render()
             return
 
@@ -1780,13 +1789,41 @@ class GcodePreviewerWidget(QWidget):
         layer = self.layer_analyzer.get_layers()[index]
         moves = self.layer_analyzer.get_moves_for_layer(layer.layer_number, self.moves)
         self.renderer.render_toolpath(moves)
+        self._apply_layer_filters()
         self.vtk_widget.update_render()
 
     def _on_show_all_layers(self) -> None:
         """Show all layers."""
-        self.layer_combo.setCurrentIndex(-1)
+        if self.layer_combo is not None:
+            self.layer_combo.setCurrentIndex(-1)
         self.renderer.render_toolpath(self.moves)
+        self._apply_layer_filters()
         self.vtk_widget.update_render()
+
+    def _on_layer_filter_changed(self, key: str, checked: bool) -> None:
+        """Toggle visibility for move-type groups via checkbox filters."""
+        if self.renderer is None:
+            return
+        mapping = {
+            "cut": "cutting",
+            "rapids": "rapid",
+            "tool_change": "tool_change",
+            "not_cut": "arc",
+        }
+        move_key = mapping.get(key)
+        if move_key:
+            try:
+                self.renderer.set_move_visibility(move_key, checked)
+            finally:
+                if self.vtk_widget:
+                    self.vtk_widget.update_render()
+
+    def _apply_layer_filters(self) -> None:
+        """Apply current layer filter checkboxes to the renderer actors."""
+        if not self.layer_filters:
+            return
+        for key, checkbox in self.layer_filters.items():
+            self._on_layer_filter_changed(key, checkbox.isChecked())
 
     def _on_edit_gcode(self) -> None:
         """Handle edit G-code with proper validation and limits."""
@@ -1840,6 +1877,7 @@ class GcodePreviewerWidget(QWidget):
         try:
             # Parse the edited content
             self.moves = self.parser.parse_lines(content.split("\n"))
+            self._camera_fit_done = False
 
             # Update animation controller
             self.animation_controller.set_moves(self.moves)
@@ -1849,8 +1887,9 @@ class GcodePreviewerWidget(QWidget):
             self._update_layer_combo()
 
             # Re-render
-            self.renderer.render_toolpath(self.moves)
+            self.renderer.render_toolpath(self.moves, fit_camera=True)
             self.vtk_widget.update_render()
+            self._camera_fit_done = True
 
             # Reset timing and either use cache or kick off a new job.
             self.current_timing = None
@@ -1873,6 +1912,10 @@ class GcodePreviewerWidget(QWidget):
 
     def _update_layer_combo(self) -> None:
         """Update layer combo box with detected layers."""
+        if self.layer_combo is None:
+            self.logger.debug("Layer combo unavailable; skipping layer list refresh")
+            return
+
         self.layer_combo.blockSignals(True)
         self.layer_combo.clear()
 
@@ -1895,6 +1938,7 @@ class GcodePreviewerWidget(QWidget):
         # Add moves to renderer incrementally
         self.renderer.add_moves_incremental(moves)
         self.vtk_widget.update_render()
+        self._apply_layer_filters()
 
         # Update statistics
         self._update_statistics()
@@ -1942,9 +1986,15 @@ class GcodePreviewerWidget(QWidget):
         # Update moves table
         self._update_moves_table()
 
+        # Render full path with an initial fit only once per load
+        fit_needed = not self._camera_fit_done
+        self.renderer.render_toolpath(self.moves, fit_camera=fit_needed)
+        if fit_needed:
+            self._camera_fit_done = True
+
         # Add axes
         self.renderer.add_axes()
-        self.renderer.reset_camera()
+        self._apply_layer_filters()
         self.vtk_widget.update_render()
 
         self.gcode_loaded.emit(self.current_file)
@@ -2017,9 +2067,17 @@ class GcodePreviewerWidget(QWidget):
         # Ensure final incremental actors are built before we adjust camera/axes
         self.renderer.update_incremental_actors()
 
-        # Add axes and fit view
+        # Add axes and optionally fit once per load
         self.renderer.add_axes()
-        self.renderer.reset_camera()
+        fit_needed = not self._camera_fit_done
+        if fit_needed:
+            try:
+                self.renderer.renderer.ResetCamera()
+                self.renderer.renderer.ResetCameraClippingRange()
+            except Exception:
+                pass
+            self._camera_fit_done = True
+        self._apply_layer_filters()
         self.vtk_widget.update_render()
 
         if self.progress_bar is not None:
@@ -2036,6 +2094,7 @@ class GcodePreviewerWidget(QWidget):
         # Add moves to renderer incrementally
         self.renderer.add_moves_incremental(chunk_moves)
         self.vtk_widget.update_render()
+        self._apply_layer_filters()
 
         # Update statistics
         self._update_statistics()

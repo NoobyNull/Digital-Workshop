@@ -267,6 +267,7 @@ class GcodeToolsWidget(QWidget):
         self.camera_controls_checkbox: Optional[QCheckBox] = None
         self.layer_combo: Optional[QComboBox] = None
         self.show_all_layers_btn: Optional[QPushButton] = None
+        self.layer_filters: Dict[str, QCheckBox] = {}
 
         self.progress_bar: Optional[QProgressBar] = None
         self.file_name_label: Optional[QLabel] = None
@@ -417,12 +418,20 @@ class GcodeToolsWidget(QWidget):
         self.camera_controls_checkbox.setChecked(True)
         viz_layout.addWidget(self.camera_controls_checkbox, 0, 2)
 
+        # Layer visibility as toggleable move-type filters
         viz_layout.addWidget(QLabel("Layers:"), 1, 0)
-        self.layer_combo = QComboBox()
-        viz_layout.addWidget(self.layer_combo, 1, 1)
-
-        self.show_all_layers_btn = QPushButton("Show All")
-        viz_layout.addWidget(self.show_all_layers_btn, 1, 2)
+        filters_layout = QHBoxLayout()
+        self.layer_filters = {
+            "not_cut": QCheckBox("Not Cut"),
+            "cut": QCheckBox("Cut"),
+            "rapids": QCheckBox("Rapids"),
+            "tool_change": QCheckBox("Tool Change"),
+        }
+        for key, cb in self.layer_filters.items():
+            cb.setChecked(True)
+            filters_layout.addWidget(cb)
+        filters_layout.addStretch()
+        viz_layout.addLayout(filters_layout, 1, 1, 1, 2)
 
         viz_layout.setColumnStretch(1, 1)
         parent_layout.addWidget(viz_group)

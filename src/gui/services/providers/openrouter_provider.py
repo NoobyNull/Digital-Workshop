@@ -3,10 +3,11 @@ OpenRouter Vision Provider
 Implements vision analysis using OpenRouter's API (OpenAI-compatible).
 """
 
-import base64
 import os
 from typing import Dict, Any, Optional
+
 import openai
+
 from .base_provider import BaseProvider
 
 
@@ -55,7 +56,6 @@ class OpenRouterProvider(BaseProvider):
             all_model_ids = [model.id for model in models.data]
             self.logger.info("All available models: %s", all_model_ids)
 
-            # Filter for vision-capable models
             vision_models = [
                 model.id
                 for model in models.data
@@ -68,7 +68,6 @@ class OpenRouterProvider(BaseProvider):
         except (openai.APIError, openai.OpenAIError, ConnectionError) as e:
             self.logger.error("Failed to fetch OpenRouter models: %s", str(e))
             self.logger.info("Returning default OpenRouter models")
-            # Return default models if API call fails
             return [
                 "gpt-4-vision-preview",
                 "gpt-4o",
@@ -95,40 +94,12 @@ class OpenRouterProvider(BaseProvider):
             raise FileNotFoundError(f"Image file not found: {image_path}")
 
         try:
-            # Read and encode the image
-            with open(image_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode("utf-8")
+            from .image_utils import build_image_message
 
-            # Determine image MIME type
-            ext = os.path.splitext(image_path)[1].lower()
-            mime_type = {
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".png": "image/png",
-                ".gif": "image/gif",
-                ".webp": "image/webp",
-            }.get(ext, "image/jpeg")
-
-            # Prepare the message
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt or self.get_default_prompt()},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:{mime_type};base64,{image_data}"},
-                        },
-                    ],
-                }
-            ]
-
-            # Make the API call
+            messages = build_image_message(prompt, image_path, self.get_default_prompt)
             response = self.client.chat.completions.create(
                 model=self.model, messages=messages, max_tokens=1000
             )
-
-            # Extract and parse the response
             response_text = response.choices[0].message.content
             return self.parse_response(response_text)
 

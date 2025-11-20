@@ -279,3 +279,13 @@ class LightingControlPanel(QDockWidget):
         hex_col = f"#{r:02x}{g:02x}{b:02x}"
         # Set background color only, let qt-material handle other styling
         self.color_button.setStyleSheet(f"background-color: {hex_col};")
+
+    # ---- Styling helpers (avoid AttributeError when main window instantiates panel) ----
+    def _apply_button_style(self, button: QPushButton) -> None:
+        """Apply a minimal consistent style to action buttons."""
+        button.setMinimumHeight(28)
+        button.setCursor(Qt.PointingHandCursor)
+
+    def _apply_theme_styles(self, widget: QWidget) -> None:
+        """Hook for theme-aware tweaks; keep lightweight to avoid dependency issues."""
+        widget.setObjectName("LightingControlPanelContainer")

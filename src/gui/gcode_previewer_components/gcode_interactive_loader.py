@@ -105,22 +105,28 @@ class GcodeLoaderWorker(QThread):
 
                     # Process when buffer reaches chunk size
                     if len(lines_buffer) >= self.chunk_size:
-                        moves = self.parser.parse_lines(lines_buffer)
-                        all_moves.extend(moves)
+                        try:
+                            moves = self.parser.parse_lines(lines_buffer)
+                            all_moves.extend(moves)
 
-                        # Emit chunk for incremental visualization
-                        if moves:
-                            self.chunk_loaded.emit(moves)
+                            # Emit chunk for incremental visualization
+                            if moves:
+                                self.chunk_loaded.emit(moves)
+                        except Exception as exc:  # pragma: no cover - defensive
+                            self.logger.warning("Chunk parse failed, continuing: %s", exc)
 
                         # Clear buffer
                         lines_buffer.clear()
 
                 # Process remaining lines
                 if lines_buffer and not self._is_cancelled:
-                    moves = self.parser.parse_lines(lines_buffer)
-                    all_moves.extend(moves)
-                    if moves:
-                        self.chunk_loaded.emit(moves)
+                    try:
+                        moves = self.parser.parse_lines(lines_buffer)
+                        all_moves.extend(moves)
+                        if moves:
+                            self.chunk_loaded.emit(moves)
+                    except Exception as exc:  # pragma: no cover - defensive
+                        self.logger.warning("Final chunk parse failed, continuing: %s", exc)
 
             # Final progress
             self.progress_updated.emit(100, "Loading complete")
@@ -131,7 +137,7 @@ class GcodeLoaderWorker(QThread):
                 self.filepath,
             )
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+        except Exception as e:  # pragma: no cover - defensive catch-all
             self.logger.error(
                 "Interactive G-code load failed for %s: %s",
                 self.filepath,
@@ -162,6 +168,7 @@ class InteractiveGcodeLoader(QWidget):
         self.renderer = renderer
         self.loader_thread: Optional[GcodeLoaderWorker] = None
         self.all_moves: List[GcodeMove] = []
+        self.logger = get_logger(__name__)
 
         self._init_ui()
         self._setup_connections()
@@ -257,7 +264,10 @@ class InteractiveGcodeLoader(QWidget):
         self.all_moves.extend(moves)
 
         # Update renderer incrementally
-        self.renderer.add_moves_incremental(moves)
+        try:
+            self.renderer.add_moves_incremental(moves)
+        except Exception as exc:
+            self.logger.warning("Incremental render skipped a chunk: %s", exc)
 
         # Emit signal
         self.chunk_loaded.emit(moves)

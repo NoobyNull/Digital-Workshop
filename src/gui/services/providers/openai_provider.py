@@ -86,44 +86,14 @@ class OpenAIProvider(BaseProvider):
         if not self.is_configured():
             raise ValueError("OpenAI provider is not configured. Please provide an API key.")
 
-        if not os.path.exists(image_path):
-            raise FileNotFoundError(f"Image file not found: {image_path}")
-
         try:
-            # Read and encode the image
-            with open(image_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode("utf-8")
+            from .image_utils import build_image_message
 
-            # Determine image MIME type
-            ext = os.path.splitext(image_path)[1].lower()
-            mime_type = {
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".png": "image/png",
-                ".gif": "image/gif",
-                ".webp": "image/webp",
-            }.get(ext, "image/jpeg")
+            messages = build_image_message(prompt, image_path, self.get_default_prompt)
 
-            # Prepare the message
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt or self.get_default_prompt()},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:{mime_type};base64,{image_data}"},
-                        },
-                    ],
-                }
-            ]
-
-            # Make the API call
             response = self.client.chat.completions.create(
                 model=self.model, messages=messages, max_tokens=1000
             )
-
-            # Extract and parse the response
             response_text = response.choices[0].message.content
             return self.parse_response(response_text)
 

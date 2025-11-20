@@ -225,10 +225,15 @@ class GcodeParser:
             if ";" in line:
                 line = line.split(";")[0].strip()
 
-            move = self._parse_line(line, line_num)
-            if move:
-                self.moves.append(move)
-                self._update_bounds(move)
+            try:
+                move = self._parse_line(line, line_num)
+                if move:
+                    self.moves.append(move)
+                    self._update_bounds(move)
+            except Exception as parse_exc:
+                # Skip malformed lines but continue parsing the rest
+                self._logger.debug("Skipping malformed G-code line %s: %s", line_num, parse_exc)
+                continue
 
         return self.moves
 
