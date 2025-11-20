@@ -133,6 +133,7 @@ class GcodeEditorWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
+        # Find/replace UI (stacked rows to save horizontal space)
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Find...")
         self.search_input.textChanged.connect(self._on_search_text_changed)
@@ -143,35 +144,41 @@ class GcodeEditorWidget(QWidget):
         self.case_checkbox = QCheckBox("Match case")
         self.regex_checkbox = QCheckBox("Regex")
 
-        search_row = QHBoxLayout()
-        search_row.addWidget(QLabel("Find:"))
-        search_row.addWidget(self.search_input, 2)
-        search_row.addWidget(QLabel("Replace:"))
-        search_row.addWidget(self.replace_input, 2)
-        search_row.addWidget(self.case_checkbox)
-        search_row.addWidget(self.regex_checkbox)
+        # Row 1: Find + options + navigation
+        find_row = QHBoxLayout()
+        find_row.addWidget(QLabel("Find:"))
+        find_row.addWidget(self.search_input, 3)
+        find_row.addWidget(self.case_checkbox)
+        find_row.addWidget(self.regex_checkbox)
 
         self.find_prev_btn = QToolButton()
         self.find_prev_btn.setText(SEARCH_BACK_ICON)
         self.find_prev_btn.setToolTip("Find previous")
         self.find_prev_btn.clicked.connect(lambda: self._find_next(forward=False))
-        search_row.addWidget(self.find_prev_btn)
+        find_row.addWidget(self.find_prev_btn)
 
         self.find_next_btn = QToolButton()
         self.find_next_btn.setText(SEARCH_FORWARD_ICON)
         self.find_next_btn.setToolTip("Find next")
         self.find_next_btn.clicked.connect(self._find_next)
-        search_row.addWidget(self.find_next_btn)
+        find_row.addWidget(self.find_next_btn)
+
+        layout.addLayout(find_row)
+
+        # Row 2: Replace entry + actions
+        replace_row = QHBoxLayout()
+        replace_row.addWidget(QLabel("Replace:"))
+        replace_row.addWidget(self.replace_input, 3)
 
         self.replace_btn = QPushButton("Replace")
         self.replace_btn.clicked.connect(self._replace_one)
-        search_row.addWidget(self.replace_btn)
+        replace_row.addWidget(self.replace_btn)
 
         self.replace_all_btn = QPushButton("Replace All")
         self.replace_all_btn.clicked.connect(self._replace_all)
-        search_row.addWidget(self.replace_all_btn)
+        replace_row.addWidget(self.replace_all_btn)
 
-        layout.addLayout(search_row)
+        layout.addLayout(replace_row)
 
         # Text editor
         self.editor = QPlainTextEdit()

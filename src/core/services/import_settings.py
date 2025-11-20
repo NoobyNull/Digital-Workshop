@@ -66,6 +66,24 @@ class ImportSettings:
     def __init__(self, qsettings: Optional[QSettings] = None) -> None:
         self._settings = qsettings or QSettings()
 
+    def get_mode(self) -> str:
+        """Return the saved import execution mode ('serial' or 'concurrent')."""
+        self._settings.beginGroup(self.GROUP)
+        try:
+            mode = self._settings.value("mode", "serial", type=str) or "serial"
+            return mode if mode in ("serial", "concurrent") else "serial"
+        finally:
+            self._settings.endGroup()
+
+    def set_mode(self, mode: str) -> None:
+        """Persist the import execution mode."""
+        mode = mode if mode in ("serial", "concurrent") else "serial"
+        self._settings.beginGroup(self.GROUP)
+        try:
+            self._settings.setValue("mode", mode)
+        finally:
+            self._settings.endGroup()
+
     def get_concurrency(self) -> ImportConcurrencySettings:
         """Return the current concurrency configuration."""
 

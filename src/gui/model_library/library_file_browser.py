@@ -288,6 +288,10 @@ class LibraryFileBrowser:
     def _on_folder_scan_completed(self, files: list[str]) -> None:
         """Handle completion of folder scan for library import."""
         if self._folder_scan_dialog is not None:
+            try:
+                self._folder_scan_dialog.canceled.disconnect(self._on_folder_scan_dialog_canceled)
+            except Exception:
+                pass
             self._folder_scan_dialog.close()
             self._folder_scan_dialog = None
 

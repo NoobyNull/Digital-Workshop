@@ -159,7 +159,8 @@ class GcodePreviewController:
             | QDockWidget.DockWidgetClosable
         )
         dock.setWidget(toolbar)
-        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, dock)
+        # Prefer bottom docking by default so it can sit under the main viewport
+        self.main_window._place_camera_controls_bottom(dock)
 
         try:
             if hasattr(self.main_window, "_register_dock_for_snapping"):

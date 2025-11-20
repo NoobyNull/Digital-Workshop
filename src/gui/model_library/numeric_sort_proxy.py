@@ -39,6 +39,8 @@ class NumericSortProxyModel(QSortFilterProxyModel):
         # Optional additional filters
         self._category_filter: Optional[str] = None
         self._dirty_filter: Optional[str] = None
+        self._advanced_query: str = ""
+        self._parsed_advanced = []
 
     def lessThan(self, left, right):
         """
@@ -89,6 +91,66 @@ class NumericSortProxyModel(QSortFilterProxyModel):
         if dirty_filter not in {"dirty", "clean", None}:
             dirty_filter = None
         self._dirty_filter = dirty_filter
+
+    # ------------------------------------------------------------------
+    # Advanced boolean search
+    # ------------------------------------------------------------------
+    def set_advanced_query(self, query: str) -> None:
+        """Set a boolean search query (supports AND / OR / !term)."""
+        self._advanced_query = (query or "").strip()
+        self._parsed_advanced = self._parse_advanced_query(self._advanced_query)
+        self.invalidateFilter()
+
+    def _parse_advanced_query(self, query: str):
+        """Parse a simple boolean query into clauses.
+
+        Supports OR-separated clauses; within a clause, terms are ANDed.
+        Negation via leading '!'. No parentheses; quoted phrases are
+        preserved, and '+' is treated like AND.
+        """
+        clauses = []
+        if not query:
+            return clauses
+
+        normalized = query.replace("||", " OR ").replace("&&", " AND ")
+        for raw_clause in normalized.split(" OR "):
+            clause = []
+            for token in self._tokenize_clause(raw_clause):
+                if token.upper() == "AND":
+                    continue
+                neg = token.startswith("!")
+                term = token[1:] if neg else token
+                term = term.strip(" ,;'\"")
+                if not term:
+                    continue
+                clause.append((neg, term.lower()))
+            if clause:
+                clauses.append(clause)
+        return clauses
+
+    def _tokenize_clause(self, clause: str):
+        """Tokenize a clause respecting quotes and '+' as AND separators."""
+        tokens = []
+        current = []
+        in_quote = False
+        i = 0
+        while i < len(clause):
+            ch = clause[i]
+            if ch == '"':
+                in_quote = not in_quote
+                i += 1
+                continue
+            if not in_quote and ch in {"+", " "}:
+                if current:
+                    tokens.append("".join(current))
+                    current = []
+                i += 1
+                continue
+            current.append(ch)
+            i += 1
+        if current:
+            tokens.append("".join(current))
+        return tokens
 
     def filterAcceptsRow(self, source_row, source_parent):
         """Filter rows based on search text, category, dirty status, and thumbnails.
@@ -141,5 +203,29 @@ class NumericSortProxyModel(QSortFilterProxyModel):
                 icon = thumbnail_index.data(Qt.DecorationRole)
                 if not icon or icon.isNull():
                     return False
+
+        # Apply advanced boolean query if present
+        if self._parsed_advanced:
+            haystack_parts = []
+            column_count = source_model.columnCount()
+            for col in range(column_count):
+                idx = source_model.index(source_row, col, source_parent)
+                if idx.isValid():
+                    val = idx.data()
+                    if val:
+                        haystack_parts.append(str(val).lower())
+            haystack = " ".join(haystack_parts)
+
+            def clause_matches(clause):
+                for neg, term in clause:
+                    present = term in haystack
+                    if neg and present:
+                        return False
+                    if not neg and not present:
+                        return False
+                return True
+
+            if not any(clause_matches(c) for c in self._parsed_advanced):
+                return False
 
         return True

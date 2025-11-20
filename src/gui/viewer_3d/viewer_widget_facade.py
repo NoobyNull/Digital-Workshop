@@ -137,6 +137,17 @@ class Viewer3DWidget(QWidget):
             on_rotate_z_pos=self.rotate_z_positive,
             on_rotate_z_neg=self.rotate_z_negative,
         )
+        # Hide quick-action controls by default unless user opted in
+        try:
+            from PySide6.QtCore import QSettings
+
+            settings = QSettings()
+            show_controls = settings.value("viewer/show_quick_controls", False, type=bool)
+            if hasattr(self.ui_manager, "set_control_panel_visible"):
+                self.ui_manager.set_control_panel_visible(bool(show_controls))
+        except Exception:
+            if hasattr(self.ui_manager, "set_control_panel_visible"):
+                self.ui_manager.set_control_panel_visible(False)
 
     def _init_modules(self) -> None:
         """Initialize modular components."""

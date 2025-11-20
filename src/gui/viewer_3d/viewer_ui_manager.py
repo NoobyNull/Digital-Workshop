@@ -48,6 +48,7 @@ class ViewerUIManager:
         self.progress_bar = None
         self.progress_label = None
         self.progress_frame = None
+        self.control_panel = None
 
     @log_function_call(logger)
     def setup_ui(
@@ -103,6 +104,7 @@ class ViewerUIManager:
 
         # Create control panel
         control_panel = QWidget()
+        self.control_panel = control_panel
         control_panel.setObjectName("ControlPanel")
         control_layout = QHBoxLayout(control_panel)
         control_layout.setContentsMargins(5, 5, 5, 5)
@@ -269,6 +271,12 @@ class ViewerUIManager:
                 button.setVisible(visible)
 
         logger.debug("Coordinate rotation buttons %s", "shown" if visible else "hidden")
+
+    def set_control_panel_visible(self, visible: bool) -> None:
+        """Show or hide the entire quick-action control panel."""
+        if self.control_panel is not None:
+            self.control_panel.setVisible(visible)
+            logger.debug("Viewer control panel %s", "shown" if visible else "hidden")
 
     def apply_theme(self) -> None:
         """Apply theme styling."""

@@ -779,8 +779,9 @@ class VTKCleanupCoordinator:
             cleaned_count = sum(1 for r in self.cleanup_resources.values() if r["cleaned"])
             total_count = len(self.cleanup_resources)
 
-            self.logger.info(
-                f"Cleanup verification: {cleaned_count}/{total_count} resources cleaned"
+            # Reduce noise: keep verification at debug level
+            self.logger.debug(
+                "Cleanup verification: %s/%s resources cleaned", cleaned_count, total_count
             )
 
             # Reset state

@@ -177,6 +177,17 @@ class ViewerSettingsTab(QWidget):
 
         layout.addWidget(camera_group)
 
+        # Quick Controls Group
+        quick_group = QFrame()
+        quick_layout = QFormLayout(quick_group)
+        quick_label = QLabel("<b>Quick Viewer Buttons</b>")
+        quick_layout.addRow(quick_label)
+
+        self.show_quick_controls_check = QCheckBox("Show quick action buttons (Solid/Material/Lighting/etc.)")
+        quick_layout.addRow(self.show_quick_controls_check)
+
+        layout.addWidget(quick_group)
+
         # Lighting Group
         lighting_group = QFrame()
         lighting_layout = QFormLayout(lighting_group)
@@ -375,6 +386,11 @@ class ViewerSettingsTab(QWidget):
             gradient_bottom = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
             self._update_color_button(self.gradient_top_color_btn, gradient_top)
             self._update_color_button(self.gradient_bottom_color_btn, gradient_bottom)
+
+            # Quick controls visibility (default hidden)
+            self.show_quick_controls_check.setChecked(
+                settings.value("viewer/show_quick_controls", False, type=bool)
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to load viewer settings: %s", e)
@@ -430,6 +446,9 @@ class ViewerSettingsTab(QWidget):
             settings.setValue(
                 "viewer/gradient_bottom_color", self.gradient_bottom_color_btn.palette().button().color().name()
             )
+
+            # Quick controls visibility
+            settings.setValue("viewer/show_quick_controls", self.show_quick_controls_check.isChecked())
 
             if self.logger:
                 self.logger.info("Viewer settings saved to QSettings")

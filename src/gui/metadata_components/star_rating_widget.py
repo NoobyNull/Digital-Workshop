@@ -50,6 +50,7 @@ class StarRatingWidget(QWidget):
         self.filled_color = get_theme_color("star_filled")
         self.empty_color = get_theme_color("star_empty")
         self.hover_color = get_theme_color("star_hover")
+        self.active_color = QColor("#f5c542")  # fallback bright gold for active stars
 
         # Set widget size
         self.setFixedSize(
@@ -103,9 +104,9 @@ class StarRatingWidget(QWidget):
 
             # Determine star color
             if i < self.current_rating:
-                color = self.filled_color
+                color = self.filled_color if self.filled_color.isValid() else self.active_color
             elif i < self.hover_rating:
-                color = self.hover_color
+                color = self.hover_color if self.hover_color.isValid() else self.active_color.lighter(120)
             else:
                 color = self.empty_color
 

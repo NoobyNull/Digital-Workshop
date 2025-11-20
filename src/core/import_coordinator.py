@@ -172,6 +172,16 @@ class ImportCoordinatorWorker(QThread):
         self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
         self.analysis_service = ImportAnalysisService() if run_analysis else None
         self.db_manager = get_database_manager()
+        self._batches: List[List[str]] = []
+        try:
+            cap = ImportFileManager.MAX_IMPORT_FILES
+            if cap and isinstance(cap, int) and cap > 0:
+                paths = list(file_paths)
+                self._batches = [paths[i : i + cap] for i in range(0, len(paths), cap)]
+            else:
+                self._batches = [list(file_paths)]
+        except Exception:
+            self._batches = [list(file_paths)]
 
     def run(self) -> None:
         """Execute the coordinated import process."""
@@ -183,55 +193,92 @@ class ImportCoordinatorWorker(QThread):
             if not self._validate_settings():
                 return
 
-            # Stage 2: Start import session
-            session = self._start_import_session()
-            if not session:
-                return
+            overall_imports = 0
+            overall_failed = 0
+            overall_skipped = 0
+            overall_duplicates = 0
+            final_import_result = None
+            final_thumbnail_result = None
+            final_analysis_result = None
 
-            total_files = len(session.files)
-            self.logger.info("Starting coordinated import of %s files", total_files)
+            total_files_all = len(self.file_paths)
+            processed_global_index = 0
 
-            # Stage 3: Process files (hashing + file management)
-            processed_files = self._process_files(session)
-            if self.cancellation_token.is_cancelled():
-                self._handle_cancellation(session)
-                return
+            for batch_index, batch_paths in enumerate(self._batches):
+                if self.cancellation_token.is_cancelled():
+                    break
 
-            # Stage 4: Generate thumbnails
-            thumbnail_result = None
-            if self.generate_thumbnails and processed_files:
-                thumbnail_result = self._generate_thumbnails(processed_files)
+                self._update_stage(
+                    ImportWorkflowStage.FILE_DISCOVERY,
+                    f"Starting batch {batch_index + 1}/{len(self._batches)} "
+                    f"({len(batch_paths)} files)...",
+                )
 
-            # Stage 5: Store in database
-            self._update_stage(ImportWorkflowStage.DATABASE_STORAGE, "Storing import results...")
-            stored_models = self._store_in_database(session, processed_files)
+                session = self._start_import_session(batch_paths)
+                if not session:
+                    break
 
-            # Stage 6: Queue background analysis
-            analysis_result = None
-            if self.run_analysis and stored_models:
-                analysis_result = self._queue_analysis(stored_models)
+                total_files = len(session.files)
+                self.logger.info(
+                    "Starting coordinated import batch %s/%s of %s files",
+                    batch_index + 1,
+                    len(self._batches),
+                    total_files,
+                )
 
-            # Complete import
-            import_result = self.file_manager.complete_import_session(session, True)
+                processed_files = self._process_files(
+                    session, processed_global_index, total_files_all
+                )
+                processed_global_index += len(session.files)
+
+                if self.cancellation_token.is_cancelled():
+                    self._handle_cancellation(session)
+                    break
+
+                thumbnail_result = None
+                if self.generate_thumbnails and processed_files:
+                    thumbnail_result = self._generate_thumbnails(processed_files)
+                    final_thumbnail_result = thumbnail_result
+
+                self._update_stage(
+                    ImportWorkflowStage.DATABASE_STORAGE, "Storing import results..."
+                )
+                stored_models = self._store_in_database(session, processed_files)
+
+                analysis_result = None
+                if self.run_analysis and stored_models:
+                    analysis_result = self._queue_analysis(stored_models)
+                    final_analysis_result = analysis_result
+
+                import_result = self.file_manager.complete_import_session(session, True)
+                final_import_result = import_result
+
+                overall_imports += import_result.processed_files
+                overall_failed += import_result.failed_files
+                overall_skipped += import_result.skipped_files
+                overall_duplicates += import_result.duplicate_count
+
             total_duration = time.time() - self.start_time
 
-            # Create final result
             final_result = ImportCoordinatorResult(
-                success=True,
-                import_result=import_result,
-                thumbnail_result=thumbnail_result,
-                analysis_result=analysis_result,
+                success=not self.cancellation_token.is_cancelled(),
+                import_result=final_import_result,
+                thumbnail_result=final_thumbnail_result,
+                analysis_result=final_analysis_result,
                 total_duration_seconds=total_duration,
-                models_imported=import_result.processed_files,
-                models_failed=import_result.failed_files,
-                models_skipped=import_result.skipped_files,
-                duplicates_detected=import_result.duplicate_count,
+                models_imported=overall_imports,
+                models_failed=overall_failed,
+                models_skipped=overall_skipped,
+                duplicates_detected=overall_duplicates,
             )
 
-            self._update_stage(ImportWorkflowStage.COMPLETED, "Import completed successfully")
-            self.import_completed.emit(final_result)
+            if self.cancellation_token.is_cancelled():
+                self._update_stage(ImportWorkflowStage.CANCELLED, "Import cancelled")
+                self.import_failed.emit("Import cancelled")
+            else:
+                self._update_stage(ImportWorkflowStage.COMPLETED, "Import completed successfully")
+                self.import_completed.emit(final_result)
 
-            # Cleanup
             gc.collect()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -257,11 +304,11 @@ class ImportCoordinatorWorker(QThread):
             self.import_failed.emit(f"Validation error: {e}")
             return False
 
-    def _start_import_session(self) -> Optional[ImportSession]:
+    def _start_import_session(self, batch_paths: Optional[List[str]] = None) -> Optional[ImportSession]:
         """Start a new import session."""
         try:
             success, error, session = self.file_manager.start_import_session(
-                self.file_paths, self.mode, self.root_directory, self.duplicate_action
+                batch_paths or self.file_paths, self.mode, self.root_directory, self.duplicate_action
             )
 
             if not success:
@@ -275,7 +322,9 @@ class ImportCoordinatorWorker(QThread):
             self.import_failed.emit(f"Session start error: {e}")
             return None
 
-    def _process_files(self, session: ImportSession) -> List[ImportFileInfo]:
+    def _process_files(
+        self, session: ImportSession, processed_global_index: int, total_files_all: int
+    ) -> List[ImportFileInfo]:
         """Process all files in the session."""
         self._update_stage(ImportWorkflowStage.HASHING, "Processing files...")
 
@@ -290,11 +339,12 @@ class ImportCoordinatorWorker(QThread):
 
             # Create progress callback
             def file_progress(message: str, percent: int) -> None:
+                overall_idx = processed_global_index + idx
                 progress = ImportProgress(
                     stage=ImportWorkflowStage.HASHING,
-                    overall_percent=(idx / total_files) * 100,
-                    current_file_index=idx + 1,
-                    total_files=total_files,
+                    overall_percent=((overall_idx) / max(total_files_all, 1)) * 100,
+                    current_file_index=overall_idx + 1,
+                    total_files=total_files_all,
                     current_file_name=file_name,
                     stage_message=message,
                     stage_percent=percent,
@@ -575,6 +625,8 @@ class ImportCoordinator(QObject):
     import_completed = Signal(object)  # ImportCoordinatorResult
     import_failed = Signal(str)  # error_message
 
+    PENDING_KEY = "import/pending_batches"
+
     def __init__(self, parent=None) -> None:
         """
         Initialize the import coordinator.
@@ -600,6 +652,40 @@ class ImportCoordinator(QObject):
         }
 
         self.logger.info("ImportCoordinator initialized")
+
+    @staticmethod
+    def _load_pending_batches() -> list[list[str]]:
+        try:
+            from PySide6.QtCore import QSettings
+            import json
+
+            settings = QSettings()
+            raw = settings.value(ImportCoordinator.PENDING_KEY, "[]", type=str) or "[]"
+            batches = json.loads(raw)
+            # Ensure list of lists of strings
+            sanitized: list[list[str]] = []
+            for batch in batches:
+                if isinstance(batch, list):
+                    sanitized.append([str(p) for p in batch])
+            return sanitized
+        except Exception:
+            return []
+
+    @staticmethod
+    def _save_pending_batches(batches: list[list[str]]) -> None:
+        try:
+            from PySide6.QtCore import QSettings
+            import json
+
+            settings = QSettings()
+            settings.setValue(ImportCoordinator.PENDING_KEY, json.dumps(batches))
+        except Exception:
+            pass
+
+    @staticmethod
+    def pending_batch_count() -> int:
+        """Helper to expose pending batch count for UI display."""
+        return len(ImportCoordinator._load_pending_batches())
 
     def start_import(
         self,
@@ -636,9 +722,24 @@ class ImportCoordinator(QObject):
             # Create cancellation token
             self._cancellation_token = CancellationToken()
 
-            # Create and configure worker
+            # Split into batches respecting MAX_IMPORT_FILES
+            try:
+                from src.core.import_file_manager import ImportFileManager
+
+                cap = ImportFileManager.MAX_IMPORT_FILES
+            except Exception:
+                cap = 500
+
+            paths = list(file_paths)
+            batches: list[list[str]] = [paths[i : i + cap] for i in range(0, len(paths), cap)] or [paths]
+
+            # Persist any remaining batches beyond the first
+            pending_batches = batches[1:] if len(batches) > 1 else []
+            self._save_pending_batches(pending_batches)
+
+            # Create and configure worker for the first/current batch
             self._worker = ImportCoordinatorWorker(
-                file_paths=file_paths,
+                file_paths=batches[0],
                 mode=mode,
                 root_directory=root_directory,
                 generate_thumbnails=generate_thumbnails,
@@ -659,7 +760,12 @@ class ImportCoordinator(QObject):
 
             self._stats["total_imports"] += 1
 
-            self.logger.info("Started coordinated import of %s files", len(file_paths))
+            self.logger.info(
+                "Started coordinated import of %s files (batch size %s, pending batches: %s)",
+                len(file_paths),
+                len(batches[0]),
+                len(pending_batches),
+            )
             return True
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

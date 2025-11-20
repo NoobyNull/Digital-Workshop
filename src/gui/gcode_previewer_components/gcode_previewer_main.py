@@ -29,6 +29,7 @@ from PySide6.QtCore import Qt, Signal, QThread, QUrl
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.services.tab_data_manager import TabDataManager
+from src.core.materials import wood_catalog
 from src.core.kinematics.gcode_timing import analyze_gcode_moves
 from src.gui.widgets.add_tool_dialog import AddToolDialog
 from src.gui.dialogs.tool_snapshot_dialog import ToolSnapshotDialog
@@ -119,6 +120,7 @@ class GcodePreviewerWidget(QWidget):
     """Main widget for G-code preview and visualization."""
 
     gcode_loaded = Signal(str)  # Emits filepath when G-code is loaded
+    piece_material_changed = Signal(str, str)  # Emits piece name, material
 
     def __init__(self, parent: Optional[QWidget] = None, use_external_tools: bool = False) -> None:
         """Initialize the G-code previewer widget.
@@ -184,6 +186,8 @@ class GcodePreviewerWidget(QWidget):
         self._line_to_move_index: Dict[int, int] = {}
         self._suppress_editor_sync = False
         self._suppress_camera_checkbox = False
+        self._suppress_material_sync = False
+        self._material_signal_connected = False
         self._editor_reload_connected = False
         self._editor_line_connected = False
         self._snapshot_add_connected = False
@@ -202,9 +206,15 @@ class GcodePreviewerWidget(QWidget):
         # timing results can be cached per-project and per-file.
         self.current_operation_id: Optional[str] = None
         self.current_version_id: Optional[int] = None
+        self.current_piece_name: str = ""
+        self._current_piece_material: str = ""
+        self._cutlist_adapter = None
+        self._material_choices: list[str] = list(wood_catalog.all_material_names())
 
         self._init_ui()
         self._connect_signals()
+        if self.tools_widget:
+            self.tools_widget.set_material_choices(self._material_choices)
         self.logger.info("G-code Previewer Widget initialized")
 
     def set_current_project(self, project_id: str) -> None:
@@ -253,6 +263,27 @@ class GcodePreviewerWidget(QWidget):
         # timing summary reflects the newly selected project.
         if self.moves:
             self._start_timing_job()
+
+    def set_cutlist_adapter(self, adapter) -> None:
+        """Connect to the cut list widget for material synchronization."""
+        self._cutlist_adapter = adapter
+        try:
+            if hasattr(adapter, "material_names"):
+                self._material_choices = list(getattr(adapter, "material_names") or [])
+        except Exception:
+            pass
+        if getattr(adapter, "piece_material_changed", None):
+            try:
+                adapter.piece_material_changed.connect(self._on_cutlist_material_changed)
+            except Exception:  # pragma: no cover - best effort
+                self.logger.debug("Could not connect cut list material signal", exc_info=True)
+        if self.tools_widget:
+            try:
+                self.tools_widget.set_material_choices(self._material_choices)
+            except Exception:
+                self.logger.debug("Could not update material choices for tools widget", exc_info=True)
+        # Refresh material display if a file is already loaded
+        self._sync_material_from_cutlist()
 
     def save_to_project(self) -> None:
         """Save G-code timing summary and tool selection to the current project."""
@@ -461,6 +492,12 @@ class GcodePreviewerWidget(QWidget):
             self.interactive_loader.progress_updated.connect(self._on_loader_progress_updated)
             self.interactive_loader.error_occurred.connect(self._on_loader_error)
 
+        # Connect color pickers for path visualization
+        if getattr(self.tools_widget, "cut_color_changed", None):
+            self.tools_widget.cut_color_changed.connect(self._on_cut_color_changed)
+        if getattr(self.tools_widget, "ahead_color_changed", None):
+            self.tools_widget.ahead_color_changed.connect(self._on_ahead_color_changed)
+
         # Connect editor signals
         if self.editor:
             if self._editor_reload_connected:
@@ -539,6 +576,15 @@ class GcodePreviewerWidget(QWidget):
                 self._file_saved_connected = False
             self.tools_widget.file_saved.connect(self._on_editor_file_saved)
             self._file_saved_connected = True
+
+        if getattr(self.tools_widget, "material_changed", None):
+            if self._material_signal_connected:
+                try:
+                    self.tools_widget.material_changed.disconnect(self._on_material_changed)
+                except (TypeError, RuntimeError):
+                    pass
+            self.tools_widget.material_changed.connect(self._on_material_changed)
+            self._material_signal_connected = True
 
         # Connect visualization controls
         if self.viz_mode_combo is not None:
@@ -905,6 +951,10 @@ class GcodePreviewerWidget(QWidget):
     def load_gcode_file(self, filepath: str) -> None:
         """Load and display a G-code file in background thread."""
         try:
+            # Stop any running simulation before switching files
+            if self.animation_controller.get_state() == PlaybackState.PLAYING:
+                self._on_stop()
+
             # Validate path first (quick operation)
             validated_path = self._validate_file_path(filepath)
             if not validated_path:
@@ -928,10 +978,12 @@ class GcodePreviewerWidget(QWidget):
             self._show_status_message(info_text)
 
             self.current_file = validated_path
+            self.current_piece_name = file_path.stem
             self.moves = []
             self._line_to_move_index = {}
             self._camera_fit_done = False
             self._update_loader_summary_panel()
+            self._sync_material_from_cutlist()
 
             # Clear renderer (quick operation)
             self.renderer.clear_incremental()
@@ -1179,6 +1231,61 @@ class GcodePreviewerWidget(QWidget):
             parts.append(str(vendor))
 
         self.tool_label.setText(" - ".join(parts))
+
+    def _normalize_piece_name(self, name: Optional[str]) -> str:
+        return (name or "").strip().lower()
+
+    def _update_material_display(self, material: str) -> None:
+        """Update tools panel with current material text."""
+        self._current_piece_material = material or ""
+        if self.tools_widget:
+            try:
+                self.tools_widget.set_material_value(self._current_piece_material)
+            except Exception:
+                self.logger.debug("Failed to set material display", exc_info=True)
+
+    def _sync_material_from_cutlist(self) -> None:
+        """Fetch material for the current piece from the cut list adapter."""
+        if not self.current_piece_name:
+            self._update_material_display("")
+            return
+        material = ""
+        if self._cutlist_adapter and hasattr(self._cutlist_adapter, "get_piece_material_by_name"):
+            try:
+                material = self._cutlist_adapter.get_piece_material_by_name(self.current_piece_name)
+            except Exception:
+                self.logger.debug("Failed to get material from cut list", exc_info=True)
+        self._update_material_display(material)
+
+    def _on_material_changed(self, text: str) -> None:
+        """Handle material edits in the tools panel."""
+        if self._suppress_material_sync:
+            return
+        self._current_piece_material = text.strip()
+        piece_name = self.current_piece_name
+        if piece_name and self._cutlist_adapter and hasattr(
+            self._cutlist_adapter, "set_piece_material_by_name"
+        ):
+            try:
+                self._cutlist_adapter.set_piece_material_by_name(
+                    piece_name, self._current_piece_material, emit_signal=False
+                )
+            except Exception:  # pragma: no cover - best effort
+                self.logger.debug("Failed to push material to cut list", exc_info=True)
+        if piece_name:
+            self.piece_material_changed.emit(piece_name, self._current_piece_material)
+
+    def _on_cutlist_material_changed(self, piece_name: str, material: str) -> None:
+        """React to material changes coming from the cut list widget."""
+        if not piece_name:
+            return
+        if self._normalize_piece_name(piece_name) != self._normalize_piece_name(
+            self.current_piece_name
+        ):
+            return
+        self._suppress_material_sync = True
+        self._update_material_display(material)
+        self._suppress_material_sync = False
 
     def _refresh_tool_label_for_current_version(self) -> None:
         """Refresh tool label and snapshots table for the current version."""
@@ -1743,9 +1850,9 @@ class GcodePreviewerWidget(QWidget):
         if self.timeline:
             self.timeline.set_current_frame(frame)
 
-        # Update visualization to show moves up to current frame
-        moves_to_show = self.animation_controller.get_moves_up_to_frame(frame)
-        self.renderer.render_toolpath(moves_to_show)
+        # Update visualization without rebuilding geometry
+        self.renderer.update_cut_progress(frame)
+        self.renderer.update_toolhead_position(self.animation_controller.get_current_move())
         self._apply_layer_filters()
         self.vtk_widget.update_render()
         self._highlight_editor_for_frame(frame)
@@ -1769,7 +1876,8 @@ class GcodePreviewerWidget(QWidget):
             actor = self.feed_speed_visualizer.create_spindle_speed_visualization(self.moves)
             self.visualization_mode = "spindle_speed"
         else:
-            self.renderer.render_toolpath(self.moves)
+            self.renderer.prepare_full_path(self.moves, fit_camera=False)
+            self.renderer.update_cut_progress(len(self.moves))
             self.visualization_mode = "default"
             self._apply_layer_filters()
             self.vtk_widget.update_render()
@@ -1788,7 +1896,8 @@ class GcodePreviewerWidget(QWidget):
 
         layer = self.layer_analyzer.get_layers()[index]
         moves = self.layer_analyzer.get_moves_for_layer(layer.layer_number, self.moves)
-        self.renderer.render_toolpath(moves)
+        self.renderer.prepare_full_path(moves, fit_camera=False)
+        self.renderer.update_cut_progress(len(moves))
         self._apply_layer_filters()
         self.vtk_widget.update_render()
 
@@ -1796,7 +1905,8 @@ class GcodePreviewerWidget(QWidget):
         """Show all layers."""
         if self.layer_combo is not None:
             self.layer_combo.setCurrentIndex(-1)
-        self.renderer.render_toolpath(self.moves)
+        self.renderer.prepare_full_path(self.moves, fit_camera=False)
+        self.renderer.update_cut_progress(len(self.moves))
         self._apply_layer_filters()
         self.vtk_widget.update_render()
 
@@ -1808,7 +1918,7 @@ class GcodePreviewerWidget(QWidget):
             "cut": "cutting",
             "rapids": "rapid",
             "tool_change": "tool_change",
-            "not_cut": "arc",
+            "not_cut": "ahead",
         }
         move_key = mapping.get(key)
         if move_key:
@@ -1817,6 +1927,22 @@ class GcodePreviewerWidget(QWidget):
             finally:
                 if self.vtk_widget:
                     self.vtk_widget.update_render()
+
+    def _on_cut_color_changed(self, color: tuple) -> None:
+        if not self.renderer:
+            return
+        self.renderer.set_cut_colors(cut=color)
+        self.renderer.update_cut_progress(self.animation_controller.current_frame)
+        if self.vtk_widget:
+            self.vtk_widget.update_render()
+
+    def _on_ahead_color_changed(self, color: tuple) -> None:
+        if not self.renderer:
+            return
+        self.renderer.set_cut_colors(ahead=color)
+        self.renderer.update_cut_progress(self.animation_controller.current_frame)
+        if self.vtk_widget:
+            self.vtk_widget.update_render()
 
     def _apply_layer_filters(self) -> None:
         """Apply current layer filter checkboxes to the renderer actors."""
@@ -1887,7 +2013,8 @@ class GcodePreviewerWidget(QWidget):
             self._update_layer_combo()
 
             # Re-render
-            self.renderer.render_toolpath(self.moves, fit_camera=True)
+            self.renderer.prepare_full_path(self.moves, fit_camera=True)
+            self.renderer.update_cut_progress(-1)
             self.vtk_widget.update_render()
             self._camera_fit_done = True
 
@@ -2064,21 +2191,15 @@ class GcodePreviewerWidget(QWidget):
         # Update moves table
         self._update_moves_table()
 
-        # Ensure final incremental actors are built before we adjust camera/axes
-        self.renderer.update_incremental_actors()
-
-        # Add axes and optionally fit once per load
-        self.renderer.add_axes()
+        # Build the persistent path once and keep it for playback
         fit_needed = not self._camera_fit_done
-        if fit_needed:
-            try:
-                self.renderer.renderer.ResetCamera()
-                self.renderer.renderer.ResetCameraClippingRange()
-            except Exception:
-                pass
-            self._camera_fit_done = True
+        self.renderer.prepare_full_path(self.moves, fit_camera=fit_needed)
+        self.renderer.update_cut_progress(-1)
+        self.renderer.add_axes()
         self._apply_layer_filters()
         self.vtk_widget.update_render()
+        if fit_needed:
+            self._camera_fit_done = True
 
         if self.progress_bar is not None:
             self.progress_bar.setValue(100)

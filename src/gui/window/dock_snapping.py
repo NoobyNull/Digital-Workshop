@@ -137,6 +137,13 @@ class DockDragHandler(QObject):
             et = event.type()
             if et == QEvent.MouseButtonPress:
                 if not getattr(self._mw, "layout_edit_mode", False):
+                    try:
+                        self._logger.debug(
+                            "Dock drag ignored because layout edit mode is locked for %s",
+                            self._dock.windowTitle(),
+                        )
+                    except Exception:
+                        pass
                     return False
                 # Begin potential drag tracking when user interacts with dock.
                 self._tracking = True
@@ -157,6 +164,14 @@ class DockDragHandler(QObject):
             self._overlay.show_overlays()
             edge = self._nearest_edge_to_cursor()
             self._overlay.set_active(edge)
+            try:
+                self._logger.debug(
+                    "Dock '%s' dragging over edge=%s (layout edit mode enabled)",
+                    self._dock.windowTitle(),
+                    edge,
+                )
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -184,6 +199,12 @@ class DockDragHandler(QObject):
 
             # Perform snap
             self._mw._snap_dock_to_edge(self._dock, edge)
+            try:
+                self._logger.debug(
+                    "Dock '%s' snapped to %s", self._dock.windowTitle(), edge
+                )
+            except Exception:
+                pass
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
                 self._logger.warning("Snap finalize failed: %s", e)
@@ -217,20 +238,23 @@ class DockDragHandler(QObject):
         pos = QCursor.pos()
         # Use main window frame geometry to compare in global coords
         rect = self._mw.frameGeometry()
-        if not rect.contains(pos):
+        inside = rect.contains(pos)
+        if not inside:
             # Allow a small outside tolerance
             grown = rect.adjusted(
                 -self.SNAP_MARGIN, -self.SNAP_MARGIN, self.SNAP_MARGIN, self.SNAP_MARGIN
             )
             if not grown.contains(pos):
                 return None
+
         # distances
         d_left = abs(pos.x() - rect.left())
         d_right = abs(rect.right() - pos.x())
         d_top = abs(pos.y() - rect.top())
         d_bottom = abs(rect.bottom() - pos.y())
         d_min = min(d_left, d_right, d_top, d_bottom)
-        if d_min > self.SNAP_MARGIN:
+        # If cursor is inside the window, allow snapping even if farther than SNAP_MARGIN
+        if d_min > self.SNAP_MARGIN and not inside:
             return None
         if d_min == d_left:
             return "left"

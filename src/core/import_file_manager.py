@@ -123,6 +123,7 @@ class ImportFileManager:
     }
 
     ARCHIVE_EXTENSIONS = {".zip"}
+    MAX_IMPORT_FILES = 500  # Hard cap to force batching imports
 
     def __init__(self) -> None:
         """Initialize the import file manager."""
@@ -132,6 +133,7 @@ class ImportFileManager:
         self.file_type_filter = FileTypeFilter()
         self._active_session: Optional[ImportSession] = None
         self._session_lock = Lock()
+        self._imported_path_hashes: set[str] = set()
 
         self._log_json(
             "file_manager_initialized",
@@ -422,6 +424,20 @@ class ImportFileManager:
 
         prepared_entries = self._prepare_import_entries(file_paths, session)
 
+        # Enforce hard cap to avoid UI and OS picker limits when users select huge batches.
+        if len(prepared_entries) > self.MAX_IMPORT_FILES:
+            self.logger.warning(
+                "Import request exceeds hard cap: %d > %d. Prompting user to batch imports.",
+                len(prepared_entries),
+                self.MAX_IMPORT_FILES,
+            )
+            return (
+                False,
+                f"Too many files selected ({len(prepared_entries)}). "
+                f"Import up to {self.MAX_IMPORT_FILES} files at a time.",
+                None,
+            )
+
         # Create file info for each file
         security_logger = SecurityEventLogger()
 
@@ -450,6 +466,18 @@ class ImportFileManager:
 
                 path = Path(file_path)
                 if path.exists() and path.is_file():
+                    normalized = str(path).lower()
+                    # Use a deterministic path hash to de-dup within the session.
+                    # FastHasher is optimized for files; for paths we use xxhash directly.
+                    import xxhash
+
+                    path_hash = xxhash.xxh128(normalized.encode("utf-8")).hexdigest()
+
+                    # Skip files we already imported in this app session
+                    if path_hash in self._imported_path_hashes:
+                        self.logger.info("Skipping already imported file: %s", file_path)
+                        continue
+
                     file_info = ImportFileInfo(
                         original_path=file_path,
                         file_size=path.stat().st_size,
@@ -457,6 +485,7 @@ class ImportFileManager:
                         source_origin=source_origin,
                     )
                     session.files.append(file_info)
+                    self._imported_path_hashes.add(path_hash)
                 else:
                     self.logger.warning("File not found or not accessible: %s", file_path)
             except (OSError, IOError) as e:

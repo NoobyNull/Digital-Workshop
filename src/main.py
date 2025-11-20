@@ -111,6 +111,18 @@ Examples:
         help=argparse.SUPPRESS,
     )
 
+    # Settings import/export
+    parser.add_argument(
+        "--export-settings",
+        metavar="OUTFILE",
+        help="Export all QSettings values to the specified JSON file and exit",
+    )
+    parser.add_argument(
+        "--import-settings",
+        metavar="INFILE",
+        help="Import QSettings values from the specified JSON file and exit (no UI launch)",
+    )
+
     return parser.parse_args()
 
 
@@ -157,6 +169,68 @@ def _confirm_nuclear_reset_with_timeout(timeout_seconds: int = 5) -> bool:
 
     print("\nProceeding with nuclear reset...")
     return True
+
+
+def _init_qsettings_for_cli(config: ApplicationConfig):
+    """Initialize QSettings for CLI-only operations (no UI launch)."""
+    from pathlib import Path
+    from PySide6.QtCore import QCoreApplication, QSettings
+
+    app = QCoreApplication.instance() or QCoreApplication([])
+    QCoreApplication.setOrganizationName(config.organization_name)
+    QCoreApplication.setApplicationName(config.name)
+    if getattr(config, "organization_domain", None):
+        QCoreApplication.setOrganizationDomain(config.organization_domain)
+
+    if os.getenv("USE_MEMORY_DB", "false").lower() == "true":
+        import tempfile
+
+        temp_dir = Path(tempfile.gettempdir()) / "digital_workshop_dev"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, str(temp_dir))
+        QSettings.setDefaultFormat(QSettings.IniFormat)
+
+    return QSettings()
+
+
+def _export_settings(config: ApplicationConfig, outfile: str) -> int:
+    """Export all QSettings keys to a JSON file."""
+    import json
+    from pathlib import Path
+
+    try:
+        settings = _init_qsettings_for_cli(config)
+        data = {key: settings.value(key) for key in settings.allKeys()}
+        Path(outfile).parent.mkdir(parents=True, exist_ok=True)
+        Path(outfile).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        print(f"Wrote {len(data)} settings to {outfile}")
+        return 0
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to export settings: {exc}")
+        return 1
+
+
+def _import_settings(config: ApplicationConfig, infile: str) -> int:
+    """Import QSettings keys from a JSON file."""
+    import json
+    from pathlib import Path
+
+    try:
+        payload = json.loads(Path(infile).read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to read settings file: {exc}")
+        return 1
+
+    try:
+        settings = _init_qsettings_for_cli(config)
+        for key, value in payload.items():
+            settings.setValue(key, value)
+        settings.sync()
+        print(f"Imported {len(payload)} settings from {infile}")
+        return 0
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to import settings: {exc}")
+        return 1
 
 
 def main() -> None:
@@ -227,38 +301,31 @@ def main() -> None:
             return 0
 
         logger.warning(
-            "Scheduling nuclear reset in background process (backup %s)",
+            "Executing nuclear reset directly (backup %s); application will not launch.",
             "DISABLED" if not create_backup else "ENABLED",
         )
 
-        # Build command for background worker process
-        cmd = [sys.executable, os.path.abspath(__file__)]
-        if getattr(args, "nuke_no_backup", False):
-            cmd.append("--nuke-no-backup")
-        cmd.append("--nuke-exec")
+        reset_handler = NuclearReset()
+        results = reset_handler.execute_nuclear_reset(create_backup=create_backup)
 
-        try:
-            creationflags = 0
-            if os.name == "nt":
-                creationflags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(
-                    subprocess, "CREATE_NEW_PROCESS_GROUP", 0
-                )
-
-            subprocess.Popen(
-                cmd,
-                close_fds=True,
-                creationflags=creationflags,
-                cwd=os.path.dirname(os.path.abspath(__file__)),
+        if results.get("success"):
+            logger.warning(
+                "Nuclear reset completed successfully. Directories deleted: %s, files deleted: %s",
+                results.get("directories_deleted", 0),
+                results.get("files_deleted", 0),
             )
-            logger.warning("Background nuclear reset process started.")
-        except Exception as exc:
-            logger.error(
-                "Failed to start background nuclear reset process: %s", exc, exc_info=True
-            )
-            return 1
+            backup_info = "YES" if results.get("backup_created") else "NO"
+            logger.warning("Nuclear reset backup created: %s", backup_info)
+            if results.get("backup_path"):
+                logger.warning("Nuclear reset backup path: %s", results["backup_path"])
+            return 0
 
-        # Launcher process can exit immediately after scheduling the reset
-        return 0
+        errors = results.get("errors") or []
+        if errors:
+            logger.error("Nuclear reset failed with errors: %s", "; ".join(errors))
+        else:
+            logger.error("Nuclear reset failed for unknown reasons.")
+        return 1
 
     # Set environment variable for in-memory database if --mem-only flag is used
     if args.mem_only:
@@ -275,6 +342,12 @@ def main() -> None:
         log_human_readable=args.log_human,
         logging_profile=profile,
     )
+
+    # Handle settings import/export before launching the UI
+    if args.export_settings:
+        return _export_settings(config, args.export_settings)
+    if args.import_settings:
+        return _import_settings(config, args.import_settings)
 
     exception_handler = ExceptionHandler()
     app = None

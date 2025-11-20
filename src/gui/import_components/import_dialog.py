@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QGroupBox,
     QRadioButton,
+    QComboBox,
     QTextEdit,
     QFileDialog,
     QMessageBox,
@@ -60,6 +61,8 @@ from src.core.import_file_manager import (
 )
 from src.core.import_thumbnail_service import ImportThumbnailService
 from src.core.import_analysis_service import ImportAnalysisService
+from src.core.import_coordinator import ImportCoordinator
+from src.gui.services.ai_description_service import AIDescriptionService
 from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 from src.gui.workers.folder_scan_worker import FolderScanWorker
 from src.gui.background_tasks.import_background_monitor import ImportBackgroundMonitor
@@ -262,6 +265,11 @@ class ImportWorker(QThread):
 
             # Create coordinator and generate thumbnails
             coordinator = ThumbnailGenerationCoordinator()
+            # Capture generated thumbnail paths for downstream tagging.
+            captured: List[Tuple[str, str]] = []
+            coordinator.thumbnail_generated.connect(
+                lambda file_path, thumb_path: captured.append((file_path, thumb_path))
+            )
             coordinator.generate_thumbnails(
                 file_info_list=files_to_process,
                 background=background,
@@ -270,6 +278,7 @@ class ImportWorker(QThread):
 
             # Wait for completion
             coordinator.wait_for_completion()
+            self.generated_thumbnails = captured
 
             self.logger.info("Thumbnail generation completed")
 
@@ -305,6 +314,7 @@ class PipelineImportWorker(QThread):
         root_directory: Optional[str],
         generate_thumbnails: bool,
         run_analysis: bool,
+        concurrency_mode: str,
     ):
         """Initialize pipeline import worker."""
         super().__init__()
@@ -313,6 +323,8 @@ class PipelineImportWorker(QThread):
         self.root_directory = root_directory
         self.generate_thumbnails = generate_thumbnails
         self.run_analysis = run_analysis
+        self.concurrency_mode = concurrency_mode if concurrency_mode in ("serial", "concurrent") else "serial"
+        self.generated_thumbnails: List[Tuple[str, str]] = []
 
         self.logger = get_logger(__name__)
 
@@ -371,13 +383,19 @@ class PipelineImportWorker(QThread):
                 self._cancel_requested,
             )
 
-            concurrency = self.import_settings.get_concurrency()
-            self.logger.info(
-                "Preparing %d files with up to %s workers",
-                total_files,
-                concurrency.prep_workers,
-            )
-            prepared_count = self._prepare_files_concurrently(session, concurrency.prep_workers)
+            if self.concurrency_mode == "serial":
+                prep_workers = 1
+                self.logger.info("Preparing %d files in SERIAL mode (1 worker)", total_files)
+            else:
+                concurrency = self.import_settings.get_concurrency()
+                prep_workers = concurrency.prep_workers
+                self.logger.info(
+                    "Preparing %d files with up to %s workers (concurrent mode)",
+                    total_files,
+                    prep_workers,
+                )
+
+            prepared_count = self._prepare_files_concurrently(session, prep_workers)
 
             if self._cancel_requested:
                 self.logger.info("Import cancelled during file preparation")
@@ -392,7 +410,16 @@ class PipelineImportWorker(QThread):
             # Create pipeline
             db_manager = get_database_manager()
             thumbnail_generator = ThumbnailGenerator()
-            pipeline_workers = max(1, min(concurrency.queue_limit, concurrency.thumbnail_workers))
+            if self.concurrency_mode == "serial":
+                pipeline_workers = 1
+            else:
+                pipeline_workers = max(
+                    1,
+                    min(
+                        concurrency.queue_limit,
+                        concurrency.thumbnail_workers,
+                    ),
+                )
             pipeline = create_pipeline(
                 db_manager,
                 thumbnail_generator,
@@ -625,16 +652,44 @@ class ImportDialog(QDialog):
         self._managed_mode_confirmed = False
         self._background_monitor = None
         self._background_mode = False
+        self.pending_label = QLabel("")
+        self.pending_label.setVisible(False)
+        self.pending_button = QPushButton("Import Pending")
+        self.pending_button.setVisible(False)
+        self._last_plain_log_message: Optional[str] = None
+        self._file_start_times: dict[str, float] = {}
+        self.import_settings = ImportSettings()
+        self._concurrency_mode: str = self.import_settings.get_mode()
 
         # Setup UI
         self._setup_ui()
         self._connect_signals()
+        self._apply_concurrency_mode_ui(self._concurrency_mode)
         self._apply_library_preferences()
+        self._update_pending_label()
 
         # Enable drag and drop
         self.setAcceptDrops(True)
 
         self.logger.info("ImportDialog initialized")
+
+    def _apply_concurrency_mode_ui(self, mode: str) -> None:
+        """Sync the concurrency combo to the given mode."""
+        mode = mode if mode in ("serial", "concurrent") else "serial"
+        self._concurrency_mode = mode
+        if hasattr(self, "concurrency_combo"):
+            idx = self.concurrency_combo.findData(mode)
+            if idx >= 0:
+                self.concurrency_combo.setCurrentIndex(idx)
+
+    def _on_concurrency_changed(self, mode: str) -> None:
+        """Persist user-selected concurrency mode."""
+        mode = mode if mode in ("serial", "concurrent") else "serial"
+        self._concurrency_mode = mode
+        try:
+            self.import_settings.set_mode(mode)
+        except Exception:
+            self.logger.debug("Failed to persist concurrency mode")
 
     def _apply_library_preferences(self) -> None:
         """Initialize mode/root directory from global library settings.
@@ -839,6 +894,35 @@ class ImportDialog(QDialog):
         self.run_analysis_check.setToolTip("Analyze model geometry in the background after import")
         layout.addWidget(self.run_analysis_check)
 
+        layout.addSpacing(8)
+        concurrency_label = QLabel("Execution Mode:")
+        layout.addWidget(concurrency_label)
+
+        self.concurrency_combo = QComboBox()
+        self.concurrency_combo.addItem("Serial (safer for drag/drop)", "serial")
+        self.concurrency_combo.addItem("Concurrent (faster for folders)", "concurrent")
+        layout.addWidget(self.concurrency_combo)
+
+        self.enable_ai_tagging_check = QCheckBox("Enable AI auto-tagging after thumbnails")
+        self.enable_ai_tagging_check.setToolTip(
+            "Submit generated thumbnails to the AI description service to suggest tags/keywords."
+        )
+        settings = QSettings()
+        self.enable_ai_tagging_check.setChecked(
+            settings.value("ai/auto_tag_import", False, type=bool)
+        )
+        # Keep UI changes reflected in preferences
+        self.enable_ai_tagging_check.toggled.connect(
+            lambda checked: settings.setValue("ai/auto_tag_import", bool(checked))
+        )
+        layout.addWidget(self.enable_ai_tagging_check)
+        warning = QLabel(
+            '<span style="color:#c00; font-weight:bold;">Note:</span> AI calls may incur charges from your '
+            "provider. For cost control, prefer a self-hosted model such as Ollama."
+        )
+        warning.setWordWrap(True)
+        layout.addWidget(warning)
+
         return group
 
     def _create_progress_section(self) -> QGroupBox:
@@ -870,6 +954,13 @@ class ImportDialog(QDialog):
         self.file_progress_bar.setTextVisible(True)
         file_layout.addWidget(self.file_progress_bar, 1)
         layout.addLayout(file_layout)
+
+        # Pending batch status
+        pending_layout = QHBoxLayout()
+        pending_layout.addWidget(self.pending_label, 1)
+        self.pending_button.setMaximumWidth(150)
+        pending_layout.addWidget(self.pending_button)
+        layout.addLayout(pending_layout)
 
         # Thumbnail generation status
         thumbnail_layout = QHBoxLayout()
@@ -947,8 +1038,12 @@ class ImportDialog(QDialog):
         self.root_dir_button.clicked.connect(self._on_select_root_directory)
 
         self.import_button.clicked.connect(self._on_start_import)
+        self.pending_button.clicked.connect(self._start_pending_import)
         self.background_button.clicked.connect(self._send_to_background)
         self.cancel_button.clicked.connect(self._on_cancel)
+        self.concurrency_combo.currentIndexChanged.connect(
+            lambda _: self._on_concurrency_changed(self.concurrency_combo.currentData())
+        )
 
         # Update time elapsed timer
         self.time_timer = QTimer(self)
@@ -965,6 +1060,7 @@ class ImportDialog(QDialog):
         if file_dialog.exec():
             files = file_dialog.selectedFiles()
             self._add_files(files)
+            self._apply_concurrency_mode_ui("serial")
 
     def _on_add_folder(self) -> None:
         """Handle add folder button click."""
@@ -1031,6 +1127,10 @@ class ImportDialog(QDialog):
     def _on_folder_scan_completed(self, files: List[str]) -> None:
         """Handle completion of folder scan."""
         if self.folder_scan_dialog is not None:
+            try:
+                self.folder_scan_dialog.canceled.disconnect(self._on_folder_scan_dialog_canceled)
+            except Exception:
+                pass
             self.folder_scan_dialog.close()
             self.folder_scan_dialog = None
 
@@ -1038,6 +1138,7 @@ class ImportDialog(QDialog):
 
         if files:
             self._add_files(files)
+            self._apply_concurrency_mode_ui("concurrent")
             self._log_message(f"Found {len(files)} model files in folder")
         else:
             QMessageBox.warning(
@@ -1306,6 +1407,57 @@ class ImportDialog(QDialog):
         self.import_button.setEnabled(can_import and self.current_stage == ImportStage.IDLE)
         self.clear_button.setEnabled(len(self.selected_files) > 0)
 
+    def _update_pending_label(self) -> None:
+        """Update the pending import batches label/button visibility."""
+        try:
+            batch_count = ImportCoordinator.pending_batch_count()
+        except Exception as exc:
+            self.logger.warning("Unable to read pending batches: %s", exc)
+            batch_count = 0
+
+        has_pending = batch_count > 0
+        if has_pending:
+            self.pending_label.setText(f"Pending imports: {batch_count} batch(es) queued")
+        else:
+            self.pending_label.setText("")
+
+        self.pending_label.setVisible(has_pending)
+        self.pending_button.setVisible(has_pending)
+        self.pending_button.setEnabled(has_pending)
+
+    def _start_pending_import(self) -> None:
+        """Start the next set of pending imports, if any."""
+        if self.import_worker and self.import_worker.isRunning():
+            QMessageBox.information(
+                self,
+                "Import Running",
+                "Please wait for the current import to finish before starting pending batches.",
+            )
+            return
+
+        try:
+            batches = ImportCoordinator._load_pending_batches()
+        except Exception as exc:
+            self.logger.warning("Failed to load pending batches: %s", exc)
+            batches = []
+
+        if not batches:
+            QMessageBox.information(self, "No Pending Imports", "There are no pending batches to import.")
+            self._update_pending_label()
+            return
+
+        # Flatten so the standard start flow can re-slice and re-persist.
+        files = [path for batch in batches for path in batch]
+        remaining = batches[1:] if len(batches) > 1 else []
+        ImportCoordinator._save_pending_batches(remaining)
+        self._update_pending_label()
+
+        # Replace the current selection with the pending batch contents.
+        self.selected_files.clear()
+        self.file_list.clear()
+        self._add_files(files)
+        self._on_start_import()
+
     def _on_start_import(self) -> None:
         """Start the import process."""
         # Validate settings
@@ -1322,6 +1474,10 @@ class ImportDialog(QDialog):
         # Confirm import
         file_count = len(self.selected_files)
         total_size = sum(Path(f).stat().st_size for f in self.selected_files) / (1024 * 1024)
+        try:
+            cap = int(getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)) or 500
+        except Exception:
+            cap = 500
 
         msg = (
             f"Import {file_count} file(s) ({total_size:.2f} MB)?\n\n"
@@ -1333,6 +1489,11 @@ class ImportDialog(QDialog):
 
         msg += f"Generate Thumbnails: {'Yes' if self.generate_thumbnails_check.isChecked() else 'No'}\n"
         msg += f"Run Analysis: {'Yes' if self.run_analysis_check.isChecked() else 'No'}"
+        if file_count > cap:
+            msg += (
+                f"\n\nNote: Imports run in batches of {cap}. The first batch will start now and the "
+                f"remaining {file_count - cap} file(s) will stay queued as pending batches."
+            )
 
         reply = QMessageBox.question(self, "Confirm Import", msg, QMessageBox.Yes | QMessageBox.No)
 
@@ -1370,6 +1531,8 @@ class ImportDialog(QDialog):
 
         # Clear progress display
         self.progress_text.clear()
+        self._last_plain_log_message = None
+        self._file_start_times.clear()
         self.overall_progress_bar.setValue(0)
         self.file_progress_bar.setValue(0)
         self.thumbnail_progress_bar.setValue(0)
@@ -1381,6 +1544,25 @@ class ImportDialog(QDialog):
         # Move archive files (.zip) to the end of the queue and confirm handling with the user.
         self.selected_files = self._handle_archives(self.selected_files)
 
+        try:
+            cap = int(getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)) or 500
+        except Exception:
+            cap = 500
+
+        # Slice into batches and persist any remainder as pending.
+        paths = list(self.selected_files)
+        batches = [paths[i : i + cap] for i in range(0, len(paths), cap)] if paths else []
+        pending_batches = batches[1:] if len(batches) > 1 else []
+        ImportCoordinator._save_pending_batches(pending_batches)
+        self._update_pending_label()
+
+        if not batches:
+            QMessageBox.warning(self, "No Files", "No files available to import.")
+            self._reset_controls()
+            return
+
+        self.selected_files = batches[0]
+
         # Create and start worker
         mode = (
             FileManagementMode.KEEP_ORGANIZED
@@ -1389,6 +1571,10 @@ class ImportDialog(QDialog):
         )
         root_dir = self.root_dir_path.text() if mode == FileManagementMode.KEEP_ORGANIZED else None
 
+        # Capture current concurrency mode (UI could have been changed manually).
+        current_mode = self.concurrency_combo.currentData() or "serial"
+        self._concurrency_mode = current_mode if current_mode in ("serial", "concurrent") else "serial"
+
         # Use the new pipeline-based worker for complete import functionality
         self.import_worker = PipelineImportWorker(
             self.selected_files,
@@ -1396,6 +1582,7 @@ class ImportDialog(QDialog):
             root_dir,
             self.generate_thumbnails_check.isChecked(),
             self.run_analysis_check.isChecked(),
+            self._concurrency_mode,
         )
 
         # Connect worker signals
@@ -1429,11 +1616,30 @@ class ImportDialog(QDialog):
 
     def _on_file_progress(self, filename: str, percent: int, message: str) -> None:
         """Handle individual file progress update."""
+        import time
+
+        now = time.time()
+        started = self._file_start_times.get(filename)
+
+        # First sighting of this file: log start and record timestamp
+        if started is None:
+            self._file_start_times[filename] = now
+            self._log_message(f"{filename}: started")
+
+        # Only log on completion/failure to avoid spam
+        if percent >= 100 or "Completed" in message or "Failed" in message:
+            start_time = self._file_start_times.pop(filename, now)
+            elapsed = now - start_time
+            status = "completed" if percent >= 100 or "Completed" in message else "failed"
+            self._log_message(f"{filename}: {status} in {elapsed:.1f}s")
+
         self.file_progress_bar.setValue(percent)
-        self._log_message(f"{filename}: {message}")
 
     def _on_overall_progress(self, current: int, total: int, percent: int) -> None:
         """Handle overall progress update."""
+        # Reset per-file tracking when a new overall run starts indexing
+        if current == 0:
+            self._file_start_times.clear()
         self.overall_progress_bar.setValue(percent)
         self.progress_label.setText(f"{current} / {total}")
 
@@ -1586,8 +1792,12 @@ class ImportDialog(QDialog):
         self.thumbnail_status_label.setText("Complete")
         self.stage_label.setText("Completed")
         self.status_label.setText(f"Import completed: {result.processed_files} file(s) imported")
+        self._update_pending_label()
 
         # Show completion message
+        if self.enable_ai_tagging_check.isChecked():
+            self._run_ai_tagging(result)
+
         QMessageBox.information(
             self,
             "Import Complete",
@@ -1621,6 +1831,8 @@ class ImportDialog(QDialog):
         self._log_message(f"Import cancelled: {reason}{summary}")
         self.stage_label.setText("Cancelled")
         self.status_label.setText("Import cancelled")
+        self._update_pending_label()
+        self._file_start_times.clear()
 
         if self._background_mode:
             return
@@ -1644,11 +1856,67 @@ class ImportDialog(QDialog):
         self._log_message(f"\n❌ Import failed: {error_message}")
         self.stage_label.setText("Failed")
         self.status_label.setText("Import failed")
+        self._update_pending_label()
+        self._file_start_times.clear()
 
         QMessageBox.critical(self, "Import Failed", f"Import failed with error:\n\n{error_message}")
 
         # Re-enable controls
         self._reset_controls()
+
+    def _run_ai_tagging(self, result: ImportResult) -> None:
+        """Best-effort AI tagging using generated thumbnails."""
+        try:
+            ai_enabled = bool(QSettings().value("ai/auto_tag_import", False, type=bool))
+            if not ai_enabled:
+                return
+
+            db_manager = get_database_manager()
+            ai_service = AIDescriptionService()
+        except Exception as exc:
+            self._log_message(f"AI tagging unavailable: {exc}")
+            return
+
+        thumb_map = {}
+        if self.import_worker and hasattr(self.import_worker, "generated_thumbnails"):
+            try:
+                from pathlib import Path
+
+                thumb_map = {
+                    Path(f).resolve(): thumb for f, thumb in getattr(self.import_worker, "generated_thumbnails", [])
+                }
+            except Exception:
+                thumb_map = {}
+
+        processed = 0
+        tagged = 0
+        for file_info in getattr(result, "session", ImportSession("", FileManagementMode.LEAVE_IN_PLACE)).files:
+            if getattr(file_info, "import_status", "") not in ("completed", "success"):
+                continue
+            path = file_info.managed_path or file_info.original_path
+            if not path:
+                continue
+            processed += 1
+            try:
+                model = db_manager.get_model_by_path(path)
+                if not model:
+                    continue
+                # Prefer thumbnail path if available; skip when missing to avoid passing 3D file to AI.
+                from pathlib import Path
+
+                thumb = thumb_map.get(Path(path).resolve())
+                if not thumb:
+                    continue
+                ai_result = ai_service.analyze_image(thumb)
+                keywords = ai_result.get("metadata_keywords") or []
+                if keywords:
+                    db_manager.update_model_keywords_tags(model["id"], add_tags=keywords)
+                    tagged += 1
+            except Exception as exc:
+                self._log_message(f"AI tagging skipped for {path}: {exc}")
+
+        if tagged:
+            self._log_message(f"AI tagging applied to {tagged} of {processed} imported file(s).")
 
     def _on_cancel(self) -> None:
         """Handle cancel button click."""
@@ -1689,6 +1957,8 @@ class ImportDialog(QDialog):
         self.background_button.setEnabled(False)
         self._background_mode = False
         self._update_import_button_state()
+        self._update_pending_label()
+        self._file_start_times.clear()
 
     def _update_time_elapsed(self) -> None:
         """Update elapsed time display."""
@@ -1705,6 +1975,12 @@ class ImportDialog(QDialog):
         Args:
             message: Message to log
         """
+        # Avoid spamming the log with per-millisecond updates; only log when the content changes.
+        if message == self._last_plain_log_message:
+            return
+
+        self._last_plain_log_message = message
+
         timestamp = time.strftime("%H:%M:%S")
         self.progress_text.append(f"[{timestamp}] {message}")
 
@@ -1721,6 +1997,7 @@ class ImportDialog(QDialog):
     def dropEvent(self, event: QDropEvent) -> None:
         """Handle drop event."""
         files = []
+        has_directory = False
 
         for url in event.mimeData().urls():
             file_path = url.toLocalFile()
@@ -1738,6 +2015,7 @@ class ImportDialog(QDialog):
                 }:
                     files.append(str(path))
             elif path.is_dir():
+                has_directory = True
                 # Directory - find all model files
                 model_extensions = {".stl", ".obj", ".step", ".stp", ".3mf", ".ply"}
                 for ext in model_extensions:
@@ -1746,6 +2024,8 @@ class ImportDialog(QDialog):
 
         if files:
             self._add_files(files)
+            # Default concurrency per source: serial for files, concurrent for directories.
+            self._apply_concurrency_mode_ui("concurrent" if has_directory else "serial")
             event.acceptProposedAction()
 
     def get_import_result(self) -> Optional[ImportResult]:

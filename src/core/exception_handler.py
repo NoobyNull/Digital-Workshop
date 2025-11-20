@@ -91,6 +91,12 @@ class ExceptionHandler:
             msg_box.setWindowTitle("Application Error")
             msg_box.setText("An unexpected error occurred")
             msg_box.setInformativeText(f"Error: {str(exc_value)}")
+            # Make the dialog easier to read
+            msg_box.setMinimumSize(520, 320)
+            msg_box.setStyleSheet(
+                "QLabel{font-size:12pt;} QMessageBox{min-width:520px;} "
+                "QTextEdit{min-height:200px;}"
+            )
 
             # Add detailed traceback
             detailed_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))

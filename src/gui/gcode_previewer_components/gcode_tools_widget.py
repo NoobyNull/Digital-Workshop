@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QHeaderView,
     QAbstractItemView,
+    QColorDialog,
 )
 
 from src.core.logging_config import get_logger
@@ -247,6 +248,9 @@ class GcodeToolsWidget(QWidget):
     reload_file_requested = Signal()
     open_folder_requested = Signal(str)
     file_saved = Signal(str)
+    material_changed = Signal(str)
+    cut_color_changed = Signal(tuple)
+    ahead_color_changed = Signal(tuple)
 
     def __init__(self, renderer: Optional[GcodeRenderer], parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -262,12 +266,15 @@ class GcodeToolsWidget(QWidget):
         self.stats_label: Optional[QLabel] = None
         self.tool_label: Optional[QLabel] = None
         self.moves_table: Optional[QTableWidget] = None
+        self.material_combo: Optional[QComboBox] = None
 
         self.viz_mode_combo: Optional[QComboBox] = None
         self.camera_controls_checkbox: Optional[QCheckBox] = None
         self.layer_combo: Optional[QComboBox] = None
         self.show_all_layers_btn: Optional[QPushButton] = None
         self.layer_filters: Dict[str, QCheckBox] = {}
+        self.cut_color_btn: Optional[QPushButton] = None
+        self.ahead_color_btn: Optional[QPushButton] = None
 
         self.progress_bar: Optional[QProgressBar] = None
         self.file_name_label: Optional[QLabel] = None
@@ -301,6 +308,10 @@ class GcodeToolsWidget(QWidget):
         self.progress_bar.setVisible(False)
         layout.addWidget(self.progress_bar)
 
+        # Wire material combo change
+        if self.material_combo:
+            self.material_combo.currentTextChanged.connect(self.material_changed.emit)
+
     def _build_timeline_tab(self) -> QWidget:
         widget = QWidget()
         tab_layout = QVBoxLayout(widget)
@@ -333,6 +344,14 @@ class GcodeToolsWidget(QWidget):
         tool_layout.addWidget(self.tool_label)
         self.select_tool_button = QPushButton("Select Tool")
         tool_layout.addWidget(self.select_tool_button)
+
+        # Material selector for current part/toolpath
+        material_row = QHBoxLayout()
+        material_row.addWidget(QLabel("Material:"))
+        self.material_combo = QComboBox()
+        self.material_combo.setEditable(True)
+        material_row.addWidget(self.material_combo, 1)
+        tool_layout.addLayout(material_row)
         stats_layout.addWidget(tool_group)
 
         stats_group = QGroupBox("Toolpath Statistics")
@@ -418,8 +437,24 @@ class GcodeToolsWidget(QWidget):
         self.camera_controls_checkbox.setChecked(True)
         viz_layout.addWidget(self.camera_controls_checkbox, 0, 2)
 
+        # Path colors
+        viz_layout.addWidget(QLabel("Path Colors:"), 1, 0)
+        color_row = QHBoxLayout()
+        self.cut_color_btn = QPushButton("Cut Color")
+        self.ahead_color_btn = QPushButton("Ahead Color")
+        self._set_button_color(self.cut_color_btn, (0.0, 0.8, 0.4))
+        self._set_button_color(self.ahead_color_btn, (0.35, 0.35, 0.7))
+        self.cut_color_btn.clicked.connect(lambda: self._pick_color(self.cut_color_btn, self.cut_color_changed))
+        self.ahead_color_btn.clicked.connect(
+            lambda: self._pick_color(self.ahead_color_btn, self.ahead_color_changed)
+        )
+        color_row.addWidget(self.cut_color_btn)
+        color_row.addWidget(self.ahead_color_btn)
+        color_row.addStretch()
+        viz_layout.addLayout(color_row, 1, 1, 1, 2)
+
         # Layer visibility as toggleable move-type filters
-        viz_layout.addWidget(QLabel("Layers:"), 1, 0)
+        viz_layout.addWidget(QLabel("Layers:"), 2, 0)
         filters_layout = QHBoxLayout()
         self.layer_filters = {
             "not_cut": QCheckBox("Not Cut"),
@@ -431,7 +466,7 @@ class GcodeToolsWidget(QWidget):
             cb.setChecked(True)
             filters_layout.addWidget(cb)
         filters_layout.addStretch()
-        viz_layout.addLayout(filters_layout, 1, 1, 1, 2)
+        viz_layout.addLayout(filters_layout, 2, 1, 1, 2)
 
         viz_layout.setColumnStretch(1, 1)
         parent_layout.addWidget(viz_group)
@@ -439,6 +474,37 @@ class GcodeToolsWidget(QWidget):
     # ------------------------------------------------------------------
     # Integration helpers
     # ------------------------------------------------------------------
+    def set_material_choices(self, materials: list[str]) -> None:
+        """Populate material choices while preserving current selection."""
+        if not self.material_combo:
+            return
+        current = self.material_combo.currentText()
+        block = self.material_combo.blockSignals(True)
+        self.material_combo.clear()
+        for name in materials:
+            self.material_combo.addItem(name)
+        if current:
+            idx = self.material_combo.findText(current)
+            if idx >= 0:
+                self.material_combo.setCurrentIndex(idx)
+            else:
+                self.material_combo.setEditText(current)
+        self.material_combo.blockSignals(block)
+
+    def set_material_value(self, value: str) -> None:
+        """Set the material field without emitting change."""
+        if not self.material_combo:
+            return
+        block = self.material_combo.blockSignals(True)
+        self.material_combo.setEditText(value or "")
+        self.material_combo.blockSignals(block)
+
+    def current_material_value(self) -> str:
+        """Return current material text."""
+        if not self.material_combo:
+            return ""
+        return self.material_combo.currentText().strip()
+
     def set_project_directory(self, base_path: Optional[str]) -> None:
         """Set the base directory for saving edited G-code."""
         if not base_path:
@@ -469,6 +535,23 @@ class GcodeToolsWidget(QWidget):
         except Exception as exc:  # pragma: no cover - UI feedback
             self.logger.warning("Failed to save edited G-code to %s: %s", path, exc)
             QMessageBox.warning(self, "Save Failed", f"Could not save file:\n{exc}")
+
+    # ------------------------------------------------------------------
+    # Color helpers
+    # ------------------------------------------------------------------
+    def _set_button_color(self, button: QPushButton, color: tuple[float, float, float]) -> None:
+        r, g, b = [int(c * 255) for c in color]
+        button.setStyleSheet(f"QPushButton {{ background-color: rgb({r},{g},{b}); color: #fff; }}")
+
+    def _pick_color(self, button: QPushButton, signal: Signal) -> None:
+        current_style = button.palette().button().color()
+        initial = QColorDialog.getColor(current_style, self, "Select Color")
+        if not initial.isValid():
+            return
+        r, g, b, _ = initial.getRgb()
+        color_tuple = (r / 255.0, g / 255.0, b / 255.0)
+        self._set_button_color(button, color_tuple)
+        signal.emit(color_tuple)
 
     def update_loader_summary(
         self,

@@ -63,6 +63,18 @@ class AITab(QWidget):
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
+        self.auto_tag_import_check = QCheckBox("Auto-tag imported models using AI after thumbnails")
+        self.auto_tag_import_check.setToolTip(
+            "When enabled, newly imported models will be submitted to the AI service for keywords/tags."
+        )
+        warning = QLabel(
+            '<span style="color:#c00; font-weight:bold;">Note:</span> AI calls may incur charges from '
+            "cloud providers. Consider using a self-hosted model like Ollama to avoid costs."
+        )
+        warning.setWordWrap(True)
+        layout.addWidget(self.auto_tag_import_check)
+        layout.addWidget(warning)
+
         # Provider Selection Group
         provider_group = QFrame()
         provider_layout = QVBoxLayout(provider_group)
@@ -284,6 +296,11 @@ class AITab(QWidget):
             enable_batch = settings.value("ai/enable_batch", False, type=bool)
             self.enable_batch_check.setChecked(enable_batch)
 
+            # Import-time auto tagging
+            self.auto_tag_import_check.setChecked(
+                settings.value("ai/auto_tag_import", False, type=bool)
+            )
+
             if self.logger:
                 self.logger.info("✓ AI settings loaded from QSettings")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -342,6 +359,7 @@ class AITab(QWidget):
             # Save batch settings
             settings.setValue("ai/batch_size", self.batch_size_spin.value())
             settings.setValue("ai/enable_batch", self.enable_batch_check.isChecked())
+            settings.setValue("ai/auto_tag_import", self.auto_tag_import_check.isChecked())
 
             settings.sync()
 

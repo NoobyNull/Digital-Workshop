@@ -112,15 +112,27 @@ class LibraryUIManager:
     def create_search_bar(self, parent_layout: QVBoxLayout) -> None:
         """Create search and filter controls."""
         controls_frame = QFrame()
-        controls_layout = QHBoxLayout(controls_frame)
+        controls_frame = QFrame()
+        controls_frame.setObjectName("LibraryControls")
+        controls_layout = QVBoxLayout(controls_frame)
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(SPACING_8)
 
-        # Free-text search box
+        # Row 1: Free-text search box (dominant width via stretch)
+        search_row = QHBoxLayout()
+        search_row.setContentsMargins(0, 0, 0, 0)
+        search_row.setSpacing(SPACING_8)
         self.library_widget.search_box = QLineEdit()
         self.library_widget.search_box.setPlaceholderText("Search models...")
-        controls_layout.addWidget(QLabel("Search:"))
-        controls_layout.addWidget(self.library_widget.search_box)
+        self.library_widget.search_box.setMinimumWidth(300)
+        search_row.addWidget(QLabel("Search:"))
+        search_row.addWidget(self.library_widget.search_box, 4)
+        controls_layout.addLayout(search_row)
+
+        # Row 2: filters under the search bar
+        button_row = QHBoxLayout()
+        button_row.setContentsMargins(0, 0, 0, 0)
+        button_row.setSpacing(SPACING_8)
 
         # Category filter
         self.library_widget.category_filter = QComboBox()
@@ -137,8 +149,8 @@ class LibraryUIManager:
             # If categories cannot be loaded, keep the filter with only the default option
             logger.warning("Failed to load categories for model library filter", exc_info=True)
 
-        controls_layout.addWidget(QLabel("Category:"))
-        controls_layout.addWidget(self.library_widget.category_filter)
+        button_row.addWidget(QLabel("Category:"))
+        button_row.addWidget(self.library_widget.category_filter)
 
         # Dirty/clean status filter
         self.library_widget.dirty_filter = QComboBox()
@@ -147,10 +159,15 @@ class LibraryUIManager:
         self.library_widget.dirty_filter.addItem("Only Dirty", userData="dirty")
         self.library_widget.dirty_filter.addItem("Only Clean", userData="clean")
 
-        controls_layout.addWidget(QLabel("Status:"))
-        controls_layout.addWidget(self.library_widget.dirty_filter)
+        button_row.addWidget(QLabel("Status:"))
+        button_row.addWidget(self.library_widget.dirty_filter)
+        button_row.addStretch(1)
+
+        controls_layout.addLayout(button_row)
 
         parent_layout.addWidget(controls_frame)
+
+    # Advanced search dialog removed; main search bar now accepts boolean syntax directly
 
     def create_recent_models_panel(self, parent_layout: QVBoxLayout) -> None:
         """Create the MRU list panel that surfaces recently opened models."""

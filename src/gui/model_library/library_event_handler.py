@@ -117,14 +117,21 @@ class LibraryEventHandler:
             if hasattr(self.library_widget, "search_box")
             else ""
         )
+        advanced = text  # unified: the main search box accepts boolean syntax too
 
-        # Free-text search uses the proxy model's regular expression filter
+        # Treat the main search box as the advanced query; fall back to regex if parsing fails
         try:
-            self.library_widget.proxy_model.setFilterRegularExpression(
-                QRegularExpression(text, QRegularExpression.CaseInsensitiveOption)
-            )
+            self.library_widget.proxy_model.set_advanced_query(advanced)
+            # Clear regex so advanced boolean search drives filtering
+            self.library_widget.proxy_model.setFilterRegularExpression(QRegularExpression())
         except Exception:
-            self.library_widget.proxy_model.setFilterFixedString(text or "")
+            try:
+                self.library_widget.proxy_model.set_advanced_query("")
+                self.library_widget.proxy_model.setFilterRegularExpression(
+                    QRegularExpression(text, QRegularExpression.CaseInsensitiveOption)
+                )
+            except Exception:
+                self.library_widget.proxy_model.setFilterFixedString(text or "")
 
         # Apply category filter via the proxy model
         category_value = None
@@ -457,6 +464,15 @@ class LibraryEventHandler:
             model_data: Model data dictionary from database
         """
         try:
+            if not model_data:
+                self.logger.warning("Analyze requested but model data was missing for id=%s", model_id)
+                QMessageBox.warning(
+                    self.library_widget,
+                    "No Model Data",
+                    "Model details are unavailable; please refresh the library and try again.",
+                )
+                return
+
             file_path = model_data.get("file_path")
             if not file_path or not Path(file_path).exists():
                 QMessageBox.warning(

@@ -316,6 +316,25 @@ class MetadataEditorWidget(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to load categories: %s", str(e))
 
+    def _ensure_category_exists(self, name: str) -> bool:
+        """Ensure a category exists in the database, adding it if missing.
+
+        Returns True if a new category was added.
+        """
+        try:
+            clean = name.strip()
+            if not clean:
+                return False
+            existing = {c.get("name", "").lower() for c in self.categories or []}
+            if clean.lower() in existing:
+                return False
+            self.db_manager.add_category(clean)
+            self.logger.info("Added new category from metadata editor: %s", clean)
+            return True
+        except Exception as e:
+            self.logger.warning("Failed to add category '%s': %s", name, e)
+            return False
+
     def load_model_metadata(self, model_id: int) -> None:
         """
         Load metadata for a specific model.
@@ -502,6 +521,15 @@ class MetadataEditorWidget(QWidget):
             # Remove empty category
             if not metadata["category"]:
                 metadata["category"] = None
+            else:
+                # Ensure category exists in DB; add if new
+                added = self._ensure_category_exists(metadata["category"])
+                if added:
+                    # Refresh local list and combo to include the newly added category
+                    self._load_categories()
+                    idx = self.category_field.findText(metadata["category"])
+                    if idx >= 0:
+                        self.category_field.setCurrentIndex(idx)
 
             # Save to database
             success = self._save_to_database(metadata)

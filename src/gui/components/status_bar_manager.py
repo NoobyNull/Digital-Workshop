@@ -69,6 +69,13 @@ class StatusBarManager:
             self.status_bar.setAttribute(Qt.WA_StyledBackground, True)
         except Exception:
             pass
+        # Add a thicker border/frame for visual separation
+        try:
+            self.status_bar.setStyleSheet(
+                "QStatusBar#AppStatusBar { border: 2px solid #444; padding: 4px 8px; }"
+            )
+        except Exception:
+            pass
 
         # qt-material handles statusbar styling automatically
 
@@ -103,6 +110,7 @@ class StatusBarManager:
         self.layout_edit_indicator.setMinimumWidth(150)
         self.layout_edit_indicator.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_bar.addPermanentWidget(self.layout_edit_indicator)
+        self.layout_edit_indicator.setVisible(False)
 
         # Deduplication status widget (add last to be on the far right)
         self.dedup_status_widget = DeduplicationStatusWidget()
@@ -305,8 +313,10 @@ class StatusBarManager:
         try:
             if is_enabled:
                 self.layout_edit_indicator.setText("Layout Edit Mode: ON")
+                self.layout_edit_indicator.setVisible(True)
             else:
                 self.layout_edit_indicator.setText("Layout Edit Mode: OFF")
+                self.layout_edit_indicator.setVisible(False)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to update layout edit mode indicator: %s", e)
 

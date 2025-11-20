@@ -7,6 +7,7 @@ Handles generating thumbnails for models.
 import os
 import shutil
 import time
+import concurrent.futures
 from pathlib import Path
 from typing import Optional
 from PySide6.QtCore import QThreadPool
@@ -101,6 +102,7 @@ class ThumbnailStage(BaseStage):
             StageResult with success/failure information
         """
         start_time = time.time()
+        timeout_seconds = 45  # avoid hangs in thumbnail generation
 
         try:
             # Update task status
@@ -121,6 +123,7 @@ class ThumbnailStage(BaseStage):
                     # Copy paired image to thumbnail location
                     shutil.copy2(task.paired_image_path, thumbnail_path)
                     task.thumbnail_path = str(thumbnail_path)
+                    thumbnail_generated = True
                     used_paired_image = True
 
                     self.logger.info(
@@ -135,27 +138,43 @@ class ThumbnailStage(BaseStage):
                     )
             else:
                 # No paired image - generate 3D rendered thumbnail
-                model_info = task.to_dict()
-                thumbnail = self.thumbnail_generator.generate_thumbnail(model_info)
+                # Require a hash for naming; fall back to filename stem to avoid hard failure
+                file_hash = task.file_hash or Path(task.file_path).stem
+                thumbnail_dir = self._get_thumbnail_directory()
+                background = None
+                material = None
+                if task.metadata:
+                    background = task.metadata.get("thumbnail_background")
+                    material = task.metadata.get("material")
 
-                if thumbnail:
-                    # Thumbnail generator returns QPixmap or path
-                    # Store the path in task
-                    if task.file_hash:
-                        thumbnail_dir = self._get_thumbnail_directory()
-                        thumbnail_path = thumbnail_dir / f"{task.file_hash[:16]}.png"
-                        task.thumbnail_path = str(thumbnail_path)
-                        thumbnail_generated = True
-                        self.logger.info(
-                            "Generated 3D thumbnail for %s: %s",
-                            task.filename,
-                            thumbnail_path.name,
+                # Run generation with a timeout to prevent hangs on bad geometry/files
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        self.thumbnail_generator.generate_thumbnail,
+                        task.file_path,
+                        file_hash,
+                        thumbnail_dir,
+                        background,
+                        None,
+                        material,
+                        False,
+                    )
+                    try:
+                        thumbnail_path, _ = future.result(timeout=timeout_seconds)
+                    except concurrent.futures.TimeoutError:
+                        future.cancel()
+                        raise RuntimeError(
+                            f"Thumbnail generation timed out after {timeout_seconds}s"
                         )
-                    else:
-                        self.logger.warning(
-                            "Generated thumbnail for %s but no hash available to save path",
-                            task.filename,
-                        )
+
+                if thumbnail_path:
+                    task.thumbnail_path = str(thumbnail_path)
+                    thumbnail_generated = True
+                    self.logger.info(
+                        "Generated 3D thumbnail for %s: %s",
+                        task.filename,
+                        Path(task.thumbnail_path).name,
+                    )
                 else:
                     self.logger.warning("Thumbnail generation returned None for %s", task.filename)
 

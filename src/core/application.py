@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QCoreApplication, QSettings
+from PySide6.QtCore import QCoreApplication, QSettings, QThreadPool
 
 from .application_config import ApplicationConfig
 from .application_bootstrap import ApplicationBootstrap
@@ -24,6 +24,7 @@ from src.core.services.library_root_monitor import LibraryRootMonitor
 from src.core.services.import_watch_service import ImportWatchService
 from src.gui.dialogs.library_setup_dialog import run_first_launch_setup
 from src.gui.dialogs.ai_setup_dialog import run_ai_first_launch_setup
+from src.gui.dialogs.first_run_walkthrough import run_first_run_walkthrough
 from src.gui.main_window import MainWindow
 
 
@@ -79,6 +80,9 @@ class Application:
 
             # First-launch AI setup for local Ollama configuration (also once per user)
             run_ai_first_launch_setup()
+
+            # Lightweight interactive walkthrough for first-time users
+            run_first_run_walkthrough()
 
             # Show a lightweight startup splash while core systems initialize.
             self._show_startup_splash()
@@ -204,6 +208,17 @@ class Application:
             if self.main_window:
                 self.main_window.close()
                 self.main_window = None
+
+            # Stop any background Qt thread pool tasks (thumbnails, etc.)
+            try:
+                pool = QThreadPool.globalInstance()
+                pool.clear()  # request cancellation of queued runnables
+                pool.waitForDone(5000)  # wait up to 5s for running tasks
+                if self.logger:
+                    self.logger.info("QThreadPool cleared and waited during cleanup")
+            except Exception as exc:
+                if self.logger:
+                    self.logger.warning("Failed to clear QThreadPool on cleanup: %s", exc)
 
             # Cleanup bootstrap
             if self.bootstrap:

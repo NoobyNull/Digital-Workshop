@@ -154,8 +154,10 @@ class GeneralTab(QWidget):
         # Startup behavior
         self.maximize_startup_check = QCheckBox("Maximize window on startup")
         self.remember_size_check = QCheckBox("Remember window size on exit")
+        self.remember_location_check = QCheckBox("Remember window position on exit")
         window_layout.addWidget(self.maximize_startup_check)
         window_layout.addWidget(self.remember_size_check)
+        window_layout.addWidget(self.remember_location_check)
 
         workspace_section = QFrame()
         workspace_layout = QVBoxLayout(workspace_section)
@@ -317,7 +319,11 @@ class GeneralTab(QWidget):
             self.min_width_spin.setValue(config.minimum_window_width)
             self.min_height_spin.setValue(config.minimum_window_height)
             self.maximize_startup_check.setChecked(config.maximize_on_startup)
-            self.remember_size_check.setChecked(config.remember_window_size)
+            remember_size = settings.value("window/remember_window_size", config.remember_window_size, type=bool)
+            self.remember_size_check.setChecked(bool(remember_size))
+            self.remember_location_check.setChecked(
+                settings.value("window/remember_location", config.remember_window_location, type=bool)
+            )
             sidebar_sync = settings.value("ui/sidebar_sync_enabled", True, type=bool)
             self.sidebar_sync_check.setChecked(bool(sidebar_sync))
             startup_mode = settings.value("ui/startup_tab_mode", "restore_last", type=str) or "restore_last"
@@ -378,9 +384,12 @@ class GeneralTab(QWidget):
             config.minimum_window_height = self.min_height_spin.value()
             config.maximize_on_startup = self.maximize_startup_check.isChecked()
             config.remember_window_size = self.remember_size_check.isChecked()
+            config.remember_window_location = self.remember_location_check.isChecked()
+            settings.setValue("window/remember_window_size", self.remember_size_check.isChecked())
             settings.setValue("ui/sidebar_sync_enabled", self.sidebar_sync_check.isChecked())
             startup_data = self.startup_page_combo.currentData() or "restore_last"
             settings.setValue("ui/startup_tab_mode", startup_data)
+            settings.setValue("window/remember_location", self.remember_location_check.isChecked())
 
             # Save dock tab positions
             left_pos = self.left_tab_position_combo.currentData()

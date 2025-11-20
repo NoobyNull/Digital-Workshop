@@ -54,8 +54,8 @@ class PreferencesDialog(QDialog):
         self._was_saved = False
 
         self._setup_ui()
-        self._restore_last_tab()
-        self.tabs.currentChanged.connect(self._save_current_tab)
+        # Always start on General tab (index 0)
+        self.tabs.setCurrentIndex(0)
 
     def _setup_ui(self) -> None:
         """Set up the preferences dialog UI."""

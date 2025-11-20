@@ -45,19 +45,18 @@ class ApplicationConfig:
     system_memory_reserve_percent: int = 20
 
     # UI Configuration
-    # Default window size: snapped to middle wide, full height
-    # Calculated as: 50% of screen width, 100% of screen height
-    # These are fallback values; actual defaults are calculated at runtime based on screen size
-    default_window_width: int = 1200  # Will be overridden by screen-based calculation
-    default_window_height: int = 800  # Will be overridden by screen-based calculation
+    # Default window size: ship with current preferred dimensions
+    default_window_width: int = 2560
+    default_window_height: int = 1440
     minimum_window_width: int = 800
     minimum_window_height: int = 600
     maximize_on_startup: bool = False
     remember_window_size: bool = True
+    remember_window_location: bool = True
 
     # 3D Viewer - Grid Settings
     grid_visible: bool = True
-    grid_color: str = "theme"  # Use theme grid color, fallback to "#CCCCCC"
+    grid_color: str = "#000000"  # Use theme override to match preferred grid
     grid_size: float = 10.0
 
     # Cut List Optimizer - Layout Grid Settings
@@ -67,7 +66,7 @@ class ApplicationConfig:
     clo_grid_show_intermediate: bool = True  # Show intermediate lines at 50% opacity
 
     # 3D Viewer - Ground Plane Settings
-    ground_visible: bool = True
+    ground_visible: bool = False
     ground_color: str = "theme"  # Use theme ground color, fallback to "#999999"
     ground_offset: float = 0.5
 
@@ -105,10 +104,8 @@ class ApplicationConfig:
 
     # Thumbnail Generation Configuration
     thumbnail_bg_color: str = "#404658"  # Professional dark teal-gray background color
-    thumbnail_bg_image: Optional[str] = None  # Path to custom background image
-    thumbnail_material: Optional[str] = (
-        None  # Wood species name for thumbnail material (e.g., 'Oak', 'Walnut')
-    )
+    thumbnail_bg_image: Optional[str] = "Green"  # Default background selection
+    thumbnail_material: Optional[str] = "pine"  # Default wood species name
 
     def get_effective_memory_limit_mb(
         self,

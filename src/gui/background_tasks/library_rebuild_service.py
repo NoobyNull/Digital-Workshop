@@ -85,6 +85,7 @@ class LibraryRebuildService(QObject):
             root_directory=None,
             generate_thumbnails=True,
             run_analysis=True,
+            concurrency_mode="concurrent",
         )
         self.worker = worker
         self.monitor = ImportBackgroundMonitor(self.main_window, worker)
