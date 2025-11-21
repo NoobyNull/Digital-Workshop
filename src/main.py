@@ -8,28 +8,19 @@ It uses the new modular Application class for initialization and execution.
 
 import argparse
 import dataclasses
-import sys
 import os
+import sys
 import time
-import subprocess
 
 try:  # Windows-only, used for CLI nuclear reset countdown
     import msvcrt  # type: ignore[import]
 except ImportError:  # pragma: no cover - non-Windows platforms
     msvcrt = None  # type: ignore[assignment]
 
-# Add the parent directory to the Python path so we can import from src
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parent_dir)
-
 from src.core.application import Application
 from src.core.application_config import ApplicationConfig
 from src.core.exception_handler import ExceptionHandler
-from src.core.logging_config import (
-    LoggingProfile,
-    get_logger,
-    setup_logging,
-)
+from src.core.logging_config import LoggingProfile, get_logger, setup_logging
 from src.core.nuclear_reset import NuclearReset
 
 
@@ -103,7 +94,10 @@ Examples:
     parser.add_argument(
         "--nuke-no-backup",
         action="store_true",
-        help=("NUKE: do NOT create a final backup before deletion " "(maximum risk, faster)"),
+        help=(
+            "NUKE: do NOT create a final backup before deletion "
+            "(maximum risk, faster)"
+        ),
     )
     parser.add_argument(
         "--nuke-exec",
@@ -145,7 +139,9 @@ def _confirm_nuclear_reset_with_timeout(timeout_seconds: int = 5) -> bool:
     print("=" * 80)
     print("⚠️  NUCLEAR RESET REQUESTED ⚠️")
     print("=" * 80)
-    print("This will permanently delete ALL Digital Workshop application data, including:")
+    print(
+        "This will permanently delete ALL Digital Workshop application data, including:"
+    )
     print("  • Databases")
     print("  • Settings / registry entries")
     print("  • Cache, logs, thumbnails, and temp files")
@@ -176,7 +172,8 @@ def _init_qsettings_for_cli(config: ApplicationConfig):
     from pathlib import Path
     from PySide6.QtCore import QCoreApplication, QSettings
 
-    app = QCoreApplication.instance() or QCoreApplication([])
+    if QCoreApplication.instance() is None:
+        QCoreApplication([])
     QCoreApplication.setOrganizationName(config.organization_name)
     QCoreApplication.setApplicationName(config.name)
     if getattr(config, "organization_domain", None):
@@ -394,7 +391,14 @@ def main() -> None:
         if app:
             try:
                 app.cleanup()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 logger.error("Cleanup failed: %s", str(e))
 
 

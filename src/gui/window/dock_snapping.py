@@ -72,7 +72,9 @@ class SnapOverlayLayer(QWidget):
     def _style_for(self, active: bool) -> str:
         """Get stylesheet for active/inactive state."""
         bg = self._rgba_active if active else self._rgba_inactive
-        border = f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
+        border = (
+            f"2px solid {self._rgba_border}" if active else "1px dashed transparent"
+        )
         return f"background-color: {bg}; border: {border}; border-radius: 3px;"
 
     def set_active(self, edge: Optional[str]) -> None:
@@ -224,9 +226,13 @@ class DockDragHandler(QObject):
 
                 # If the central widget is a splitter or tab widget, ensure it resizes
                 if hasattr(central_widget, "setSizePolicy"):
-                    central_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                    central_widget.setSizePolicy(
+                        QSizePolicy.Expanding, QSizePolicy.Expanding
+                    )
 
-                self._logger.debug("Central widget resize ensured for right dock movement")
+                self._logger.debug(
+                    "Central widget resize ensured for right dock movement"
+                )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             try:
                 self._logger.debug("Failed to ensure central widget resize: %s", e)

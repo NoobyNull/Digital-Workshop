@@ -105,7 +105,9 @@ class ImagePairingService:
                 )
                 paired_models.add(base_name)
                 paired_images.add(base_name)
-                self.logger.info("Paired: %s <-> %s", Path(model_path).name, Path(image_path).name)
+                self.logger.info(
+                    "Paired: %s <-> %s", Path(model_path).name, Path(image_path).name
+                )
                 continue
 
             # Check for common naming patterns
@@ -213,11 +215,15 @@ class ImagePairingService:
             # Check file size (reject if too small or too large)
             file_size = path.stat().st_size
             if file_size < 1024:  # Less than 1KB
-                self.logger.warning("Image file too small: %s (%d bytes)", image_path, file_size)
+                self.logger.warning(
+                    "Image file too small: %s (%d bytes)", image_path, file_size
+                )
                 return False
 
             if file_size > 50 * 1024 * 1024:  # More than 50MB
-                self.logger.warning("Image file too large: %s (%d bytes)", image_path, file_size)
+                self.logger.warning(
+                    "Image file too large: %s (%d bytes)", image_path, file_size
+                )
                 return False
 
             # Check extension

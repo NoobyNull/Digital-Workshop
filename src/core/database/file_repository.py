@@ -279,7 +279,9 @@ class FileRepository:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM files WHERE project_id = ?", (project_id,))
+                cursor.execute(
+                    "SELECT COUNT(*) FROM files WHERE project_id = ?", (project_id,)
+                )
                 result = cursor.fetchone()
                 return result[0] if result else 0
 
@@ -288,7 +290,9 @@ class FileRepository:
             return 0
 
     @log_function_call(logger)
-    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate_by_hash(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Find duplicate file by hash in a project.
 

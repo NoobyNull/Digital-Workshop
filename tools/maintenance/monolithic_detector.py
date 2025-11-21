@@ -130,7 +130,11 @@ class MonolithicDetector:
         }
         violations = [asdict(m) for m in monolithic]
         detailed = [asdict(m) for m in metric_list]
-        return {"summary": summary, "violations": violations, "detailed_results": detailed}
+        return {
+            "summary": summary,
+            "violations": violations,
+            "detailed_results": detailed,
+        }
 
     def save_report(self, report: dict, output_path: Path) -> None:
         output_path = Path(output_path)

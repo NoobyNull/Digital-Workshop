@@ -49,7 +49,9 @@ class ProjectInvoiceDataService:
 
         header = InvoiceHeader(
             project_name=project.get("name", "Untitled Project"),
-            project_reference=project.get("structure_type") or project.get("import_tag") or "",
+            project_reference=project.get("structure_type")
+            or project.get("import_tag")
+            or "",
             invoice_number=f"INV-{datetime.now().strftime('%Y%m%d-%H%M')}",
             issue_date=QDate.currentDate().toString("yyyy-MM-dd"),
             issuer_name="Digital Workshop",
@@ -73,7 +75,9 @@ class ProjectInvoiceDataService:
 
         project_folder = project.get("base_path")
         project_path = Path(project_folder) if project_folder else None
-        return InvoiceSeed(header=header, suggestions=suggestions, project_folder=project_path)
+        return InvoiceSeed(
+            header=header, suggestions=suggestions, project_folder=project_path
+        )
 
     # ------------------------------------------------------------------ #
     # Collectors
@@ -251,7 +255,9 @@ class ProjectInvoiceDataService:
                 except Exception:
                     continue
                 for snapshot in snapshots or []:
-                    tool_label = snapshot.get("tool_number") or snapshot.get("tool_id") or "Tool"
+                    tool_label = (
+                        snapshot.get("tool_number") or snapshot.get("tool_id") or "Tool"
+                    )
                     metadata = {
                         "version_id": str(version_id),
                         "tool_number": str(snapshot.get("tool_number") or ""),

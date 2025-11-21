@@ -115,7 +115,14 @@ class DirectoryIndexer(QThread):
                     children.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
                     indexed_data[dir_path] = children
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Error indexing directory %s: {e}", dir_path)
 
         if not self._is_cancelled:
@@ -178,7 +185,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 root_folder=folder,
             )
             self.root_node.add_child(root_node)
-            self.logger.debug("Added root folder: %s ({folder.path})", folder.display_name)
+            self.logger.debug(
+                "Added root folder: %s ({folder.path})", folder.display_name
+            )
 
     def _get_node(self, index: QModelIndex) -> Optional[TreeNode]:
         """Get the TreeNode for a given model index."""
@@ -221,13 +230,17 @@ class MultiRootFileSystemModel(QAbstractItemModel):
                 items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
 
                 for item in items:
-                    child_node = TreeNode(name=item.name, path=str(item), is_dir=item.is_dir())
+                    child_node = TreeNode(
+                        name=item.name, path=str(item), is_dir=item.is_dir()
+                    )
                     node.add_child(child_node)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading children for %s: {e}", node.path)
 
-    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
+    def index(
+        self, row: int, column: int, parent: QModelIndex = QModelIndex()
+    ) -> QModelIndex:
         """Create a model index for the given row, column, and parent."""
         parent_node = self._get_node(parent)
         if not parent_node or row < 0 or row >= len(parent_node.children):
@@ -313,7 +326,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
 
         return None
 
-    def headerData(self, section: int, orientation: int, role: int = Qt.DisplayRole) -> Any:
+    def headerData(
+        self, section: int, orientation: int, role: int = Qt.DisplayRole
+    ) -> Any:
         """Get header data."""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             headers = ["Name", "Size", "Type", "Modified"]
@@ -437,7 +452,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
         self.indexer = DirectoryIndexer(root_paths)
         self.indexer.indexing_complete.connect(self._on_indexing_complete)
         self.indexer.start()
-        self.logger.debug("Started background indexing for %s root directories", len(root_paths))
+        self.logger.debug(
+            "Started background indexing for %s root directories", len(root_paths)
+        )
 
         # Emit signal for status update
         self.indexing_started.emit()
@@ -445,7 +462,9 @@ class MultiRootFileSystemModel(QAbstractItemModel):
     def _on_indexing_complete(self, indexed_data: dict) -> None:
         """Handle completion of background indexing."""
         self.indexed_data.update(indexed_data)
-        self.logger.debug("Background indexing completed for %s directories", len(indexed_data))
+        self.logger.debug(
+            "Background indexing completed for %s directories", len(indexed_data)
+        )
 
         # Clean up indexer
         if self.indexer:

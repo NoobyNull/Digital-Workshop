@@ -6,6 +6,8 @@ import mmap
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
+from src.core.logging_config import get_logger
+
 
 @dataclass
 class GcodeMove:
@@ -29,7 +31,11 @@ class GcodeMove:
     def get_move_type_name(self) -> str:
         """Get human-readable move type name."""
         if self.is_tool_change:
-            return f"Tool Change (T{self.tool_number})" if self.tool_number else "Tool Change"
+            return (
+                f"Tool Change (T{self.tool_number})"
+                if self.tool_number
+                else "Tool Change"
+            )
         elif self.is_spindle_on:
             return "Spindle On"
         elif self.is_spindle_off:
@@ -61,6 +67,7 @@ class GcodeParser:
             "min_z": float("inf"),
             "max_z": float("-inf"),
         }
+        self._logger = get_logger(__name__)
 
     def parse_file(
         self, filepath: str, sample_mode: bool = True, sample_size: int = 100
@@ -138,7 +145,9 @@ class GcodeParser:
                 if total_lines <= sample_size * 4:
                     # File is small enough, parse all lines
                     mmapped_file.seek(0)
-                    lines = [line.decode("utf-8", errors="ignore") for line in mmapped_file]
+                    lines = [
+                        line.decode("utf-8", errors="ignore") for line in mmapped_file
+                    ]
                     return self.parse_lines(lines)
 
                 # Sample first N lines
@@ -232,7 +241,9 @@ class GcodeParser:
                     self._update_bounds(move)
             except Exception as parse_exc:
                 # Skip malformed lines but continue parsing the rest
-                self._logger.debug("Skipping malformed G-code line %s: %s", line_num, parse_exc)
+                self._logger.debug(
+                    "Skipping malformed G-code line %s: %s", line_num, parse_exc
+                )
                 continue
 
         return self.moves

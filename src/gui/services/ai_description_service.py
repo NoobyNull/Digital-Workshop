@@ -163,23 +163,37 @@ class AIDescriptionService(QObject):
             settings = QSettings()
 
             # Save provider configurations
-            for provider_name, provider_config in self.config.get("providers", {}).items():
+            for provider_name, provider_config in self.config.get(
+                "providers", {}
+            ).items():
                 group = f"ai_description/providers/{provider_name}"
-                settings.setValue(f"{group}/api_key", provider_config.get("api_key", ""))
+                settings.setValue(
+                    f"{group}/api_key", provider_config.get("api_key", "")
+                )
                 settings.setValue(
                     f"{group}/model",
                     provider_config.get("model", "gpt-4-vision-preview"),
                 )
-                settings.setValue(f"{group}/base_url", provider_config.get("base_url", ""))
-                settings.setValue(f"{group}/enabled", provider_config.get("enabled", False))
+                settings.setValue(
+                    f"{group}/base_url", provider_config.get("base_url", "")
+                )
+                settings.setValue(
+                    f"{group}/enabled", provider_config.get("enabled", False)
+                )
 
             # Save custom prompts
-            for prompt_type, prompt_text in self.config.get("custom_prompts", {}).items():
-                settings.setValue(f"ai_description/custom_prompts/{prompt_type}", prompt_text)
+            for prompt_type, prompt_text in self.config.get(
+                "custom_prompts", {}
+            ).items():
+                settings.setValue(
+                    f"ai_description/custom_prompts/{prompt_type}", prompt_text
+                )
 
             # Save settings
             for setting_name, setting_value in self.config.get("settings", {}).items():
-                settings.setValue(f"ai_description/settings/{setting_name}", setting_value)
+                settings.setValue(
+                    f"ai_description/settings/{setting_name}", setting_value
+                )
 
             settings.sync()
             self.logger.debug("AI description configuration saved to QSettings")
@@ -307,7 +321,14 @@ Return ONLY valid JSON, no additional text.""",
                     base_url=openai_config.get("base_url") or None,
                 )
                 self.logger.info("OpenAI provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize OpenAI provider: %s", e)
 
         # Initialize OpenRouter provider
@@ -320,7 +341,14 @@ Return ONLY valid JSON, no additional text.""",
                     base_url=openrouter_config.get("base_url") or None,
                 )
                 self.logger.info("OpenRouter provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize OpenRouter provider: %s", e)
 
         # Initialize Gemini provider
@@ -334,7 +362,14 @@ Return ONLY valid JSON, no additional text.""",
                     model=gemini_config.get("model", "gemini-2.5-flash"),
                 )
                 self.logger.info("Gemini provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize Gemini provider: %s", e)
 
         # Initialize Anthropic provider
@@ -348,7 +383,14 @@ Return ONLY valid JSON, no additional text.""",
                     model=anthropic_config.get("model", "claude-3-5-sonnet-20241022"),
                 )
                 self.logger.info("Anthropic provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize Anthropic provider: %s", e)
 
         # Initialize Ollama provider (local CLI, optional API key)
@@ -362,7 +404,14 @@ Return ONLY valid JSON, no additional text.""",
                     model=ollama_config.get("model", "moondream"),
                 )
                 self.logger.info("Ollama provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize Ollama provider: %s", e)
 
         # Initialize AI Studio / LM Studio provider (local, optional API key)
@@ -374,20 +423,32 @@ Return ONLY valid JSON, no additional text.""",
                 self.providers["ai_studio"] = AIStudioProvider(
                     api_key=ai_studio_config.get("api_key") or None,
                     model=ai_studio_config.get("model", "gemini-1.5-pro-vision-001"),
-                    base_url=ai_studio_config.get("base_url") or "http://localhost:1234/v1",
+                    base_url=ai_studio_config.get("base_url")
+                    or "http://localhost:1234/v1",
                 )
                 self.logger.info("AI Studio provider initialized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to initialize AI Studio provider: %s", e)
 
         # Set current provider
-        default_provider = self.config.get("settings", {}).get("default_provider", "ollama")
+        default_provider = self.config.get("settings", {}).get(
+            "default_provider", "ollama"
+        )
         if default_provider in self.providers:
             self.current_provider = self.providers[default_provider]
         elif self.providers:
             # If default provider not available, use first available provider
             self.current_provider = next(iter(self.providers.values()))
-            self.logger.info("Default provider not available, using first available provider")
+            self.logger.info(
+                "Default provider not available, using first available provider"
+            )
 
     @staticmethod
     def get_available_providers() -> List[str]:
@@ -447,7 +508,9 @@ Return ONLY valid JSON, no additional text.""",
                 "bakllava": "BakLLaVA (Local)",
                 "llava": "LLaVA (Local)",
             },
-            "ai_studio": {"gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"},
+            "ai_studio": {
+                "gemini-1.5-pro-vision-001": "Gemini 1.5 Pro Vision (AI Studio)"
+            },
             "openrouter": {
                 "openai/gpt-4o": "GPT-4o (via OpenRouter)",
                 "openai/gpt-4-vision-preview": "GPT-4 Vision (via OpenRouter)",
@@ -506,7 +569,14 @@ Return ONLY valid JSON, no additional text.""",
                         f"Connected successfully. {len(models)} models available.",
                     )
                 return False, "No models available"
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 return False, f"Connection test failed: {str(e)}"
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -527,7 +597,10 @@ Return ONLY valid JSON, no additional text.""",
 
     def set_current_provider(self, provider_name: str) -> bool:
         """Set the current AI provider."""
-        if provider_name in self.providers and self.providers[provider_name].is_configured():
+        if (
+            provider_name in self.providers
+            and self.providers[provider_name].is_configured()
+        ):
             self.current_provider = self.providers[provider_name]
             # Update default provider in config
             self.config.setdefault("settings", {})["default_provider"] = provider_name
@@ -590,7 +663,9 @@ Return ONLY valid JSON, no additional text.""",
 
             # Test provider configuration
             if not provider.is_configured():
-                self.logger.error("Provider %s failed configuration test", provider_name)
+                self.logger.error(
+                    "Provider %s failed configuration test", provider_name
+                )
                 return False
 
             # Store provider
@@ -622,7 +697,9 @@ Return ONLY valid JSON, no additional text.""",
             models = provider.list_available_models()
             return len(models) > 0
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Provider connection test failed for %s: %s", provider_name, e)
+            self.logger.error(
+                "Provider connection test failed for %s: %s", provider_name, e
+            )
             return False
 
     def analyze_image(
@@ -674,7 +751,9 @@ Return ONLY valid JSON, no additional text.""",
             if not analysis_prompt:
                 # Check for custom prompts in config
                 custom_prompts = self.config.get("custom_prompts", {})
-                analysis_prompt = custom_prompts.get("default", provider.get_default_prompt())
+                analysis_prompt = custom_prompts.get(
+                    "default", provider.get_default_prompt()
+                )
 
             provider_label = effective_provider_name or "current"
             self.logger.info(

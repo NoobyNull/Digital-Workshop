@@ -59,7 +59,9 @@ class NuclearResetWorker(QThread):
             self.progress_updated.emit("Initializing nuclear reset...")
 
             # Execute reset
-            results = self.reset_handler.execute_nuclear_reset(create_backup=self.create_backup)
+            results = self.reset_handler.execute_nuclear_reset(
+                create_backup=self.create_backup
+            )
 
             if results["success"]:
                 self.reset_completed.emit(results)
@@ -131,7 +133,9 @@ class NuclearResetDialog(QDialog):
         layout.addWidget(scan_group)
 
         # Backup option - let qt-material handle styling
-        self.backup_checkbox = QCheckBox("Create backup before deletion (HIGHLY RECOMMENDED)")
+        self.backup_checkbox = QCheckBox(
+            "Create backup before deletion (HIGHLY RECOMMENDED)"
+        )
         self.backup_checkbox.setChecked(True)
         layout.addWidget(self.backup_checkbox)
 
@@ -176,9 +180,13 @@ class NuclearResetDialog(QDialog):
         if self.backup_checkbox.isChecked():
             docs_path = Path(os.environ.get("USERPROFILE", Path.home())) / "Documents"
             backup_path = docs_path / "DigitalWorkshop_Backups"
-            self.backup_location_label.setText(f"Backup will be saved to: {backup_path}")
+            self.backup_location_label.setText(
+                f"Backup will be saved to: {backup_path}"
+            )
         else:
-            self.backup_location_label.setText("⚠️ NO BACKUP - All data will be permanently lost!")
+            self.backup_location_label.setText(
+                "⚠️ NO BACKUP - All data will be permanently lost!"
+            )
 
     def _scan_targets(self):
         """Scan and display what will be deleted."""
@@ -194,7 +202,9 @@ class NuclearResetDialog(QDialog):
             self.scan_text.append(f"  • Total Size: {targets['total_size_mb']:.2f} MB")
 
             if targets.get("registry_keys"):
-                self.scan_text.append(f"  • Registry Keys: {len(targets['registry_keys'])}")
+                self.scan_text.append(
+                    f"  • Registry Keys: {len(targets['registry_keys'])}"
+                )
 
             self.scan_text.append("\n📁 DIRECTORIES TO DELETE:")
 
@@ -243,7 +253,9 @@ class NuclearResetDialog(QDialog):
 
         if not ok or text != "DELETE EVERYTHING":
             QMessageBox.information(
-                self, "Cancelled", "Nuclear reset cancelled. Confirmation text did not match."
+                self,
+                "Cancelled",
+                "Nuclear reset cancelled. Confirmation text did not match.",
             )
             return
 
@@ -279,7 +291,9 @@ class NuclearResetDialog(QDialog):
         message = "✅ NUCLEAR RESET COMPLETE\n\n"
         message += f"Directories deleted: {results['directories_deleted']}\n"
         message += f"Files deleted: {results['files_deleted']}\n"
-        message += f"Registry cleared: {'Yes' if results['registry_cleared'] else 'No'}\n"
+        message += (
+            f"Registry cleared: {'Yes' if results['registry_cleared'] else 'No'}\n"
+        )
 
         if results.get("backup_created"):
             message += f"\n📦 Backup created at:\n{results['backup_path']}"

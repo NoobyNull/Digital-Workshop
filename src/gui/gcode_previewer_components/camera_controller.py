@@ -64,7 +64,9 @@ class CameraController:
         elif event.button() == Qt.RightButton:
             self.is_zooming = True
 
-    def handle_mouse_move(self, event: QMouseEvent, viewport_size: Tuple[int, int]) -> None:
+    def handle_mouse_move(
+        self, event: QMouseEvent, viewport_size: Tuple[int, int]
+    ) -> None:
         """Handle mouse move event."""
         current_pos = (event.x(), event.y())
         delta_x = current_pos[0] - self.last_mouse_pos[0]
@@ -119,7 +121,9 @@ class CameraController:
         # Keep clipping range in sync so geometry is not clipped when zoomed in
         self._update_clipping_range()
 
-    def _pan_camera(self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]) -> None:
+    def _pan_camera(
+        self, delta_x: float, delta_y: float, viewport_size: Tuple[int, int]
+    ) -> None:
         """Pan camera in the view plane."""
         try:
             focal_point = self.camera.GetFocalPoint()
@@ -147,13 +151,18 @@ class CameraController:
             right_norm = _normalize(right_vec)
 
             # Scale pan based on viewport size
-            pan_scale = self.pan_speed * max(1.0, (viewport_size[0] + viewport_size[1]) / 2.0)
+            pan_scale = self.pan_speed * max(
+                1.0, (viewport_size[0] + viewport_size[1]) / 2.0
+            )
 
             # Screen-space delta to world translation: left/right uses right vector, up/down uses up vector
             translation = (
-                (-delta_x * pan_scale) * right_norm[0] + (delta_y * pan_scale) * up_norm[0],
-                (-delta_x * pan_scale) * right_norm[1] + (delta_y * pan_scale) * up_norm[1],
-                (-delta_x * pan_scale) * right_norm[2] + (delta_y * pan_scale) * up_norm[2],
+                (-delta_x * pan_scale) * right_norm[0]
+                + (delta_y * pan_scale) * up_norm[0],
+                (-delta_x * pan_scale) * right_norm[1]
+                + (delta_y * pan_scale) * up_norm[1],
+                (-delta_x * pan_scale) * right_norm[2]
+                + (delta_y * pan_scale) * up_norm[2],
             )
 
             # Apply translation to both camera position and focal point

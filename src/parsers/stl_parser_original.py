@@ -116,7 +116,9 @@ class STLParser(BaseParser):
     # Binary STL format constants
     BINARY_HEADER_SIZE = 80
     BINARY_TRIANGLE_COUNT_SIZE = 4
-    BINARY_TRIANGLE_SIZE = 50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    BINARY_TRIANGLE_SIZE = (
+        50  # 12 bytes for normal + 36 bytes for vertices + 2 bytes for attribute
+    )
 
     def __init__(self) -> None:
         """Initialize the STL parser."""
@@ -177,7 +179,9 @@ class STLParser(BaseParser):
                 # Read triangle count
                 count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                    raise STLParseError("Invalid binary STL: cannot read triangle count")
+                    raise STLParseError(
+                        "Invalid binary STL: cannot read triangle count"
+                    )
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
                 self.logger.info("Parsing binary STL with %s triangles", triangle_count)
@@ -190,13 +194,18 @@ class STLParser(BaseParser):
                     backend = caps.recommended_backend
                     gpu_available = backend != AccelBackend.CPU
                     if progress_callback:
-                        progress_callback.report(3.0, f"Hardware backend: {backend.value}")
+                        progress_callback.report(
+                            3.0, f"Hardware backend: {backend.value}"
+                        )
                     self.logger.info(
                         "Hardware backend selected: %s (score=%s, available=%s, devices=%s)",
                         backend.value,
                         caps.performance_score,
                         [b.value for b in caps.available_backends],
-                        [f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)" for d in caps.devices],
+                        [
+                            f"{d.vendor} {d.name} ({d.memory_mb or '?'}MB)"
+                            for d in caps.devices
+                        ],
                     )
                 except (
                     OSError,
@@ -206,7 +215,9 @@ class STLParser(BaseParser):
                     KeyError,
                     AttributeError,
                 ) as accel_err:
-                    self.logger.warning("Hardware acceleration probe failed: %s", accel_err)
+                    self.logger.warning(
+                        "Hardware acceleration probe failed: %s", accel_err
+                    )
                     backend = None
 
                 # Validate triangle count is reasonable
@@ -260,7 +271,9 @@ class STLParser(BaseParser):
 
                 # Decide path: array-based fast path for large models, else vectorized object path
                 if (np is not None) and (triangle_count >= 100000):
-                    self.logger.info("Using array-based fast path for %s triangles", triangle_count)
+                    self.logger.info(
+                        "Using array-based fast path for %s triangles", triangle_count
+                    )
                     return self._parse_binary_stl_arrays(file_path, progress_callback)
 
                 use_vectorized = (np is not None) and (triangle_count >= 20000)
@@ -268,13 +281,17 @@ class STLParser(BaseParser):
                 if use_vectorized:
                     # Report progress
                     if progress_callback:
-                        progress_callback.report(5.0, "Reading binary triangle block...")
+                        progress_callback.report(
+                            5.0, "Reading binary triangle block..."
+                        )
 
                     # Read all triangle records: 50 bytes each
                     total_bytes = triangle_count * self.BINARY_TRIANGLE_SIZE
                     # Detect network path (UNC) for diagnostics
                     path_str = str(file_path)
-                    is_network = path_str.startswith("\\\\") or path_str.startswith("//")
+                    is_network = path_str.startswith("\\\\") or path_str.startswith(
+                        "//"
+                    )
                     t_read0 = time.time()
                     data = file.read(total_bytes)
                     t_read1 = time.time()
@@ -304,7 +321,9 @@ class STLParser(BaseParser):
                     u8 = np.frombuffer(data, dtype=np.uint8).reshape(triangle_count, self.BINARY_TRIANGLE_SIZE)  # type: ignore
 
                     # Process float decoding in chunks for progress reporting
-                    chunk_size = min(50000, max(10000, triangle_count // 20))  # Adaptive chunk size
+                    chunk_size = min(
+                        50000, max(10000, triangle_count // 20)
+                    )  # Adaptive chunk size
                     floats = np.empty((triangle_count, 12), dtype=np.float32)
 
                     for start_idx in range(0, triangle_count, chunk_size):
@@ -386,7 +405,9 @@ class STLParser(BaseParser):
 
                     # Finalize build timing
                     t_bld1 = time.time()
-                    self.logger.info("Triangle build completed in %.2fs", t_bld1 - t_bld0)
+                    self.logger.info(
+                        "Triangle build completed in %.2fs", t_bld1 - t_bld0
+                    )
                     # Final GC to release worker-side memory sooner
                     gc.collect()
                     # Memory snapshot (best-effort)
@@ -394,7 +415,9 @@ class STLParser(BaseParser):
                         import psutil  # type: ignore
 
                         rss_mb = psutil.Process().memory_info().rss / (1024 * 1024)
-                        self.logger.info("Process RSS after vectorized parse: %.0f MB", rss_mb)
+                        self.logger.info(
+                            "Process RSS after vectorized parse: %.0f MB", rss_mb
+                        )
                     except Exception:
                         pass
 
@@ -442,7 +465,9 @@ class STLParser(BaseParser):
                     # Read triangle data (50 bytes)
                     triangle_data = file.read(self.BINARY_TRIANGLE_SIZE)
                     if len(triangle_data) != self.BINARY_TRIANGLE_SIZE:
-                        raise STLParseError(f"Failed to read triangle {i}: incomplete data")
+                        raise STLParseError(
+                            f"Failed to read triangle {i}: incomplete data"
+                        )
 
                     values = struct.unpack("<ffffffffffffH", triangle_data)
 
@@ -466,7 +491,9 @@ class STLParser(BaseParser):
                     # Report progress
                     if progress_callback and i % 1000 == 0:
                         progress = (i / triangle_count) * 100
-                        progress_callback.report(progress, f"Parsed {i}/{triangle_count} triangles")
+                        progress_callback.report(
+                            progress, f"Parsed {i}/{triangle_count} triangles"
+                        )
 
                     if i % 10000 == 0 and i > 0:
                         gc.collect()
@@ -521,7 +548,9 @@ class STLParser(BaseParser):
                 # Triangle count
                 count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
                 if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                    raise STLParseError("Invalid binary STL: cannot read triangle count")
+                    raise STLParseError(
+                        "Invalid binary STL: cannot read triangle count"
+                    )
 
                 triangle_count = struct.unpack("<I", count_bytes)[0]
                 self.logger.info(
@@ -568,7 +597,9 @@ class STLParser(BaseParser):
                 for start_idx in range(0, triangle_count, chunk_size):
                     end_idx = min(start_idx + chunk_size, triangle_count)
                     chunk_floats = (
-                        u8[start_idx:end_idx, :48].view("<f4").reshape(end_idx - start_idx, 12)
+                        u8[start_idx:end_idx, :48]
+                        .view("<f4")
+                        .reshape(end_idx - start_idx, 12)
                     )
                     floats[start_idx:end_idx] = chunk_floats
 
@@ -592,10 +623,14 @@ class STLParser(BaseParser):
 
                 # normals: cols 0..2, vertices: cols 3..11 reshaped to (N,3,3)
                 verts = floats[:, 3:12].reshape(triangle_count, 3, 3)
-                vertex_array = verts.reshape(triangle_count * 3, 3).astype("float32", copy=False)
+                vertex_array = verts.reshape(triangle_count * 3, 3).astype(
+                    "float32", copy=False
+                )
 
                 # Repeat each normal 3 times, one per vertex
-                normal_array = np.repeat(floats[:, 0:3], 3, axis=0).astype("float32", copy=False)
+                normal_array = np.repeat(floats[:, 0:3], 3, axis=0).astype(
+                    "float32", copy=False
+                )
 
                 # Bounds
                 t_bnd0 = time.time()
@@ -624,8 +659,12 @@ class STLParser(BaseParser):
                 stats = ModelStats(
                     vertex_count=triangle_count * 3,
                     triangle_count=triangle_count,
-                    min_bounds=Vector3D(float(min_xyz[0]), float(min_xyz[1]), float(min_xyz[2])),
-                    max_bounds=Vector3D(float(max_xyz[0]), float(max_xyz[1]), float(max_xyz[2])),
+                    min_bounds=Vector3D(
+                        float(min_xyz[0]), float(min_xyz[1]), float(min_xyz[2])
+                    ),
+                    max_bounds=Vector3D(
+                        float(max_xyz[0]), float(max_xyz[1]), float(max_xyz[2])
+                    ),
                     file_size_bytes=file_size,
                     format_type=STLFormat.BINARY,
                     parsing_time_seconds=parsing_time,
@@ -706,7 +745,9 @@ class STLParser(BaseParser):
                             # Parse normal vector
                             normal_parts = line.split()
                             if len(normal_parts) != 5:
-                                raise STLParseError(f"Invalid facet normal line: {line}")
+                                raise STLParseError(
+                                    f"Invalid facet normal line: {line}"
+                                )
 
                             normal = Vector3D(
                                 float(normal_parts[2]),
@@ -716,8 +757,13 @@ class STLParser(BaseParser):
 
                             # Expect "outer loop" on next line
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "outer loop":
-                                raise STLParseError("Expected 'outer loop' after facet normal")
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "outer loop"
+                            ):
+                                raise STLParseError(
+                                    "Expected 'outer loop' after facet normal"
+                                )
 
                             # Parse three vertices
                             vertices = []
@@ -730,11 +776,15 @@ class STLParser(BaseParser):
 
                                 vertex_line = lines[i].strip().lower()
                                 if not vertex_line.startswith("vertex"):
-                                    raise STLParseError(f"Expected 'vertex', got: {vertex_line}")
+                                    raise STLParseError(
+                                        f"Expected 'vertex', got: {vertex_line}"
+                                    )
 
                                 vertex_parts = vertex_line.split()
                                 if len(vertex_parts) != 4:
-                                    raise STLParseError(f"Invalid vertex line: {vertex_line}")
+                                    raise STLParseError(
+                                        f"Invalid vertex line: {vertex_line}"
+                                    )
 
                                 vertex = Vector3D(
                                     float(vertex_parts[1]),
@@ -753,16 +803,24 @@ class STLParser(BaseParser):
 
                             # Expect "endloop"
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "endloop":
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "endloop"
+                            ):
                                 raise STLParseError("Expected 'endloop' after vertices")
 
                             # Expect "endfacet"
                             i += 1
-                            if i >= line_count or not lines[i].strip().lower() == "endfacet":
+                            if (
+                                i >= line_count
+                                or not lines[i].strip().lower() == "endfacet"
+                            ):
                                 raise STLParseError("Expected 'endfacet' after endloop")
 
                             # Create triangle
-                            triangle = Triangle(normal, vertices[0], vertices[1], vertices[2])
+                            triangle = Triangle(
+                                normal, vertices[0], vertices[1], vertices[2]
+                            )
                             triangles.append(triangle)
                             triangle_count += 1
 
@@ -857,7 +915,9 @@ class STLParser(BaseParser):
             # Detect format
             format_type = self._detect_format(file_path)
             if format_type == STLFormat.UNKNOWN:
-                raise STLParseError("Unable to determine STL format (invalid or corrupted file)")
+                raise STLParseError(
+                    "Unable to determine STL format (invalid or corrupted file)"
+                )
 
             # Parse based on format
             if format_type == STLFormat.BINARY:
@@ -997,7 +1057,9 @@ class STLParser(BaseParser):
                 KeyError,
                 AttributeError,
             ) as e:
-                self.logger.warning("GPU progressive loading failed, falling back to CPU: %s", e)
+                self.logger.warning(
+                    "GPU progressive loading failed, falling back to CPU: %s", e
+                )
 
         # Fallback to CPU-based progressive loading
         # Get full model first

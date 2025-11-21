@@ -189,7 +189,9 @@ class UrlImportDialog(QDialog):
             projects_root = str(self.settings.ensure_projects_root())
         except OSError as exc:
             QMessageBox.critical(
-                self, "Projects Folder Error", f"Unable to access Projects folder:\n\n{exc}"
+                self,
+                "Projects Folder Error",
+                f"Unable to access Projects folder:\n\n{exc}",
             )
             self.download_button.setEnabled(True)
             return
@@ -216,7 +218,9 @@ class UrlImportDialog(QDialog):
         self.import_result = result
         self.status_label.setText("Import completed.")
         self._tag_downloaded_models(result)
-        QMessageBox.information(self, "Import Complete", "The model was imported successfully.")
+        QMessageBox.information(
+            self, "Import Complete", "The model was imported successfully."
+        )
         self.accept()
 
     def _on_import_failed(self, error: str) -> None:
@@ -235,6 +239,10 @@ class GoogleDriveHelper:
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPCookieProcessor(self.cookie_jar)
         )
+        # Defensive attributes to satisfy downstream callers
+        self._source_url: Optional[str] = None
+        self.logger = get_logger(__name__)
+        self.import_result: Optional[ImportCoordinatorResult] = None
 
     def can_handle(self, url: str) -> bool:
         parsed = urlparse(url)
@@ -249,16 +257,22 @@ class GoogleDriveHelper:
                 return self.can_handle(unquote(qs["u"][0]))
         return False
 
-    def download(self, url: str, destination: Path, progress_callback: Callable[[int], None]) -> None:
+    def download(
+        self, url: str, destination: Path, progress_callback: Callable[[int], None]
+    ) -> None:
         file_id = self._extract_file_id(url)
         if not file_id:
-            raise ValueError("Unable to determine Google Drive file ID from the provided link.")
+            raise ValueError(
+                "Unable to determine Google Drive file ID from the provided link."
+            )
 
         last_error: Optional[Exception] = None
         for candidate in self._candidate_urls(url, file_id):
             try:
                 response = self._open(candidate)
-                self._process_response(file_id, response, destination, progress_callback)
+                self._process_response(
+                    file_id, response, destination, progress_callback
+                )
                 return
             except ValueError as exc:
                 last_error = exc
@@ -281,15 +295,19 @@ class GoogleDriveHelper:
         page_content = response.read().decode("utf-8", errors="ignore")
         confirm_url = None
         try:
-            confirm_url = self._extract_confirmation_url(page_content, response.geturl())
+            confirm_url = self._extract_confirmation_url(
+                page_content, response.geturl()
+            )
         except ValueError as exc:
             raise ValueError(
-                "Google Drive rejected the download request: "
-                f"{exc}"
+                "Google Drive rejected the download request: " f"{exc}"
             ) from exc
 
         if not confirm_url:
-            token = self._extract_confirm_token(page_content) or self._extract_cookie_token()
+            token = (
+                self._extract_confirm_token(page_content)
+                or self._extract_cookie_token()
+            )
             if token:
                 confirm_url = self._build_url(file_id, token)
 
@@ -358,7 +376,9 @@ class GoogleDriveHelper:
                 return cookie.value
         return None
 
-    def _extract_confirmation_url(self, page: str, response_url: Optional[str]) -> Optional[str]:
+    def _extract_confirmation_url(
+        self, page: str, response_url: Optional[str]
+    ) -> Optional[str]:
         """Parse HTML confirmation pages to find the redirect download URL."""
 
         base = response_url or "https://docs.google.com"
@@ -421,7 +441,6 @@ class GoogleDriveHelper:
         if token:
             return f"{base}&confirm={token}"
         return base
-        self.status_label.setText("Import failed.")
 
     def _tag_downloaded_models(self, result: ImportCoordinatorResult) -> None:
         if not result.import_result or not self._source_url:
@@ -442,9 +461,13 @@ class GoogleDriveHelper:
 
             try:
                 db_manager.update_model_metadata(model_id, source=self._source_url)
-                db_manager.update_model_keywords_tags(model_id, add_tags=[TAG_DOWNLOADED])
+                db_manager.update_model_keywords_tags(
+                    model_id, add_tags=[TAG_DOWNLOADED]
+                )
             except Exception as exc:  # pragma: no cover - defensive
-                self.logger.warning("Failed to tag downloaded model %s: %s", model_id, exc)
+                self.logger.warning(
+                    "Failed to tag downloaded model %s: %s", model_id, exc
+                )
 
     def get_import_result(self) -> Optional[ImportCoordinatorResult]:
         """Expose the final import result to callers."""

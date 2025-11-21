@@ -273,7 +273,9 @@ class LoggingManager:
         with self._lock:
             if profile is not None:
                 self._profile = profile
-            self._structured_filter = StructuredContextFilter(self._current_correlation_id)
+            self._structured_filter = StructuredContextFilter(
+                self._current_correlation_id
+            )
             self._formatter = self._create_formatter()
             self._log_directory = self._resolve_log_directory()
             self._handlers_initialized = False
@@ -309,7 +311,9 @@ class LoggingManager:
             del self._thread_context.correlation_id
 
     def _current_correlation_id(self) -> Optional[str]:
-        return getattr(self._thread_context, "correlation_id", self._profile.correlation_id)
+        return getattr(
+            self._thread_context, "correlation_id", self._profile.correlation_id
+        )
 
     def _ensure_handlers(self) -> None:
         with self._lock:
@@ -560,8 +564,10 @@ def log_function_call(*decorator_args, **decorator_kwargs):
         return wrapper
 
     # Case 1: Used directly as ``@log_function_call`` (no parentheses).
-    if decorator_args and callable(decorator_args[0]) and not isinstance(
-        decorator_args[0], logging.Logger
+    if (
+        decorator_args
+        and callable(decorator_args[0])
+        and not isinstance(decorator_args[0], logging.Logger)
     ):
         func = decorator_args[0]
         derived_logger = logging.getLogger(func.__module__)

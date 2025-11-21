@@ -87,7 +87,9 @@ class EventDebouncer:
     Uses time-based and movement-based debouncing strategies.
     """
 
-    def __init__(self, time_threshold_ms: int = 16, movement_threshold: int = 2) -> None:
+    def __init__(
+        self, time_threshold_ms: int = 16, movement_threshold: int = 2
+    ) -> None:
         """
         Initialize the event debouncer.
 
@@ -238,7 +240,9 @@ class EventFilter(QObject):
             elif event_type == QEvent.MouseButtonRelease:
                 return self._create_mouse_event(EventType.MOUSE_RELEASE, widget, event)
             elif event_type == QEvent.MouseButtonDblClick:
-                return self._create_mouse_event(EventType.MOUSE_DOUBLE_CLICK, widget, event)
+                return self._create_mouse_event(
+                    EventType.MOUSE_DOUBLE_CLICK, widget, event
+                )
             elif event_type == QEvent.Resize:
                 return self._create_resize_event(widget, event)
             elif event_type == QEvent.Move:
@@ -275,7 +279,9 @@ class EventFilter(QObject):
                 original_event=event,
                 metadata={
                     "global_position": global_pos,
-                    "mouse_buttons": (int(event.buttons()) if hasattr(event, "buttons") else 0),
+                    "mouse_buttons": (
+                        int(event.buttons()) if hasattr(event, "buttons") else 0
+                    ),
                     "keyboard_modifiers": (
                         int(event.modifiers()) if hasattr(event, "modifiers") else 0
                     ),
@@ -285,7 +291,9 @@ class EventFilter(QObject):
             self.logger.error("Failed to create mouse event: %s", e)
             return None
 
-    def _create_resize_event(self, widget: QWidget, event: QEvent) -> Optional[SnapEvent]:
+    def _create_resize_event(
+        self, widget: QWidget, event: QEvent
+    ) -> Optional[SnapEvent]:
         """Create a resize SnapEvent."""
         try:
             # Get widget center position
@@ -457,7 +465,9 @@ class EventProcessor:
         """Periodic cleanup of resources and stale data."""
         try:
             # Clean up dead weak references
-            self._active_widgets = {k: v for k, v in self._active_widgets.items() if v is not None}
+            self._active_widgets = {
+                k: v for k, v in self._active_widgets.items() if v is not None
+            }
 
             # Clear old performance stats
             if self._performance_stats["total_events"] > 10000:
@@ -610,8 +620,17 @@ class EventProcessor:
                 for handler in self._event_handlers[event.event_type]:
                     try:
                         handler(event)
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                        self.logger.error("Error in event handler for %s: {e}", event.event_type)
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
+                        self.logger.error(
+                            "Error in event handler for %s: {e}", event.event_type
+                        )
 
             # Handle specific event types
             if event.event_type == EventType.MOUSE_MOVE:
@@ -684,7 +703,9 @@ class EventProcessor:
             self.logger.error("Error handling mouse release: %s", e)
             return False
 
-    def _handle_widget_resize(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
+    def _handle_widget_resize(
+        self, event: SnapEvent
+    ) -> bool:  # pylint: disable=unused-argument
         """Handle widget resize events."""
         try:
             # Update coordinate systems
@@ -698,7 +719,9 @@ class EventProcessor:
             self.logger.error("Error handling widget resize: %s", e)
             return False
 
-    def _handle_widget_move(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
+    def _handle_widget_move(
+        self, event: SnapEvent
+    ) -> bool:  # pylint: disable=unused-argument
         """Handle widget move events."""
         try:
             # Update coordinate systems
@@ -709,7 +732,9 @@ class EventProcessor:
             self.logger.error("Error handling widget move: %s", e)
             return False
 
-    def _handle_layout_change(self, event: SnapEvent) -> bool:  # pylint: disable=unused-argument
+    def _handle_layout_change(
+        self, event: SnapEvent
+    ) -> bool:  # pylint: disable=unused-argument
         """Handle layout change events."""
         try:
             # Clear all caches when layout changes
@@ -747,7 +772,9 @@ class EventProcessor:
                 delta_x = snapped_global.x() - current_pos.x()
                 delta_y = snapped_global.y() - current_pos.y()
 
-                if abs(delta_x) > 1 or abs(delta_y) > 1:  # Only move if significant change
+                if (
+                    abs(delta_x) > 1 or abs(delta_y) > 1
+                ):  # Only move if significant change
                     widget.move(widget.x() + int(delta_x), widget.y() + int(delta_y))
 
             self.logger.debug(
@@ -791,7 +818,9 @@ class EventProcessor:
         # Update average processing time
         total_events = self._performance_stats["processed_events"]
         if total_events > 0:
-            total_time = self._performance_stats["avg_processing_time_ms"] * (total_events - 1)
+            total_time = self._performance_stats["avg_processing_time_ms"] * (
+                total_events - 1
+            )
             self._performance_stats["avg_processing_time_ms"] = (
                 total_time + processing_time_ms
             ) / total_events
@@ -813,7 +842,9 @@ class EventProcessor:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to register event handler: %s", e)
 
-    def unregister_event_handler(self, event_type: EventType, handler: Callable) -> None:
+    def unregister_event_handler(
+        self, event_type: EventType, handler: Callable
+    ) -> None:
         """
         Unregister an event handler for a specific event type.
 
@@ -838,7 +869,9 @@ class EventProcessor:
         """
         try:
             self._processing_enabled = enabled
-            self.logger.info("Event processing %s", "enabled" if enabled else "disabled")
+            self.logger.info(
+                "Event processing %s", "enabled" if enabled else "disabled"
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to set processing enabled: %s", e)
 
@@ -859,7 +892,8 @@ class EventProcessor:
                 },
                 "active_widgets": len(self._active_widgets),
                 "registered_handlers": {
-                    et.name: len(handlers) for et, handlers in self._event_handlers.items()
+                    et.name: len(handlers)
+                    for et, handlers in self._event_handlers.items()
                 },
                 "processing_enabled": self._processing_enabled,
             }

@@ -69,7 +69,12 @@ class QualityGateResult:
 class QualityGateEnforcer:
     """Coordinates external tooling and evaluates quality gates."""
 
-    def __init__(self, config_path: Path, output_path: Optional[str] = None, parallel_execution: bool = False) -> None:
+    def __init__(
+        self,
+        config_path: Path,
+        output_path: Optional[str] = None,
+        parallel_execution: bool = False,
+    ) -> None:
         self.config_path = Path(config_path)
         self.output_path = Path(output_path) if output_path else None
         self.parallel_execution = parallel_execution
@@ -133,10 +138,26 @@ class QualityGateEnforcer:
                 },
             },
             "tools": {
-                "code_quality_validator": {"command": "python", "args": ["-m", "tools.maintenance.code_quality_validator"], "enabled": False},
-                "monolithic_detector": {"command": "python", "args": ["-m", "tools.maintenance.monolithic_detector"], "enabled": False},
-                "naming_validator": {"command": "python", "args": ["-m", "tools.maintenance.naming_validator"], "enabled": False},
-                "unified_test_runner": {"command": "python", "args": ["-m", "tools.maintenance.unified_test_runner"], "enabled": False},
+                "code_quality_validator": {
+                    "command": "python",
+                    "args": ["-m", "tools.maintenance.code_quality_validator"],
+                    "enabled": False,
+                },
+                "monolithic_detector": {
+                    "command": "python",
+                    "args": ["-m", "tools.maintenance.monolithic_detector"],
+                    "enabled": False,
+                },
+                "naming_validator": {
+                    "command": "python",
+                    "args": ["-m", "tools.maintenance.naming_validator"],
+                    "enabled": False,
+                },
+                "unified_test_runner": {
+                    "command": "python",
+                    "args": ["-m", "tools.maintenance.unified_test_runner"],
+                    "enabled": False,
+                },
             },
             "reporting": {"formats": ["console"]},
         }
@@ -213,7 +234,9 @@ class QualityGateEnforcer:
         output_pattern = tool_config.get("output_pattern", "")
         start = time.perf_counter()
         try:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             stdout, stderr = process.communicate(timeout=timeout)
             exit_code = process.returncode
         except Exception as exc:  # pragma: no cover - defensive
@@ -281,13 +304,21 @@ class QualityGateEnforcer:
             )
         return gate_results
 
-    def _resolve_gate_value(self, gate_name: str, metrics_map: Dict[str, Dict]) -> float:
+    def _resolve_gate_value(
+        self, gate_name: str, metrics_map: Dict[str, Dict]
+    ) -> float:
         if gate_name == "code_quality":
-            return metrics_map.get("code_quality_validator", {}).get("overall_compliance", 0.0)
+            return metrics_map.get("code_quality_validator", {}).get(
+                "overall_compliance", 0.0
+            )
         if gate_name == "monolithic_modules":
-            return metrics_map.get("monolithic_detector", {}).get("monolithic_files_found", 0)
+            return metrics_map.get("monolithic_detector", {}).get(
+                "monolithic_files_found", 0
+            )
         if gate_name == "naming_conventions":
-            return metrics_map.get("naming_validator", {}).get("compliance_percentage", 0.0)
+            return metrics_map.get("naming_validator", {}).get(
+                "compliance_percentage", 0.0
+            )
         if gate_name == "test_execution":
             return metrics_map.get("unified_test_runner", {}).get("success_rate", 0.0)
         return 0.0

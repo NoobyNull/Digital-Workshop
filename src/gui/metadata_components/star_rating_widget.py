@@ -104,9 +104,17 @@ class StarRatingWidget(QWidget):
 
             # Determine star color
             if i < self.current_rating:
-                color = self.filled_color if self.filled_color.isValid() else self.active_color
+                color = (
+                    self.filled_color
+                    if self.filled_color.isValid()
+                    else self.active_color
+                )
             elif i < self.hover_rating:
-                color = self.hover_color if self.hover_color.isValid() else self.active_color.lighter(120)
+                color = (
+                    self.hover_color
+                    if self.hover_color.isValid()
+                    else self.active_color.lighter(120)
+                )
             else:
                 color = self.empty_color
 
@@ -115,7 +123,9 @@ class StarRatingWidget(QWidget):
 
         painter.end()
 
-    def _draw_star(self, painter: QPainter, x: int, y: int, size: int, color: QColor) -> None:
+    def _draw_star(
+        self, painter: QPainter, x: int, y: int, size: int, color: QColor
+    ) -> None:
         """
         Draw a proper 5-pointed star shape.
 

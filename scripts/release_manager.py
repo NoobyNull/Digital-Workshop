@@ -451,7 +451,9 @@ class ReleaseManager:
         if all_passed:
             print("\n✅ All safety checks passed!")
         else:
-            print("\n❌ Some safety checks failed. Please fix issues before proceeding.")
+            print(
+                "\n❌ Some safety checks failed. Please fix issues before proceeding."
+            )
 
         return all_passed
 

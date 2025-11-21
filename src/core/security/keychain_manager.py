@@ -34,7 +34,9 @@ class KeychainManager:
 
             return True
         except ImportError:
-            logger.warning("keyring library not available. " "Install with: pip install keyring")
+            logger.warning(
+                "keyring library not available. " "Install with: pip install keyring"
+            )
             return False
 
     def store_credential(self, credential_name: str, credential_value: str) -> bool:

@@ -91,7 +91,9 @@ class WidgetCleanupHandler(CleanupHandler):
             cleanup_results["global_widgets"] = True
 
             # Log results
-            failed_cleanups = [name for name, success in cleanup_results.items() if not success]
+            failed_cleanups = [
+                name for name, success in cleanup_results.items() if not success
+            ]
             if failed_cleanups:
                 self.logger.warning(
                     f"Failed to cleanup {len(failed_cleanups)} widget area(s): {', '.join(failed_cleanups)}"
@@ -114,15 +116,26 @@ class WidgetCleanupHandler(CleanupHandler):
 
             # Cleanup viewer widget if it exists
             if hasattr(main_window, "viewer_widget") and main_window.viewer_widget:
-                success = self._cleanup_viewer_widget(main_window.viewer_widget) and success
+                success = (
+                    self._cleanup_viewer_widget(main_window.viewer_widget) and success
+                )
 
             # Cleanup metadata editor if it exists
             if hasattr(main_window, "metadata_editor") and main_window.metadata_editor:
-                success = self._cleanup_metadata_editor(main_window.metadata_editor) and success
+                success = (
+                    self._cleanup_metadata_editor(main_window.metadata_editor)
+                    and success
+                )
 
             # Cleanup model library if it exists
-            if hasattr(main_window, "model_library_widget") and main_window.model_library_widget:
-                success = self._cleanup_model_library(main_window.model_library_widget) and success
+            if (
+                hasattr(main_window, "model_library_widget")
+                and main_window.model_library_widget
+            ):
+                success = (
+                    self._cleanup_model_library(main_window.model_library_widget)
+                    and success
+                )
 
             # Cleanup other window components
             success = self._cleanup_window_components(main_window) and success
@@ -193,11 +206,20 @@ class WidgetCleanupHandler(CleanupHandler):
 
             # Cleanup snapping system if it exists
             if hasattr(main_window, "snapping_system") and main_window.snapping_system:
-                success = self._cleanup_snapping_system(main_window.snapping_system) and success
+                success = (
+                    self._cleanup_snapping_system(main_window.snapping_system)
+                    and success
+                )
 
             # Cleanup event coordinator if it exists
-            if hasattr(main_window, "event_coordinator") and main_window.event_coordinator:
-                success = self._cleanup_event_coordinator(main_window.event_coordinator) and success
+            if (
+                hasattr(main_window, "event_coordinator")
+                and main_window.event_coordinator
+            ):
+                success = (
+                    self._cleanup_event_coordinator(main_window.event_coordinator)
+                    and success
+                )
 
             # Cleanup any timers
             success = self._cleanup_timers(main_window) and success
@@ -306,7 +328,9 @@ class WidgetCleanupHandler(CleanupHandler):
     def _cleanup_tracked_widgets(self) -> bool:
         """Cleanup tracked widgets."""
         try:
-            self.logger.debug("Cleaning up %s tracked widgets", len(self._tracked_widgets))
+            self.logger.debug(
+                "Cleaning up %s tracked widgets", len(self._tracked_widgets)
+            )
 
             success = True
             for widget in self._tracked_widgets.copy():
@@ -314,7 +338,14 @@ class WidgetCleanupHandler(CleanupHandler):
                     if hasattr(widget, "cleanup"):
                         widget.cleanup()
                     self._tracked_widgets.discard(widget)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to cleanup tracked widget: %s", e)
                     success = False
 
@@ -353,7 +384,9 @@ class WidgetCleanupHandler(CleanupHandler):
         try:
             if widget and isinstance(widget, QWidget):
                 self._tracked_widgets.add(widget)
-                self.logger.debug("Registered widget for cleanup: %s", type(widget).__name__)
+                self.logger.debug(
+                    "Registered widget for cleanup: %s", type(widget).__name__
+                )
             else:
                 self.logger.warning("Invalid widget registration: %s", type(widget))
 
@@ -373,7 +406,9 @@ class WidgetCleanupHandler(CleanupHandler):
         try:
             if widget in self._tracked_widgets:
                 self._tracked_widgets.discard(widget)
-                self.logger.debug("Unregistered widget from cleanup: %s", type(widget).__name__)
+                self.logger.debug(
+                    "Unregistered widget from cleanup: %s", type(widget).__name__
+                )
                 return True
             return False
 

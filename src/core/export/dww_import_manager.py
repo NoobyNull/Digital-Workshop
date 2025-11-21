@@ -76,7 +76,9 @@ class PJCTImportManager:
 
                 # Add thumbnails to count if importing them
                 if import_thumbnails:
-                    total_items += len([f for f in file_list if f.startswith("thumbnails/")])
+                    total_items += len(
+                        [f for f in file_list if f.startswith("thumbnails/")]
+                    )
 
                 current_item = 0
 
@@ -91,7 +93,9 @@ class PJCTImportManager:
 
                         current_item += 1
                         if progress_callback:
-                            progress = current_item / total_items if total_items > 0 else 1.0
+                            progress = (
+                                current_item / total_items if total_items > 0 else 1.0
+                            )
                             progress_callback(
                                 progress, f"Imported {current_item}/{total_items} items"
                             )
@@ -112,7 +116,11 @@ class PJCTImportManager:
 
                             current_item += 1
                             if progress_callback:
-                                progress = current_item / total_items if total_items > 0 else 1.0
+                                progress = (
+                                    current_item / total_items
+                                    if total_items > 0
+                                    else 1.0
+                                )
                                 progress_callback(
                                     progress,
                                     f"Imported {current_item}/{total_items} items",
@@ -120,7 +128,9 @@ class PJCTImportManager:
 
                 # Extract metadata if available
                 try:
-                    metadata_json = pjct_archive.read("metadata/files_metadata.json").decode("utf-8")
+                    metadata_json = pjct_archive.read(
+                        "metadata/files_metadata.json"
+                    ).decode("utf-8")
                     metadata = json.loads(metadata_json)
                     manifest["metadata"] = metadata
                 except KeyError:
@@ -128,7 +138,9 @@ class PJCTImportManager:
 
                 # Extract hero tab metadata if available
                 try:
-                    hero_json = pjct_archive.read("metadata/hero_tabs.json").decode("utf-8")
+                    hero_json = pjct_archive.read("metadata/hero_tabs.json").decode(
+                        "utf-8"
+                    )
                     hero_tabs = json.loads(hero_json)
                     manifest["hero_tabs"] = hero_tabs
                 except KeyError:
@@ -196,7 +208,9 @@ class PJCTImportManager:
                     sort_keys=True,
                 )
 
-                calculated_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
+                calculated_hash = hashlib.sha256(
+                    (combined_data + salt).encode()
+                ).hexdigest()
 
                 if calculated_hash == stored_hash:
                     return True, "Integrity verified"

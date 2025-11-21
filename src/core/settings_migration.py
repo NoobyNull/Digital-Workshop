@@ -41,7 +41,9 @@ class SettingsMigrator:
         self.settings_path = self.app_data_path / "settings.json"
         self.old_settings_path = self.old_app_data_path / "settings.json"
 
-        logger.info("Settings migrator initialized for %s v{self.current_version}", app_name)
+        logger.info(
+            "Settings migrator initialized for %s v{self.current_version}", app_name
+        )
 
     def check_migration_needed(self) -> bool:
         """Check if migration is needed from a previous version.
@@ -62,7 +64,9 @@ class SettingsMigrator:
         # Check versions
         old_version = self._get_old_version()
         if old_version and old_version != self.current_version:
-            logger.info("Version change detected: %s -> {self.current_version}", old_version)
+            logger.info(
+                "Version change detected: %s -> {self.current_version}", old_version
+            )
             return True
 
         return False
@@ -187,7 +191,9 @@ class SettingsMigrator:
             if "render_mode" in old_viewer and "render_mode" not in merged.get(
                 "viewer_settings", {}
             ):
-                merged.setdefault("viewer_settings", {})["render_mode"] = old_viewer["render_mode"]
+                merged.setdefault("viewer_settings", {})["render_mode"] = old_viewer[
+                    "render_mode"
+                ]
 
         return merged
 
@@ -342,7 +348,10 @@ class SettingsMigrator:
             if self.old_app_data_path.exists():
                 # Rename old directory with timestamp for backup
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_path = self.old_app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+                backup_path = (
+                    self.old_app_data_path.parent
+                    / f"{self.app_name}_backup_{timestamp}"
+                )
 
                 shutil.move(str(self.old_app_data_path), str(backup_path))
                 logger.info("Old data backed up to: %s", backup_path)
@@ -365,7 +374,9 @@ class SettingsMigrator:
         """
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = self.app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+            backup_path = (
+                self.app_data_path.parent / f"{self.app_name}_backup_{timestamp}"
+            )
 
             if self.app_data_path.exists():
                 shutil.copytree(self.app_data_path, backup_path)

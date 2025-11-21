@@ -58,7 +58,9 @@ class ThumbnailGenerator:
             self.material_manager = MaterialManager(get_database_manager())
             self.logger.debug("MaterialManager initialized for thumbnail generation")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.warning("Could not initialize MaterialManager for thumbnails: %s", e)
+            self.logger.warning(
+                "Could not initialize MaterialManager for thumbnails: %s", e
+            )
 
         # Default thumbnail size (1280x1280 for high quality with auto-downscaling)
         self.thumbnail_size = (1280, 1280)
@@ -261,7 +263,9 @@ class ThumbnailGenerator:
             if material:
                 # Use MaterialManager for consistent material application
                 if self.material_manager:
-                    success = self.material_manager.apply_material_to_actor(actor, material)
+                    success = self.material_manager.apply_material_to_actor(
+                        actor, material
+                    )
                     if not success:
                         self.logger.warning(
                             f"Failed to apply material '{material}' using MaterialManager, using fallback"
@@ -409,7 +413,9 @@ class ThumbnailGenerator:
                     polydata.SetPolys(triangles)
                     polydata.GetPointData().SetNormals(normals)
 
-                    self.logger.debug("Created polydata (fast path): %s triangles", tri_count)
+                    self.logger.debug(
+                        "Created polydata (fast path): %s triangles", tri_count
+                    )
                     return polydata
 
             # Fallback to triangle-by-triangle construction
@@ -449,7 +455,9 @@ class ThumbnailGenerator:
             polydata.SetPolys(triangles)
             polydata.GetPointData().SetNormals(normals)
 
-            self.logger.debug("Created polydata (slow path): %s triangles", len(model.triangles))
+            self.logger.debug(
+                "Created polydata (slow path): %s triangles", len(model.triangles)
+            )
             return polydata
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -484,13 +492,17 @@ class ThumbnailGenerator:
                     # Image file - use textured background
                     self._set_background_image(renderer, background)
                 else:
-                    self.logger.warning("Invalid background: %s, using default", background)
+                    self.logger.warning(
+                        "Invalid background: %s, using default", background
+                    )
                     renderer.SetBackground(0.95, 0.95, 0.95)
             elif isinstance(background, (tuple, list)) and len(background) == 3:
                 # RGB tuple
                 renderer.SetBackground(*background)
             else:
-                self.logger.warning("Unknown background type: %s, using default", type(background))
+                self.logger.warning(
+                    "Unknown background type: %s, using default", type(background)
+                )
                 renderer.SetBackground(0.95, 0.95, 0.95)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -511,7 +523,9 @@ class ThumbnailGenerator:
         try:
             # Read image
             reader = vtk.vtkPNGReader()
-            if image_path.lower().endswith(".jpg") or image_path.lower().endswith(".jpeg"):
+            if image_path.lower().endswith(".jpg") or image_path.lower().endswith(
+                ".jpeg"
+            ):
                 reader = vtk.vtkJPEGReader()
 
             reader.SetFileName(image_path)
@@ -595,7 +609,9 @@ class ThumbnailGenerator:
             key_light.SetIntensity(1.0)
             key_light.SetColor(1.0, 1.0, 1.0)
             key_light.SetPositional(True)  # Point light
-            key_light.SetConeAngle(120)  # Wide cone (90-360 range, using 120 for broad coverage)
+            key_light.SetConeAngle(
+                120
+            )  # Wide cone (90-360 range, using 120 for broad coverage)
             renderer.AddLight(key_light)
 
             # Fill directional light from front-left
@@ -632,7 +648,9 @@ class ThumbnailGenerator:
         b = int(hex_color[4:6], 16) / 255.0
         return (r, g, b)
 
-    def _apply_texture_material_fallback(self, actor: vtk.vtkActor, material_name: str) -> bool:
+    def _apply_texture_material_fallback(
+        self, actor: vtk.vtkActor, material_name: str
+    ) -> bool:
         """
         Fallback method to apply texture material to actor using texture images from materials folder.
 
@@ -650,7 +668,9 @@ class ThumbnailGenerator:
         """
         try:
             # Get material texture path
-            texture_path = self.material_provider.get_material_texture_path(material_name)
+            texture_path = self.material_provider.get_material_texture_path(
+                material_name
+            )
 
             if texture_path is None or not texture_path.exists():
                 self.logger.warning("Material texture not found: %s", material_name)
@@ -710,7 +730,9 @@ class ThumbnailGenerator:
 
             # Set actor properties for good texture visibility
             actor_prop = actor.GetProperty()
-            actor_prop.SetColor(1.0, 1.0, 1.0)  # White base color for proper texture display
+            actor_prop.SetColor(
+                1.0, 1.0, 1.0
+            )  # White base color for proper texture display
 
             # Get MTL properties if available
             material_info = self.material_provider.get_material_by_name(material_name)
@@ -745,5 +767,7 @@ class ThumbnailGenerator:
             return True
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error(f"Error applying texture '{material_name}': {e}", exc_info=True)
+            self.logger.error(
+                f"Error applying texture '{material_name}': {e}", exc_info=True
+            )
             return False

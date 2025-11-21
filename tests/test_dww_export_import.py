@@ -102,9 +102,11 @@ class TestPJCTExportManager:
             assert success, f"Export failed: {message}"
 
             # Verify thumbnail is in archive
-            with zipfile.ZipFile(output_path, 'r') as pjct:
+            with zipfile.ZipFile(output_path, "r") as pjct:
                 files = pjct.namelist()
-                assert any("thumbnails/" in f for f in files), "Thumbnails not found in archive"
+                assert any(
+                    "thumbnails/" in f for f in files
+                ), "Thumbnails not found in archive"
 
     def test_export_includes_metadata(self):
         """Test that export includes metadata when requested."""
@@ -130,10 +132,14 @@ class TestPJCTExportManager:
             assert success, f"Export failed: {message}"
 
             # Verify metadata is in archive
-            with zipfile.ZipFile(output_path, 'r') as pjct:
+            with zipfile.ZipFile(output_path, "r") as pjct:
                 files = pjct.namelist()
-                assert "metadata/files_metadata.json" in files, "Metadata not found in archive"
-                metadata = json.loads(pjct.read("metadata/files_metadata.json").decode())
+                assert (
+                    "metadata/files_metadata.json" in files
+                ), "Metadata not found in archive"
+                metadata = json.loads(
+                    pjct.read("metadata/files_metadata.json").decode()
+                )
                 assert "files_metadata" in metadata
 
     def test_pjct_file_contains_manifest(self):
@@ -155,7 +161,7 @@ class TestPJCTExportManager:
             export_manager.export_project("test-project-1", str(output_path))
 
             # Verify manifest exists
-            with zipfile.ZipFile(output_path, 'r') as pjct:
+            with zipfile.ZipFile(output_path, "r") as pjct:
                 assert "manifest.json" in pjct.namelist()
                 manifest = json.loads(pjct.read("manifest.json").decode())
                 assert manifest["version"] == "1.0"
@@ -181,7 +187,7 @@ class TestPJCTExportManager:
             export_manager.export_project("test-project-1", str(output_path))
 
             # Verify integrity data exists
-            with zipfile.ZipFile(output_path, 'r') as pjct:
+            with zipfile.ZipFile(output_path, "r") as pjct:
                 assert "integrity.json" in pjct.namelist()
                 integrity = json.loads(pjct.read("integrity.json").decode())
                 assert "salt" in integrity
@@ -209,7 +215,6 @@ class TestPJCTExportManager:
             # Verify integrity
             is_valid, message = export_manager.verify_pjct_file(str(output_path))
             assert is_valid, f"Integrity verification failed: {message}"
-
 
     def test_export_includes_hero_tab_metadata(self):
         """Test that export writes hero tab summary metadata."""
@@ -256,7 +261,9 @@ class TestPJCTExportManager:
             export_manager = PJCTExportManager(db_manager)
             output_path = tmpdir_path / "export.pjt"
 
-            success, message = export_manager.export_project("test-project-1", str(output_path))
+            success, message = export_manager.export_project(
+                "test-project-1", str(output_path)
+            )
             assert success, f"Export failed: {message}"
 
             with zipfile.ZipFile(output_path, "r") as pjct:
@@ -267,7 +274,10 @@ class TestPJCTExportManager:
                 assert hero.get("project_id") == "test-project-1"
 
                 model_section = hero.get("model_previewer", {})
-                assert set(model_section.get("model_files", [])) == {"model.stl", "part.obj"}
+                assert set(model_section.get("model_files", [])) == {
+                    "model.stl",
+                    "part.obj",
+                }
                 assert model_section.get("has_view_state") is True
 
                 gcode_section = hero.get("gcode_previewer", {})
@@ -317,7 +327,6 @@ class TestPJCTImportManager:
             assert "hero_tabs" in manifest
             assert manifest["hero_tabs"].get("project_id") == "test-project-1"
 
-
     def test_import_project_extracts_files(self):
         """Test that import extracts files from PJT project archive."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -363,7 +372,9 @@ class TestPJCTImportManager:
 
             export_manager = PJCTExportManager(db_manager)
             export_path = Path(tmpdir) / "export.pjt"
-            export_manager.export_project("test-project-1", str(export_path), include_thumbnails=True)
+            export_manager.export_project(
+                "test-project-1", str(export_path), include_thumbnails=True
+            )
 
             # Import project with thumbnails
             import_dir = Path(tmpdir) / "import"
@@ -373,8 +384,12 @@ class TestPJCTImportManager:
             )
 
             assert success, f"Import failed: {message}"
-            assert (import_dir / "thumbnails").exists(), "Thumbnails directory not created"
-            assert any((import_dir / "thumbnails").glob("*.png")), "No thumbnails extracted"
+            assert (
+                import_dir / "thumbnails"
+            ).exists(), "Thumbnails directory not created"
+            assert any(
+                (import_dir / "thumbnails").glob("*.png")
+            ), "No thumbnails extracted"
 
     def test_get_pjct_info_without_extraction(self):
         """Test getting PJCT manifest without extracting files."""

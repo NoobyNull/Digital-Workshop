@@ -94,7 +94,7 @@ class FilesTab(QWidget):
 
         mode_help = QLabel(
             "Files imported in managed mode are copied into the Projects folder. "
-            "Choose \"Leave files where they are\" if you prefer to browse multiple "
+            'Choose "Leave files where they are" if you prefer to browse multiple '
             "root folders without copying."
         )
         mode_help.setWordWrap(True)
@@ -139,7 +139,9 @@ class FilesTab(QWidget):
         validation_layout = QVBoxLayout(self.validation_group)
 
         self.validate_button = QPushButton("Validate All Folders")
-        self.validate_button.setToolTip("Check if all configured folders are accessible")
+        self.validate_button.setToolTip(
+            "Check if all configured folders are accessible"
+        )
         validation_layout.addWidget(self.validate_button)
 
         self.validation_status = QLabel("Ready")
@@ -187,7 +189,9 @@ class FilesTab(QWidget):
         # Buttons
         maintenance_buttons = QHBoxLayout()
         self.start_maintenance_button = QPushButton("Start Maintenance")
-        self.start_maintenance_button.setToolTip("Start the selected maintenance operation")
+        self.start_maintenance_button.setToolTip(
+            "Start the selected maintenance operation"
+        )
         maintenance_buttons.addWidget(self.start_maintenance_button)
 
         self.cancel_maintenance_button = QPushButton("Cancel")
@@ -275,9 +279,7 @@ class FilesTab(QWidget):
         if persisted:
             text = f"Remembering up to {limit} recently opened models."
         else:
-            text = (
-                "Unable to update MRU preference right now. The previous value will remain in use."
-            )
+            text = "Unable to update MRU preference right now. The previous value will remain in use."
         self.recent_status_label.setText(text)
 
     def _apply_library_mode_to_ui(self) -> None:
@@ -463,7 +465,9 @@ class FilesTab(QWidget):
         # Add to manager
         if self.root_folder_manager.add_folder(folder_path, display_name.strip()):
             self._load_folders()  # Refresh the list
-            show_auto_close_message(self, "Success", f"Added folder '{display_name}'", 5000)
+            show_auto_close_message(
+                self, "Success", f"Added folder '{display_name}'", 5000
+            )
         else:
             QMessageBox.warning(
                 self,
@@ -519,7 +523,9 @@ class FilesTab(QWidget):
         )
 
         if ok and new_name.strip() and new_name.strip() != folder.display_name:
-            if self.root_folder_manager.update_folder(folder_id, display_name=new_name.strip()):
+            if self.root_folder_manager.update_folder(
+                folder_id, display_name=new_name.strip()
+            ):
                 self._load_folders()  # Refresh the list
                 show_auto_close_message(self, "Success", "Folder name updated.", 5000)
             else:
@@ -573,7 +579,9 @@ class FilesTab(QWidget):
         invalid_count = len(results["invalid"])
 
         if invalid_count == 0:
-            self.validation_status.setText(f"✓ All {valid_count} folders are accessible.")
+            self.validation_status.setText(
+                f"✓ All {valid_count} folders are accessible."
+            )
             QMessageBox.information(
                 self,
                 "Validation Complete",

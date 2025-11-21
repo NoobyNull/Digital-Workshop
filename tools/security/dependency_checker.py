@@ -13,7 +13,7 @@ from pathlib import Path
 def check_dependencies():
     """Check dependencies for security vulnerabilities."""
     print("Checking dependencies for security vulnerabilities...")
-    
+
     try:
         # Run pip-audit
         result = subprocess.run(
@@ -22,7 +22,7 @@ def check_dependencies():
             text=True,
             timeout=300,
         )
-        
+
         if result.returncode == 0:
             print("✓ No vulnerabilities found")
             return True
@@ -31,7 +31,7 @@ def check_dependencies():
             try:
                 data = json.loads(result.stdout)
                 vulnerabilities = data.get("vulnerabilities", [])
-                
+
                 if vulnerabilities:
                     print(f"\n⚠ Found {len(vulnerabilities)} vulnerabilities:\n")
                     for vuln in vulnerabilities:
@@ -45,7 +45,7 @@ def check_dependencies():
                 print("Error parsing pip-audit output")
                 print(result.stdout)
                 return False
-                
+
     except FileNotFoundError:
         print("pip-audit not found. Installing...")
         subprocess.run(["pip", "install", "pip-audit"], check=True)
@@ -59,4 +59,3 @@ def check_dependencies():
 if __name__ == "__main__":
     success = check_dependencies()
     exit(0 if success else 1)
-

@@ -12,7 +12,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
-from src.gui.progress_window.thumbnail_generation_window import ThumbnailGenerationWindow
+from src.gui.progress_window.thumbnail_generation_window import (
+    ThumbnailGenerationWindow,
+)
 
 
 class TestThumbnailGenerationCoordinator(unittest.TestCase):
@@ -65,9 +67,7 @@ class TestThumbnailGenerationCoordinator(unittest.TestCase):
 
             # Verify window was created
             self.assertIsNotNone(self.coordinator.window)
-            self.assertIsInstance(
-                self.coordinator.window, ThumbnailGenerationWindow
-            )
+            self.assertIsInstance(self.coordinator.window, ThumbnailGenerationWindow)
 
     def test_generate_thumbnails_creates_worker(self):
         """Test that generate_thumbnails creates a worker."""
@@ -176,4 +176,3 @@ class TestThumbnailGenerationCoordinator(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

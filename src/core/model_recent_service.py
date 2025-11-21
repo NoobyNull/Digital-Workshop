@@ -126,4 +126,6 @@ def _sync_recent_tags(
     remove_tags = [tag for tag in remove_tags if tag not in add_tags]
 
     if add_tags or remove_tags:
-        manager.update_model_keywords_tags(model_id, add_tags=add_tags, remove_tags=remove_tags)
+        manager.update_model_keywords_tags(
+            model_id, add_tags=add_tags, remove_tags=remove_tags
+        )

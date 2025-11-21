@@ -85,7 +85,9 @@ def test_snapshot_csv_round_trip(tmp_path, qt_app, monkeypatch):
 
     export_path = tmp_path / "snapshots.csv"
     monkeypatch.setattr(
-        QFileDialog, "getSaveFileName", lambda *args, **kwargs: (str(export_path), "csv")
+        QFileDialog,
+        "getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "csv"),
     )
     monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: None)
     monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: None)
@@ -96,7 +98,9 @@ def test_snapshot_csv_round_trip(tmp_path, qt_app, monkeypatch):
     imported: List[dict] = []
     widget.snapshots_imported.connect(lambda data: imported.extend(data))
     monkeypatch.setattr(
-        QFileDialog, "getOpenFileName", lambda *args, **kwargs: (str(export_path), "csv")
+        QFileDialog,
+        "getOpenFileName",
+        lambda *args, **kwargs: (str(export_path), "csv"),
     )
 
     widget._import_csv()

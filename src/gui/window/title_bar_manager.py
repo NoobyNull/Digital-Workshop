@@ -23,6 +23,8 @@ class WindowTitleBarManager(QObject):
     Uses weak references to avoid memory leaks.
     """
 
+    _initialized: bool = False
+
     # Signal emitted when theme changes (for external listeners)
     theme_changed = Signal(str)  # Emits theme name ("dark" or "light")
 
@@ -60,7 +62,9 @@ class WindowTitleBarManager(QObject):
 
         return get_logger(__name__)
 
-    def register_window(self, window: QWidget, title_bar: Optional[CustomTitleBar] = None) -> None:
+    def register_window(
+        self, window: QWidget, title_bar: Optional[CustomTitleBar] = None
+    ) -> None:
         """
         Register a window with the manager.
 
@@ -105,7 +109,14 @@ class WindowTitleBarManager(QObject):
                     if title_bar and hasattr(title_bar, "update_theme"):
                         title_bar.update_theme()
                         updated_count += 1
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug("Failed to update title bar: %s", e)
 
             self.logger.debug("Updated %s title bars for theme: {theme}", updated_count)

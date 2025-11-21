@@ -165,7 +165,7 @@ class Installer:
                 from .modes.patch_mode import PatchMode
 
                 installer = PatchMode(self)
-                installer.execute(version)
+                installer.execute(version, modules or [])
 
             elif mode == "reinstall":
                 from .modes.reinstall_mode import ReinstallMode

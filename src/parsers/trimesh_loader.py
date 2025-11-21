@@ -15,7 +15,13 @@ from typing import Optional
 import numpy as np
 
 from src.core.logging_config import get_logger
-from src.core.data_structures import Model, ModelStats, Vector3D, ModelFormat, LoadingState
+from src.core.data_structures import (
+    Model,
+    ModelStats,
+    Vector3D,
+    ModelFormat,
+    LoadingState,
+)
 from src.parsers.base_parser import ProgressCallback
 
 logger = get_logger(__name__)
@@ -90,10 +96,14 @@ class TrimeshLoader:
             try:
                 model = self._load_with_trimesh(file_path, progress_callback)
                 if model is not None:
-                    self.logger.info("Successfully loaded model with Trimesh: %s", path.name)
+                    self.logger.info(
+                        "Successfully loaded model with Trimesh: %s", path.name
+                    )
                     return model
                 else:
-                    self.logger.warning("Trimesh returned None, falling back to standard parser")
+                    self.logger.warning(
+                        "Trimesh returned None, falling back to standard parser"
+                    )
             except Exception as e:
                 self.logger.warning(
                     "Trimesh loading failed (%s), falling back to standard parser: %s",
@@ -231,7 +241,10 @@ class TrimeshLoader:
                 progress_callback.report(100.0, "Model loaded successfully")
 
             self.logger.info(
-                "Trimesh loaded %s: %d triangles in %.3fs", path.name, num_faces, parsing_time
+                "Trimesh loaded %s: %d triangles in %.3fs",
+                path.name,
+                num_faces,
+                parsing_time,
             )
 
             return model

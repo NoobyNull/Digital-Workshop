@@ -84,18 +84,27 @@ class ToolMigrationUtility:
                     # Add tool to database
                     self.tool_repo.add_tool(
                         provider_id=provider_id,
-                        guid=tool.guid or f"migrated_{idx}",
-                        description=tool.description or "",
-                        tool_type=tool.tool_type or "Unknown",
-                        diameter=tool.diameter or 0.0,
-                        vendor=tool.vendor or "",
-                        geometry=tool.geometry or {},
-                        start_values=tool.start_values or {},
-                        properties=tool.custom_properties or {},
+                        tool_data={
+                            "guid": tool.guid or f"migrated_{idx}",
+                            "description": tool.description or "",
+                            "tool_type": tool.tool_type or "Unknown",
+                            "diameter": tool.diameter or 0.0,
+                            "vendor": tool.vendor or "",
+                            "geometry": tool.geometry or {},
+                            "start_values": tool.start_values or {},
+                            "custom_properties": tool.custom_properties or {},
+                        },
                     )
                     success_count += 1
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     fail_count += 1
                     error_msg = f"Failed to migrate tool {idx}: {str(e)}"
                     errors.append(error_msg)
@@ -104,7 +113,9 @@ class ToolMigrationUtility:
                 # Report progress
                 if progress_callback:
                     progress = (idx + 1) / len(tools)
-                    progress_callback(progress, f"Migrated {success_count}/{len(tools)}")
+                    progress_callback(
+                        progress, f"Migrated {success_count}/{len(tools)}"
+                    )
 
             self.logger.info(
                 "Migration complete: %s successful, {fail_count} failed", success_count
@@ -178,7 +189,9 @@ class ToolMigrationUtility:
                 "start_values",
                 "speeds_feeds",
             }
-            custom_properties = {k: v for k, v in item.items() if k not in reserved_fields}
+            custom_properties = {
+                k: v for k, v in item.items() if k not in reserved_fields
+            }
 
             return ToolData(
                 guid=guid,
@@ -224,14 +237,17 @@ class ToolMigrationUtility:
                 break
 
         if not json_path:
-            error_msg = "Could not find existing tool library JSON file. " "Checked: " + ", ".join(
-                str(p) for p in possible_paths
+            error_msg = (
+                "Could not find existing tool library JSON file. "
+                "Checked: " + ", ".join(str(p) for p in possible_paths)
             )
             self.logger.error(error_msg)
             raise FileNotFoundError(error_msg)
 
         self.logger.info("Found tool library at %s", json_path)
-        return self.migrate_from_json(str(json_path), progress_callback=progress_callback)
+        return self.migrate_from_json(
+            str(json_path), progress_callback=progress_callback
+        )
 
     def get_migration_status(self) -> Dict[str, any]:
         """Get status of migration (number of providers and tools in database)."""

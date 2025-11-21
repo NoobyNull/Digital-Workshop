@@ -459,7 +459,9 @@ class NotificationService(INotificationService):
 
             # Auto-remove after duration
             if duration_ms > 0:
-                QTimer.singleShot(duration_ms, lambda: self.hide_notification(notification.id))
+                QTimer.singleShot(
+                    duration_ms, lambda: self.hide_notification(notification.id)
+                )
 
             self.logger.debug("Notification shown: %s", title)
             return notification.id

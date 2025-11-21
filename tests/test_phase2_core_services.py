@@ -22,7 +22,7 @@ def temp_db():
     tmpdir = tempfile.mkdtemp()
     db_path = os.path.join(tmpdir, "test.db")
     yield db_path
-    
+
     try:
         if os.path.exists(db_path):
             os.remove(db_path)
@@ -76,24 +76,22 @@ class TestIFTService:
         """Test adding IFT."""
         service = IFTService()
         initial_count = service.get_ift_count()
-        
+
         new_ift = IFTDefinition(
-            name="Test Model",
-            extension=".test",
-            description="Test file type"
+            name="Test Model", extension=".test", description="Test file type"
         )
         service.add_ift("test", new_ift)
-        
+
         assert service.get_ift_count() > initial_count
 
     def test_enable_disable_ift(self):
         """Test enabling/disabling IFT."""
         service = IFTService()
         service.disable_ift("stl")
-        
+
         ift = service.get_ift("stl")
         assert ift.enabled is False
-        
+
         service.enable_ift("stl")
         ift = service.get_ift("stl")
         assert ift.enabled is True
@@ -102,7 +100,7 @@ class TestIFTService:
         """Test resetting to defaults."""
         service = IFTService()
         service.reset_to_defaults()
-        
+
         assert service.get_ift("stl") is not None
         assert service.get_ift("obj") is not None
 
@@ -122,7 +120,7 @@ class TestRunModeManager:
         assert mode in (
             RunModeManager.RUN_MODE_FIRST_TIME,
             RunModeManager.RUN_MODE_NORMAL,
-            RunModeManager.RUN_MODE_PORTABLE
+            RunModeManager.RUN_MODE_PORTABLE,
         )
 
     def test_set_run_mode(self):
@@ -173,7 +171,7 @@ class TestProjectManager:
         """Test opening project."""
         manager = ProjectManager(db_manager)
         project_id = manager.create_project("Test Project")
-        
+
         result = manager.open_project(project_id)
         assert result is True
         assert manager.get_current_project() is not None
@@ -183,7 +181,7 @@ class TestProjectManager:
         manager = ProjectManager(db_manager)
         project_id = manager.create_project("Test Project")
         manager.open_project(project_id)
-        
+
         result = manager.close_project()
         assert result is True
         assert manager.get_current_project() is None
@@ -192,17 +190,17 @@ class TestProjectManager:
         """Test getting project."""
         manager = ProjectManager(db_manager)
         project_id = manager.create_project("Test Project")
-        
+
         project = manager.get_project(project_id)
         assert project is not None
-        assert project['name'] == "Test Project"
+        assert project["name"] == "Test Project"
 
     def test_list_projects(self, db_manager):
         """Test listing projects."""
         manager = ProjectManager(db_manager)
         manager.create_project("Project 1")
         manager.create_project("Project 2")
-        
+
         projects = manager.list_projects()
         assert len(projects) >= 2
 
@@ -210,7 +208,7 @@ class TestProjectManager:
         """Test duplicate detection."""
         manager = ProjectManager(db_manager)
         manager.create_project("Test Project")
-        
+
         is_duplicate = manager.check_duplicate("Test Project")
         assert is_duplicate is True
 
@@ -218,7 +216,7 @@ class TestProjectManager:
         """Test deleting project."""
         manager = ProjectManager(db_manager)
         project_id = manager.create_project("Test Project")
-        
+
         result = manager.delete_project(project_id)
         assert result is True
 
@@ -230,44 +228,38 @@ class TestFileManager:
         """Test adding file."""
         project_manager = ProjectManager(db_manager)
         file_manager = FileManager(db_manager)
-        
+
         project_id = project_manager.create_project("Test Project")
         file_id = file_manager.add_file(
-            project_id=project_id,
-            file_path="/path/to/file.stl",
-            file_name="file.stl"
+            project_id=project_id, file_path="/path/to/file.stl", file_name="file.stl"
         )
-        
+
         assert file_id is not None
 
     def test_get_file(self, db_manager):
         """Test getting file."""
         project_manager = ProjectManager(db_manager)
         file_manager = FileManager(db_manager)
-        
+
         project_id = project_manager.create_project("Test Project")
         file_id = file_manager.add_file(
-            project_id=project_id,
-            file_path="/path/to/file.stl",
-            file_name="file.stl"
+            project_id=project_id, file_path="/path/to/file.stl", file_name="file.stl"
         )
-        
+
         file_data = file_manager.get_file(file_id)
         assert file_data is not None
-        assert file_data['file_name'] == "file.stl"
+        assert file_data["file_name"] == "file.stl"
 
     def test_update_file_status(self, db_manager):
         """Test updating file status."""
         project_manager = ProjectManager(db_manager)
         file_manager = FileManager(db_manager)
-        
+
         project_id = project_manager.create_project("Test Project")
         file_id = file_manager.add_file(
-            project_id=project_id,
-            file_path="/path/to/file.stl",
-            file_name="file.stl"
+            project_id=project_id, file_path="/path/to/file.stl", file_name="file.stl"
         )
-        
+
         result = file_manager.update_file_status(file_id, "imported")
         assert result is True
 
@@ -275,11 +267,11 @@ class TestFileManager:
         """Test getting files by project."""
         project_manager = ProjectManager(db_manager)
         file_manager = FileManager(db_manager)
-        
+
         project_id = project_manager.create_project("Test Project")
         file_manager.add_file(project_id, "/path/to/file1.stl", "file1.stl")
         file_manager.add_file(project_id, "/path/to/file2.obj", "file2.obj")
-        
+
         files = file_manager.get_files_by_project(project_id)
         assert len(files) == 2
 
@@ -287,14 +279,11 @@ class TestFileManager:
         """Test deleting file."""
         project_manager = ProjectManager(db_manager)
         file_manager = FileManager(db_manager)
-        
+
         project_id = project_manager.create_project("Test Project")
         file_id = file_manager.add_file(
-            project_id=project_id,
-            file_path="/path/to/file.stl",
-            file_name="file.stl"
+            project_id=project_id, file_path="/path/to/file.stl", file_name="file.stl"
         )
-        
+
         result = file_manager.delete_file(file_id)
         assert result is True
-

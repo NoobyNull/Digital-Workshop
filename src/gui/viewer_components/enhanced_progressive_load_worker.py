@@ -53,7 +53,9 @@ class EnhancedProgressiveLoadWorker(QThread):
     def run(self) -> None:
         """Run the enhanced progressive loading process with accurate progress tracking."""
         try:
-            self.logger.info("Starting enhanced progressive loading: %s", self.file_path)
+            self.logger.info(
+                "Starting enhanced progressive loading: %s", self.file_path
+            )
 
             # Get model cache
             model_cache = get_model_cache()
@@ -71,7 +73,9 @@ class EnhancedProgressiveLoadWorker(QThread):
                 return
 
             # Model not in cache, need to parse it with detailed progress tracking
-            self.logger.info("Model not in cache - parsing with detailed progress tracking")
+            self.logger.info(
+                "Model not in cache - parsing with detailed progress tracking"
+            )
             self._parse_model_with_progress(file_path_obj, model_cache)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -89,7 +93,9 @@ class EnhancedProgressiveLoadWorker(QThread):
         try:
             # Create detailed progress tracker
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
-            tracker = DetailedProgressTracker(triangle_count=0, file_size_mb=file_size_mb)
+            tracker = DetailedProgressTracker(
+                triangle_count=0, file_size_mb=file_size_mb
+            )
 
             # Set callback to emit progress updates
             def emit_progress(progress: float, message: str) -> None:
@@ -139,7 +145,9 @@ class EnhancedProgressiveLoadWorker(QThread):
             model_cache.put(str(file_path), CacheLevel.GEOMETRY_FULL, model)
 
             # Model is now ready for display
-            self.logger.info("Model parsing completed: %s triangles", model.stats.triangle_count)
+            self.logger.info(
+                "Model parsing completed: %s triangles", model.stats.triangle_count
+            )
             self.progress_updated.emit(
                 100, f"Model ready: {model.stats.triangle_count:,} triangles"
             )

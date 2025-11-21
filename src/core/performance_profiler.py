@@ -106,7 +106,9 @@ class PerformanceProfiler:
     Collects, analyzes, and reports performance metrics for loading operations.
     """
 
-    def __init__(self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0) -> None:
+    def __init__(
+        self, enable_profiling: bool = True, log_threshold_seconds: float = 1.0
+    ) -> None:
         """
         Initialize performance profiler.
 
@@ -120,7 +122,9 @@ class PerformanceProfiler:
 
         # Data storage
         self.samples: List[PerformanceSample] = []
-        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(dict)
+        self.stats: Dict[str, Dict[PerformanceMetric, PerformanceStats]] = defaultdict(
+            dict
+        )
         self.active_timers: Dict[str, float] = {}
 
         # Thread safety
@@ -130,7 +134,9 @@ class PerformanceProfiler:
         self.profile_output_dir = Path("performance_profiles")
         self.profile_output_dir.mkdir(exist_ok=True)
 
-        self.logger.info("PerformanceProfiler initialized (enabled: %s)", enable_profiling)
+        self.logger.info(
+            "PerformanceProfiler initialized (enabled: %s)", enable_profiling
+        )
 
     @log_function_call
     @contextmanager
@@ -213,7 +219,9 @@ class PerformanceProfiler:
             self.stats[operation][metric].add_sample(value)
 
     @log_function_call
-    def get_operation_stats(self, operation: str) -> Dict[PerformanceMetric, PerformanceStats]:
+    def get_operation_stats(
+        self, operation: str
+    ) -> Dict[PerformanceMetric, PerformanceStats]:
         """
         Get performance statistics for an operation.
 
@@ -304,7 +312,9 @@ class PerformanceProfiler:
 
                     # Save profile data
                     timestamp = int(time.time())
-                    profile_file = self.profile_output_dir / f"{operation}_{timestamp}.prof"
+                    profile_file = (
+                        self.profile_output_dir / f"{operation}_{timestamp}.prof"
+                    )
 
                     # Save binary profile
                     profiler.dump_stats(str(profile_file))
@@ -314,11 +324,15 @@ class PerformanceProfiler:
                     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats(20)  # Top 20 functions
 
-                    text_report = self.profile_output_dir / f"{operation}_{timestamp}.txt"
+                    text_report = (
+                        self.profile_output_dir / f"{operation}_{timestamp}.txt"
+                    )
                     with open(text_report, "w") as f:
                         f.write(s.getvalue())
 
-                    self.logger.info("Profile saved: %s and {text_report}", profile_file)
+                    self.logger.info(
+                        "Profile saved: %s and {text_report}", profile_file
+                    )
 
             return wrapper
 
@@ -347,13 +361,22 @@ class PerformanceProfiler:
         if not self.enable_profiling:
             return {"error": "Profiling disabled"}
 
-        self.logger.info("Starting benchmark: %s ({iterations} iterations)", operation_name)
+        self.logger.info(
+            "Starting benchmark: %s ({iterations} iterations)", operation_name
+        )
 
         # Warmup
         for i in range(warmup_iterations):
             try:
                 operation_func()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 return {"error": f"Warmup failed: {e}"}
 
         # Benchmark
@@ -375,7 +398,14 @@ class PerformanceProfiler:
                     {"iteration": i + 1},
                 )
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Benchmark iteration %s failed: {e}", i + 1)
                 continue
 
@@ -558,7 +588,9 @@ def profile_function(operation: str) -> None:
     return profiler.profile_function(operation)
 
 
-def time_operation(operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME) -> None:
+def time_operation(
+    operation: str, metric: PerformanceMetric = PerformanceMetric.LOAD_TIME
+) -> None:
     """
     Context manager to time an operation.
 

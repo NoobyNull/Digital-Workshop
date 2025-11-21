@@ -198,7 +198,9 @@ class WalkthroughDialog(QDialog):
         layout.addWidget(content_label)
 
         # Category badge
-        category_label = QLabel(f"Category: {self.tip.category.replace('_', ' ').title()}")
+        category_label = QLabel(
+            f"Category: {self.tip.category.replace('_', ' ').title()}"
+        )
         category_label.setStyleSheet("color: #666; font-style: italic;")
         layout.addWidget(category_label)
 

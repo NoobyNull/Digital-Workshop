@@ -20,7 +20,9 @@ class SavedSearchDialog(QDialog):
     Dialog for saving a search with a custom name.
     """
 
-    def __init__(self, query: str, filters: Optional[Dict[str, Any]] = None, parent=None) -> None:
+    def __init__(
+        self, query: str, filters: Optional[Dict[str, Any]] = None, parent=None
+    ) -> None:
         """
         Initialize the saved search dialog.
 

@@ -113,4 +113,3 @@ def test_dirty_filter_limits_rows_by_dirty_state(qt_app):  # noqa: ARG001
     proxy.set_dirty_filter("invalid")
     proxy.invalidateFilter()
     assert proxy.rowCount() == 3
-

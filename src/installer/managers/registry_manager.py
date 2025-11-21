@@ -126,7 +126,9 @@ class RegistryManager:
             manifest = self.installer._load_manifest()
             modules = manifest.get("modules", {})
 
-            is_installed = module_name in modules and modules[module_name].get("installed", False)
+            is_installed = module_name in modules and modules[module_name].get(
+                "installed", False
+            )
             logger.debug("Module installed: %s = {is_installed}", module_name)
 
             return is_installed
@@ -166,7 +168,9 @@ class RegistryManager:
 
         try:
             modules = self.get_all_modules()
-            installed = [name for name, info in modules.items() if info.get("installed", False)]
+            installed = [
+                name for name, info in modules.items() if info.get("installed", False)
+            ]
             logger.debug("Found %s installed modules: {installed}", len(installed))
 
             return installed

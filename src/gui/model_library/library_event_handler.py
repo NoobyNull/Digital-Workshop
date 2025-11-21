@@ -57,25 +57,47 @@ class LibraryEventHandler:
         )
 
         self.library_widget.list_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.list_view.doubleClicked.connect(self.on_model_double_clicked)
+        self.library_widget.list_view.doubleClicked.connect(
+            self.on_model_double_clicked
+        )
         self.library_widget.grid_view.clicked.connect(self.on_model_clicked)
-        self.library_widget.grid_view.doubleClicked.connect(self.on_model_double_clicked)
+        self.library_widget.grid_view.doubleClicked.connect(
+            self.on_model_double_clicked
+        )
 
         # Search and filter controls
         self.library_widget.search_box.textChanged.connect(self.apply_filters)
         if hasattr(self.library_widget, "category_filter"):
-            self.library_widget.category_filter.currentIndexChanged.connect(self.apply_filters)
+            self.library_widget.category_filter.currentIndexChanged.connect(
+                self.apply_filters
+            )
         if hasattr(self.library_widget, "dirty_filter"):
-            self.library_widget.dirty_filter.currentIndexChanged.connect(self.apply_filters)
+            self.library_widget.dirty_filter.currentIndexChanged.connect(
+                self.apply_filters
+            )
 
         self.library_widget.setAcceptDrops(True)
         self.library_widget.list_view.setAcceptDrops(True)
         self.library_widget.grid_view.setAcceptDrops(True)
 
+    def remove_model(self, model_id: int) -> None:
+        """Compatibility hook to remove a model via the facade event handler."""
+        try:
+            if hasattr(self.library_widget, "facade"):
+                handler = getattr(self.library_widget.facade, "event_handler", None)
+                if handler and hasattr(handler, "remove_model"):
+                    handler.remove_model(model_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning("Failed to remove model %s: %s", model_id, exc)
+
         self.library_widget.list_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.list_view.customContextMenuRequested.connect(self.show_context_menu)
+        self.library_widget.list_view.customContextMenuRequested.connect(
+            self.show_context_menu
+        )
         self.library_widget.grid_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.library_widget.grid_view.customContextMenuRequested.connect(self.show_context_menu)
+        self.library_widget.grid_view.customContextMenuRequested.connect(
+            self.show_context_menu
+        )
 
         # Set up file tree context menu
         self.logger.info(
@@ -109,7 +131,9 @@ class LibraryEventHandler:
 
     def apply_filters(self) -> None:
         """Apply search, category, and dirty/clean filters."""
-        if self.library_widget._disposed or not hasattr(self.library_widget, "proxy_model"):
+        if self.library_widget._disposed or not hasattr(
+            self.library_widget, "proxy_model"
+        ):
             return
 
         text = (
@@ -123,7 +147,9 @@ class LibraryEventHandler:
         try:
             self.library_widget.proxy_model.set_advanced_query(advanced)
             # Clear regex so advanced boolean search drives filtering
-            self.library_widget.proxy_model.setFilterRegularExpression(QRegularExpression())
+            self.library_widget.proxy_model.setFilterRegularExpression(
+                QRegularExpression()
+            )
         except Exception:
             try:
                 self.library_widget.proxy_model.set_advanced_query("")
@@ -183,7 +209,8 @@ class LibraryEventHandler:
             sender_view = self.library_widget.sender()
             view = (
                 sender_view
-                if sender_view in (self.library_widget.list_view, self.library_widget.grid_view)
+                if sender_view
+                in (self.library_widget.list_view, self.library_widget.grid_view)
                 else self.library_widget.list_view
             )
             index = view.indexAt(position)
@@ -205,7 +232,9 @@ class LibraryEventHandler:
                 db_manager = get_database_manager()
                 model_data = db_manager.get_model(model_id)
 
-            analyze_action = open_native_action = generate_preview_action = remove_action = None
+            analyze_action = open_native_action = generate_preview_action = (
+                remove_action
+            ) = None
 
             if model_id and model_data:
                 # Model operations
@@ -239,10 +268,21 @@ class LibraryEventHandler:
                         self.library_widget.import_requested.emit([])
                     else:
                         parent = self.library_widget.parent()
-                        if parent is not None and hasattr(parent, "_open_import_dialog"):
+                        if parent is not None and hasattr(
+                            parent, "_open_import_dialog"
+                        ):
                             parent._open_import_dialog()
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
-                    self.logger.warning("Failed to open Import dialog from context menu: %s", exc)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as exc:
+                    self.logger.warning(
+                        "Failed to open Import dialog from context menu: %s", exc
+                    )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to show context menu: %s", e)
 
@@ -268,7 +308,13 @@ class LibraryEventHandler:
                     path_obj = Path(file_path)
                     if path_obj.is_file():
                         # Check if it's a supported model file
-                        if path_obj.suffix.lower() in [".stl", ".obj", ".3mf", ".step", ".stp"]:
+                        if path_obj.suffix.lower() in [
+                            ".stl",
+                            ".obj",
+                            ".3mf",
+                            ".step",
+                            ".stp",
+                        ]:
                             import_action = menu.addAction("Import File")
                         else:
                             import_action = None
@@ -280,7 +326,9 @@ class LibraryEventHandler:
                     open_action = menu.addAction("Open in Explorer")
 
                     # Execute menu
-                    action = menu.exec(self.library_widget.file_tree.mapToGlobal(position))
+                    action = menu.exec(
+                        self.library_widget.file_tree.mapToGlobal(position)
+                    )
 
                     if import_action and action == import_action:
                         self.library_widget._import_from_context_menu(file_path)
@@ -292,7 +340,9 @@ class LibraryEventHandler:
             return
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to show file tree context menu: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to show file tree context menu: %s", e, exc_info=True
+            )
 
     def _add_root_folder(self) -> None:
         """Add a new root folder via dialog."""
@@ -339,7 +389,9 @@ class LibraryEventHandler:
                 )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add root folder: %s", e)
-            QMessageBox.critical(self.library_widget, "Error", f"Failed to add root folder: {e}")
+            QMessageBox.critical(
+                self.library_widget, "Error", f"Failed to add root folder: {e}"
+            )
 
     def drag_enter_event(self, event: QDragEnterEvent) -> None:
         """Handle drag enter event."""
@@ -382,12 +434,16 @@ class LibraryEventHandler:
             model = db_manager.get_model(model_id)
 
             if not model:
-                QMessageBox.warning(self.library_widget, "Error", "Model not found in database")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Model not found in database"
+                )
                 return
 
             model_path = model.get("file_path")
             if not model_path or not Path(model_path).exists():
-                QMessageBox.warning(self.library_widget, "Error", "Model file not found on disk")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Model file not found on disk"
+                )
                 return
 
             # Get file hash
@@ -396,7 +452,9 @@ class LibraryEventHandler:
             file_hash = hash_result.hash_value if hash_result.success else None
 
             if not file_hash:
-                QMessageBox.warning(self.library_widget, "Error", "Failed to compute file hash")
+                QMessageBox.warning(
+                    self.library_widget, "Error", "Failed to compute file hash"
+                )
                 return
 
             # Load thumbnail settings from preferences
@@ -410,7 +468,9 @@ class LibraryEventHandler:
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -448,7 +508,9 @@ class LibraryEventHandler:
                     "Error",
                     f"Failed to generate preview: {error_msg}",
                 )
-                self.logger.error("Preview generation failed for model %s: {error_msg}", model_id)
+                self.logger.error(
+                    "Preview generation failed for model %s: {error_msg}", model_id
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Exception during preview generation: {str(e)}"
@@ -465,7 +527,9 @@ class LibraryEventHandler:
         """
         try:
             if not model_data:
-                self.logger.warning("Analyze requested but model data was missing for id=%s", model_id)
+                self.logger.warning(
+                    "Analyze requested but model data was missing for id=%s", model_id
+                )
                 QMessageBox.warning(
                     self.library_widget,
                     "No Model Data",
@@ -493,7 +557,9 @@ class LibraryEventHandler:
             try:
                 import numpy as np  # type: ignore
 
-                if hasattr(model, "triangles") and isinstance(model.triangles, np.ndarray):
+                if hasattr(model, "triangles") and isinstance(
+                    model.triangles, np.ndarray
+                ):
                     model.triangles = model.triangles.tolist()
             except Exception:
                 pass

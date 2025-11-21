@@ -120,7 +120,14 @@ class DatabaseErrorHandler:
                 self._check_connection_leaks()
                 self._cleanup_old_errors()
                 time.sleep(30)  # Check every 30 seconds
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 logger.error("Health monitoring error: %s", str(e))
 
     def _check_database_health(self) -> None:
@@ -191,7 +198,9 @@ class DatabaseErrorHandler:
                 leaked_connections.append(conn_id)
 
         if leaked_connections:
-            logger.warning("Potential connection leaks detected: %s", leaked_connections)
+            logger.warning(
+                "Potential connection leaks detected: %s", leaked_connections
+            )
             # In a real implementation, we would force-close these connections
 
     def _cleanup_old_errors(self) -> None:
@@ -237,7 +246,9 @@ class DatabaseErrorHandler:
             suggested_action=suggested_action,
             context=context or {},
             traceback_info=(
-                traceback.format_exc() if error_type != DatabaseErrorType.UNKNOWN_ERROR else None
+                traceback.format_exc()
+                if error_type != DatabaseErrorType.UNKNOWN_ERROR
+                else None
             ),
         )
 
@@ -278,9 +289,7 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.CONNECTION_ERROR
             user_message = "Database is currently locked. Please try again in a moment."
             recoverable = True
-            suggested_action = (
-                "Wait and retry the operation, or close other applications using the database."
-            )
+            suggested_action = "Wait and retry the operation, or close other applications using the database."
         elif "no such table" in error_message.lower():
             error_type = DatabaseErrorType.SCHEMA_ERROR
             user_message = "Database schema is missing or outdated."
@@ -290,7 +299,9 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.CONSTRAINT_ERROR
             user_message = "Data constraint violation occurred."
             recoverable = True
-            suggested_action = "Check data integrity and ensure unique constraints are satisfied."
+            suggested_action = (
+                "Check data integrity and ensure unique constraints are satisfied."
+            )
         elif "database disk image is malformed" in error_message.lower():
             error_type = DatabaseErrorType.CORRUPTION_ERROR
             user_message = "Database file appears to be corrupted."
@@ -305,7 +316,9 @@ class DatabaseErrorHandler:
             error_type = DatabaseErrorType.UNKNOWN_ERROR
             user_message = "An unexpected database error occurred."
             recoverable = True
-            suggested_action = "Please try again or contact support if the problem persists."
+            suggested_action = (
+                "Please try again or contact support if the problem persists."
+            )
 
         return self._log_error(
             error_type=error_type,
@@ -426,7 +439,14 @@ class DatabaseErrorHandler:
             for callback in self._recovery_callbacks:
                 try:
                     callback(error)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Recovery callback failed: %s", str(e))
 
             if recovery_successful:
@@ -555,7 +575,9 @@ class DatabaseErrorHandler:
                     ]
                 ),
                 "most_common_error": (
-                    max(error_counts.items(), key=lambda x: x[1]) if error_counts else None
+                    max(error_counts.items(), key=lambda x: x[1])
+                    if error_counts
+                    else None
                 ),
             }
 
@@ -681,7 +703,14 @@ class ConnectionManager:
                 if conn:
                     try:
                         conn.close()
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
                         logger.error("Error closing connection: %s", str(e))
 
     def _create_healthy_connection(self, timeout: float) -> sqlite3.Connection:
@@ -730,13 +759,17 @@ class ConnectionManager:
         with self._lock:
             return {
                 "total_connections": len(self._connections),
-                "active_connections": len([c for c in self._connections.values() if c is not None]),
+                "active_connections": len(
+                    [c for c in self._connections.values() if c is not None]
+                ),
                 "connection_metrics": {
                     conn_id: {
                         "state": metrics.state.value,
                         "query_count": metrics.query_count,
                         "error_count": metrics.error_count,
-                        "uptime_seconds": (datetime.now() - metrics.created_at).total_seconds(),
+                        "uptime_seconds": (
+                            datetime.now() - metrics.created_at
+                        ).total_seconds(),
                     }
                     for conn_id, metrics in self.error_handler.connection_metrics.items()
                 },
@@ -750,7 +783,14 @@ class ConnectionManager:
                     if conn:
                         conn.close()
                         logger.debug("Closed connection %s", conn_id)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Error closing connection %s: {str(e)}", conn_id)
 
             self._connections.clear()
@@ -761,7 +801,9 @@ class GracefulDegradationManager:
 
     def __init__(self) -> None:
         """Initialize graceful degradation manager."""
-        self.degradation_level = 0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
+        self.degradation_level = (
+            0  # 0 = normal, 1 = degraded, 2 = read-only, 3 = minimal
+        )
         self.available_features = set()
         self.fallback_data = {}
 

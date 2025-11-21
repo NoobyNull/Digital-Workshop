@@ -28,7 +28,9 @@ class DatabaseStage(BaseStage):
     3. Updates task with model_id
     """
 
-    def __init__(self, db_manager: DatabaseManager, thread_pool: Optional[QThreadPool] = None):
+    def __init__(
+        self, db_manager: DatabaseManager, thread_pool: Optional[QThreadPool] = None
+    ):
         """
         Initialize the database stage.
 
@@ -71,7 +73,9 @@ class DatabaseStage(BaseStage):
                 )
                 return False
         except Exception as e:
-            self.logger.warning("Error checking for existing model %s: %s", task.filename, e)
+            self.logger.warning(
+                "Error checking for existing model %s: %s", task.filename, e
+            )
 
         return True
 

@@ -64,8 +64,12 @@ class ThumbnailGenerationWorker(QThread):
     def run(self) -> None:
         """Generate thumbnails for all files in the list."""
         try:
-            self.logger.info("Starting thumbnail generation for %s files", len(self.file_info_list))
-            self.logger.info("Background: %s, Material: %s", self.background, self.material)
+            self.logger.info(
+                "Starting thumbnail generation for %s files", len(self.file_info_list)
+            )
+            self.logger.info(
+                "Background: %s, Material: %s", self.background, self.material
+            )
 
             total = len(self.file_info_list)
 
@@ -81,7 +85,9 @@ class ThumbnailGenerationWorker(QThread):
             self.finished_batch.emit()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Fatal error in thumbnail generation worker: %s", e, exc_info=True)
+            self.logger.error(
+                "Fatal error in thumbnail generation worker: %s", e, exc_info=True
+            )
             self.error_occurred.emit("", str(e))
 
     def _process_single_thumbnail(

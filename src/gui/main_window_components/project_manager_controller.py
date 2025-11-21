@@ -65,10 +65,18 @@ class ProjectManagerController:
 
                 # Connect signals
                 mw.project_manager_widget.project_opened.connect(mw._on_project_opened)
-                mw.project_manager_widget.project_created.connect(mw._on_project_created)
-                mw.project_manager_widget.project_deleted.connect(mw._on_project_deleted)
-                mw.project_manager_widget.file_selected.connect(mw._on_project_file_selected)
-                mw.project_manager_widget.tab_switch_requested.connect(mw._on_tab_switch_requested)
+                mw.project_manager_widget.project_created.connect(
+                    mw._on_project_created
+                )
+                mw.project_manager_widget.project_deleted.connect(
+                    mw._on_project_deleted
+                )
+                mw.project_manager_widget.file_selected.connect(
+                    mw._on_project_file_selected
+                )
+                mw.project_manager_widget.tab_switch_requested.connect(
+                    mw._on_tab_switch_requested
+                )
 
                 mw.project_manager_dock.setWidget(mw.project_manager_widget)
                 logger.info("Project manager dock created successfully")
@@ -85,7 +93,9 @@ class ProjectManagerController:
 
             try:
                 if hasattr(mw, "_register_dock_for_snapping"):
-                    mw._register_dock_for_snapping(mw.project_manager_dock)  # noqa: SLF001
+                    mw._register_dock_for_snapping(
+                        mw.project_manager_dock
+                    )  # noqa: SLF001
             except Exception:
                 logger.debug("Failed to register Project Manager dock for snapping")
 
@@ -94,11 +104,15 @@ class ProjectManagerController:
             try:
                 if hasattr(mw, "model_library_dock") and mw.model_library_dock:
                     mw.tabifyDockWidget(mw.model_library_dock, mw.project_manager_dock)
-                    logger.info("Model Library and Project Manager docks tabified using native Qt")
+                    logger.info(
+                        "Model Library and Project Manager docks tabified using native Qt"
+                    )
             except Exception:  # noqa: BLE001
                 # Dock layout persistence is handled elsewhere; failure to tabify
                 # is not fatal.
-                logger.debug("Failed to tabify Project Manager dock with Model Library dock")
+                logger.debug(
+                    "Failed to tabify Project Manager dock with Model Library dock"
+                )
 
         except Exception as e:  # noqa: BLE001
             logger.error("Failed to setup project manager dock: %s", e)

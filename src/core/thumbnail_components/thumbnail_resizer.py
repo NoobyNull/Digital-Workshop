@@ -77,7 +77,9 @@ class ThumbnailResizer:
             for size_name, (width, height) in sizes.items():
                 try:
                     # Resize using high-quality resampling
-                    resized = source_image.resize((width, height), Image.Resampling.LANCZOS)
+                    resized = source_image.resize(
+                        (width, height), Image.Resampling.LANCZOS
+                    )
 
                     # Save with size suffix in filename
                     output_path = output_dir / f"{file_hash}_{width}.png"
@@ -86,8 +88,17 @@ class ThumbnailResizer:
                     output_paths[size_name] = output_path
                     self.logger.debug("Saved %s thumbnail: {output_path}", size_name)
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.error("Failed to resize to %s ({width}x{height}): {e}", size_name)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    self.logger.error(
+                        "Failed to resize to %s ({width}x{height}): {e}", size_name
+                    )
 
             return output_paths
 
@@ -95,7 +106,9 @@ class ThumbnailResizer:
             self.logger.error("Failed to resize thumbnails: %s", e, exc_info=True)
             return output_paths
 
-    def get_thumbnail_path(self, file_hash: str, output_dir: Path, size: str = "xlarge") -> Path:
+    def get_thumbnail_path(
+        self, file_hash: str, output_dir: Path, size: str = "xlarge"
+    ) -> Path:
         """
         Get the path for a specific thumbnail size.
 
@@ -114,7 +127,9 @@ class ThumbnailResizer:
         width, height = self.SIZES[size]
         return output_dir / f"{file_hash}_{width}.png"
 
-    def get_all_thumbnail_paths(self, file_hash: str, output_dir: Path) -> Dict[str, Path]:
+    def get_all_thumbnail_paths(
+        self, file_hash: str, output_dir: Path
+    ) -> Dict[str, Path]:
         """
         Get paths for all available thumbnail sizes.
 

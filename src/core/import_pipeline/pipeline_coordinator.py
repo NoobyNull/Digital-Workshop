@@ -94,7 +94,9 @@ class PipelineCoordinator(QObject):
 
             # Process each task through all stages concurrently
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = [executor.submit(self._run_task_wrapper, task) for task in tasks]
+                futures = [
+                    executor.submit(self._run_task_wrapper, task) for task in tasks
+                ]
                 for future in as_completed(futures):
                     # Re-raise exceptions so pipeline_failed is triggered
                     future.result()
@@ -166,7 +168,9 @@ class PipelineCoordinator(QObject):
                 stage_enum = self._get_stage_enum(stage)
                 if stage_enum and stage_enum in completed_stages:
                     self.logger.info(
-                        "Skipping completed stage %s for task %s", stage_enum.value, task.filename
+                        "Skipping completed stage %s for task %s",
+                        stage_enum.value,
+                        task.filename,
                     )
                     continue
 
@@ -176,7 +180,9 @@ class PipelineCoordinator(QObject):
                 # Check if stage failed
                 if not result.success:
                     self._record_failure()
-                    self.signals.task_failed.emit(task, result.error_message or "Unknown error")
+                    self.signals.task_failed.emit(
+                        task, result.error_message or "Unknown error"
+                    )
                     return
 
             # All stages completed successfully

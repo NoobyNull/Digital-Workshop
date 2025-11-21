@@ -189,7 +189,9 @@ class LoadingProgressWidget(QWidget):
             time_since_last_update = current_time - self.last_progress_update
             progress_diff = abs(target_value - current_value)
 
-            if progress_diff >= 0.5 or time_since_last_update >= 0.1:  # Update every 100ms minimum
+            if (
+                progress_diff >= 0.5 or time_since_last_update >= 0.1
+            ):  # Update every 100ms minimum
                 # Smooth transition for small changes
                 if progress_diff <= 5.0 and time_since_last_update < 0.5:
                     # Animate small changes smoothly
@@ -219,7 +221,9 @@ class LoadingProgressWidget(QWidget):
         """
         try:
             # Use QTimer for smooth animation
-            steps = max(1, abs(to_value - from_value) // 2)  # 2-3 steps for small changes
+            steps = max(
+                1, abs(to_value - from_value) // 2
+            )  # 2-3 steps for small changes
             step_size = (to_value - from_value) / steps
 
             def animate_step(current_step: int = 0) -> None:
@@ -231,7 +235,9 @@ class LoadingProgressWidget(QWidget):
                 self.progress_bar.setValue(intermediate_value)
 
                 # Schedule next step
-                QTimer.singleShot(20, lambda: animate_step(current_step + 1))  # 20ms intervals
+                QTimer.singleShot(
+                    20, lambda: animate_step(current_step + 1)
+                )  # 20ms intervals
 
             animate_step()
 
@@ -240,7 +246,9 @@ class LoadingProgressWidget(QWidget):
             self.logger.debug("Progress animation failed, using direct update: %s", e)
             self.progress_bar.setValue(to_value)
 
-    def finish_loading(self, success: bool = True, final_message: str = "Completed") -> None:
+    def finish_loading(
+        self, success: bool = True, final_message: str = "Completed"
+    ) -> None:
         """
         Finish loading operation.
 
@@ -266,7 +274,9 @@ class LoadingProgressWidget(QWidget):
             # Keep widget visible briefly, then hide
             QTimer.singleShot(3000, self._hide_widget)
 
-            self.logger.debug("Finished loading display for job %s", self.current_job_id)
+            self.logger.debug(
+                "Finished loading display for job %s", self.current_job_id
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to finish loading display: %s", e)

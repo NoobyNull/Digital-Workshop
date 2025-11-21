@@ -34,7 +34,9 @@ def test_mark_model_dirty_and_clean_preserves_user_tags(tmp_path) -> None:
     # Mark dirty: TAG_DIRTY should be added alongside existing tags
     assert manager.mark_model_dirty(model_id)
     metadata = manager.get_model_metadata(model_id)
-    keywords = [k.strip() for k in (metadata.get("keywords") or "").split(",") if k.strip()]
+    keywords = [
+        k.strip() for k in (metadata.get("keywords") or "").split(",") if k.strip()
+    ]
     assert "user" in keywords
     assert "tag" in keywords
     assert TAG_DIRTY in keywords
@@ -42,8 +44,9 @@ def test_mark_model_dirty_and_clean_preserves_user_tags(tmp_path) -> None:
     # Mark clean: TAG_DIRTY should be removed, other tags preserved
     assert manager.mark_model_clean(model_id)
     metadata = manager.get_model_metadata(model_id)
-    keywords = [k.strip() for k in (metadata.get("keywords") or "").split(",") if k.strip()]
+    keywords = [
+        k.strip() for k in (metadata.get("keywords") or "").split(",") if k.strip()
+    ]
     assert "user" in keywords
     assert "tag" in keywords
     assert TAG_DIRTY not in keywords
-

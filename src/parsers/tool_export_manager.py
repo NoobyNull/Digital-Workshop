@@ -87,7 +87,9 @@ class ToolExportManager:
 
                     if progress_callback and tools:
                         progress = min((i + 1) / len(tools), 1.0)
-                        progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
+                        progress_callback.report(
+                            progress, f"Exported {i + 1}/{len(tools)} tools"
+                        )
 
             self.logger.info("Exported %s tools to CSV: {output_path}", len(tools))
             return True, f"Successfully exported {len(tools)} tools to CSV", len(tools)
@@ -144,7 +146,9 @@ class ToolExportManager:
 
                 if progress_callback and tools:
                     progress = min((i + 1) / len(tools), 1.0)
-                    progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
+                    progress_callback.report(
+                        progress, f"Exported {i + 1}/{len(tools)} tools"
+                    )
 
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
@@ -225,12 +229,16 @@ class ToolExportManager:
 
                 if progress_callback and tools:
                     progress = min((i + 1) / len(tools), 1.0)
-                    progress_callback.report(progress, f"Exported {i + 1}/{len(tools)} tools")
+                    progress_callback.report(
+                        progress, f"Exported {i + 1}/{len(tools)} tools"
+                    )
 
             conn.commit()
             conn.close()
 
-            self.logger.info("Exported %s tools to external database: {output_path}", len(tools))
+            self.logger.info(
+                "Exported %s tools to external database: {output_path}", len(tools)
+            )
             return (
                 True,
                 f"Successfully exported {len(tools)} tools to external database",

@@ -171,7 +171,9 @@ class FloatCacheAnalyzer:
         context["cache_load_time"] = load_time
         self.logger.debug("Cache hit loaded in %.3fs", load_time)
 
-    def end_analysis(self, context: Dict[str, Any], triangle_count: int) -> FloatParsingMetrics:
+    def end_analysis(
+        self, context: Dict[str, Any], triangle_count: int
+    ) -> FloatParsingMetrics:
         """
         End performance analysis and generate metrics.
 
@@ -208,7 +210,9 @@ class FloatCacheAnalyzer:
 
         # Calculate IO throughput
         if metrics.total_parse_time > 0:
-            metrics.io_read_mb_per_sec = (file_size / (1024 * 1024)) / metrics.total_parse_time
+            metrics.io_read_mb_per_sec = (
+                file_size / (1024 * 1024)
+            ) / metrics.total_parse_time
 
         with self._lock:
             self.metrics.append(metrics)
@@ -259,20 +263,26 @@ class FloatCacheAnalyzer:
             # Calculate averages and totals
             total_triangles = sum(m.triangle_count for m in self.metrics)
             total_file_size = sum(m.file_size_bytes for m in self.metrics)
-            avg_parse_time = sum(m.total_parse_time for m in self.metrics) / len(self.metrics)
-            avg_float_decode_time = sum(m.float_decode_time for m in self.metrics) / len(
+            avg_parse_time = sum(m.total_parse_time for m in self.metrics) / len(
                 self.metrics
             )
-            avg_struct_unpack_time = sum(m.struct_unpack_time for m in self.metrics) / len(
-                self.metrics
-            )
+            avg_float_decode_time = sum(
+                m.float_decode_time for m in self.metrics
+            ) / len(self.metrics)
+            avg_struct_unpack_time = sum(
+                m.struct_unpack_time for m in self.metrics
+            ) / len(self.metrics)
 
             # Calculate time breakdown percentages
             avg_decode_percentage = (
-                (avg_float_decode_time / avg_parse_time * 100) if avg_parse_time > 0 else 0
+                (avg_float_decode_time / avg_parse_time * 100)
+                if avg_parse_time > 0
+                else 0
             )
             avg_unpack_percentage = (
-                (avg_struct_unpack_time / avg_parse_time * 100) if avg_parse_time > 0 else 0
+                (avg_struct_unpack_time / avg_parse_time * 100)
+                if avg_parse_time > 0
+                else 0
             )
 
             # Cache performance
@@ -280,7 +290,9 @@ class FloatCacheAnalyzer:
             non_cache_files = [m for m in self.metrics if not m.cache_hit]
 
             avg_cache_time = (
-                sum(m.cache_load_time for m in cache_files) / len(cache_files) if cache_files else 0
+                sum(m.cache_load_time for m in cache_files) / len(cache_files)
+                if cache_files
+                else 0
             )
             avg_non_cache_time = (
                 sum(m.total_parse_time for m in non_cache_files) / len(non_cache_files)
@@ -288,9 +300,13 @@ class FloatCacheAnalyzer:
                 else 0
             )
 
-            time_savings = avg_non_cache_time - avg_cache_time if avg_non_cache_time > 0 else 0
+            time_savings = (
+                avg_non_cache_time - avg_cache_time if avg_non_cache_time > 0 else 0
+            )
             time_savings_percentage = (
-                (time_savings / avg_non_cache_time * 100) if avg_non_cache_time > 0 else 0
+                (time_savings / avg_non_cache_time * 100)
+                if avg_non_cache_time > 0
+                else 0
             )
 
             return {
@@ -316,7 +332,9 @@ class FloatCacheAnalyzer:
                     "time_savings_percentage": time_savings_percentage,
                 },
                 "memory": {
-                    "average_peak_memory_mb": sum(m.peak_memory_mb for m in self.metrics)
+                    "average_peak_memory_mb": sum(
+                        m.peak_memory_mb for m in self.metrics
+                    )
                     / len(self.metrics),
                     "average_memory_delta_mb": sum(
                         m.final_memory_mb - m.baseline_memory_mb for m in self.metrics
@@ -324,7 +342,9 @@ class FloatCacheAnalyzer:
                     / len(self.metrics),
                 },
                 "throughput": {
-                    "average_io_mb_per_sec": sum(m.io_read_mb_per_sec for m in self.metrics)
+                    "average_io_mb_per_sec": sum(
+                        m.io_read_mb_per_sec for m in self.metrics
+                    )
                     / len(self.metrics),
                     "triangles_per_second": (
                         total_triangles / sum(m.total_parse_time for m in self.metrics)
@@ -352,7 +372,10 @@ class FloatCacheAnalyzer:
             )
 
         # Assumption 2: Struct unpack is significant portion of float decode (>50%)
-        if "timing" in summary and summary["timing"].get("average_float_decode_time", 0) > 0:
+        if (
+            "timing" in summary
+            and summary["timing"].get("average_float_decode_time", 0) > 0
+        ):
             unpack_percentage = (
                 summary["timing"]["average_struct_unpack_time"]
                 / summary["timing"]["average_float_decode_time"]
@@ -379,7 +402,9 @@ class FloatCacheAnalyzer:
                 / summary["summary"]["total_files_processed"]
             )
             avg_memory_mb = summary["memory"]["average_peak_memory_mb"]
-            validations["memory_overhead_is_acceptable"] = avg_memory_mb < (avg_file_mb * 2)
+            validations["memory_overhead_is_acceptable"] = avg_memory_mb < (
+                avg_file_mb * 2
+            )
 
         self.logger.info(
             "Performance assumption validation completed",

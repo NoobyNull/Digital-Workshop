@@ -79,6 +79,14 @@ class PersonalToolboxManager:
             self.logger.error("Failed to load toolbox: %s", e)
             return []
 
+    def get_all_tools(self) -> List[Tool]:
+        """Compatibility wrapper for retrieving all tools."""
+        return self.get_toolbox()
+
+    def get_all_presets(self) -> List[Tool]:
+        """Personal toolbox does not distinguish presets; return tools."""
+        return self.get_toolbox()
+
     def has_tool(self, tool_guid: str) -> bool:
         """Check if tool is in personal toolbox."""
         toolbox = self._load_toolbox()

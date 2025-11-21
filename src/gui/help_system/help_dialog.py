@@ -104,7 +104,9 @@ class HelpDialog(QDialog):
         """Build documentation index."""
         try:
             self.indexer.build_index()
-            self.status_label.setText(f"Documentation indexed: {len(self.indexer.topics)} topics")
+            self.status_label.setText(
+                f"Documentation indexed: {len(self.indexer.topics)} topics"
+            )
             logger.info("Help system indexed %s topics", len(self.indexer.topics))
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error building documentation index: %s", e)

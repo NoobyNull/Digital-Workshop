@@ -47,9 +47,13 @@ class SnapZone:
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if not 0.0 <= self.magnetism <= 1.0:
-            raise ValueError(f"Magnetism must be between 0.0 and 1.0, got {self.magnetism}")
+            raise ValueError(
+                f"Magnetism must be between 0.0 and 1.0, got {self.magnetism}"
+            )
         if self.snap_threshold < 0:
-            raise ValueError(f"Snap threshold must be non-negative, got {self.snap_threshold}")
+            raise ValueError(
+                f"Snap threshold must be non-negative, got {self.snap_threshold}"
+            )
         if self.priority < 0:
             raise ValueError(f"Priority must be non-negative, got {self.priority}")
 
@@ -149,7 +153,9 @@ class PerformanceSettings:
                 f"Hysteresis threshold must be non-negative, got {self.hysteresis_threshold}"
             )
         if self.update_debounce_ms < 1:
-            raise ValueError(f"Update debounce must be at least 1ms, got {self.update_debounce_ms}")
+            raise ValueError(
+                f"Update debounce must be at least 1ms, got {self.update_debounce_ms}"
+            )
         if self.max_memory_usage_mb < 1:
             raise ValueError(
                 f"Max memory usage must be at least 1MB, got {self.max_memory_usage_mb}"
@@ -203,8 +209,17 @@ class SnapConfiguration:
             try:
                 self.load_from_file()
                 self.logger.info("Loaded snap configuration from %s", self.config_file)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                self.logger.warning("Failed to load configuration file, using defaults: %s", e)
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
+                self.logger.warning(
+                    "Failed to load configuration file, using defaults: %s", e
+                )
         else:
             self.logger.info("Using default snap configuration")
 
@@ -217,14 +232,18 @@ class SnapConfiguration:
         try:
             # Default snap zones for main window edges
             default_zones = [
-                SnapZone("left_edge", QRect(0, 0, 48, 1000), magnetism=0.8, snap_threshold=56),
+                SnapZone(
+                    "left_edge", QRect(0, 0, 48, 1000), magnetism=0.8, snap_threshold=56
+                ),
                 SnapZone(
                     "right_edge",
                     QRect(1000, 0, 48, 1000),
                     magnetism=0.8,
                     snap_threshold=56,
                 ),
-                SnapZone("top_edge", QRect(0, 0, 1000, 48), magnetism=0.8, snap_threshold=56),
+                SnapZone(
+                    "top_edge", QRect(0, 0, 1000, 48), magnetism=0.8, snap_threshold=56
+                ),
                 SnapZone(
                     "bottom_edge",
                     QRect(0, 1000, 1000, 48),
@@ -435,10 +454,14 @@ class SnapConfiguration:
                 visual_data = data["visual"]
                 self.visual = VisualSettings(
                     show_guides=visual_data.get("show_guides", True),
-                    guide_color=tuple(visual_data.get("guide_color", (0, 120, 212, 180))),
+                    guide_color=tuple(
+                        visual_data.get("guide_color", (0, 120, 212, 180))
+                    ),
                     guide_width=visual_data.get("guide_width", 2),
                     guide_style=visual_data.get("guide_style", "dashed"),
-                    highlight_color=tuple(visual_data.get("highlight_color", (0, 120, 212, 100))),
+                    highlight_color=tuple(
+                        visual_data.get("highlight_color", (0, 120, 212, 100))
+                    ),
                     highlight_opacity=visual_data.get("highlight_opacity", 0.3),
                     animation_duration=visual_data.get("animation_duration", 150),
                     fade_in_duration=visual_data.get("fade_in_duration", 100),
@@ -483,7 +506,14 @@ class SnapConfiguration:
                             enabled=zone_data.get("enabled", True),
                         )
                         self.snap_zones[name] = zone
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
                         self.logger.warning(f"Failed to load snap zone '{name}': {e}")
                         continue
 
@@ -598,7 +628,9 @@ class SnapConfiguration:
 
             # Validate performance settings
             if not isinstance(self.performance, PerformanceSettings):
-                errors.append("Performance settings must be PerformanceSettings instance")
+                errors.append(
+                    "Performance settings must be PerformanceSettings instance"
+                )
             else:
                 try:
                     self.performance.__post_init__()

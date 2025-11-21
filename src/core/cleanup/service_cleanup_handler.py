@@ -103,7 +103,9 @@ class ServiceCleanupHandler(CleanupHandler):
             overall_success = overall_success and success
 
             # Log results
-            failed_services = [name for name, success in cleanup_results.items() if not success]
+            failed_services = [
+                name for name, success in cleanup_results.items() if not success
+            ]
             if failed_services:
                 self.logger.warning(
                     f"Failed to cleanup {len(failed_services)} service(s): {', '.join(failed_services)}"
@@ -135,7 +137,14 @@ class ServiceCleanupHandler(CleanupHandler):
                         self.logger.debug("Bootstrap cleanup called")
                     else:
                         self.logger.warning("Bootstrap has no cleanup method")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Bootstrap cleanup failed: %s", e)
                     success = False
 
@@ -169,9 +178,18 @@ class ServiceCleanupHandler(CleanupHandler):
                             thread.cancel()
 
                         threads_cleaned += 1
-                        self.logger.debug("Cleaned up background thread: %s", thread.name)
+                        self.logger.debug(
+                            "Cleaned up background thread: %s", thread.name
+                        )
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning(
                         f"Failed to cleanup thread {getattr(thread, 'name', 'unknown')}: {e}"
                     )
@@ -221,7 +239,14 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Model cache has no cleanup method")
             except ImportError:
                 self.logger.debug("Model cache not available")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Model cache cleanup failed: %s", e)
 
             return True
@@ -246,7 +271,14 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Thumbnail service has no cleanup method")
             except ImportError:
                 self.logger.debug("Thumbnail service not available")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Thumbnail service cleanup failed: %s", e)
 
             return True
@@ -271,7 +303,14 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Fast hasher has no cleanup method")
             except ImportError:
                 self.logger.debug("Fast hasher not available")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Fast hasher cleanup failed: %s", e)
 
             return True
@@ -311,7 +350,14 @@ class ServiceCleanupHandler(CleanupHandler):
                     self.logger.warning("Memory manager has no cleanup method")
             except ImportError:
                 self.logger.debug("Memory manager not available")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Memory manager cleanup failed: %s", e)
 
             return True

@@ -105,7 +105,9 @@ class ThumbnailManager:
                             )
                             break
                 except Exception as e:
-                    self.logger.error("Failed to save thumbnail path to database: %s", e)
+                    self.logger.error(
+                        "Failed to save thumbnail path to database: %s", e
+                    )
 
             coordinator.thumbnail_generated.connect(on_thumbnail_generated)
             coordinator.generate_thumbnails(
@@ -116,9 +118,13 @@ class ThumbnailManager:
             )
 
             # Connect completion signal to reload library
-            coordinator.generation_completed.connect(self.on_library_thumbnails_completed)
+            coordinator.generation_completed.connect(
+                self.on_library_thumbnails_completed
+            )
 
-            self.logger.info(f"Started thumbnail generation for {len(file_info_list)} models")
+            self.logger.info(
+                f"Started thumbnail generation for {len(file_info_list)} models"
+            )
 
         except Exception as e:
             self.logger.error("Failed to start thumbnail generation: %s", e)
@@ -134,14 +140,18 @@ class ThumbnailManager:
             if total > 0:
                 progress = int((current / total) * 100)
                 self.main_window.progress_bar.setValue(progress)
-                self.main_window.status_label.setText(f"Generating screenshots: {current}/{total}")
+                self.main_window.status_label.setText(
+                    f"Generating screenshots: {current}/{total}"
+                )
         except Exception as e:
             self.logger.warning("Failed to update progress: %s", e)
 
     def on_screenshot_generated(self, model_id: int, screenshot_path: str) -> None:
         """Handle screenshot generated event."""
         try:
-            self.logger.debug(f"Screenshot generated for model {model_id}: {screenshot_path}")
+            self.logger.debug(
+                f"Screenshot generated for model {model_id}: {screenshot_path}"
+            )
         except Exception as e:
             self.logger.warning("Failed to handle screenshot generated event: %s", e)
 
@@ -173,7 +183,9 @@ class ThumbnailManager:
             self.logger.info("Batch screenshot generation completed")
 
             # Clear status after a delay
-            QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
+            QTimer.singleShot(
+                3000, lambda: self.main_window.status_label.setText("Ready")
+            )
 
         except Exception as e:
             self.logger.error("Failed to handle screenshots finished event: %s", e)

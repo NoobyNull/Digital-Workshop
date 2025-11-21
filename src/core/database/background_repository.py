@@ -87,7 +87,9 @@ class BackgroundRepository:
 
                 background_id = cursor.lastrowid
                 conn.commit()
-                self.logger.info("Added background '%s' with ID %s", name, background_id)
+                self.logger.info(
+                    "Added background '%s' with ID %s", name, background_id
+                )
                 return background_id
 
         except sqlite3.IntegrityError:
@@ -148,7 +150,9 @@ class BackgroundRepository:
             return None
 
     @log_function_call(logger)
-    def get_all_backgrounds(self, include_deletable: bool = True) -> List[Dict[str, Any]]:
+    def get_all_backgrounds(
+        self, include_deletable: bool = True
+    ) -> List[Dict[str, Any]]:
         """
         Get all backgrounds from the database.
 
@@ -163,7 +167,9 @@ class BackgroundRepository:
                 cursor = conn.cursor()
 
                 if include_deletable:
-                    cursor.execute("SELECT * FROM backgrounds ORDER BY is_default DESC, name ASC")
+                    cursor.execute(
+                        "SELECT * FROM backgrounds ORDER BY is_default DESC, name ASC"
+                    )
                 else:
                     cursor.execute(
                         "SELECT * FROM backgrounds WHERE is_default = 1 ORDER BY name ASC"
@@ -235,7 +241,9 @@ class BackgroundRepository:
                 if success:
                     self.logger.info("Updated background %s", background_id)
                 else:
-                    self.logger.warning("Background %s not found for update", background_id)
+                    self.logger.warning(
+                        "Background %s not found for update", background_id
+                    )
 
                 return success
 
@@ -259,15 +267,21 @@ class BackgroundRepository:
                 cursor = conn.cursor()
 
                 # Check if background is deletable
-                cursor.execute("SELECT is_default FROM backgrounds WHERE id = ?", (background_id,))
+                cursor.execute(
+                    "SELECT is_default FROM backgrounds WHERE id = ?", (background_id,)
+                )
                 row = cursor.fetchone()
 
                 if not row:
-                    self.logger.warning("Background %s not found for deletion", background_id)
+                    self.logger.warning(
+                        "Background %s not found for deletion", background_id
+                    )
                     return False
 
                 if row[0]:  # is_default is True
-                    self.logger.error("Cannot delete default background %s", background_id)
+                    self.logger.error(
+                        "Cannot delete default background %s", background_id
+                    )
                     return False
 
                 # Delete the background
@@ -279,7 +293,9 @@ class BackgroundRepository:
                 if success:
                     self.logger.info("Deleted background %s", background_id)
                 else:
-                    self.logger.warning("Background %s not found for deletion", background_id)
+                    self.logger.warning(
+                        "Background %s not found for deletion", background_id
+                    )
 
                 return success
 
@@ -296,10 +312,14 @@ class BackgroundRepository:
         as default, non-deletable resources.
         """
         try:
-            backgrounds_dir = Path(__file__).parent.parent.parent / "resources" / "backgrounds"
+            backgrounds_dir = (
+                Path(__file__).parent.parent.parent / "resources" / "backgrounds"
+            )
 
             if not backgrounds_dir.exists():
-                self.logger.warning("Backgrounds directory not found: %s", backgrounds_dir)
+                self.logger.warning(
+                    "Backgrounds directory not found: %s", backgrounds_dir
+                )
                 return
 
             # Find all image files
@@ -334,7 +354,9 @@ class BackgroundRepository:
                 )
                 added_count += 1
 
-            self.logger.info("Initialized %s default backgrounds from filesystem", added_count)
+            self.logger.info(
+                "Initialized %s default backgrounds from filesystem", added_count
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize default backgrounds: %s", e)

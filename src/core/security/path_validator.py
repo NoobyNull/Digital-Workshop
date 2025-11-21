@@ -59,7 +59,9 @@ class PathValidator:
             return (self.base_directory / file_path).resolve()
         return None
 
-    def is_file_allowed(self, file_path: str, allowed_extensions: Optional[list] = None) -> bool:
+    def is_file_allowed(
+        self, file_path: str, allowed_extensions: Optional[list] = None
+    ) -> bool:
         """Check if file is allowed based on extension.
 
         Args:

@@ -154,7 +154,14 @@ class AddToolDialog(QDialog):
             try:
                 tool_data = self.tool_repo.get_tool_by_id(self.selected_tool)
                 return tool_data
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to get selected tool: %s", e)
 
         return None

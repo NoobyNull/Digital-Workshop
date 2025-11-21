@@ -125,7 +125,9 @@ class DeduplicationDialog(QDialog):
         """Setup models table."""
         self.models_table = QTableWidget()
         self.models_table.setColumnCount(4)
-        self.models_table.setHorizontalHeaderLabels(["Filename", "Size (MB)", "Modified", "Path"])
+        self.models_table.setHorizontalHeaderLabels(
+            ["Filename", "Size (MB)", "Modified", "Path"]
+        )
 
         for i, model in enumerate(self.duplicate_models):
             self.models_table.insertRow(i)

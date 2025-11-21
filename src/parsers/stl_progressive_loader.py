@@ -188,7 +188,9 @@ class ProgressiveSTLLoader:
                 level_start = time.time()
 
                 # Calculate target triangle count for this LOD level
-                target_count = self._calculate_lod_triangle_count(triangle_count, lod_level)
+                target_count = self._calculate_lod_triangle_count(
+                    triangle_count, lod_level
+                )
 
                 if progress_callback:
                     progress_pct = total_progress + (i / len(self.config.levels)) * 80.0
@@ -209,7 +211,8 @@ class ProgressiveSTLLoader:
                 lod_stats = {
                     "triangle_count": lod_model.stats.triangle_count,
                     "load_time": level_time,
-                    "compression_ratio": lod_model.stats.triangle_count / triangle_count,
+                    "compression_ratio": lod_model.stats.triangle_count
+                    / triangle_count,
                     "file_size_mb": file_size / (1024 * 1024),
                 }
 
@@ -233,7 +236,8 @@ class ProgressiveSTLLoader:
                     level: {
                         "triangle_count": model.stats.triangle_count,
                         "load_time": 0.0,  # Would need to track individually
-                        "compression_ratio": model.stats.triangle_count / triangle_count,
+                        "compression_ratio": model.stats.triangle_count
+                        / triangle_count,
                         "file_size_mb": file_size / (1024 * 1024),
                     }
                     for level, model in lod_models.items()
@@ -264,7 +268,9 @@ class ProgressiveSTLLoader:
         """Get triangle count from STL file."""
         return self.gpu_parser._get_triangle_count(file_path)
 
-    def _calculate_lod_triangle_count(self, total_count: int, lod_level: LODLevel) -> int:
+    def _calculate_lod_triangle_count(
+        self, total_count: int, lod_level: LODLevel
+    ) -> int:
         """Calculate target triangle count for LOD level."""
         ratio = self.config.sampling_ratios[lod_level]
         max_count = self.config.max_triangles_per_level[lod_level]
@@ -283,7 +289,9 @@ class ProgressiveSTLLoader:
             # Load sampled model
             return self._load_sampled_model(file_path, target_count, total_count)
 
-    def _load_sampled_model(self, file_path: Path, target_count: int, total_count: int) -> Model:
+    def _load_sampled_model(
+        self, file_path: Path, target_count: int, total_count: int
+    ) -> Model:
         """Load a sampled version of the model for LOD."""
         # For now, use simple uniform sampling
         # In a full implementation, this would use more sophisticated sampling
@@ -294,7 +302,9 @@ class ProgressiveSTLLoader:
 
         if full_model.vertex_array is None or full_model.normal_array is None:
             # Fallback for models without arrays
-            return self._create_sampled_model_from_triangles(full_model, target_count, total_count)
+            return self._create_sampled_model_from_triangles(
+                full_model, target_count, total_count
+            )
 
         # Sample from vertex/normal arrays
         sample_indices = self._generate_sample_indices(total_count, target_count)
@@ -327,7 +337,9 @@ class ProgressiveSTLLoader:
 
         return sampled_model
 
-    def _generate_sample_indices(self, total_count: int, target_count: int) -> np.ndarray:
+    def _generate_sample_indices(
+        self, total_count: int, target_count: int
+    ) -> np.ndarray:
         """Generate sampling indices for LOD creation."""
         if target_count >= total_count:
             return np.arange(total_count, dtype=np.int32)
@@ -406,10 +418,14 @@ class ProgressiveSTLLoader:
             if progress_callback:
                 progress_callback.report(0.0, f"Preloading {lod_level.value} detail...")
 
-            model = self._load_lod_level(file_path_obj, lod_level, target_count, triangle_count)
+            model = self._load_lod_level(
+                file_path_obj, lod_level, target_count, triangle_count
+            )
 
             if progress_callback:
-                progress_callback.report(100.0, f"{lod_level.value.capitalize()} detail loaded")
+                progress_callback.report(
+                    100.0, f"{lod_level.value.capitalize()} detail loaded"
+                )
 
             return model
 
@@ -429,7 +445,9 @@ class ProgressiveSTLLoader:
         """Get cache statistics."""
         with self._lock:
             total_models = len(self._lod_cache)
-            total_lod_levels = sum(len(model.lod_models) for model in self._lod_cache.values())
+            total_lod_levels = sum(
+                len(model.lod_models) for model in self._lod_cache.values()
+            )
 
             return {
                 "cached_models": total_models,

@@ -127,7 +127,9 @@ class ProgressThrottler:
             "emitted_updates": self.emitted_updates,
             "throttled_updates": self.throttled_updates,
             "throttle_rate": (
-                self.throttled_updates / self.total_updates if self.total_updates > 0 else 0.0
+                self.throttled_updates / self.total_updates
+                if self.total_updates > 0
+                else 0.0
             ),
         }
 

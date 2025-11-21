@@ -44,7 +44,9 @@ class InvoicePdfExporter:
         if header.logo_path:
             logo_path = Path(header.logo_path)
             if logo_path.exists():
-                logo_html = f'<img src="{logo_path.as_posix()}" style="max-height:80px;" />'
+                logo_html = (
+                    f'<img src="{logo_path.as_posix()}" style="max-height:80px;" />'
+                )
 
         address_html = f"""
             <table width="100%" style="margin-bottom: 20px;">

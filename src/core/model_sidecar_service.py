@@ -168,13 +168,22 @@ def regenerate_sidecars_for_dirty_models(
             try:
                 db_manager.mark_model_clean(model_id)
                 result["updated"] += 1
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as exc:
                 logger.error(
-                    "Failed to clear dirty tag for model %s: %s", model_id, exc, exc_info=True
+                    "Failed to clear dirty tag for model %s: %s",
+                    model_id,
+                    exc,
+                    exc_info=True,
                 )
                 result["errors"] += 1
         else:
             result["errors"] += 1
 
     return result
-

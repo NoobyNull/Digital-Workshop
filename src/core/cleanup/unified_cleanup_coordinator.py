@@ -38,7 +38,9 @@ class CleanupContext(Enum):
 class CleanupError(Exception):
     """Exception raised during cleanup operations."""
 
-    def __init__(self, message: str, phase: CleanupPhase, context: CleanupContext) -> None:
+    def __init__(
+        self, message: str, phase: CleanupPhase, context: CleanupContext
+    ) -> None:
         super().__init__(message)
         self.phase = phase
         self.context = context
@@ -62,7 +64,9 @@ class PhaseError:
         severity = "CRITICAL" if self.is_critical else "ERROR"
         recovery_info = ""
         if self.recovery_attempted:
-            recovery_info = f" [Recovery: {'successful' if self.recovery_successful else 'failed'}]"
+            recovery_info = (
+                f" [Recovery: {'successful' if self.recovery_successful else 'failed'}]"
+            )
         return (
             f"{severity} in {self.phase} ({self.handler}): {self.error_message} "
             f"({self.error_type}){recovery_info}"
@@ -165,7 +169,9 @@ class CleanupHandler:
     def set_enabled(self, enabled: bool) -> None:
         """Enable or disable this handler."""
         self.enabled = enabled
-        self.logger.debug("Handler {self.name} %s", "enabled" if enabled else "disabled")
+        self.logger.debug(
+            "Handler {self.name} %s", "enabled" if enabled else "disabled"
+        )
 
 
 class UnifiedCleanupCoordinator:
@@ -353,7 +359,9 @@ class UnifiedCleanupCoordinator:
             else:
                 self._context_state = CleanupContext.VALID
 
-            self.logger.debug("Cleanup context initialized: %s", self._context_state.value)
+            self.logger.debug(
+                "Cleanup context initialized: %s", self._context_state.value
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Context validation failed: %s", e)
@@ -375,7 +383,9 @@ class UnifiedCleanupCoordinator:
                 else:
                     self._context_state = CleanupContext.LOST
                     self._stats.context_lost = True
-                    self.logger.info("OpenGL context lost during cleanup (normal during shutdown)")
+                    self.logger.info(
+                        "OpenGL context lost during cleanup (normal during shutdown)"
+                    )
 
             else:
                 self._context_state = CleanupContext.VALID
@@ -427,7 +437,14 @@ class UnifiedCleanupCoordinator:
                         f"Phase {phase.value} skipped (context lost or other reason) ({phase_duration:.3f}s)"
                     )
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 phase_duration = time.time() - phase_start_time
                 self._stats.failed_phases += 1
 
@@ -512,7 +529,9 @@ class UnifiedCleanupCoordinator:
                     }
 
                 self._stats.handler_stats[handler.name]["phases_executed"] += 1
-                self._stats.handler_stats[handler.name]["total_duration"] += handler_duration
+                self._stats.handler_stats[handler.name][
+                    "total_duration"
+                ] += handler_duration
 
                 if handler_success:
                     self._stats.handler_stats[handler.name]["phases_succeeded"] += 1
@@ -526,7 +545,14 @@ class UnifiedCleanupCoordinator:
                     )
                     phase_success = False
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 handler_duration = time.time() - handler_start_time
 
                 # Create detailed error record
@@ -551,7 +577,9 @@ class UnifiedCleanupCoordinator:
 
                 self._stats.handler_stats[handler.name]["phases_executed"] += 1
                 self._stats.handler_stats[handler.name]["phases_failed"] += 1
-                self._stats.handler_stats[handler.name]["total_duration"] += handler_duration
+                self._stats.handler_stats[handler.name][
+                    "total_duration"
+                ] += handler_duration
 
                 self.logger.error(
                     f"Handler {handler.name} error in phase {phase.value} ({handler_duration:.3f}s): {e}",
@@ -574,7 +602,10 @@ class UnifiedCleanupCoordinator:
             ready_handlers = [
                 h
                 for h in remaining_handlers
-                if all(dep in [h.name for h in sorted_handlers] for dep in h.get_dependencies())
+                if all(
+                    dep in [h.name for h in sorted_handlers]
+                    for dep in h.get_dependencies()
+                )
             ]
 
             if not ready_handlers:

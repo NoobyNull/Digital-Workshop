@@ -285,7 +285,9 @@ class ProgressAggregator:
             pending = self.total_chunks - completed - failed - active
 
             # Calculate sub-operation statistics
-            total_sub_ops = sum(len(chunk.sub_operations) for chunk in self.chunks.values())
+            total_sub_ops = sum(
+                len(chunk.sub_operations) for chunk in self.chunks.values()
+            )
             active_sub_ops = sum(
                 len(
                     [

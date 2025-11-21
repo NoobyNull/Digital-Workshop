@@ -151,10 +151,18 @@ class ThemeService:
                 palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
 
                 # Additional dark theme colors for better UI consistency
-                palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.HighlightedText, QColor(128, 128, 128))
+                palette.setColor(
+                    QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Text, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.HighlightedText, QColor(128, 128, 128)
+                )
                 palette.setColor(QPalette.Disabled, QPalette.Base, QColor(32, 32, 32))
 
             else:
@@ -174,11 +182,21 @@ class ThemeService:
                 palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
 
                 # Additional light theme colors for better UI consistency
-                palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
-                palette.setColor(QPalette.Disabled, QPalette.HighlightedText, QColor(255, 255, 255))
-                palette.setColor(QPalette.Disabled, QPalette.Base, QColor(240, 240, 240))
+                palette.setColor(
+                    QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Text, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.HighlightedText, QColor(255, 255, 255)
+                )
+                palette.setColor(
+                    QPalette.Disabled, QPalette.Base, QColor(240, 240, 240)
+                )
 
             # Apply the palette to the application
             app.setPalette(palette)
@@ -188,7 +206,9 @@ class ThemeService:
             self._current_library = "builtin"
             self._save_theme()
 
-            logger.info("Applied fallback theme: %s (effective: {effective_theme})", theme)
+            logger.info(
+                "Applied fallback theme: %s (effective: {effective_theme})", theme
+            )
             return True
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

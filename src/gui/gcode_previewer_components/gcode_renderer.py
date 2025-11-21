@@ -122,7 +122,9 @@ class GcodeRenderer:
     # ------------------------------------------------------------------
     # Progressive toolpath (no per-frame rebuild)
     # ------------------------------------------------------------------
-    def prepare_full_path(self, moves: List[GcodeMove], *, fit_camera: bool = False) -> None:
+    def prepare_full_path(
+        self, moves: List[GcodeMove], *, fit_camera: bool = False
+    ) -> None:
         """Build the full toolpath once and keep it for fast progressive updates."""
         if not moves:
             self.clear_full_path()
@@ -145,7 +147,14 @@ class GcodeRenderer:
         self._cut_colors.SetNumberOfComponents(4)
 
         prev_point = None
-        bounds = [float("inf"), float("-inf"), float("inf"), float("-inf"), float("inf"), float("-inf")]
+        bounds = [
+            float("inf"),
+            float("-inf"),
+            float("inf"),
+            float("-inf"),
+            float("inf"),
+            float("-inf"),
+        ]
 
         def _track_bounds(x: float, y: float, z: float) -> None:
             bounds[0] = min(bounds[0], x)
@@ -163,14 +172,20 @@ class GcodeRenderer:
 
             if prev_point is not None:
                 if move.is_rapid:
-                    self._add_line_segment(rapid_points, rapid_lines, [], prev_point, current_point, None)
+                    self._add_line_segment(
+                        rapid_points, rapid_lines, [], prev_point, current_point, None
+                    )
                 elif move.is_cutting or move.is_arc:
                     self._cut_segment_map.append(move_index)
-                    self._add_line_segment(cut_points, cut_lines, [], prev_point, current_point, None)
+                    self._add_line_segment(
+                        cut_points, cut_lines, [], prev_point, current_point, None
+                    )
                 else:
                     # Treat unclassified linear motions as cutting for visibility
                     self._cut_segment_map.append(move_index)
-                    self._add_line_segment(cut_points, cut_lines, [], prev_point, current_point, None)
+                    self._add_line_segment(
+                        cut_points, cut_lines, [], prev_point, current_point, None
+                    )
             prev_point = current_point
 
         # Build colors for cutting polydata (ahead by default)
@@ -190,7 +205,10 @@ class GcodeRenderer:
             self._cut_polydata = vtk_module.vtkPolyData()
             self._cut_polydata.SetPoints(cut_points)
             self._cut_polydata.SetLines(cut_lines)
-            if self._cut_colors is not None and self._cut_colors.GetNumberOfTuples() > 0:
+            if (
+                self._cut_colors is not None
+                and self._cut_colors.GetNumberOfTuples() > 0
+            ):
                 self._cut_polydata.GetCellData().SetScalars(self._cut_colors)
 
             cut_actor = self._create_actor(
@@ -232,7 +250,9 @@ class GcodeRenderer:
 
         # Tool indicator actor sized from bounds
         if all(b != float("inf") and b != float("-inf") for b in bounds):
-            max_extent = max(bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4])
+            max_extent = max(
+                bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4]
+            )
             self._tool_radius = max(0.5, max_extent * 0.01)
             center = (
                 0.5 * (bounds[0] + bounds[1]),
@@ -263,7 +283,8 @@ class GcodeRenderer:
                 break
 
         cut_color = self._rgba255(
-            self.colors["cutting"], alpha=255 if self.visibility.get("cutting", True) else 0
+            self.colors["cutting"],
+            alpha=255 if self.visibility.get("cutting", True) else 0,
         )
         ahead_color = self._rgba255(
             self.colors["ahead"], alpha=255 if self.visibility.get("ahead", True) else 0
@@ -287,13 +308,17 @@ class GcodeRenderer:
         center = (move.x, move.y, move.z)
         self._ensure_tool_actor(center)
 
-    def set_cut_colors(self, *, cut: Optional[Color] = None, ahead: Optional[Color] = None) -> None:
+    def set_cut_colors(
+        self, *, cut: Optional[Color] = None, ahead: Optional[Color] = None
+    ) -> None:
         """Update stored colors and refresh the current cut mask."""
         if cut:
             self.colors["cutting"] = cut
         if ahead:
             self.colors["ahead"] = ahead
-        self.update_cut_progress(self._last_frame_index if self._last_frame_index >= 0 else -1)
+        self.update_cut_progress(
+            self._last_frame_index if self._last_frame_index >= 0 else -1
+        )
 
     def clear_full_path(self) -> None:
         """Remove the persistent path actors and tool indicator."""
@@ -316,7 +341,9 @@ class GcodeRenderer:
     # ------------------------------------------------------------------
     # Legacy entry points (kept for layer toggles & static previews)
     # ------------------------------------------------------------------
-    def render_toolpath(self, moves: List[GcodeMove], *, fit_camera: bool = False) -> None:
+    def render_toolpath(
+        self, moves: List[GcodeMove], *, fit_camera: bool = False
+    ) -> None:
         """Render a list of G-code moves as a 3D toolpath."""
         self.prepare_full_path(moves, fit_camera=fit_camera)
         # Show the path as fully cut for static renders
@@ -458,7 +485,12 @@ class GcodeRenderer:
             pass
 
     def _create_actor(
-        self, geometry, color: Color, line_width: float, colors_array=None, use_cell_scalars: bool = False
+        self,
+        geometry,
+        color: Color,
+        line_width: float,
+        colors_array=None,
+        use_cell_scalars: bool = False,
     ):
         """Create a VTK actor from either a polydata or (points, lines) tuple."""
         if hasattr(geometry, "GetClassName"):
@@ -577,7 +609,9 @@ class GcodeRenderer:
 
         # Ahead visibility is driven by alpha in the color mask
         if move_key in ("ahead", "cutting"):
-            self.update_cut_progress(self._last_frame_index if self._last_frame_index >= 0 else -1)
+            self.update_cut_progress(
+                self._last_frame_index if self._last_frame_index >= 0 else -1
+            )
 
     def cleanup(self) -> None:
         """Cleanup all VTK resources before destruction."""

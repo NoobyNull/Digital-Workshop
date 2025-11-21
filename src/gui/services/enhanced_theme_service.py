@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
-from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtCore import QObject, Signal, QThread, QTimer
 
 from src.core.logging_config import get_logger
 from src.core.settings_manager import get_settings_manager
@@ -260,7 +260,9 @@ class EnhancedThemeService(IEnhancedThemeService):
                 del self.validation_workers[theme_name]
 
             # Set UI state
-            self.ui_service.set_ui_state(UIState.PROCESSING, f"Applying theme: {theme_name}")
+            self.ui_service.set_ui_state(
+                UIState.PROCESSING, f"Applying theme: {theme_name}"
+            )
 
             # Start async theme application in thread pool
             future = self.thread_pool.submit(self._apply_theme_sync, theme_name)
@@ -271,7 +273,9 @@ class EnhancedThemeService(IEnhancedThemeService):
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error starting async theme application: %s", e)
-            self.ui_service.show_error("Theme Error", f"Failed to start theme application: {e}")
+            self.ui_service.show_error(
+                "Theme Error", f"Failed to start theme application: {e}"
+            )
             return False
 
     def _apply_theme_sync(self, theme_name: str) -> bool:
@@ -294,7 +298,9 @@ class EnhancedThemeService(IEnhancedThemeService):
                 self.settings_manager.set("ui.current_theme", theme_name)
 
                 # Update UI state
-                self.ui_service.set_ui_state(UIState.READY, f"Theme applied: {theme_name}")
+                self.ui_service.set_ui_state(
+                    UIState.READY, f"Theme applied: {theme_name}"
+                )
                 self.ui_service.show_info(
                     "Theme Applied",
                     f"Theme '{theme_name}' has been applied successfully.",
@@ -321,9 +327,13 @@ class EnhancedThemeService(IEnhancedThemeService):
             # Generate preview information
             preview_info = {
                 "name": theme_data.get("name", theme_name),
-                "description": theme_data.get("description", "No description available"),
+                "description": theme_data.get(
+                    "description", "No description available"
+                ),
                 "colors": (
-                    list(theme_data.get("colors", {}).keys()) if theme_data.get("colors") else []
+                    list(theme_data.get("colors", {}).keys())
+                    if theme_data.get("colors")
+                    else []
                 ),
                 "components": (
                     list(theme_data.get("components", {}).keys())
@@ -424,7 +434,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {e}"
 
-    def preview_theme_temporarily(self, theme_name: str, duration_ms: int = 3000) -> bool:
+    def preview_theme_temporarily(
+        self, theme_name: str, duration_ms: int = 3000
+    ) -> bool:
         """Preview a theme temporarily without permanent application."""
         try:
             # Cancel any existing preview for this theme
@@ -465,7 +477,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
         """Revert to the previously applied theme."""
         try:
             if not self.previous_theme:
-                self.ui_service.show_warning("No Previous Theme", "No previous theme to revert to.")
+                self.ui_service.show_warning(
+                    "No Previous Theme", "No previous theme to revert to."
+                )
                 return False
 
             success = self.apply_theme_async(self.previous_theme)
@@ -519,7 +533,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
             self.logger.error("Error getting theme categories: %s", e)
             return {}
 
-    def _on_validation_completed(self, theme_name: str, is_valid: bool, error_message: str) -> None:
+    def _on_validation_completed(
+        self, theme_name: str, is_valid: bool, error_message: str
+    ) -> None:
         """Handle theme validation completion."""
         try:
             if theme_name in self.validation_workers:
@@ -534,9 +550,13 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
                         "data": theme_data,
                     }
 
-                self.logger.info("Theme validation completed successfully: %s", theme_name)
+                self.logger.info(
+                    "Theme validation completed successfully: %s", theme_name
+                )
             else:
-                self.logger.warning("Theme validation failed: %s - {error_message}", theme_name)
+                self.logger.warning(
+                    "Theme validation failed: %s - {error_message}", theme_name
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation completion: %s", e)
@@ -545,7 +565,9 @@ Components ({len(preview_info['components'])}): {', '.join(preview_info['compone
         """Handle validation progress updates."""
         try:
             # Could emit progress signal here if UI wants to show validation progress
-            self.logger.debug("Theme validation progress: %s - {progress:.1f}%", theme_name)
+            self.logger.debug(
+                "Theme validation progress: %s - {progress:.1f}%", theme_name
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error handling validation progress: %s", e)
 

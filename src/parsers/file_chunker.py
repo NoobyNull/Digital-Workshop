@@ -244,7 +244,9 @@ class FileChunker:
         triangles_per_chunk = max(1, int(target_chunk_size_bytes / bytes_per_triangle))
 
         # Calculate number of chunks
-        chunk_count = max(1, (triangle_count + triangles_per_chunk - 1) // triangles_per_chunk)
+        chunk_count = max(
+            1, (triangle_count + triangles_per_chunk - 1) // triangles_per_chunk
+        )
 
         # Apply max_chunks limit
         if max_chunks and chunk_count > max_chunks:
@@ -255,11 +257,15 @@ class FileChunker:
         chunk_size_bytes = triangles_per_chunk * bytes_per_triangle
 
         # Determine strategy
-        strategy = ChunkStrategy.PARALLEL if chunk_count > 1 else ChunkStrategy.SEQUENTIAL
+        strategy = (
+            ChunkStrategy.PARALLEL if chunk_count > 1 else ChunkStrategy.SEQUENTIAL
+        )
 
         # Ensure reasonable limits
         chunk_count = min(chunk_count, 16)  # Max 16 chunks
-        chunk_size_bytes = min(chunk_size_bytes, 200 * 1024 * 1024)  # Max 200MB per chunk
+        chunk_size_bytes = min(
+            chunk_size_bytes, 200 * 1024 * 1024
+        )  # Max 200MB per chunk
 
         return {
             "count": chunk_count,
@@ -296,7 +302,9 @@ class FileChunker:
             chunk_triangle_count = triangle_end - triangle_start
 
             # Calculate byte offsets
-            start_offset = data_start_offset + (triangle_start * self.BINARY_TRIANGLE_SIZE)
+            start_offset = data_start_offset + (
+                triangle_start * self.BINARY_TRIANGLE_SIZE
+            )
             size = chunk_triangle_count * self.BINARY_TRIANGLE_SIZE
 
             chunk = FileChunk(

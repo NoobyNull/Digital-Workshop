@@ -94,7 +94,9 @@ class WindowStateManager:
         try:
             for dock in self.main_window.findChildren(QDockWidget):
                 if dock.isFloating():
-                    self.logger.debug("Re-docking floating dock: %s", dock.windowTitle())
+                    self.logger.debug(
+                        "Re-docking floating dock: %s", dock.windowTitle()
+                    )
                     dock.setFloating(False)
                     self.main_window.addDockWidget(Qt.RightDockWidgetArea, dock)
             self.logger.debug("All floating docks have been re-docked")
@@ -112,7 +114,9 @@ class WindowStateManager:
                 return
 
             # Check if window is on any screen
-            is_on_screen = any(window_rect.intersects(screen.geometry()) for screen in screens)
+            is_on_screen = any(
+                window_rect.intersects(screen.geometry()) for screen in screens
+            )
 
             # If window is off-screen, center it on the primary screen
             if not is_on_screen:
@@ -122,8 +126,14 @@ class WindowStateManager:
                 primary_screen = QGuiApplication.primaryScreen()
                 if primary_screen:
                     screen_rect = primary_screen.geometry()
-                    x = screen_rect.x() + (screen_rect.width() - window_rect.width()) // 2
-                    y = screen_rect.y() + (screen_rect.height() - window_rect.height()) // 2
+                    x = (
+                        screen_rect.x()
+                        + (screen_rect.width() - window_rect.width()) // 2
+                    )
+                    y = (
+                        screen_rect.y()
+                        + (screen_rect.height() - window_rect.height()) // 2
+                    )
                     self.main_window.move(x, y)
                     self.logger.info("Window moved to (%s,{y})", x)
         except Exception as e:

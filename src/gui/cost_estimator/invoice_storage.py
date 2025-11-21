@@ -37,7 +37,9 @@ class InvoiceStorageManager:
         invoice_dir.mkdir(parents=True, exist_ok=True)
         return invoice_dir
 
-    def save_xml(self, project_id: str, invoice: InvoiceDocument, filename: Optional[str] = None) -> Path:
+    def save_xml(
+        self, project_id: str, invoice: InvoiceDocument, filename: Optional[str] = None
+    ) -> Path:
         invoice_dir = self.get_invoice_directory(project_id)
         if not invoice_dir:
             raise FileNotFoundError("Project folder unavailable; cannot save invoice.")
@@ -61,6 +63,8 @@ class InvoiceStorageManager:
     def default_pdf_path(self, project_id: str, filename: Optional[str] = None) -> Path:
         invoice_dir = self.get_invoice_directory(project_id)
         if not invoice_dir:
-            raise FileNotFoundError("Project folder unavailable; cannot build PDF path.")
+            raise FileNotFoundError(
+                "Project folder unavailable; cannot build PDF path."
+            )
         base_name = filename or datetime.now().strftime("invoice-%Y%m%d-%H%M%S")
         return invoice_dir / f"{base_name}.pdf"

@@ -111,7 +111,9 @@ class GcodeTimeline(QWidget):
 
         # Statistics frame
         stats_frame = QFrame()
-        stats_frame.setStyleSheet("QFrame { border: 1px solid #ccc; border-radius: 4px; }")
+        stats_frame.setStyleSheet(
+            "QFrame { border: 1px solid #ccc; border-radius: 4px; }"
+        )
         stats_layout = QHBoxLayout(stats_frame)
         stats_layout.setContentsMargins(8, 8, 8, 8)
         stats_layout.setSpacing(16)

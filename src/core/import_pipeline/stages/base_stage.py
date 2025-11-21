@@ -8,7 +8,11 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from PySide6.QtCore import QThreadPool
 
-from src.core.import_pipeline.pipeline_models import ImportTask, StageResult, ImportStage
+from src.core.import_pipeline.pipeline_models import (
+    ImportTask,
+    StageResult,
+    ImportStage,
+)
 from src.core.import_pipeline.signals import StageSignals
 from src.core.logging_config import get_logger
 
@@ -104,7 +108,9 @@ class BaseStage(ABC):
 
             # Emit started signal
             self.signals.started.emit(task)
-            self.logger.debug("Starting %s for %s", self.stage_name.value, task.filename)
+            self.logger.debug(
+                "Starting %s for %s", self.stage_name.value, task.filename
+            )
 
             # Process the task
             result = self.process(task)
@@ -112,7 +118,9 @@ class BaseStage(ABC):
             # Emit completion signal
             if result.success:
                 self.signals.completed.emit(result)
-                self.logger.debug("Completed %s for %s", self.stage_name.value, task.filename)
+                self.logger.debug(
+                    "Completed %s for %s", self.stage_name.value, task.filename
+                )
             else:
                 self.signals.failed.emit(task, result.error_message or "Unknown error")
                 self.logger.error(

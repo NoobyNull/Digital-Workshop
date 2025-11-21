@@ -340,13 +340,13 @@ class ToolDatabaseManager:
             # Build user-facing message
             if existing_provider:
                 if normalized_mode == "overwrite":
-                    message = (
-                        f"Successfully updated {provider_name}: imported {imported_count} tools"
-                    )
+                    message = f"Successfully updated {provider_name}: imported {imported_count} tools"
                 else:
                     message = f"Successfully merged {imported_count} new tools into {provider_name}"
             else:
-                message = f"Successfully imported {imported_count} tools from {provider_name}"
+                message = (
+                    f"Successfully imported {imported_count} tools from {provider_name}"
+                )
 
             self.logger.info(message)
             return True, message
@@ -360,7 +360,9 @@ class ToolDatabaseManager:
         """Get all tools for a provider."""
         return self.tool_repo.get_tools_by_provider(provider_id)
 
-    def search_tools(self, query: str, provider_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def search_tools(
+        self, query: str, provider_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Search for tools."""
         return self.tool_repo.search_tools(query, provider_id)
 
@@ -502,7 +504,9 @@ class ToolDatabaseManager:
                 for tool in tools:
                     properties = {
                         "geometry": tool.get("properties", {}).get("geometry", {}),
-                        "start_values": tool.get("properties", {}).get("start_values", {}),
+                        "start_values": tool.get("properties", {}).get(
+                            "start_values", {}
+                        ),
                     }
 
                     cursor.execute(

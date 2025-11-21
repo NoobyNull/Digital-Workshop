@@ -198,7 +198,9 @@ class CameraController:
                 update_grid_callback(radius, center_x=cx, center_y=cy)
             if update_ground_callback:
                 ground_z = zmin - 0.5
-                update_ground_callback(radius, center_x=cx, center_y=cy, z_position=ground_z)
+                update_ground_callback(
+                    radius, center_x=cx, center_y=cy, z_position=ground_z
+                )
 
             # Set camera
             cam = self.renderer.GetActiveCamera()

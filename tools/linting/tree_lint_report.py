@@ -15,10 +15,10 @@ from typing import Dict, Optional
 def get_pylint_score(file_path: Path) -> Optional[float]:
     """
     Get pylint score for a single Python file.
-    
+
     Args:
         file_path: Path to the Python file
-        
+
     Returns:
         Pylint score as float, or None if scoring failed
     """
@@ -56,10 +56,10 @@ def get_pylint_score(file_path: Path) -> Optional[float]:
 def collect_all_python_files(directory: Path) -> list:
     """
     Collect all Python files in directory recursively.
-    
+
     Args:
         directory: Root directory to scan
-        
+
     Returns:
         List of Path objects for all Python files
     """
@@ -78,10 +78,10 @@ def collect_all_python_files(directory: Path) -> list:
 def lint_all_files(python_files: list) -> Dict[str, float]:
     """
     Lint all Python files and return scores.
-    
+
     Args:
         python_files: List of Python file paths
-        
+
     Returns:
         Dictionary mapping file path to score
     """
@@ -108,13 +108,13 @@ def build_tree_with_scores(
 ) -> list:
     """
     Build directory tree with linting scores.
-    
+
     Args:
         directory: Directory to build tree for
         scores: Dictionary of file paths to scores
         prefix: Current line prefix for tree structure
         is_last: Whether this is the last item in parent directory
-        
+
     Returns:
         List of formatted tree lines
     """
@@ -168,10 +168,10 @@ def build_tree_with_scores(
 def generate_statistics(scores: Dict[str, float]) -> dict:
     """
     Generate statistics from linting scores.
-    
+
     Args:
         scores: Dictionary of file paths to scores
-        
+
     Returns:
         Dictionary of statistics
     """
@@ -232,10 +232,18 @@ def main():
     if stats:
         print(f"Total Python files: {stats['total_files']}")
         print(f"Average score: {stats['average_score']:.2f}/10")
-        print(f"Perfect (10.0): {stats['perfect_10']} files ({stats['perfect_10']/stats['total_files']*100:.1f}%)")
-        print(f"Excellent (9.5+): {stats['excellent_9_5_plus']} files ({stats['excellent_9_5_plus']/stats['total_files']*100:.1f}%)")
-        print(f"Good (9.0+): {stats['good_9_plus']} files ({stats['good_9_plus']/stats['total_files']*100:.1f}%)")
-        print(f"Needs work (<8.0): {stats['needs_work_below_8']} files ({stats['needs_work_below_8']/stats['total_files']*100:.1f}%)")
+        print(
+            f"Perfect (10.0): {stats['perfect_10']} files ({stats['perfect_10']/stats['total_files']*100:.1f}%)"
+        )
+        print(
+            f"Excellent (9.5+): {stats['excellent_9_5_plus']} files ({stats['excellent_9_5_plus']/stats['total_files']*100:.1f}%)"
+        )
+        print(
+            f"Good (9.0+): {stats['good_9_plus']} files ({stats['good_9_plus']/stats['total_files']*100:.1f}%)"
+        )
+        print(
+            f"Needs work (<8.0): {stats['needs_work_below_8']} files ({stats['needs_work_below_8']/stats['total_files']*100:.1f}%)"
+        )
         print(f"Score range: {stats['min_score']:.2f} - {stats['max_score']:.2f}")
 
     print()
@@ -249,4 +257,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

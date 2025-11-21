@@ -189,7 +189,14 @@ class AnimationController:
                 updated = self._update_single_animation(guide, current_time)
                 if not updated:
                     finished_animations.append(guide_id)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 # Log error and remove problematic animation
                 print(f"Error updating animation for guide {guide_id}: {e}")
                 finished_animations.append(guide_id)
@@ -490,7 +497,8 @@ class SnapGuideRenderer:
                         position=(start_point + end_point) / 2,
                         bounds=QRectF(start_point, end_point).normalized(),
                         color=self.config.visual.highlight_color,
-                        width=self.config.visual.guide_width + 2,  # Thicker for highlights
+                        width=self.config.visual.guide_width
+                        + 2,  # Thicker for highlights
                         style=self.config.visual.guide_style,
                         widget=context_widget,
                         metadata={"edge_name": edge_name, "snap_type": "edge"},
@@ -659,7 +667,9 @@ class SnapGuideRenderer:
             return (point - line_start).manhattanLength()
 
         # Project point onto line
-        projection = max(0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length))
+        projection = max(
+            0, min(line_length, QPointF.dotProduct(point_vec, line_vec) / line_length)
+        )
         projection_point = line_start + (line_vec / line_length) * projection
 
         return (point - projection_point).manhattanLength()
@@ -678,7 +688,9 @@ class SnapGuideRenderer:
             # Add to active guides
             self._active_guides.append(guide)
 
-            self.logger.debug("Added guide %s at {guide.position}", guide.guide_type.value)
+            self.logger.debug(
+                "Added guide %s at {guide.position}", guide.guide_type.value
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to add guide: %s", e)
 
@@ -716,7 +728,9 @@ class SnapGuideRenderer:
         """Clear all active guides."""
         try:
             # Start fade-out for all guides
-            for guide in self._active_guides[:]:  # Copy list to avoid modification during iteration
+            for guide in self._active_guides[
+                :
+            ]:  # Copy list to avoid modification during iteration
                 self.remove_guide(guide)
 
             self.logger.debug("Cleared %s guides", len(self._active_guides))
@@ -834,8 +848,12 @@ class SnapGuideRenderer:
             if not bounds.isEmpty():
                 # Draw corner brackets
                 margin = bounds.width() * 0.2
-                painter.drawLine(bounds.left(), bounds.top(), bounds.left() + margin, bounds.top())
-                painter.drawLine(bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin)
+                painter.drawLine(
+                    bounds.left(), bounds.top(), bounds.left() + margin, bounds.top()
+                )
+                painter.drawLine(
+                    bounds.left(), bounds.top(), bounds.left(), bounds.top() + margin
+                )
                 painter.drawLine(
                     bounds.right() - margin, bounds.top(), bounds.right(), bounds.top()
                 )

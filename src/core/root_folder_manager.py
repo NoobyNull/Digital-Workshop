@@ -84,7 +84,9 @@ class RootFolderManager(QObject):
                     if self._validate_folder(folder):
                         self._folders.append(folder)
                     else:
-                        self.logger.warning("Skipping invalid root folder: %s", folder.path)
+                        self.logger.warning(
+                            "Skipping invalid root folder: %s", folder.path
+                        )
 
             # If no folders configured, add default user home or projects root
             if not self._folders:
@@ -113,7 +115,9 @@ class RootFolderManager(QObject):
             root_path = Path.home()
             display_name = "Home"
 
-        home_folder = RootFolder(path=str(root_path), display_name=display_name, enabled=True)
+        home_folder = RootFolder(
+            path=str(root_path), display_name=display_name, enabled=True
+        )
         self._folders = [home_folder]
         self._save_folders()
 
@@ -137,13 +141,17 @@ class RootFolderManager(QObject):
                 self.logger.warning("Root folder path does not exist: %s", folder.path)
                 return False
             if not path.is_dir():
-                self.logger.warning("Root folder path is not a directory: %s", folder.path)
+                self.logger.warning(
+                    "Root folder path is not a directory: %s", folder.path
+                )
                 return False
             # Check if we can list the directory (basic permission check)
             try:
                 list(path.iterdir())
             except PermissionError:
-                self.logger.warning("No permission to access root folder: %s", folder.path)
+                self.logger.warning(
+                    "No permission to access root folder: %s", folder.path
+                )
                 return False
             return True
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -163,7 +171,9 @@ class RootFolderManager(QObject):
     def add_folder(self, path: str, display_name: Optional[str] = None) -> bool:
         """Add a new root folder."""
         if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
-            self.logger.warning("Cannot add custom root folders while Projects mode is active.")
+            self.logger.warning(
+                "Cannot add custom root folders while Projects mode is active."
+            )
             return False
 
         try:
@@ -198,7 +208,9 @@ class RootFolderManager(QObject):
     def remove_folder(self, folder_id: int) -> bool:
         """Remove a root folder by ID."""
         if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
-            self.logger.warning("Cannot remove root folders while Projects mode is active.")
+            self.logger.warning(
+                "Cannot remove root folders while Projects mode is active."
+            )
             return False
 
         try:
@@ -207,7 +219,9 @@ class RootFolderManager(QObject):
                     removed_folder = self._folders.pop(i)
                     self._save_folders()
                     self.folders_changed.emit()
-                    self.logger.info("Removed root folder: %s", removed_folder.display_name)
+                    self.logger.info(
+                        "Removed root folder: %s", removed_folder.display_name
+                    )
                     return True
 
             self.logger.warning("Root folder with ID %s not found", folder_id)
@@ -226,7 +240,9 @@ class RootFolderManager(QObject):
     ) -> bool:
         """Update properties of a root folder."""
         if self.library_settings.get_mode() == LibraryMode.CONSOLIDATED:
-            self.logger.warning("Cannot edit root folders while Projects mode is active.")
+            self.logger.warning(
+                "Cannot edit root folders while Projects mode is active."
+            )
             return False
 
         try:
@@ -318,4 +334,6 @@ class RootFolderManager(QObject):
             return
 
         display_name = root.name or "Projects"
-        self._folders = [RootFolder(path=str(root), display_name=display_name, enabled=True)]
+        self._folders = [
+            RootFolder(path=str(root), display_name=display_name, enabled=True)
+        ]

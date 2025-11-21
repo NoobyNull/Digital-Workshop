@@ -131,7 +131,9 @@ class ProjectDetailsWidget(QWidget):
         self.resources_table = QTableWidget()
         self.resources_table.setColumnCount(3)
         self.resources_table.setHorizontalHeaderLabels(["File Name", "Size", "Type"])
-        self.resources_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.resources_table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.Stretch
+        )
         self.resources_table.horizontalHeader().setSectionResizeMode(
             1, QHeaderView.ResizeToContents
         )
@@ -142,7 +144,9 @@ class ProjectDetailsWidget(QWidget):
         self.resources_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.resources_table.setSelectionMode(QTableWidget.SingleSelection)
         self.resources_table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.resources_table.customContextMenuRequested.connect(self._on_resources_context_menu)
+        self.resources_table.customContextMenuRequested.connect(
+            self._on_resources_context_menu
+        )
         self.resources_table.itemDoubleClicked.connect(self._on_resource_activated)
 
         layout.addWidget(self.resources_table)
@@ -189,7 +193,9 @@ class ProjectDetailsWidget(QWidget):
             # Format dimensions
             dimensions = model_data.get("dimensions", (0, 0, 0))
             if isinstance(dimensions, (list, tuple)) and len(dimensions) >= 3:
-                dim_str = f"{dimensions[0]:.2f} × {dimensions[1]:.2f} × {dimensions[2]:.2f}"
+                dim_str = (
+                    f"{dimensions[0]:.2f} × {dimensions[1]:.2f} × {dimensions[2]:.2f}"
+                )
             else:
                 dim_str = "-"
 
@@ -198,9 +204,15 @@ class ProjectDetailsWidget(QWidget):
             self.info_labels["format"].setText(model_data.get("format", "-").upper())
             self.info_labels["file_size"].setText(size_str)
             self.info_labels["dimensions"].setText(dim_str)
-            self.info_labels["triangles"].setText(f"{model_data.get('triangle_count', 0):,}")
-            self.info_labels["vertices"].setText(f"{model_data.get('vertex_count', 0):,}")
-            self.info_labels["date_added"].setText(str(model_data.get("date_added", "-")))
+            self.info_labels["triangles"].setText(
+                f"{model_data.get('triangle_count', 0):,}"
+            )
+            self.info_labels["vertices"].setText(
+                f"{model_data.get('vertex_count', 0):,}"
+            )
+            self.info_labels["date_added"].setText(
+                str(model_data.get("date_added", "-"))
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update model info: %s", e)
@@ -303,7 +315,9 @@ class ProjectDetailsWidget(QWidget):
                 try:
                     main_window._on_tab_switch_requested(tab_name)
                 except Exception:  # noqa: BLE001
-                    self.logger.warning("Failed to switch tab for resource %s", file_path_str)
+                    self.logger.warning(
+                        "Failed to switch tab for resource %s", file_path_str
+                    )
 
             if main_window is None:
                 return
@@ -328,7 +342,10 @@ class ProjectDetailsWidget(QWidget):
             # If we know which model this is, delegate to the model viewer
             # controller so we reuse the same pipeline (camera restore, status
             # messages, etc.) as the model library.
-            if getattr(self, "current_model_id", None) is not None and controller is not None:
+            if (
+                getattr(self, "current_model_id", None) is not None
+                and controller is not None
+            ):
                 try:
                     controller.on_model_double_clicked(self.current_model_id)  # type: ignore[arg-type]
                     return
@@ -367,7 +384,9 @@ class ProjectDetailsWidget(QWidget):
             if not icon.isNull():
                 return icon
         except Exception as e:  # noqa: BLE001
-            self.logger.debug("Falling back to default file icon for %s: %s", file_path, e)
+            self.logger.debug(
+                "Falling back to default file icon for %s: %s", file_path, e
+            )
         # Fallback: generic file icon from the current style
         try:
             return self.style().standardIcon(QStyle.SP_FileIcon)
@@ -415,7 +434,9 @@ class ProjectDetailsWidget(QWidget):
 
         # Ask user for replacement file
         dialog_caption = "Select Replacement File"
-        start_dir = str(current_path.parent) if current_path and current_path.exists() else ""
+        start_dir = (
+            str(current_path.parent) if current_path and current_path.exists() else ""
+        )
         new_path_str, _ = QFileDialog.getOpenFileName(
             self,
             dialog_caption,
@@ -472,7 +493,9 @@ class ProjectDetailsWidget(QWidget):
             if model_data:
                 self.set_model(model_data)
 
-            QMessageBox.information(self, "Replace File", "Model file replaced successfully.")
+            QMessageBox.information(
+                self, "Replace File", "Model file replaced successfully."
+            )
 
         except Exception as exc:  # noqa: BLE001
             self.logger.error("Failed to replace model file: %s", exc)
@@ -534,7 +557,9 @@ class ProjectDetailsWidget(QWidget):
                     and original_path_obj.resolve() != current_path.resolve()
                 ):
                     backup_dir = tempfile.gettempdir()
-                    backup_path = Path(backup_dir) / f"dww_backup_{original_path_obj.name}"
+                    backup_path = (
+                        Path(backup_dir) / f"dww_backup_{original_path_obj.name}"
+                    )
                     shutil.move(str(original_path_obj), str(backup_path))
 
                 shutil.move(str(current_path), str(original_path_obj))

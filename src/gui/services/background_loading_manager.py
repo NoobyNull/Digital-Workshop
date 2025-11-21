@@ -129,7 +129,9 @@ class BackgroundLoadingManager:
                 ]
             ]
             if len(active_jobs) >= self.max_concurrent_jobs:
-                raise RuntimeError(f"Maximum concurrent jobs ({self.max_concurrent_jobs}) exceeded")
+                raise RuntimeError(
+                    f"Maximum concurrent jobs ({self.max_concurrent_jobs}) exceeded"
+                )
 
             # Create job
             job_id = str(uuid.uuid4())
@@ -161,7 +163,14 @@ class BackgroundLoadingManager:
                     job.progress = 100.0
                     job.status_message = "Completed"
                 self.logger.info("Loading job %s completed successfully", job_id)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 with self._lock:
                     job.error = e
                     job.state = LoadingState.FAILED
@@ -200,7 +209,9 @@ class BackgroundLoadingManager:
                 LoadingState.CANCELLED,
                 LoadingState.FAILED,
             ]:
-                self.logger.info("Job %s already in terminal state: {job.state.value}", job_id)
+                self.logger.info(
+                    "Job %s already in terminal state: {job.state.value}", job_id
+                )
                 return False
 
             # Initiate cancellation
@@ -217,7 +228,9 @@ class BackgroundLoadingManager:
             # Ensure cancellation response time is under 500ms
             elapsed = time.time() - start_time
             if elapsed > 0.5:
-                self.logger.warning("Cancellation response time exceeded 500ms: %.3fs", elapsed)
+                self.logger.warning(
+                    "Cancellation response time exceeded 500ms: %.3fs", elapsed
+                )
 
             return True
 
@@ -318,9 +331,13 @@ class BackgroundLoadingManager:
                 file_size_gb = job.file_path.stat().st_size / (1024**3)
                 if file_size_gb > 0.5:  # Use adaptive chunking for files > 500MB
                     chunks = self.adaptive_chunker.create_adaptive_chunks(job.file_path)
-                    self.logger.info("Using adaptive chunking: created %s chunks", len(chunks))
+                    self.logger.info(
+                        "Using adaptive chunking: created %s chunks", len(chunks)
+                    )
                 else:
-                    chunks = self.chunker.create_chunks(job.file_path, target_chunk_size_mb=50)
+                    chunks = self.chunker.create_chunks(
+                        job.file_path, target_chunk_size_mb=50
+                    )
 
                 if job.cancellation_token.is_cancelled():
                     raise Exception("Loading was cancelled")
@@ -330,8 +347,12 @@ class BackgroundLoadingManager:
                 job.status_message = f"Processing {len(chunks)} chunks..."
 
                 # Check memory limits before proceeding
-                total_chunk_memory = sum(chunk.get_memory_estimate() for chunk in chunks)
-                if not self.memory_manager.check_memory_limits(total_chunk_memory / (1024**3)):
+                total_chunk_memory = sum(
+                    chunk.get_memory_estimate() for chunk in chunks
+                )
+                if not self.memory_manager.check_memory_limits(
+                    total_chunk_memory / (1024**3)
+                ):
                     raise Exception("Insufficient memory for loading operation")
 
                 # Coordinate parsing with enhanced progress tracking
@@ -372,7 +393,14 @@ class BackgroundLoadingManager:
 
                 return result
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 job.state = LoadingState.FAILED
                 job.status_message = f"Failed: {str(e)}"
 

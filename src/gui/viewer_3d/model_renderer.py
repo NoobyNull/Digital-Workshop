@@ -41,7 +41,9 @@ class ModelRenderer:
         self.render_mode = RenderMode.SOLID
         self.progress_callback: Optional[Callable[[float, str], None]] = None
 
-    def set_progress_callback(self, callback: Optional[Callable[[float, str], None]]) -> None:
+    def set_progress_callback(
+        self, callback: Optional[Callable[[float, str], None]]
+    ) -> None:
         """Set callback for progress updates during rendering."""
         self.progress_callback = callback
 
@@ -105,7 +107,9 @@ class ModelRenderer:
             # Emit progress every 10000 triangles
             if idx % 10000 == 0 and idx > 0:
                 progress = (idx / total_triangles) * 100.0
-                self._emit_progress(progress, f"Processing {idx:,}/{total_triangles:,} triangles")
+                self._emit_progress(
+                    progress, f"Processing {idx:,}/{total_triangles:,} triangles"
+                )
 
         # Create polydata
         polydata = vtk.vtkPolyData()
@@ -165,7 +169,9 @@ class ModelRenderer:
                 # Emit progress every 100000 triangles
                 if i % 100000 == 0 and i > 0:
                     progress = (i / num_triangles) * 100.0
-                    self._emit_progress(progress, f"Processing {i:,}/{num_triangles:,} triangles")
+                    self._emit_progress(
+                        progress, f"Processing {i:,}/{num_triangles:,} triangles"
+                    )
 
             # Create polydata
             polydata = vtk.vtkPolyData()
@@ -327,7 +333,9 @@ class ModelRenderer:
 
         try:
             logger.info(f"Applying material '{material_name}' to actor")
-            success = material_manager.apply_material_to_actor(self.actor, material_name)
+            success = material_manager.apply_material_to_actor(
+                self.actor, material_name
+            )
 
             if success:
                 logger.info(f"Material '{material_name}' applied successfully")
@@ -336,7 +344,9 @@ class ModelRenderer:
                 # This is the same fix applied to screenshot generator for consistent behavior
                 mapper = self.actor.GetMapper()
                 if mapper:
-                    logger.debug("Forcing mapper update to ensure UV coordinates are recognized")
+                    logger.debug(
+                        "Forcing mapper update to ensure UV coordinates are recognized"
+                    )
                     input_data = mapper.GetInput()
                     if input_data:
                         mapper.SetInputData(input_data)
@@ -352,7 +362,9 @@ class ModelRenderer:
             return success
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            logger.error(f"Error applying material '{material_name}': {e}", exc_info=True)
+            logger.error(
+                f"Error applying material '{material_name}': {e}", exc_info=True
+            )
             return False
 
     def apply_default_material(self, material_manager) -> bool:

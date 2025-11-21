@@ -31,10 +31,12 @@ class DependencyTracer:
     def __init__(self, root_dir: str = "."):
         self.root_dir = Path(root_dir)
         self.dependencies: Dict[str, Set[str]] = defaultdict(set)  # What X depends on
-        self.dependants: Dict[str, Set[str]] = defaultdict(set)    # What depends on X
-        self.definitions: Dict[str, str] = {}                       # Where things are defined
-        self.file_map: Dict[str, Path] = {}                         # Module name to file path
-        self.file_imports: Dict[str, Set[str]] = defaultdict(set)   # What each file imports
+        self.dependants: Dict[str, Set[str]] = defaultdict(set)  # What depends on X
+        self.definitions: Dict[str, str] = {}  # Where things are defined
+        self.file_map: Dict[str, Path] = {}  # Module name to file path
+        self.file_imports: Dict[str, Set[str]] = defaultdict(
+            set
+        )  # What each file imports
         self.cache_file = Path(".tracer_cache.json")
         self.scanned_files = set()
 
@@ -157,18 +159,20 @@ class DependencyTracer:
         """Add a dependency relationship."""
         if source and target and source != target:
             # Normalize the target to handle various import formats
-            normalized_target = target.split('.')[0] if '.' in target else target
+            normalized_target = target.split(".")[0] if "." in target else target
             self.dependencies[source].add(target)
             self.dependants[target].add(source)
             # Also add the module-level dependency
-            if '.' in target:
+            if "." in target:
                 self.dependants[normalized_target].add(source)
 
     def _get_module_name(self, file_path: Path) -> str:
         """Convert file path to module name."""
         try:
             rel_path = file_path.relative_to(self.root_dir)
-            module = str(rel_path).replace("\\", "/").replace("/", ".").replace(".py", "")
+            module = (
+                str(rel_path).replace("\\", "/").replace("/", ".").replace(".py", "")
+            )
             return module
         except ValueError:
             return file_path.stem
@@ -298,27 +302,35 @@ class DependencyTracer:
             with open(self.cache_file, "r", encoding="utf-8") as f:
                 cache_data = json.load(f)
 
-            self.dependencies = defaultdict(set, {k: set(v) for k, v in cache_data.get("dependencies", {}).items()})
-            self.dependants = defaultdict(set, {k: set(v) for k, v in cache_data.get("dependants", {}).items()})
+            self.dependencies = defaultdict(
+                set, {k: set(v) for k, v in cache_data.get("dependencies", {}).items()}
+            )
+            self.dependants = defaultdict(
+                set, {k: set(v) for k, v in cache_data.get("dependants", {}).items()}
+            )
             self.definitions = cache_data.get("definitions", {})
-            self.file_map = {k: Path(v) for k, v in cache_data.get("file_map", {}).items()}
-            self.file_imports = defaultdict(set, {k: set(v) for k, v in cache_data.get("file_imports", {}).items()})
+            self.file_map = {
+                k: Path(v) for k, v in cache_data.get("file_map", {}).items()
+            }
+            self.file_imports = defaultdict(
+                set, {k: set(v) for k, v in cache_data.get("file_imports", {}).items()}
+            )
 
         except Exception as e:
             print(f"[!] Error loading cache: {e}")
 
     def interactive(self) -> None:
         """Start interactive tracer mode."""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("DEPENDENCY TRACER - Interactive Mode")
-        print("="*70)
+        print("=" * 70)
         print("Commands:")
         print("  trace <name>  - Trace dependencies and dependants")
         print("  update        - Rescan codebase")
         print("  stats         - Show statistics")
         print("  help          - Show this help")
         print("  exit          - Exit tracer")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
 
         while True:
             try:
@@ -383,4 +395,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

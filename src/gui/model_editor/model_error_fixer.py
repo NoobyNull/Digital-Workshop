@@ -34,7 +34,9 @@ class ModelErrorFixer:
         # Ensure triangles is a list (handle numpy arrays or other types)
         if self.fixed_triangles is None:
             return (
-                STLModel(header=self.model.header, triangles=[], stats=self.model.stats),
+                STLModel(
+                    header=self.model.header, triangles=[], stats=self.model.stats
+                ),
                 fixes_applied,
             )
 
@@ -44,13 +46,17 @@ class ModelErrorFixer:
                 self.fixed_triangles = list(self.fixed_triangles)
         except (TypeError, ValueError):
             return (
-                STLModel(header=self.model.header, triangles=[], stats=self.model.stats),
+                STLModel(
+                    header=self.model.header, triangles=[], stats=self.model.stats
+                ),
                 fixes_applied,
             )
 
         if not self.fixed_triangles:
             return (
-                STLModel(header=self.model.header, triangles=[], stats=self.model.stats),
+                STLModel(
+                    header=self.model.header, triangles=[], stats=self.model.stats
+                ),
                 fixes_applied,
             )
 
@@ -137,7 +143,9 @@ class ModelErrorFixer:
 
         # Remove non-manifold triangles
         fixed_triangles = [
-            tri for idx, tri in enumerate(self.fixed_triangles) if idx not in non_manifold_triangles
+            tri
+            for idx, tri in enumerate(self.fixed_triangles)
+            if idx not in non_manifold_triangles
         ]
 
         return fixed_triangles, len(non_manifold_triangles)

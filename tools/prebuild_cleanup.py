@@ -67,7 +67,9 @@ def clean_artifacts(extra_paths: Iterable[str]) -> None:
             continue
         if path.is_dir():
             print(f"[clean] removing directory {path}")
-            subprocess.run(["python", "-c", f"import shutil; shutil.rmtree(r'{path}')"], check=True)
+            subprocess.run(
+                ["python", "-c", f"import shutil; shutil.rmtree(r'{path}')"], check=True
+            )
         else:
             print(f"[clean] removing file {path}")
             path.unlink()
@@ -78,7 +80,10 @@ def clean_artifacts(extra_paths: Iterable[str]) -> None:
                 continue
             if match.is_dir():
                 print(f"[clean] removing directory {match}")
-                subprocess.run(["python", "-c", f"import shutil; shutil.rmtree(r'{match}')"], check=True)
+                subprocess.run(
+                    ["python", "-c", f"import shutil; shutil.rmtree(r'{match}')"],
+                    check=True,
+                )
             else:
                 print(f"[clean] removing file {match}")
                 match.unlink()

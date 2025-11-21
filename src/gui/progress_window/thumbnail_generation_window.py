@@ -96,7 +96,9 @@ class ThumbnailGenerationWindow(QMainWindow):
         self._setup_ui()
         self._restore_window_state()
 
-        self.logger.info("ThumbnailGenerationWindow initialized: total_items=%d", total_items)
+        self.logger.info(
+            "ThumbnailGenerationWindow initialized: total_items=%d", total_items
+        )
 
     def _setup_ui(self) -> None:
         """Create all UI components."""
@@ -206,7 +208,6 @@ class ThumbnailGenerationWindow(QMainWindow):
         section.setLayout(layout)
         return section
 
-
     def _create_button_layout(self) -> FlowLayout:
         """Create control button layout.
 
@@ -257,9 +258,13 @@ class ThumbnailGenerationWindow(QMainWindow):
                 remaining_items = self.total_items - self.current_index
                 remaining_time = avg_time_per_item * remaining_items
                 remaining_str = self._format_time(remaining_time)
-                self.time_label.setText(f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}")
+                self.time_label.setText(
+                    f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}"
+                )
             else:
-                self.time_label.setText(f"Elapsed: {elapsed_str} | Remaining: Calculating...")
+                self.time_label.setText(
+                    f"Elapsed: {elapsed_str} | Remaining: Calculating..."
+                )
 
     def _format_time(self, seconds: float) -> str:
         """Format seconds to human-readable time."""
@@ -377,7 +382,9 @@ class ThumbnailGenerationWindow(QMainWindow):
         if not self.time_update_timer.isActive():
             self.time_update_timer.start()
 
-    def update_individual_progress(self, current_file: str, percent: int, stage: str) -> None:
+    def update_individual_progress(
+        self, current_file: str, percent: int, stage: str
+    ) -> None:
         """Update individual image progress labels and progress bar."""
         if self.individual_label:
             self.individual_label.setText(f"Current: {current_file}")

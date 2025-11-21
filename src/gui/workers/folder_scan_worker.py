@@ -93,4 +93,3 @@ class FolderScanWorker(QThread):
             msg = f"Error scanning folder {self.root_folder}: {exc}"
             self.logger.error("%s", msg, exc_info=True)
             self.error_occurred.emit(msg)
-

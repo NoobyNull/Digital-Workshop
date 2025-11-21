@@ -53,7 +53,9 @@ class EnhancedModelRepository(IModelRepository):
                 required_fields = ["filename", "format", "file_path"]
                 for field in required_fields:
                     if field not in model_data:
-                        raise ValueError(f"Required field '{field}' missing from model_data")
+                        raise ValueError(
+                            f"Required field '{field}' missing from model_data"
+                        )
 
                 cursor.execute(
                     """
@@ -195,7 +197,9 @@ class EnhancedModelRepository(IModelRepository):
                 cursor = conn.cursor()
 
                 # Delete related metadata first (due to foreign key constraints)
-                cursor.execute("DELETE FROM model_metadata WHERE model_id = ?", (model_id,))
+                cursor.execute(
+                    "DELETE FROM model_metadata WHERE model_id = ?", (model_id,)
+                )
 
                 # Delete the model
                 cursor.execute("DELETE FROM models WHERE id = ?", (model_id,))
@@ -305,7 +309,10 @@ class EnhancedModelRepository(IModelRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug("Search returned %s results for criteria: {criteria}", len(model_ids))
+                logger.debug(
+                    "Search returned %s results for criteria: {criteria}",
+                    len(model_ids),
+                )
                 return model_ids
 
         except sqlite3.Error as e:
@@ -356,7 +363,9 @@ class EnhancedModelRepository(IModelRepository):
     # Additional enhanced methods for better performance and functionality
 
     @log_function_call(logger)
-    def get_models_paginated(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    def get_models_paginated(
+        self, limit: int = 50, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """
         Get models with pagination support.
 
@@ -387,7 +396,10 @@ class EnhancedModelRepository(IModelRepository):
                 rows = cursor.fetchall()
                 models = [dict(row) for row in rows]
 
-                logger.debug("Retrieved %s models (limit: {limit}, offset: {offset})", len(models))
+                logger.debug(
+                    "Retrieved %s models (limit: {limit}, offset: {offset})",
+                    len(models),
+                )
                 return models
 
         except sqlite3.Error as e:

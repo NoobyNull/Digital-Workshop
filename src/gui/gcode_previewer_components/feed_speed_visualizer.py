@@ -69,7 +69,9 @@ class FeedSpeedVisualizer:
 
         return self._create_colored_actor(points, lines, colors)
 
-    def create_spindle_speed_visualization(self, moves: List[GcodeMove]) -> vtk.vtkActor:
+    def create_spindle_speed_visualization(
+        self, moves: List[GcodeMove]
+    ) -> vtk.vtkActor:
         """
         Create a visualization colored by spindle speed.
 

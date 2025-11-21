@@ -165,7 +165,9 @@ class ImportThumbnailService:
         """
         if self.storage_location == StorageLocation.CUSTOM:
             if not self.custom_storage_path:
-                raise ValueError("Custom storage path required when storage_location is CUSTOM")
+                raise ValueError(
+                    "Custom storage path required when storage_location is CUSTOM"
+                )
             storage_dir = Path(self.custom_storage_path)
         else:
             # Use AppData for default storage
@@ -254,7 +256,14 @@ class ImportThumbnailService:
                         error=error_msg,
                     )
                 file_hash = hash_result.hash_value
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as exc:
                 error_msg = f"Failed to hash model for external thumbnail: {exc}"
                 self.logger.error("%s for %s", error_msg, model_name)
                 return ThumbnailGenerationResult(
@@ -271,7 +280,14 @@ class ImportThumbnailService:
         try:
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(thumbnail_path, dest_path)
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             generation_time = time.time() - start_time
             error_msg = f"Failed to register external thumbnail: {exc}"
             self.logger.error("%s for %s", error_msg, model_name)
@@ -293,7 +309,14 @@ class ImportThumbnailService:
                 file_hash=file_hash,
                 output_dir=self._storage_dir,
             )
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.warning(
                 "Failed to generate resized thumbnails for external image %s: %s",
                 dest_path,
@@ -323,7 +346,6 @@ class ImportThumbnailService:
             success=True,
             cached=False,
         )
-
 
     def generate_thumbnail(
         self,
@@ -566,7 +588,9 @@ class ImportThumbnailService:
                 "cached": cached,
                 "generated": successful - cached,
                 "time_seconds": round(batch_time, 3),
-                "avg_time_per_file": (round(batch_time / total_files, 3) if total_files > 0 else 0),
+                "avg_time_per_file": (
+                    round(batch_time / total_files, 3) if total_files > 0 else 0
+                ),
             },
         )
 
@@ -621,7 +645,14 @@ class ImportThumbnailService:
                     else:
                         kept_count += 1
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Error processing %s: {e}", thumbnail_path)
                     error_count += 1
 
@@ -674,7 +705,8 @@ class ImportThumbnailService:
             "thumbnails_cached": self._stats["thumbnails_cached"],
             "total_generation_time": round(self._stats["total_generation_time"], 3),
             "avg_generation_time": round(
-                self._stats["total_generation_time"] / max(1, self._stats["thumbnails_generated"]),
+                self._stats["total_generation_time"]
+                / max(1, self._stats["thumbnails_generated"]),
                 3,
             ),
             "cache_hits": self._stats["cache_hits"],
@@ -761,7 +793,9 @@ class ImportThumbnailService:
             self.logger.error("Error verifying thumbnail %s: {e}", thumbnail_path)
             return False
 
-    def get_thumbnail_by_size(self, file_hash: str, size: str = "xlarge") -> Optional[Path]:
+    def get_thumbnail_by_size(
+        self, file_hash: str, size: str = "xlarge"
+    ) -> Optional[Path]:
         """
         Get thumbnail path for a specific size.
 

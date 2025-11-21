@@ -85,7 +85,9 @@ class ExtraFilesPolicy:
         try:
             decision = ExtraFileDecision(value)
         except ValueError:
-            logger.warning("Unknown extra file decision '%s' for extension %s", value, ext)
+            logger.warning(
+                "Unknown extra file decision '%s' for extension %s", value, ext
+            )
             return None
 
         return ExtraFilePolicyEntry(extension=ext, decision=decision)
@@ -136,4 +138,3 @@ class ExtraFilesPolicy:
             self._settings.endGroup()
 
         logger.info("All extra files policies cleared")
-

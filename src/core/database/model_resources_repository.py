@@ -160,7 +160,9 @@ class ModelResourcesRepository:
                         try:
                             import json
 
-                            association["metadata"] = json.loads(association["metadata_json"])
+                            association["metadata"] = json.loads(
+                                association["metadata_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             association["metadata"] = {}
 
@@ -231,7 +233,9 @@ class ModelResourcesRepository:
                         try:
                             import json
 
-                            material["properties"] = json.loads(material["properties_json"])
+                            material["properties"] = json.loads(
+                                material["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
 
@@ -305,7 +309,9 @@ class ModelResourcesRepository:
             return materials[0] if materials else None
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to get primary material for model %s: %s", model_id, e)
+            self.logger.error(
+                "Failed to get primary material for model %s: %s", model_id, e
+            )
             return None
 
     @log_function_call(logger)
@@ -329,7 +335,9 @@ class ModelResourcesRepository:
             return backgrounds[0] if backgrounds else None
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to get primary background for model %s: %s", model_id, e)
+            self.logger.error(
+                "Failed to get primary background for model %s: %s", model_id, e
+            )
             return None
 
     @log_function_call(logger)
@@ -362,7 +370,9 @@ class ModelResourcesRepository:
                 row = cursor.fetchone()
 
                 if not row:
-                    self.logger.warning("Association %s not found for update", association_id)
+                    self.logger.warning(
+                        "Association %s not found for update", association_id
+                    )
                     return False
 
                 model_id, resource_type = row
@@ -402,7 +412,9 @@ class ModelResourcesRepository:
                 if success:
                     self.logger.info("Updated association %s", association_id)
                 else:
-                    self.logger.warning("Association %s not found for update", association_id)
+                    self.logger.warning(
+                        "Association %s not found for update", association_id
+                    )
 
                 return success
 
@@ -496,7 +508,9 @@ class ModelResourcesRepository:
                 return removed_count
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to remove resources from model %s: %s", model_id, e)
+            self.logger.error(
+                "Failed to remove resources from model %s: %s", model_id, e
+            )
             return 0
 
     @log_function_call(logger)
@@ -534,7 +548,9 @@ class ModelResourcesRepository:
                 return [dict(row) for row in rows]
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to get models using material %s: %s", material_id, e)
+            self.logger.error(
+                "Failed to get models using material %s: %s", material_id, e
+            )
             return []
 
     @log_function_call(logger)
@@ -572,5 +588,7 @@ class ModelResourcesRepository:
                 return [dict(row) for row in rows]
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to get models using background %s: %s", background_id, e)
+            self.logger.error(
+                "Failed to get models using background %s: %s", background_id, e
+            )
             return []

@@ -166,7 +166,12 @@ class ProjectTreeWidget(QWidget):
                     children_map.setdefault(group.get("parent_id"), []).append(group)
 
                 for grp_list in children_map.values():
-                    grp_list.sort(key=lambda g: ((g.get("sort_order") or 0), g.get("name", "").lower()))
+                    grp_list.sort(
+                        key=lambda g: (
+                            (g.get("sort_order") or 0),
+                            g.get("name", "").lower(),
+                        )
+                    )
 
                 for root_group in children_map.get(None, []):
                     item = self._create_group_item(root_group)
@@ -178,7 +183,9 @@ class ProjectTreeWidget(QWidget):
             self.ungrouped_item.setText(0, "Ungrouped Projects")
             self.ungrouped_item.setData(0, Qt.UserRole, None)
             self.ungrouped_item.setData(0, Qt.UserRole + 1, "ungrouped")
-            self.ungrouped_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsDropEnabled | Qt.ItemIsSelectable)
+            self.ungrouped_item.setFlags(
+                Qt.ItemIsEnabled | Qt.ItemIsDropEnabled | Qt.ItemIsSelectable
+            )
             self.tree_widget.addTopLevelItem(self.ungrouped_item)
 
             if not projects:
@@ -223,7 +230,10 @@ class ProjectTreeWidget(QWidget):
         item.setData(0, Qt.UserRole, group.get("id"))
         item.setData(0, Qt.UserRole + 1, "group")
         item.setFlags(
-            Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled
+            Qt.ItemIsEnabled
+            | Qt.ItemIsSelectable
+            | Qt.ItemIsDragEnabled
+            | Qt.ItemIsDropEnabled
         )
         self.group_items[group["id"]] = item
         return item
@@ -248,7 +258,9 @@ class ProjectTreeWidget(QWidget):
         project_item.setFlags(flags)
         return project_item
 
-    def _load_project_files(self, project_id: str, project_item: QTreeWidgetItem) -> None:
+    def _load_project_files(
+        self, project_id: str, project_item: QTreeWidgetItem
+    ) -> None:
         """Load files for a project into the tree, organized by category."""
         try:
             # Get files from database
@@ -271,7 +283,9 @@ class ProjectTreeWidget(QWidget):
                 if category not in categories:
                     categories[category] = []
 
-                categories[category].append({"name": file_name, "path": file_path, "ext": file_ext})
+                categories[category].append(
+                    {"name": file_name, "path": file_path, "ext": file_ext}
+                )
 
             # Create category items and add files
             for category in sorted(categories.keys()):
@@ -374,7 +388,9 @@ class ProjectTreeWidget(QWidget):
                 open_action = menu.addAction("Open File")
                 action = menu.exec(global_pos)
                 if action == open_action:
-                    self._handle_file_selection(item.data(0, Qt.UserRole), open_file=True)
+                    self._handle_file_selection(
+                        item.data(0, Qt.UserRole), open_file=True
+                    )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Error showing context menu: %s", str(e))
@@ -412,8 +428,12 @@ class ProjectTreeWidget(QWidget):
                     )
                     return
 
-                default_group_id = self._group_id_for_item(self.tree_widget.currentItem())
-                project_id = self.project_manager.create_project(name, group_id=default_group_id)
+                default_group_id = self._group_id_for_item(
+                    self.tree_widget.currentItem()
+                )
+                project_id = self.project_manager.create_project(
+                    name, group_id=default_group_id
+                )
                 self.project_created.emit(project_id)
                 self._refresh_project_tree()
                 logger.info("Created project: %s", name)
@@ -476,7 +496,14 @@ class ProjectTreeWidget(QWidget):
                     )
                     added_count += 1
                     logger.info("Added file to project: %s", file_name)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning("Failed to add file %s: {str(e)}", file_path)
 
             if added_count > 0:
@@ -487,7 +514,9 @@ class ProjectTreeWidget(QWidget):
                     f"Successfully added {added_count} file(s) to project.",
                 )
             else:
-                QMessageBox.warning(self, "No Files Added", "Failed to add files to project.")
+                QMessageBox.warning(
+                    self, "No Files Added", "Failed to add files to project."
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to add files to project: %s", str(e))
@@ -516,7 +545,9 @@ class ProjectTreeWidget(QWidget):
         group_id = item.data(0, Qt.UserRole)
         if not group_id:
             return
-        name = self._prompt_group_name("Rename Group", "New name:", default=item.text(0))
+        name = self._prompt_group_name(
+            "Rename Group", "New name:", default=item.text(0)
+        )
         if not name:
             return
         if self.project_manager.rename_project_group(group_id, name):
@@ -561,7 +592,9 @@ class ProjectTreeWidget(QWidget):
         if self.project_manager.assign_project_to_group(project_id, target_group):
             self._refresh_project_tree()
 
-    def _prompt_group_name(self, title: str, label: str, default: str = "") -> Optional[str]:
+    def _prompt_group_name(
+        self, title: str, label: str, default: str = ""
+    ) -> Optional[str]:
         text, ok = QInputDialog.getText(self, title, label, text=default)
         if not ok:
             return None
@@ -593,7 +626,9 @@ class ProjectTreeWidget(QWidget):
                 project_id = item.data(0, Qt.UserRole)
                 parent_item = item.parent()
                 target_group = self._group_id_for_item(parent_item)
-                if self.project_manager.assign_project_to_group(project_id, target_group):
+                if self.project_manager.assign_project_to_group(
+                    project_id, target_group
+                ):
                     changed = True
             elif item_type == "group":
                 group_id = item.data(0, Qt.UserRole)
@@ -622,7 +657,9 @@ class ProjectTreeWidget(QWidget):
             return item.data(0, Qt.UserRole)
         return None
 
-    def _is_descendant(self, parent: QTreeWidgetItem, potential_child: QTreeWidgetItem) -> bool:
+    def _is_descendant(
+        self, parent: QTreeWidgetItem, potential_child: QTreeWidgetItem
+    ) -> bool:
         cursor = parent
         while cursor:
             if cursor == potential_child:
@@ -671,7 +708,9 @@ class ProjectTreeWidget(QWidget):
 
             item_type = current_item.data(0, Qt.UserRole + 1)
             if item_type != "project":
-                QMessageBox.warning(self, "Invalid Selection", "Please select a project to delete.")
+                QMessageBox.warning(
+                    self, "Invalid Selection", "Please select a project to delete."
+                )
                 return
 
             project_id = current_item.data(0, Qt.UserRole)
@@ -706,7 +745,9 @@ class ProjectTreeWidget(QWidget):
 
             item_type = current_item.data(0, Qt.UserRole + 1)
             if item_type != "project":
-                QMessageBox.warning(self, "Invalid Selection", "Please select a project to export.")
+                QMessageBox.warning(
+                    self, "Invalid Selection", "Please select a project to export."
+                )
                 return
 
             project_id = current_item.data(0, Qt.UserRole)
@@ -834,7 +875,9 @@ class ProjectTreeWidget(QWidget):
                         "Import Failed",
                         f"Failed to import project files: {import_report.error}",
                     )
-                    logger.error("Failed to import project files: %s", import_report.error)
+                    logger.error(
+                        "Failed to import project files: %s", import_report.error
+                    )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to import project: %s", str(e))

@@ -40,7 +40,9 @@ class ApplicationConfig:
 
     # Memory Override Settings
     use_manual_memory_override: bool = False
-    manual_cache_limit_percent: int = 80  # Allow cache to use up to 80% of total system RAM
+    manual_cache_limit_percent: int = (
+        80  # Allow cache to use up to 80% of total system RAM
+    )
     min_memory_specification_mb: int = 512
     system_memory_reserve_percent: int = 20
 
@@ -135,7 +137,9 @@ class ApplicationConfig:
         if self.use_manual_memory_override:
             # Calculate cache limit as percentage of total system RAM
             if total_system_memory_mb is not None:
-                return int(total_system_memory_mb * (self.manual_cache_limit_percent / 100))
+                return int(
+                    total_system_memory_mb * (self.manual_cache_limit_percent / 100)
+                )
 
         # Use provided values or defaults
         if available_memory_mb is None:
@@ -149,18 +153,26 @@ class ApplicationConfig:
         # Adaptive memory calculation based on system size
         if total_memory_gb >= 64:
             # High-memory systems: Use up to 60% of available memory, max 16GB
-            calculated_limit = min(int(available_memory_mb * 0.6), 16384)  # 16GB max for app
+            calculated_limit = min(
+                int(available_memory_mb * 0.6), 16384
+            )  # 16GB max for app
         elif total_memory_gb >= 32:
             # Medium-high memory systems: Use up to 50% of available memory, max 8GB
-            calculated_limit = min(int(available_memory_mb * 0.5), 8192)  # 8GB max for app
+            calculated_limit = min(
+                int(available_memory_mb * 0.5), 8192
+            )  # 8GB max for app
         elif total_memory_gb >= 16:
             # Medium memory systems: Use up to 40% of available memory, max 4GB
-            calculated_limit = min(int(available_memory_mb * 0.4), 4096)  # 4GB max for app
+            calculated_limit = min(
+                int(available_memory_mb * 0.4), 4096
+            )  # 4GB max for app
         else:
             # Low memory systems: Use conservative approach
             fifty_percent_mb = available_memory_mb // 2
             hard_max_mb = int(
-                total_system_memory_mb * (100 - self.system_memory_reserve_percent) / 100
+                total_system_memory_mb
+                * (100 - self.system_memory_reserve_percent)
+                / 100
             )
             calculated_limit = max(
                 self.min_memory_specification_mb, min(fifty_percent_mb, hard_max_mb)

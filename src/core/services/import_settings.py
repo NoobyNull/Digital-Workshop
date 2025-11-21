@@ -137,7 +137,9 @@ class ImportSettings:
         """Reset to detected defaults."""
 
         self.set_concurrency(
-            _default_prep_threads(), _default_thumbnail_workers(), _default_queue_limit()
+            _default_prep_threads(),
+            _default_thumbnail_workers(),
+            _default_queue_limit(),
         )
 
 

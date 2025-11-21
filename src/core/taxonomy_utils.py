@@ -19,7 +19,9 @@ _TOP_LEVEL_CATEGORIES = {
 }
 
 
-def split_category_and_keywords(raw_keywords: List[str]) -> Tuple[Optional[str], List[str]]:
+def split_category_and_keywords(
+    raw_keywords: List[str],
+) -> Tuple[Optional[str], List[str]]:
     """Split raw AI keywords into a category and remaining keywords.
 
     The first keyword that matches a known top-level category (case-
@@ -55,4 +57,3 @@ def split_category_and_keywords(raw_keywords: List[str]) -> Tuple[Optional[str],
         cleaned_keywords.append(text)
 
     return category, cleaned_keywords
-

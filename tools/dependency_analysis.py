@@ -29,6 +29,7 @@ from collections import defaultdict
 @dataclass
 class DependencyInfo:
     """Information about a single dependency."""
+
     file_path: str
     line_number: int
     dependency_type: str  # 'import', 'usage', 'stylesheet'
@@ -39,6 +40,7 @@ class DependencyInfo:
 @dataclass
 class FileAnalysis:
     """Analysis results for a single file."""
+
     file_path: str
     theme_manager_imports: List[DependencyInfo]
     theme_manager_usage: List[DependencyInfo]
@@ -52,6 +54,7 @@ class FileAnalysis:
 @dataclass
 class AnalysisReport:
     """Complete analysis report."""
+
     summary: Dict[str, Any]
     files: List[FileAnalysis]
     theme_manager_usage: Dict[str, List[str]]
@@ -72,49 +75,45 @@ class ThemeDependencyAnalyzer:
 
         # Patterns for different types of dependencies
         self.patterns = {
-            'theme_manager_import': re.compile(
-                r'^(?:from\s+[\w.]+\s+)?import\s+(?:.*\b)?ThemeManager(?:\b.*)?',
-                re.MULTILINE
+            "theme_manager_import": re.compile(
+                r"^(?:from\s+[\w.]+\s+)?import\s+(?:.*\b)?ThemeManager(?:\b.*)?",
+                re.MULTILINE,
             ),
-            'theme_manager_usage': re.compile(
-                r'\bThemeManager\b(?:\.instance\(\)|\.get_instance\(\)|\(\))?',
-                re.MULTILINE
+            "theme_manager_usage": re.compile(
+                r"\bThemeManager\b(?:\.instance\(\)|\.get_instance\(\)|\(\))?",
+                re.MULTILINE,
             ),
-            'stylesheet_call': re.compile(
-                r'\.setStyleSheet\(["\']([^"\']+)["\']',
-                re.MULTILINE
+            "stylesheet_call": re.compile(
+                r'\.setStyleSheet\(["\']([^"\']+)["\']', re.MULTILINE
             ),
-            'hardcoded_colors': re.compile(
-                r'#[0-9a-fA-F]{6}',
-                re.MULTILINE
+            "hardcoded_colors": re.compile(r"#[0-9a-fA-F]{6}", re.MULTILINE),
+            "theme_related_imports": re.compile(
+                r"from\s+[\w.]*(?:theme|Theme)(?:[\w.]*\s+import|import\s+[\w\s,]*\b(?:COLORS|ThemeService|ThemeManager|UnifiedThemeManager)\b)",
+                re.MULTILINE,
             ),
-            'theme_related_imports': re.compile(
-                r'from\s+[\w.]*(?:theme|Theme)(?:[\w.]*\s+import|import\s+[\w\s,]*\b(?:COLORS|ThemeService|ThemeManager|UnifiedThemeManager)\b)',
-                re.MULTILINE
+            "qt_material_imports": re.compile(
+                r"from\s+[\w.]*(?:qt_material|qt-material)[\w.]*\s+import|import\s+[\w\s,]*\bqt_material\b",
+                re.MULTILINE,
             ),
-            'qt_material_imports': re.compile(
-                r'from\s+[\w.]*(?:qt_material|qt-material)[\w.]*\s+import|import\s+[\w\s,]*\bqt_material\b',
-                re.MULTILINE
-            )
         }
 
         # Risk assessment patterns
         self.risk_patterns = {
-            'high': [
-                r'ThemeManager\.instance\(\)',
-                r'setStyleSheet.*#[0-9a-fA-F]{6}',
-                r'from.*theme.*import.*ThemeManager',
+            "high": [
+                r"ThemeManager\.instance\(\)",
+                r"setStyleSheet.*#[0-9a-fA-F]{6}",
+                r"from.*theme.*import.*ThemeManager",
             ],
-            'medium': [
-                r'COLORS\.',
-                r'setStyleSheet.*\{[^}]*background-color',
-                r'from.*theme.*import.*COLORS',
+            "medium": [
+                r"COLORS\.",
+                r"setStyleSheet.*\{[^}]*background-color",
+                r"from.*theme.*import.*COLORS",
             ],
-            'low': [
-                r'from.*theme.*import.*UnifiedThemeManager',
-                r'qt_material',
-                r'ThemeService',
-            ]
+            "low": [
+                r"from.*theme.*import.*UnifiedThemeManager",
+                r"qt_material",
+                r"ThemeService",
+            ],
         }
 
     def analyze_codebase(self) -> AnalysisReport:
@@ -158,7 +157,9 @@ class ThemeDependencyAnalyzer:
         migration_plan = self._generate_migration_plan(file_analyses)
 
         # Create summary
-        summary = self._create_summary(file_analyses, theme_manager_usage, stylesheet_usage, hardcoded_colors)
+        summary = self._create_summary(
+            file_analyses, theme_manager_usage, stylesheet_usage, hardcoded_colors
+        )
 
         return AnalysisReport(
             summary=summary,
@@ -166,23 +167,23 @@ class ThemeDependencyAnalyzer:
             theme_manager_usage=dict(theme_manager_usage),
             stylesheet_usage=dict(stylesheet_usage),
             hardcoded_colors=dict(hardcoded_colors),
-            migration_plan=migration_plan
+            migration_plan=migration_plan,
         )
 
     def _get_files_to_analyze(self) -> List[str]:
         """Get list of Python files to analyze."""
-        file_extensions = ['.py']
-        exclude_dirs = ['__pycache__', '.git', 'venv', 'env', '.venv', '.env']
+        file_extensions = [".py"]
+        exclude_dirs = ["__pycache__", ".git", "venv", "env", ".venv", ".env"]
 
         files = []
         for ext in file_extensions:
-            for file_path in self.root_path.rglob(f'*{ext}'):
+            for file_path in self.root_path.rglob(f"*{ext}"):
                 # Skip excluded directories
                 if any(part in exclude_dirs for part in file_path.parts):
                     continue
 
                 # Skip test files unless requested
-                if not self.include_tests and 'test' in file_path.name.lower():
+                if not self.include_tests and "test" in file_path.name.lower():
                     continue
 
                 files.append(str(file_path.relative_to(self.root_path)))
@@ -194,30 +195,33 @@ class ThemeDependencyAnalyzer:
         full_path = self.root_path / file_path
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             self.logger.error(f"Failed to read {file_path}: {e}")
             return self._create_empty_analysis(file_path)
 
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Find all dependency types
         theme_manager_imports = self._find_pattern_matches(
-            file_path, lines, 'theme_manager_import', 'import'
+            file_path, lines, "theme_manager_import", "import"
         )
         theme_manager_usage = self._find_pattern_matches(
-            file_path, lines, 'theme_manager_usage', 'usage'
+            file_path, lines, "theme_manager_usage", "usage"
         )
         stylesheet_calls = self._find_stylesheet_calls(file_path, lines)
         hardcoded_colors = self._find_hardcoded_colors(file_path, lines)
         theme_related_imports = self._find_pattern_matches(
-            file_path, lines, 'theme_related_imports', 'import'
+            file_path, lines, "theme_related_imports", "import"
         )
 
         # Assess risk level
         risk_level = self._assess_risk_level(
-            theme_manager_usage, stylesheet_calls, hardcoded_colors, theme_related_imports
+            theme_manager_usage,
+            stylesheet_calls,
+            hardcoded_colors,
+            theme_related_imports,
         )
 
         # Calculate migration priority
@@ -233,10 +237,12 @@ class ThemeDependencyAnalyzer:
             hardcoded_colors=hardcoded_colors,
             theme_related_imports=theme_related_imports,
             risk_level=risk_level,
-            migration_priority=migration_priority
+            migration_priority=migration_priority,
         )
 
-    def _find_pattern_matches(self, file_path: str, lines: List[str], pattern_name: str, dep_type: str) -> List[DependencyInfo]:
+    def _find_pattern_matches(
+        self, file_path: str, lines: List[str], pattern_name: str, dep_type: str
+    ) -> List[DependencyInfo]:
         """Find matches for a specific pattern."""
         pattern = self.patterns[pattern_name]
         matches = []
@@ -244,105 +250,143 @@ class ThemeDependencyAnalyzer:
         for line_num, line in enumerate(lines, 1):
             match = pattern.search(line)
             if match:
-                matches.append(DependencyInfo(
-                    file_path=file_path,
-                    line_number=line_num,
-                    dependency_type=dep_type,
-                    context=line.strip(),
-                    code_snippet=self._get_code_snippet(lines, line_num, 2)
-                ))
+                matches.append(
+                    DependencyInfo(
+                        file_path=file_path,
+                        line_number=line_num,
+                        dependency_type=dep_type,
+                        context=line.strip(),
+                        code_snippet=self._get_code_snippet(lines, line_num, 2),
+                    )
+                )
 
         return matches
 
-    def _find_stylesheet_calls(self, file_path: str, lines: List[str]) -> List[DependencyInfo]:
+    def _find_stylesheet_calls(
+        self, file_path: str, lines: List[str]
+    ) -> List[DependencyInfo]:
         """Find setStyleSheet calls with context."""
         matches = []
 
         for line_num, line in enumerate(lines, 1):
-            match = self.patterns['stylesheet_call'].search(line)
+            match = self.patterns["stylesheet_call"].search(line)
             if match:
                 # Get more context around the call
                 context_start = max(0, line_num - 3)
                 context_end = min(len(lines), line_num + 3)
                 context_lines = lines[context_start:context_end]
-                context = '\n'.join(context_lines)
+                context = "\n".join(context_lines)
 
-                matches.append(DependencyInfo(
-                    file_path=file_path,
-                    line_number=line_num,
-                    dependency_type='stylesheet',
-                    context=context,
-                    code_snippet=line.strip()
-                ))
+                matches.append(
+                    DependencyInfo(
+                        file_path=file_path,
+                        line_number=line_num,
+                        dependency_type="stylesheet",
+                        context=context,
+                        code_snippet=line.strip(),
+                    )
+                )
 
         return matches
 
-    def _find_hardcoded_colors(self, file_path: str, lines: List[str]) -> List[DependencyInfo]:
+    def _find_hardcoded_colors(
+        self, file_path: str, lines: List[str]
+    ) -> List[DependencyInfo]:
         """Find hardcoded color values."""
         matches = []
 
         for line_num, line in enumerate(lines, 1):
             # Find hex colors
-            hex_matches = self.patterns['hardcoded_colors'].findall(line)
+            hex_matches = self.patterns["hardcoded_colors"].findall(line)
             for hex_color in hex_matches:
                 # Skip if it's in a comment or string that's not a style
                 if self._is_style_related_context(line, hex_color):
-                    matches.append(DependencyInfo(
-                        file_path=file_path,
-                        line_number=line_num,
-                        dependency_type='hardcoded_color',
-                        context=line.strip(),
-                        code_snippet=f"Color: {hex_color}"
-                    ))
+                    matches.append(
+                        DependencyInfo(
+                            file_path=file_path,
+                            line_number=line_num,
+                            dependency_type="hardcoded_color",
+                            context=line.strip(),
+                            code_snippet=f"Color: {hex_color}",
+                        )
+                    )
 
         return matches
 
     def _is_style_related_context(self, line: str, hex_color: str) -> bool:
         """Check if hex color is in a style-related context."""
         style_indicators = [
-            'background', 'color', 'border', 'setStyleSheet',
-            'QWidget', 'QPushButton', 'QLabel', 'QFrame',
-            'rgb(', 'rgba(', 'hsl(', 'hsla('
+            "background",
+            "color",
+            "border",
+            "setStyleSheet",
+            "QWidget",
+            "QPushButton",
+            "QLabel",
+            "QFrame",
+            "rgb(",
+            "rgba(",
+            "hsl(",
+            "hsla(",
         ]
 
         line_lower = line.lower()
         return any(indicator in line_lower for indicator in style_indicators)
 
-    def _assess_risk_level(self, theme_usage: List[DependencyInfo], stylesheets: List[DependencyInfo],
-                          colors: List[DependencyInfo], imports: List[DependencyInfo]) -> str:
+    def _assess_risk_level(
+        self,
+        theme_usage: List[DependencyInfo],
+        stylesheets: List[DependencyInfo],
+        colors: List[DependencyInfo],
+        imports: List[DependencyInfo],
+    ) -> str:
         """Assess the risk level of migrating this file."""
         risk_score = 0
 
         # High risk indicators
-        if any(re.search(pattern, info.context) for info in theme_usage for pattern in self.risk_patterns['high']):
+        if any(
+            re.search(pattern, info.context)
+            for info in theme_usage
+            for pattern in self.risk_patterns["high"]
+        ):
             risk_score += 3
 
-        if any(re.search(pattern, info.context) for info in stylesheets for pattern in self.risk_patterns['high']):
+        if any(
+            re.search(pattern, info.context)
+            for info in stylesheets
+            for pattern in self.risk_patterns["high"]
+        ):
             risk_score += 3
 
         # Medium risk indicators
-        if any(re.search(pattern, info.context) for info in theme_usage + stylesheets for pattern in self.risk_patterns['medium']):
+        if any(
+            re.search(pattern, info.context)
+            for info in theme_usage + stylesheets
+            for pattern in self.risk_patterns["medium"]
+        ):
             risk_score += 2
 
         # Low risk indicators (actually reduce risk)
-        if any(re.search(pattern, info.context) for info in imports for pattern in self.risk_patterns['low']):
+        if any(
+            re.search(pattern, info.context)
+            for info in imports
+            for pattern in self.risk_patterns["low"]
+        ):
             risk_score -= 1
 
         # Determine risk level
         if risk_score >= 4:
-            return 'high'
+            return "high"
         elif risk_score >= 2:
-            return 'medium'
+            return "medium"
         else:
-            return 'low'
+            return "low"
 
-    def _calculate_migration_priority(self, risk_level: str, theme_usage_count: int, stylesheet_count: int) -> int:
+    def _calculate_migration_priority(
+        self, risk_level: str, theme_usage_count: int, stylesheet_count: int
+    ) -> int:
         """Calculate migration priority (1-10, higher = more urgent)."""
-        base_priority = {
-            'high': 8,
-            'medium': 5,
-            'low': 2
-        }
+        base_priority = {"high": 8, "medium": 5, "low": 2}
 
         priority = base_priority[risk_level]
 
@@ -360,57 +404,67 @@ class ThemeDependencyAnalyzer:
             stylesheet_calls=[],
             hardcoded_colors=[],
             theme_related_imports=[],
-            risk_level='low',
-            migration_priority=1
+            risk_level="low",
+            migration_priority=1,
         )
 
-    def _get_code_snippet(self, lines: List[str], line_num: int, context_lines: int) -> str:
+    def _get_code_snippet(
+        self, lines: List[str], line_num: int, context_lines: int
+    ) -> str:
         """Get code snippet with context around a line."""
         start = max(0, line_num - context_lines - 1)
         end = min(len(lines), line_num + context_lines)
-        return '\n'.join(lines[start:end])
+        return "\n".join(lines[start:end])
 
-    def _generate_migration_plan(self, file_analyses: List[FileAnalysis]) -> Dict[str, Any]:
+    def _generate_migration_plan(
+        self, file_analyses: List[FileAnalysis]
+    ) -> Dict[str, Any]:
         """Generate a comprehensive migration plan."""
         # Sort files by priority
-        sorted_files = sorted(file_analyses, key=lambda x: x.migration_priority, reverse=True)
+        sorted_files = sorted(
+            file_analyses, key=lambda x: x.migration_priority, reverse=True
+        )
 
         # Group by risk level
-        high_risk = [f for f in sorted_files if f.risk_level == 'high']
-        medium_risk = [f for f in sorted_files if f.risk_level == 'medium']
-        low_risk = [f for f in sorted_files if f.risk_level == 'low']
+        high_risk = [f for f in sorted_files if f.risk_level == "high"]
+        medium_risk = [f for f in sorted_files if f.risk_level == "medium"]
+        low_risk = [f for f in sorted_files if f.risk_level == "low"]
 
         # Create phases
         phases = {
-            'phase_1_critical': high_risk[:5],  # First 5 high-risk files
-            'phase_2_high_risk': high_risk[5:],
-            'phase_3_medium_risk': medium_risk[:10],  # First 10 medium-risk files
-            'phase_4_remaining': medium_risk[10:] + low_risk
+            "phase_1_critical": high_risk[:5],  # First 5 high-risk files
+            "phase_2_high_risk": high_risk[5:],
+            "phase_3_medium_risk": medium_risk[:10],  # First 10 medium-risk files
+            "phase_4_remaining": medium_risk[10:] + low_risk,
         }
 
         # Generate migration steps for each phase
         migration_steps = {}
         for phase_name, files in phases.items():
             migration_steps[phase_name] = {
-                'files': [f.file_path for f in files],
-                'estimated_effort': self._estimate_effort(files),
-                'risk_level': files[0].risk_level if files else 'none',
-                'steps': self._generate_phase_steps(files)
+                "files": [f.file_path for f in files],
+                "estimated_effort": self._estimate_effort(files),
+                "risk_level": files[0].risk_level if files else "none",
+                "steps": self._generate_phase_steps(files),
             }
 
         return {
-            'total_files': len(file_analyses),
-            'phases': migration_steps,
-            'estimated_total_effort': sum(step['estimated_effort'] for step in migration_steps.values()),
-            'high_risk_files': len(high_risk),
-            'medium_risk_files': len(medium_risk),
-            'low_risk_files': len(low_risk)
+            "total_files": len(file_analyses),
+            "phases": migration_steps,
+            "estimated_total_effort": sum(
+                step["estimated_effort"] for step in migration_steps.values()
+            ),
+            "high_risk_files": len(high_risk),
+            "medium_risk_files": len(medium_risk),
+            "low_risk_files": len(low_risk),
         }
 
     def _estimate_effort(self, files: List[FileAnalysis]) -> int:
         """Estimate effort required for a group of files."""
         total_items = sum(
-            len(f.theme_manager_usage) + len(f.stylesheet_calls) + len(f.hardcoded_colors)
+            len(f.theme_manager_usage)
+            + len(f.stylesheet_calls)
+            + len(f.hardcoded_colors)
             for f in files
         )
 
@@ -430,15 +484,22 @@ class ThemeDependencyAnalyzer:
                 steps.append(f"Replace ThemeManager usage in {file_analysis.file_path}")
 
             if file_analysis.stylesheet_calls:
-                steps.append(f"Convert setStyleSheet calls in {file_analysis.file_path}")
+                steps.append(
+                    f"Convert setStyleSheet calls in {file_analysis.file_path}"
+                )
 
             if file_analysis.hardcoded_colors:
                 steps.append(f"Replace hardcoded colors in {file_analysis.file_path}")
 
         return steps
 
-    def _create_summary(self, file_analyses: List[FileAnalysis], theme_usage: Dict,
-                       stylesheet_usage: Dict, hardcoded_colors: Dict) -> Dict[str, Any]:
+    def _create_summary(
+        self,
+        file_analyses: List[FileAnalysis],
+        theme_usage: Dict,
+        stylesheet_usage: Dict,
+        hardcoded_colors: Dict,
+    ) -> Dict[str, Any]:
         """Create analysis summary."""
         total_files = len(file_analyses)
         files_with_issues = len([f for f in file_analyses if f.migration_priority > 1])
@@ -446,44 +507,60 @@ class ThemeDependencyAnalyzer:
         # Count different types of issues
         total_theme_manager_usage = sum(len(usage) for usage in theme_usage.values())
         total_stylesheet_calls = sum(len(calls) for calls in stylesheet_usage.values())
-        total_hardcoded_colors = sum(len(colors) for colors in hardcoded_colors.values())
+        total_hardcoded_colors = sum(
+            len(colors) for colors in hardcoded_colors.values()
+        )
 
         # Risk distribution
-        risk_counts = {'high': 0, 'medium': 0, 'low': 0}
+        risk_counts = {"high": 0, "medium": 0, "low": 0}
         for analysis in file_analyses:
             risk_counts[analysis.risk_level] += 1
 
         return {
-            'total_files_analyzed': total_files,
-            'files_requiring_migration': files_with_issues,
-            'total_theme_manager_usage': total_theme_manager_usage,
-            'total_stylesheet_calls': total_stylesheet_calls,
-            'total_hardcoded_colors': total_hardcoded_colors,
-            'risk_distribution': risk_counts,
-            'migration_coverage': (files_with_issues / total_files * 100) if total_files > 0 else 0
+            "total_files_analyzed": total_files,
+            "files_requiring_migration": files_with_issues,
+            "total_theme_manager_usage": total_theme_manager_usage,
+            "total_stylesheet_calls": total_stylesheet_calls,
+            "total_hardcoded_colors": total_hardcoded_colors,
+            "risk_distribution": risk_counts,
+            "migration_coverage": (
+                (files_with_issues / total_files * 100) if total_files > 0 else 0
+            ),
         }
 
 
 def main():
     """Main entry point for the dependency analysis tool."""
-    parser = argparse.ArgumentParser(description='Theme Dependency Analysis Tool')
-    parser.add_argument('--output', '-o', default='dependency_report.json',
-                       help='Output file for the analysis report')
-    parser.add_argument('--format', '-f', choices=['json', 'html', 'markdown'],
-                       default='json', help='Output format')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Enable verbose logging')
-    parser.add_argument('--include-tests', action='store_true',
-                       help='Include test files in analysis')
-    parser.add_argument('--root-path', default='src',
-                       help='Root path to analyze (default: src)')
+    parser = argparse.ArgumentParser(description="Theme Dependency Analysis Tool")
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="dependency_report.json",
+        help="Output file for the analysis report",
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
+        choices=["json", "html", "markdown"],
+        default="json",
+        help="Output format",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--include-tests", action="store_true", help="Include test files in analysis"
+    )
+    parser.add_argument(
+        "--root-path", default="src", help="Root path to analyze (default: src)"
+    )
 
     args = parser.parse_args()
 
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
 
     # Run analysis
@@ -491,12 +568,12 @@ def main():
     report = analyzer.analyze_codebase()
 
     # Output report
-    if args.format == 'json':
-        with open(args.output, 'w') as f:
+    if args.format == "json":
+        with open(args.output, "w") as f:
             json.dump(asdict(report), f, indent=2, default=str)
-    elif args.format == 'html':
+    elif args.format == "html":
         _output_html_report(report, args.output)
-    elif args.format == 'markdown':
+    elif args.format == "markdown":
         _output_markdown_report(report, args.output)
 
     # Print summary to console
@@ -556,13 +633,13 @@ def _output_html_report(report: AnalysisReport, output_file: str):
     </html>
     """
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(html)
 
 
 def _format_file_html(file_analysis: FileAnalysis) -> str:
     """Format a single file analysis as HTML."""
-    risk_class = file_analysis.risk_level.replace(' ', '-')
+    risk_class = file_analysis.risk_level.replace(" ", "-")
 
     return f"""
     <div class="file {risk_class}">
@@ -612,9 +689,9 @@ def _output_markdown_report(report: AnalysisReport, output_file: str):
 
 """
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(markdown)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

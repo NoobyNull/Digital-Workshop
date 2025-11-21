@@ -36,7 +36,9 @@ class AnthropicProvider(BaseProvider):
 
         if self.api_key:
             if self.base_url:
-                self.client = anthropic.Anthropic(api_key=self.api_key, base_url=self.base_url)
+                self.client = anthropic.Anthropic(
+                    api_key=self.api_key, base_url=self.base_url
+                )
             else:
                 self.client = anthropic.Anthropic(api_key=self.api_key)
 
@@ -62,7 +64,9 @@ class AnthropicProvider(BaseProvider):
             self.logger.warning("Failed to fetch Anthropic models: %s", str(e))
             return ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
 
-    def analyze_image(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_image(
+        self, image_path: str, prompt: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Analyze image using Anthropic's Claude.
 
@@ -74,7 +78,9 @@ class AnthropicProvider(BaseProvider):
             Structured analysis results
         """
         if not self.is_configured():
-            raise ValueError("Anthropic provider is not configured. Please provide an API key.")
+            raise ValueError(
+                "Anthropic provider is not configured. Please provide an API key."
+            )
 
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")

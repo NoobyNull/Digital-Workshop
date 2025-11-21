@@ -57,6 +57,25 @@ class ThumbnailStage(BaseStage):
         """Return the stage identifier."""
         return ImportStage.THUMBNAIL_GENERATION
 
+    @staticmethod
+    def _find_existing_thumbnail(task: ImportTask) -> Optional[Path]:
+        """Best-effort lookup for a preexisting thumbnail near the model source."""
+        candidate_dirs = [Path(task.file_path).parent]
+        source_path = task.metadata.get("original_file_path") if task.metadata else None
+        if source_path:
+            candidate_dirs.append(Path(source_path).parent)
+
+        stems = {Path(task.file_path).stem, Path(task.filename).stem}
+        thumbnail_exts = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+
+        for directory in candidate_dirs:
+            for stem in stems:
+                for ext in thumbnail_exts:
+                    candidate = directory / f"{stem}{ext}"
+                    if candidate.exists():
+                        return candidate
+        return None
+
     def should_process(self, task: ImportTask) -> bool:
         """
         Check if thumbnail already exists.
@@ -111,9 +130,24 @@ class ThumbnailStage(BaseStage):
 
             thumbnail_generated = False
             used_paired_image = False
+            used_existing_thumbnail = False
 
             # Check if we have a paired image to use as thumbnail
-            if task.paired_image_path and Path(task.paired_image_path).exists():
+            existing_thumb = self._find_existing_thumbnail(task)
+            if existing_thumb and task.file_hash:
+                thumbnail_dir = self._get_thumbnail_directory()
+                thumbnail_dir.mkdir(parents=True, exist_ok=True)
+                thumbnail_path = thumbnail_dir / f"{task.file_hash[:16]}.png"
+                shutil.copy2(existing_thumb, thumbnail_path)
+                task.thumbnail_path = str(thumbnail_path)
+                thumbnail_generated = True
+                used_existing_thumbnail = True
+                self.logger.info(
+                    "Using existing thumbnail for %s: %s",
+                    task.filename,
+                    existing_thumb.name,
+                )
+            elif task.paired_image_path and Path(task.paired_image_path).exists():
                 # Use paired image as thumbnail
                 if task.file_hash:
                     thumbnail_dir = self._get_thumbnail_directory()
@@ -161,11 +195,11 @@ class ThumbnailStage(BaseStage):
                     )
                     try:
                         thumbnail_path, _ = future.result(timeout=timeout_seconds)
-                    except concurrent.futures.TimeoutError:
+                    except concurrent.futures.TimeoutError as exc:
                         future.cancel()
                         raise RuntimeError(
                             f"Thumbnail generation timed out after {timeout_seconds}s"
-                        )
+                        ) from exc
 
                 if thumbnail_path:
                     task.thumbnail_path = str(thumbnail_path)
@@ -176,7 +210,9 @@ class ThumbnailStage(BaseStage):
                         Path(task.thumbnail_path).name,
                     )
                 else:
-                    self.logger.warning("Thumbnail generation returned None for %s", task.filename)
+                    self.logger.warning(
+                        "Thumbnail generation returned None for %s", task.filename
+                    )
 
             task.status = ImportStatus.COMPLETED
 
@@ -190,6 +226,7 @@ class ThumbnailStage(BaseStage):
                 metadata={
                     "thumbnail_generated": thumbnail_generated,
                     "used_paired_image": used_paired_image,
+                    "used_existing_thumbnail": used_existing_thumbnail,
                     "thumbnail_path": task.thumbnail_path,
                 },
             )

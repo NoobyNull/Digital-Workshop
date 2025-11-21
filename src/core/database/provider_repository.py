@@ -29,7 +29,14 @@ class ProviderRepository:
         if conn:
             try:
                 conn.close()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Error closing connection: %s", e)
 
     def add_provider(

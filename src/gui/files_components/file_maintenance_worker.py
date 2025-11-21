@@ -98,7 +98,14 @@ class FileMaintenanceWorker(QThread):
                     else:
                         result["errors"] += 1
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Error hashing model %s: {e}", model_id)
                     result["errors"] += 1
 
@@ -139,7 +146,14 @@ class FileMaintenanceWorker(QThread):
                         db_manager.update_file_hash(model_id, file_hash)
                         result["updated"] += 1
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Error matching model %s: {e}", model_id)
                     result["errors"] += 1
 
@@ -171,7 +185,7 @@ class FileMaintenanceWorker(QThread):
             screenshot_gen = ScreenshotGenerator(
                 width=128, height=128, background_image=bg_image, material_name=material
             )
-            material_manager = MaterialManager()
+            material_manager = MaterialManager(db_manager)
 
             for idx, model in enumerate(models):
                 if self._stop_requested:
@@ -211,7 +225,14 @@ class FileMaintenanceWorker(QThread):
                     else:
                         result["errors"] += 1
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Error generating thumbnail %s: {e}", model_id)
                     result["errors"] += 1
 

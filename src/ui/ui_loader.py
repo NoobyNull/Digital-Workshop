@@ -52,4 +52,3 @@ class UILoader:
         if not path.exists():
             raise FileNotFoundError(path)
         return path
-

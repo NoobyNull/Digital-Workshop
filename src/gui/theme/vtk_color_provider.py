@@ -241,7 +241,14 @@ class VTKColorProvider(QObject):
                         vtk_manager.update_theme_colors()
                     elif hasattr(vtk_manager, "render"):
                         vtk_manager.render()
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning(
                         f"Failed to update VTK manager {vtk_manager.__class__.__name__}: {e}"
                     )
@@ -281,7 +288,9 @@ class VTKColorProvider(QObject):
         for color_name in common_colors:
             self.get_vtk_color(color_name)
 
-        logger.debug("Updated VTK color cache with %s colors", len(self._cached_vtk_colors))
+        logger.debug(
+            "Updated VTK color cache with %s colors", len(self._cached_vtk_colors)
+        )
 
     @staticmethod
     def _hex_to_vtk_rgb(hex_color: str) -> Tuple[float, float, float]:

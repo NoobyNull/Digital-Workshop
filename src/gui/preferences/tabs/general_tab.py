@@ -32,7 +32,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
 class GeneralTab(QWidget):
     """General settings tab: window, layout, and performance settings combined."""
 
@@ -57,6 +56,7 @@ class GeneralTab(QWidget):
         # Initialize theme service
         try:
             from src.gui.theme.simple_service import ThemeService
+
             self.theme_service = ThemeService.instance()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
             pass
@@ -81,7 +81,9 @@ class GeneralTab(QWidget):
         header.setStyleSheet("font-weight: bold; font-size: 13pt;")
         layout.addWidget(header)
 
-        desc = QLabel("Configure window behavior, layout management, theme, and system performance.")
+        desc = QLabel(
+            "Configure window behavior, layout management, theme, and system performance."
+        )
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
@@ -273,7 +275,9 @@ class GeneralTab(QWidget):
         # System info
         self.system_info_label = QLabel()
         self.system_info_label.setWordWrap(True)
-        self.system_info_label.setStyleSheet("padding: 8px; background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;")
+        self.system_info_label.setStyleSheet(
+            "padding: 8px; background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;"
+        )
         perf_layout.addWidget(self.system_info_label)
 
         layout.addWidget(perf_section)
@@ -319,14 +323,23 @@ class GeneralTab(QWidget):
             self.min_width_spin.setValue(config.minimum_window_width)
             self.min_height_spin.setValue(config.minimum_window_height)
             self.maximize_startup_check.setChecked(config.maximize_on_startup)
-            remember_size = settings.value("window/remember_window_size", config.remember_window_size, type=bool)
+            remember_size = settings.value(
+                "window/remember_window_size", config.remember_window_size, type=bool
+            )
             self.remember_size_check.setChecked(bool(remember_size))
             self.remember_location_check.setChecked(
-                settings.value("window/remember_location", config.remember_window_location, type=bool)
+                settings.value(
+                    "window/remember_location",
+                    config.remember_window_location,
+                    type=bool,
+                )
             )
             sidebar_sync = settings.value("ui/sidebar_sync_enabled", True, type=bool)
             self.sidebar_sync_check.setChecked(bool(sidebar_sync))
-            startup_mode = settings.value("ui/startup_tab_mode", "restore_last", type=str) or "restore_last"
+            startup_mode = (
+                settings.value("ui/startup_tab_mode", "restore_last", type=str)
+                or "restore_last"
+            )
             startup_index = self.startup_page_combo.findData(startup_mode)
             if startup_index >= 0:
                 self.startup_page_combo.setCurrentIndex(startup_index)
@@ -385,11 +398,17 @@ class GeneralTab(QWidget):
             config.maximize_on_startup = self.maximize_startup_check.isChecked()
             config.remember_window_size = self.remember_size_check.isChecked()
             config.remember_window_location = self.remember_location_check.isChecked()
-            settings.setValue("window/remember_window_size", self.remember_size_check.isChecked())
-            settings.setValue("ui/sidebar_sync_enabled", self.sidebar_sync_check.isChecked())
+            settings.setValue(
+                "window/remember_window_size", self.remember_size_check.isChecked()
+            )
+            settings.setValue(
+                "ui/sidebar_sync_enabled", self.sidebar_sync_check.isChecked()
+            )
             startup_data = self.startup_page_combo.currentData() or "restore_last"
             settings.setValue("ui/startup_tab_mode", startup_data)
-            settings.setValue("window/remember_location", self.remember_location_check.isChecked())
+            settings.setValue(
+                "window/remember_location", self.remember_location_check.isChecked()
+            )
 
             # Save dock tab positions
             left_pos = self.left_tab_position_combo.currentData()
@@ -413,7 +432,9 @@ class GeneralTab(QWidget):
         try:
             if callable(self.on_reset_layout):
                 self.on_reset_layout()
-                QMessageBox.information(self, "Layout Reset", "Window layout has been reset to defaults.")
+                QMessageBox.information(
+                    self, "Layout Reset", "Window layout has been reset to defaults."
+                )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             QMessageBox.warning(self, "Reset Failed", f"Failed to reset layout:\n{e}")
 
@@ -467,7 +488,9 @@ class GeneralTab(QWidget):
                 )
             else:
                 limit_mb = config.get_effective_memory_limit_mb(available_mb, total_mb)
-                hard_max = int(total_mb * (100 - config.system_memory_reserve_percent) / 100)
+                hard_max = int(
+                    total_mb * (100 - config.system_memory_reserve_percent) / 100
+                )
                 fifty_percent = available_mb // 2
                 doubled_min = config.min_memory_specification_mb * 2
 
@@ -480,5 +503,3 @@ class GeneralTab(QWidget):
             self.system_info_label.setText(info_text)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.system_info_label.setText(f"Error: {e}")
-
-

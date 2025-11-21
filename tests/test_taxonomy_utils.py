@@ -26,4 +26,3 @@ def test_split_category_and_keywords_handles_no_category_match() -> None:
 
     assert category is None
     assert keywords == ["Wall Art", "Living Room"]
-

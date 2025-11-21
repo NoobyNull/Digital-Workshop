@@ -20,7 +20,11 @@ from PySide6.QtWidgets import (
 class ToolSnapshotDialog(QDialog):
     """Collects tool metadata and feed parameters for a snapshot row."""
 
-    def __init__(self, defaults: Optional[Dict[str, Any]] = None, parent: Optional[QWidget] = None) -> None:
+    def __init__(
+        self,
+        defaults: Optional[Dict[str, Any]] = None,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Capture Tool Snapshot")
         self.setMinimumWidth(420)
@@ -28,7 +32,9 @@ class ToolSnapshotDialog(QDialog):
         defaults = defaults or {}
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Review the captured settings before saving them to the project."))
+        layout.addWidget(
+            QLabel("Review the captured settings before saving them to the project.")
+        )
 
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
@@ -54,8 +60,12 @@ class ToolSnapshotDialog(QDialog):
         form_layout.addRow("Plunge", self.plunge_edit)
 
         self.notes_edit = QPlainTextEdit()
-        self.notes_edit.setPlainText(self._format(defaults.get("notes"), allow_dash=False))
-        self.notes_edit.setPlaceholderText("Describe why this toolpath snapshot matters.")
+        self.notes_edit.setPlainText(
+            self._format(defaults.get("notes"), allow_dash=False)
+        )
+        self.notes_edit.setPlaceholderText(
+            "Describe why this toolpath snapshot matters."
+        )
         form_layout.addRow("Notes", self.notes_edit)
 
         layout.addLayout(form_layout)

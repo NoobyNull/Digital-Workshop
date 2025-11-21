@@ -39,14 +39,21 @@ class CameraControlWidget(QFrame):
         self.setMinimumHeight(44)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        self._add_button(layout, "Fit All", QStyle.SP_TitleBarMaxButton, controller.fit_all)
+        self._add_button(
+            layout, "Fit All", QStyle.SP_TitleBarMaxButton, controller.fit_all
+        )
         self._add_button(layout, "Front", QStyle.SP_ArrowUp, controller.set_view_front)
         self._add_button(layout, "Top", QStyle.SP_ArrowDown, controller.set_view_top)
         self._add_button(layout, "Side", QStyle.SP_ArrowRight, controller.set_view_side)
         self._add_button(
-            layout, "Isometric", QStyle.SP_FileDialogDetailedView, controller.set_view_isometric
+            layout,
+            "Isometric",
+            QStyle.SP_FileDialogDetailedView,
+            controller.set_view_isometric,
         )
-        self._add_button(layout, "Reset", QStyle.SP_BrowserReload, controller.reset_camera)
+        self._add_button(
+            layout, "Reset", QStyle.SP_BrowserReload, controller.reset_camera
+        )
         layout.addStretch()
 
     def _add_button(
@@ -138,7 +145,9 @@ class VTKWidget(QWidget):
         style = self.style()
         return style.standardIcon(standard_pixmap)
 
-    def create_camera_toolbar(self, parent: Optional[QWidget] = None) -> CameraControlWidget:
+    def create_camera_toolbar(
+        self, parent: Optional[QWidget] = None
+    ) -> CameraControlWidget:
         """Return a toolbar widget wired to the current camera controller."""
         return CameraControlWidget(self.camera_controller, self.update_render, parent)
 

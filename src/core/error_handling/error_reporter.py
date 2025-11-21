@@ -109,27 +109,39 @@ class ErrorReporter:
     def _setup_default_handlers(self) -> None:
         """Setup default error handlers for different categories."""
         # Critical error handlers
-        self.category_handlers[ErrorCategory.SHUTDOWN_CLEANUP] = self._handle_shutdown_error
+        self.category_handlers[ErrorCategory.SHUTDOWN_CLEANUP] = (
+            self._handle_shutdown_error
+        )
         self.category_handlers[ErrorCategory.VTK_CLEANUP] = self._handle_vtk_error
-        self.category_handlers[ErrorCategory.MEMORY_MANAGEMENT] = self._handle_memory_error
-        self.category_handlers[ErrorCategory.SYSTEM_RESOURCE] = self._handle_system_resource_error
+        self.category_handlers[ErrorCategory.MEMORY_MANAGEMENT] = (
+            self._handle_memory_error
+        )
+        self.category_handlers[ErrorCategory.SYSTEM_RESOURCE] = (
+            self._handle_system_resource_error
+        )
 
         # Recovery strategies
-        self.recovery_strategies[ErrorRecoveryStrategy.GRACEFUL_SHUTDOWN] = self._graceful_shutdown
+        self.recovery_strategies[ErrorRecoveryStrategy.GRACEFUL_SHUTDOWN] = (
+            self._graceful_shutdown
+        )
         self.recovery_strategies[ErrorRecoveryStrategy.IMMEDIATE_SHUTDOWN] = (
             self._immediate_shutdown
         )
         self.recovery_strategies[ErrorRecoveryStrategy.RETRY_WITH_BACKOFF] = (
             self._retry_with_backoff
         )
-        self.recovery_strategies[ErrorRecoveryStrategy.FALLBACK_MODE] = self._fallback_mode
+        self.recovery_strategies[ErrorRecoveryStrategy.FALLBACK_MODE] = (
+            self._fallback_mode
+        )
         self.recovery_strategies[ErrorRecoveryStrategy.USER_INTERVENTION] = (
             self._request_user_intervention
         )
         self.recovery_strategies[ErrorRecoveryStrategy.IGNORE_AND_CONTINUE] = (
             self._ignore_and_continue
         )
-        self.recovery_strategies[ErrorRecoveryStrategy.DEFER_PROCESSING] = self._defer_processing
+        self.recovery_strategies[ErrorRecoveryStrategy.DEFER_PROCESSING] = (
+            self._defer_processing
+        )
 
     def report_error(
         self,
@@ -201,7 +213,9 @@ class ErrorReporter:
             AttributeError,
         ) as reporting_error:
             # Fallback error handling if reporting itself fails
-            self.logger.critical("Error reporting failed: %s", reporting_error, exc_info=True)
+            self.logger.critical(
+                "Error reporting failed: %s", reporting_error, exc_info=True
+            )
             raise
 
     def _store_error_report(self, error_report: ErrorReport) -> None:
@@ -213,12 +227,16 @@ class ErrorReporter:
             self.error_reports.pop(0)
 
         # Update error counts
-        error_key = f"{error_report.error_type}:{error_report.classification.category.value}"
+        error_key = (
+            f"{error_report.error_type}:{error_report.classification.category.value}"
+        )
         self.error_counts[error_key] = self.error_counts.get(error_key, 0) + 1
 
     def _update_error_patterns(self, error_report: ErrorReport) -> None:
         """Track error patterns for analysis."""
-        error_key = f"{error_report.error_type}:{error_report.classification.category.value}"
+        error_key = (
+            f"{error_report.error_type}:{error_report.classification.category.value}"
+        )
         if error_key not in self.error_patterns:
             self.error_patterns[error_key] = []
         self.error_patterns[error_key].append(error_report.timestamp)
@@ -264,7 +282,9 @@ class ErrorReporter:
                     exc_info=True,
                 )
 
-    def _attempt_recovery(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _attempt_recovery(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Attempt to recover from the error."""
         strategy = error_report.classification.recovery_strategy
         recovery_handler = self.recovery_strategies.get(strategy)
@@ -289,7 +309,9 @@ class ErrorReporter:
             KeyError,
             AttributeError,
         ) as recovery_error:
-            self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
+            self.logger.error(
+                "Recovery attempt failed: %s", recovery_error, exc_info=True
+            )
             with self._lock:
                 self.reporting_stats["failed_recoveries"] += 1
             return False
@@ -334,12 +356,15 @@ class ErrorReporter:
     def _handle_memory_error(self, error_report: ErrorReport) -> None:
         """Handle memory-related errors."""
         self.logger.critical(
-            f"Memory error: {error_report.error_message}. " f"Immediate attention required."
+            f"Memory error: {error_report.error_message}. "
+            f"Immediate attention required."
         )
 
         # Log memory usage information
         memory_info = {
-            "available_memory": error_report.system_info.get("available_memory", "unknown"),
+            "available_memory": error_report.system_info.get(
+                "available_memory", "unknown"
+            ),
             "memory_usage": error_report.system_info.get("memory_usage", "unknown"),
             "process_memory": error_report.system_info.get("process_memory", "unknown"),
         }
@@ -358,7 +383,9 @@ class ErrorReporter:
         self.logger.debug("System resource info: %s", resource_info)
 
     # Recovery strategy implementations
-    def _graceful_shutdown(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _graceful_shutdown(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Attempt graceful shutdown recovery."""
         self.logger.info("Attempting graceful shutdown recovery")
         try:
@@ -370,7 +397,9 @@ class ErrorReporter:
             self.logger.error("Graceful shutdown recovery failed: %s", e)
             return False
 
-    def _immediate_shutdown(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _immediate_shutdown(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Immediate shutdown recovery (emergency)."""
         self.logger.critical("Immediate shutdown required - emergency recovery")
         try:
@@ -382,7 +411,9 @@ class ErrorReporter:
             self.logger.error("Immediate shutdown failed: %s", e)
             return False
 
-    def _retry_with_backoff(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _retry_with_backoff(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Retry with exponential backoff."""
         self.logger.info("Attempting retry with backoff")
         try:
@@ -398,7 +429,14 @@ class ErrorReporter:
                     recovery_callback()
                     self.logger.info("Retry successful on attempt %s", attempt + 1)
                     return True
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Retry attempt %s failed: {e}", attempt + 1)
                     continue
 
@@ -408,7 +446,9 @@ class ErrorReporter:
             self.logger.error("Retry with backoff failed: %s", e)
             return False
 
-    def _fallback_mode(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _fallback_mode(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Switch to fallback mode."""
         self.logger.info("Switching to fallback mode")
         try:
@@ -435,12 +475,18 @@ class ErrorReporter:
         # For now, we'll just log that user intervention is needed
         return False  # User intervention required, not automatically recoverable
 
-    def _ignore_and_continue(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _ignore_and_continue(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Ignore error and continue operation."""
-        self.logger.info("Ignoring error and continuing: %s", error_report.error_message)
+        self.logger.info(
+            "Ignoring error and continuing: %s", error_report.error_message
+        )
         return True
 
-    def _defer_processing(self, error_report: ErrorReport, recovery_callback: Callable) -> bool:
+    def _defer_processing(
+        self, error_report: ErrorReport, recovery_callback: Callable
+    ) -> bool:
         """Defer processing for later."""
         self.logger.info("Deferring processing: %s", error_report.error_message)
         # In a real implementation, this would queue the operation for later
@@ -454,13 +500,18 @@ class ErrorReporter:
                 "reporting_stats": self.reporting_stats.copy(),
                 "error_counts": self.error_counts.copy(),
                 "error_patterns": {
-                    key: len(timestamps) for key, timestamps in self.error_patterns.items()
+                    key: len(timestamps)
+                    for key, timestamps in self.error_patterns.items()
                 },
                 "total_reports": len(self.error_reports),
-                "recent_errors": [report.to_dict() for report in self.error_reports[-10:]],
+                "recent_errors": [
+                    report.to_dict() for report in self.error_reports[-10:]
+                ],
             }
 
-    def get_error_reports_by_category(self, category: ErrorCategory) -> List[ErrorReport]:
+    def get_error_reports_by_category(
+        self, category: ErrorCategory
+    ) -> List[ErrorReport]:
         """Get all error reports for a specific category."""
         with self._lock:
             return [
@@ -485,7 +536,9 @@ class ErrorReporter:
             # Clean up patterns
             for error_key in list(self.error_patterns.keys()):
                 self.error_patterns[error_key] = [
-                    ts for ts in self.error_patterns[error_key] if ts.timestamp() > cutoff_time
+                    ts
+                    for ts in self.error_patterns[error_key]
+                    if ts.timestamp() > cutoff_time
                 ]
                 if not self.error_patterns[error_key]:
                     del self.error_patterns[error_key]

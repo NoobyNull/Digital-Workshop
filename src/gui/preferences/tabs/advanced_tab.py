@@ -25,8 +25,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
-
 class AdvancedTab(QWidget):
     """Advanced settings tab with system reset functionality."""
 
@@ -152,11 +150,19 @@ class AdvancedTab(QWidget):
 
         # Second verification: Text input
         text, ok = QInputDialog.getText(
-            self, "Reset Database - Confirmation 2/2", "Type 'RESET DATABASE' to confirm:", QLineEdit.Normal, ""
+            self,
+            "Reset Database - Confirmation 2/2",
+            "Type 'RESET DATABASE' to confirm:",
+            QLineEdit.Normal,
+            "",
         )
 
         if not ok or text.strip().upper() != "RESET DATABASE":
-            QMessageBox.information(self, "Reset Cancelled", "Database reset cancelled. No changes were made.")
+            QMessageBox.information(
+                self,
+                "Reset Cancelled",
+                "Database reset cancelled. No changes were made.",
+            )
             return
 
         # All verifications passed - perform reset
@@ -177,12 +183,21 @@ class AdvancedTab(QWidget):
                 from src.core.database_manager import close_database_manager
 
                 close_database_manager()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not close database manager: {e}")
 
             # Delete database file
             try:
-                app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+                app_data = Path(
+                    QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                )
                 db_file = app_data / "3dmm.db"
                 if db_file.exists():
                     db_file.unlink()
@@ -195,7 +210,14 @@ class AdvancedTab(QWidget):
                     wal_file.unlink()
                 if shm_file.exists():
                     shm_file.unlink()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not delete database file: {e}")
 
             # Clear model cache instance
@@ -205,7 +227,14 @@ class AdvancedTab(QWidget):
                 cache = ModelCache.get_instance()
                 cache.clear()
                 print("✓ Model cache cleared")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not clear model cache: {e}")
 
             # Show success message
@@ -224,7 +253,11 @@ class AdvancedTab(QWidget):
             QApplication.instance().quit()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            QMessageBox.critical(self, "Reset Failed", f"An error occurred during database reset:\n\n{str(e)}")
+            QMessageBox.critical(
+                self,
+                "Reset Failed",
+                f"An error occurred during database reset:\n\n{str(e)}",
+            )
 
     def _perform_system_reset(self) -> None:
         """Perform complete system reset with triple verification."""
@@ -272,7 +305,9 @@ class AdvancedTab(QWidget):
         )
 
         if not ok or text.strip().upper() != "RESET":
-            QMessageBox.information(self, "Reset Cancelled", "System reset cancelled. No changes were made.")
+            QMessageBox.information(
+                self, "Reset Cancelled", "System reset cancelled. No changes were made."
+            )
             return
 
         # All verifications passed - perform reset
@@ -294,7 +329,14 @@ class AdvancedTab(QWidget):
                 from src.core.database_manager import close_database_manager
 
                 close_database_manager()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not close database manager: {e}")
 
             # Clear QSettings
@@ -303,7 +345,9 @@ class AdvancedTab(QWidget):
             settings.sync()
 
             # Get the main AppData directory
-            app_data = Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+            app_data = Path(
+                QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            )
             print(f"Resetting application data at: {app_data}")
 
             # Delete entire AppData directory and all subdirectories
@@ -311,7 +355,14 @@ class AdvancedTab(QWidget):
                 try:
                     shutil.rmtree(str(app_data))
                     print(f"✓ Deleted entire AppData directory: {app_data}")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     print(f"Warning: Could not delete AppData directory: {e}")
 
             # Clear model cache instance
@@ -320,7 +371,14 @@ class AdvancedTab(QWidget):
 
                 cache = ModelCache.get_instance()
                 cache.clear()
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not clear model cache: {e}")
 
             # Clear system temp files related to the application
@@ -331,7 +389,14 @@ class AdvancedTab(QWidget):
                 if temp_dir.exists():
                     shutil.rmtree(str(temp_dir))
                     print(f"✓ Deleted temporary screenshot directory: {temp_dir}")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not clear temp files: {e}")
 
             # Clear any profile-related data
@@ -348,7 +413,14 @@ class AdvancedTab(QWidget):
                     if profile_path.exists():
                         shutil.rmtree(str(profile_path))
                         print(f"✓ Deleted profile directory: {profile_path}")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 print(f"Warning: Could not clear profile directories: {e}")
 
             # Show success message
@@ -367,7 +439,11 @@ class AdvancedTab(QWidget):
             QApplication.instance().quit()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            QMessageBox.critical(self, "Reset Failed", f"An error occurred during system reset:\n\n{str(e)}")
+            QMessageBox.critical(
+                self,
+                "Reset Failed",
+                f"An error occurred during system reset:\n\n{str(e)}",
+            )
 
     def _perform_nuclear_reset(self) -> None:
         """Perform nuclear reset by opening the Nuclear Reset dialog."""
@@ -381,7 +457,9 @@ class AdvancedTab(QWidget):
             if self.logger:
                 self.logger.error("Failed to show nuclear reset dialog: %s", e)
             QMessageBox.critical(
-                self, "Nuclear Reset Failed", f"An error occurred while opening nuclear reset:\n\n{str(e)}"
+                self,
+                "Nuclear Reset Failed",
+                f"An error occurred while opening nuclear reset:\n\n{str(e)}",
             )
 
     def save_settings(self) -> None:

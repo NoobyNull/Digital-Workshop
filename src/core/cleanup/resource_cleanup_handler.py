@@ -109,8 +109,17 @@ class ResourceCleanupHandler(CleanupHandler):
                         files_cleaned += 1
                         self.logger.debug("Removed temporary file: %s", temp_file)
                     self._temp_files.remove(temp_file)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.warning("Failed to remove temporary file %s: {e}", temp_file)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    self.logger.warning(
+                        "Failed to remove temporary file %s: {e}", temp_file
+                    )
 
             self.logger.debug("Cleaned up %s temporary files", files_cleaned)
             return True
@@ -132,7 +141,14 @@ class ResourceCleanupHandler(CleanupHandler):
                         handles_cleaned += 1
                         self.logger.debug("Closed file handle")
                     self._file_handles.remove(handle)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to close file handle: %s", e)
 
             self.logger.debug("Cleaned up %s file handles", handles_cleaned)
@@ -145,7 +161,9 @@ class ResourceCleanupHandler(CleanupHandler):
     def _cleanup_network_connections(self) -> bool:
         """Cleanup network connections."""
         try:
-            self.logger.debug("Cleaning up %s network connections", len(self._network_connections))
+            self.logger.debug(
+                "Cleaning up %s network connections", len(self._network_connections)
+            )
 
             connections_cleaned = 0
             for connection in self._network_connections.copy():
@@ -155,7 +173,14 @@ class ResourceCleanupHandler(CleanupHandler):
                         connections_cleaned += 1
                         self.logger.debug("Closed network connection")
                     self._network_connections.remove(connection)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning("Failed to close network connection: %s", e)
 
             self.logger.debug("Cleaned up %s network connections", connections_cleaned)
@@ -168,7 +193,9 @@ class ResourceCleanupHandler(CleanupHandler):
     def _cleanup_tracked_resources(self) -> bool:
         """Cleanup tracked resources."""
         try:
-            self.logger.debug("Cleaning up %s tracked resources", len(self._tracked_resources))
+            self.logger.debug(
+                "Cleaning up %s tracked resources", len(self._tracked_resources)
+            )
 
             resources_cleaned = 0
             for resource in list(self._tracked_resources):
@@ -179,7 +206,14 @@ class ResourceCleanupHandler(CleanupHandler):
                         self.logger.debug(
                             "Cleaned up tracked resource: %s", type(resource).__name__
                         )
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning(
                         f"Failed to cleanup tracked resource {type(resource).__name__}: {e}"
                     )
@@ -221,9 +255,13 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if file_path and os.path.exists(file_path):
                 self._temp_files.append(file_path)
-                self.logger.debug("Registered temporary file for cleanup: %s", file_path)
+                self.logger.debug(
+                    "Registered temporary file for cleanup: %s", file_path
+                )
             else:
-                self.logger.warning("Invalid temporary file registration: %s", file_path)
+                self.logger.warning(
+                    "Invalid temporary file registration: %s", file_path
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register temporary file %s: {e}", file_path)
@@ -238,9 +276,13 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if handle and hasattr(handle, "close"):
                 self._file_handles.append(handle)
-                self.logger.debug("Registered file handle for cleanup: %s", type(handle).__name__)
+                self.logger.debug(
+                    "Registered file handle for cleanup: %s", type(handle).__name__
+                )
             else:
-                self.logger.warning("Invalid file handle registration: %s", type(handle))
+                self.logger.warning(
+                    "Invalid file handle registration: %s", type(handle)
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register file handle: %s", e)
@@ -259,7 +301,9 @@ class ResourceCleanupHandler(CleanupHandler):
                     f"Registered network connection for cleanup: {type(connection).__name__}"
                 )
             else:
-                self.logger.warning("Invalid network connection registration: %s", type(connection))
+                self.logger.warning(
+                    "Invalid network connection registration: %s", type(connection)
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to register network connection: %s", e)
@@ -274,7 +318,9 @@ class ResourceCleanupHandler(CleanupHandler):
         try:
             if resource:
                 self._tracked_resources.add(resource)
-                self.logger.debug("Registered resource for cleanup: %s", type(resource).__name__)
+                self.logger.debug(
+                    "Registered resource for cleanup: %s", type(resource).__name__
+                )
             else:
                 self.logger.warning("Invalid resource registration: %s", type(resource))
 

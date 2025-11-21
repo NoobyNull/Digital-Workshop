@@ -28,7 +28,9 @@ class LayoutPersistenceManager:
     user experience across application sessions.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the layout persistence manager.
 
@@ -41,6 +43,19 @@ class LayoutPersistenceManager:
         self._layout_save_timer = None
         self._default_layout_state = None
         self._default_geometry = None
+
+    # Backwards compatibility helpers
+    def _init_layout_persistence(self) -> None:
+        """Initialize layout persistence defaults (legacy API)."""
+        self.save_default_layout_state()
+
+    def reset_dock_layout_and_save(self) -> None:
+        """Reset layout and persist immediately (legacy API)."""
+        self.reset_dock_layout()
+        try:
+            self.schedule_layout_save()
+        except Exception:
+            pass
 
     def _validate_geometry_for_screens(self, geom_bytes: bytes) -> bytes:
         """
@@ -128,7 +143,9 @@ class LayoutPersistenceManager:
 
                 # Mark that default has been saved
                 settings.setValue("layout/default_saved", True)
-                self.logger.info("Saved current layout as default for fresh installations")
+                self.logger.info(
+                    "Saved current layout as default for fresh installations"
+                )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to save current layout as default: %s", e)
 
@@ -158,9 +175,13 @@ class LayoutPersistenceManager:
                                 isinstance(default_hero_idx, int)
                                 and hasattr(self.main_window, "hero_tabs")
                                 and isinstance(self.main_window.hero_tabs, QTabWidget)
-                                and 0 <= default_hero_idx < self.main_window.hero_tabs.count()
+                                and 0
+                                <= default_hero_idx
+                                < self.main_window.hero_tabs.count()
                             ):
-                                self.main_window.hero_tabs.setCurrentIndex(default_hero_idx)
+                                self.main_window.hero_tabs.setCurrentIndex(
+                                    default_hero_idx
+                                )
                         except Exception:
                             pass
                         self.schedule_layout_save()
@@ -351,13 +372,17 @@ class LayoutPersistenceManager:
             self.logger.warning("Failed to load saved layout: %s", e)
             return False
 
-    def connect_layout_autosave(self, dock: QDockWidget) -> None:
+    def connect_layout_autosave(self, dock: QDockWidget | None = None) -> None:
         """Connect signals from a dock to trigger autosave."""
+        if dock is None:
+            return
         try:
             dock.topLevelChanged.connect(lambda _=False: self.schedule_layout_save())
             # Some bindings expose dockLocationChanged(area)
             if hasattr(dock, "dockLocationChanged"):
-                dock.dockLocationChanged.connect(lambda _area=None: self.schedule_layout_save())
+                dock.dockLocationChanged.connect(
+                    lambda _area=None: self.schedule_layout_save()
+                )
             dock.visibilityChanged.connect(lambda _=False: self.schedule_layout_save())
         except Exception:
             pass

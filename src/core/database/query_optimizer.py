@@ -217,7 +217,9 @@ class QueryOptimizer:
                 )
 
                 # Update statistics
-                self._update_query_stats(query, execution_time, cache_result is not None)
+                self._update_query_stats(
+                    query, execution_time, cache_result is not None
+                )
 
                 logger.debug(
                     f"Query analyzed: {execution_time:.3f}s, cost: {cost:.2f}, rows: {rows_examined}"
@@ -265,7 +267,9 @@ class QueryOptimizer:
 
         return cost
 
-    def _update_query_stats(self, query: str, execution_time: float, cache_hit: bool) -> None:
+    def _update_query_stats(
+        self, query: str, execution_time: float, cache_hit: bool
+    ) -> None:
         """
         Update query execution statistics.
 
@@ -372,7 +376,9 @@ class QueryOptimizer:
 
                 # Analyze query patterns for index recommendations
                 for pattern, stats in self._query_stats.items():
-                    if stats.total_executions >= 10:  # Only for frequently executed queries
+                    if (
+                        stats.total_executions >= 10
+                    ):  # Only for frequently executed queries
                         indexes = self._recommend_indexes_for_query(pattern)
                         recommended_indexes.extend(indexes)
 
@@ -381,7 +387,9 @@ class QueryOptimizer:
                 existing_names = {idx.name for idx in existing_indexes}
 
                 # Filter out existing indexes
-                new_indexes = [idx for idx in recommended_indexes if idx.name not in existing_names]
+                new_indexes = [
+                    idx for idx in recommended_indexes if idx.name not in existing_names
+                ]
 
                 logger.info("Found %s new recommended indexes", len(new_indexes))
                 return new_indexes
@@ -493,7 +501,9 @@ class QueryOptimizer:
 
                         column_match = re.search(r"\(([^)]+)\)", sql)
                         if column_match:
-                            columns = [col.strip() for col in column_match.group(1).split(",")]
+                            columns = [
+                                col.strip() for col in column_match.group(1).split(",")
+                            ]
 
                     indexes.append(
                         IndexInfo(
@@ -527,7 +537,14 @@ class QueryOptimizer:
                 self._create_index(idx)
                 created_indexes.append(idx.name)
                 logger.info("Created index: %s", idx.name)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 logger.error("Failed to create index %s: {str(e)}", idx.name)
 
         return created_indexes
@@ -800,7 +817,9 @@ class IndexManager:
         """
         with self._lock:
             all_indexes = set(self._index_usage.keys())
-            used_indexes = {name for name, count in self._index_usage.items() if count >= min_usage}
+            used_indexes = {
+                name for name, count in self._index_usage.items() if count >= min_usage
+            }
             return list(all_indexes - used_indexes)
 
     def drop_unused_indexes(self, min_usage: int = 10) -> List[str]:
@@ -847,4 +866,6 @@ def query_performance_monitor(optimizer: QueryOptimizer, query: str) -> None:
     finally:
         execution_time = time.time() - start_time
         if execution_time > 0.1:  # Log slow queries
-            logger.warning("Slow query detected: %.3fs - {query[:100]}...", execution_time)
+            logger.warning(
+                "Slow query detected: %.3fs - {query[:100]}...", execution_time
+            )

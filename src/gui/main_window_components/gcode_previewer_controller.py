@@ -44,14 +44,20 @@ class GcodePreviewController:
             try:
                 self._setup_gcode_tools_dock()
             except Exception as dock_error:  # pragma: no cover - defensive
-                self.logger.warning("Failed to initialize G-code tools dock: %s", dock_error)
+                self.logger.warning(
+                    "Failed to initialize G-code tools dock: %s", dock_error
+                )
 
             try:
                 self._setup_camera_controls_dock()
             except Exception as dock_error:  # pragma: no cover - defensive
-                self.logger.warning("Failed to initialize camera controls dock: %s", dock_error)
+                self.logger.warning(
+                    "Failed to initialize camera controls dock: %s", dock_error
+                )
         except Exception as e:  # pragma: no cover - defensive
-            self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to create G-code Previewer widget: %s", e, exc_info=True
+            )
             placeholder = self._create_placeholder(
                 "G Code Previewer",
                 "G-code Previewer\n\nComponent unavailable.",
@@ -79,7 +85,9 @@ class GcodePreviewController:
         )
 
         try:
-            self.main_window.gcode_tools_dock = QDockWidget("G-code Tools", self.main_window)
+            self.main_window.gcode_tools_dock = QDockWidget(
+                "G-code Tools", self.main_window
+            )
             self.main_window.gcode_tools_dock.setObjectName("GcodeToolsDock")
 
             # Configure with native Qt dock features
@@ -90,7 +98,9 @@ class GcodePreviewController:
                 | Qt.BottomDockWidgetArea
             )
             # Start with layout locked (only closable, not movable)
-            self.main_window.gcode_tools_dock.setFeatures(QDockWidget.DockWidgetClosable)
+            self.main_window.gcode_tools_dock.setFeatures(
+                QDockWidget.DockWidgetClosable
+            )
 
             # Use the renderer from the G-code previewer widget if available.
             renderer = None
@@ -98,10 +108,16 @@ class GcodePreviewController:
                 hasattr(self.main_window, "gcode_previewer_widget")
                 and self.main_window.gcode_previewer_widget is not None
             ):
-                renderer = getattr(self.main_window.gcode_previewer_widget, "renderer", None)
+                renderer = getattr(
+                    self.main_window.gcode_previewer_widget, "renderer", None
+                )
 
-            self.main_window.gcode_tools_widget = GcodeToolsWidget(renderer, self.main_window)
-            self.main_window.gcode_tools_dock.setWidget(self.main_window.gcode_tools_widget)
+            self.main_window.gcode_tools_widget = GcodeToolsWidget(
+                renderer, self.main_window
+            )
+            self.main_window.gcode_tools_dock.setWidget(
+                self.main_window.gcode_tools_widget
+            )
 
             # Add to main window using native Qt dock system
             self.main_window.addDockWidget(
@@ -114,7 +130,9 @@ class GcodePreviewController:
                     self.main_window.gcode_tools_dock
                 )
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.debug("Failed to register G-code tools dock for snapping: %s", e)
+                self.logger.debug(
+                    "Failed to register G-code tools dock for snapping: %s", e
+                )
 
             # Attach this tools widget to the previewer so its signals are wired
             # up when the docked configuration is in use.
@@ -127,7 +145,9 @@ class GcodePreviewController:
                         self.main_window.gcode_tools_widget
                     )
                 except Exception as e:  # pragma: no cover - defensive
-                    self.logger.warning("Failed to attach G-code tools widget to previewer: %s", e)
+                    self.logger.warning(
+                        "Failed to attach G-code tools widget to previewer: %s", e
+                    )
 
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error("Failed to setup G-code tools dock: %s", e)
@@ -140,7 +160,9 @@ class GcodePreviewController:
         ):
             return
 
-        vtk_widget = getattr(self.main_window.gcode_previewer_widget, "vtk_widget", None)
+        vtk_widget = getattr(
+            self.main_window.gcode_previewer_widget, "vtk_widget", None
+        )
         if vtk_widget is None:
             return
 
@@ -166,13 +188,17 @@ class GcodePreviewController:
             if hasattr(self.main_window, "_register_dock_for_snapping"):
                 self.main_window._register_dock_for_snapping(dock)  # noqa: SLF001
         except Exception:
-            self.logger.debug("Failed to register camera controls dock for snapping context")
+            self.logger.debug(
+                "Failed to register camera controls dock for snapping context"
+            )
 
         if hasattr(self.main_window, "_register_dock_for_snapping"):
             try:
                 self.main_window._register_dock_for_snapping(dock)  # noqa: SLF001
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.debug("Failed to register camera controls dock for snapping: %s", e)
+                self.logger.debug(
+                    "Failed to register camera controls dock for snapping: %s", e
+                )
 
         self.main_window.camera_controls_dock = dock
         dock.visibilityChanged.connect(self._on_camera_dock_visibility_changed)
@@ -197,7 +223,9 @@ class GcodePreviewController:
         if self.main_window.gcode_previewer_widget:
             try:
                 self.main_window.gcode_previewer_widget.set_current_project(project_id)
-                self.logger.debug("Set current project for G-code Previewer: %s", project_id)
+                self.logger.debug(
+                    "Set current project for G-code Previewer: %s", project_id
+                )
             except Exception as e:  # pragma: no cover - defensive
                 self.logger.warning("Failed to set project for G-code Previewer: %s", e)
 
@@ -210,4 +238,6 @@ class GcodePreviewController:
             try:
                 self.main_window.gcode_previewer_widget.load_gcode_file(file_path)
             except Exception as e:  # pragma: no cover - defensive
-                self.logger.error("Failed to load G-code file %s in previewer: %s", file_path, e)
+                self.logger.error(
+                    "Failed to load G-code file %s in previewer: %s", file_path, e
+                )

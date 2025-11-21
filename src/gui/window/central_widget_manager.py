@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QTabWidget,
     QSizePolicy,
+    QTextEdit,
 )
 
 from src.gui.material_manager import MaterialManager
@@ -35,7 +36,9 @@ class CentralWidgetManager:
     and layout coordination.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the central widget manager.
 
@@ -69,12 +72,23 @@ class CentralWidgetManager:
 
             # Connect signals
             self.main_window.viewer_widget.model_loaded.connect(self._on_model_loaded)
-            self.main_window.viewer_widget.performance_updated.connect(self._on_performance_updated)
+            self.main_window.viewer_widget.performance_updated.connect(
+                self._on_performance_updated
+            )
 
             # Managers
             try:
-                self.main_window.material_manager = MaterialManager(get_database_manager())
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                self.main_window.material_manager = MaterialManager(
+                    get_database_manager()
+                )
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.main_window.material_manager = None
                 self.logger.warning("MaterialManager unavailable: %s", e)
 
@@ -96,7 +110,14 @@ class CentralWidgetManager:
                         AttributeError,
                     ) as le:
                         self.logger.warning("Failed to load lighting settings: %s", le)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.main_window.lighting_manager = None
                 self.logger.warning("LightingManager unavailable: %s", e)
 
@@ -104,11 +125,18 @@ class CentralWidgetManager:
             try:
                 from src.gui.materials.integration import MaterialLightingIntegrator
 
-                self.main_window.material_lighting_integrator = MaterialLightingIntegrator(
-                    self.main_window
+                self.main_window.material_lighting_integrator = (
+                    MaterialLightingIntegrator(self.main_window)
                 )
                 self.logger.info("MaterialLightingIntegrator created successfully")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.main_window.material_lighting_integrator = None
                 self.logger.warning("MaterialLightingIntegrator unavailable: %s", e)
 
@@ -121,11 +149,15 @@ class CentralWidgetManager:
                     self._apply_material_species
                 )
             if hasattr(self.main_window.viewer_widget, "save_view_requested"):
-                self.main_window.viewer_widget.save_view_requested.connect(self._save_current_view)
+                self.main_window.viewer_widget.save_view_requested.connect(
+                    self._save_current_view
+                )
 
             # Note: Lighting panel is created later in dock_manager, so we'll connect it there
             # This is just a placeholder to ensure the signal exists
-            self.logger.debug("Lighting panel will be connected in dock_manager after creation")
+            self.logger.debug(
+                "Lighting panel will be connected in dock_manager after creation"
+            )
 
             if hasattr(self.main_window.viewer_widget, "apply_theme"):
                 try:
@@ -164,18 +196,24 @@ class CentralWidgetManager:
             self.main_window.hero_tabs.setUsesScrollButtons(
                 False
             )  # Disable scrolling to allow even spacing
-            self.main_window.hero_tabs.setElideMode(Qt.ElideNone)  # Don't truncate tab text
+            self.main_window.hero_tabs.setElideMode(
+                Qt.ElideNone
+            )  # Don't truncate tab text
             # Set expanding policy for tabs to use available space evenly
             self.main_window.hero_tabs.setTabBarAutoHide(False)
 
             # Get the tab bar and set expanding policy
             tab_bar = self.main_window.hero_tabs.tabBar()
             if tab_bar:
-                tab_bar.setExpanding(True)  # This makes tabs expand to fill available space
+                tab_bar.setExpanding(
+                    True
+                )  # This makes tabs expand to fill available space
                 tab_bar.setUsesScrollButtons(False)
 
             # Make hero tabs sticky to all sides
-            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Expanding
+            )
             self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
         except Exception:
             pass
@@ -184,7 +222,9 @@ class CentralWidgetManager:
         # No need to apply custom stylesheets here - let qt-material handle it
 
         # Add tabs: Model (viewer) + placeholders
-        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model Previewer")
+        self.main_window.hero_tabs.addTab(
+            self.main_window.viewer_widget, "Model Previewer"
+        )
 
         def _placeholder(title: str, body: str) -> QWidget:
             w = QWidget()
@@ -207,7 +247,9 @@ class CentralWidgetManager:
             self.logger.info("GcodePreviewerWidget imported successfully")
 
             self.logger.info("Creating GcodePreviewerWidget instance...")
-            self.main_window.gcode_previewer_widget = GcodePreviewerWidget(self.main_window)
+            self.main_window.gcode_previewer_widget = GcodePreviewerWidget(
+                self.main_window
+            )
             self.logger.info("GcodePreviewerWidget instance created")
 
             self.logger.info("Adding G-code Previewer tab...")
@@ -216,7 +258,9 @@ class CentralWidgetManager:
             )
             self.logger.info("G-code Previewer widget created successfully")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to create G-code Previewer widget: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to create G-code Previewer widget: %s", e, exc_info=True
+            )
             self.main_window.hero_tabs.addTab(
                 _placeholder("GCP", "G-code Previewer\n\nComponent unavailable."),
                 "G Code Previewer",
@@ -227,7 +271,9 @@ class CentralWidgetManager:
             from src.gui.CLO import CutListOptimizerWidget
 
             self.main_window.clo_widget = CutListOptimizerWidget()
-            self.main_window.hero_tabs.addTab(self.main_window.clo_widget, "Cut List Optimizer")
+            self.main_window.hero_tabs.addTab(
+                self.main_window.clo_widget, "Cut List Optimizer"
+            )
             self.logger.info("CLO widget created successfully")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create CLO widget: %s", e)
@@ -240,7 +286,9 @@ class CentralWidgetManager:
         try:
             from src.gui.feeds_and_speeds import FeedsAndSpeedsWidget
 
-            self.main_window.feeds_and_speeds_widget = FeedsAndSpeedsWidget(self.main_window)
+            self.main_window.feeds_and_speeds_widget = FeedsAndSpeedsWidget(
+                self.main_window
+            )
             self.main_window.hero_tabs.addTab(
                 self.main_window.feeds_and_speeds_widget, "Feed and Speed"
             )
@@ -248,7 +296,9 @@ class CentralWidgetManager:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to create Feeds & Speeds widget: %s", e)
             self.main_window.hero_tabs.addTab(
-                _placeholder("F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."),
+                _placeholder(
+                    "F&S", "Feeds & Speeds Calculator\n\nComponent unavailable."
+                ),
                 "Feed and Speed",
             )
 
@@ -264,7 +314,9 @@ class CentralWidgetManager:
         try:
             from src.gui.components.dynamic_tab_manager import setup_dynamic_tabs
 
-            self.main_window.dynamic_tab_manager = setup_dynamic_tabs(self.main_window.hero_tabs)
+            self.main_window.dynamic_tab_manager = setup_dynamic_tabs(
+                self.main_window.hero_tabs
+            )
             self.logger.info("Dynamic tab manager initialized")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to initialize dynamic tab manager: %s", e)
@@ -293,7 +345,9 @@ class CentralWidgetManager:
             self.main_window.setCentralWidget(self.main_window.hero_tabs)
 
             # Ensure hero tabs fill all available space
-            self.main_window.hero_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.main_window.hero_tabs.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Expanding
+            )
             self.main_window.hero_tabs.setContentsMargins(0, 0, 0, 0)
 
             # Connect to main window resize events for real-time updates
@@ -301,17 +355,25 @@ class CentralWidgetManager:
                 # Force initial layout
                 self.main_window._force_central_widget_layout()
 
-            self.logger.info("Hero tabs set as central widget - dock system will manage layout")
+            self.logger.info(
+                "Hero tabs set as central widget - dock system will manage layout"
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to set central widget: %s", e)
 
         # 3) Ensure all docks are visible but don't force positioning
         try:
             # Just make sure all main docks are visible, let users arrange them
-            if hasattr(self.main_window, "properties_dock") and self.main_window.properties_dock:
+            if (
+                hasattr(self.main_window, "properties_dock")
+                and self.main_window.properties_dock
+            ):
                 if not self.main_window.properties_dock.isVisible():
                     self.main_window.properties_dock.setVisible(True)
-            if hasattr(self.main_window, "metadata_dock") and self.main_window.metadata_dock:
+            if (
+                hasattr(self.main_window, "metadata_dock")
+                and self.main_window.metadata_dock
+            ):
                 if not self.main_window.metadata_dock.isVisible():
                     self.main_window.metadata_dock.setVisible(True)
             if (
@@ -324,7 +386,9 @@ class CentralWidgetManager:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to ensure dock visibility: %s", e)
 
-        self.logger.debug("Center Hero Tabs layout with right-column stacking completed")
+        self.logger.debug(
+            "Center Hero Tabs layout with right-column stacking completed"
+        )
 
     # Helper methods that need to be connected to actual implementations
     def _on_model_loaded(self, info: str) -> None:

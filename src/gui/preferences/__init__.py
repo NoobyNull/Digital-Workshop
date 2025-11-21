@@ -12,12 +12,12 @@ from src.gui.preferences.tabs import (
 )
 
 __all__ = [
-    'PreferencesDialog',
-    'GeneralTab',
-    'ThemingTab',
-    'ViewerSettingsTab',
-    'ThumbnailSettingsTab',
-    'AdvancedTab',
-    'AITab',
-    'InvoicePreferencesTab',
+    "PreferencesDialog",
+    "GeneralTab",
+    "ThemingTab",
+    "ViewerSettingsTab",
+    "ThumbnailSettingsTab",
+    "AdvancedTab",
+    "AITab",
+    "InvoicePreferencesTab",
 ]

@@ -82,7 +82,8 @@ class PatchMode:
         logger.info("Creating backup")
 
         backup_dir = (
-            self.installer.backup_dir / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.installer.backup_dir
+            / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         )
         backup_dir.mkdir(parents=True, exist_ok=True)
 

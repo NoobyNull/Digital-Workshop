@@ -29,7 +29,9 @@ class ProjectModelRepository:
         try:
             return json.dumps(metadata)
         except (TypeError, ValueError):
-            logger.warning("Failed to serialize project model metadata; storing as string fallback")
+            logger.warning(
+                "Failed to serialize project model metadata; storing as string fallback"
+            )
             return json.dumps({"value": str(metadata)})
 
     @staticmethod
@@ -83,7 +85,10 @@ class ProjectModelRepository:
             conn.commit()
             record_id = cursor.lastrowid
             logger.info(
-                "Linked model %s to project %s (record %s)", model_id, project_id, record_id
+                "Linked model %s to project %s (record %s)",
+                model_id,
+                project_id,
+                record_id,
             )
             return record_id
 

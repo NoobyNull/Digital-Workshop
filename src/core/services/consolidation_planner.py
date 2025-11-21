@@ -148,7 +148,12 @@ class ConsolidationPlanner:
                 stem = model_path.stem.lower()
                 for img in images:
                     img_stem = img.stem.lower()
-                    if img_stem in {stem, f"{stem}_thumb", f"{stem}-thumb", f"thumb_{stem}"}:
+                    if img_stem in {
+                        stem,
+                        f"{stem}_thumb",
+                        f"{stem}-thumb",
+                        f"thumb_{stem}",
+                    }:
                         thumbnail_paths.add(img)
                         model_to_thumbs.setdefault(model_path, []).append(img)
 
@@ -239,7 +244,9 @@ class ConsolidationPlanner:
         confirmed to exist at the destination path.
         """
 
-        actionable = [i for i in plan.items if i.operation != ConsolidationOperation.SKIP]
+        actionable = [
+            i for i in plan.items if i.operation != ConsolidationOperation.SKIP
+        ]
         total = len(actionable)
         completed = 0
 
@@ -251,7 +258,9 @@ class ConsolidationPlanner:
                 continue
 
             if cancellation_token is not None and cancellation_token.is_cancelled():
-                logger.info("Consolidation cancelled after %s/%s items", completed, total)
+                logger.info(
+                    "Consolidation cancelled after %s/%s items", completed, total
+                )
                 break
 
             dest_path = Path(item.dest_path)
@@ -292,7 +301,9 @@ class ConsolidationPlanner:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _decide_operation(self, src_path: Path, dest_root: Path) -> ConsolidationOperation:
+    def _decide_operation(
+        self, src_path: Path, dest_root: Path
+    ) -> ConsolidationOperation:
         """Decide MOVE vs COPY based on drive/anchor (Windows-like semantics)."""
 
         try:
@@ -314,7 +325,6 @@ class ConsolidationPlanner:
         except ValueError:
             rel = file_path.name
         return dest_root / category_folder / rel
-
 
 
 def create_thumbnail_registration_callback(
@@ -339,7 +349,14 @@ def create_thumbnail_registration_callback(
                 model_path=item.primary_model_source,
                 thumbnail_path=item.dest_path,
             )
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             logger.error(
                 "Failed to register thumbnail for %s from %s: %s",
                 item.primary_model_source,
@@ -348,4 +365,3 @@ def create_thumbnail_registration_callback(
             )
 
     return _callback
-

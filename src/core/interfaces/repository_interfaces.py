@@ -196,7 +196,9 @@ class ISearchRepository(ABC):
     """Interface for search operations."""
 
     @abstractmethod
-    def search_models(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[str]:
+    def search_models(
+        self, query: str, filters: Optional[Dict[str, Any]] = None
+    ) -> List[str]:
         """Search for models using text query and filters.
 
         Args:

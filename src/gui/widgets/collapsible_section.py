@@ -121,7 +121,9 @@ class CollapsibleSection(QWidget):
             start_height = self.content_frame.height()
             self.animation.setStartValue(start_height)
             self.animation.setEndValue(0)
-            self.animation.finished.connect(lambda: self.content_frame.setVisible(False))
+            self.animation.finished.connect(
+                lambda: self.content_frame.setVisible(False)
+            )
         else:
             # Expand
             self.content_frame.setVisible(True)

@@ -30,7 +30,7 @@ def temp_db():
     tmpdir = tempfile.mkdtemp()
     db_path = os.path.join(tmpdir, "test.db")
     yield db_path
-    
+
     try:
         if os.path.exists(db_path):
             os.remove(db_path)
@@ -70,9 +70,9 @@ class TestRunModeSetupDialog:
     def test_dialog_signals(self, qapp):
         """Test dialog signals."""
         dialog = RunModeSetupDialog()
-        
+
         # Check that signals exist
-        assert hasattr(dialog, 'setup_complete')
+        assert hasattr(dialog, "setup_complete")
         assert dialog.setup_complete is not None
 
 
@@ -87,11 +87,11 @@ class TestProjectManagerWidget:
     def test_widget_signals(self, qapp, db_manager):
         """Test widget signals."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Check that signals exist
-        assert hasattr(widget, 'project_opened')
-        assert hasattr(widget, 'project_created')
-        assert hasattr(widget, 'project_deleted')
+        assert hasattr(widget, "project_opened")
+        assert hasattr(widget, "project_created")
+        assert hasattr(widget, "project_deleted")
 
     def test_project_list_empty(self, qapp, db_manager):
         """Test project list is empty initially."""
@@ -101,29 +101,26 @@ class TestProjectManagerWidget:
     def test_project_list_refresh(self, qapp, db_manager):
         """Test project list refresh."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Create a project
         db_manager.create_project("Test Project")
-        
+
         # Refresh list
         widget._refresh_project_list()
-        
+
         # Check list has item
         assert widget.project_list.count() == 1
 
     def test_project_list_shows_imported_tag(self, qapp, db_manager):
         """Test project list shows imported tag."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Create imported project
-        db_manager.create_project(
-            "Imported Library",
-            import_tag="imported_project"
-        )
-        
+        db_manager.create_project("Imported Library", import_tag="imported_project")
+
         # Refresh list
         widget._refresh_project_list()
-        
+
         # Check list shows imported tag
         item = widget.project_list.item(0)
         assert "[Imported]" in item.text()
@@ -131,22 +128,22 @@ class TestProjectManagerWidget:
     def test_project_list_multiple_projects(self, qapp, db_manager):
         """Test project list with multiple projects."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Create multiple projects
         db_manager.create_project("Project 1")
         db_manager.create_project("Project 2")
         db_manager.create_project("Project 3")
-        
+
         # Refresh list
         widget._refresh_project_list()
-        
+
         # Check list has all projects
         assert widget.project_list.count() == 3
 
     def test_widget_buttons_exist(self, qapp, db_manager):
         """Test that all buttons exist."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Check buttons are created (they should be in the layout)
         assert widget.project_list is not None
 
@@ -159,11 +156,11 @@ class TestUIIntegration:
         # Create dialog
         dialog = RunModeSetupDialog()
         assert dialog is not None
-        
+
         # Create widget
         widget = ProjectManagerWidget(db_manager)
         assert widget is not None
-        
+
         # Both should work together
         location = dialog.get_storage_location()
         assert location is not None
@@ -171,29 +168,28 @@ class TestUIIntegration:
     def test_project_manager_with_imported_projects(self, qapp, db_manager):
         """Test project manager with imported projects."""
         widget = ProjectManagerWidget(db_manager)
-        
+
         # Create regular project
         db_manager.create_project("Regular Project")
-        
+
         # Create imported project
         db_manager.create_project(
             "Imported Library",
             import_tag="imported_project",
-            original_path="/original/path"
+            original_path="/original/path",
         )
-        
+
         # Refresh list
         widget._refresh_project_list()
-        
+
         # Check both projects are listed
         assert widget.project_list.count() == 2
-        
+
         # Check imported tag is shown
         imported_found = False
         for i in range(widget.project_list.count()):
             item = widget.project_list.item(i)
             if "[Imported]" in item.text():
                 imported_found = True
-        
-        assert imported_found is True
 
+        assert imported_found is True

@@ -23,7 +23,7 @@ class TestSecurity:
     @pytest.fixture
     def installer(self, temp_app_dir):
         """Create installer instance."""
-        with patch.object(Installer, '__init__', lambda x: None):
+        with patch.object(Installer, "__init__", lambda x: None):
             installer = Installer()
             installer.app_dir = temp_app_dir
             installer.modules_dir = temp_app_dir / "modules"
@@ -33,14 +33,14 @@ class TestSecurity:
             installer.logs_dir = temp_app_dir / "logs"
             installer.manifest_file = temp_app_dir / "manifest.json"
             installer.version_file = temp_app_dir / "version.txt"
-            
+
             # Mock methods
             installer.create_directories = MagicMock()
             installer.detect_installation = MagicMock(return_value=None)
-            installer._load_manifest = MagicMock(return_value={'modules': {}})
+            installer._load_manifest = MagicMock(return_value={"modules": {}})
             installer._save_manifest = MagicMock()
             installer._update_version_file = MagicMock()
-            
+
             return installer
 
     @pytest.fixture
@@ -62,26 +62,28 @@ class TestSecurity:
         clean_install_mode._install_modules = MagicMock()
         clean_install_mode._initialize_database = MagicMock()
         clean_install_mode._create_configuration = MagicMock()
-        
+
         clean_install_mode.execute("0.1.5", ["core"])
-        
+
         # Verify warning was displayed
         clean_install_mode._display_destructive_warning.assert_called_once()
 
-    def test_clean_install_creates_backup_before_deletion(self, clean_install_mode, installer):
+    def test_clean_install_creates_backup_before_deletion(
+        self, clean_install_mode, installer
+    ):
         """Test that backup is created before deletion in Clean Install."""
         installer.app_dir.mkdir(parents=True, exist_ok=True)
         installer.backup_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Mock other methods
         clean_install_mode._display_destructive_warning = MagicMock()
         clean_install_mode._remove_everything = MagicMock()
         clean_install_mode._install_modules = MagicMock()
         clean_install_mode._initialize_database = MagicMock()
         clean_install_mode._create_configuration = MagicMock()
-        
+
         clean_install_mode.execute("0.1.5", ["core"])
-        
+
         # Verify backup was created
         backups = list(installer.backup_dir.glob("backup_*"))
         assert len(backups) > 0, "Backup should be created before deletion"
@@ -123,12 +125,14 @@ class TestSecurity:
         # Create sensitive directories
         installer.app_dir.mkdir(parents=True, exist_ok=True)
         installer.data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Verify directories exist
         assert installer.app_dir.exists(), "App directory should exist"
         assert installer.data_dir.exists(), "Data directory should exist"
 
-    def test_backup_restoration_preserves_data_integrity(self, backup_manager, installer):
+    def test_backup_restoration_preserves_data_integrity(
+        self, backup_manager, installer
+    ):
         """Test that backup restoration preserves data integrity."""
         # Create test data
         installer.app_dir.mkdir(parents=True, exist_ok=True)
@@ -148,30 +152,37 @@ class TestSecurity:
         # Verify data integrity in backup
         backup_file = backup_path / "data" / "important_file.txt"
         if backup_file.exists():
-            assert backup_file.read_text() == test_content, "Data should be preserved in backup"
+            assert (
+                backup_file.read_text() == test_content
+            ), "Data should be preserved in backup"
 
-    def test_clean_install_removes_all_sensitive_data(self, clean_install_mode, installer):
+    def test_clean_install_removes_all_sensitive_data(
+        self, clean_install_mode, installer
+    ):
         """Test that Clean Install removes all sensitive data."""
         # Setup existing installation with sensitive data
         installer.app_dir.mkdir(parents=True, exist_ok=True)
         installer.data_dir.mkdir(parents=True, exist_ok=True)
         installer.config_dir.mkdir(parents=True, exist_ok=True)
         installer.backup_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create sensitive files
         (installer.data_dir / "user_data.db").write_text("sensitive data")
         (installer.config_dir / "settings.json").write_text('{"api_key": "secret"}')
-        
+
         # Mock methods
         clean_install_mode._display_destructive_warning = MagicMock()
         clean_install_mode._create_final_backup = MagicMock()
         clean_install_mode._install_modules = MagicMock()
         clean_install_mode._initialize_database = MagicMock()
         clean_install_mode._create_configuration = MagicMock()
-        
-        clean_install_mode.execute("0.1.5", ["core"])
-        
-        # Verify sensitive data was removed (except backups)
-        assert not (installer.data_dir / "user_data.db").exists(), "User data should be removed"
-        assert not (installer.config_dir / "settings.json").exists(), "Config should be removed"
 
+        clean_install_mode.execute("0.1.5", ["core"])
+
+        # Verify sensitive data was removed (except backups)
+        assert not (
+            installer.data_dir / "user_data.db"
+        ).exists(), "User data should be removed"
+        assert not (
+            installer.config_dir / "settings.json"
+        ).exists(), "Config should be removed"

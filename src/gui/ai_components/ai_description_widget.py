@@ -108,14 +108,18 @@ class AIProviderConfigWidget(QWidget):
         # Configuration fields
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.Password)
-        self.api_key_edit.setPlaceholderText("Enter API key (optional for local providers)")
+        self.api_key_edit.setPlaceholderText(
+            "Enter API key (optional for local providers)"
+        )
         provider_layout.addRow("API Key:", self.api_key_edit)
 
         self.model_combo = QComboBox()
         provider_layout.addRow("Model:", self.model_combo)
 
         self.base_url_edit = QLineEdit()
-        self.base_url_edit.setPlaceholderText("Endpoint URL (required for local providers)")
+        self.base_url_edit.setPlaceholderText(
+            "Endpoint URL (required for local providers)"
+        )
         provider_layout.addRow("Base URL:", self.base_url_edit)
 
         # Reset provider button (affects only the selected provider)
@@ -170,7 +174,11 @@ class AIProviderConfigWidget(QWidget):
             providers,
             key=lambda name: (
                 name not in preferred_order,
-                preferred_order.index(name) if name in preferred_order else name.lower(),
+                (
+                    preferred_order.index(name)
+                    if name in preferred_order
+                    else name.lower()
+                ),
             ),
         )
 
@@ -354,7 +362,9 @@ class AIProviderConfigWidget(QWidget):
 
         if reply == QMessageBox.Yes:
             # Clear cache logic would go here
-            QMessageBox.information(self, "Cache Cleared", "AI response cache has been cleared.")
+            QMessageBox.information(
+                self, "Cache Cleared", "AI response cache has been cleared."
+            )
 
     def _apply_configuration(self) -> None:
         """Apply current configuration."""
@@ -405,7 +415,9 @@ class AIDescriptionWidget(QWidget):
         header_layout = QHBoxLayout()
 
         self.title_label = QLabel("AI Description Generator")
-        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
+        self.title_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #2c3e50;"
+        )
         header_layout.addWidget(self.title_label)
 
         header_layout.addStretch()
@@ -531,7 +543,9 @@ class AIDescriptionWidget(QWidget):
         results_header = QHBoxLayout()
 
         self.results_label = QLabel("Generated Description")
-        self.results_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
+        self.results_label.setStyleSheet(
+            "font-size: 14px; font-weight: bold; color: #2c3e50;"
+        )
         results_header.addWidget(self.results_label)
 
         results_header.addStretch()
@@ -559,7 +573,9 @@ class AIDescriptionWidget(QWidget):
 
         self.title_result = QLabel("No description generated yet")
         self.title_result.setWordWrap(True)
-        self.title_result.setStyleSheet("color: #495057; font-style: italic; padding: 5px;")
+        self.title_result.setStyleSheet(
+            "color: #495057; font-style: italic; padding: 5px;"
+        )
         title_layout.addWidget(self.title_result)
 
         self.results_layout.addWidget(title_group)
@@ -570,7 +586,9 @@ class AIDescriptionWidget(QWidget):
 
         self.description_result = QLabel("No description generated yet")
         self.description_result.setWordWrap(True)
-        self.description_result.setStyleSheet("color: #495057; font-style: italic; padding: 5px;")
+        self.description_result.setStyleSheet(
+            "color: #495057; font-style: italic; padding: 5px;"
+        )
         desc_layout.addWidget(self.description_result)
 
         self.results_layout.addWidget(desc_group)
@@ -601,7 +619,9 @@ class AIDescriptionWidget(QWidget):
     def _connect_signals(self) -> None:
         """Connect AI service signals."""
         if self.ai_service:
-            self.ai_service.description_generated.connect(self._on_description_generated)
+            self.ai_service.description_generated.connect(
+                self._on_description_generated
+            )
             self.ai_service.error_occurred.connect(self._on_error_occurred)
 
             # Update available providers
@@ -680,7 +700,9 @@ class AIDescriptionWidget(QWidget):
         """Display the generated description results."""
         # Update title
         self.title_result.setText(result.get("title", "No title"))
-        self.title_result.setStyleSheet("color: #212529; font-weight: bold; padding: 5px;")
+        self.title_result.setStyleSheet(
+            "color: #212529; font-weight: bold; padding: 5px;"
+        )
 
         # Update description
         self.description_result.setText(result.get("description", "No description"))
@@ -714,7 +736,8 @@ class AIDescriptionWidget(QWidget):
             "title": self.title_result.text(),
             "description": self.description_result.text(),
             "keywords": [
-                self.keywords_result.item(i).text() for i in range(self.keywords_result.count())
+                self.keywords_result.item(i).text()
+                for i in range(self.keywords_result.count())
             ],
         }
 
@@ -730,7 +753,9 @@ class AIDescriptionWidget(QWidget):
         # This would open a modal dialog for provider configuration
         # Implementation depends on the main application's dialog system
 
-    def _on_description_generated(self, image_path: str, result: Dict[str, Any]) -> None:
+    def _on_description_generated(
+        self, image_path: str, result: Dict[str, Any]
+    ) -> None:
         """Handle description generation completion."""
         if image_path == self.current_image_path:
             self._display_results(result)

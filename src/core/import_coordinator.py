@@ -32,6 +32,7 @@ Example:
 """
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import gc
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -60,6 +61,7 @@ from src.core.import_analysis_service import (
 )
 from src.core.database_manager import get_database_manager
 from src.core.services.image_pairing_service import get_image_pairing_service
+from src.core.services.import_settings import get_import_settings
 
 
 class ImportWorkflowStage(Enum):
@@ -141,6 +143,7 @@ class ImportCoordinatorWorker(QThread):
         run_analysis: bool,
         duplicate_action: DuplicateAction,
         cancellation_token: Optional[CancellationToken] = None,
+        max_workers: int = 1,
     ):
         """
         Initialize the import coordinator worker.
@@ -162,6 +165,7 @@ class ImportCoordinatorWorker(QThread):
         self.run_analysis = run_analysis
         self.duplicate_action = duplicate_action
         self.cancellation_token = cancellation_token or CancellationToken()
+        self.max_workers = max(1, int(max_workers))
 
         self.logger = get_logger(__name__)
         self.activity_logger = get_activity_logger(__name__)
@@ -169,7 +173,9 @@ class ImportCoordinatorWorker(QThread):
 
         # Initialize services
         self.file_manager = ImportFileManager()
-        self.thumbnail_service = ImportThumbnailService() if generate_thumbnails else None
+        self.thumbnail_service = (
+            ImportThumbnailService() if generate_thumbnails else None
+        )
         self.analysis_service = ImportAnalysisService() if run_analysis else None
         self.db_manager = get_database_manager()
         self._batches: List[List[str]] = []
@@ -189,7 +195,9 @@ class ImportCoordinatorWorker(QThread):
 
         try:
             # Stage 1: Validation
-            self._update_stage(ImportWorkflowStage.VALIDATION, "Validating import settings...")
+            self._update_stage(
+                ImportWorkflowStage.VALIDATION, "Validating import settings..."
+            )
             if not self._validate_settings():
                 return
 
@@ -245,10 +253,8 @@ class ImportCoordinatorWorker(QThread):
                 )
                 stored_models = self._store_in_database(session, processed_files)
 
-                analysis_result = None
                 if self.run_analysis and stored_models:
-                    analysis_result = self._queue_analysis(stored_models)
-                    final_analysis_result = analysis_result
+                    self._queue_analysis(stored_models)
 
                 import_result = self.file_manager.complete_import_session(session, True)
                 final_import_result = import_result
@@ -276,7 +282,9 @@ class ImportCoordinatorWorker(QThread):
                 self._update_stage(ImportWorkflowStage.CANCELLED, "Import cancelled")
                 self.import_failed.emit("Import cancelled")
             else:
-                self._update_stage(ImportWorkflowStage.COMPLETED, "Import completed successfully")
+                self._update_stage(
+                    ImportWorkflowStage.COMPLETED, "Import completed successfully"
+                )
                 self.import_completed.emit(final_result)
 
             gc.collect()
@@ -304,11 +312,16 @@ class ImportCoordinatorWorker(QThread):
             self.import_failed.emit(f"Validation error: {e}")
             return False
 
-    def _start_import_session(self, batch_paths: Optional[List[str]] = None) -> Optional[ImportSession]:
+    def _start_import_session(
+        self, batch_paths: Optional[List[str]] = None
+    ) -> Optional[ImportSession]:
         """Start a new import session."""
         try:
             success, error, session = self.file_manager.start_import_session(
-                batch_paths or self.file_paths, self.mode, self.root_directory, self.duplicate_action
+                batch_paths or self.file_paths,
+                self.mode,
+                self.root_directory,
+                self.duplicate_action,
             )
 
             if not success:
@@ -329,21 +342,28 @@ class ImportCoordinatorWorker(QThread):
         self._update_stage(ImportWorkflowStage.HASHING, "Processing files...")
 
         processed_files = []
-        total_files = len(session.files)
+        # Order by size ascending so the UI sees quick wins first
+        sorted_files = sorted(
+            session.files,
+            key=lambda f: (
+                Path(f.original_path).stat().st_size
+                if Path(f.original_path).exists()
+                else float("inf")
+            ),
+        )
 
-        for idx, file_info in enumerate(session.files):
+        def run_file(file_info: ImportFileInfo) -> tuple[bool, ImportFileInfo]:
             if self.cancellation_token.is_cancelled():
-                break
+                return False, file_info
 
             file_name = Path(file_info.original_path).name
 
-            # Create progress callback
             def file_progress(message: str, percent: int) -> None:
-                overall_idx = processed_global_index + idx
+                # Per-file progress; overall progress updated on completion
                 progress = ImportProgress(
                     stage=ImportWorkflowStage.HASHING,
-                    overall_percent=((overall_idx) / max(total_files_all, 1)) * 100,
-                    current_file_index=overall_idx + 1,
+                    overall_percent=0.0,
+                    current_file_index=0,
                     total_files=total_files_all,
                     current_file_name=file_name,
                     stage_message=message,
@@ -353,15 +373,38 @@ class ImportCoordinatorWorker(QThread):
                 )
                 self.progress_updated.emit(progress)
 
-            # Process file
             success, error = self.file_manager.process_file(
                 file_info, session, file_progress, self.cancellation_token
             )
+            if not success:
+                self.logger.warning("Failed to process %s: %s", file_name, error)
+            return success, file_info
 
-            if success:
-                processed_files.append(file_info)
-            else:
-                self.logger.warning("Failed to process %s: {error}", file_name)
+        with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
+            future_map = {
+                pool.submit(run_file, file_info): file_info for file_info in sorted_files
+            }
+            completed = processed_global_index
+            for future in as_completed(future_map):
+                if self.cancellation_token.is_cancelled():
+                    pool.shutdown(wait=False, cancel_futures=True)
+                    break
+                success, file_info = future.result()
+                completed += 1
+                if success:
+                    processed_files.append(file_info)
+                progress = ImportProgress(
+                    stage=ImportWorkflowStage.HASHING,
+                    overall_percent=(completed / max(total_files_all, 1)) * 100,
+                    current_file_index=completed,
+                    total_files=total_files_all,
+                    current_file_name=Path(file_info.original_path).name,
+                    stage_message="Processed file",
+                    stage_percent=100,
+                    files_hashed=len(processed_files),
+                    elapsed_time_seconds=time.time() - self.start_time,
+                )
+                self.progress_updated.emit(progress)
 
         return processed_files
 
@@ -374,7 +417,9 @@ class ImportCoordinatorWorker(QThread):
         Checks for matching image files (e.g., model1.stl + model1.jpg) and uses
         them as thumbnails instead of generating via VTK rendering.
         """
-        self._update_stage(ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails...")
+        self._update_stage(
+            ImportWorkflowStage.THUMBNAIL_GENERATION, "Generating thumbnails..."
+        )
 
         try:
             # Load thumbnail settings from preferences
@@ -389,7 +434,9 @@ class ImportCoordinatorWorker(QThread):
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -401,10 +448,14 @@ class ImportCoordinatorWorker(QThread):
             pairing_service = get_image_pairing_service()
 
             # Collect all file paths for pairing detection
-            all_file_paths = [f.managed_path or f.original_path for f in processed_files]
+            all_file_paths = [
+                f.managed_path or f.original_path for f in processed_files
+            ]
 
             # Find image-model pairs
-            pairs, unpaired_models, unpaired_images = pairing_service.find_pairs(all_file_paths)
+            pairs, unpaired_models, _ = pairing_service.find_pairs(
+                all_file_paths
+            )
 
             # Track paired thumbnails
             paired_count = 0
@@ -465,12 +516,15 @@ class ImportCoordinatorWorker(QThread):
             result = None
             if file_info_list:
 
-                def progress_callback(completed: int, total: int, current_file: str) -> None:
+                def progress_callback(
+                    completed: int, total: int, current_file: str
+                ) -> None:
                     """Progress callback for thumbnail generation."""
                     total_completed = paired_count + completed
                     progress = ImportProgress(
                         stage=ImportWorkflowStage.THUMBNAIL_GENERATION,
-                        overall_percent=70 + (total_completed / total_files) * 20,  # 70-90%
+                        overall_percent=70
+                        + (total_completed / total_files) * 20,  # 70-90%
                         current_file_index=total_completed,
                         total_files=total_files,
                         current_file_name=current_file,
@@ -522,14 +576,18 @@ class ImportCoordinatorWorker(QThread):
                     }
                     stored_models.append(model_data)
 
-            self.logger.info("Prepared %s models for database storage", len(stored_models))
+            self.logger.info(
+                "Prepared %s models for database storage", len(stored_models)
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Database storage failed: %s", e, exc_info=True)
 
         return stored_models
 
-    def _queue_analysis(self, stored_models: List[Dict[str, Any]]) -> Optional[BatchAnalysisResult]:
+    def _queue_analysis(
+        self, stored_models: List[Dict[str, Any]]
+    ) -> Optional[BatchAnalysisResult]:
         """Queue background analysis for imported models."""
         self._update_stage(
             ImportWorkflowStage.BACKGROUND_ANALYSIS, "Queueing background analysis..."
@@ -549,7 +607,9 @@ class ImportCoordinatorWorker(QThread):
                 file_model_pairs, cancellation_token=self.cancellation_token
             )
 
-            self.logger.info("Queued %s models for background analysis", len(file_model_pairs))
+            self.logger.info(
+                "Queued %s models for background analysis", len(file_model_pairs)
+            )
             return None  # Analysis result will come later via signals
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -721,17 +781,19 @@ class ImportCoordinator(QObject):
         try:
             # Create cancellation token
             self._cancellation_token = CancellationToken()
+            settings = get_import_settings()
+            concurrency = settings.get_concurrency()
 
             # Split into batches respecting MAX_IMPORT_FILES
             try:
-                from src.core.import_file_manager import ImportFileManager
-
                 cap = ImportFileManager.MAX_IMPORT_FILES
             except Exception:
                 cap = 500
 
             paths = list(file_paths)
-            batches: list[list[str]] = [paths[i : i + cap] for i in range(0, len(paths), cap)] or [paths]
+            batches: list[list[str]] = [
+                paths[i : i + cap] for i in range(0, len(paths), cap)
+            ] or [paths]
 
             # Persist any remaining batches beyond the first
             pending_batches = batches[1:] if len(batches) > 1 else []
@@ -746,6 +808,7 @@ class ImportCoordinator(QObject):
                 run_analysis=run_analysis,
                 duplicate_action=duplicate_action,
                 cancellation_token=self._cancellation_token,
+                max_workers=concurrency.prep_workers,
             )
 
             # Connect signals
@@ -808,10 +871,15 @@ class ImportCoordinator(QObject):
         return {
             **self._stats,
             "avg_import_time": (
-                self._stats["total_import_time"] / max(1, self._stats["successful_imports"])
+                self._stats["total_import_time"]
+                / max(1, self._stats["successful_imports"])
             ),
             "success_rate": (
-                (self._stats["successful_imports"] / max(1, self._stats["total_imports"])) * 100
+                (
+                    self._stats["successful_imports"]
+                    / max(1, self._stats["total_imports"])
+                )
+                * 100
             ),
         }
 

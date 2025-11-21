@@ -12,19 +12,19 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QCoreApplication, QSettings, QThreadPool
+from PySide6.QtWidgets import QApplication
 
-from .application_config import ApplicationConfig
-from .application_bootstrap import ApplicationBootstrap
-from .exception_handler import ExceptionHandler
-from .logging_config import get_logger
-from .system_initializer import SystemInitializer
-from src.core.services.library_root_monitor import LibraryRootMonitor
+from src.core.application_bootstrap import ApplicationBootstrap
+from src.core.application_config import ApplicationConfig
+from src.core.exception_handler import ExceptionHandler
+from src.core.logging_config import get_logger
 from src.core.services.import_watch_service import ImportWatchService
-from src.gui.dialogs.library_setup_dialog import run_first_launch_setup
+from src.core.services.library_root_monitor import LibraryRootMonitor
+from src.core.system_initializer import SystemInitializer
 from src.gui.dialogs.ai_setup_dialog import run_ai_first_launch_setup
 from src.gui.dialogs.first_run_walkthrough import run_first_run_walkthrough
+from src.gui.dialogs.library_setup_dialog import run_first_launch_setup
 from src.gui.main_window import MainWindow
 
 
@@ -218,7 +218,9 @@ class Application:
                     self.logger.info("QThreadPool cleared and waited during cleanup")
             except Exception as exc:
                 if self.logger:
-                    self.logger.warning("Failed to clear QThreadPool on cleanup: %s", exc)
+                    self.logger.warning(
+                        "Failed to clear QThreadPool on cleanup: %s", exc
+                    )
 
             # Cleanup bootstrap
             if self.bootstrap:
@@ -315,10 +317,11 @@ class Application:
 
                 temp_dir = Path(tempfile.gettempdir()) / "digital_workshop_dev"
                 temp_dir.mkdir(parents=True, exist_ok=True)
-                settings_file = temp_dir / "settings.ini"
 
                 # Create a file-based QSettings that uses INI format
-                QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, str(temp_dir))
+                QSettings.setPath(
+                    QSettings.IniFormat, QSettings.UserScope, str(temp_dir)
+                )
                 QSettings.setDefaultFormat(QSettings.IniFormat)
 
             self.logger = get_logger(__name__)
@@ -419,7 +422,12 @@ class Application:
         try:
             from PySide6.QtCore import Qt
             from PySide6.QtGui import QFont, QPixmap
-            from PySide6.QtWidgets import QLabel, QProgressBar, QSplashScreen, QVBoxLayout
+            from PySide6.QtWidgets import (
+                QLabel,
+                QProgressBar,
+                QSplashScreen,
+                QVBoxLayout,
+            )
         except Exception:
             return
 
@@ -507,7 +515,6 @@ class Application:
                 self.qt_app.processEvents()
             except RuntimeError:
                 pass
-
 
     def _apply_theme_early(self) -> None:
         """Apply theme early, right after QApplication is created."""

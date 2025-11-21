@@ -6,7 +6,7 @@ OpenGL context management, VTK resource tracker coordination, and
 graphics resource cleanup.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Callable
 import vtk
 
 from .unified_cleanup_coordinator import CleanupHandler, CleanupPhase, CleanupContext
@@ -114,7 +114,9 @@ class VTKCleanupHandler(CleanupHandler):
     def _cleanup_with_lost_context(self) -> bool:
         """Cleanup VTK resources with lost OpenGL context."""
         try:
-            self.logger.info("Performing VTK cleanup with lost context (graceful degradation)")
+            self.logger.info(
+                "Performing VTK cleanup with lost context (graceful degradation)"
+            )
 
             # With lost context, we can only do basic cleanup
             # No OpenGL operations are safe
@@ -139,17 +141,15 @@ class VTKCleanupHandler(CleanupHandler):
             self.logger.debug("Performing VTK cleanup with unknown context")
 
             # Try to detect context state and proceed accordingly
+            # If a context manager exists, prefer valid cleanup; fall back to lost cleanup on failure.
             if self._context_manager:
-                # Try to validate context
                 try:
-                    # This might fail if context is truly lost
-                    self._context_manager.validate_context(None, "cleanup")
                     return self._cleanup_with_valid_context()
                 except Exception:
                     return self._cleanup_with_lost_context()
-            else:
-                # No context manager available, assume safe cleanup
-                return self._cleanup_with_valid_context()
+
+            # No context manager available, assume safe cleanup
+            return self._cleanup_with_valid_context()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("VTK cleanup with unknown context failed: %s", e)
@@ -175,7 +175,9 @@ class VTKCleanupHandler(CleanupHandler):
                 if error_count > 0:
                     failed_resources = cleanup_stats.get("failed_resources", [])
                     if failed_resources:
-                        self.logger.warning("Failed to cleanup %s resource(s):", error_count)
+                        self.logger.warning(
+                            "Failed to cleanup %s resource(s):", error_count
+                        )
                         for resource_info in failed_resources:
                             self.logger.warning("  - %s", resource_info)
 
@@ -236,7 +238,9 @@ class VTKCleanupHandler(CleanupHandler):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to clear VTK references: %s", e)
 
-    def register_vtk_resource(self, name: str, resource: Any, priority: str = "normal") -> None:
+    def register_vtk_resource(
+        self, name: str, resource: Any, priority: str = "normal"
+    ) -> None:
         """
         Register a VTK resource for cleanup tracking.
 

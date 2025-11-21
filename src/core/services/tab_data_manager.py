@@ -96,7 +96,14 @@ class TabDataManager:
                     status="imported",
                 )
                 self.logger.info("Linked %s to project %s", filename, project_id)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Could not link file to project: %s", e)
                 # File was saved successfully, so don't fail
 
@@ -106,6 +113,34 @@ class TabDataManager:
             error_msg = f"Failed to save tab data: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return False, error_msg
+
+    def export_tab_data_to_pdf(
+        self,
+        project_id: str,
+        tab_name: str,
+        destination: Optional[Path] = None,
+        **kwargs: Any,
+    ) -> tuple[bool, str]:
+        """
+        Placeholder export hook to satisfy callers expecting PDF output.
+
+        Currently writes the tab data JSON (if present) next to the requested
+        destination with a .json suffix and returns a clear message.
+        """
+        try:
+            success, tab_data, msg = self.load_tab_data_from_project(
+                project_id, f"{tab_name.lower().replace(' ', '_')}.json"
+            )
+            if not success or tab_data is None:
+                return False, msg or "No tab data available for export"
+
+            target = destination or Path.cwd() / f"{tab_name}.pdf"
+            backup_path = target.with_suffix(".json")
+            with open(backup_path, "w", encoding="utf-8") as handle:
+                json.dump(tab_data, handle, indent=2)
+            return False, "PDF export not implemented; tab data saved as JSON backup"
+        except Exception as exc:
+            return False, f"Failed to prepare export: {exc}"
 
     def load_tab_data_from_project(
         self, project_id: str, filename: str
@@ -189,7 +224,9 @@ class TabDataManager:
             self.logger.error("Error getting file path: %s", e)
             return None
 
-    def list_tab_data_files(self, project_id: str, tab_name: str = None) -> Tuple[bool, list, str]:
+    def list_tab_data_files(
+        self, project_id: str, tab_name: str = None
+    ) -> Tuple[bool, list, str]:
         """
         List all tab data files in a project.
 
@@ -219,7 +256,10 @@ class TabDataManager:
 
                         # Filter by tab name if provided
                         if tab_name:
-                            if tab_name.lower().replace(" ", "_") not in str(file_path).lower():
+                            if (
+                                tab_name.lower().replace(" ", "_")
+                                not in str(file_path).lower()
+                            ):
                                 continue
 
                         files.append(

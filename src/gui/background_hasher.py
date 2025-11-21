@@ -30,7 +30,9 @@ class BackgroundHasher(QThread):
 
     hash_progress = Signal(str)  # filename being hashed
     model_hashed = Signal(int, str)  # model_id, file_hash
-    duplicate_found = Signal(int, int, str, str)  # new_model_id, existing_id, new_path, old_path
+    duplicate_found = Signal(
+        int, int, str, str
+    )  # new_model_id, existing_id, new_path, old_path
     all_complete = Signal()
 
     def __init__(self, parent=None) -> None:
@@ -79,7 +81,9 @@ class BackgroundHasher(QThread):
             if not unhashed_models:
                 # No more models to hash
                 self.all_complete.emit()
-                self.logger.info("Background hashing complete - no more unhashed models")
+                self.logger.info(
+                    "Background hashing complete - no more unhashed models"
+                )
                 break
 
             model = unhashed_models[0]
@@ -88,7 +92,9 @@ class BackgroundHasher(QThread):
             filename = Path(file_path).name if file_path else "Unknown"
 
             if not file_path or not Path(file_path).exists():
-                self.logger.warning("File not found for model %s: {file_path}", model_id)
+                self.logger.warning(
+                    "File not found for model %s: {file_path}", model_id
+                )
                 # Mark with empty hash so we don't try again
                 self.db_manager.update_file_hash(model_id, "")
                 continue
@@ -103,7 +109,9 @@ class BackgroundHasher(QThread):
                 )
 
                 if not result.success:
-                    self.logger.error("Failed to calculate hash for %s: {result.error}", filename)
+                    self.logger.error(
+                        "Failed to calculate hash for %s: {result.error}", filename
+                    )
                     # Mark with empty hash so we don't try again
                     self.db_manager.update_file_hash(model_id, "")
                     continue
@@ -124,7 +132,9 @@ class BackgroundHasher(QThread):
                     # Check if file moved (hash match but path different)
                     if existing_path != file_path:
                         # Emit signal for UI to handle
-                        self.duplicate_found.emit(model_id, existing_id, file_path, existing_path)
+                        self.duplicate_found.emit(
+                            model_id, existing_id, file_path, existing_path
+                        )
                     else:
                         # Same file, same path - just update hash on current model
                         self.db_manager.update_file_hash(model_id, file_hash)
@@ -135,7 +145,14 @@ class BackgroundHasher(QThread):
                     self.model_hashed.emit(model_id, file_hash)
                     self.logger.info("Hashed model %s: {filename}", model_id)
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Error hashing model %s ({filename}): {e}", model_id)
                 # Mark with empty hash so we don't try again
                 self.db_manager.update_file_hash(model_id, "")

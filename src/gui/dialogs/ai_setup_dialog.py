@@ -182,7 +182,9 @@ class AIFirstRunDialog(QDialog):
             return False
 
         if list_result.returncode != 0:
-            logger.warning("Failed to list Ollama models: %s", list_result.stderr.strip())
+            logger.warning(
+                "Failed to list Ollama models: %s", list_result.stderr.strip()
+            )
             return False
 
         installed = any(model in line for line in list_result.stdout.splitlines())
@@ -222,7 +224,9 @@ class AIFirstRunDialog(QDialog):
             return False
 
         if pull_result.returncode != 0:
-            logger.error("Ollama pull failed for %s: %s", model, pull_result.stderr.strip())
+            logger.error(
+                "Ollama pull failed for %s: %s", model, pull_result.stderr.strip()
+            )
             QMessageBox.critical(
                 self,
                 "Download failed",
@@ -274,4 +278,3 @@ def run_ai_first_launch_setup(parent: Optional[QWidget] = None) -> None:
     dialog = AIFirstRunDialog(parent)
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.exec()
-

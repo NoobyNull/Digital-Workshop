@@ -92,10 +92,14 @@ class InvoicePreferencesTab(QWidget):
         self.tax_spin.setRange(0.0, 100.0)
 
         self.default_notes_edit = QPlainTextEdit()
-        self.default_notes_edit.setPlaceholderText("Default header notes / summary text.")
+        self.default_notes_edit.setPlaceholderText(
+            "Default header notes / summary text."
+        )
 
         self.default_terms_edit = QPlainTextEdit()
-        self.default_terms_edit.setPlaceholderText("Default payment terms shown at the bottom of the invoice.")
+        self.default_terms_edit.setPlaceholderText(
+            "Default payment terms shown at the bottom of the invoice."
+        )
 
         defaults_layout.addRow("Default Due Date Offset", self.due_days_spin)
         defaults_layout.addRow("Default Tax Percentage", self.tax_spin)
@@ -125,13 +129,23 @@ class InvoicePreferencesTab(QWidget):
             settings = self._settings()
             self.logo_path_edit.setText(settings.value("logo_path", "", type=str))
             self.issuer_name_edit.setText(settings.value("issuer_name", "", type=str))
-            self.issuer_address_edit.setPlainText(settings.value("issuer_address", "", type=str))
-            self.issuer_contact_edit.setText(settings.value("issuer_contact", "", type=str))
-            self.invoice_prefix_edit.setText(settings.value("invoice_prefix", "INV-", type=str))
+            self.issuer_address_edit.setPlainText(
+                settings.value("issuer_address", "", type=str)
+            )
+            self.issuer_contact_edit.setText(
+                settings.value("issuer_contact", "", type=str)
+            )
+            self.invoice_prefix_edit.setText(
+                settings.value("invoice_prefix", "INV-", type=str)
+            )
             self.due_days_spin.setValue(settings.value("due_days", 14, type=int))
             self.tax_spin.setValue(settings.value("default_tax_pct", 0.0, type=float))
-            self.default_notes_edit.setPlainText(settings.value("default_notes", "", type=str))
-            self.default_terms_edit.setPlainText(settings.value("default_terms", "", type=str))
+            self.default_notes_edit.setPlainText(
+                settings.value("default_notes", "", type=str)
+            )
+            self.default_terms_edit.setPlainText(
+                settings.value("default_terms", "", type=str)
+            )
             settings.endGroup()
             self.logger.info("Loaded invoice preferences")
         except Exception as exc:  # noqa: BLE001
@@ -142,15 +156,22 @@ class InvoicePreferencesTab(QWidget):
             settings = self._settings()
             settings.setValue("logo_path", self.logo_path_edit.text().strip())
             settings.setValue("issuer_name", self.issuer_name_edit.text().strip())
-            settings.setValue("issuer_address", self.issuer_address_edit.toPlainText().strip())
+            settings.setValue(
+                "issuer_address", self.issuer_address_edit.toPlainText().strip()
+            )
             settings.setValue("issuer_contact", self.issuer_contact_edit.text().strip())
-            settings.setValue("invoice_prefix", self.invoice_prefix_edit.text().strip() or "INV-")
+            settings.setValue(
+                "invoice_prefix", self.invoice_prefix_edit.text().strip() or "INV-"
+            )
             settings.setValue("due_days", self.due_days_spin.value())
             settings.setValue("default_tax_pct", self.tax_spin.value())
-            settings.setValue("default_notes", self.default_notes_edit.toPlainText().strip())
-            settings.setValue("default_terms", self.default_terms_edit.toPlainText().strip())
+            settings.setValue(
+                "default_notes", self.default_notes_edit.toPlainText().strip()
+            )
+            settings.setValue(
+                "default_terms", self.default_terms_edit.toPlainText().strip()
+            )
             settings.endGroup()
             self.logger.info("Invoice preferences saved.")
         except Exception as exc:  # noqa: BLE001
             self.logger.error("Failed to save invoice preferences: %s", exc)
-

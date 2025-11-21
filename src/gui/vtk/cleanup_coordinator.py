@@ -111,7 +111,14 @@ class VTKCleanupCoordinator:
                 else:
                     raise ValueError("Resource tracker is None")
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning(
                     f"CRITICAL FIX: Resource tracker initialization attempt {attempt + 1} failed: {e}"
                 )
@@ -168,8 +175,17 @@ class VTKCleanupCoordinator:
                             "success": success_count,
                             "errors": error_count,
                         }
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                        self.logger.error("CRITICAL FIX: Fallback cleanup failed: %s", e)
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
+                        self.logger.error(
+                            "CRITICAL FIX: Fallback cleanup failed: %s", e
+                        )
                         return {"total": 0, "success": 0, "errors": 1}
 
                 def get_statistics(self) -> Dict[str, Any]:
@@ -182,7 +198,9 @@ class VTKCleanupCoordinator:
             )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("CRITICAL FIX: Failed to create fallback resource tracker: %s", e)
+            self.logger.error(
+                "CRITICAL FIX: Failed to create fallback resource tracker: %s", e
+            )
             self.resource_tracker = None
 
     def _setup_cleanup_phases(self) -> None:
@@ -201,22 +219,32 @@ class VTKCleanupCoordinator:
         self.register_cleanup_callback(CleanupPhase.PRE_CLEANUP, self._pre_cleanup)
 
         # Context validation: Check if context is still valid
-        self.register_cleanup_callback(CleanupPhase.CONTEXT_VALIDATION, self._validate_context)
+        self.register_cleanup_callback(
+            CleanupPhase.CONTEXT_VALIDATION, self._validate_context
+        )
 
         # Resource cleanup: Clean up VTK resources that don't require context
-        self.register_cleanup_callback(CleanupPhase.RESOURCE_CLEANUP, self._cleanup_resources)
+        self.register_cleanup_callback(
+            CleanupPhase.RESOURCE_CLEANUP, self._cleanup_resources
+        )
 
         # Actor cleanup: Remove actors from renderer
         self.register_cleanup_callback(CleanupPhase.ACTOR_CLEANUP, self._cleanup_actors)
 
         # Renderer cleanup: Clean up renderer
-        self.register_cleanup_callback(CleanupPhase.RENDERER_CLEANUP, self._cleanup_renderer)
+        self.register_cleanup_callback(
+            CleanupPhase.RENDERER_CLEANUP, self._cleanup_renderer
+        )
 
         # Window cleanup: Clean up render window
-        self.register_cleanup_callback(CleanupPhase.WINDOW_CLEANUP, self._cleanup_window)
+        self.register_cleanup_callback(
+            CleanupPhase.WINDOW_CLEANUP, self._cleanup_window
+        )
 
         # Interactor cleanup: Clean up interactor
-        self.register_cleanup_callback(CleanupPhase.INTERACTOR_CLEANUP, self._cleanup_interactor)
+        self.register_cleanup_callback(
+            CleanupPhase.INTERACTOR_CLEANUP, self._cleanup_interactor
+        )
 
         # Final cleanup: Final resource cleanup
         self.register_cleanup_callback(CleanupPhase.FINAL_CLEANUP, self._final_cleanup)
@@ -250,7 +278,14 @@ class VTKCleanupCoordinator:
                         f"CRITICAL FIX: Emergency shutdown cleanup - "
                         f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
                     )
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.warning(
                         f"CRITICAL FIX: Emergency resource tracker cleanup failed: {e}"
                     )
@@ -274,7 +309,9 @@ class VTKCleanupCoordinator:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("CRITICAL FIX: Emergency shutdown cleanup failed: %s", e)
 
-    def register_cleanup_callback(self, phase: CleanupPhase, callback: Callable) -> None:
+    def register_cleanup_callback(
+        self, phase: CleanupPhase, callback: Callable
+    ) -> None:
         """
         Register a cleanup callback for a specific phase.
 
@@ -304,7 +341,9 @@ class VTKCleanupCoordinator:
             "priority": priority,
             "cleaned": False,
         }
-        self.logger.debug("Registered resource for cleanup: %s (priority: {priority.value})", name)
+        self.logger.debug(
+            "Registered resource for cleanup: %s (priority: {priority.value})", name
+        )
 
     def coordinate_cleanup(
         self,
@@ -325,7 +364,9 @@ class VTKCleanupCoordinator:
         """
         # CRITICAL FIX: Prevent duplicate cleanup attempts
         if self.cleanup_completed:
-            self.logger.debug("VTK cleanup already completed, skipping duplicate cleanup")
+            self.logger.debug(
+                "VTK cleanup already completed, skipping duplicate cleanup"
+            )
             return True
 
         if self.cleanup_in_progress:
@@ -365,7 +406,9 @@ class VTKCleanupCoordinator:
             if success:
                 self.logger.info("VTK cleanup completed successfully")
             else:
-                self.logger.info("VTK cleanup completed with context loss (normal during shutdown)")
+                self.logger.info(
+                    "VTK cleanup completed with context loss (normal during shutdown)"
+                )
 
             return success
 
@@ -404,14 +447,28 @@ class VTKCleanupCoordinator:
                                 f"Cleanup phase {phase.value} indicated early termination"
                             )
                             return False
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
                         self.logger.debug("Error in cleanup phase %s: {e}", phase.value)
                         # Continue with other phases unless it's critical
 
                 # Small delay between phases to allow context cleanup
                 time.sleep(0.01)
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.debug("Exception in cleanup phase %s: {e}", phase.value)
                 continue
 
@@ -436,7 +493,9 @@ class VTKCleanupCoordinator:
     def _validate_context(self) -> Optional[bool]:
         """Context validation phase: Check if context is still valid."""
         try:
-            render_window = self.cleanup_resources.get("render_window", {}).get("resource")
+            render_window = self.cleanup_resources.get("render_window", {}).get(
+                "resource"
+            )
             if not render_window:
                 self.logger.debug("No render window to validate")
                 return True
@@ -481,7 +540,14 @@ class VTKCleanupCoordinator:
                     self._cleanup_single_resource(name, resource)
                     resource_info["cleaned"] = True
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug("Error cleaning up resource %s: {e}", name)
                     # Continue with other resources
 
@@ -527,7 +593,14 @@ class VTKCleanupCoordinator:
             try:
                 renderer.RemoveAllViewProps()
                 self.logger.debug("Removed all actors from renderer")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.debug("Error removing actors: %s", e)
 
             return True
@@ -554,7 +627,14 @@ class VTKCleanupCoordinator:
                 renderer.RemoveAllViewProps()
 
                 self.logger.debug("Renderer cleanup completed")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.debug("Renderer cleanup error: %s", e)
 
             return True
@@ -566,7 +646,9 @@ class VTKCleanupCoordinator:
     def _cleanup_window(self) -> Optional[bool]:
         """Window cleanup phase."""
         try:
-            render_window = self.cleanup_resources.get("render_window", {}).get("resource")
+            render_window = self.cleanup_resources.get("render_window", {}).get(
+                "resource"
+            )
             if not render_window:
                 return True
 
@@ -579,7 +661,14 @@ class VTKCleanupCoordinator:
                 # Safe window cleanup operations
                 render_window.Finalize()
                 self.logger.debug("Render window finalized")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 # This is expected if context is lost
                 self.logger.debug("Expected window cleanup error: %s", e)
 
@@ -600,7 +689,14 @@ class VTKCleanupCoordinator:
                 # Terminate interactor
                 interactor.TerminateApp()
                 self.logger.debug("Interactor terminated")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.debug("Interactor cleanup error: %s", e)
 
             return True
@@ -625,7 +721,9 @@ class VTKCleanupCoordinator:
             start_time = time.time()
             gc.collect()
             gc_time = time.time() - start_time
-            self.logger.debug("CRITICAL FIX: Garbage collection completed in %.3fs", gc_time)
+            self.logger.debug(
+                "CRITICAL FIX: Garbage collection completed in %.3fs", gc_time
+            )
 
             self.logger.info("CRITICAL FIX: Final cleanup phase completed successfully")
             return True
@@ -659,8 +757,17 @@ class VTKCleanupCoordinator:
                     else:
                         raise ValueError("Resource tracker returned invalid statistics")
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.warning("CRITICAL FIX: Resource tracker cleanup failed: %s", e)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    self.logger.warning(
+                        "CRITICAL FIX: Resource tracker cleanup failed: %s", e
+                    )
                     # Try to reinitialize the tracker
                     self._attempt_tracker_reinitialization()
             else:
@@ -670,18 +777,24 @@ class VTKCleanupCoordinator:
                 self._perform_emergency_cleanup()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("CRITICAL FIX: Critical error in resource tracker cleanup: %s", e)
+            self.logger.error(
+                "CRITICAL FIX: Critical error in resource tracker cleanup: %s", e
+            )
             # Last resort: perform basic cleanup without tracking
             self._perform_basic_emergency_cleanup()
 
     def _attempt_tracker_reinitialization(self) -> None:
         """Attempt to reinitialize the resource tracker during cleanup."""
         try:
-            self.logger.info("CRITICAL FIX: Attempting to reinitialize resource tracker")
+            self.logger.info(
+                "CRITICAL FIX: Attempting to reinitialize resource tracker"
+            )
             self._initialize_resource_tracker_with_fallback()
 
             if self.resource_tracker is not None:
-                self.logger.info("CRITICAL FIX: Resource tracker reinitialized successfully")
+                self.logger.info(
+                    "CRITICAL FIX: Resource tracker reinitialized successfully"
+                )
                 # Try cleanup again with reinitialized tracker
                 cleanup_stats = self.resource_tracker.cleanup_all_resources()
                 self.logger.info(
@@ -689,10 +802,14 @@ class VTKCleanupCoordinator:
                     f"{cleanup_stats.get('success', 0)} cleaned, {cleanup_stats.get('errors', 0)} errors"
                 )
             else:
-                self.logger.warning("CRITICAL FIX: Failed to reinitialize resource tracker")
+                self.logger.warning(
+                    "CRITICAL FIX: Failed to reinitialize resource tracker"
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("CRITICAL FIX: Failed to reinitialize resource tracker: %s", e)
+            self.logger.error(
+                "CRITICAL FIX: Failed to reinitialize resource tracker: %s", e
+            )
 
     def _perform_emergency_cleanup(self) -> None:
         """Perform emergency cleanup when resource tracker is unavailable."""
@@ -748,13 +865,24 @@ class VTKCleanupCoordinator:
                     resource_info["resource"] = None
                     resource_info["cleaned"] = True
                     cleared_count += 1
-                    self.logger.debug("CRITICAL FIX: Cleared resource reference: %s", resource_name)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    self.logger.debug(
+                        "CRITICAL FIX: Cleared resource reference: %s", resource_name
+                    )
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug(
                         "CRITICAL FIX: Error clearing resource %s: {e}", resource_name
                     )
 
-            self.logger.info("CRITICAL FIX: Cleared %s resource references", cleared_count)
+            self.logger.info(
+                "CRITICAL FIX: Cleared %s resource references", cleared_count
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("CRITICAL FIX: Error clearing resource references: %s", e)
@@ -776,12 +904,16 @@ class VTKCleanupCoordinator:
         """Post-cleanup phase: Verify cleanup."""
         try:
             # Verify that resources are cleaned up
-            cleaned_count = sum(1 for r in self.cleanup_resources.values() if r["cleaned"])
+            cleaned_count = sum(
+                1 for r in self.cleanup_resources.values() if r["cleaned"]
+            )
             total_count = len(self.cleanup_resources)
 
             # Reduce noise: keep verification at debug level
             self.logger.debug(
-                "Cleanup verification: %s/%s resources cleaned", cleaned_count, total_count
+                "Cleanup verification: %s/%s resources cleaned",
+                cleaned_count,
+                total_count,
             )
 
             # Reset state
@@ -841,7 +973,9 @@ class VTKCleanupCoordinator:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Window resource cleanup error: %s", e)
 
-    def _cleanup_interactor_resource(self, interactor: vtk.vtkRenderWindowInteractor) -> None:
+    def _cleanup_interactor_resource(
+        self, interactor: vtk.vtkRenderWindowInteractor
+    ) -> None:
         """Clean up interactor resources."""
         try:
             interactor.TerminateApp()
@@ -849,7 +983,9 @@ class VTKCleanupCoordinator:
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.debug("Interactor resource cleanup error: %s", e)
 
-    def _cleanup_orientation_widget(self, widget: vtk.vtkOrientationMarkerWidget) -> None:
+    def _cleanup_orientation_widget(
+        self, widget: vtk.vtkOrientationMarkerWidget
+    ) -> None:
         """Clean up orientation marker widget."""
         try:
             widget.Off()
@@ -904,7 +1040,9 @@ class VTKCleanupCoordinator:
                 for obj_name, obj in namespace.items():
                     try:
                         # Check if it's a VTK object
-                        if hasattr(obj, "__class__") and hasattr(obj.__class__, "__module__"):
+                        if hasattr(obj, "__class__") and hasattr(
+                            obj.__class__, "__module__"
+                        ):
                             if "vtk" in obj.__class__.__module__:
                                 # Try to delete it safely
                                 if hasattr(obj, "Delete"):
@@ -990,4 +1128,6 @@ def coordinate_vtk_cleanup(
     Returns:
         True if cleanup completed successfully
     """
-    return get_vtk_cleanup_coordinator().coordinate_cleanup(render_window, renderer, interactor)
+    return get_vtk_cleanup_coordinator().coordinate_cleanup(
+        render_window, renderer, interactor
+    )

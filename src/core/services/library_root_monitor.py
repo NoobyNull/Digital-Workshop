@@ -128,7 +128,9 @@ class LibraryRootMonitor:
 
         if not offline_path.exists():
             # Offline record is stale; clean it up.
-            logger.warning("Recorded offline database no longer exists: %s", offline_path)
+            logger.warning(
+                "Recorded offline database no longer exists: %s", offline_path
+            )
             self._settings.set_offline_db_path(None)
             self._settings.set_temp_db_path(None)
             return
@@ -159,7 +161,9 @@ class LibraryRootMonitor:
         elif clicked is keep_button:
             self._keep_temporary(temp_path)
 
-    def _switch_to_database(self, offline_path: Path, temp_path: Optional[Path]) -> None:
+    def _switch_to_database(
+        self, offline_path: Path, temp_path: Optional[Path]
+    ) -> None:
         """Switch the singleton manager back to the original database."""
 
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -201,4 +205,3 @@ class LibraryRootMonitor:
 
         self._settings.set_offline_db_path(None)
         self._settings.set_temp_db_path(None)
-

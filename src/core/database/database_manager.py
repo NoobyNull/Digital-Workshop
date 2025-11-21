@@ -79,6 +79,14 @@ class DatabaseManager:
 
     # ===== Model Operations (delegated to ModelRepository) =====
 
+    def get_unhashed_models(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Fetch models without hashes for background hashing."""
+        return self._model_repo.get_unhashed_models(limit)
+
+    def get_model_id_by_file_path(self, file_path: str) -> Optional[int]:
+        """Resolve a model id from a stored file path."""
+        return self._model_repo.get_model_id_by_file_path(file_path)
+
     def add_model(
         self,
         filename: str,
@@ -88,7 +96,9 @@ class DatabaseManager:
         file_hash: Optional[str] = None,
     ) -> int:
         """Add a new model to the database."""
-        return self._model_repo.add_model(filename, model_format, file_path, file_size, file_hash)
+        return self._model_repo.add_model(
+            filename, model_format, file_path, file_size, file_hash
+        )
 
     def find_model_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
         """Find a model by its file hash."""
@@ -138,7 +148,11 @@ class DatabaseManager:
     ) -> bool:
         """Update optimal camera view parameters for a model."""
         return self._model_repo.update_model_camera_view(
-            model_id, camera_position, camera_focal_point, camera_view_up, camera_view_name
+            model_id,
+            camera_position,
+            camera_focal_point,
+            camera_view_up,
+            camera_view_name,
         )
 
     def delete_model(self, model_id: int) -> bool:
@@ -192,7 +206,9 @@ class DatabaseManager:
         This removes TAG_DIRTY from the model_metadata.keywords field while
         leaving all other user-defined tags intact.
         """
-        return self._metadata_repo.update_keywords_tags(model_id, remove_tags=[TAG_DIRTY])
+        return self._metadata_repo.update_keywords_tags(
+            model_id, remove_tags=[TAG_DIRTY]
+        )
 
     def update_model_keywords_tags(
         self,
@@ -206,7 +222,9 @@ class DatabaseManager:
             model_id, add_tags=add_tags, remove_tags=remove_tags
         )
 
-    def record_recent_model_access(self, model_id: int, limit: Optional[int]) -> List[int]:
+    def record_recent_model_access(
+        self, model_id: int, limit: Optional[int]
+    ) -> List[int]:
         """Insert or update an MRU entry for a model and enforce the limit."""
 
         return self._recent_models_repo.record_access(model_id, limit)
@@ -231,8 +249,9 @@ class DatabaseManager:
 
         return self._recent_models_repo.trim(limit)
 
-
-    def save_camera_orientation(self, model_id: int, camera_data: Dict[str, float]) -> bool:
+    def save_camera_orientation(
+        self, model_id: int, camera_data: Dict[str, float]
+    ) -> bool:
         """Save camera orientation for a model."""
         return self._metadata_repo.save_camera_orientation(model_id, camera_data)
 
@@ -248,7 +267,9 @@ class DatabaseManager:
         """Get all categories from the database."""
         return self._metadata_repo.get_categories()
 
-    def add_category(self, name: str, color: str = "#CCCCCC", sort_order: int = 0) -> int:
+    def add_category(
+        self, name: str, color: str = "#CCCCCC", sort_order: int = 0
+    ) -> int:
         """Add a new category."""
         return self._metadata_repo.add_category(name, color, sort_order)
 
@@ -316,7 +337,14 @@ class DatabaseManager:
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as err:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as err:
             logger.exception("Failed to update model %s", model_id, exc_info=err)
             return False
 
@@ -422,7 +450,14 @@ class DatabaseManager:
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as err:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as err:
             logger.exception("Failed to update category %s", category_id, exc_info=err)
             return False
 
@@ -439,7 +474,12 @@ class DatabaseManager:
     ) -> str:
         """Create a new project."""
         return self._project_repo.create_project(
-            name, base_path, import_tag, original_path, structure_type, group_id=group_id
+            name,
+            base_path,
+            import_tag,
+            original_path,
+            structure_type,
+            group_id=group_id,
         )
 
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
@@ -450,7 +490,9 @@ class DatabaseManager:
         """Get project by name (case-insensitive)."""
         return self._project_repo.get_project_by_name(name)
 
-    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_projects(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """List all projects."""
         return self._project_repo.list_projects(limit, offset)
 
@@ -497,7 +539,9 @@ class DatabaseManager:
         """Get active machine ID for a project."""
         return self._project_repo.get_active_machine(project_id)
 
-    def set_project_active_machine(self, project_id: str, machine_id: Optional[int]) -> bool:
+    def set_project_active_machine(
+        self, project_id: str, machine_id: Optional[int]
+    ) -> bool:
         """Set active machine for a project."""
         return self._project_repo.set_active_machine(project_id, machine_id)
 
@@ -562,7 +606,9 @@ class DatabaseManager:
         """Get total number of files in a project."""
         return self._file_repo.get_file_count_by_project(project_id)
 
-    def find_duplicate_by_hash(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate_by_hash(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash in a project."""
         return self._file_repo.find_duplicate_by_hash(project_id, file_hash)
 
@@ -579,7 +625,9 @@ class DatabaseManager:
 
         kwargs may include: role, version, material_tag, orientation_hint, derived_from_model_id, metadata.
         """
-        return self._project_model_repo.create_project_model(project_id, model_id, **kwargs)
+        return self._project_model_repo.create_project_model(
+            project_id, model_id, **kwargs
+        )
 
     def get_project_model_link(self, record_id: int) -> Optional[Dict[str, Any]]:
         """Fetch a single project-model association."""
@@ -589,7 +637,9 @@ class DatabaseManager:
         """List all models (and derived assets) linked to a project."""
         return self._project_model_repo.list_by_project(project_id)
 
-    def list_project_models_by_role(self, project_id: str, role: str) -> List[Dict[str, Any]]:
+    def list_project_models_by_role(
+        self, project_id: str, role: str
+    ) -> List[Dict[str, Any]]:
         """List project associations filtered by workflow role (e.g., stock, reference, output)."""
         return self._project_model_repo.list_by_role(project_id, role)
 
@@ -820,7 +870,9 @@ class DatabaseManager:
         return self._material_repo.get_material_by_name(name)
 
     def get_all_materials(self, include_deletable: bool = True) -> List[Dict[str, Any]]:
-        return self._material_repo.get_all_materials(include_deletable=include_deletable)
+        return self._material_repo.get_all_materials(
+            include_deletable=include_deletable
+        )
 
     def get_default_materials(self) -> List[Dict[str, Any]]:
         return self._material_repo.get_default_materials()
@@ -839,8 +891,12 @@ class DatabaseManager:
     def get_background_by_name(self, name: str) -> Optional[Dict[str, Any]]:
         return self._background_repo.get_background_by_name(name)
 
-    def get_all_backgrounds(self, include_deletable: bool = True) -> List[Dict[str, Any]]:
-        return self._background_repo.get_all_backgrounds(include_deletable=include_deletable)
+    def get_all_backgrounds(
+        self, include_deletable: bool = True
+    ) -> List[Dict[str, Any]]:
+        return self._background_repo.get_all_backgrounds(
+            include_deletable=include_deletable
+        )
 
     def get_default_backgrounds(self) -> List[Dict[str, Any]]:
         return self._background_repo.get_default_backgrounds()

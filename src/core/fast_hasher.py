@@ -171,7 +171,9 @@ class FastHasher:
                             {
                                 "file": path.name,
                                 "bytes_processed": bytes_processed,
-                                "percent_complete": round((bytes_processed / file_size) * 100, 1),
+                                "percent_complete": round(
+                                    (bytes_processed / file_size) * 100, 1
+                                ),
                             },
                         )
                         return HashResult(
@@ -219,7 +221,9 @@ class FastHasher:
                     "hash": hash_value[:16] + "...",  # Log first 16 chars only
                     "time_seconds": round(hash_time, 3),
                     "throughput_mbps": (
-                        round((file_size / (1024 * 1024)) / hash_time, 2) if hash_time > 0 else 0
+                        round((file_size / (1024 * 1024)) / hash_time, 2)
+                        if hash_time > 0
+                        else 0
                     ),
                 },
             )
@@ -256,7 +260,9 @@ class FastHasher:
                 error=error_msg,
             )
 
-    def hash_chunk(self, data: bytes, hasher: Optional[xxhash.xxh128] = None) -> xxhash.xxh128:
+    def hash_chunk(
+        self, data: bytes, hasher: Optional[xxhash.xxh128] = None
+    ) -> xxhash.xxh128:
         """
         Hash a chunk of data, optionally continuing from previous hasher state.
 
@@ -347,7 +353,9 @@ class FastHasher:
                 "successful": successful,
                 "failed": total_files - successful,
                 "time_seconds": round(batch_time, 3),
-                "avg_time_per_file": (round(batch_time / total_files, 3) if total_files > 0 else 0),
+                "avg_time_per_file": (
+                    round(batch_time / total_files, 3) if total_files > 0 else 0
+                ),
             },
         )
 
@@ -422,7 +430,9 @@ class FastHasher:
             "total_time_seconds": round(total_time, 3),
             "avg_time_per_file": round(total_time / len(successful_results), 3),
             "avg_throughput_mbps": (
-                round((total_size / (1024 * 1024)) / total_time, 2) if total_time > 0 else 0
+                round((total_size / (1024 * 1024)) / total_time, 2)
+                if total_time > 0
+                else 0
             ),
             "min_time": round(min(r.hash_time for r in successful_results), 3),
             "max_time": round(max(r.hash_time for r in successful_results), 3),

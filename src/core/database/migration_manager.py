@@ -132,7 +132,9 @@ class DatabaseVersion:
 class MigrationManager:
     """Comprehensive database migration management system."""
 
-    def __init__(self, db_path: str, migrations_dir: str = None, backup_dir: str = None) -> None:
+    def __init__(
+        self, db_path: str, migrations_dir: str = None, backup_dir: str = None
+    ) -> None:
         """
         Initialize migration manager.
 
@@ -142,8 +144,12 @@ class MigrationManager:
             backup_dir: Directory for backup files
         """
         self.db_path = db_path
-        self.migrations_dir = migrations_dir or os.path.join(os.path.dirname(db_path), "migrations")
-        self.backup_dir = backup_dir or os.path.join(os.path.dirname(db_path), "backups")
+        self.migrations_dir = migrations_dir or os.path.join(
+            os.path.dirname(db_path), "migrations"
+        )
+        self.backup_dir = backup_dir or os.path.join(
+            os.path.dirname(db_path), "backups"
+        )
 
         # Ensure directories exist
         os.makedirs(self.migrations_dir, exist_ok=True)
@@ -230,7 +236,9 @@ class MigrationManager:
 
         try:
             if not os.path.exists(self.migrations_dir):
-                logger.info("Migrations directory %s does not exist", self.migrations_dir)
+                logger.info(
+                    "Migrations directory %s does not exist", self.migrations_dir
+                )
                 return migrations
 
             for filename in os.listdir(self.migrations_dir):
@@ -432,18 +440,24 @@ class MigrationManager:
             operation = "downgrade"
 
         if not required_migrations:
-            logger.warning("No migrations found for %s to version {target_version}", operation)
+            logger.warning(
+                "No migrations found for %s to version {target_version}", operation
+            )
             return []
 
         # Create backup if requested
         backup_path = None
         if create_backup:
-            backup_path = self.create_backup(f"{operation}_{target_version}_{int(time.time())}")
+            backup_path = self.create_backup(
+                f"{operation}_{target_version}_{int(time.time())}"
+            )
 
         results = []
 
         try:
-            logger.info("Starting %s from {current_version} to {target_version}", operation)
+            logger.info(
+                "Starting %s from {current_version} to {target_version}", operation
+            )
 
             for migration in required_migrations:
                 if operation == "upgrade":
@@ -454,10 +468,14 @@ class MigrationManager:
                 results.append(result)
 
                 if result.status == MigrationStatus.FAILED:
-                    logger.error("Migration %s failed: {result.error_message}", migration.version)
+                    logger.error(
+                        "Migration %s failed: {result.error_message}", migration.version
+                    )
                     break
                 else:
-                    logger.info("Migration %s completed successfully", migration.version)
+                    logger.info(
+                        "Migration %s completed successfully", migration.version
+                    )
 
             if all(r.status == MigrationStatus.COMPLETED for r in results):
                 logger.info("Successfully %sd to version {target_version}", operation)
@@ -768,12 +786,16 @@ class MigrationManager:
             applied = self.get_applied_migrations()
             applied_versions = {m["version"] for m in applied}
             validation_results["applied_count"] = len(applied)
-            validation_results["pending_count"] = len(migrations) - len(applied_versions)
+            validation_results["pending_count"] = len(migrations) - len(
+                applied_versions
+            )
 
             # Validate each migration
             for migration in migrations:
                 # Check for duplicate versions
-                version_count = sum(1 for m in migrations if m.version == migration.version)
+                version_count = sum(
+                    1 for m in migrations if m.version == migration.version
+                )
                 if version_count > 1:
                     validation_results["errors"].append(
                         f"Duplicate migration version: {migration.version}"
@@ -911,7 +933,14 @@ class MigrationManager:
                     os.remove(filepath)
                     removed_count += 1
                     logger.debug("Removed old backup: %s", filepath)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning("Failed to remove backup %s: {str(e)}", filepath)
 
             logger.info("Cleaned up %s old backups", removed_count)

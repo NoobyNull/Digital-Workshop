@@ -111,8 +111,12 @@ class ToolSnapshotsWidget(QWidget):
             self.table.setItem(row_index, 0, tool_item)
             self.table.setItem(row_index, 1, _make_item(self._format_numeric(diameter)))
             self.table.setItem(row_index, 2, _make_item(self._format_value(material)))
-            self.table.setItem(row_index, 3, _make_item(self._format_numeric(feed_rate)))
-            self.table.setItem(row_index, 4, _make_item(self._format_numeric(plunge_rate)))
+            self.table.setItem(
+                row_index, 3, _make_item(self._format_numeric(feed_rate))
+            )
+            self.table.setItem(
+                row_index, 4, _make_item(self._format_numeric(plunge_rate))
+            )
             self.table.setItem(row_index, 5, _make_item(notes.strip()))
 
             self._row_id_map[row_index] = snapshot.get("id")
@@ -133,7 +137,9 @@ class ToolSnapshotsWidget(QWidget):
             button.setEnabled(available)
 
         if not available:
-            self.status_label.setText("Select a project G-code to capture tool snapshots.")
+            self.status_label.setText(
+                "Select a project G-code to capture tool snapshots."
+            )
             self.table.setRowCount(0)
             self._current_rows.clear()
             self._row_id_map.clear()
@@ -168,7 +174,9 @@ class ToolSnapshotsWidget(QWidget):
     def _on_delete_clicked(self) -> None:
         ids = self._selected_snapshot_ids()
         if not ids:
-            QMessageBox.information(self, "No Selection", "Select at least one snapshot to delete.")
+            QMessageBox.information(
+                self, "No Selection", "Select at least one snapshot to delete."
+            )
             return
         self.delete_requested.emit(ids)
 
@@ -189,7 +197,10 @@ class ToolSnapshotsWidget(QWidget):
                 if not line.strip():
                     continue
                 values = [v.strip() for v in line.split(",")]
-                row_dict = {headers[i]: values[i] if i < len(values) else "" for i in range(len(headers))}
+                row_dict = {
+                    headers[i]: values[i] if i < len(values) else ""
+                    for i in range(len(headers))
+                }
                 rows.append(
                     {
                         "tool_number": row_dict.get("tool #") or row_dict.get("tool"),
@@ -201,7 +212,9 @@ class ToolSnapshotsWidget(QWidget):
                     }
                 )
             if not rows:
-                QMessageBox.information(self, "No Rows", "No snapshot rows were found in the CSV.")
+                QMessageBox.information(
+                    self, "No Rows", "No snapshot rows were found in the CSV."
+                )
                 return
             self.snapshots_imported.emit(rows)
             QMessageBox.information(
@@ -236,8 +249,12 @@ class ToolSnapshotsWidget(QWidget):
                 ]
                 lines.append(",".join(values))
             Path(path).write_text("\n".join(lines), encoding="utf-8")
-            self.logger.info("Exported %s tool snapshot(s) to %s", len(self._current_rows), path)
-            QMessageBox.information(self, "Export Complete", "Snapshots exported successfully.")
+            self.logger.info(
+                "Exported %s tool snapshot(s) to %s", len(self._current_rows), path
+            )
+            QMessageBox.information(
+                self, "Export Complete", "Snapshots exported successfully."
+            )
         except Exception as exc:  # pragma: no cover - UI feedback
             QMessageBox.warning(self, "Export Failed", f"Could not export CSV:\n{exc}")
 
@@ -252,7 +269,9 @@ class GcodeToolsWidget(QWidget):
     cut_color_changed = Signal(tuple)
     ahead_color_changed = Signal(tuple)
 
-    def __init__(self, renderer: Optional[GcodeRenderer], parent: Optional[QWidget] = None) -> None:
+    def __init__(
+        self, renderer: Optional[GcodeRenderer], parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent)
         self.logger = get_logger(__name__)
         self.renderer = renderer
@@ -444,7 +463,9 @@ class GcodeToolsWidget(QWidget):
         self.ahead_color_btn = QPushButton("Ahead Color")
         self._set_button_color(self.cut_color_btn, (0.0, 0.8, 0.4))
         self._set_button_color(self.ahead_color_btn, (0.35, 0.35, 0.7))
-        self.cut_color_btn.clicked.connect(lambda: self._pick_color(self.cut_color_btn, self.cut_color_changed))
+        self.cut_color_btn.clicked.connect(
+            lambda: self._pick_color(self.cut_color_btn, self.cut_color_changed)
+        )
         self.ahead_color_btn.clicked.connect(
             lambda: self._pick_color(self.ahead_color_btn, self.ahead_color_changed)
         )
@@ -531,7 +552,9 @@ class GcodeToolsWidget(QWidget):
             Path(path).write_text(text, encoding="utf-8")
             self.logger.info("Saved edited G-code to %s", path)
             self.file_saved.emit(path)
-            QMessageBox.information(self, "G-code Saved", f"Edited file saved to:\n{path}")
+            QMessageBox.information(
+                self, "G-code Saved", f"Edited file saved to:\n{path}"
+            )
         except Exception as exc:  # pragma: no cover - UI feedback
             self.logger.warning("Failed to save edited G-code to %s: %s", path, exc)
             QMessageBox.warning(self, "Save Failed", f"Could not save file:\n{exc}")
@@ -539,9 +562,13 @@ class GcodeToolsWidget(QWidget):
     # ------------------------------------------------------------------
     # Color helpers
     # ------------------------------------------------------------------
-    def _set_button_color(self, button: QPushButton, color: tuple[float, float, float]) -> None:
+    def _set_button_color(
+        self, button: QPushButton, color: tuple[float, float, float]
+    ) -> None:
         r, g, b = [int(c * 255) for c in color]
-        button.setStyleSheet(f"QPushButton {{ background-color: rgb({r},{g},{b}); color: #fff; }}")
+        button.setStyleSheet(
+            f"QPushButton {{ background-color: rgb({r},{g},{b}); color: #fff; }}"
+        )
 
     def _pick_color(self, button: QPushButton, signal: Signal) -> None:
         current_style = button.palette().button().color()

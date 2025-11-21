@@ -95,7 +95,9 @@ class SnappingSystem:
         _initialized: Whether the system has been properly initialized
     """
 
-    def __init__(self, main_window: QMainWindow, config_file: Optional[str] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, config_file: Optional[str] = None
+    ) -> None:
         """
         Initialize the complete snapping system.
 

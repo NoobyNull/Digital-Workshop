@@ -71,7 +71,9 @@ class ErrorRecoveryStrategy(Enum):
 
     IMMEDIATE_SHUTDOWN = "immediate_shutdown"  # Stop application immediately
     GRACEFUL_SHUTDOWN = "graceful_shutdown"  # Clean shutdown with error reporting
-    RETRY_WITH_BACKOFF = "retry_with_backoff"  # Retry operation with exponential backoff
+    RETRY_WITH_BACKOFF = (
+        "retry_with_backoff"  # Retry operation with exponential backoff
+    )
     FALLBACK_MODE = "fallback_mode"  # Switch to fallback implementation
     USER_INTERVENTION = "user_intervention"  # Request user action
     IGNORE_AND_CONTINUE = "ignore_and_continue"  # Log error and continue operation

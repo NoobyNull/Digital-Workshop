@@ -51,14 +51,18 @@ class TestDatabaseSchema:
         """Test that projects table is created."""
         with db_manager._db_ops.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='projects'"
+            )
             assert cursor.fetchone() is not None
 
     def test_files_table_created(self, db_manager):
         """Test that files table is created."""
         with db_manager._db_ops.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='files'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='files'"
+            )
             assert cursor.fetchone() is not None
 
     def test_projects_table_columns(self, db_manager):
@@ -67,10 +71,17 @@ class TestDatabaseSchema:
             cursor = conn.cursor()
             cursor.execute("PRAGMA table_info(projects)")
             columns = {row[1] for row in cursor.fetchall()}
-            
+
             expected_columns = {
-                'id', 'name', 'base_path', 'import_tag', 'original_path',
-                'structure_type', 'import_date', 'created_at', 'updated_at'
+                "id",
+                "name",
+                "base_path",
+                "import_tag",
+                "original_path",
+                "structure_type",
+                "import_date",
+                "created_at",
+                "updated_at",
             }
             assert expected_columns.issubset(columns)
 
@@ -80,11 +91,19 @@ class TestDatabaseSchema:
             cursor = conn.cursor()
             cursor.execute("PRAGMA table_info(files)")
             columns = {row[1] for row in cursor.fetchall()}
-            
+
             expected_columns = {
-                'id', 'project_id', 'file_path', 'file_name', 'file_size',
-                'file_hash', 'status', 'link_type', 'original_path',
-                'created_at', 'updated_at'
+                "id",
+                "project_id",
+                "file_path",
+                "file_name",
+                "file_size",
+                "file_hash",
+                "status",
+                "link_type",
+                "original_path",
+                "created_at",
+                "updated_at",
             }
             assert expected_columns.issubset(columns)
 
@@ -95,10 +114,9 @@ class TestProjectRepository:
     def test_create_project(self, db_manager):
         """Test creating a project."""
         project_id = db_manager.create_project(
-            name="Test Project",
-            base_path="/path/to/project"
+            name="Test Project", base_path="/path/to/project"
         )
-        
+
         assert project_id is not None
         assert isinstance(project_id, str)
         assert len(project_id) > 0
@@ -106,40 +124,36 @@ class TestProjectRepository:
     def test_get_project(self, db_manager):
         """Test retrieving a project."""
         project_id = db_manager.create_project(
-            name="Test Project",
-            base_path="/path/to/project"
+            name="Test Project", base_path="/path/to/project"
         )
-        
+
         project = db_manager.get_project(project_id)
         assert project is not None
-        assert project['name'] == "Test Project"
-        assert project['base_path'] == "/path/to/project"
+        assert project["name"] == "Test Project"
+        assert project["base_path"] == "/path/to/project"
 
     def test_get_project_by_name(self, db_manager):
         """Test retrieving a project by name (case-insensitive)."""
-        db_manager.create_project(
-            name="Test Project",
-            base_path="/path/to/project"
-        )
-        
+        db_manager.create_project(name="Test Project", base_path="/path/to/project")
+
         # Test exact match
         project = db_manager.get_project_by_name("Test Project")
         assert project is not None
-        assert project['name'] == "Test Project"
-        
+        assert project["name"] == "Test Project"
+
         # Test case-insensitive match
         project = db_manager.get_project_by_name("test project")
         assert project is not None
-        assert project['name'] == "Test Project"
+        assert project["name"] == "Test Project"
 
     def test_duplicate_project_detection(self, db_manager):
         """Test that duplicate projects are detected (case-insensitive)."""
         db_manager.create_project(name="Test Project")
-        
+
         # Should raise ValueError for duplicate
         with pytest.raises(ValueError):
             db_manager.create_project(name="Test Project")
-        
+
         # Should also detect case-insensitive duplicates
         with pytest.raises(ValueError):
             db_manager.create_project(name="test project")
@@ -149,30 +163,27 @@ class TestProjectRepository:
         db_manager.create_project(name="Project 1")
         db_manager.create_project(name="Project 2")
         db_manager.create_project(name="Project 3")
-        
+
         projects = db_manager.list_projects()
         assert len(projects) == 3
 
     def test_update_project(self, db_manager):
         """Test updating a project."""
         project_id = db_manager.create_project(name="Test Project")
-        
-        success = db_manager.update_project(
-            project_id,
-            base_path="/new/path"
-        )
-        
+
+        success = db_manager.update_project(project_id, base_path="/new/path")
+
         assert success
         project = db_manager.get_project(project_id)
-        assert project['base_path'] == "/new/path"
+        assert project["base_path"] == "/new/path"
 
     def test_delete_project(self, db_manager):
         """Test deleting a project."""
         project_id = db_manager.create_project(name="Test Project")
-        
+
         success = db_manager.delete_project(project_id)
         assert success
-        
+
         project = db_manager.get_project(project_id)
         assert project is None
 
@@ -182,29 +193,27 @@ class TestProjectRepository:
             name="Imported Project",
             import_tag="imported_project",
             original_path="/original/path",
-            structure_type="nested"
+            structure_type="nested",
         )
-        
+
         project = db_manager.get_project(project_id)
-        assert project['import_tag'] == "imported_project"
-        assert project['original_path'] == "/original/path"
-        assert project['structure_type'] == "nested"
+        assert project["import_tag"] == "imported_project"
+        assert project["original_path"] == "/original/path"
+        assert project["structure_type"] == "nested"
 
     def test_list_imported_projects(self, db_manager):
         """Test listing imported projects."""
         db_manager.create_project(name="Regular Project")
         db_manager.create_project(
-            name="Imported Project 1",
-            import_tag="imported_project"
+            name="Imported Project 1", import_tag="imported_project"
         )
         db_manager.create_project(
-            name="Imported Project 2",
-            import_tag="imported_project"
+            name="Imported Project 2", import_tag="imported_project"
         )
-        
+
         imported = db_manager.list_imported_projects()
         assert len(imported) == 2
-        assert all(p['import_tag'] == "imported_project" for p in imported)
+        assert all(p["import_tag"] == "imported_project" for p in imported)
 
 
 class TestFileRepository:
@@ -213,15 +222,15 @@ class TestFileRepository:
     def test_add_file(self, db_manager):
         """Test adding a file to a project."""
         project_id = db_manager.create_project(name="Test Project")
-        
+
         file_id = db_manager.add_file(
             project_id=project_id,
             file_path="/path/to/file.stl",
             file_name="file.stl",
             file_size=1024,
-            status="imported"
+            status="imported",
         )
-        
+
         assert file_id is not None
         assert isinstance(file_id, int)
 
@@ -229,23 +238,21 @@ class TestFileRepository:
         """Test retrieving a file."""
         project_id = db_manager.create_project(name="Test Project")
         file_id = db_manager.add_file(
-            project_id=project_id,
-            file_path="/path/to/file.stl",
-            file_name="file.stl"
+            project_id=project_id, file_path="/path/to/file.stl", file_name="file.stl"
         )
-        
+
         file_data = db_manager.get_file(file_id)
         assert file_data is not None
-        assert file_data['file_name'] == "file.stl"
-        assert file_data['project_id'] == project_id
+        assert file_data["file_name"] == "file.stl"
+        assert file_data["project_id"] == project_id
 
     def test_get_files_by_project(self, db_manager):
         """Test retrieving files by project."""
         project_id = db_manager.create_project(name="Test Project")
-        
+
         db_manager.add_file(project_id, "/path/to/file1.stl", "file1.stl")
         db_manager.add_file(project_id, "/path/to/file2.obj", "file2.obj")
-        
+
         files = db_manager.get_files_by_project(project_id)
         assert len(files) == 2
 
@@ -253,26 +260,23 @@ class TestFileRepository:
         """Test updating file status."""
         project_id = db_manager.create_project(name="Test Project")
         file_id = db_manager.add_file(
-            project_id, "/path/to/file.stl", "file.stl",
-            status="pending"
+            project_id, "/path/to/file.stl", "file.stl", status="pending"
         )
-        
+
         success = db_manager.update_file_status(file_id, "imported")
         assert success
-        
+
         file_data = db_manager.get_file(file_id)
-        assert file_data['status'] == "imported"
+        assert file_data["status"] == "imported"
 
     def test_delete_file(self, db_manager):
         """Test deleting a file."""
         project_id = db_manager.create_project(name="Test Project")
-        file_id = db_manager.add_file(
-            project_id, "/path/to/file.stl", "file.stl"
-        )
-        
+        file_id = db_manager.add_file(project_id, "/path/to/file.stl", "file.stl")
+
         success = db_manager.delete_file(file_id)
         assert success
-        
+
         file_data = db_manager.get_file(file_id)
         assert file_data is None
 
@@ -281,11 +285,10 @@ class TestFileRepository:
         project_id = db_manager.create_project(name="Test Project")
         db_manager.add_file(project_id, "/path/to/file1.stl", "file1.stl")
         db_manager.add_file(project_id, "/path/to/file2.obj", "file2.obj")
-        
+
         # Delete project
         db_manager.delete_project(project_id)
-        
+
         # Files should be deleted too
         files = db_manager.get_files_by_project(project_id)
         assert len(files) == 0
-

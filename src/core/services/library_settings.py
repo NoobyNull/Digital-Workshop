@@ -85,7 +85,9 @@ class LibrarySettings:
 
         self._settings.beginGroup(self.GROUP)
         try:
-            raw = self._settings.value("mode", LibraryMode.LEAVE_IN_PLACE.value, type=str)
+            raw = self._settings.value(
+                "mode", LibraryMode.LEAVE_IN_PLACE.value, type=str
+            )
         finally:
             self._settings.endGroup()
 

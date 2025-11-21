@@ -87,7 +87,9 @@ class DeduplicationManager:
             self.logger.error("Failed to get file stats for %s: {e}", file_path)
             return None
 
-    def deduplicate_group(self, models: List[Dict], keep_strategy: str) -> Tuple[int, List[int]]:
+    def deduplicate_group(
+        self, models: List[Dict], keep_strategy: str
+    ) -> Tuple[int, List[int]]:
         """
         Deduplicate a group of duplicate models.
 
@@ -125,7 +127,9 @@ class DeduplicationManager:
                 keep_model = max(
                     models,
                     key=lambda m: (
-                        self.get_file_stats(m["file_path"]).get("modified", datetime.min)
+                        self.get_file_stats(m["file_path"]).get(
+                            "modified", datetime.min
+                        )
                         if self.get_file_stats(m["file_path"])
                         else datetime.min
                     ),
@@ -134,7 +138,9 @@ class DeduplicationManager:
                 keep_model = min(
                     models,
                     key=lambda m: (
-                        self.get_file_stats(m["file_path"]).get("modified", datetime.max)
+                        self.get_file_stats(m["file_path"]).get(
+                            "modified", datetime.max
+                        )
                         if self.get_file_stats(m["file_path"])
                         else datetime.max
                     ),

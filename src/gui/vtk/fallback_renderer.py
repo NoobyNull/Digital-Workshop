@@ -50,7 +50,7 @@ class VTKFallbackRenderer:
         self.image_cache: Dict[str, Any] = {}
 
         # Performance settings
-        self.enable_image_cache = True
+        self._image_cache_enabled = True
         self.cache_timeout_seconds = 300  # 5 minutes
         self.max_cache_size = 50
 
@@ -73,11 +73,17 @@ class VTKFallbackRenderer:
 
         # Platform-specific adjustments
         if system == "Windows":
-            capabilities.update({"software_rendering_available": True, "angle_fallback": True})
+            capabilities.update(
+                {"software_rendering_available": True, "angle_fallback": True}
+            )
         elif system == "Linux":
-            capabilities.update({"software_rendering_available": True, "mesa_fallback": True})
+            capabilities.update(
+                {"software_rendering_available": True, "mesa_fallback": True}
+            )
         elif system == "Darwin":
-            capabilities.update({"software_rendering_available": True, "metal_fallback": True})
+            capabilities.update(
+                {"software_rendering_available": True, "metal_fallback": True}
+            )
 
         return capabilities
 
@@ -102,7 +108,9 @@ class VTKFallbackRenderer:
             self.original_renderer = renderer
             self.fallback_mode = mode or self._select_best_fallback_mode()
 
-            self.logger.info("Activating fallback rendering mode: %s", self.fallback_mode.value)
+            self.logger.info(
+                "Activating fallback rendering mode: %s", self.fallback_mode.value
+            )
 
             success = self._apply_fallback_mode()
 
@@ -129,7 +137,7 @@ class VTKFallbackRenderer:
                 return FallbackMode.SOFTWARE_RENDERING
 
             # Otherwise, try image cache if available
-            if caps.get("image_cache_supported", False) and self.enable_image_cache:
+            if caps.get("image_cache_supported", False) and self._image_cache_enabled:
                 return FallbackMode.IMAGE_CACHE
 
             # Fall back to wireframe
@@ -159,7 +167,9 @@ class VTKFallbackRenderer:
                 return False
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error applying fallback mode %s: {e}", self.fallback_mode)
+            self.logger.error(
+                "Error applying fallback mode %s: {e}", self.fallback_mode
+            )
             return False
 
     def _setup_software_rendering(self) -> bool:
@@ -191,7 +201,14 @@ class VTKFallbackRenderer:
                         self.logger.info("Mesa software rendering configured")
                         return True
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug("Software rendering setup error: %s", e)
 
             # If specific setup fails, try generic offscreen rendering
@@ -218,7 +235,9 @@ class VTKFallbackRenderer:
                 if original_camera:
                     new_camera = vtk.vtkCamera()
                     new_camera.DeepCopy(original_camera)
-                    offscreen_window.GetRenderers().GetFirstRenderer().SetActiveCamera(new_camera)
+                    offscreen_window.GetRenderers().GetFirstRenderer().SetActiveCamera(
+                        new_camera
+                    )
 
             self.logger.info("Generic offscreen rendering configured")
             return True
@@ -384,7 +403,9 @@ class VTKFallbackRenderer:
         """
         try:
             # Check if context is valid
-            is_valid, context_state = self.context_manager.validate_context(render_window, "render")
+            is_valid, context_state = self.context_manager.validate_context(
+                render_window, "render"
+            )
 
             if is_valid:
                 # Context is valid, use normal rendering
@@ -392,7 +413,9 @@ class VTKFallbackRenderer:
 
             # Context is invalid, check if fallback is appropriate
             if not self.can_use_fallback(context_state):
-                self.logger.warning("Cannot use fallback for context state: %s", context_state)
+                self.logger.warning(
+                    "Cannot use fallback for context state: %s", context_state
+                )
                 return False
 
             # Activate fallback if not already active
@@ -460,11 +483,15 @@ class VTKFallbackRenderer:
             elif self.fallback_mode == FallbackMode.BOUNDING_BOX:
                 return self._bounding_box_render(render_window)
             else:
-                self.logger.warning("Unknown fallback mode for rendering: %s", self.fallback_mode)
+                self.logger.warning(
+                    "Unknown fallback mode for rendering: %s", self.fallback_mode
+                )
                 return False
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error in fallback render mode %s: {e}", self.fallback_mode)
+            self.logger.error(
+                "Error in fallback render mode %s: {e}", self.fallback_mode
+            )
             return False
 
     def _software_render(self, render_window: vtk.vtkRenderWindow) -> bool:
@@ -516,7 +543,7 @@ class VTKFallbackRenderer:
             "fallback_active": self.fallback_active,
             "fallback_mode": self.fallback_mode.value if self.fallback_mode else None,
             "platform_capabilities": self.platform_capabilities,
-            "image_cache_enabled": self.enable_image_cache,
+            "image_cache_enabled": self._image_cache_enabled,
             "cache_size": len(self.image_cache),
             "max_cache_size": self.max_cache_size,
         }
@@ -531,7 +558,7 @@ class VTKFallbackRenderer:
         self.fallback_mode = mode
         self.logger.info("Fallback mode set to: %s", mode.value)
 
-    def enable_image_cache(self, enabled: bool, max_size: int = 50) -> None:
+    def set_image_cache_enabled(self, enabled: bool, max_size: int = 50) -> None:
         """
         Enable or disable image caching.
 
@@ -539,7 +566,7 @@ class VTKFallbackRenderer:
             enabled: Whether to enable image caching
             max_size: Maximum number of cached images
         """
-        self.enable_image_cache = enabled
+        self._image_cache_enabled = enabled
         self.max_cache_size = max_size
 
         if not enabled:
@@ -562,7 +589,9 @@ def get_vtk_fallback_renderer() -> VTKFallbackRenderer:
     return _vtk_fallback_renderer
 
 
-def activate_vtk_fallback(renderer: vtk.vtkRenderer, mode: Optional[FallbackMode] = None) -> bool:
+def activate_vtk_fallback(
+    renderer: vtk.vtkRenderer, mode: Optional[FallbackMode] = None
+) -> bool:
     """
     Convenience function to activate VTK fallback rendering.
 

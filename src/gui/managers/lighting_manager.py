@@ -36,7 +36,9 @@ class LightingManager:
     def _setup_lighting_manager(self) -> None:
         """Initialize the VTK lighting manager."""
         try:
-            from src.gui.lighting_control_panel import LightingManager as VTKLightingManager
+            from src.gui.lighting_control_panel import (
+                LightingManager as VTKLightingManager,
+            )
 
             renderer = getattr(self.main_window.viewer_widget, "renderer", None)
             if renderer:
@@ -63,16 +65,15 @@ class LightingManager:
             if self.lighting_manager:
                 self.lighting_panel.position_changed.connect(self._on_position_changed)
                 self.lighting_panel.color_changed.connect(self._on_color_changed)
-                self.lighting_panel.intensity_changed.connect(self._on_intensity_changed)
-                self.lighting_panel.cone_angle_changed.connect(self._on_cone_angle_changed)
-
+                self.lighting_panel.intensity_changed.connect(
+                    self._on_intensity_changed
+                )
                 # Initialize panel with current properties
                 props = self.lighting_manager.get_properties()
                 self.lighting_panel.set_values(
                     position=tuple(props.get("position", (100.0, 100.0, 100.0))),
                     color=tuple(props.get("color", (1.0, 1.0, 1.0))),
                     intensity=float(props.get("intensity", 0.8)),
-                    cone_angle=float(props.get("cone_angle", 30.0)),
                     emit_signals=False,
                 )
 
@@ -94,13 +95,10 @@ class LightingManager:
             col_g = settings.value("lighting/color_g", 1.0, type=float)
             col_b = settings.value("lighting/color_b", 1.0, type=float)
             intensity = settings.value("lighting/intensity", 1.2, type=float)
-            cone_angle = settings.value("lighting/cone_angle", 90.0, type=float)
-
             props = {
                 "position": (float(pos_x), float(pos_y), float(pos_z)),
                 "color": (float(col_r), float(col_g), float(col_b)),
                 "intensity": float(intensity),
-                "cone_angle": float(cone_angle),
             }
 
             if self.lighting_manager:
@@ -111,7 +109,6 @@ class LightingManager:
                     position=props["position"],
                     color=props["color"],
                     intensity=props["intensity"],
-                    cone_angle=props["cone_angle"],
                     emit_signals=False,
                 )
 
@@ -135,7 +132,7 @@ class LightingManager:
             settings.setValue("lighting/color_g", float(props["color"][1]))
             settings.setValue("lighting/color_b", float(props["color"][2]))
             settings.setValue("lighting/intensity", float(props["intensity"]))
-            settings.setValue("lighting/cone_angle", float(props["cone_angle"]))
+            # No cone angle support in current panel; retain core settings only
             settings.sync()
 
             self.logger.debug("Lighting settings saved")
@@ -206,7 +203,9 @@ class LightingManager:
                 hasattr(self.main_window, "material_lighting_integrator")
                 and self.main_window.material_lighting_integrator
             ):
-                self.main_window.material_lighting_integrator.apply_material_species(species_name)
+                self.main_window.material_lighting_integrator.apply_material_species(
+                    species_name
+                )
             else:
                 self.logger.warning("MaterialLightingIntegrator not available")
         except Exception as e:

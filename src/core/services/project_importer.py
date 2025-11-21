@@ -115,7 +115,9 @@ class ProjectImporter:
 
                     if not filter_result.is_allowed:
                         files_blocked += 1
-                        logger.debug("Blocked file: %s ({filter_result.reason})", file_path)
+                        logger.debug(
+                            "Blocked file: %s ({filter_result.reason})", file_path
+                        )
                         continue
 
                     # Get file info
@@ -137,7 +139,14 @@ class ProjectImporter:
                     files_imported += 1
                     logger.debug("Imported file: %s", file_name)
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     files_failed += 1
                     error_msg = f"Failed to import {file_path}: {str(e)}"
                     errors.append(error_msg)

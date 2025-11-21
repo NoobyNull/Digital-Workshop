@@ -38,7 +38,9 @@ class MaterialCostManager:
         Args:
             db_path: Path to store material library (optional)
         """
-        self.db_path = db_path or str(Path.home() / ".digital_workshop" / "materials.json")
+        self.db_path = db_path or str(
+            Path.home() / ".digital_workshop" / "materials.json"
+        )
         self.materials: Dict[str, Material] = {}
         self._load_materials()
 
@@ -125,7 +127,10 @@ class MaterialCostManager:
         try:
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
             with open(self.db_path, "w") as f:
-                data = {name: material.to_dict() for name, material in self.materials.items()}
+                data = {
+                    name: material.to_dict()
+                    for name, material in self.materials.items()
+                }
                 json.dump(data, f, indent=2)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             print(f"Error saving materials: {e}")
@@ -232,7 +237,9 @@ class MaterialCostManager:
         """
         try:
             if name in self.materials:
-                self.materials[name].waste_percentage = max(0.0, min(100.0, waste_percentage))
+                self.materials[name].waste_percentage = max(
+                    0.0, min(100.0, waste_percentage)
+                )
                 self._save_materials()
                 return True
             return False

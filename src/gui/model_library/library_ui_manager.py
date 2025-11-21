@@ -147,7 +147,9 @@ class LibraryUIManager:
                 self.library_widget.category_filter.addItem(name, userData=name)
         except Exception:
             # If categories cannot be loaded, keep the filter with only the default option
-            logger.warning("Failed to load categories for model library filter", exc_info=True)
+            logger.warning(
+                "Failed to load categories for model library filter", exc_info=True
+            )
 
         button_row.addWidget(QLabel("Category:"))
         button_row.addWidget(self.library_widget.category_filter)
@@ -193,7 +195,9 @@ class LibraryUIManager:
 
         self.library_widget.file_model = MultiRootFileSystemModel()
         self.library_widget.file_proxy_model = FileSystemProxyModel()
-        self.library_widget.file_proxy_model.setSourceModel(self.library_widget.file_model)
+        self.library_widget.file_proxy_model.setSourceModel(
+            self.library_widget.file_model
+        )
 
         self.library_widget.file_model.indexing_started.connect(
             self.library_widget._on_indexing_started
@@ -216,21 +220,25 @@ class LibraryUIManager:
 
         self.library_widget.refresh_button = QPushButton("Refresh")
         self.library_widget.refresh_button.setToolTip("Refresh directory index")
-        self.library_widget.refresh_button.setIcon(self._std_icon(QStyle.SP_BrowserReload))
+        self.library_widget.refresh_button.setIcon(
+            self._std_icon(QStyle.SP_BrowserReload)
+        )
         self.library_widget.refresh_button.clicked.connect(
             self.library_widget._refresh_file_browser
         )
         import_layout.addWidget(self.library_widget.refresh_button)
 
-
-
         self.library_widget.import_selected_button = QPushButton("Import Selected")
         self.library_widget.import_selected_button.setToolTip("Import selected file(s)")
-        self.library_widget.import_selected_button.setIcon(self._std_icon(QStyle.SP_ArrowDown))
+        self.library_widget.import_selected_button.setIcon(
+            self._std_icon(QStyle.SP_ArrowDown)
+        )
         import_layout.addWidget(self.library_widget.import_selected_button)
 
         self.library_widget.import_folder_button = QPushButton("Import Folder")
-        self.library_widget.import_folder_button.setToolTip("Import the selected folder")
+        self.library_widget.import_folder_button.setToolTip(
+            "Import the selected folder"
+        )
         self.library_widget.import_folder_button.setIcon(
             self._std_icon(QStyle.SP_FileDialogNewFolder)
         )
@@ -248,9 +256,13 @@ class LibraryUIManager:
         # Row height zoom controlled by Ctrl+Scroll (no slider UI)
         # Initialize row height from settings or default
         settings = QSettings("DigitalWorkshop", "ModelLibrary")
-        self.library_widget.current_row_height = settings.value("row_height", 64, type=int)
+        self.library_widget.current_row_height = settings.value(
+            "row_height", 64, type=int
+        )
         # Initialize grid icon size from settings or default
-        self.library_widget.current_grid_icon_size = settings.value("grid_icon_size", 128, type=int)
+        self.library_widget.current_grid_icon_size = settings.value(
+            "grid_icon_size", 128, type=int
+        )
 
         self.library_widget.view_tabs = QTabWidget()
 
@@ -285,7 +297,9 @@ class LibraryUIManager:
         # Apply initial row height from settings
         initial_height = self.library_widget.current_row_height
         self.library_widget.list_view.setIconSize(QSize(initial_height, initial_height))
-        self.library_widget.list_view.verticalHeader().setDefaultSectionSize(initial_height)
+        self.library_widget.list_view.verticalHeader().setDefaultSectionSize(
+            initial_height
+        )
 
         # Removed setAlternatingRowColors(True) - qt-material handles alternating row colors via theme
         header = self.library_widget.list_view.horizontalHeader()
@@ -338,11 +352,17 @@ class LibraryUIManager:
 
         # Apply initial grid icon size from settings
         initial_grid_size = self.library_widget.current_grid_icon_size
-        self.library_widget.grid_view.setIconSize(QSize(initial_grid_size, initial_grid_size))
+        self.library_widget.grid_view.setIconSize(
+            QSize(initial_grid_size, initial_grid_size)
+        )
 
         # Use custom delegate to hide filenames in grid view
-        self.library_widget.grid_delegate = GridIconDelegate(self.library_widget.grid_view)
-        self.library_widget.grid_delegate.set_icon_size(QSize(initial_grid_size, initial_grid_size))
+        self.library_widget.grid_delegate = GridIconDelegate(
+            self.library_widget.grid_view
+        )
+        self.library_widget.grid_delegate.set_icon_size(
+            QSize(initial_grid_size, initial_grid_size)
+        )
         self.library_widget.grid_view.setItemDelegate(self.library_widget.grid_delegate)
 
         self.library_widget.view_tabs.addTab(self.library_widget.grid_view, "Grid")
@@ -501,7 +521,9 @@ class LibraryUIManager:
         # Get column names
         column_names = []
         for col in range(self.library_widget.list_model.columnCount()):
-            column_names.append(self.library_widget.list_model.headerData(col, Qt.Horizontal))
+            column_names.append(
+                self.library_widget.list_model.headerData(col, Qt.Horizontal)
+            )
 
         # Create actions for each column
         def make_toggle_handler(column_index):

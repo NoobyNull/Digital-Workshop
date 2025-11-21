@@ -132,4 +132,3 @@ def test_execute_plan_moves_files_and_registers_thumbnails(tmp_path: Path) -> No
     file_hash = hash_result.hash_value
     registered_thumb = service.get_thumbnail_path(file_hash)
     assert registered_thumb.exists()
-

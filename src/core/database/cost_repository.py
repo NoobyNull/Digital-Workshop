@@ -322,7 +322,9 @@ class CostRepository:
     def delete_entries(self, snapshot_id: int) -> int:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM cost_entries WHERE snapshot_id = ?", (snapshot_id,))
+            cursor.execute(
+                "DELETE FROM cost_entries WHERE snapshot_id = ?", (snapshot_id,)
+            )
             conn.commit()
             deleted = cursor.rowcount
 

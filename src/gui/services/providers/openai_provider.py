@@ -36,7 +36,9 @@ class OpenAIProvider(BaseProvider):
 
         if self.api_key:
             if self.base_url:
-                self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
+                self.client = openai.OpenAI(
+                    api_key=self.api_key, base_url=self.base_url
+                )
             else:
                 self.client = openai.OpenAI(api_key=self.api_key)
 
@@ -52,7 +54,9 @@ class OpenAIProvider(BaseProvider):
         try:
             self.logger.info("Fetching OpenAI models...")
             models = self.client.models.list()
-            self.logger.info("OpenAI API response received. Total models: %d", len(models.data))
+            self.logger.info(
+                "OpenAI API response received. Total models: %d", len(models.data)
+            )
 
             # Log all models for debugging
             all_model_ids = [model.id for model in models.data]
@@ -72,7 +76,9 @@ class OpenAIProvider(BaseProvider):
             # Return default models if API call fails
             return ["gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini"]
 
-    def analyze_image(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_image(
+        self, image_path: str, prompt: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Analyze image using OpenAI's GPT-4 Vision.
 
@@ -84,7 +90,9 @@ class OpenAIProvider(BaseProvider):
             Structured analysis results
         """
         if not self.is_configured():
-            raise ValueError("OpenAI provider is not configured. Please provide an API key.")
+            raise ValueError(
+                "OpenAI provider is not configured. Please provide an API key."
+            )
 
         try:
             from .image_utils import build_image_message

@@ -31,9 +31,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
-
-
 class ViewerSettingsTab(QWidget):
     """3D Viewer settings tab: grid, ground plane, camera, and lighting."""
 
@@ -183,7 +180,9 @@ class ViewerSettingsTab(QWidget):
         quick_label = QLabel("<b>Quick Viewer Buttons</b>")
         quick_layout.addRow(quick_label)
 
-        self.show_quick_controls_check = QCheckBox("Show quick action buttons (Solid/Material/Lighting/etc.)")
+        self.show_quick_controls_check = QCheckBox(
+            "Show quick action buttons (Solid/Material/Lighting/etc.)"
+        )
         quick_layout.addRow(self.show_quick_controls_check)
 
         layout.addWidget(quick_group)
@@ -284,7 +283,9 @@ class ViewerSettingsTab(QWidget):
         self.ground_visible_check.stateChanged.connect(self._on_settings_changed)
         self.ground_color_btn.clicked.connect(self._on_ground_color_clicked)
         self.ground_offset_slider.valueChanged.connect(self._on_ground_offset_changed)
-        self.mouse_sensitivity_slider.valueChanged.connect(self._on_mouse_sensitivity_changed)
+        self.mouse_sensitivity_slider.valueChanged.connect(
+            self._on_mouse_sensitivity_changed
+        )
         self.fps_limit_combo.currentIndexChanged.connect(self._on_settings_changed)
         self.zoom_speed_slider.valueChanged.connect(self._on_zoom_speed_changed)
         self.auto_fit_check.stateChanged.connect(self._on_settings_changed)
@@ -292,14 +293,20 @@ class ViewerSettingsTab(QWidget):
         self.light_pos_y_slider.valueChanged.connect(self._on_light_pos_y_changed)
         self.light_pos_z_slider.valueChanged.connect(self._on_light_pos_z_changed)
         self.light_color_btn.clicked.connect(self._on_light_color_clicked)
-        self.light_intensity_slider.valueChanged.connect(self._on_light_intensity_changed)
-        self.light_cone_angle_slider.valueChanged.connect(self._on_light_cone_angle_changed)
+        self.light_intensity_slider.valueChanged.connect(
+            self._on_light_intensity_changed
+        )
+        self.light_cone_angle_slider.valueChanged.connect(
+            self._on_light_cone_angle_changed
+        )
         self.enable_fill_light_check.stateChanged.connect(self._on_settings_changed)
 
         # Gradient signals
         self.enable_gradient_check.stateChanged.connect(self._on_settings_changed)
         self.gradient_top_color_btn.clicked.connect(self._on_gradient_top_color_clicked)
-        self.gradient_bottom_color_btn.clicked.connect(self._on_gradient_bottom_color_clicked)
+        self.gradient_bottom_color_btn.clicked.connect(
+            self._on_gradient_bottom_color_clicked
+        )
 
     def _load_settings(self) -> None:
         """Load current settings from QSettings with fallback to
@@ -313,47 +320,90 @@ class ViewerSettingsTab(QWidget):
             settings = QSettings()
 
             # Grid settings - load from QSettings with fallback to config
-            self.grid_visible_check.setChecked(settings.value("viewer/grid_visible", config.grid_visible, type=bool))
-            grid_color = settings.value("viewer/grid_color", config.grid_color, type=str)
+            self.grid_visible_check.setChecked(
+                settings.value("viewer/grid_visible", config.grid_visible, type=bool)
+            )
+            grid_color = settings.value(
+                "viewer/grid_color", config.grid_color, type=str
+            )
             self._update_color_button(self.grid_color_btn, grid_color)
-            self.grid_size_slider.setValue(int(settings.value("viewer/grid_size", config.grid_size, type=float)))
+            self.grid_size_slider.setValue(
+                int(settings.value("viewer/grid_size", config.grid_size, type=float))
+            )
 
             # Ground settings
             self.ground_visible_check.setChecked(
-                settings.value("viewer/ground_visible", config.ground_visible, type=bool)
+                settings.value(
+                    "viewer/ground_visible", config.ground_visible, type=bool
+                )
             )
-            ground_color = settings.value("viewer/ground_color", config.ground_color, type=str)
+            ground_color = settings.value(
+                "viewer/ground_color", config.ground_color, type=str
+            )
             self._update_color_button(self.ground_color_btn, ground_color)
             self.ground_offset_slider.setValue(
-                int(settings.value("viewer/ground_offset", config.ground_offset, type=float) * 10)
+                int(
+                    settings.value(
+                        "viewer/ground_offset", config.ground_offset, type=float
+                    )
+                    * 10
+                )
             )
 
             # Camera settings
             self.mouse_sensitivity_slider.setValue(
-                int(settings.value("viewer/mouse_sensitivity", config.mouse_sensitivity, type=float) * 10)
+                int(
+                    settings.value(
+                        "viewer/mouse_sensitivity", config.mouse_sensitivity, type=float
+                    )
+                    * 10
+                )
             )
-            fps_limit = int(settings.value("viewer/fps_limit", config.fps_limit, type=int))
-            self.fps_limit_combo.setCurrentIndex({0: 0, 120: 1, 60: 2, 30: 3}.get(fps_limit, 0))
+            fps_limit = int(
+                settings.value("viewer/fps_limit", config.fps_limit, type=int)
+            )
+            self.fps_limit_combo.setCurrentIndex(
+                {0: 0, 120: 1, 60: 2, 30: 3}.get(fps_limit, 0)
+            )
             self.zoom_speed_slider.setValue(
-                int(settings.value("viewer/zoom_speed", config.zoom_speed, type=float) * 10)
+                int(
+                    settings.value("viewer/zoom_speed", config.zoom_speed, type=float)
+                    * 10
+                )
             )
             self.auto_fit_check.setChecked(
-                settings.value("viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool)
+                settings.value(
+                    "viewer/auto_fit_on_load", config.auto_fit_on_load, type=bool
+                )
             )
 
             # Cut List Optimizer grid settings
             self.clo_grid_spacing_spin.setValue(
-                int(settings.value("clo/grid_spacing", config.clo_grid_spacing, type=float))
+                int(
+                    settings.value(
+                        "clo/grid_spacing", config.clo_grid_spacing, type=float
+                    )
+                )
             )
             clo_unit = settings.value("clo/grid_unit", config.clo_grid_unit, type=str)
             index = self.clo_grid_unit_combo.findText(clo_unit.capitalize())
             if index != -1:
                 self.clo_grid_unit_combo.setCurrentIndex(index)
             self.clo_grid_opacity_spin.setValue(
-                int(settings.value("clo/grid_major_opacity", config.clo_grid_major_opacity, type=int))
+                int(
+                    settings.value(
+                        "clo/grid_major_opacity",
+                        config.clo_grid_major_opacity,
+                        type=int,
+                    )
+                )
             )
             self.clo_grid_intermediate_check.setChecked(
-                settings.value("clo/grid_show_intermediate", config.clo_grid_show_intermediate, type=bool)
+                settings.value(
+                    "clo/grid_show_intermediate",
+                    config.clo_grid_show_intermediate,
+                    type=bool,
+                )
             )
 
             # Lighting settings
@@ -364,26 +414,45 @@ class ViewerSettingsTab(QWidget):
             self.light_pos_y_slider.setValue(int(pos_y))
             self.light_pos_z_slider.setValue(int(pos_z))
 
-            r = settings.value("lighting/color_r", config.default_light_color_r, type=float)
-            g = settings.value("lighting/color_g", config.default_light_color_g, type=float)
-            b = settings.value("lighting/color_b", config.default_light_color_b, type=float)
+            r = settings.value(
+                "lighting/color_r", config.default_light_color_r, type=float
+            )
+            g = settings.value(
+                "lighting/color_g", config.default_light_color_g, type=float
+            )
+            b = settings.value(
+                "lighting/color_b", config.default_light_color_b, type=float
+            )
             self._update_color_button(self.light_color_btn, self._rgb_to_hex(r, g, b))
             self.light_intensity_slider.setValue(
-                int(settings.value("lighting/intensity", config.default_light_intensity, type=float) * 100)
+                int(
+                    settings.value(
+                        "lighting/intensity", config.default_light_intensity, type=float
+                    )
+                    * 100
+                )
             )
             cone_angle = settings.value("lighting/cone_angle", 90.0, type=float)
             self.light_cone_angle_slider.setValue(int(cone_angle))
             self.light_cone_angle_label.setText(f"{int(cone_angle)}°")
             self.enable_fill_light_check.setChecked(
-                settings.value("lighting/enable_fill_light", config.enable_fill_light, type=bool)
+                settings.value(
+                    "lighting/enable_fill_light", config.enable_fill_light, type=bool
+                )
             )
 
             # Load gradient settings
             self.enable_gradient_check.setChecked(
-                settings.value("viewer/enable_gradient", config.enable_gradient, type=bool)
+                settings.value(
+                    "viewer/enable_gradient", config.enable_gradient, type=bool
+                )
             )
-            gradient_top = settings.value("viewer/gradient_top_color", config.gradient_top_color, type=str)
-            gradient_bottom = settings.value("viewer/gradient_bottom_color", config.gradient_bottom_color, type=str)
+            gradient_top = settings.value(
+                "viewer/gradient_top_color", config.gradient_top_color, type=str
+            )
+            gradient_bottom = settings.value(
+                "viewer/gradient_bottom_color", config.gradient_bottom_color, type=str
+            )
             self._update_color_button(self.gradient_top_color_btn, gradient_top)
             self._update_color_button(self.gradient_bottom_color_btn, gradient_bottom)
 
@@ -403,52 +472,100 @@ class ViewerSettingsTab(QWidget):
             settings = QSettings()
 
             # Grid settings
-            settings.setValue("viewer/grid_visible", self.grid_visible_check.isChecked())
-            settings.setValue("viewer/grid_color", self.grid_color_btn.palette().button().color().name())
+            settings.setValue(
+                "viewer/grid_visible", self.grid_visible_check.isChecked()
+            )
+            settings.setValue(
+                "viewer/grid_color",
+                self.grid_color_btn.palette().button().color().name(),
+            )
             settings.setValue("viewer/grid_size", float(self.grid_size_slider.value()))
 
             # Cut List Optimizer grid settings
-            settings.setValue("clo/grid_spacing", float(self.clo_grid_spacing_spin.value()))
-            settings.setValue("clo/grid_unit", self.clo_grid_unit_combo.currentText().lower())
-            settings.setValue("clo/grid_major_opacity", int(self.clo_grid_opacity_spin.value()))
-            settings.setValue("clo/grid_show_intermediate", self.clo_grid_intermediate_check.isChecked())
+            settings.setValue(
+                "clo/grid_spacing", float(self.clo_grid_spacing_spin.value())
+            )
+            settings.setValue(
+                "clo/grid_unit", self.clo_grid_unit_combo.currentText().lower()
+            )
+            settings.setValue(
+                "clo/grid_major_opacity", int(self.clo_grid_opacity_spin.value())
+            )
+            settings.setValue(
+                "clo/grid_show_intermediate",
+                self.clo_grid_intermediate_check.isChecked(),
+            )
 
             # Ground settings
-            settings.setValue("viewer/ground_visible", self.ground_visible_check.isChecked())
-            settings.setValue("viewer/ground_color", self.ground_color_btn.palette().button().color().name())
-            settings.setValue("viewer/ground_offset", float(self.ground_offset_slider.value()) / 10.0)
+            settings.setValue(
+                "viewer/ground_visible", self.ground_visible_check.isChecked()
+            )
+            settings.setValue(
+                "viewer/ground_color",
+                self.ground_color_btn.palette().button().color().name(),
+            )
+            settings.setValue(
+                "viewer/ground_offset", float(self.ground_offset_slider.value()) / 10.0
+            )
 
             # Camera settings
-            settings.setValue("viewer/mouse_sensitivity", float(self.mouse_sensitivity_slider.value()) / 10.0)
-            settings.setValue("viewer/fps_limit", int(self.fps_limit_combo.currentData()))
-            settings.setValue("viewer/zoom_speed", float(self.zoom_speed_slider.value()) / 10.0)
-            settings.setValue("viewer/auto_fit_on_load", self.auto_fit_check.isChecked())
+            settings.setValue(
+                "viewer/mouse_sensitivity",
+                float(self.mouse_sensitivity_slider.value()) / 10.0,
+            )
+            settings.setValue(
+                "viewer/fps_limit", int(self.fps_limit_combo.currentData())
+            )
+            settings.setValue(
+                "viewer/zoom_speed", float(self.zoom_speed_slider.value()) / 10.0
+            )
+            settings.setValue(
+                "viewer/auto_fit_on_load", self.auto_fit_check.isChecked()
+            )
 
             # Lighting settings
-            settings.setValue("lighting/position_x", float(self.light_pos_x_slider.value()))
-            settings.setValue("lighting/position_y", float(self.light_pos_y_slider.value()))
-            settings.setValue("lighting/position_z", float(self.light_pos_z_slider.value()))
+            settings.setValue(
+                "lighting/position_x", float(self.light_pos_x_slider.value())
+            )
+            settings.setValue(
+                "lighting/position_y", float(self.light_pos_y_slider.value())
+            )
+            settings.setValue(
+                "lighting/position_z", float(self.light_pos_z_slider.value())
+            )
 
             light_color = self.light_color_btn.palette().button().color().name()
             r, g, b = self._hex_to_rgb(light_color)
             settings.setValue("lighting/color_r", r)
             settings.setValue("lighting/color_g", g)
             settings.setValue("lighting/color_b", b)
-            settings.setValue("lighting/intensity", float(self.light_intensity_slider.value()) / 100.0)
-            settings.setValue("lighting/cone_angle", float(self.light_cone_angle_slider.value()))
-            settings.setValue("lighting/enable_fill_light", self.enable_fill_light_check.isChecked())
-
-            # Gradient settings
-            settings.setValue("viewer/enable_gradient", self.enable_gradient_check.isChecked())
             settings.setValue(
-                "viewer/gradient_top_color", self.gradient_top_color_btn.palette().button().color().name()
+                "lighting/intensity", float(self.light_intensity_slider.value()) / 100.0
             )
             settings.setValue(
-                "viewer/gradient_bottom_color", self.gradient_bottom_color_btn.palette().button().color().name()
+                "lighting/cone_angle", float(self.light_cone_angle_slider.value())
+            )
+            settings.setValue(
+                "lighting/enable_fill_light", self.enable_fill_light_check.isChecked()
+            )
+
+            # Gradient settings
+            settings.setValue(
+                "viewer/enable_gradient", self.enable_gradient_check.isChecked()
+            )
+            settings.setValue(
+                "viewer/gradient_top_color",
+                self.gradient_top_color_btn.palette().button().color().name(),
+            )
+            settings.setValue(
+                "viewer/gradient_bottom_color",
+                self.gradient_bottom_color_btn.palette().button().color().name(),
             )
 
             # Quick controls visibility
-            settings.setValue("viewer/show_quick_controls", self.show_quick_controls_check.isChecked())
+            settings.setValue(
+                "viewer/show_quick_controls", self.show_quick_controls_check.isChecked()
+            )
 
             if self.logger:
                 self.logger.info("Viewer settings saved to QSettings")
@@ -458,14 +575,20 @@ class ViewerSettingsTab(QWidget):
 
     def _on_grid_color_clicked(self) -> None:
         """Handle grid color picker."""
-        color = QColorDialog.getColor(QColor(self.grid_color_btn.palette().button().color()), self, "Select Grid Color")
+        color = QColorDialog.getColor(
+            QColor(self.grid_color_btn.palette().button().color()),
+            self,
+            "Select Grid Color",
+        )
         if color.isValid():
             self._update_color_button(self.grid_color_btn, color.name())
 
     def _on_ground_color_clicked(self) -> None:
         """Handle ground color picker."""
         color = QColorDialog.getColor(
-            QColor(self.ground_color_btn.palette().button().color()), self, "Select Ground Color"
+            QColor(self.ground_color_btn.palette().button().color()),
+            self,
+            "Select Ground Color",
         )
         if color.isValid():
             self._update_color_button(self.ground_color_btn, color.name())
@@ -473,7 +596,9 @@ class ViewerSettingsTab(QWidget):
     def _on_light_color_clicked(self) -> None:
         """Handle light color picker."""
         color = QColorDialog.getColor(
-            QColor(self.light_color_btn.palette().button().color()), self, "Select Light Color"
+            QColor(self.light_color_btn.palette().button().color()),
+            self,
+            "Select Light Color",
         )
         if color.isValid():
             self._update_color_button(self.light_color_btn, color.name())
@@ -517,7 +642,9 @@ class ViewerSettingsTab(QWidget):
     def _on_gradient_top_color_clicked(self) -> None:
         """Handle gradient top color picker."""
         color = QColorDialog.getColor(
-            QColor(self.gradient_top_color_btn.palette().button().color()), self, "Select Gradient Top Color (Sky)"
+            QColor(self.gradient_top_color_btn.palette().button().color()),
+            self,
+            "Select Gradient Top Color (Sky)",
         )
         if color.isValid():
             self._update_color_button(self.gradient_top_color_btn, color.name())
@@ -556,5 +683,3 @@ class ViewerSettingsTab(QWidget):
     def _rgb_to_hex(r: float, g: float, b: float) -> str:
         """Convert RGB (0-1 range) to hex color."""
         return f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
-
-

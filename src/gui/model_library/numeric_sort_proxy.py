@@ -175,7 +175,9 @@ class NumericSortProxyModel(QSortFilterProxyModel):
 
         # Apply category filter if set
         if self._category_filter:
-            category_index = source_model.index(source_row, self.CATEGORY_COLUMN, source_parent)
+            category_index = source_model.index(
+                source_row, self.CATEGORY_COLUMN, source_parent
+            )
             if category_index.isValid():
                 category_value = category_index.data()
                 if not category_value or str(category_value) != self._category_filter:
@@ -183,7 +185,9 @@ class NumericSortProxyModel(QSortFilterProxyModel):
 
         # Apply dirty/clean filter if set
         if self._dirty_filter:
-            dirty_index = source_model.index(source_row, self.DIRTY_COLUMN, source_parent)
+            dirty_index = source_model.index(
+                source_row, self.DIRTY_COLUMN, source_parent
+            )
             is_dirty = False
             if dirty_index.isValid():
                 dirty_data = dirty_index.data(Qt.UserRole)

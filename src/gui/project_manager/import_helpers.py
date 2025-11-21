@@ -22,16 +22,22 @@ def import_existing_library(  # pragma: no cover - UI heavy
     The flow opens a folder picker, asks for a project name, runs a dry-run, and
     if confirmed executes the import and refreshes UI.
     """
-    folder = QFileDialog.getExistingDirectory(parent, "Select Library Folder", "", QFileDialog.ShowDirsOnly)
+    folder = QFileDialog.getExistingDirectory(
+        parent, "Select Library Folder", "", QFileDialog.ShowDirsOnly
+    )
     if not folder:
         return
 
-    name, ok = QInputDialog.getText(parent, "Import Library", "Project name:", text=Path(folder).name)
+    name, ok = QInputDialog.getText(
+        parent, "Import Library", "Project name:", text=Path(folder).name
+    )
     if not ok or not name:
         return
 
     if project_manager.check_duplicate(name):
-        QMessageBox.warning(parent, "Duplicate Project", f"Project '{name}' already exists.")
+        QMessageBox.warning(
+            parent, "Duplicate Project", f"Project '{name}' already exists."
+        )
         return
 
     dry_run = dry_run_analyzer.analyze(folder, name)
@@ -46,7 +52,9 @@ def import_existing_library(  # pragma: no cover - UI heavy
         f"Size: {dry_run.total_size_mb:.2f} MB\n\n"
         "Proceed with import?"
     )
-    reply = QMessageBox.question(parent, "Import Library", report_text, QMessageBox.Yes | QMessageBox.No)
+    reply = QMessageBox.question(
+        parent, "Import Library", report_text, QMessageBox.Yes | QMessageBox.No
+    )
     if reply != QMessageBox.Yes:
         return
 
@@ -59,9 +67,15 @@ def import_existing_library(  # pragma: no cover - UI heavy
     if import_report.success:
         on_created(import_report.project_id)
         refresh_ui()
-        QMessageBox.information(parent, "Import Complete", f"Imported {import_report.files_imported} files.")
+        QMessageBox.information(
+            parent, "Import Complete", f"Imported {import_report.files_imported} files."
+        )
         logger.info("Imported library: %s", name)
     else:
-        error_text = import_report.errors[0] if import_report.errors else "Unknown error"
-        QMessageBox.critical(parent, "Import Failed", f"Failed to import library: {error_text}")
+        error_text = (
+            import_report.errors[0] if import_report.errors else "Unknown error"
+        )
+        QMessageBox.critical(
+            parent, "Import Failed", f"Failed to import library: {error_text}"
+        )
         logger.error("Failed to import library: %s", error_text)

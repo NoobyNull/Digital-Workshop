@@ -42,7 +42,10 @@ class InvoiceHeader:
     def from_dict(cls, payload: Optional[Dict[str, str]]) -> "InvoiceHeader":
         if not payload:
             return cls()
-        return cls(**{k: payload.get(k, "") for k in cls().__dataclass_fields__.keys()})
+        from dataclasses import fields
+
+        allowed_keys = [f.name for f in fields(cls)]
+        return cls(**{k: payload.get(k, "") for k in allowed_keys})
 
 
 @dataclass

@@ -11,7 +11,13 @@ Usage:
 import sys
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 from PySide6.QtCore import Qt
 
 # Add src to path
@@ -23,39 +29,40 @@ from src.core.logging_config import setup_logging
 
 class TestWindow(QMainWindow):
     """Test window for ImportDialog."""
-    
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Import Dialog Test")
         self.setGeometry(100, 100, 400, 200)
-        
+
         # Central widget
         central = QWidget()
         self.setCentralWidget(central)
-        
+
         layout = QVBoxLayout(central)
         layout.setAlignment(Qt.AlignCenter)
-        
+
         # Test button
         self.import_button = QPushButton("Open Import Dialog")
         self.import_button.setMinimumSize(200, 50)
         self.import_button.clicked.connect(self.open_import_dialog)
         layout.addWidget(self.import_button)
-        
+
         # Results label
         from PySide6.QtWidgets import QLabel
+
         self.result_label = QLabel("No imports yet")
         self.result_label.setAlignment(Qt.AlignCenter)
         self.result_label.setWordWrap(True)
         layout.addWidget(self.result_label)
-    
+
     def open_import_dialog(self):
         """Open the import dialog."""
         dialog = ImportDialog(self)
-        
+
         if dialog.exec() == ImportDialog.Accepted:
             result = dialog.get_import_result()
-            
+
             if result:
                 self.result_label.setText(
                     f"Import Completed!\n\n"
@@ -77,17 +84,17 @@ def main():
     """Main test function."""
     # Setup logging
     setup_logging()
-    
+
     # Create application
     app = QApplication(sys.argv)
-    
+
     # Set application style
     app.setStyle("Fusion")
-    
+
     # Create and show test window
     window = TestWindow()
     window.show()
-    
+
     # Run application
     sys.exit(app.exec())
 

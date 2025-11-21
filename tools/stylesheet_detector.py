@@ -30,6 +30,7 @@ from collections import defaultdict
 @dataclass
 class StyleSheetCall:
     """Information about a setStyleSheet() call."""
+
     file_path: str
     line_number: int
     stylesheet_content: str
@@ -43,6 +44,7 @@ class StyleSheetCall:
 @dataclass
 class StyleAnalysis:
     """Analysis results for a single file."""
+
     file_path: str
     total_calls: int
     high_risk_calls: int
@@ -56,6 +58,7 @@ class StyleAnalysis:
 @dataclass
 class DetectionReport:
     """Complete detection report."""
+
     summary: Dict[str, Any]
     files: List[StyleAnalysis]
     risk_distribution: Dict[str, int]
@@ -68,7 +71,9 @@ class StyleSheetDetector:
     Advanced detector for hardcoded styles in setStyleSheet() calls.
     """
 
-    def __init__(self, root_path: str = "src", include_tests: bool = False, min_risk: str = "low"):
+    def __init__(
+        self, root_path: str = "src", include_tests: bool = False, min_risk: str = "low"
+    ):
         self.root_path = Path(root_path)
         self.include_tests = include_tests
         self.min_risk = min_risk
@@ -76,32 +81,33 @@ class StyleSheetDetector:
 
         # Regex patterns for different types of stylesheet content
         self.patterns = {
-            'stylesheet_call': re.compile(
-                r'\.setStyleSheet\(["\']([^"\']+)["\']',
-                re.MULTILINE | re.DOTALL
+            "stylesheet_call": re.compile(
+                r'\.setStyleSheet\(["\']([^"\']+)["\']', re.MULTILINE | re.DOTALL
             ),
-            'hardcoded_colors': re.compile(r'#[0-9a-fA-F]{3,8}'),
-            'qt_properties': re.compile(r'Q[A-Z][A-Za-z]*\s*\{[^}]*\}'),
-            'complex_styles': re.compile(r'\{[^}]*\{[^}]*\}[^}]*\}'),  # Nested braces
-            'inline_styles': re.compile(r'background-color|color|border|padding|margin'),
-            'dynamic_values': re.compile(r'\{[^}]*\}'),  # Template variables
+            "hardcoded_colors": re.compile(r"#[0-9a-fA-F]{3,8}"),
+            "qt_properties": re.compile(r"Q[A-Z][A-Za-z]*\s*\{[^}]*\}"),
+            "complex_styles": re.compile(r"\{[^}]*\{[^}]*\}[^}]*\}"),  # Nested braces
+            "inline_styles": re.compile(
+                r"background-color|color|border|padding|margin"
+            ),
+            "dynamic_values": re.compile(r"\{[^}]*\}"),  # Template variables
         }
 
         # Risk assessment criteria
         self.risk_criteria = {
-            'high': {
-                'hardcoded_colors': 3,  # 3+ hardcoded colors
-                'complex_styles': True,  # Complex nested styles
-                'no_variables': True,  # No template variables
+            "high": {
+                "hardcoded_colors": 3,  # 3+ hardcoded colors
+                "complex_styles": True,  # Complex nested styles
+                "no_variables": True,  # No template variables
             },
-            'medium': {
-                'hardcoded_colors': 1,  # 1+ hardcoded colors
-                'inline_styles': True,  # Inline style properties
+            "medium": {
+                "hardcoded_colors": 1,  # 1+ hardcoded colors
+                "inline_styles": True,  # Inline style properties
             },
-            'low': {
-                'dynamic_values': True,  # Uses template variables
-                'qt_material': True,  # Already using qt-material
-            }
+            "low": {
+                "dynamic_values": True,  # Uses template variables
+                "qt_material": True,  # Already using qt-material
+            },
         }
 
     def analyze_codebase(self) -> DetectionReport:
@@ -112,7 +118,7 @@ class StyleSheetDetector:
         self.logger.info(f"Found {len(files_to_analyze)} files to analyze")
 
         file_analyses = []
-        risk_distribution = {'high': 0, 'medium': 0, 'low': 0}
+        risk_distribution = {"high": 0, "medium": 0, "low": 0}
         common_patterns = defaultdict(int)
 
         for file_path in files_to_analyze:
@@ -135,30 +141,32 @@ class StyleSheetDetector:
         recommendations = self._generate_recommendations(file_analyses, common_patterns)
 
         # Create summary
-        summary = self._create_summary(file_analyses, risk_distribution, common_patterns)
+        summary = self._create_summary(
+            file_analyses, risk_distribution, common_patterns
+        )
 
         return DetectionReport(
             summary=summary,
             files=file_analyses,
             risk_distribution=risk_distribution,
             common_patterns=dict(common_patterns),
-            migration_recommendations=recommendations
+            migration_recommendations=recommendations,
         )
 
     def _get_files_to_analyze(self) -> List[str]:
         """Get list of Python files to analyze."""
-        file_extensions = ['.py']
-        exclude_dirs = ['__pycache__', '.git', 'venv', 'env', '.venv', '.env']
+        file_extensions = [".py"]
+        exclude_dirs = ["__pycache__", ".git", "venv", "env", ".venv", ".env"]
 
         files = []
         for ext in file_extensions:
-            for file_path in self.root_path.rglob(f'*{ext}'):
+            for file_path in self.root_path.rglob(f"*{ext}"):
                 # Skip excluded directories
                 if any(part in exclude_dirs for part in file_path.parts):
                     continue
 
                 # Skip test files unless requested
-                if not self.include_tests and 'test' in file_path.name.lower():
+                if not self.include_tests and "test" in file_path.name.lower():
                     continue
 
                 files.append(str(file_path.relative_to(self.root_path)))
@@ -170,22 +178,24 @@ class StyleSheetDetector:
         full_path = self.root_path / file_path
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             self.logger.error(f"Failed to read {file_path}: {e}")
             return self._create_empty_analysis(file_path)
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         calls = self._find_stylesheet_calls(file_path, lines)
 
         # Categorize calls by risk
-        high_risk_calls = [c for c in calls if c.risk_level == 'high']
-        medium_risk_calls = [c for c in calls if c.risk_level == 'medium']
-        low_risk_calls = [c for c in calls if c.risk_level == 'low']
+        high_risk_calls = [c for c in calls if c.risk_level == "high"]
+        medium_risk_calls = [c for c in calls if c.risk_level == "medium"]
+        low_risk_calls = [c for c in calls if c.risk_level == "low"]
 
         # Determine overall risk
-        overall_risk = self._determine_overall_risk(high_risk_calls, medium_risk_calls, low_risk_calls)
+        overall_risk = self._determine_overall_risk(
+            high_risk_calls, medium_risk_calls, low_risk_calls
+        )
 
         # Calculate migration priority
         migration_priority = self._calculate_migration_priority(overall_risk, calls)
@@ -198,40 +208,47 @@ class StyleSheetDetector:
             low_risk_calls=len(low_risk_calls),
             calls=calls,
             overall_risk=overall_risk,
-            migration_priority=migration_priority
+            migration_priority=migration_priority,
         )
 
-    def _find_stylesheet_calls(self, file_path: str, lines: List[str]) -> List[StyleSheetCall]:
+    def _find_stylesheet_calls(
+        self, file_path: str, lines: List[str]
+    ) -> List[StyleSheetCall]:
         """Find and analyze all setStyleSheet() calls in a file."""
         calls = []
 
         for line_num, line in enumerate(lines, 1):
-            match = self.patterns['stylesheet_call'].search(line)
+            match = self.patterns["stylesheet_call"].search(line)
             if match:
                 stylesheet_content = match.group(1)
-                call = self._analyze_stylesheet_call(file_path, line_num, stylesheet_content, lines)
+                call = self._analyze_stylesheet_call(
+                    file_path, line_num, stylesheet_content, lines
+                )
                 calls.append(call)
 
         return calls
 
-    def _analyze_stylesheet_call(self, file_path: str, line_num: int,
-                               stylesheet_content: str, lines: List[str]) -> StyleSheetCall:
+    def _analyze_stylesheet_call(
+        self, file_path: str, line_num: int, stylesheet_content: str, lines: List[str]
+    ) -> StyleSheetCall:
         """Analyze a single setStyleSheet() call."""
 
         # Get context around the call
         context_start = max(0, line_num - 3)
         context_end = min(len(lines), line_num + 3)
         context_lines = lines[context_start:context_end]
-        context = '\n'.join(context_lines)
+        context = "\n".join(context_lines)
 
         # Extract hardcoded colors
-        hardcoded_colors = self.patterns['hardcoded_colors'].findall(stylesheet_content)
+        hardcoded_colors = self.patterns["hardcoded_colors"].findall(stylesheet_content)
 
         # Extract Qt properties
-        qt_properties = self.patterns['qt_properties'].findall(stylesheet_content)
+        qt_properties = self.patterns["qt_properties"].findall(stylesheet_content)
 
         # Assess risk level
-        risk_level = self._assess_call_risk(stylesheet_content, hardcoded_colors, qt_properties)
+        risk_level = self._assess_call_risk(
+            stylesheet_content, hardcoded_colors, qt_properties
+        )
 
         # Generate migration suggestion
         migration_suggestion = self._generate_migration_suggestion(
@@ -246,74 +263,107 @@ class StyleSheetDetector:
             risk_level=risk_level,
             migration_suggestion=migration_suggestion,
             hardcoded_colors=hardcoded_colors,
-            qt_properties=qt_properties
+            qt_properties=qt_properties,
         )
 
-    def _assess_call_risk(self, stylesheet_content: str, hardcoded_colors: List[str],
-                         qt_properties: List[str]) -> str:
+    def _assess_call_risk(
+        self,
+        stylesheet_content: str,
+        hardcoded_colors: List[str],
+        qt_properties: List[str],
+    ) -> str:
         """Assess the risk level of a stylesheet call."""
 
         # Check for high-risk patterns
-        if (len(hardcoded_colors) >= 3 or
-            self.patterns['complex_styles'].search(stylesheet_content) or
-            (self.patterns['inline_styles'].search(stylesheet_content) and
-             not self.patterns['dynamic_values'].search(stylesheet_content))):
-            return 'high'
+        if (
+            len(hardcoded_colors) >= 3
+            or self.patterns["complex_styles"].search(stylesheet_content)
+            or (
+                self.patterns["inline_styles"].search(stylesheet_content)
+                and not self.patterns["dynamic_values"].search(stylesheet_content)
+            )
+        ):
+            return "high"
 
         # Check for medium-risk patterns
-        if (len(hardcoded_colors) >= 1 or
-            self.patterns['inline_styles'].search(stylesheet_content)):
-            return 'medium'
+        if len(hardcoded_colors) >= 1 or self.patterns["inline_styles"].search(
+            stylesheet_content
+        ):
+            return "medium"
 
         # Check for low-risk patterns (already using qt-material or variables)
-        if (self.patterns['dynamic_values'].search(stylesheet_content) or
-            'qt_material' in stylesheet_content.lower() or
-            'COLORS.' in stylesheet_content):
-            return 'low'
+        if (
+            self.patterns["dynamic_values"].search(stylesheet_content)
+            or "qt_material" in stylesheet_content.lower()
+            or "COLORS." in stylesheet_content
+        ):
+            return "low"
 
-        return 'medium'  # Default to medium
+        return "medium"  # Default to medium
 
-    def _generate_migration_suggestion(self, stylesheet_content: str, hardcoded_colors: List[str],
-                                     qt_properties: List[str], risk_level: str) -> str:
+    def _generate_migration_suggestion(
+        self,
+        stylesheet_content: str,
+        hardcoded_colors: List[str],
+        qt_properties: List[str],
+        risk_level: str,
+    ) -> str:
         """Generate migration suggestion for a stylesheet call."""
 
         suggestions = []
 
         if hardcoded_colors:
-            suggestions.append(f"Replace {len(hardcoded_colors)} hardcoded colors with qt-material theme colors")
+            suggestions.append(
+                f"Replace {len(hardcoded_colors)} hardcoded colors with qt-material theme colors"
+            )
 
-        if self.patterns['inline_styles'].search(stylesheet_content):
+        if self.patterns["inline_styles"].search(stylesheet_content):
             suggestions.append("Convert inline styles to qt-material theme properties")
 
-        if self.patterns['complex_styles'].search(stylesheet_content):
-            suggestions.append("Break down complex nested styles into simpler qt-material components")
+        if self.patterns["complex_styles"].search(stylesheet_content):
+            suggestions.append(
+                "Break down complex nested styles into simpler qt-material components"
+            )
 
-        if not self.patterns['dynamic_values'].search(stylesheet_content):
-            suggestions.append("Use qt-material color variables instead of hardcoded values")
+        if not self.patterns["dynamic_values"].search(stylesheet_content):
+            suggestions.append(
+                "Use qt-material color variables instead of hardcoded values"
+            )
 
-        if risk_level == 'high':
-            suggestions.insert(0, "HIGH PRIORITY: This stylesheet needs immediate migration")
+        if risk_level == "high":
+            suggestions.insert(
+                0, "HIGH PRIORITY: This stylesheet needs immediate migration"
+            )
 
-        return "; ".join(suggestions) if suggestions else "Review for potential qt-material integration"
+        return (
+            "; ".join(suggestions)
+            if suggestions
+            else "Review for potential qt-material integration"
+        )
 
-    def _determine_overall_risk(self, high_risk_calls: List[StyleSheetCall],
-                               medium_risk_calls: List[StyleSheetCall],
-                               low_risk_calls: List[StyleSheetCall]) -> str:
+    def _determine_overall_risk(
+        self,
+        high_risk_calls: List[StyleSheetCall],
+        medium_risk_calls: List[StyleSheetCall],
+        low_risk_calls: List[StyleSheetCall],
+    ) -> str:
         """Determine overall risk level for a file."""
 
         if high_risk_calls:
-            return 'high'
+            return "high"
         elif medium_risk_calls:
-            return 'medium'
+            return "medium"
         elif low_risk_calls:
-            return 'low'
+            return "low"
         else:
-            return 'low'
+            return "low"
 
-    def _calculate_migration_priority(self, overall_risk: str, calls: List[StyleSheetCall]) -> int:
+    def _calculate_migration_priority(
+        self, overall_risk: str, calls: List[StyleSheetCall]
+    ) -> int:
         """Calculate migration priority (1-10, higher = more urgent)."""
 
-        base_priority = {'high': 8, 'medium': 5, 'low': 2}
+        base_priority = {"high": 8, "medium": 5, "low": 2}
         priority = base_priority[overall_risk]
 
         # Increase priority based on number of calls
@@ -328,7 +378,7 @@ class StyleSheetDetector:
     def _should_include_analysis(self, analysis: StyleAnalysis) -> bool:
         """Check if analysis should be included based on minimum risk level."""
 
-        risk_levels = {'low': 1, 'medium': 2, 'high': 3}
+        risk_levels = {"low": 1, "medium": 2, "high": 3}
         min_level = risk_levels.get(self.min_risk, 1)
         current_level = risk_levels.get(analysis.overall_risk, 1)
 
@@ -344,18 +394,19 @@ class StyleSheetDetector:
             medium_risk_calls=0,
             low_risk_calls=0,
             calls=[],
-            overall_risk='low',
-            migration_priority=1
+            overall_risk="low",
+            migration_priority=1,
         )
 
-    def _generate_recommendations(self, file_analyses: List[StyleAnalysis],
-                                 common_patterns: Dict[str, int]) -> List[str]:
+    def _generate_recommendations(
+        self, file_analyses: List[StyleAnalysis], common_patterns: Dict[str, int]
+    ) -> List[str]:
         """Generate migration recommendations."""
 
         recommendations = []
 
         # General recommendations
-        high_risk_files = [f for f in file_analyses if f.overall_risk == 'high']
+        high_risk_files = [f for f in file_analyses if f.overall_risk == "high"]
         if high_risk_files:
             recommendations.append(
                 f"Migrate {len(high_risk_files)} high-risk files first to prevent system instability"
@@ -363,7 +414,9 @@ class StyleSheetDetector:
 
         # Color recommendations
         if common_patterns:
-            most_common_colors = sorted(common_patterns.items(), key=lambda x: x[1], reverse=True)[:5]
+            most_common_colors = sorted(
+                common_patterns.items(), key=lambda x: x[1], reverse=True
+            )[:5]
             recommendations.append(
                 f"Replace common colors {', '.join([color for color, _ in most_common_colors])} "
                 "with qt-material theme colors"
@@ -372,19 +425,27 @@ class StyleSheetDetector:
         # Pattern-based recommendations
         total_calls = sum(f.total_calls for f in file_analyses)
         if total_calls > 20:
-            recommendations.append("Consider batch migration of similar stylesheet patterns")
+            recommendations.append(
+                "Consider batch migration of similar stylesheet patterns"
+            )
 
-        recommendations.extend([
-            "Use UnifiedThemeManager for dynamic theme application",
-            "Replace hardcoded colors with theme color variables",
-            "Test visual appearance after each migration step",
-            "Update documentation to reflect new theming approach"
-        ])
+        recommendations.extend(
+            [
+                "Use UnifiedThemeManager for dynamic theme application",
+                "Replace hardcoded colors with theme color variables",
+                "Test visual appearance after each migration step",
+                "Update documentation to reflect new theming approach",
+            ]
+        )
 
         return recommendations
 
-    def _create_summary(self, file_analyses: List[StyleAnalysis], risk_distribution: Dict[str, int],
-                       common_patterns: Dict[str, int]) -> Dict[str, Any]:
+    def _create_summary(
+        self,
+        file_analyses: List[StyleAnalysis],
+        risk_distribution: Dict[str, int],
+        common_patterns: Dict[str, int],
+    ) -> Dict[str, Any]:
         """Create analysis summary."""
 
         total_files = len(file_analyses)
@@ -396,47 +457,69 @@ class StyleSheetDetector:
         # Calculate averages
         avg_calls_per_file = total_calls / total_files if total_files > 0 else 0
         avg_risk_score = (
-            (risk_distribution['high'] * 3 +
-             risk_distribution['medium'] * 2 +
-             risk_distribution['low'] * 1) / total_files
-            if total_files > 0 else 0
+            (
+                risk_distribution["high"] * 3
+                + risk_distribution["medium"] * 2
+                + risk_distribution["low"] * 1
+            )
+            / total_files
+            if total_files > 0
+            else 0
         )
 
         return {
-            'total_files_analyzed': total_files,
-            'total_stylesheet_calls': total_calls,
-            'average_calls_per_file': avg_calls_per_file,
-            'high_risk_calls': total_high_risk,
-            'medium_risk_calls': total_medium_risk,
-            'low_risk_calls': total_low_risk,
-            'average_risk_score': avg_risk_score,
-            'most_common_colors': sorted(common_patterns.items(), key=lambda x: x[1], reverse=True)[:10]
+            "total_files_analyzed": total_files,
+            "total_stylesheet_calls": total_calls,
+            "average_calls_per_file": avg_calls_per_file,
+            "high_risk_calls": total_high_risk,
+            "medium_risk_calls": total_medium_risk,
+            "low_risk_calls": total_low_risk,
+            "average_risk_score": avg_risk_score,
+            "most_common_colors": sorted(
+                common_patterns.items(), key=lambda x: x[1], reverse=True
+            )[:10],
         }
 
 
 def main():
     """Main entry point for the stylesheet detection tool."""
 
-    parser = argparse.ArgumentParser(description='setStyleSheet() Detection Tool')
-    parser.add_argument('--output', '-o', default='stylesheet_report.json',
-                       help='Output file for the analysis report')
-    parser.add_argument('--format', '-f', choices=['json', 'html', 'markdown'],
-                       default='json', help='Output format')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Enable verbose logging')
-    parser.add_argument('--include-tests', action='store_true',
-                       help='Include test files in analysis')
-    parser.add_argument('--min-risk', choices=['low', 'medium', 'high'],
-                       default='low', help='Minimum risk level to include')
-    parser.add_argument('--root-path', default='src',
-                       help='Root path to analyze (default: src)')
+    parser = argparse.ArgumentParser(description="setStyleSheet() Detection Tool")
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="stylesheet_report.json",
+        help="Output file for the analysis report",
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
+        choices=["json", "html", "markdown"],
+        default="json",
+        help="Output format",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--include-tests", action="store_true", help="Include test files in analysis"
+    )
+    parser.add_argument(
+        "--min-risk",
+        choices=["low", "medium", "high"],
+        default="low",
+        help="Minimum risk level to include",
+    )
+    parser.add_argument(
+        "--root-path", default="src", help="Root path to analyze (default: src)"
+    )
 
     args = parser.parse_args()
 
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
 
     # Run analysis
@@ -444,12 +527,12 @@ def main():
     report = detector.analyze_codebase()
 
     # Output report
-    if args.format == 'json':
-        with open(args.output, 'w', encoding='utf-8') as f:
+    if args.format == "json":
+        with open(args.output, "w", encoding="utf-8") as f:
             json.dump(asdict(report), f, indent=2, default=str)
-    elif args.format == 'html':
+    elif args.format == "html":
         _output_html_report(report, args.output)
-    elif args.format == 'markdown':
+    elif args.format == "markdown":
         _output_markdown_report(report, args.output)
 
     # Print summary to console
@@ -462,12 +545,14 @@ def main():
     print(f"High risk calls: {report.summary['high_risk_calls']}")
     print(f"Medium risk calls: {report.summary['medium_risk_calls']}")
     print(f"Low risk calls: {report.summary['low_risk_calls']}")
-    print(f"Risk distribution: High={report.risk_distribution['high']}, "
-          f"Medium={report.risk_distribution['medium']}, Low={report.risk_distribution['low']}")
+    print(
+        f"Risk distribution: High={report.risk_distribution['high']}, "
+        f"Medium={report.risk_distribution['medium']}, Low={report.risk_distribution['low']}"
+    )
 
-    if report.summary['most_common_colors']:
+    if report.summary["most_common_colors"]:
         print(f"\nMost common hardcoded colors:")
-        for color, count in report.summary['most_common_colors'][:5]:
+        for color, count in report.summary["most_common_colors"][:5]:
             print(f"  {color}: {count} occurrences")
 
     print(f"\nReport saved to: {args.output}")
@@ -516,16 +601,16 @@ def _output_html_report(report: DetectionReport, output_file: str):
     </html>
     """
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(html)
 
 
 def _format_file_html(file_analysis: StyleAnalysis) -> str:
     """Format a single file analysis as HTML."""
 
-    risk_class = file_analysis.overall_risk.replace(' ', '-')
+    risk_class = file_analysis.overall_risk.replace(" ", "-")
 
-    calls_html = ''
+    calls_html = ""
     for call in file_analysis.calls:
         calls_html += f"""
         <div class="call {call.risk_level}-risk">
@@ -570,7 +655,7 @@ def _output_markdown_report(report: DetectionReport, output_file: str):
 
 """
 
-    for color, count in report.summary['most_common_colors']:
+    for color, count in report.summary["most_common_colors"]:
         markdown += f"- `{color}`: {count} occurrences\n"
 
     markdown += "\n## Files Requiring Migration\n\n"
@@ -601,9 +686,9 @@ def _output_markdown_report(report: DetectionReport, output_file: str):
     for recommendation in report.migration_recommendations:
         markdown += f"- {recommendation}\n"
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(markdown)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

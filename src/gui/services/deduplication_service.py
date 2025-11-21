@@ -108,7 +108,9 @@ class DeduplicationService(QObject):
         models = self.pending_duplicates[file_hash]
 
         try:
-            keep_id, delete_ids = self.dedup_manager.deduplicate_group(models, keep_strategy)
+            keep_id, delete_ids = self.dedup_manager.deduplicate_group(
+                models, keep_strategy
+            )
 
             if keep_id is None:
                 return False

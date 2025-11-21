@@ -16,7 +16,9 @@ def isolated_settings(tmp_path) -> ImportSettings:
 
 
 def test_import_settings_roundtrip(isolated_settings: ImportSettings) -> None:
-    isolated_settings.set_concurrency(prep_workers=3, thumbnail_workers=2, queue_limit=10)
+    isolated_settings.set_concurrency(
+        prep_workers=3, thumbnail_workers=2, queue_limit=10
+    )
     updated = isolated_settings.get_concurrency()
     assert updated.prep_workers == 3
     assert updated.thumbnail_workers == 2

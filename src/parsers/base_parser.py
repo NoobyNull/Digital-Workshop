@@ -162,7 +162,9 @@ class BaseParser(ABC):
         lazy_loading: bool = True,
     ) -> Model:
         """Alias for parse_file to keep legacy call sites working."""
-        return self.parse_file(file_path, progress_callback=progress_callback, lazy_loading=lazy_loading)
+        return self.parse_file(
+            file_path, progress_callback=progress_callback, lazy_loading=lazy_loading
+        )
 
     @abstractmethod
     def _parse_file_internal(
@@ -260,7 +262,9 @@ class BaseParser(ABC):
                 # Lazy import to avoid NameError during async geometry load
                 from src.core.model_cache import CacheLevel
 
-                full_model = self._parse_file_internal(metadata_model.file_path, progress_callback)
+                full_model = self._parse_file_internal(
+                    metadata_model.file_path, progress_callback
+                )
 
                 # Merge geometry into the metadata model
                 try:
@@ -309,9 +313,18 @@ class BaseParser(ABC):
                     metadata_model.loading_state = LoadingState.FULL_GEOMETRY
 
                 # Cache the full model (may be skipped if too large per cache limits)
-                self.model_cache.put(metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model)
+                self.model_cache.put(
+                    metadata_model.file_path, CacheLevel.GEOMETRY_FULL, full_model
+                )
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error(
                     f"Failed to load geometry for {metadata_model.file_path}: {str(e)}"
                 )

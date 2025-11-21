@@ -78,7 +78,14 @@ class MachineRepository:
         except sqlite3.IntegrityError as exc:  # duplicate name, etc.
             self.logger.error("Machine with name '%s' already exists: %s", name, exc)
             raise
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to add machine '%s': %s", name, exc)
             raise
 
@@ -92,7 +99,14 @@ class MachineRepository:
                 cursor.execute("SELECT * FROM machines WHERE id = ?", (machine_id,))
                 row = cursor.fetchone()
                 return dict(row) if row else None
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to get machine %s: %s", machine_id, exc)
             return None
 
@@ -106,7 +120,14 @@ class MachineRepository:
                 cursor.execute("SELECT * FROM machines WHERE name = ?", (name,))
                 row = cursor.fetchone()
                 return dict(row) if row else None
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to get machine by name '%s': %s", name, exc)
             return None
 
@@ -117,10 +138,19 @@ class MachineRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM machines ORDER BY is_default DESC, name ASC")
+                cursor.execute(
+                    "SELECT * FROM machines ORDER BY is_default DESC, name ASC"
+                )
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to list machines: %s", exc)
             return []
 
@@ -136,7 +166,14 @@ class MachineRepository:
                 )
                 row = cursor.fetchone()
                 return dict(row) if row else None
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to get default machine: %s", exc)
             return None
 
@@ -210,7 +247,14 @@ class MachineRepository:
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to update machine %s: %s", machine_id, exc)
             return False
 
@@ -240,11 +284,20 @@ class MachineRepository:
                 if success:
                     self.logger.info("Deleted machine %s", machine_id)
                 else:
-                    self.logger.warning("Machine %s not found for deletion after check", machine_id)
+                    self.logger.warning(
+                        "Machine %s not found for deletion after check", machine_id
+                    )
 
                 return success
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to delete machine %s: %s", machine_id, exc)
             return False
 
@@ -270,6 +323,13 @@ class MachineRepository:
             )
             self.logger.info("Initialized default generic machine profile")
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             self.logger.error("Failed to initialize default machine: %s", exc)
             raise

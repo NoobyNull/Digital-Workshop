@@ -328,7 +328,9 @@ class IViewerService(ABC):
         """Reset camera to default position."""
 
     @abstractmethod
-    def take_screenshot(self, file_path: Path, width: int = 1920, height: int = 1080) -> bool:
+    def take_screenshot(
+        self, file_path: Path, width: int = 1920, height: int = 1080
+    ) -> bool:
         """Take a screenshot of the viewer.
 
         Args:
@@ -415,7 +417,9 @@ class IErrorHandler(ABC):
     """Interface for error handling."""
 
     @abstractmethod
-    def handle_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> bool:
+    def handle_error(
+        self, error: Exception, context: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Handle an error.
 
         Args:

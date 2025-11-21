@@ -78,11 +78,15 @@ class GPUMemoryManager:
             )
         else:
             self.allocation_strategy = MemoryStrategy.CONSERVATIVE
-            self.memory_stats.available_bytes = 2 * 1024 * 1024 * 1024  # 2GB CPU fallback
+            self.memory_stats.available_bytes = (
+                2 * 1024 * 1024 * 1024
+            )  # 2GB CPU fallback
             self.logger.info("GPU memory manager configured for CPU fallback")
 
     @log_function_call
-    def allocate_stl_buffer(self, triangle_count: int, buffer_type: str) -> Optional[GPUBuffer]:
+    def allocate_stl_buffer(
+        self, triangle_count: int, buffer_type: str
+    ) -> Optional[GPUBuffer]:
         """
         Allocate GPU buffer optimized for STL triangle data.
 
@@ -117,13 +121,24 @@ class GPUMemoryManager:
                         self.memory_stats.allocated_bytes,
                     )
 
-                    self.logger.debug("Allocated STL buffer: %s ({size_bytes} bytes)", buffer_id)
+                    self.logger.debug(
+                        "Allocated STL buffer: %s ({size_bytes} bytes)", buffer_id
+                    )
                     return buffer
                 else:
-                    self.logger.error("GPU buffer allocation failed for %s bytes", size_bytes)
+                    self.logger.error(
+                        "GPU buffer allocation failed for %s bytes", size_bytes
+                    )
                     return None
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Error allocating STL buffer: %s", e)
                 return None
 
@@ -227,7 +242,9 @@ class GPUMemoryManager:
                 chunk_idx = 0
 
                 while total_processed < triangle_count:
-                    current_chunk_size = min(chunk_size, triangle_count - total_processed)
+                    current_chunk_size = min(
+                        chunk_size, triangle_count - total_processed
+                    )
 
                     # Read chunk data
                     chunk_bytes = file.read(current_chunk_size * 50)
@@ -249,9 +266,13 @@ class GPUMemoryManager:
                     # Progress reporting
                     if progress_callback:
                         progress = total_processed / triangle_count
-                        progress_callback.report(progress * 100, f"Streaming chunk {chunk_idx}")
+                        progress_callback.report(
+                            progress * 100, f"Streaming chunk {chunk_idx}"
+                        )
 
-            self.logger.info("Successfully streamed %s triangles to GPU", triangle_count)
+            self.logger.info(
+                "Successfully streamed %s triangles to GPU", triangle_count
+            )
             return output_buffer
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -285,9 +306,18 @@ class GPUMemoryManager:
                 # Free GPU memory
                 buffer.free()
 
-                self.logger.debug("Freed GPU buffer: %s ({buffer.size_bytes} bytes)", buffer_id)
+                self.logger.debug(
+                    "Freed GPU buffer: %s ({buffer.size_bytes} bytes)", buffer_id
+                )
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Error freeing GPU buffer: %s", e)
 
     @log_function_call
@@ -302,7 +332,8 @@ class GPUMemoryManager:
             # Calculate fragmentation (simplified)
             if self.memory_stats.allocation_count > 0:
                 avg_allocation = (
-                    self.memory_stats.allocated_bytes / self.memory_stats.allocation_count
+                    self.memory_stats.allocated_bytes
+                    / self.memory_stats.allocation_count
                 )
                 # Fragmentation estimate based on allocation variance
                 self.memory_stats.fragmentation_ratio = min(

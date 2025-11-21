@@ -62,7 +62,10 @@ class MetadataManager:
             # Find the Model Previewer tab index
             model_previewer_index = -1
             for i in range(self.main_window.hero_tabs.count()):
-                if self.main_window.hero_tabs.tabText(i) in ("Model Previewer", "3D Viewer"):
+                if self.main_window.hero_tabs.tabText(i) in (
+                    "Model Previewer",
+                    "3D Viewer",
+                ):
                     model_previewer_index = i
                     break
 
@@ -84,7 +87,10 @@ class MetadataManager:
         """Enable/disable 'Show Metadata Manager' based on panel visibility."""
         try:
             visible = False
-            if hasattr(self.main_window, "metadata_dock") and self.main_window.metadata_dock:
+            if (
+                hasattr(self.main_window, "metadata_dock")
+                and self.main_window.metadata_dock
+            ):
                 visible = bool(self.main_window.metadata_dock.isVisible())
 
             if hasattr(self.main_window, "show_metadata_action"):
@@ -140,7 +146,9 @@ class MetadataManager:
                 self.main_window.model_library_widget._load_models_from_database()
 
             # Clear status after a delay
-            QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
+            QTimer.singleShot(
+                3000, lambda: self.main_window.status_label.setText("Ready")
+            )
 
         except Exception as e:
             self.logger.error("Failed to handle metadata saved event: %s", str(e))
@@ -154,7 +162,9 @@ class MetadataManager:
             # Refresh the model display in the library to show updated metadata
             if hasattr(self.main_window, "model_library_widget"):
                 if self.main_window.model_library_widget:
-                    self.main_window.model_library_widget._refresh_model_display(model_id)
+                    self.main_window.model_library_widget._refresh_model_display(
+                        model_id
+                    )
 
         except Exception as e:
             self.logger.error("Failed to handle metadata changed event: %s", str(e))

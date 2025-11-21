@@ -58,12 +58,22 @@ class CutListRepository:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (project_id, name, stock_strategy, status, metadata_json, timestamp, timestamp),
+                (
+                    project_id,
+                    name,
+                    stock_strategy,
+                    status,
+                    metadata_json,
+                    timestamp,
+                    timestamp,
+                ),
             )
             conn.commit()
             scenario_id = cursor.lastrowid
 
-        logger.info("Created cut list scenario %s for project %s", scenario_id, project_id)
+        logger.info(
+            "Created cut list scenario %s for project %s", scenario_id, project_id
+        )
         return scenario_id
 
     @log_function_call(logger)
@@ -71,12 +81,16 @@ class CutListRepository:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM cutlist_scenarios WHERE id = ?", (scenario_id,))
+            cursor.execute(
+                "SELECT * FROM cutlist_scenarios WHERE id = ?", (scenario_id,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 
     @log_function_call(logger)
-    def list_scenarios(self, project_id: str, status: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_scenarios(
+        self, project_id: str, status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         query = "SELECT * FROM cutlist_scenarios WHERE project_id = ?"
         params: List[Any] = [project_id]
 
@@ -335,10 +349,14 @@ class CutListRepository:
     def delete_sequence(self, scenario_id: int) -> int:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM cutlist_sequences WHERE scenario_id = ?", (scenario_id,))
+            cursor.execute(
+                "DELETE FROM cutlist_sequences WHERE scenario_id = ?", (scenario_id,)
+            )
             conn.commit()
             deleted = cursor.rowcount
 
         if deleted:
-            logger.info("Deleted %s sequence steps for scenario %s", deleted, scenario_id)
+            logger.info(
+                "Deleted %s sequence steps for scenario %s", deleted, scenario_id
+            )
         return deleted

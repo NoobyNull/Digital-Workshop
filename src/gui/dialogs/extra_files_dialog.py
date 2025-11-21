@@ -131,7 +131,9 @@ class ExtraFilesDialog(QDialog):
         if self.group_list.count() > 0:
             self.group_list.setCurrentRow(0)
 
-    def _on_group_changed(self, current: QListWidgetItem, _previous: QListWidgetItem) -> None:
+    def _on_group_changed(
+        self, current: QListWidgetItem, _previous: QListWidgetItem
+    ) -> None:
         group = current.data(Qt.UserRole) if current is not None else None
         self._current_group = group
 
@@ -185,4 +187,3 @@ class ExtraFilesDialog(QDialog):
     def _on_leave_all_clicked(self) -> None:
         self._apply_decision(ExtraFileDecision.LEAVE_IN_PLACE, remember=True)
         self.accept()
-

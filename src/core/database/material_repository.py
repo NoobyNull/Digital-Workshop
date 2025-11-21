@@ -128,7 +128,9 @@ class MaterialRepository:
                             # Convert string back to dict if it's JSON
                             import json
 
-                            material["properties"] = json.loads(material["properties_json"])
+                            material["properties"] = json.loads(
+                                material["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     return material
@@ -165,7 +167,9 @@ class MaterialRepository:
                         try:
                             import json
 
-                            material["properties"] = json.loads(material["properties_json"])
+                            material["properties"] = json.loads(
+                                material["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     return material
@@ -192,9 +196,13 @@ class MaterialRepository:
                 cursor = conn.cursor()
 
                 if include_deletable:
-                    cursor.execute("SELECT * FROM materials ORDER BY is_default DESC, name ASC")
+                    cursor.execute(
+                        "SELECT * FROM materials ORDER BY is_default DESC, name ASC"
+                    )
                 else:
-                    cursor.execute("SELECT * FROM materials WHERE is_default = 1 ORDER BY name ASC")
+                    cursor.execute(
+                        "SELECT * FROM materials WHERE is_default = 1 ORDER BY name ASC"
+                    )
 
                 rows = cursor.fetchall()
                 materials = []
@@ -205,7 +213,9 @@ class MaterialRepository:
                         try:
                             import json
 
-                            material["properties"] = json.loads(material["properties_json"])
+                            material["properties"] = json.loads(
+                                material["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     materials.append(material)
@@ -319,11 +329,15 @@ class MaterialRepository:
                 cursor = conn.cursor()
 
                 # Check if material is deletable
-                cursor.execute("SELECT is_default FROM materials WHERE id = ?", (material_id,))
+                cursor.execute(
+                    "SELECT is_default FROM materials WHERE id = ?", (material_id,)
+                )
                 row = cursor.fetchone()
 
                 if not row:
-                    self.logger.warning("Material %s not found for deletion", material_id)
+                    self.logger.warning(
+                        "Material %s not found for deletion", material_id
+                    )
                     return False
 
                 if row[0]:  # is_default is True
@@ -339,7 +353,9 @@ class MaterialRepository:
                 if success:
                     self.logger.info("Deleted material %s", material_id)
                 else:
-                    self.logger.warning("Material %s not found for deletion", material_id)
+                    self.logger.warning(
+                        "Material %s not found for deletion", material_id
+                    )
 
                 return success
 
@@ -348,7 +364,9 @@ class MaterialRepository:
             return False
 
     @log_function_call(logger)
-    def get_materials_by_type(self, material_type: str = "wood") -> List[Dict[str, Any]]:
+    def get_materials_by_type(
+        self, material_type: str = "wood"
+    ) -> List[Dict[str, Any]]:
         """
         Get materials by type.
 
@@ -375,7 +393,9 @@ class MaterialRepository:
                         try:
                             import json
 
-                            material["properties"] = json.loads(material["properties_json"])
+                            material["properties"] = json.loads(
+                                material["properties_json"]
+                            )
                         except (json.JSONDecodeError, TypeError):
                             material["properties"] = {}
                     materials.append(material)
@@ -383,7 +403,9 @@ class MaterialRepository:
                 return materials
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to get materials by type '%s': %s", material_type, e)
+            self.logger.error(
+                "Failed to get materials by type '%s': %s", material_type, e
+            )
             return []
 
     @log_function_call(logger)
@@ -395,7 +417,9 @@ class MaterialRepository:
         as default, non-deletable resources.
         """
         try:
-            materials_dir = Path(__file__).parent.parent.parent / "resources" / "materials"
+            materials_dir = (
+                Path(__file__).parent.parent.parent / "resources" / "materials"
+            )
 
             if not materials_dir.exists():
                 self.logger.warning("Materials directory not found: %s", materials_dir)
@@ -470,7 +494,14 @@ class MaterialRepository:
                                         )
                                     except (IndexError, ValueError):
                                         pass
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ):
                         pass
 
                 # Add material to database
@@ -487,7 +518,9 @@ class MaterialRepository:
                 )
                 added_count += 1
 
-            self.logger.info("Initialized %s default materials from filesystem", added_count)
+            self.logger.info(
+                "Initialized %s default materials from filesystem", added_count
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize default materials: %s", e)

@@ -25,7 +25,8 @@ class DataEncryptor:
             pass
         except ImportError:
             logger.warning(
-                "cryptography library not available. " "Install with: pip install cryptography"
+                "cryptography library not available. "
+                "Install with: pip install cryptography"
             )
 
     def generate_key(self) -> str:

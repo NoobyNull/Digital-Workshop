@@ -11,24 +11,32 @@ import subprocess
 import importlib.util
 from pathlib import Path
 
+
 def check_python_version():
     """Check if Python version is compatible."""
     version = sys.version_info
     if version < (3, 8):
-        print(f"Error: Python 3.8 or higher is required. You have Python {version.major}.{version.minor}.{version.micro}")
+        print(
+            f"Error: Python 3.8 or higher is required. You have Python {version.major}.{version.minor}.{version.micro}"
+        )
         return False
     elif (version.major, version.minor) >= (3, 13):
-        print(f"Warning: Python {version.major}.{version.minor}.{version.micro} detected. Digital Workshop is tested with Python 3.8-3.12")
+        print(
+            f"Warning: Python {version.major}.{version.minor}.{version.micro} detected. Digital Workshop is tested with Python 3.8-3.12"
+        )
         try:
             response = input("Continue anyway? (y/n): ")
-            if response.lower() != 'y':
+            if response.lower() != "y":
                 return False
         except EOFError:
             # Handle non-interactive environments
-            print("Non-interactive environment detected. Continuing with Python 3.13+...")
+            print(
+                "Non-interactive environment detected. Continuing with Python 3.13+..."
+            )
 
     print(f"[OK] Python {version.major}.{version.minor}.{version.micro} is compatible")
     return True
+
 
 def check_dependencies():
     """Check if required dependencies are installed."""
@@ -78,19 +86,33 @@ def check_dependencies():
 
         try:
             install = input("\nInstall missing dependencies now? (y/n): ")
-            if install.lower() == 'y':
+            if install.lower() == "y":
                 try:
-                    subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], check=True)
+                    subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "pip",
+                            "install",
+                            "-r",
+                            "requirements.txt",
+                        ],
+                        check=True,
+                    )
                     print("Dependencies installed successfully!")
                     return True
                 except subprocess.CalledProcessError:
-                    print("Failed to install dependencies. Please install them manually.")
+                    print(
+                        "Failed to install dependencies. Please install them manually."
+                    )
                     return False
             else:
                 return False
         except EOFError:
             # Handle non-interactive environments
-            print("\nNon-interactive environment detected. Please install missing dependencies manually:")
+            print(
+                "\nNon-interactive environment detected. Please install missing dependencies manually:"
+            )
             print("  pip install -r requirements.txt")
             return False
 
@@ -102,6 +124,7 @@ def check_dependencies():
 
     return True
 
+
 def fix_circular_imports():
     """Check and fix circular import issues."""
     base_parser_path = Path("src/parsers/base_parser.py")
@@ -110,7 +133,7 @@ def fix_circular_imports():
         print("Error: src/parsers/base_parser.py not found")
         return False
 
-    with open(base_parser_path, 'r') as f:
+    with open(base_parser_path, "r") as f:
         content = f.read()
 
     if "from core.model_cache import get_model_cache, CacheLevel" in content:
@@ -118,25 +141,30 @@ def fix_circular_imports():
 
         try:
             fix = input("Fix circular imports automatically? (y/n): ")
-            if fix.lower() == 'y':
+            if fix.lower() == "y":
                 try:
-                    subprocess.run([sys.executable, "fix_circular_imports.py"], check=True)
+                    subprocess.run(
+                        [sys.executable, "fix_circular_imports.py"], check=True
+                    )
                     print("Circular imports fixed successfully!")
                     return True
                 except subprocess.CalledProcessError:
                     print("Failed to fix circular imports automatically.")
                     return False
             else:
-                print("Please fix circular imports manually before running the application.")
+                print(
+                    "Please fix circular imports manually before running the application."
+                )
                 return False
         except EOFError:
             # Handle non-interactive environments
-            print("\nNon-interactive environment detected. Please fix circular imports manually before running the application.")
+            print(
+                "\nNon-interactive environment detected. Please fix circular imports manually before running the application."
+            )
             return False
 
     print("[OK] No circular import issues detected")
     return True
-
 
 
 def print_startup_summary() -> None:
@@ -211,6 +239,7 @@ def print_startup_summary() -> None:
     except Exception as exc:  # pragma: no cover - defensive only
         print(f"[WARN] Failed to collect environment summary: {exc}")
 
+
 def run_application():
     """Run the Digital Workshop application."""
     print("\nStarting Digital Workshop application...")
@@ -249,6 +278,7 @@ def run_application():
         print(f"Failed to run application: {e}")
         return False
 
+
 def main():
     """Main function to check and run the application."""
     print("Digital Workshop (3D Model Manager) - Quick Start")
@@ -256,7 +286,9 @@ def main():
 
     # Check if we're in the right directory
     if not Path("src").exists():
-        print("Error: src directory not found. Please run this script from the project root.")
+        print(
+            "Error: src directory not found. Please run this script from the project root."
+        )
         sys.exit(1)
 
     # Step 1: Check Python version
@@ -274,6 +306,7 @@ def main():
     # Step 4: Run the application
     if not run_application():
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -10,12 +10,12 @@ from src.gui.preferences.tabs.invoice_tab import InvoicePreferencesTab
 from src.gui.preferences.tabs.import_tab import ImportSettingsTab
 
 __all__ = [
-    'GeneralTab',
-    'ThemingTab',
-    'ViewerSettingsTab',
-    'ThumbnailSettingsTab',
-    'AdvancedTab',
-    'AITab',
-    'InvoicePreferencesTab',
-    'ImportSettingsTab',
+    "GeneralTab",
+    "ThemingTab",
+    "ViewerSettingsTab",
+    "ThumbnailSettingsTab",
+    "AdvancedTab",
+    "AITab",
+    "InvoicePreferencesTab",
+    "ImportSettingsTab",
 ]

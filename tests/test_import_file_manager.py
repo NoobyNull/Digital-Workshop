@@ -23,7 +23,7 @@ from src.core.import_file_manager import (
     ImportFileManager,
     FileManagementMode,
     ImportFileInfo,
-    ImportSession
+    ImportSession,
 )
 
 
@@ -48,8 +48,8 @@ class TestImportFileManager(unittest.TestCase):
         file_path = Path(self.temp_dir) / filename
         size_bytes = int(size_mb * 1024 * 1024)
 
-        with file_path.open('wb') as f:
-            f.write(b'0' * size_bytes)
+        with file_path.open("wb") as f:
+            f.write(b"0" * size_bytes)
 
         self.test_files.append(str(file_path))
         return str(file_path)
@@ -90,8 +90,7 @@ class TestImportFileManager(unittest.TestCase):
     def test_validate_root_directory_leave_in_place(self):
         """Test root directory validation for leave in place mode."""
         is_valid, error = self.manager.validate_root_directory(
-            None,
-            FileManagementMode.LEAVE_IN_PLACE
+            None, FileManagementMode.LEAVE_IN_PLACE
         )
         self.assertTrue(is_valid)
         self.assertIsNone(error)
@@ -99,8 +98,7 @@ class TestImportFileManager(unittest.TestCase):
     def test_validate_root_directory_organized_no_directory(self):
         """Test root directory validation fails without directory."""
         is_valid, error = self.manager.validate_root_directory(
-            None,
-            FileManagementMode.KEEP_ORGANIZED
+            None, FileManagementMode.KEEP_ORGANIZED
         )
         self.assertFalse(is_valid)
         self.assertIsNotNone(error)
@@ -109,8 +107,7 @@ class TestImportFileManager(unittest.TestCase):
     def test_validate_root_directory_nonexistent(self):
         """Test root directory validation fails for nonexistent path."""
         is_valid, error = self.manager.validate_root_directory(
-            "/nonexistent/path",
-            FileManagementMode.KEEP_ORGANIZED
+            "/nonexistent/path", FileManagementMode.KEEP_ORGANIZED
         )
         self.assertFalse(is_valid)
         self.assertIsNotNone(error)
@@ -128,7 +125,12 @@ class TestImportFileManager(unittest.TestCase):
         self.assertIsNone(error)
 
         # The temporary root should now be present in the configured roots
-        configured = [Path(p).resolve() for p in self.manager.root_folder_manager.get_folder_paths(enabled_only=True)]
+        configured = [
+            Path(p).resolve()
+            for p in self.manager.root_folder_manager.get_folder_paths(
+                enabled_only=True
+            )
+        ]
         self.assertIn(temp_root, configured)
 
     def test_get_organized_subdir(self):
@@ -214,8 +216,7 @@ class TestImportFileManager(unittest.TestCase):
         test_file = self.create_test_file(1.0, "test.stl")
 
         success, error, session = self.manager.start_import_session(
-            [test_file],
-            FileManagementMode.LEAVE_IN_PLACE
+            [test_file], FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertTrue(success)
@@ -228,8 +229,7 @@ class TestImportFileManager(unittest.TestCase):
     def test_start_import_session_no_valid_files(self):
         """Test starting import session with no valid files."""
         success, error, _ = self.manager.start_import_session(
-            ["/nonexistent/file.stl"],
-            FileManagementMode.LEAVE_IN_PLACE
+            ["/nonexistent/file.stl"], FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertFalse(success)
@@ -241,8 +241,7 @@ class TestImportFileManager(unittest.TestCase):
         test_file = self.create_test_file(0.5, "test.stl")
 
         success, error, session = self.manager.start_import_session(
-            [test_file],
-            FileManagementMode.LEAVE_IN_PLACE
+            [test_file], FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertTrue(success)
@@ -250,13 +249,12 @@ class TestImportFileManager(unittest.TestCase):
 
         # Process the file
         progress_calls = []
+
         def progress_callback(msg, percent):
             progress_calls.append((msg, percent))
 
         success, error = self.manager.process_file(
-            file_info,
-            session,
-            progress_callback=progress_callback
+            file_info, session, progress_callback=progress_callback
         )
 
         self.assertTrue(success)
@@ -272,8 +270,7 @@ class TestImportFileManager(unittest.TestCase):
         test_file = self.create_test_file(0.5, "small.stl")
 
         success, error, session = self.manager.start_import_session(
-            [test_file],
-            FileManagementMode.LEAVE_IN_PLACE
+            [test_file], FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertTrue(success)
@@ -281,9 +278,7 @@ class TestImportFileManager(unittest.TestCase):
 
         # Process without cancellation token (None)
         success, error = self.manager.process_file(
-            file_info,
-            session,
-            cancellation_token=None  # No token provided
+            file_info, session, cancellation_token=None  # No token provided
         )
 
         # Should succeed
@@ -296,9 +291,7 @@ class TestImportFileManager(unittest.TestCase):
         test_hash = "abc123def456"
         existing_file = {"id": 1, "path": "/existing/file.stl"}
 
-        existing_hashes = {
-            test_hash: existing_file
-        }
+        existing_hashes = {test_hash: existing_file}
 
         # Check duplicate
         is_dup, existing = self.manager.check_duplicate(test_hash, existing_hashes)
@@ -313,8 +306,7 @@ class TestImportFileManager(unittest.TestCase):
     def test_rollback_session_empty(self):
         """Test rollback with empty session."""
         session = ImportSession(
-            session_id="test_session",
-            mode=FileManagementMode.LEAVE_IN_PLACE
+            session_id="test_session", mode=FileManagementMode.LEAVE_IN_PLACE
         )
 
         result = self.manager.rollback_session(session)
@@ -325,8 +317,7 @@ class TestImportFileManager(unittest.TestCase):
         test_file = self.create_test_file(1.0, "test.stl")
 
         success, _, session = self.manager.start_import_session(
-            [test_file],
-            FileManagementMode.LEAVE_IN_PLACE
+            [test_file], FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertTrue(success)
@@ -355,8 +346,7 @@ class TestImportFileManager(unittest.TestCase):
             test_file = self.create_test_file(0.5, f"test_{i}.stl")
 
             success, _, session = self.manager.start_import_session(
-                [test_file],
-                FileManagementMode.LEAVE_IN_PLACE
+                [test_file], FileManagementMode.LEAVE_IN_PLACE
             )
 
             if success:
@@ -371,14 +361,15 @@ class TestImportFileManager(unittest.TestCase):
         tracemalloc.stop()
 
         # Memory growth should be reasonable (< 50MB for 10 operations)
-        self.assertLess(memory_growth_mb, 50,
-                       f"Excessive memory growth: {memory_growth_mb:.2f} MB")
+        self.assertLess(
+            memory_growth_mb, 50, f"Excessive memory growth: {memory_growth_mb:.2f} MB"
+        )
 
     def test_copy_file_with_progress(self):
         """Test file copying with progress tracking."""
         # Create source file
         source = Path(self.temp_dir) / "source.stl"
-        source.write_bytes(b'0' * (1024 * 1024))  # 1MB
+        source.write_bytes(b"0" * (1024 * 1024))  # 1MB
 
         # Create destination
         dest_dir = Path(self.temp_dir) / "dest"
@@ -387,15 +378,12 @@ class TestImportFileManager(unittest.TestCase):
 
         # Track progress
         progress_values = []
+
         def progress_callback(percent):
             progress_values.append(percent)
 
         # Copy file
-        self.manager._copy_file_with_progress(
-            source,
-            dest,
-            progress_callback
-        )
+        self.manager._copy_file_with_progress(source, dest, progress_callback)
 
         # Verify file was copied
         self.assertTrue(dest.exists())
@@ -408,13 +396,11 @@ class TestImportFileManager(unittest.TestCase):
     def test_error_handling_nonexistent_file(self):
         """Test error handling for nonexistent file."""
         session = ImportSession(
-            session_id="test",
-            mode=FileManagementMode.LEAVE_IN_PLACE
+            session_id="test", mode=FileManagementMode.LEAVE_IN_PLACE
         )
 
         file_info = ImportFileInfo(
-            original_path="/nonexistent/file.stl",
-            file_size=1000
+            original_path="/nonexistent/file.stl", file_size=1000
         )
         session.files.append(file_info)
 
@@ -447,13 +433,12 @@ class TestImportFileManagerIntegration(unittest.TestCase):
         test_files = []
         for i in range(3):
             file_path = Path(self.temp_dir) / f"model_{i}.stl"
-            file_path.write_bytes(b'0' * (100 * 1024))  # 100KB
+            file_path.write_bytes(b"0" * (100 * 1024))  # 100KB
             test_files.append(str(file_path))
 
         # Start session
         success, error, session = self.manager.start_import_session(
-            test_files,
-            FileManagementMode.LEAVE_IN_PLACE
+            test_files, FileManagementMode.LEAVE_IN_PLACE
         )
 
         self.assertTrue(success)
@@ -492,6 +477,7 @@ def run_tests():
     return result.wasSuccessful()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     sys.exit(0 if run_tests() else 1)

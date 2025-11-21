@@ -136,4 +136,3 @@ def test_analyze_gcode_moves_computes_consistent_correction_factor() -> None:
     # allow a small tolerance because the kinematic model may introduce a
     # modest conservatism depending on the acceleration profile.
     assert metrics["time_correction_factor"] == pytest.approx(1.0, rel=2e-2)
-

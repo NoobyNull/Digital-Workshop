@@ -29,12 +29,12 @@ def test_trimesh_availability_check():
     """Test Trimesh availability detection."""
     loader = get_trimesh_loader()
     is_available = loader.is_trimesh_available()
-    
+
     if is_available:
         print("✓ Trimesh is available - fast loading enabled")
     else:
         print("✓ Trimesh not available - will use fallback parsers")
-    
+
     # Should return a boolean
     assert isinstance(is_available, bool)
 
@@ -43,7 +43,7 @@ def test_singleton_pattern():
     """Test that get_trimesh_loader returns the same instance."""
     loader1 = get_trimesh_loader()
     loader2 = get_trimesh_loader()
-    
+
     assert loader1 is loader2
     print("✓ Singleton pattern working correctly")
 
@@ -52,7 +52,7 @@ def test_load_model_with_nonexistent_file():
     """Test that loading a nonexistent file returns None."""
     loader = get_trimesh_loader()
     model = loader.load_model("nonexistent_file.stl")
-    
+
     assert model is None
     print("✓ Nonexistent file handled correctly")
 
@@ -60,35 +60,35 @@ def test_load_model_with_nonexistent_file():
 def test_trimesh_loader_with_real_stl():
     """Test loading a real STL file if available."""
     loader = get_trimesh_loader()
-    
+
     # Look for test STL files
     test_files = [
         Path("tests/test_data/cube.stl"),
         Path("tests/test_data/sample.stl"),
         Path("data/test.stl"),
     ]
-    
+
     stl_file = None
     for test_file in test_files:
         if test_file.exists():
             stl_file = test_file
             break
-    
+
     if stl_file is None:
         print("⚠ No test STL file found - skipping real file test")
         return
-    
+
     print(f"Testing with: {stl_file}")
-    
+
     # Try to load the model
     model = loader.load_model(str(stl_file))
-    
+
     if model is not None:
         print(f"✓ Model loaded successfully")
         print(f"  - Triangles: {model.stats.triangle_count:,}")
         print(f"  - Vertices: {model.stats.vertex_count:,}")
         print(f"  - Loading state: {model.loading_state}")
-        
+
         # Check if it's array-based (Trimesh) or triangle-based (fallback)
         if model.loading_state == LoadingState.ARRAY_GEOMETRY:
             print("  - Loaded with Trimesh (array-based)")
@@ -105,6 +105,7 @@ def test_integration_with_model_loader():
     """Test that the integration with model_loader works."""
     try:
         from src.gui.model.model_loader import ModelLoader
+
         print("✓ ModelLoader imports successfully with Trimesh integration")
     except ImportError as e:
         print(f"⚠ Could not import ModelLoader: {e}")
@@ -113,7 +114,10 @@ def test_integration_with_model_loader():
 def test_integration_with_thumbnail_generator():
     """Test that the integration with thumbnail generator works."""
     try:
-        from src.core.thumbnail_components.thumbnail_generator_main import ThumbnailGenerator
+        from src.core.thumbnail_components.thumbnail_generator_main import (
+            ThumbnailGenerator,
+        )
+
         print("✓ ThumbnailGenerator imports successfully with Trimesh integration")
     except ImportError as e:
         print(f"⚠ Could not import ThumbnailGenerator: {e}")
@@ -125,7 +129,7 @@ def main():
     print("Trimesh Integration Test Suite")
     print("=" * 60)
     print()
-    
+
     tests = [
         ("Loader Initialization", test_trimesh_loader_initialization),
         ("Availability Check", test_trimesh_availability_check),
@@ -135,10 +139,10 @@ def main():
         ("ModelLoader Integration", test_integration_with_model_loader),
         ("ThumbnailGenerator Integration", test_integration_with_thumbnail_generator),
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test_name, test_func in tests:
         print(f"\n{test_name}:")
         print("-" * 60)
@@ -148,16 +152,15 @@ def main():
         except Exception as e:
             print(f"✗ Test failed: {e}")
             failed += 1
-    
+
     print()
     print("=" * 60)
     print(f"Results: {passed} passed, {failed} failed")
     print("=" * 60)
-    
+
     return failed == 0
 
 
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-

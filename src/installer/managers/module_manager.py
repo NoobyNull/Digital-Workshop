@@ -166,7 +166,9 @@ class ModuleManager:
             if not self.installer.modules_dir.exists():
                 return []
 
-            modules = [d.name for d in self.installer.modules_dir.iterdir() if d.is_dir()]
+            modules = [
+                d.name for d in self.installer.modules_dir.iterdir() if d.is_dir()
+            ]
             logger.debug("Found %s modules: {modules}", len(modules))
 
             return modules

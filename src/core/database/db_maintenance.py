@@ -64,7 +64,9 @@ class DatabaseMaintenance:
                 format_counts = dict(cursor.fetchall())
 
                 # Get total file size
-                cursor.execute("SELECT SUM(file_size) FROM models WHERE file_size IS NOT NULL")
+                cursor.execute(
+                    "SELECT SUM(file_size) FROM models WHERE file_size IS NOT NULL"
+                )
                 total_size = cursor.fetchone()[0] or 0
 
                 stats = {

@@ -26,7 +26,13 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass, asdict
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+)
 from PySide6.QtCore import Qt, QTimer, QSize
 from PySide6.QtGui import QPixmap, QImage, QPainter, QColor
 
@@ -38,6 +44,7 @@ logger = get_logger(__name__)
 @dataclass
 class TestResult:
     """Result of a visual regression test."""
+
     test_name: str
     baseline_path: str
     current_path: str
@@ -52,6 +59,7 @@ class TestResult:
 @dataclass
 class TestSuite:
     """Complete test suite results."""
+
     summary: Dict[str, Any]
     results: List[TestResult]
     baseline_dir: str
@@ -64,9 +72,12 @@ class VisualRegressionTester:
     Visual regression testing framework for GUI components.
     """
 
-    def __init__(self, baseline_dir: str = "tests/baseline",
-                 output_dir: str = "tests/visual_regression",
-                 threshold: float = 0.05):
+    def __init__(
+        self,
+        baseline_dir: str = "tests/baseline",
+        output_dir: str = "tests/visual_regression",
+        threshold: float = 0.05,
+    ):
         self.baseline_dir = Path(baseline_dir)
         self.output_dir = Path(output_dir)
         self.threshold = threshold
@@ -78,7 +89,9 @@ class VisualRegressionTester:
         # Test components registry
         self.test_components = {}
 
-    def register_component(self, name: str, component_class: type, setup_func: callable = None):
+    def register_component(
+        self, name: str, component_class: type, setup_func: callable = None
+    ):
         """
         Register a component for visual regression testing.
 
@@ -87,10 +100,7 @@ class VisualRegressionTester:
             component_class: The QWidget class to test
             setup_func: Optional function to set up the component before testing
         """
-        self.test_components[name] = {
-            'class': component_class,
-            'setup': setup_func
-        }
+        self.test_components[name] = {"class": component_class, "setup": setup_func}
         self.logger.info(f"Registered test component: {name}")
 
     def run_test_suite(self, components: List[str] = None) -> TestSuite:
@@ -106,7 +116,9 @@ class VisualRegressionTester:
         if components is None:
             components = list(self.test_components.keys())
 
-        self.logger.info(f"Running visual regression tests for {len(components)} components")
+        self.logger.info(
+            f"Running visual regression tests for {len(components)} components"
+        )
 
         results = []
         start_time = time.time()
@@ -116,7 +128,9 @@ class VisualRegressionTester:
 
         for component_name in components:
             if component_name not in self.test_components:
-                self.logger.warning(f"Component {component_name} not registered, skipping")
+                self.logger.warning(
+                    f"Component {component_name} not registered, skipping"
+                )
                 continue
 
             try:
@@ -124,17 +138,19 @@ class VisualRegressionTester:
                 results.append(result)
             except Exception as e:
                 self.logger.error(f"Failed to test component {component_name}: {e}")
-                results.append(TestResult(
-                    test_name=component_name,
-                    baseline_path="",
-                    current_path="",
-                    difference_path="",
-                    pixel_difference=1.0,
-                    max_difference=1.0,
-                    passed=False,
-                    error_message=str(e),
-                    test_duration=0.0
-                ))
+                results.append(
+                    TestResult(
+                        test_name=component_name,
+                        baseline_path="",
+                        current_path="",
+                        difference_path="",
+                        pixel_difference=1.0,
+                        max_difference=1.0,
+                        passed=False,
+                        error_message=str(e),
+                        test_duration=0.0,
+                    )
+                )
 
         total_time = time.time() - start_time
 
@@ -143,14 +159,14 @@ class VisualRegressionTester:
         failed_tests = [r for r in results if not r.passed]
 
         summary = {
-            'total_tests': len(results),
-            'passed_tests': len(passed_tests),
-            'failed_tests': len(failed_tests),
-            'total_time': total_time,
-            'average_time_per_test': total_time / len(results) if results else 0,
-            'threshold': self.threshold,
-            'baseline_dir': str(self.baseline_dir),
-            'output_dir': str(self.output_dir)
+            "total_tests": len(results),
+            "passed_tests": len(passed_tests),
+            "failed_tests": len(failed_tests),
+            "total_time": total_time,
+            "average_time_per_test": total_time / len(results) if results else 0,
+            "threshold": self.threshold,
+            "baseline_dir": str(self.baseline_dir),
+            "output_dir": str(self.output_dir),
         }
 
         return TestSuite(
@@ -158,7 +174,7 @@ class VisualRegressionTester:
             results=results,
             baseline_dir=str(self.baseline_dir),
             output_dir=str(self.output_dir),
-            threshold=self.threshold
+            threshold=self.threshold,
         )
 
     def generate_baselines(self, components: List[str] = None) -> Dict[str, str]:
@@ -183,9 +199,13 @@ class VisualRegressionTester:
             try:
                 baseline_path = self._generate_component_baseline(component_name)
                 baselines[component_name] = baseline_path
-                self.logger.info(f"Generated baseline for {component_name}: {baseline_path}")
+                self.logger.info(
+                    f"Generated baseline for {component_name}: {baseline_path}"
+                )
             except Exception as e:
-                self.logger.error(f"Failed to generate baseline for {component_name}: {e}")
+                self.logger.error(
+                    f"Failed to generate baseline for {component_name}: {e}"
+                )
 
         return baselines
 
@@ -201,8 +221,8 @@ class VisualRegressionTester:
         start_time = time.time()
 
         component_info = self.test_components[component_name]
-        component_class = component_info['class']
-        setup_func = component_info['setup']
+        component_class = component_info["class"]
+        setup_func = component_info["setup"]
 
         # Create component instance
         component = self._create_component_instance(component_class, setup_func)
@@ -227,14 +247,16 @@ class VisualRegressionTester:
                 max_difference=1.0,
                 passed=False,
                 error_message=error_msg,
-                test_duration=time.time() - start_time
+                test_duration=time.time() - start_time,
             )
 
         # Load baseline
         baseline_pixmap = QPixmap(str(baseline_path))
 
         # Compare images
-        pixel_diff, max_diff, diff_pixmap = self._compare_images(baseline_pixmap, current_pixmap)
+        pixel_diff, max_diff, diff_pixmap = self._compare_images(
+            baseline_pixmap, current_pixmap
+        )
 
         # Save difference image
         diff_path = self.output_dir / f"{component_name}_diff.png"
@@ -245,8 +267,10 @@ class VisualRegressionTester:
         passed = pixel_diff <= self.threshold
 
         if not passed:
-            self.logger.warning(f"Visual regression detected in {component_name}: "
-                              f"pixel difference {pixel_diff:.4f} > threshold {self.threshold}")
+            self.logger.warning(
+                f"Visual regression detected in {component_name}: "
+                f"pixel difference {pixel_diff:.4f} > threshold {self.threshold}"
+            )
 
         return TestResult(
             test_name=component_name,
@@ -257,10 +281,12 @@ class VisualRegressionTester:
             max_difference=max_diff,
             passed=passed,
             error_message="",
-            test_duration=time.time() - start_time
+            test_duration=time.time() - start_time,
         )
 
-    def _create_component_instance(self, component_class: type, setup_func: callable = None) -> QWidget:
+    def _create_component_instance(
+        self, component_class: type, setup_func: callable = None
+    ) -> QWidget:
         """Create and set up a component instance for testing."""
 
         # Create main window to hold the component
@@ -316,8 +342,8 @@ class VisualRegressionTester:
     def _generate_component_baseline(self, component_name: str) -> str:
         """Generate baseline image for a component."""
         component_info = self.test_components[component_name]
-        component_class = component_info['class']
-        setup_func = component_info['setup']
+        component_class = component_info["class"]
+        setup_func = component_info["setup"]
 
         # Create component instance
         component = self._create_component_instance(component_class, setup_func)
@@ -332,7 +358,9 @@ class VisualRegressionTester:
 
         return str(baseline_path)
 
-    def _compare_images(self, baseline: QPixmap, current: QPixmap) -> Tuple[float, float, Optional[QPixmap]]:
+    def _compare_images(
+        self, baseline: QPixmap, current: QPixmap
+    ) -> Tuple[float, float, Optional[QPixmap]]:
         """
         Compare two images and return pixel difference metrics.
 
@@ -346,7 +374,9 @@ class VisualRegressionTester:
         # Ensure same size
         if baseline_img.size() != current_img.size():
             # Resize current to match baseline
-            current_img = current_img.scaled(baseline_img.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+            current_img = current_img.scaled(
+                baseline_img.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation
+            )
 
         width = baseline_img.width()
         height = baseline_img.height()
@@ -418,7 +448,7 @@ class VisualRegressionTester:
         # Generate HTML report
         html = self._generate_html_report(test_suite)
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(html)
 
         self.logger.info(f"Test report generated: {output_file}")
@@ -499,7 +529,7 @@ class VisualRegressionTester:
                 """.format(
                     self._get_relative_path(result.baseline_path),
                     self._get_relative_path(result.current_path),
-                    self._get_relative_path(result.difference_path)
+                    self._get_relative_path(result.difference_path),
                 )
 
             html += "</div>"
@@ -525,11 +555,19 @@ class VisualRegressionTester:
 def create_test_components():
     """Create sample test components for demonstration."""
 
-    from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
+    from PySide6.QtWidgets import (
+        QWidget,
+        QVBoxLayout,
+        QHBoxLayout,
+        QPushButton,
+        QLabel,
+        QFrame,
+    )
     from PySide6.QtCore import Qt
 
     def create_main_window_test():
         """Create a test main window component."""
+
         class TestMainWindow(QMainWindow):
             def __init__(self):
                 super().__init__()
@@ -551,7 +589,8 @@ def create_test_components():
                 button_layout = QHBoxLayout()
 
                 btn1 = QPushButton("Primary Button")
-                btn1.setStyleSheet("""
+                btn1.setStyleSheet(
+                    """
                     QPushButton {
                         background-color: #1976D2;
                         color: white;
@@ -563,11 +602,13 @@ def create_test_components():
                     QPushButton:hover {
                         background-color: #1565C0;
                     }
-                """)
+                """
+                )
                 button_layout.addWidget(btn1)
 
                 btn2 = QPushButton("Secondary Button")
-                btn2.setStyleSheet("""
+                btn2.setStyleSheet(
+                    """
                     QPushButton {
                         background-color: #757575;
                         color: white;
@@ -575,7 +616,8 @@ def create_test_components():
                         padding: 10px 20px;
                         border-radius: 5px;
                     }
-                """)
+                """
+                )
                 button_layout.addWidget(btn2)
 
                 layout.addLayout(button_layout)
@@ -583,14 +625,16 @@ def create_test_components():
                 # Test frame
                 frame = QFrame()
                 frame.setFrameStyle(QFrame.Box)
-                frame.setStyleSheet("""
+                frame.setStyleSheet(
+                    """
                     QFrame {
                         background-color: #f5f5f5;
                         border: 2px solid #1976D2;
                         border-radius: 10px;
                         padding: 15px;
                     }
-                """)
+                """
+                )
 
                 frame_layout = QVBoxLayout(frame)
                 frame_layout.addWidget(QLabel("Test Frame Content"))
@@ -602,6 +646,7 @@ def create_test_components():
 
     def create_dialog_test():
         """Create a test dialog component."""
+
         class TestDialog(QWidget):
             def __init__(self):
                 super().__init__()
@@ -620,7 +665,8 @@ def create_test_components():
 
                 label1 = QLabel("Username:")
                 input1 = QFrame()  # Simulate input field
-                input1.setStyleSheet("""
+                input1.setStyleSheet(
+                    """
                     QFrame {
                         background-color: white;
                         border: 1px solid #ccc;
@@ -628,13 +674,15 @@ def create_test_components():
                         padding: 5px;
                         min-height: 25px;
                     }
-                """)
+                """
+                )
                 form_layout.addWidget(label1)
                 form_layout.addWidget(input1)
 
                 label2 = QLabel("Password:")
                 input2 = QFrame()  # Simulate input field
-                input2.setStyleSheet("""
+                input2.setStyleSheet(
+                    """
                     QFrame {
                         background-color: white;
                         border: 1px solid #ccc;
@@ -642,7 +690,8 @@ def create_test_components():
                         padding: 5px;
                         min-height: 25px;
                     }
-                """)
+                """
+                )
                 form_layout.addWidget(label2)
                 form_layout.addWidget(input2)
 
@@ -652,7 +701,8 @@ def create_test_components():
                 button_layout = QHBoxLayout()
 
                 ok_btn = QPushButton("OK")
-                ok_btn.setStyleSheet("""
+                ok_btn.setStyleSheet(
+                    """
                     QPushButton {
                         background-color: #4CAF50;
                         color: white;
@@ -661,11 +711,13 @@ def create_test_components():
                         border-radius: 4px;
                         font-weight: bold;
                     }
-                """)
+                """
+                )
                 button_layout.addWidget(ok_btn)
 
                 cancel_btn = QPushButton("Cancel")
-                cancel_btn.setStyleSheet("""
+                cancel_btn.setStyleSheet(
+                    """
                     QPushButton {
                         background-color: #f44336;
                         color: white;
@@ -673,42 +725,46 @@ def create_test_components():
                         padding: 8px 16px;
                         border-radius: 4px;
                     }
-                """)
+                """
+                )
                 button_layout.addWidget(cancel_btn)
 
                 layout.addLayout(button_layout)
 
         return TestDialog
 
-    return {
-        'main_window': create_main_window_test,
-        'dialog': create_dialog_test
-    }
+    return {"main_window": create_main_window_test, "dialog": create_dialog_test}
 
 
 def main():
     """Main entry point for visual regression testing."""
 
-    parser = argparse.ArgumentParser(description='Visual Regression Testing Framework')
-    parser.add_argument('--baseline', default='tests/baseline',
-                       help='Directory containing baseline screenshots')
-    parser.add_argument('--output', default='tests/visual_regression',
-                       help='Directory for test output')
-    parser.add_argument('--threshold', type=float, default=0.05,
-                       help='Pixel difference threshold (0-1)')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Enable verbose logging')
-    parser.add_argument('--generate-baselines', action='store_true',
-                       help='Generate new baseline images')
-    parser.add_argument('--components', nargs='*',
-                       help='Specific components to test')
+    parser = argparse.ArgumentParser(description="Visual Regression Testing Framework")
+    parser.add_argument(
+        "--baseline",
+        default="tests/baseline",
+        help="Directory containing baseline screenshots",
+    )
+    parser.add_argument(
+        "--output", default="tests/visual_regression", help="Directory for test output"
+    )
+    parser.add_argument(
+        "--threshold", type=float, default=0.05, help="Pixel difference threshold (0-1)"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--generate-baselines", action="store_true", help="Generate new baseline images"
+    )
+    parser.add_argument("--components", nargs="*", help="Specific components to test")
 
     args = parser.parse_args()
 
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
 
     # Initialize tester
@@ -742,17 +798,21 @@ def main():
         print(f"Failed: {test_suite.summary['failed_tests']}")
         print(f"Threshold: {test_suite.threshold}")
         print(f"Total time: {test_suite.summary['total_time']:.2f}s")
-        print(f"Average time per test: {test_suite.summary['average_time_per_test']:.2f}s")
+        print(
+            f"Average time per test: {test_suite.summary['average_time_per_test']:.2f}s"
+        )
 
-        if test_suite.summary['failed_tests'] > 0:
+        if test_suite.summary["failed_tests"] > 0:
             print(f"\nFailed tests:")
             for result in test_suite.results:
                 if not result.passed:
-                    print(f"  - {result.test_name}: {result.pixel_difference:.4f} difference")
+                    print(
+                        f"  - {result.test_name}: {result.pixel_difference:.4f} difference"
+                    )
 
         print(f"\nReport: {report_path}")
         print(f"{'='*60}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

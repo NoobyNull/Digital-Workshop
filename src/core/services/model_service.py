@@ -58,7 +58,9 @@ class ModelService(IModelService):
         self._loaded_models: Set[str] = set()
         self._progress_callbacks: Dict[str, Callable[[float], None]] = {}
 
-        self._logger.info("ModelService initialized with %d parsers", len(parser_registry))
+        self._logger.info(
+            "ModelService initialized with %d parsers", len(parser_registry)
+        )
 
     def load_model(
         self,
@@ -93,14 +95,18 @@ class ModelService(IModelService):
             # Detect file format
             format_detected = self._format_detector.detect_format(file_path)
             if format_detected is None:
-                raise ValueError(f"Unsupported or unrecognized file format: {file_path}")
+                raise ValueError(
+                    f"Unsupported or unrecognized file format: {file_path}"
+                )
 
             self._logger.debug("Detected format: %s", format_detected.value)
 
             # Get appropriate parser
             parser = self._parser_registry.get(format_detected.value)
             if parser is None:
-                raise ValueError(f"No parser available for format: {format_detected.value}")
+                raise ValueError(
+                    f"No parser available for format: {format_detected.value}"
+                )
 
             # Validate file before parsing
             if not parser.validate_file(file_path):
@@ -112,7 +118,9 @@ class ModelService(IModelService):
 
             # Parse the model
             self._logger.debug("Starting model parsing")
-            model_data = parser.parse(file_path, self._create_progress_callback(model_id))
+            model_data = parser.parse(
+                file_path, self._create_progress_callback(model_id)
+            )
 
             # Validate parsed data
             if not self._validate_model_data(model_data):
@@ -126,7 +134,9 @@ class ModelService(IModelService):
             # Store metadata
             metadata = self._extract_metadata(file_path, model_data, format_detected)
             if not self._metadata_repository.add_metadata(stored_model_id, metadata):
-                self._logger.warning("Failed to store metadata for model: %s", stored_model_id)
+                self._logger.warning(
+                    "Failed to store metadata for model: %s", stored_model_id
+                )
 
             # Mark as loaded
             self._loaded_models.add(stored_model_id)
@@ -143,7 +153,14 @@ class ModelService(IModelService):
             self._logger.error("Failed to load model %s: %s", file_path, error)
             return False
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
             self._logger.error(
                 "Unexpected error loading model %s: %s", file_path, error, exc_info=True
             )
@@ -179,8 +196,17 @@ class ModelService(IModelService):
             self._logger.info("Successfully unloaded model: %s", model_id)
             return True
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
-            self._logger.error("Error unloading model %s: %s", model_id, error, exc_info=True)
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
+            self._logger.error(
+                "Error unloading model %s: %s", model_id, error, exc_info=True
+            )
             return False
 
     def get_model(self, model_id: str) -> Optional[Any]:
@@ -204,8 +230,17 @@ class ModelService(IModelService):
 
             return model_data
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
-            self._logger.error("Error retrieving model %s: %s", model_id, error, exc_info=True)
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
+            self._logger.error(
+                "Error retrieving model %s: %s", model_id, error, exc_info=True
+            )
             return None
 
     def get_loaded_models(self) -> List[str]:
@@ -228,7 +263,14 @@ class ModelService(IModelService):
         try:
             return self._metadata_repository.get_metadata(model_id)
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
             self._logger.error(
                 "Error retrieving metadata for model %s: %s",
                 model_id,
@@ -250,7 +292,14 @@ class ModelService(IModelService):
         try:
             return self._metadata_repository.update_metadata(model_id, metadata)
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
             self._logger.error(
                 "Error updating metadata for model %s: %s",
                 model_id,
@@ -273,7 +322,14 @@ class ModelService(IModelService):
             search_criteria = {"query": query}
             return self._model_repository.search(search_criteria)
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as error:
             self._logger.error("Error searching models: %s", error, exc_info=True)
             return []
 
@@ -291,7 +347,14 @@ class ModelService(IModelService):
             if model_id in self._progress_callbacks:
                 try:
                     self._progress_callbacks[model_id](progress)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as error:
                     self._logger.warning(
                         "Error in progress callback for model %s: %s", model_id, error
                     )

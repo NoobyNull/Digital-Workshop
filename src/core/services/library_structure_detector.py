@@ -133,7 +133,9 @@ class LibraryStructureDetector:
                         metadata_files.append(file)
 
             # Analyze structure
-            structure_type = self._detect_structure_type(folder_path, all_files, all_folders)
+            structure_type = self._detect_structure_type(
+                folder_path, all_files, all_folders
+            )
             confidence_score = self._calculate_confidence(
                 file_type_grouping,
                 len(all_files),
@@ -194,7 +196,9 @@ class LibraryStructureDetector:
             or filename.lower() in {"readme", "manifest", "index", "catalog"}
         )
 
-    def _detect_structure_type(self, folder_path: str, files: List[str], folders: set) -> str:
+    def _detect_structure_type(
+        self, folder_path: str, files: List[str], folders: set
+    ) -> str:
         """Detect structure type: flat, nested, or balanced."""
         if not files:
             return "flat"
@@ -275,7 +279,9 @@ class LibraryStructureDetector:
             patterns.append("Category organization")
 
         # Date patterns
-        if any(name for name in folder_names if name.startswith("20") and len(name) == 4):
+        if any(
+            name for name in folder_names if name.startswith("20") and len(name) == 4
+        ):
             patterns.append("Date-based organization")
 
         # Numbered patterns

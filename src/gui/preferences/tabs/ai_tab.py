@@ -28,8 +28,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
-
 class AITab(QWidget):
     """AI Description Service configuration tab."""
 
@@ -63,7 +61,9 @@ class AITab(QWidget):
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
-        self.auto_tag_import_check = QCheckBox("Auto-tag imported models using AI after thumbnails")
+        self.auto_tag_import_check = QCheckBox(
+            "Auto-tag imported models using AI after thumbnails"
+        )
         self.auto_tag_import_check.setToolTip(
             "When enabled, newly imported models will be submitted to the AI service for keywords/tags."
         )
@@ -117,7 +117,9 @@ class AITab(QWidget):
         api_key_form = QFormLayout()
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.Password)
-        self.api_key_edit.setPlaceholderText("Enter API key for selected provider (or use environment variable)")
+        self.api_key_edit.setPlaceholderText(
+            "Enter API key for selected provider (or use environment variable)"
+        )
         api_key_form.addRow("API Key:", self.api_key_edit)
         api_layout.addLayout(api_key_form)
 
@@ -185,7 +187,9 @@ class AITab(QWidget):
         batch_layout.addLayout(batch_form)
 
         # Enable batch processing
-        self.enable_batch_check = QCheckBox("Enable batch processing for multiple images")
+        self.enable_batch_check = QCheckBox(
+            "Enable batch processing for multiple images"
+        )
         batch_layout.addWidget(self.enable_batch_check)
 
         layout.addWidget(batch_group)
@@ -198,7 +202,9 @@ class AITab(QWidget):
         test_label.setStyleSheet("font-size: 11pt;")
         test_layout.addWidget(test_label)
 
-        test_desc = QLabel("Test your AI provider configuration to ensure it's working correctly.")
+        test_desc = QLabel(
+            "Test your AI provider configuration to ensure it's working correctly."
+        )
         test_desc.setWordWrap(True)
         test_layout.addWidget(test_desc)
 
@@ -321,7 +327,9 @@ class AITab(QWidget):
             if provider_id:
                 settings.setValue("ai/provider_id", provider_id)
                 # Keep AI description service in sync with preferences
-                settings.setValue("ai_description/settings/default_provider", provider_id)
+                settings.setValue(
+                    "ai_description/settings/default_provider", provider_id
+                )
 
             # Save API key if provided by user
             api_key = self.api_key_edit.text().strip()
@@ -359,7 +367,9 @@ class AITab(QWidget):
             # Save batch settings
             settings.setValue("ai/batch_size", self.batch_size_spin.value())
             settings.setValue("ai/enable_batch", self.enable_batch_check.isChecked())
-            settings.setValue("ai/auto_tag_import", self.auto_tag_import_check.isChecked())
+            settings.setValue(
+                "ai/auto_tag_import", self.auto_tag_import_check.isChecked()
+            )
 
             settings.sync()
 
@@ -478,7 +488,6 @@ class AITab(QWidget):
         """Handle settings change."""
         # Update test result to indicate unsaved changes (text only, no custom styling)
         self.test_result_label.setText("Settings changed - save to apply")
-
 
     def _reset_current_provider(self) -> None:
         """Reset only the currently selected provider to its default configuration."""
@@ -638,4 +647,3 @@ class AITab(QWidget):
         }
         prefix = prefix_map.get(status, "")
         self.test_result_label.setText(f"{prefix}{message}")
-

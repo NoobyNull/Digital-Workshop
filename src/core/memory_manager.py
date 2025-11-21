@@ -41,7 +41,11 @@ class MemoryStats:
     @property
     def available_ratio(self) -> float:
         """Get ratio of available to total memory."""
-        return self.available_memory_gb / self.total_memory_gb if self.total_memory_gb > 0 else 0
+        return (
+            self.available_memory_gb / self.total_memory_gb
+            if self.total_memory_gb > 0
+            else 0
+        )
 
     @property
     def is_memory_constrained(self) -> bool:
@@ -172,10 +176,24 @@ class MemoryMonitor:
                 for callback in self._callbacks:
                     try:
                         callback(self._stats)
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
                         self.logger.warning("Memory monitor callback failed: %s", e)
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Memory monitoring error: %s", e)
 
             time.sleep(self.update_interval)
@@ -304,14 +322,20 @@ class MemoryManager:
             stats: Current memory statistics
         """
         if stats.pressure_level == MemoryPressure.CRITICAL:
-            self.logger.warning("Critical memory pressure detected - triggering cleanup")
+            self.logger.warning(
+                "Critical memory pressure detected - triggering cleanup"
+            )
             self.force_cleanup()
         elif stats.pressure_level == MemoryPressure.HIGH:
-            self.logger.info("High memory pressure detected - performing maintenance cleanup")
+            self.logger.info(
+                "High memory pressure detected - performing maintenance cleanup"
+            )
             self.maintenance_cleanup()
 
     @log_function_call
-    def allocate_memory(self, size_bytes: int, owner: str = "unknown") -> Optional[bytearray]:
+    def allocate_memory(
+        self, size_bytes: int, owner: str = "unknown"
+    ) -> Optional[bytearray]:
         """
         Allocate memory with tracking and limits.
 
@@ -338,7 +362,9 @@ class MemoryManager:
             block = self.memory_pool.allocate(size_bytes)
             if block:
                 self.allocation_tracking[owner].append(len(block))
-                self.logger.debug("Allocated %s bytes from pool for {owner}", len(block))
+                self.logger.debug(
+                    "Allocated %s bytes from pool for {owner}", len(block)
+                )
                 return block
 
             # Fallback to direct allocation if pool fails
@@ -348,7 +374,9 @@ class MemoryManager:
                 self.logger.debug("Direct allocated %s bytes for {owner}", len(block))
                 return block
             except MemoryError:
-                self.logger.error("Memory allocation failed for %s: {size_bytes} bytes", owner)
+                self.logger.error(
+                    "Memory allocation failed for %s: {size_bytes} bytes", owner
+                )
                 return None
 
     @log_function_call
@@ -365,7 +393,14 @@ class MemoryManager:
                 # Try to return to pool
                 self.memory_pool.free(block)
                 self.logger.debug("Returned %s bytes to pool for {owner}", len(block))
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.warning("Failed to return block to pool: %s", e)
 
             # Remove from tracking
@@ -384,12 +419,16 @@ class MemoryManager:
             Dictionary with allocation summary
         """
         with self._lock:
-            total_allocated = sum(sum(sizes) for sizes in self.allocation_tracking.values())
+            total_allocated = sum(
+                sum(sizes) for sizes in self.allocation_tracking.values()
+            )
 
             return {
                 "total_allocated_bytes": total_allocated,
                 "total_allocated_gb": total_allocated / (1024**3),
-                "allocation_count": sum(len(sizes) for sizes in self.allocation_tracking.values()),
+                "allocation_count": sum(
+                    len(sizes) for sizes in self.allocation_tracking.values()
+                ),
                 "owners": dict(self.allocation_tracking),
                 "memory_stats": self.monitor.get_memory_stats().__dict__,
             }

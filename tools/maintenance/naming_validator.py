@@ -123,8 +123,25 @@ class NamingConventionValidator:
         self._severity_priority = ["critical", "major", "minor"]
         self._severity_lookup = {
             "critical": {"backup", "temp", "old"},
-            "major": {"new", "refactored", "improved", "enhanced", "optimized", "modern", "experimental", "legacy"},
-            "minor": {"working", "prototype", "draft", "final", "release", "beta", "alpha"},
+            "major": {
+                "new",
+                "refactored",
+                "improved",
+                "enhanced",
+                "optimized",
+                "modern",
+                "experimental",
+                "legacy",
+            },
+            "minor": {
+                "working",
+                "prototype",
+                "draft",
+                "final",
+                "release",
+                "beta",
+                "alpha",
+            },
         }
 
     def validate_filename(self, file_path: Path) -> Optional[NamingViolation]:
@@ -154,11 +171,15 @@ class NamingConventionValidator:
         violations: List[NamingViolation] = []
         if files:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                for index, violation in enumerate(executor.map(self.validate_filename, files), start=1):
+                for index, violation in enumerate(
+                    executor.map(self.validate_filename, files), start=1
+                ):
                     if violation:
                         violations.append(violation)
                     if progress_callback:
-                        progress_callback(index, len(files), round(index / len(files) * 100, 2))
+                        progress_callback(
+                            index, len(files), round(index / len(files) * 100, 2)
+                        )
 
         total = len(files)
         violated = len(violations)
@@ -210,7 +231,9 @@ class NamingConventionValidator:
         normalized = [adj.lower() for adj in adjectives]
         for severity in self._severity_priority:
             keywords = self._severity_lookup.get(severity, set())
-            if any(adj in keywords or self._is_version_token(adj) for adj in normalized):
+            if any(
+                adj in keywords or self._is_version_token(adj) for adj in normalized
+            ):
                 return severity
         return "minor"
 
@@ -228,7 +251,11 @@ class NamingConventionValidator:
             f"Resolve {result.violated_files} non-compliant filenames to raise compliance above {result.compliance_rate:.2f}%."
         )
         if any(v.severity == "critical" for v in result.violations):
-            recommendations.append("Remove urgent adjectives like 'backup' or 'temp' from production assets.")
+            recommendations.append(
+                "Remove urgent adjectives like 'backup' or 'temp' from production assets."
+            )
         if any("new" in v.detected_adjectives for v in result.violations):
-            recommendations.append("Replace transitional adjectives (e.g., 'new', 'refactored') with descriptive names.")
+            recommendations.append(
+                "Replace transitional adjectives (e.g., 'new', 'refactored') with descriptive names."
+            )
         return recommendations

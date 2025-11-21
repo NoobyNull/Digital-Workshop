@@ -244,6 +244,62 @@ class ModelRepository:
         return self.update_file_hash(model_id, file_hash)
 
     @log_function_call(logger)
+    def get_unhashed_models(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Return models that do not yet have a file hash.
+
+        Args:
+            limit: Maximum number of records to return
+
+        Returns:
+            List of model dicts lacking hashes
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT * FROM models
+                    WHERE file_hash IS NULL OR file_hash = ''
+                    ORDER BY id ASC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                )
+                rows = cursor.fetchall()
+                return [dict(row) for row in rows]
+        except sqlite3.Error as e:
+            logger.error("Failed to fetch unhashed models: %s", e)
+            return []
+
+    @log_function_call(logger)
+    def get_model_id_by_file_path(self, file_path: str) -> Optional[int]:
+        """
+        Get a model id by its file path.
+
+        Args:
+            file_path: Absolute or relative path to the model
+
+        Returns:
+            Model id if found, otherwise None
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT id FROM models WHERE file_path = ? LIMIT 1
+                    """,
+                    (file_path,),
+                )
+                row = cursor.fetchone()
+                return int(row[0]) if row else None
+        except sqlite3.Error as e:
+            logger.error("Failed to get model id by path %s: %s", file_path, e)
+            return None
+
+    @log_function_call(logger)
     def get_all_models(
         self,
         limit: Optional[int] = None,
@@ -383,7 +439,9 @@ class ModelRepository:
                 conn.commit()
                 if success:
                     logger.info(
-                        "Updated camera view for model %s to '%s'", model_id, camera_view_name
+                        "Updated camera view for model %s to '%s'",
+                        model_id,
+                        camera_view_name,
                     )
                 return success
         except sqlite3.Error as e:

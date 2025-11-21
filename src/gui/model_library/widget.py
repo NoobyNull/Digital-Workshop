@@ -141,10 +141,14 @@ class ModelLibraryWidget(QWidget):
                 # Restore the visual order
                 for logical_index, visual_index in enumerate(column_order):
                     if isinstance(visual_index, int):
-                        header.moveSection(header.visualIndex(logical_index), visual_index)
+                        header.moveSection(
+                            header.visualIndex(logical_index), visual_index
+                        )
                 self.logger.debug("[DELAYED] Column order restored successfully")
             else:
-                self.logger.debug("[DELAYED] Invalid column order format: %r", column_order)
+                self.logger.debug(
+                    "[DELAYED] Invalid column order format: %r", column_order
+                )
         else:
             self.logger.debug("[DELAYED] No saved column order found")
 
@@ -205,7 +209,9 @@ class ModelLibraryWidget(QWidget):
             if set_recent_favorite(model_id, is_favorite):
                 self.refresh_recent_models()
         except Exception as exc:
-            self.logger.warning("Failed to update favorite state for model %s: %s", model_id, exc)
+            self.logger.warning(
+                "Failed to update favorite state for model %s: %s", model_id, exc
+            )
 
     def cleanup(self) -> None:
         """Clean up resources before closing."""

@@ -66,7 +66,9 @@ class ModelLoadWorker(QThread):
                 file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
 
                 # Create detailed progress tracker for this file
-                tracker = DetailedProgressTracker(triangle_count=0, file_size_mb=file_size_mb)
+                tracker = DetailedProgressTracker(
+                    triangle_count=0, file_size_mb=file_size_mb
+                )
 
                 # Set callback to emit progress
                 # Use default arguments to capture loop variables (avoids cell-var-from-loop)
@@ -98,7 +100,9 @@ class ModelLoadWorker(QThread):
                 )
 
                 # Check cache first
-                tracker.start_stage(LoadingStage.METADATA, f"Checking cache for {filename}")
+                tracker.start_stage(
+                    LoadingStage.METADATA, f"Checking cache for {filename}"
+                )
                 cached_model = self.model_cache.get(file_path, CacheLevel.METADATA)
                 if cached_model:
                     model = cached_model
@@ -138,7 +142,9 @@ class ModelLoadWorker(QThread):
                         # Parse with progress tracking
                         tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")
                         model = parser.parse_metadata_only(file_path)
-                        tracker.complete_stage(f"Parsed {model.stats.triangle_count:,} triangles")
+                        tracker.complete_stage(
+                            f"Parsed {model.stats.triangle_count:,} triangles"
+                        )
 
                     # Cache the model
                     self.model_cache.put(file_path, CacheLevel.METADATA, model)

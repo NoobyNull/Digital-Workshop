@@ -191,7 +191,9 @@ class ImportFileManager:
 
         return path.suffix.lower() in self.ARCHIVE_EXTENSIONS
 
-    def _extract_archive(self, archive_path: Path, session: ImportSession) -> Optional[Path]:
+    def _extract_archive(
+        self, archive_path: Path, session: ImportSession
+    ) -> Optional[Path]:
         """Extract the archive to a temporary staging directory."""
 
         staging_root = Path(tempfile.gettempdir()) / "digital_workshop_imports"
@@ -268,13 +270,17 @@ class ImportFileManager:
             # Ensure this directory is registered as a library root so that
             # the file browser can access it consistently. If it is not yet
             # configured, try to add it automatically instead of failing.
-            configured_roots = self.root_folder_manager.get_folder_paths(enabled_only=True)
+            configured_roots = self.root_folder_manager.get_folder_paths(
+                enabled_only=True
+            )
             normalized_roots = {Path(p).resolve() for p in configured_roots}
 
             if root_path not in normalized_roots:
                 added = self.root_folder_manager.add_folder(str(root_path))
                 if not added:
-                    error = f"Directory is not a configured root folder: {root_directory}"
+                    error = (
+                        f"Directory is not a configured root folder: {root_directory}"
+                    )
                     self.logger.warning(error)
                     return False, error
 
@@ -286,7 +292,14 @@ class ImportFileManager:
 
             return True, None
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
             error = f"Error validating root directory: {exc}"
             self.logger.error(error, exc_info=True)
             return False, error
@@ -475,7 +488,9 @@ class ImportFileManager:
 
                     # Skip files we already imported in this app session
                     if path_hash in self._imported_path_hashes:
-                        self.logger.info("Skipping already imported file: %s", file_path)
+                        self.logger.info(
+                            "Skipping already imported file: %s", file_path
+                        )
                         continue
 
                     file_info = ImportFileInfo(
@@ -487,7 +502,9 @@ class ImportFileManager:
                     session.files.append(file_info)
                     self._imported_path_hashes.add(path_hash)
                 else:
-                    self.logger.warning("File not found or not accessible: %s", file_path)
+                    self.logger.warning(
+                        "File not found or not accessible: %s", file_path
+                    )
             except (OSError, IOError) as e:
                 self.logger.error("Error accessing file %s: %s", file_path, e)
 
@@ -576,7 +593,9 @@ class ImportFileManager:
                 # Copy file
                 def copy_progress(percent) -> None:
                     if progress_callback:
-                        progress_callback(f"Copying {source_path.name}", 50 + (percent // 2))
+                        progress_callback(
+                            f"Copying {source_path.name}", 50 + (percent // 2)
+                        )
 
                 self._copy_file_with_progress(source_path, target_path, copy_progress)
 
@@ -646,7 +665,14 @@ class ImportFileManager:
                     if path.exists():
                         path.unlink()
                         self.logger.info("Rolled back copied file: %s", file_path)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as exc:
                     self.logger.error(
                         "Failed to remove file during rollback: %s: %s", file_path, exc
                     )
@@ -660,8 +686,17 @@ class ImportFileManager:
                         # Only remove if empty
                         if not list(path.iterdir()):
                             path.rmdir()
-                            self.logger.info("Rolled back created directory: %s", dir_path)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                            self.logger.info(
+                                "Rolled back created directory: %s", dir_path
+                            )
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error(
                         f"Failed to remove directory during rollback: {dir_path}: {e}"
                     )
@@ -678,7 +713,9 @@ class ImportFileManager:
             self.logger.error("Error during rollback: %s", e, exc_info=True)
             return False
 
-    def complete_import_session(self, session: ImportSession, success: bool = True) -> ImportResult:
+    def complete_import_session(
+        self, session: ImportSession, success: bool = True
+    ) -> ImportResult:
         """
         Complete an import session and generate result.
 
@@ -694,7 +731,9 @@ class ImportFileManager:
 
         # Calculate statistics
         total_files = len(session.files)
-        processed_files = sum(1 for f in session.files if f.import_status == "completed")
+        processed_files = sum(
+            1 for f in session.files if f.import_status == "completed"
+        )
         failed_files = sum(1 for f in session.files if f.import_status == "failed")
         skipped_files = sum(1 for f in session.files if f.import_status == "skipped")
         total_size = sum(f.file_size for f in session.files)

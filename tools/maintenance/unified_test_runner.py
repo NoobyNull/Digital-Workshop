@@ -76,7 +76,11 @@ class JSONFormatter:
 class UnifiedTestRunner:
     """High-level orchestration around pytest for CI and developer workflows."""
 
-    def __init__(self, config_path: Optional[Path] = None, test_suites: Optional[List[TestSuiteConfig]] = None) -> None:
+    def __init__(
+        self,
+        config_path: Optional[Path] = None,
+        test_suites: Optional[List[TestSuiteConfig]] = None,
+    ) -> None:
         import logging
 
         self.config_path = Path(config_path or "unified_runner_config.json")
@@ -180,7 +184,9 @@ class UnifiedTestRunner:
             "platform": platform.platform(),
         }
 
-    def _monitor_resources(self, process: subprocess.Popen, interval: float = 0.25) -> dict:
+    def _monitor_resources(
+        self, process: subprocess.Popen, interval: float = 0.25
+    ) -> dict:
         try:
             ps_proc = psutil.Process(getattr(process, "pid", None))
         except (psutil.Error, TypeError):
@@ -190,7 +196,9 @@ class UnifiedTestRunner:
         while True:
             if process.poll() is not None:
                 try:
-                    max_memory = max(max_memory, ps_proc.memory_info().rss / (1024 * 1024))
+                    max_memory = max(
+                        max_memory, ps_proc.memory_info().rss / (1024 * 1024)
+                    )
                 except psutil.Error:
                     pass
                 break
@@ -201,7 +209,11 @@ class UnifiedTestRunner:
             except psutil.Error:
                 break
         avg_cpu = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
-        return {"max_memory_mb": max_memory, "avg_cpu_percent": avg_cpu, "cpu_samples": len(cpu_samples)}
+        return {
+            "max_memory_mb": max_memory,
+            "avg_cpu_percent": avg_cpu,
+            "cpu_samples": len(cpu_samples),
+        }
 
     def _build_report_paths(self, suite: TestSuiteConfig) -> Dict[str, Path]:
         reports_dir = self.config_path.parent / "reports"
@@ -209,7 +221,9 @@ class UnifiedTestRunner:
         junit = reports_dir / f"{suite.name}_junit.xml"
         return {"junit": junit, "log": reports_dir / f"{suite.name}.log"}
 
-    def _build_pytest_command(self, suite: TestSuiteConfig, report_path: Path, discovered: Sequence[str]) -> List[str]:
+    def _build_pytest_command(
+        self, suite: TestSuiteConfig, report_path: Path, discovered: Sequence[str]
+    ) -> List[str]:
         cmd = ["pytest", "-q"]
         if suite.markers:
             cmd.extend(["-m", " and ".join(suite.markers)])
@@ -231,7 +245,12 @@ class UnifiedTestRunner:
             failures = int(root.attrib.get("failures", 0))
             errors = int(root.attrib.get("errors", 0))
             skipped = int(root.attrib.get("skipped", 0))
-            return {"total": total, "failures": failures, "errors": errors, "skipped": skipped}
+            return {
+                "total": total,
+                "failures": failures,
+                "errors": errors,
+                "skipped": skipped,
+            }
         except Exception:
             return {"total": 0, "failures": 0, "errors": 0, "skipped": 0}
 
@@ -282,7 +301,10 @@ class UnifiedTestRunner:
                 start_time,
                 duration=duration,
                 exit_code=124,
-                metrics={"discovered_tests": float(len(discovered)), "error": "Launch timed out"},
+                metrics={
+                    "discovered_tests": float(len(discovered)),
+                    "error": "Launch timed out",
+                },
                 stats={"total": 0, "failures": 0, "errors": 0, "skipped": 0},
                 coverage=suite.coverage_target,
                 memory=0.0,
@@ -380,7 +402,9 @@ class UnifiedTestRunner:
                 handle.write(stderr)
 
     # ------------------------------------------------------------- entrypoints
-    def run_all_tests(self, parallel_suites: bool = False, max_workers: Optional[int] = None) -> List[TestExecutionResult]:
+    def run_all_tests(
+        self, parallel_suites: bool = False, max_workers: Optional[int] = None
+    ) -> List[TestExecutionResult]:
         suites = sorted(self.test_suites, key=lambda s: s.priority)
         if not parallel_suites:
             return [self.run_test_suite(suite) for suite in suites]
@@ -402,18 +426,31 @@ class UnifiedTestRunner:
             "total_failed": sum(r.failed_tests for r in results),
             "total_skipped": sum(r.skipped_tests for r in results),
             "total_errors": sum(r.error_tests for r in results),
-            "success_rate": round(
-                (sum(r.passed_tests for r in results) / max(1, sum(r.total_tests for r in results))) * 100, 2
-            )
-            if results
-            else 100.0,
-            "average_coverage": round(
-                sum((r.coverage_percentage or 0) for r in results) / max(1, len(results)), 2
-            )
-            if results
-            else 0.0,
+            "success_rate": (
+                round(
+                    (
+                        sum(r.passed_tests for r in results)
+                        / max(1, sum(r.total_tests for r in results))
+                    )
+                    * 100,
+                    2,
+                )
+                if results
+                else 100.0
+            ),
+            "average_coverage": (
+                round(
+                    sum((r.coverage_percentage or 0) for r in results)
+                    / max(1, len(results)),
+                    2,
+                )
+                if results
+                else 0.0
+            ),
             "total_duration_seconds": sum(r.duration_seconds for r in results),
-            "average_memory_usage_mb": round(sum(r.memory_usage_mb for r in results) / max(1, len(results)), 2),
+            "average_memory_usage_mb": round(
+                sum(r.memory_usage_mb for r in results) / max(1, len(results)), 2
+            ),
             "execution_timestamp": datetime.utcnow().isoformat(),
             "system_info": self._get_system_info(),
         }
@@ -459,10 +496,14 @@ class UnifiedTestRunner:
         print("\n".join(lines))
 
     # ------------------------------------------------------ report subhelpers
-    def _generate_recommendations(self, results: Sequence[TestExecutionResult]) -> List[str]:
+    def _generate_recommendations(
+        self, results: Sequence[TestExecutionResult]
+    ) -> List[str]:
         if not results:
             return ["No test suites executed."]
-        failed = [r for r in results if r.exit_code != 0 or r.failed_tests or r.error_tests]
+        failed = [
+            r for r in results if r.exit_code != 0 or r.failed_tests or r.error_tests
+        ]
         if not failed:
             return ["All tests passed! Maintain current coverage and keep CI green."]
         recs = [f"{len(failed)} suites have failing tests that need attention."]
@@ -470,7 +511,9 @@ class UnifiedTestRunner:
             recs.append("Increase test coverage above 80% on critical suites.")
         return recs
 
-    def _evaluate_quality_gates(self, results: Sequence[TestExecutionResult]) -> List[dict]:
+    def _evaluate_quality_gates(
+        self, results: Sequence[TestExecutionResult]
+    ) -> List[dict]:
         gates = []
         if not results:
             return gates
@@ -487,7 +530,9 @@ class UnifiedTestRunner:
             }
         )
         avg_coverage = (
-            sum((r.coverage_percentage or 0) for r in results) / len(results) if results else 0.0
+            sum((r.coverage_percentage or 0) for r in results) / len(results)
+            if results
+            else 0.0
         )
         gates.append(
             {
@@ -533,12 +578,18 @@ class UnifiedTestRunner:
             "average_memory_usage": sum(memory) / len(memory),
             "parallel_efficiency": self._calculate_parallel_efficiency(results),
             "suite_performance": [
-                {"suite": r.suite_name, "duration": r.duration_seconds, "memory_mb": r.memory_usage_mb}
+                {
+                    "suite": r.suite_name,
+                    "duration": r.duration_seconds,
+                    "memory_mb": r.memory_usage_mb,
+                }
                 for r in results
             ],
         }
 
-    def _calculate_parallel_efficiency(self, results: Sequence[TestExecutionResult]) -> float:
+    def _calculate_parallel_efficiency(
+        self, results: Sequence[TestExecutionResult]
+    ) -> float:
         if not results:
             return 1.0
         if len(results) == 1:
@@ -554,8 +605,15 @@ class UnifiedTestRunner:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Unified pytest runner")
-    parser.add_argument("--output", type=str, default="unified_test_report.json", help="Report file path")
-    parser.add_argument("--parallel", action="store_true", help="Run suites in parallel")
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="unified_test_report.json",
+        help="Report file path",
+    )
+    parser.add_argument(
+        "--parallel", action="store_true", help="Run suites in parallel"
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     runner = UnifiedTestRunner()

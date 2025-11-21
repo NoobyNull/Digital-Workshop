@@ -38,7 +38,9 @@ class ModelOperationManager:
             self.main_window.progress_bar.setVisible(False)
 
             # Clear status after a delay
-            QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
+            QTimer.singleShot(
+                3000, lambda: self.main_window.status_label.setText("Ready")
+            )
         except Exception as e:
             self.logger.error("Failed to handle model loaded signal: %s", e)
 
@@ -82,14 +84,18 @@ class ModelOperationManager:
             self.logger.info("Added %s models to library", len(model_ids))
 
             if model_ids:
-                self.main_window.status_label.setText(f"Added {len(model_ids)} models to library")
+                self.main_window.status_label.setText(
+                    f"Added {len(model_ids)} models to library"
+                )
 
                 # Start background hasher to process new models
                 if hasattr(self.main_window, "_start_background_hasher"):
                     self.main_window._start_background_hasher()
 
                 # Clear status after a delay
-                QTimer.singleShot(3000, lambda: self.main_window.status_label.setText("Ready"))
+                QTimer.singleShot(
+                    3000, lambda: self.main_window.status_label.setText("Ready")
+                )
 
         except Exception as e:
             self.logger.error("Failed to handle models added: %s", e)
@@ -129,7 +135,9 @@ class ModelOperationManager:
         try:
             # Check if metadata editor exists
             if not hasattr(self.main_window, "metadata_editor"):
-                self.logger.debug("Metadata editor not available for model %s", model_id)
+                self.logger.debug(
+                    "Metadata editor not available for model %s", model_id
+                )
                 return
 
             if self.main_window.metadata_editor is None:
@@ -140,12 +148,17 @@ class ModelOperationManager:
             self.logger.debug("Metadata synchronized for model %s", model_id)
 
             # Switch to metadata tab to show the loaded metadata
-            if hasattr(self.main_window, "metadata_tabs") and self.main_window.metadata_tabs:
+            if (
+                hasattr(self.main_window, "metadata_tabs")
+                and self.main_window.metadata_tabs
+            ):
                 self.main_window.metadata_tabs.setCurrentIndex(0)
                 self.logger.debug("Switched to Metadata tab for model %s", model_id)
 
         except Exception as e:
-            self.logger.warning(f"Failed to synchronize metadata for model {model_id}: {e}")
+            self.logger.warning(
+                f"Failed to synchronize metadata for model {model_id}: {e}"
+            )
 
     def edit_model(self, model_id: Optional[int] = None) -> None:
         try:
@@ -153,7 +166,9 @@ class ModelOperationManager:
                 model_id = getattr(self.main_window, "current_model_id", None)
 
             if model_id is None:
-                QMessageBox.warning(self.main_window, "No Model", "Please select a model first")
+                QMessageBox.warning(
+                    self.main_window, "No Model", "Please select a model first"
+                )
                 return
 
             db_manager = get_database_manager()
@@ -171,7 +186,9 @@ class ModelOperationManager:
 
         except Exception as e:
             self.logger.error("Failed to edit model: %s", e)
-            QMessageBox.critical(self.main_window, "Error", f"Failed to edit model: {e}")
+            QMessageBox.critical(
+                self.main_window, "Error", f"Failed to edit model: {e}"
+            )
 
     def import_models(self) -> None:
         """Import models from file system."""

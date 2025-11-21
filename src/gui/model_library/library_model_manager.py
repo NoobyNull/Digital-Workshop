@@ -37,7 +37,8 @@ class LibraryModelManager:
         # Thread pool for async operations
         self.thread_pool = QThreadPool.globalInstance()
         self.logger.info(
-            "Using global thread pool with %d threads", self.thread_pool.maxThreadCount()
+            "Using global thread pool with %d threads",
+            self.thread_pool.maxThreadCount(),
         )
 
         # Progress tracking
@@ -54,7 +55,9 @@ class LibraryModelManager:
         """Load models from the database into the view."""
         try:
             self.library_widget.status_label.setText("Loading models...")
-            self.library_widget.current_models = self.library_widget.db_manager.get_all_models()
+            self.library_widget.current_models = (
+                self.library_widget.db_manager.get_all_models()
+            )
             self.update_model_view()
             self.library_widget.model_count_label.setText(
                 f"Models: {len(self.library_widget.current_models)}"
@@ -105,9 +108,13 @@ class LibraryModelManager:
             thumbnail_item.setEditable(False)
 
             # Create name item (second column)
-            name_item = QStandardItem(model.get("title") or model.get("filename", "Unknown"))
+            name_item = QStandardItem(
+                model.get("title") or model.get("filename", "Unknown")
+            )
             name_item.setData(model.get("id"), Qt.UserRole)
-            name_item.setEditable(False)  # Not editable - use metadata editor to change name
+            name_item.setEditable(
+                False
+            )  # Not editable - use metadata editor to change name
 
             fmt = (model.get("format") or "Unknown").upper()
             format_item = QStandardItem(fmt)
@@ -122,13 +129,17 @@ class LibraryModelManager:
             else:
                 size_str = f"{size_bytes} B"
             size_item = QStandardItem(size_str)
-            size_item.setData(size_bytes, Qt.UserRole)  # Store numeric value for sorting
+            size_item.setData(
+                size_bytes, Qt.UserRole
+            )  # Store numeric value for sorting
             size_item.setEditable(False)
 
             # Triangles column - store numeric value for proper sorting
             triangle_count = model.get("triangle_count", 0) or 0
             triangles_item = QStandardItem(f"{triangle_count:,}")
-            triangles_item.setData(triangle_count, Qt.UserRole)  # Store numeric value for sorting
+            triangles_item.setData(
+                triangle_count, Qt.UserRole
+            )  # Store numeric value for sorting
             triangles_item.setEditable(False)
 
             category_item = QStandardItem(model.get("category", "Uncategorized"))
@@ -140,7 +151,9 @@ class LibraryModelManager:
             # Dirty status column - based on TAG_DIRTY presence in keywords
             keywords_value = model.get("keywords") or ""
             keyword_tags = [
-                tag.strip() for tag in str(keywords_value).split(",") if tag and tag.strip()
+                tag.strip()
+                for tag in str(keywords_value).split(",")
+                if tag and tag.strip()
             ]
             is_dirty = TAG_DIRTY in keyword_tags
 
@@ -232,7 +245,9 @@ class LibraryModelManager:
             throttle_ms=100.0,  # Update UI at most every 100ms
         )
 
-        self.logger.info("Starting batch load of %d models with async processing", len(file_paths))
+        self.logger.info(
+            "Starting batch load of %d models with async processing", len(file_paths)
+        )
 
         from .model_load_worker import ModelLoadWorker
 
@@ -324,7 +339,9 @@ class LibraryModelManager:
                     self._finalize_batch_load()
 
         except Exception as e:
-            self.logger.error("Error handling async task completion: %s", e, exc_info=True)
+            self.logger.error(
+                "Error handling async task completion: %s", e, exc_info=True
+            )
 
     def _on_async_task_failed(self, file_path: str, error_message: str) -> None:
         """Handle failure of async processing task."""
@@ -352,7 +369,8 @@ class LibraryModelManager:
             self.update_model_view()
 
             self.logger.info(
-                "Batch load finalized: %d models loaded", len(self.library_widget.current_models)
+                "Batch load finalized: %d models loaded",
+                len(self.library_widget.current_models),
             )
 
         except Exception as e:
@@ -430,7 +448,9 @@ class LibraryModelManager:
                     except Exception:
                         pass
                     try:
-                        self.library_widget.model_loader.finished.disconnect(self.on_load_finished)
+                        self.library_widget.model_loader.finished.disconnect(
+                            self.on_load_finished
+                        )
                     except Exception:
                         pass
                 except Exception:
@@ -444,10 +464,18 @@ class LibraryModelManager:
 
         if self.library_widget.model_loader:
             try:
-                self.library_widget.model_loader.model_loaded.disconnect(self.on_model_loaded)
-                self.library_widget.model_loader.progress_updated.disconnect(self.on_load_progress)
-                self.library_widget.model_loader.error_occurred.disconnect(self.on_load_error)
-                self.library_widget.model_loader.finished.disconnect(self.on_load_finished)
+                self.library_widget.model_loader.model_loaded.disconnect(
+                    self.on_model_loaded
+                )
+                self.library_widget.model_loader.progress_updated.disconnect(
+                    self.on_load_progress
+                )
+                self.library_widget.model_loader.error_occurred.disconnect(
+                    self.on_load_error
+                )
+                self.library_widget.model_loader.finished.disconnect(
+                    self.on_load_finished
+                )
             except Exception:
                 pass
 
@@ -474,12 +502,18 @@ class LibraryModelManager:
                 main_window.dedup_service.start_hashing()
 
                 # Find duplicates
-                duplicates = main_window.dedup_service.dedup_manager.find_all_duplicates()
-                duplicate_count = main_window.dedup_service.dedup_manager.get_duplicate_count()
+                duplicates = (
+                    main_window.dedup_service.dedup_manager.find_all_duplicates()
+                )
+                duplicate_count = (
+                    main_window.dedup_service.dedup_manager.get_duplicate_count()
+                )
 
                 if duplicate_count > 0:
                     main_window.dedup_service.pending_duplicates = duplicates
                     main_window.dedup_service.duplicates_found.emit(duplicate_count)
-                    self.logger.info("Found %s duplicate models after import", duplicate_count)
+                    self.logger.info(
+                        "Found %s duplicate models after import", duplicate_count
+                    )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to trigger post-import deduplication: %s", e)

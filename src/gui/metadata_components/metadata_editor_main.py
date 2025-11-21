@@ -181,7 +181,9 @@ class MetadataEditorWidget(QWidget):
 
         self.generate_preview_button = QPushButton("Generate Preview")
         self.generate_preview_button.setIcon(self._std_icon(QStyle.SP_DesktopIcon))
-        self.generate_preview_button.clicked.connect(self._generate_preview_for_current_model)
+        self.generate_preview_button.clicked.connect(
+            self._generate_preview_for_current_model
+        )
         preview_button_layout.addWidget(self.generate_preview_button)
 
         self.run_ai_analysis_button = QPushButton("Run AI Analysis")
@@ -382,7 +384,9 @@ class MetadataEditorWidget(QWidget):
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             # Silently ignore unavailable or invalid metadata; clear form and continue
-            self.logger.warning("Failed to load metadata for model %s: {str(e)}", model_id)
+            self.logger.warning(
+                "Failed to load metadata for model %s: {str(e)}", model_id
+            )
             try:
                 self._clear_form()
             except Exception:
@@ -545,7 +549,9 @@ class MetadataEditorWidget(QWidget):
                 self.metadata_saved.emit(self.current_model_id)
 
                 QMessageBox.information(self, "Success", "Metadata saved successfully")
-                self.logger.info("Metadata saved for model ID: %s", self.current_model_id)
+                self.logger.info(
+                    "Metadata saved for model ID: %s", self.current_model_id
+                )
             else:
                 QMessageBox.warning(self, "Warning", "Failed to save metadata")
 
@@ -569,7 +575,9 @@ class MetadataEditorWidget(QWidget):
 
             if existing_metadata and existing_metadata.get("title") is not None:
                 # Update existing metadata
-                success = self.db_manager.update_model_metadata(self.current_model_id, **metadata)
+                success = self.db_manager.update_model_metadata(
+                    self.current_model_id, **metadata
+                )
             else:
                 # Add new metadata
                 self.db_manager.add_model_metadata(self.current_model_id, **metadata)
@@ -617,7 +625,9 @@ class MetadataEditorWidget(QWidget):
         # Validate rating
         rating = self.star_rating.get_rating()
         if not 0 <= rating <= 5:
-            QMessageBox.warning(self, "Invalid Rating", "The rating must be between 0 and 5.")
+            QMessageBox.warning(
+                self, "Invalid Rating", "The rating must be between 0 and 5."
+            )
             return False
 
         return True
@@ -710,8 +720,12 @@ class MetadataEditorWidget(QWidget):
                             Qt.SmoothTransformation,
                         )
                         # Use set_thumbnail to store both scaled and full-resolution versions
-                        self.preview_image_label.set_thumbnail(scaled_pixmap, str(thumbnail_path))
-                        self.preview_image_label.setText("")  # Clear any placeholder text
+                        self.preview_image_label.set_thumbnail(
+                            scaled_pixmap, str(thumbnail_path)
+                        )
+                        self.preview_image_label.setText(
+                            ""
+                        )  # Clear any placeholder text
                         self.logger.debug("Loaded preview image for model %s", model_id)
                         return
 
@@ -746,7 +760,9 @@ class MetadataEditorWidget(QWidget):
                         Qt.SmoothTransformation,
                     )
                     # Use set_thumbnail to store both scaled and full-resolution versions
-                    self.preview_image_label.set_thumbnail(scaled_pixmap, str(thumbnail_path))
+                    self.preview_image_label.set_thumbnail(
+                        scaled_pixmap, str(thumbnail_path)
+                    )
                     self.preview_image_label.setText("")  # Clear any placeholder text
                     self.logger.debug("Loaded preview image for model %s", model_id)
                 else:
@@ -755,7 +771,9 @@ class MetadataEditorWidget(QWidget):
                 self._clear_preview_image()
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to load preview image for model %s: %s", model_id, e)
+            self.logger.error(
+                "Failed to load preview image for model %s: %s", model_id, e
+            )
             self._clear_preview_image()
 
     def _clear_preview_image(self) -> None:
@@ -772,7 +790,9 @@ class MetadataEditorWidget(QWidget):
             return
 
         try:
-            self.logger.info("Generating preview for model ID: %s", self.current_model_id)
+            self.logger.info(
+                "Generating preview for model ID: %s", self.current_model_id
+            )
 
             # Get model information
             model = self.db_manager.get_model(self.current_model_id)
@@ -797,7 +817,9 @@ class MetadataEditorWidget(QWidget):
             # Load thumbnail settings from preferences
             from src.core.application_config import ApplicationConfig
             from PySide6.QtCore import QSettings
-            from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
+            from src.gui.thumbnail_generation_coordinator import (
+                ThumbnailGenerationCoordinator,
+            )
 
             config = ApplicationConfig.get_default()
             settings = QSettings()
@@ -806,7 +828,9 @@ class MetadataEditorWidget(QWidget):
             bg_image = settings.value(
                 "thumbnail/background_image", config.thumbnail_bg_image, type=str
             )
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
             bg_color = settings.value(
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
@@ -824,7 +848,9 @@ class MetadataEditorWidget(QWidget):
                     return
                 if model.get("file_path") != file_path:
                     return
-                self.db_manager.update_model_thumbnail(self.current_model_id, thumbnail_path)
+                self.db_manager.update_model_thumbnail(
+                    self.current_model_id, thumbnail_path
+                )
                 self.logger.info(
                     "Saved thumbnail path to database for model %s: %s",
                     self.current_model_id,
@@ -835,10 +861,14 @@ class MetadataEditorWidget(QWidget):
 
             # Connect completion signal to refresh display
             def on_generation_completed() -> None:
-                self.logger.info("Preview generated for model %s", self.current_model_id)
+                self.logger.info(
+                    "Preview generated for model %s", self.current_model_id
+                )
                 # Reload the preview image (will now use the stored thumbnail path)
                 self._load_preview_image(self.current_model_id)
-                QMessageBox.information(self, "Success", "Preview generated successfully!")
+                QMessageBox.information(
+                    self, "Success", "Preview generated successfully!"
+                )
 
             coordinator.generation_completed.connect(on_generation_completed)
 
@@ -941,13 +971,17 @@ class MetadataEditorWidget(QWidget):
             self.run_ai_analysis_button.setText("Analyzing...")
 
             # Run analysis
-            self.logger.info("Running AI analysis on preview for model %s", self.current_model_id)
+            self.logger.info(
+                "Running AI analysis on preview for model %s", self.current_model_id
+            )
             result = ai_service.analyze_image(thumbnail_path)
 
             # Apply results to metadata
             self._apply_ai_results(result)
 
-            self.logger.info("AI analysis completed for model %s", self.current_model_id)
+            self.logger.info(
+                "AI analysis completed for model %s", self.current_model_id
+            )
             QMessageBox.information(
                 self,
                 "Analysis Complete",
@@ -995,13 +1029,17 @@ class MetadataEditorWidget(QWidget):
             # Update description if provided
             if "description" in result and result["description"]:
                 self.description_field.setPlainText(result["description"])
-                self.logger.info("Updated description: %s...", result["description"][:50])
+                self.logger.info(
+                    "Updated description: %s...", result["description"][:50]
+                )
 
             # Update taxonomy (category + keywords) if provided
             if "metadata_keywords" in result and result["metadata_keywords"]:
                 from src.core.taxonomy_utils import split_category_and_keywords
 
-                category, keywords = split_category_and_keywords(result["metadata_keywords"])
+                category, keywords = split_category_and_keywords(
+                    result["metadata_keywords"]
+                )
 
                 # Update category if we inferred one
                 if category:
@@ -1011,7 +1049,9 @@ class MetadataEditorWidget(QWidget):
                     except Exception:
                         # Category is a user-facing hint; failure here should
                         # not prevent keyword updates.
-                        self.logger.warning("Failed to update category field", exc_info=True)
+                        self.logger.warning(
+                            "Failed to update category field", exc_info=True
+                        )
 
                 keywords_str = ", ".join(keywords)
                 self.keywords_field.setText(keywords_str)
@@ -1019,7 +1059,9 @@ class MetadataEditorWidget(QWidget):
 
             # Mark as changed
             self.metadata_changed.emit(self.current_model_id)
-            self.logger.info("Applied AI analysis results to model %s", self.current_model_id)
+            self.logger.info(
+                "Applied AI analysis results to model %s", self.current_model_id
+            )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to apply AI results: %s", e)

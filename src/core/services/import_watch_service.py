@@ -75,7 +75,9 @@ class ImportWatchService(QObject):
             if key in self._queued_entries:
                 continue
             try:
-                current_match = self._current_entry and entry.samefile(self._current_entry)
+                current_match = self._current_entry and entry.samefile(
+                    self._current_entry
+                )
             except FileNotFoundError:
                 current_match = False
 
@@ -105,7 +107,9 @@ class ImportWatchService(QObject):
         try:
             projects_root = str(self.settings.ensure_projects_root())
         except OSError as exc:
-            self.logger.error("Cannot determine Projects folder for watch import: %s", exc)
+            self.logger.error(
+                "Cannot determine Projects folder for watch import: %s", exc
+            )
             return
 
         started = self._coordinator.start_import(

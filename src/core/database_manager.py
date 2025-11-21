@@ -45,9 +45,13 @@ def _get_default_db_path() -> str:
         data_dir = get_data_directory()
         return str(data_dir / "3dmm.db")
     except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.warning("Failed to get data directory: %s, falling back to user data path", e)
+        logger.warning(
+            "Failed to get data directory: %s, falling back to user data path", e
+        )
         # Fallback to user-specific directory
-        app_data = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        app_data = Path(
+            os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+        )
         from .version_manager import get_app_name
 
         app_name = get_app_name()

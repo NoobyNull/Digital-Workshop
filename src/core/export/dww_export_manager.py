@@ -80,7 +80,9 @@ class PJCTExportManager:
                 return False, "Project has no files to export"
 
             # Create PJCT archive
-            with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as pjct_archive:
+            with zipfile.ZipFile(
+                output_file, "w", zipfile.ZIP_DEFLATED
+            ) as pjct_archive:
                 # Create manifest
                 manifest = self._create_manifest(project, files)
                 manifest_json = json.dumps(manifest, indent=2)
@@ -112,7 +114,9 @@ class PJCTExportManager:
                             if thumbnail_path and Path(thumbnail_path).exists():
                                 try:
                                     thumb_arcname = f"thumbnails/{file_name}.thumb.png"
-                                    pjct_archive.write(thumbnail_path, arcname=thumb_arcname)
+                                    pjct_archive.write(
+                                        thumbnail_path, arcname=thumb_arcname
+                                    )
                                 except (
                                     OSError,
                                     IOError,
@@ -125,10 +129,21 @@ class PJCTExportManager:
 
                         if progress_callback:
                             progress = (i + 1) / total_items
-                            progress_callback(progress, f"Exported {i + 1}/{total_items} files")
+                            progress_callback(
+                                progress, f"Exported {i + 1}/{total_items} files"
+                            )
 
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                        self.logger.error("Failed to add file to archive %s: %s", file_path, e)
+                    except (
+                        OSError,
+                        IOError,
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        AttributeError,
+                    ) as e:
+                        self.logger.error(
+                            "Failed to add file to archive %s: %s", file_path, e
+                        )
                         continue
 
                 # Add metadata if requested
@@ -187,14 +202,30 @@ class PJCTExportManager:
             # Build and write hero tab summary metadata
             try:
                 hero_tabs = self._build_hero_tabs_metadata(project_id, files)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as exc:
                 self.logger.warning("Failed to build hero tab metadata: %s", exc)
             else:
                 try:
                     hero_tabs_json = json.dumps(hero_tabs, indent=2)
                     archive.writestr("metadata/hero_tabs.json", hero_tabs_json)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as exc:
-                    self.logger.warning("Failed to add hero tab metadata to archive: %s", exc)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as exc:
+                    self.logger.warning(
+                        "Failed to add hero tab metadata to archive: %s", exc
+                    )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.warning("Failed to add metadata to archive: %s", e)
@@ -295,14 +326,22 @@ class PJCTExportManager:
                         if Path(f.get("file_path")).exists()
                         else 0
                     ),
-                    "type": (Path(f.get("file_path")).suffix.lower() if f.get("file_path") else ""),
+                    "type": (
+                        Path(f.get("file_path")).suffix.lower()
+                        if f.get("file_path")
+                        else ""
+                    ),
                     "thumbnail": f.get("thumbnail_path") is not None,
                 }
                 for f in files
                 if f.get("file_path") and Path(f.get("file_path")).exists()
             ],
             "file_count": len(
-                [f for f in files if f.get("file_path") and Path(f.get("file_path")).exists()]
+                [
+                    f
+                    for f in files
+                    if f.get("file_path") and Path(f.get("file_path")).exists()
+                ]
             ),
         }
 
@@ -371,7 +410,9 @@ class PJCTExportManager:
                     sort_keys=True,
                 )
 
-                calculated_hash = hashlib.sha256((combined_data + salt).encode()).hexdigest()
+                calculated_hash = hashlib.sha256(
+                    (combined_data + salt).encode()
+                ).hexdigest()
 
                 if calculated_hash == stored_hash:
                     return True, "PJCT file integrity verified successfully"

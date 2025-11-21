@@ -99,7 +99,9 @@ class ExceptionHandler:
             )
 
             # Add detailed traceback
-            detailed_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            detailed_text = "".join(
+                traceback.format_exception(exc_type, exc_value, exc_traceback)
+            )
             msg_box.setDetailedText(detailed_text)
 
             # Set parent if available

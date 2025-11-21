@@ -24,6 +24,7 @@ import subprocess
 import tempfile
 import textwrap
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 from PySide6.QtCore import QSettings
@@ -256,7 +257,9 @@ class NuclearReset:
 
                     # Migration/installer backups created by SettingsMigrator and installers
                     # e.g. DigitalWorkshop_backup_YYYYMMDD_HHMMSS
-                    for backup_dir in base_dir.glob(f"{self.app_name}{suffix}_backup_*"):
+                    for backup_dir in base_dir.glob(
+                        f"{self.app_name}{suffix}_backup_*"
+                    ):
                         if backup_dir.is_dir():
                             directories.append(backup_dir)
 
@@ -266,7 +269,9 @@ class NuclearReset:
                     directories.append(dw_dir)
 
         elif self.system == "Darwin":  # macOS
-            app_support = Path.home() / "Library" / "Application Support" / self.app_name
+            app_support = (
+                Path.home() / "Library" / "Application Support" / self.app_name
+            )
             if app_support.exists():
                 directories.append(app_support)
 
@@ -288,7 +293,9 @@ class NuclearReset:
         directories = []
 
         if self.system == "Windows":
-            appdata = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+            appdata = Path(
+                os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")
+            )
             thumb_dir = appdata / "3DModelManager" / "thumbnails"
             if thumb_dir.exists():
                 directories.append(thumb_dir)
@@ -333,9 +340,7 @@ class NuclearReset:
                     total_size += item.stat().st_size
                     file_count += 1
         except Exception as exc:  # pragma: no cover - best-effort diagnostics
-            self.logger.warning(
-                "Failed to calculate size for %s: %s", directory, exc
-            )
+            self.logger.warning("Failed to calculate size for %s: %s", directory, exc)
 
         size_mb = total_size / (1024 * 1024)
         return size_mb, file_count
@@ -349,7 +354,9 @@ class NuclearReset:
         try:
             # Create backup in user's Documents folder (safer than AppData)
             if self.system == "Windows":
-                docs_path = Path(os.environ.get("USERPROFILE", Path.home())) / "Documents"
+                docs_path = (
+                    Path(os.environ.get("USERPROFILE", Path.home())) / "Documents"
+                )
             else:
                 docs_path = Path.home() / "Documents"
 
@@ -366,9 +373,13 @@ class NuclearReset:
                 if source_dir.exists():
                     dest_dir = backup_dir / source_dir.name
                     try:
-                        shutil.copytree(source_dir, dest_dir, ignore_dangling_symlinks=True)
+                        shutil.copytree(
+                            source_dir, dest_dir, ignore_dangling_symlinks=True
+                        )
                         self.logger.info("Backed up: %s -> %s", source_dir, dest_dir)
-                    except Exception as exc:  # pragma: no cover - best-effort diagnostics
+                    except (
+                        Exception
+                    ) as exc:  # pragma: no cover - best-effort diagnostics
                         self.logger.warning("Failed to backup %s: %s", source_dir, exc)
 
             self.logger.info("Final backup created: %s", backup_dir)

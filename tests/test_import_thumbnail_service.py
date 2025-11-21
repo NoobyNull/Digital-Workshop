@@ -32,7 +32,7 @@ from src.core.import_thumbnail_service import (
     ImportThumbnailService,
     StorageLocation,
     ThumbnailGenerationResult,
-    ThumbnailBatchResult
+    ThumbnailBatchResult,
 )
 from src.core.cancellation_token import CancellationToken
 
@@ -61,7 +61,7 @@ class TestImportThumbnailService(unittest.TestCase):
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
             custom_storage_path=str(self.test_storage_path),
-            settings_manager=self.mock_settings
+            settings_manager=self.mock_settings,
         )
 
         self.assertEqual(service.storage_location, StorageLocation.CUSTOM)
@@ -70,10 +70,10 @@ class TestImportThumbnailService(unittest.TestCase):
 
     def test_service_initialization_appdata_storage(self):
         """Test service initialization with AppData storage location."""
-        with patch.dict('os.environ', {'APPDATA': self.temp_dir}):
+        with patch.dict("os.environ", {"APPDATA": self.temp_dir}):
             service = ImportThumbnailService(
                 storage_location=StorageLocation.APPDATA,
-                settings_manager=self.mock_settings
+                settings_manager=self.mock_settings,
             )
 
             expected_dir = Path(self.temp_dir) / "3DModelManager" / "thumbnails"
@@ -84,7 +84,7 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test getting thumbnail path for a given hash."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "abc123def456"
@@ -97,7 +97,7 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test cache check when thumbnail doesn't exist."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "nonexistent_hash"
@@ -107,7 +107,7 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test cache check when thumbnail exists."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         # Create a fake thumbnail file
@@ -117,7 +117,7 @@ class TestImportThumbnailService(unittest.TestCase):
 
         self.assertTrue(service.is_thumbnail_cached(test_hash))
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_generate_thumbnail_success(self, mock_generator_class):
         """Test successful thumbnail generation."""
         # Setup mock
@@ -136,12 +136,11 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnail(
-            model_path="test_model.stl",
-            file_hash=test_hash
+            model_path="test_model.stl", file_hash=test_hash
         )
 
         self.assertTrue(result.success)
@@ -150,7 +149,7 @@ class TestImportThumbnailService(unittest.TestCase):
         self.assertFalse(result.cached)
         self.assertIsNone(result.error)
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_generate_thumbnail_cached(self, mock_generator_class):
         """Test thumbnail generation when already cached."""
         mock_generator = Mock()
@@ -164,12 +163,11 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnail(
-            model_path="test_model.stl",
-            file_hash=test_hash
+            model_path="test_model.stl", file_hash=test_hash
         )
 
         self.assertTrue(result.success)
@@ -179,7 +177,7 @@ class TestImportThumbnailService(unittest.TestCase):
         # Generator should not be called for cached thumbnail
         mock_generator.generate_thumbnail.assert_not_called()
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_generate_thumbnail_force_regenerate(self, mock_generator_class):
         """Test forced thumbnail regeneration even when cached."""
         mock_generator = Mock()
@@ -195,13 +193,11 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnail(
-            model_path="test_model.stl",
-            file_hash=test_hash,
-            force_regenerate=True
+            model_path="test_model.stl", file_hash=test_hash, force_regenerate=True
         )
 
         self.assertTrue(result.success)
@@ -210,7 +206,7 @@ class TestImportThumbnailService(unittest.TestCase):
         # Generator should be called even though thumbnail exists
         mock_generator.generate_thumbnail.assert_called_once()
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_generate_thumbnail_failure(self, mock_generator_class):
         """Test thumbnail generation failure."""
         mock_generator = Mock()
@@ -219,19 +215,18 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnail(
-            model_path="test_model.stl",
-            file_hash="fail_hash"
+            model_path="test_model.stl", file_hash="fail_hash"
         )
 
         self.assertFalse(result.success)
         self.assertIsNone(result.thumbnail_path)
         self.assertIsNotNone(result.error)
 
-    @patch('src.core.import_thumbnail_service.ThumbnailResizer')
+    @patch("src.core.import_thumbnail_service.ThumbnailResizer")
     def test_register_existing_thumbnail(self, mock_resizer_class):
         """Test registering an externally provided thumbnail image."""
 
@@ -260,8 +255,7 @@ class TestImportThumbnailService(unittest.TestCase):
 
         mock_resizer.resize_and_save.assert_called_once()
 
-
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_generate_thumbnails_batch(self, mock_generator_class):
         """Test batch thumbnail generation."""
         mock_generator = Mock()
@@ -271,7 +265,7 @@ class TestImportThumbnailService(unittest.TestCase):
         file_info_list = [
             ("model1.stl", "hash1"),
             ("model2.stl", "hash2"),
-            ("model3.stl", "hash3")
+            ("model3.stl", "hash3"),
         ]
 
         # Mock successful generation for all files
@@ -284,17 +278,17 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         # Track progress callbacks
         progress_calls = []
+
         def progress_callback(completed, total, current_file):
             progress_calls.append((completed, total, current_file))
 
         result = service.generate_thumbnails_batch(
-            file_info_list=file_info_list,
-            progress_callback=progress_callback
+            file_info_list=file_info_list, progress_callback=progress_callback
         )
 
         self.assertEqual(result.total_files, 3)
@@ -306,7 +300,7 @@ class TestImportThumbnailService(unittest.TestCase):
         # Verify progress callbacks were made
         self.assertGreater(len(progress_calls), 0)
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_batch_generation_with_cancellation(self, mock_generator_class):
         """Test batch generation with cancellation support."""
         mock_generator = Mock()
@@ -315,7 +309,7 @@ class TestImportThumbnailService(unittest.TestCase):
         file_info_list = [
             ("model1.stl", "hash1"),
             ("model2.stl", "hash2"),
-            ("model3.stl", "hash3")
+            ("model3.stl", "hash3"),
         ]
 
         # Create cancellation token - cancel before starting
@@ -324,7 +318,7 @@ class TestImportThumbnailService(unittest.TestCase):
 
         def mock_generate(*args, **kwargs):
             # Extract file_hash from kwargs or args
-            file_hash = kwargs.get('file_hash', args[1] if len(args) > 1 else 'hash1')
+            file_hash = kwargs.get("file_hash", args[1] if len(args) > 1 else "hash1")
             thumbnail_path = self.test_storage_path / f"{file_hash}.png"
             thumbnail_path.write_bytes(b"thumbnail_data")
             return thumbnail_path
@@ -333,12 +327,11 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnails_batch(
-            file_info_list=file_info_list,
-            cancellation_token=cancellation_token
+            file_info_list=file_info_list, cancellation_token=cancellation_token
         )
 
         # Should stop immediately due to cancellation
@@ -349,7 +342,7 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test cleanup of orphaned thumbnails."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         # Create some thumbnail files
@@ -362,13 +355,11 @@ class TestImportThumbnailService(unittest.TestCase):
         (self.test_storage_path / f"{orphan_hash_2}.png").write_bytes(b"orphan2")
 
         # Cleanup with only valid hash
-        result = service.cleanup_orphaned_thumbnails(
-            valid_hashes=[valid_hash]
-        )
+        result = service.cleanup_orphaned_thumbnails(valid_hashes=[valid_hash])
 
-        self.assertEqual(result['removed'], 2)
-        self.assertEqual(result['kept'], 1)
-        self.assertEqual(result['errors'], 0)
+        self.assertEqual(result["removed"], 2)
+        self.assertEqual(result["kept"], 1)
+        self.assertEqual(result["errors"], 0)
 
         # Verify files were removed
         self.assertTrue((self.test_storage_path / f"{valid_hash}.png").exists())
@@ -379,7 +370,7 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test clearing the in-memory cache."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         # Add some items to cache
@@ -392,38 +383,38 @@ class TestImportThumbnailService(unittest.TestCase):
 
         # Verify cache has items
         stats = service.get_cache_statistics()
-        self.assertGreater(stats['cache_size'], 0)
+        self.assertGreater(stats["cache_size"], 0)
 
         # Clear cache
         service.clear_cache()
 
         # Verify cache is empty
         stats = service.get_cache_statistics()
-        self.assertEqual(stats['cache_size'], 0)
+        self.assertEqual(stats["cache_size"], 0)
 
     def test_get_cache_statistics(self):
         """Test getting cache statistics."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         stats = service.get_cache_statistics()
 
-        self.assertIn('cache_size', stats)
-        self.assertIn('storage_dir', stats)
-        self.assertIn('thumbnails_generated', stats)
-        self.assertIn('thumbnails_cached', stats)
-        self.assertIn('cache_hit_rate', stats)
+        self.assertIn("cache_size", stats)
+        self.assertIn("storage_dir", stats)
+        self.assertIn("thumbnails_generated", stats)
+        self.assertIn("thumbnails_cached", stats)
+        self.assertIn("cache_hit_rate", stats)
 
-        self.assertEqual(stats['cache_size'], 0)
-        self.assertEqual(stats['thumbnails_generated'], 0)
+        self.assertEqual(stats["cache_size"], 0)
+        self.assertEqual(stats["thumbnails_generated"], 0)
 
     def test_set_storage_directory(self):
         """Test changing storage directory."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         old_dir = service.get_storage_directory()
@@ -432,8 +423,7 @@ class TestImportThumbnailService(unittest.TestCase):
         new_storage = Path(self.temp_dir) / "new_thumbnails"
 
         service.set_storage_directory(
-            storage_location=StorageLocation.CUSTOM,
-            custom_path=str(new_storage)
+            storage_location=StorageLocation.CUSTOM, custom_path=str(new_storage)
         )
 
         new_dir = service.get_storage_directory()
@@ -446,15 +436,15 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test verifying a valid thumbnail."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "valid_png_hash"
         thumbnail_path = self.test_storage_path / f"{test_hash}.png"
 
         # Write valid PNG header
-        png_header = b'\x89PNG\r\n\x1a\n'
-        thumbnail_path.write_bytes(png_header + b'dummy_png_data')
+        png_header = b"\x89PNG\r\n\x1a\n"
+        thumbnail_path.write_bytes(png_header + b"dummy_png_data")
 
         self.assertTrue(service.verify_thumbnail(test_hash))
 
@@ -462,14 +452,14 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test verifying thumbnail with invalid PNG header."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "invalid_png_hash"
         thumbnail_path = self.test_storage_path / f"{test_hash}.png"
 
         # Write invalid header
-        thumbnail_path.write_bytes(b'not_a_png_file')
+        thumbnail_path.write_bytes(b"not_a_png_file")
 
         self.assertFalse(service.verify_thumbnail(test_hash))
 
@@ -477,14 +467,14 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test verifying an empty thumbnail file."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "empty_file_hash"
         thumbnail_path = self.test_storage_path / f"{test_hash}.png"
 
         # Write empty file
-        thumbnail_path.write_bytes(b'')
+        thumbnail_path.write_bytes(b"")
 
         self.assertFalse(service.verify_thumbnail(test_hash))
 
@@ -492,13 +482,13 @@ class TestImportThumbnailService(unittest.TestCase):
         """Test verifying a non-existent thumbnail."""
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         test_hash = "nonexistent_hash"
         self.assertFalse(service.verify_thumbnail(test_hash))
 
-    @patch('src.core.import_thumbnail_service.ThumbnailGenerator')
+    @patch("src.core.import_thumbnail_service.ThumbnailGenerator")
     def test_memory_efficiency_batch_operations(self, mock_generator_class):
         """Test memory efficiency during batch operations."""
         mock_generator = Mock()
@@ -516,7 +506,7 @@ class TestImportThumbnailService(unittest.TestCase):
 
         service = ImportThumbnailService(
             storage_location=StorageLocation.CUSTOM,
-            custom_storage_path=str(self.test_storage_path)
+            custom_storage_path=str(self.test_storage_path),
         )
 
         result = service.generate_thumbnails_batch(file_info_list=file_info_list)
@@ -527,7 +517,7 @@ class TestImportThumbnailService(unittest.TestCase):
 
         # Verify statistics are tracking correctly
         stats = service.get_cache_statistics()
-        self.assertEqual(stats['thumbnails_generated'], 20)
+        self.assertEqual(stats["thumbnails_generated"], 20)
 
 
 class TestStorageLocation(unittest.TestCase):
@@ -551,7 +541,7 @@ class TestThumbnailResults(unittest.TestCase):
             generation_time=1.5,
             success=True,
             error=None,
-            cached=False
+            cached=False,
         )
 
         self.assertEqual(result.file_path, "test.stl")
@@ -567,7 +557,7 @@ class TestThumbnailResults(unittest.TestCase):
             failed=2,
             cached=3,
             total_time=15.5,
-            results=[]
+            results=[],
         )
 
         self.assertEqual(result.total_files, 10)
@@ -576,5 +566,5 @@ class TestThumbnailResults(unittest.TestCase):
         self.assertEqual(result.cached, 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

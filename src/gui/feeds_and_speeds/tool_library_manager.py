@@ -100,7 +100,14 @@ class ToolLibraryManager:
                         unit=tool_data.get("unit", "inches"),
                     )
                     tools.append(tool)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug("Failed to parse tool: %s", e)
                     continue
 
@@ -120,7 +127,9 @@ class ToolLibraryManager:
         """Get all loaded libraries."""
         return self.libraries
 
-    def search_tools(self, query: str, library_name: Optional[str] = None) -> List[Tool]:
+    def search_tools(
+        self, query: str, library_name: Optional[str] = None
+    ) -> List[Tool]:
         """
         Search for tools by description.
 
@@ -139,7 +148,9 @@ class ToolLibraryManager:
             results = [t for t in tools if query_lower in t.description.lower()]
         else:
             for tools in self.libraries.values():
-                results.extend([t for t in tools if query_lower in t.description.lower()])
+                results.extend(
+                    [t for t in tools if query_lower in t.description.lower()]
+                )
 
         return results
 

@@ -82,7 +82,9 @@ class GitLabClient:
             ) from exc
 
     def get_project(self, project_id: str) -> Dict:
-        return self.request("GET", f"api/v4/projects/{urllib.parse.quote_plus(project_id)}")
+        return self.request(
+            "GET", f"api/v4/projects/{urllib.parse.quote_plus(project_id)}"
+        )
 
     def set_variable(
         self,
@@ -107,7 +109,9 @@ class GitLabClient:
             print(f"[updated] variable {key}")
         except RuntimeError as error:
             if "404" in str(error):
-                create_path = f"api/v4/projects/{urllib.parse.quote_plus(project_id)}/variables"
+                create_path = (
+                    f"api/v4/projects/{urllib.parse.quote_plus(project_id)}/variables"
+                )
                 payload["key"] = key
                 self.request("POST", create_path, data=payload, ok_status=(201,))
                 print(f"[created] variable {key}")
@@ -127,7 +131,9 @@ class GitLabClient:
             "merge_access_level": 40,
             "unprotect_access_level": 40,
         }
-        create_path = f"api/v4/projects/{urllib.parse.quote_plus(project_id)}/protected_branches"
+        create_path = (
+            f"api/v4/projects/{urllib.parse.quote_plus(project_id)}/protected_branches"
+        )
         self.request("POST", create_path, data=payload, ok_status=(201,))
         print(f"[protected] branch {branch}")
 
@@ -145,8 +151,12 @@ def parse_kv(value: str) -> Dict[str, str]:
 def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://192.168.0.40", help="GitLab base URL")
-    parser.add_argument("--token", required=True, help="GitLab personal access token (api scope)")
-    parser.add_argument("--project-id", required=True, help="Numeric project ID or URL-encoded path")
+    parser.add_argument(
+        "--token", required=True, help="GitLab personal access token (api scope)"
+    )
+    parser.add_argument(
+        "--project-id", required=True, help="Numeric project ID or URL-encoded path"
+    )
     parser.add_argument(
         "--set",
         dest="variables",
@@ -162,7 +172,11 @@ def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
         default=[],
         help="Protect a branch so only Maintainers can push (repeatable)",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print what would happen without changing GitLab")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would happen without changing GitLab",
+    )
     return parser.parse_args(argv)
 
 
@@ -186,7 +200,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         print(f"Failed to connect to GitLab: {error}", file=sys.stderr)
         return 1
 
-    print(f"Configuring project '{project.get('name')}' ({project.get('id')}) at {args.url}")
+    print(
+        f"Configuring project '{project.get('name')}' ({project.get('id')}) at {args.url}"
+    )
 
     for key, value in variables.items():
         masked = key.endswith(("TOKEN", "PASSWORD", "SECRET"))

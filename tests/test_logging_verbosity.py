@@ -23,9 +23,9 @@ from src.core.import_analysis_service import ImportAnalysisService
 
 def test_info_level_logging():
     """Test that INFO level doesn't log debug messages."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: INFO Level Logging (should be less verbose)")
-    print("="*60)
+    print("=" * 60)
 
     # Setup logging at INFO level
     logger = setup_logging(
@@ -51,9 +51,9 @@ def test_info_level_logging():
 
 def test_debug_level_logging():
     """Test that DEBUG level logs debug messages."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: DEBUG Level Logging (should include debug messages)")
-    print("="*60)
+    print("=" * 60)
 
     # Setup logging at DEBUG level
     logger = setup_logging(
@@ -73,12 +73,14 @@ def test_debug_level_logging():
 
 def test_performance_monitor_debug_logging():
     """Test that performance monitor respects log level."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: Performance Monitor Debug Logging")
-    print("="*60)
+    print("=" * 60)
 
     # Setup logging at INFO level
-    setup_logging(profile={"log_level": "INFO", "log_dir": "logs", "enable_console": False})
+    setup_logging(
+        profile={"log_level": "INFO", "log_dir": "logs", "enable_console": False}
+    )
 
     # Create performance monitor
     monitor = PerformanceMonitor()
@@ -94,9 +96,9 @@ def test_performance_monitor_debug_logging():
 
 def main():
     """Run all tests."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("LOGGING VERBOSITY TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     results = []
 
@@ -122,9 +124,9 @@ def main():
         results.append(("Performance Monitor Debug", False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     for test_name, passed in results:
         status = "[PASS]" if passed else "[FAIL]"
@@ -141,4 +143,3 @@ def main():
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-

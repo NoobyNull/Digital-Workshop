@@ -25,7 +25,6 @@ from src.gui.preferences.tabs import (
 from src.gui.files_components.files_tab_widget import FilesTab
 
 
-
 class PreferencesDialog(QDialog):
     """Application preferences dialog with multiple tabs.
 
@@ -221,4 +220,3 @@ class PreferencesDialog(QDialog):
                 logger.error("Failed to reset preferences: %s", e)
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
                 pass
-

@@ -22,6 +22,10 @@ class ToolDatabaseSchema:
         """Create all database tables if they don't exist. Alias for initialize_database."""
         return self.initialize_database()
 
+    def create_tables(self) -> bool:
+        """Backward-compatible alias for schema initialization."""
+        return self.initialize_database()
+
     def initialize_database(self) -> bool:
         """Create all database tables if they don't exist."""
         try:
@@ -95,11 +99,15 @@ class ToolDatabaseSchema:
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_tools_provider_id ON tools(provider_id)"
                 )
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_tools_guid ON tools(guid)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_tools_guid ON tools(guid)"
+                )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_tool_properties_tool_id ON tool_properties(tool_id)"
                 )
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_preferences_key ON preferences(key)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_preferences_key ON preferences(key)"
+                )
 
                 conn.commit()
                 self.logger.info("Database schema initialized successfully")

@@ -24,7 +24,9 @@ class MenuManager:
     to provide a complete menu system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the menu manager.
 
@@ -80,7 +82,9 @@ class MenuManager:
         file_menu.addAction(import_action)
 
         import_url_action = QAction("Import from &URL...", self.main_window)
-        import_url_action.setStatusTip("Download a model from a URL and add it to the library")
+        import_url_action.setStatusTip(
+            "Download a model from a URL and add it to the library"
+        )
         import_url_action.setIcon(_std_icon(QStyle.SP_ArrowDown))
         import_url_action.triggered.connect(self._import_from_url)
         file_menu.addAction(import_url_action)
@@ -177,13 +181,17 @@ class MenuManager:
         view_menu.addAction(self.show_metadata_action)
 
         # Model Library restoration action
-        self.show_model_library_action = QAction("Show &Model Library", self.main_window)
+        self.show_model_library_action = QAction(
+            "Show &Model Library", self.main_window
+        )
         try:
             self.show_model_library_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
         except Exception:
             pass
         self.show_model_library_action.setStatusTip("Restore the Model Library panel")
-        self.show_model_library_action.setToolTip("Show the Model Library (Ctrl+Shift+L)")
+        self.show_model_library_action.setToolTip(
+            "Show the Model Library (Ctrl+Shift+L)"
+        )
         self.show_model_library_action.setIcon(_std_icon(QStyle.SP_DirIcon))
         self.show_model_library_action.triggered.connect(self._restore_model_library)
         view_menu.addAction(self.show_model_library_action)
@@ -207,7 +215,9 @@ class MenuManager:
         self.toggle_layout_edit_action.setStatusTip(
             "Enable rearranging docks. When off, docks are locked in place but still resize with the window."
         )
-        self.toggle_layout_edit_action.setToolTip("Toggle Layout Edit Mode (Ctrl+Shift+E)")
+        self.toggle_layout_edit_action.setToolTip(
+            "Toggle Layout Edit Mode (Ctrl+Shift+E)"
+        )
         self.toggle_layout_edit_action.setIcon(_std_icon(QStyle.SP_TitleBarShadeButton))
         self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
         view_menu.addAction(self.toggle_layout_edit_action)
@@ -216,7 +226,9 @@ class MenuManager:
         tools_menu = menubar.addMenu("&Tools")
 
         # Generate thumbnails action
-        generate_thumbnails_action = QAction("Generate &Thumbnails for Library", self.main_window)
+        generate_thumbnails_action = QAction(
+            "Generate &Thumbnails for Library", self.main_window
+        )
         generate_thumbnails_action.setStatusTip(
             "Generate thumbnails for all models in the library with applied materials"
         )

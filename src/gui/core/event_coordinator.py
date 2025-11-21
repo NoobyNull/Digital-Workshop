@@ -24,7 +24,9 @@ class EventCoordinator:
     proper resource management throughout the application lifecycle.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the event coordinator.
 
@@ -73,19 +75,36 @@ class EventCoordinator:
         self.logger.info("Application closing")
 
         # Stop background hasher if running
-        if hasattr(self.main_window, "background_hasher") and self.main_window.background_hasher:
+        if (
+            hasattr(self.main_window, "background_hasher")
+            and self.main_window.background_hasher
+        ):
             if self.main_window.background_hasher.isRunning():
                 try:
                     self.logger.info("Stopping background hasher...")
                     self.main_window.background_hasher.stop()
-                    self.main_window.background_hasher.wait(3000)  # Wait up to 3 seconds
+                    self.main_window.background_hasher.wait(
+                        3000
+                    )  # Wait up to 3 seconds
                     self.logger.info("Background hasher stopped")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                    self.logger.warning("Failed to stop background hasher cleanly: %s", e)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    self.logger.warning(
+                        "Failed to stop background hasher cleanly: %s", e
+                    )
 
         # Safety: Ensure layout edit mode is locked before closing
         try:
-            if hasattr(self.main_window, "layout_edit_mode") and self.main_window.layout_edit_mode:
+            if (
+                hasattr(self.main_window, "layout_edit_mode")
+                and self.main_window.layout_edit_mode
+            ):
                 self.logger.info("Locking layout edit mode before application close")
                 if hasattr(self.main_window, "_set_layout_edit_mode"):
                     # Don't show message during close
@@ -112,7 +131,10 @@ class EventCoordinator:
 
         # Memory cleanup: clear material texture cache
         try:
-            if hasattr(self.main_window, "material_manager") and self.main_window.material_manager:
+            if (
+                hasattr(self.main_window, "material_manager")
+                and self.main_window.material_manager
+            ):
                 self.main_window.material_manager.clear_texture_cache()
                 self.logger.info("Cleared MaterialManager texture cache on close")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

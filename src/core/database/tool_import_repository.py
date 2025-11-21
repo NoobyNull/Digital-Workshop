@@ -131,7 +131,9 @@ class ToolImportRepository:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tool_provider_sources WHERE id = ?", (source_id,))
+            cursor.execute(
+                "SELECT * FROM tool_provider_sources WHERE id = ?", (source_id,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -139,7 +141,9 @@ class ToolImportRepository:
     def delete_provider_source(self, source_id: int) -> bool:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM tool_provider_sources WHERE id = ?", (source_id,))
+            cursor.execute(
+                "DELETE FROM tool_provider_sources WHERE id = ?", (source_id,)
+            )
             conn.commit()
             success = cursor.rowcount > 0
 
@@ -183,7 +187,9 @@ class ToolImportRepository:
         return batch_id
 
     @log_function_call(logger)
-    def list_import_batches(self, provider_source_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def list_import_batches(
+        self, provider_source_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         query = "SELECT * FROM tool_import_batches WHERE 1=1"
         params: List[Any] = []
 
@@ -204,7 +210,9 @@ class ToolImportRepository:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tool_import_batches WHERE id = ?", (batch_id,))
+            cursor.execute(
+                "SELECT * FROM tool_import_batches WHERE id = ?", (batch_id,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 

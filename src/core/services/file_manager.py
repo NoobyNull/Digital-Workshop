@@ -147,7 +147,9 @@ class FileManager:
             return False
 
     @log_function_call(logger)
-    def link_file(self, source_path: str, dest_path: str, link_type: str = "hard") -> bool:
+    def link_file(
+        self, source_path: str, dest_path: str, link_type: str = "hard"
+    ) -> bool:
         """
         Link file with fallback logic.
 
@@ -168,7 +170,14 @@ class FileManager:
                     os.link(source_path, dest_path)
                     logger.info("Hard linked: %s -> {dest_path}", source_path)
                     return True
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning("Hard link failed: %s, trying symbolic link", str(e))
                     link_type = "symbolic"
 
@@ -177,7 +186,14 @@ class FileManager:
                     os.symlink(source_path, dest_path)
                     logger.info("Symbolic linked: %s -> {dest_path}", source_path)
                     return True
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning("Symbolic link failed: %s, trying copy", str(e))
                     link_type = "copy"
 
@@ -186,7 +202,14 @@ class FileManager:
                     shutil.copy2(source_path, dest_path)
                     logger.info("Copied: %s -> {dest_path}", source_path)
                     return True
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Copy failed: %s", str(e))
                     return False
 
@@ -195,7 +218,9 @@ class FileManager:
             return False
 
     @log_function_call(logger)
-    def find_duplicate(self, project_id: str, file_hash: str) -> Optional[Dict[str, Any]]:
+    def find_duplicate(
+        self, project_id: str, file_hash: str
+    ) -> Optional[Dict[str, Any]]:
         """Find duplicate file by hash."""
         try:
             return self.db_manager.find_duplicate_by_hash(project_id, file_hash)

@@ -84,14 +84,14 @@ def parse_search_query_language(raw_query: str) -> Tuple[str, Dict[str, Any]]:
         # Tag inclusion / exclusion
         # Check exclusion first so "tag!=foo" does not match the "tag=" prefix
         if lower.startswith("tag!="):
-            value = stripped[5:].strip().strip('\"\'')
+            value = stripped[5:].strip().strip("\"'")
             if value:
                 tags_exclude.append(value)
                 filter_indices.add(idx)
                 continue
 
         if lower.startswith("tag="):
-            value = stripped[4:].strip().strip('\"\'')
+            value = stripped[4:].strip().strip("\"'")
             if value:
                 tags_include.append(value)
                 filter_indices.add(idx)
@@ -394,7 +394,11 @@ class SearchEngine:
                 # Calculate execution time
                 execution_time = (datetime.now() - start_time).total_seconds()
 
-                logger.info("Search completed in %.3fs: %d results", execution_time, len(results))
+                logger.info(
+                    "Search completed in %.3fs: %d results",
+                    execution_time,
+                    len(results),
+                )
 
                 return {
                     "results": results,
@@ -595,7 +599,9 @@ class SearchEngine:
         return processed
 
     @log_function_call(logger)
-    def _generate_highlights(self, query: str, result: Dict[str, Any]) -> Dict[str, str]:
+    def _generate_highlights(
+        self, query: str, result: Dict[str, Any]
+    ) -> Dict[str, str]:
         """
         Generate highlighted snippets for search results.
 
@@ -615,15 +621,21 @@ class SearchEngine:
 
         # Highlight description
         if result.get("description"):
-            highlights["description"] = self._highlight_text(result["description"], query_terms)
+            highlights["description"] = self._highlight_text(
+                result["description"], query_terms
+            )
 
         # Highlight keywords
         if result.get("keywords"):
-            highlights["keywords"] = self._highlight_text(result["keywords"], query_terms)
+            highlights["keywords"] = self._highlight_text(
+                result["keywords"], query_terms
+            )
 
         # Highlight filename
         if result.get("filename"):
-            highlights["filename"] = self._highlight_text(result["filename"], query_terms)
+            highlights["filename"] = self._highlight_text(
+                result["filename"], query_terms
+            )
 
         return highlights
 
@@ -735,7 +747,9 @@ class SearchEngine:
             return []
 
     @log_function_call(logger)
-    def save_search(self, name: str, query: str, filters: Optional[Dict[str, Any]]) -> int:
+    def save_search(
+        self, name: str, query: str, filters: Optional[Dict[str, Any]]
+    ) -> int:
         """
         Save a search for later use.
 

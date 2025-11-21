@@ -127,7 +127,6 @@ class OllamaProvider(BaseProvider):
 
         return vision_models or ["moondream", "bakllava"]
 
-
     # ------------------------------------------------------------------
     # Analysis
     # ------------------------------------------------------------------

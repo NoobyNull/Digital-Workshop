@@ -50,7 +50,9 @@ class GcodeLoaderWorker(QThread):
         self._is_cancelled = True
         # Log cancellation request (safe even if logger was not initialized for some reason)
         if hasattr(self, "logger"):
-            self.logger.info("Interactive G-code load cancel requested for %s", self.filepath)
+            self.logger.info(
+                "Interactive G-code load cancel requested for %s", self.filepath
+            )
 
     def run(self) -> None:
         """Run the loading process with true streaming."""
@@ -79,7 +81,8 @@ class GcodeLoaderWorker(QThread):
                 for line in f:
                     if self._is_cancelled:
                         self.logger.info(
-                            "Interactive G-code load cancelled while reading %s", self.filepath
+                            "Interactive G-code load cancelled while reading %s",
+                            self.filepath,
                         )
                         return
 
@@ -90,7 +93,9 @@ class GcodeLoaderWorker(QThread):
                     progress = int((bytes_processed / file_size) * 100)
                     if progress != ui_last_progress:
                         ui_last_progress = progress
-                        self.progress_updated.emit(progress, f"Loading G-code ({progress}%)")
+                        self.progress_updated.emit(
+                            progress, f"Loading G-code ({progress}%)"
+                        )
 
                         # Log coarse-grained progress (every ~10%)
                         if progress - log_last_progress >= 10:
@@ -113,7 +118,9 @@ class GcodeLoaderWorker(QThread):
                             if moves:
                                 self.chunk_loaded.emit(moves)
                         except Exception as exc:  # pragma: no cover - defensive
-                            self.logger.warning("Chunk parse failed, continuing: %s", exc)
+                            self.logger.warning(
+                                "Chunk parse failed, continuing: %s", exc
+                            )
 
                         # Clear buffer
                         lines_buffer.clear()
@@ -126,7 +133,9 @@ class GcodeLoaderWorker(QThread):
                         if moves:
                             self.chunk_loaded.emit(moves)
                     except Exception as exc:  # pragma: no cover - defensive
-                        self.logger.warning("Final chunk parse failed, continuing: %s", exc)
+                        self.logger.warning(
+                            "Final chunk parse failed, continuing: %s", exc
+                        )
 
             # Final progress
             self.progress_updated.emit(100, "Loading complete")
@@ -156,7 +165,9 @@ class InteractiveGcodeLoader(QWidget):
     progress_updated = Signal(int, str)  # (percentage, message)
     error_occurred = Signal(str)  # Emits error message
 
-    def __init__(self, renderer: GcodeRenderer, parent: Optional[QWidget] = None) -> None:
+    def __init__(
+        self, renderer: GcodeRenderer, parent: Optional[QWidget] = None
+    ) -> None:
         """Initialize the interactive loader.
 
         Args:

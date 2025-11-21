@@ -26,7 +26,9 @@ class TempFileManager:
         self.temp_files = []
 
     @contextmanager
-    def temporary_file(self, suffix: str = "", prefix: str = "dw_") -> Generator[str, None, None]:
+    def temporary_file(
+        self, suffix: str = "", prefix: str = "dw_"
+    ) -> Generator[str, None, None]:
         """Context manager for temporary file creation.
 
         Ensures file is cleaned up even if an error occurs.
@@ -41,7 +43,9 @@ class TempFileManager:
         temp_file = None
         try:
             # Create temporary file
-            fd, temp_file = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.base_temp_dir)
+            fd, temp_file = tempfile.mkstemp(
+                suffix=suffix, prefix=prefix, dir=self.base_temp_dir
+            )
             os.close(fd)
 
             self.temp_files.append(temp_file)
@@ -60,7 +64,9 @@ class TempFileManager:
                     self.temp_files.remove(temp_file)
                     logger.debug("Cleaned up temporary file: %s", temp_file)
                 except (OSError, IOError) as e:
-                    logger.warning("Failed to clean up temporary file %s: %s", temp_file, e)
+                    logger.warning(
+                        "Failed to clean up temporary file %s: %s", temp_file, e
+                    )
 
     @contextmanager
     def temporary_directory(self, prefix: str = "dw_") -> Generator[str, None, None]:
@@ -94,7 +100,9 @@ class TempFileManager:
                     shutil.rmtree(temp_dir)
                     logger.debug("Cleaned up temporary directory: %s", temp_dir)
                 except (OSError, IOError) as e:
-                    logger.warning("Failed to clean up temporary directory %s: %s", temp_dir, e)
+                    logger.warning(
+                        "Failed to clean up temporary directory %s: %s", temp_dir, e
+                    )
 
     def cleanup_all(self) -> None:
         """Clean up all tracked temporary files."""

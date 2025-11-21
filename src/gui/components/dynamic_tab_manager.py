@@ -59,6 +59,7 @@ class DynamicTabManager:
         self.tab_widget = tab_widget
         self.tab_configs: Dict[int, TabNameConfig] = {}
         self.logger = logger
+        self._original_resize_event = getattr(tab_widget, "resizeEvent", None)
 
         # Timer for debouncing resize events
         self.resize_timer = QTimer()
@@ -82,9 +83,12 @@ class DynamicTabManager:
 
     def _on_resize(self, event) -> None:
         """Handle resize event with debouncing."""
-        # Call original resize event
-        if hasattr(super(QTabWidget, self.tab_widget), "resizeEvent"):
-            super(QTabWidget, self.tab_widget).resizeEvent(event)
+        # Call original resize event if it exists
+        if callable(self._original_resize_event):
+            try:
+                self._original_resize_event(event)
+            except Exception:
+                pass
 
         # Debounce tab name updates
         self.resize_timer.stop()
@@ -128,17 +132,27 @@ class DynamicTabManager:
                 try:
                     # Determine if we should use short name
                     should_use_short = (
-                        available_width < 100 or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
+                        available_width < 100
+                        or total_width < self.MIN_WIDTH_FOR_LONG_NAMES
                     )
 
-                    new_name = config.short_name if should_use_short else config.long_name
+                    new_name = (
+                        config.short_name if should_use_short else config.long_name
+                    )
 
                     # Only update if name changed
                     if new_name != config.current_name:
                         self.tab_widget.setTabText(index, new_name)
                         config.current_name = new_name
                         self.logger.debug(f"Tab {index}: '{config.current_name}'")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.debug("Error updating tab %s: {e}", index)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

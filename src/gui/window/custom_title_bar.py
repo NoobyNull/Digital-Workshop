@@ -159,7 +159,8 @@ class CustomTitleBar(QWidget):
         """Handle mouse press for window dragging."""
         if event.button() == Qt.LeftButton:
             self.drag_start_pos = (
-                event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
+                event.globalPosition().toPoint()
+                - self.window().frameGeometry().topLeft()
             )
             event.accept()
 

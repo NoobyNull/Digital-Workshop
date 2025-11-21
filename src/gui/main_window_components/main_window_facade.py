@@ -40,7 +40,8 @@ class MainWindowFacade:
         logger.info("Initializing main window components")
 
         # Initialize layout persistence
-        self.layout_manager._init_layout_persistence()
+        if hasattr(self.layout_manager, "_init_layout_persistence"):
+            self.layout_manager._init_layout_persistence()
 
         # Load saved settings
         self.settings_manager.load_lighting_settings()
@@ -68,7 +69,8 @@ class MainWindowFacade:
 
     def reset_layout(self) -> None:
         """Reset layout to default."""
-        self.layout_manager.reset_dock_layout_and_save()
+        if hasattr(self.layout_manager, "reset_dock_layout_and_save"):
+            self.layout_manager.reset_dock_layout_and_save()
 
     def save_settings(self) -> None:
         """Save current settings."""

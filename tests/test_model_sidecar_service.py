@@ -128,9 +128,7 @@ def test_regenerate_sidecars_for_dirty_models_clears_dirty_tag(tmp_path) -> None
     # Dirty tag must be cleared, user tags preserved
     metadata = manager.get_model_metadata(dirty_id)
     keywords = [
-        k.strip()
-        for k in (metadata.get("keywords") or "").split(",")
-        if k.strip()
+        k.strip() for k in (metadata.get("keywords") or "").split(",") if k.strip()
     ]
     assert TAG_DIRTY not in keywords
     assert "alpha" in keywords
@@ -140,4 +138,3 @@ def test_regenerate_sidecars_for_dirty_models_clears_dirty_tag(tmp_path) -> None
     clean_sidecar = Path(str(clean_model_file) + ".info.json")
     assert dirty_sidecar.exists()
     assert not clean_sidecar.exists()
-

@@ -35,7 +35,9 @@ class EnhancedSearchRepository(ISearchRepository):
         self._get_connection = get_connection_func
 
     @log_function_call(logger)
-    def search_models(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[str]:
+    def search_models(
+        self, query: str, filters: Optional[Dict[str, Any]] = None
+    ) -> List[str]:
         """
         Search for models using text query and filters.
 
@@ -111,7 +113,9 @@ class EnhancedSearchRepository(ISearchRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug(f"Search returned {len(model_ids)} results for query: '{query}'")
+                logger.debug(
+                    f"Search returned {len(model_ids)} results for query: '{query}'"
+                )
                 return model_ids
 
         except sqlite3.Error as e:
@@ -152,7 +156,9 @@ class EnhancedSearchRepository(ISearchRepository):
                 rows = cursor.fetchall()
 
                 model_ids = [str(row[0]) for row in rows]
-                logger.debug("Tag search returned %s results for tags: {tags}", len(model_ids))
+                logger.debug(
+                    "Tag search returned %s results for tags: {tags}", len(model_ids)
+                )
                 return model_ids
 
         except sqlite3.Error as e:

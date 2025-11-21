@@ -130,7 +130,9 @@ class DocumentationIndexer:
                 if current_heading:
                     section_content = "\n".join(current_content).strip()
                     if section_content:
-                        keywords = self._extract_keywords(current_heading + " " + section_content)
+                        keywords = self._extract_keywords(
+                            current_heading + " " + section_content
+                        )
                         topic = HelpTopic(
                             title=current_heading,
                             content=section_content[:500],  # First 500 chars
@@ -152,7 +154,9 @@ class DocumentationIndexer:
         if current_heading:
             section_content = "\n".join(current_content).strip()
             if section_content:
-                keywords = self._extract_keywords(current_heading + " " + section_content)
+                keywords = self._extract_keywords(
+                    current_heading + " " + section_content
+                )
                 topic = HelpTopic(
                     title=current_heading,
                     content=section_content[:500],

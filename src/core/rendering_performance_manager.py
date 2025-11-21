@@ -151,7 +151,14 @@ class HardwareDetector:
                     gpu_name = gpu.name
                     gpu_driver_version = gpu.driver
                     gpu_usage_percent = gpu.load * 100
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 logger.warning("GPU detection failed: %s", str(e))
 
             # OpenGL detection (if VTK available)
@@ -162,7 +169,14 @@ class HardwareDetector:
                     if hasattr(ren_win, "GetOpenGLVersion"):
                         opengl_version = ren_win.GetOpenGLVersion()
                     ren_win.Finalize()
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.warning("OpenGL detection failed: %s", str(e))
 
             # Determine hardware tier
@@ -378,7 +392,9 @@ class LevelOfDetailManager:
             logger.warning("Mesh decimation failed: %s", str(e))
             return mesh  # Return original mesh
 
-    def get_optimal_lod(self, model_id: str, camera_distance: float, screen_size: float) -> int:
+    def get_optimal_lod(
+        self, model_id: str, camera_distance: float, screen_size: float
+    ) -> int:
         """
         Get optimal LOD level based on distance and screen size.
 
@@ -468,7 +484,9 @@ class VSyncManager:
         current_time = time.time()
 
         # Record performance
-        self._performance_history.append({"fps": current_fps, "timestamp": current_time})
+        self._performance_history.append(
+            {"fps": current_fps, "timestamp": current_time}
+        )
 
         # Only adjust every few seconds
         if current_time - self._last_adjustment_time < self._adjustment_cooldown:
@@ -547,7 +565,8 @@ class FrameRateMonitor:
             recent_fps = [
                 fps
                 for fps, timestamp in [
-                    (fps, time.time() - i / 60) for i, fps in enumerate(reversed(self._fps_history))
+                    (fps, time.time() - i / 60)
+                    for i, fps in enumerate(reversed(self._fps_history))
                 ]
                 if time.time() - timestamp <= seconds
             ]
@@ -641,7 +660,9 @@ class RenderingPerformanceManager:
         """Register callback for quality level changes."""
         self._quality_change_callbacks.append(callback)
 
-    def register_performance_alert_callback(self, callback: Callable[[str], None]) -> None:
+    def register_performance_alert_callback(
+        self, callback: Callable[[str], None]
+    ) -> None:
         """Register callback for performance alerts."""
         self._performance_alert_callbacks.append(callback)
 
@@ -684,7 +705,9 @@ class RenderingPerformanceManager:
         cpu_usage = psutil.cpu_percent(interval=0.1)
 
         # Determine VSync state
-        vsync_enabled = self.vsync_manager.should_enable_vsync(current_fps, self.config.target_fps)
+        vsync_enabled = self.vsync_manager.should_enable_vsync(
+            current_fps, self.config.target_fps
+        )
 
         # Get current LOD level (simplified)
         current_lod = 0  # This would be calculated based on active models
@@ -762,14 +785,30 @@ class RenderingPerformanceManager:
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Quality change callback failed: %s", str(e))
 
             # Alert callbacks
             for callback in self._performance_alert_callbacks:
                 try:
-                    callback(f"Rendering quality reduced to {new_quality.value} due to performance")
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                    callback(
+                        f"Rendering quality reduced to {new_quality.value} due to performance"
+                    )
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Performance alert callback failed: %s", str(e))
 
     def _increase_rendering_quality(self) -> None:
@@ -794,7 +833,14 @@ class RenderingPerformanceManager:
             for callback in self._quality_change_callbacks:
                 try:
                     callback(new_quality)
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     logger.error("Quality change callback failed: %s", str(e))
 
     def _handle_gpu_memory_pressure(self) -> None:
@@ -814,8 +860,17 @@ class RenderingPerformanceManager:
         # Alert callbacks
         for callback in self._performance_alert_callbacks:
             try:
-                callback("GPU memory pressure - reduced texture quality and disabled shadows")
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                callback(
+                    "GPU memory pressure - reduced texture quality and disabled shadows"
+                )
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 logger.error("Performance alert callback failed: %s", str(e))
 
     def get_performance_report(self) -> Dict[str, Any]:
@@ -836,7 +891,9 @@ class RenderingPerformanceManager:
             "current_metrics": (
                 {
                     "fps": current_metrics.fps if current_metrics else 0,
-                    "frame_time_ms": (current_metrics.frame_time_ms if current_metrics else 0),
+                    "frame_time_ms": (
+                        current_metrics.frame_time_ms if current_metrics else 0
+                    ),
                     "triangles_rendered": (
                         current_metrics.triangles_rendered if current_metrics else 0
                     ),
@@ -850,9 +907,13 @@ class RenderingPerformanceManager:
                         current_metrics.cpu_usage_percent if current_metrics else 0
                     ),
                     "quality_level": (
-                        current_metrics.quality_level.value if current_metrics else "unknown"
+                        current_metrics.quality_level.value
+                        if current_metrics
+                        else "unknown"
                     ),
-                    "vsync_enabled": (current_metrics.vsync_enabled if current_metrics else False),
+                    "vsync_enabled": (
+                        current_metrics.vsync_enabled if current_metrics else False
+                    ),
                 }
                 if current_metrics
                 else {}
@@ -882,7 +943,8 @@ class RenderingPerformanceManager:
         if triangle_count > self.config.max_triangles // 2:
             # This would typically be called with the actual mesh object
             logger.info(
-                "Creating LOD levels for model %s with {triangle_count} triangles", model_id
+                "Creating LOD levels for model %s with {triangle_count} triangles",
+                model_id,
             )
 
     def shutdown(self) -> None:

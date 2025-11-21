@@ -126,7 +126,9 @@ class ProjectManager:
             return None
 
     @log_function_call(logger)
-    def list_projects(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_projects(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """List all projects."""
         try:
             return self.db_manager.list_projects(limit=limit, offset=offset)

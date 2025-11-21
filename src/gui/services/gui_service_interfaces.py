@@ -234,7 +234,9 @@ class IEnhancedThemeService(ABC):
         """
 
     @abstractmethod
-    def preview_theme_temporarily(self, theme_name: str, duration_ms: int = 3000) -> bool:
+    def preview_theme_temporarily(
+        self, theme_name: str, duration_ms: int = 3000
+    ) -> bool:
         """Preview a theme temporarily without permanent application.
 
         Args:

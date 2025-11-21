@@ -9,6 +9,7 @@ This tab allows users to configure thumbnail generation settings including:
 All settings are saved to QSettings for persistence and automatically synced
 to AppData and loaded on next startup.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -147,7 +148,9 @@ class ThumbnailSettingsTab(QWidget):
 
         # Material header with add/remove buttons
         mat_header_layout = QHBoxLayout()
-        mat_desc = QLabel("Select a material to apply to all thumbnails (click to select):")
+        mat_desc = QLabel(
+            "Select a material to apply to all thumbnails (click to select):"
+        )
         mat_desc.setWordWrap(True)
         mat_header_layout.addWidget(mat_desc)
         mat_header_layout.addStretch()
@@ -185,12 +188,11 @@ class ThumbnailSettingsTab(QWidget):
 
         layout.addStretch()
 
-
-
     def _load_hidden_items(self) -> None:
         """Load hidden backgrounds and materials from settings."""
         try:
             from PySide6.QtCore import QSettings
+
             settings = QSettings()
 
             # Load hidden backgrounds
@@ -204,8 +206,11 @@ class ThumbnailSettingsTab(QWidget):
                 self.hidden_materials = set(hidden_mat)
 
             if self.logger:
-                self.logger.info("Loaded hidden items: %d backgrounds, %d materials",
-                               len(self.hidden_backgrounds), len(self.hidden_materials))
+                self.logger.info(
+                    "Loaded hidden items: %d backgrounds, %d materials",
+                    len(self.hidden_backgrounds),
+                    len(self.hidden_materials),
+                )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to load hidden items: %s", e)
@@ -214,14 +219,20 @@ class ThumbnailSettingsTab(QWidget):
         """Save hidden backgrounds and materials to settings."""
         try:
             from PySide6.QtCore import QSettings
+
             settings = QSettings()
 
-            settings.setValue("thumbnail/hidden_backgrounds", list(self.hidden_backgrounds))
+            settings.setValue(
+                "thumbnail/hidden_backgrounds", list(self.hidden_backgrounds)
+            )
             settings.setValue("thumbnail/hidden_materials", list(self.hidden_materials))
 
             if self.logger:
-                self.logger.info("Saved hidden items: %d backgrounds, %d materials",
-                               len(self.hidden_backgrounds), len(self.hidden_materials))
+                self.logger.info(
+                    "Saved hidden items: %d backgrounds, %d materials",
+                    len(self.hidden_backgrounds),
+                    len(self.hidden_materials),
+                )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to save hidden items: %s", e)
@@ -230,7 +241,9 @@ class ThumbnailSettingsTab(QWidget):
         """Populate background grid with clickable image buttons."""
         try:
             # Navigate from src/gui/preferences/tabs to src/resources
-            bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+            bg_dir = (
+                Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+            )
             if bg_dir.exists():
                 row, col = 0, 0
                 max_cols = 4  # 4 images per row
@@ -248,19 +261,25 @@ class ThumbnailSettingsTab(QWidget):
                     btn.setToolTip(bg_name)
                     btn.setCheckable(True)
                     btn.setProperty("bg_name", bg_name)
-                    btn.setProperty("is_default", True)  # Mark as default (shipped with app)
+                    btn.setProperty(
+                        "is_default", True
+                    )  # Mark as default (shipped with app)
 
                     # Load and scale image
                     pixmap = QPixmap(str(bg_file))
                     if not pixmap.isNull():
-                        scaled = pixmap.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        scaled = pixmap.scaled(
+                            90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                        )
                         btn.setIcon(QIcon(scaled))
                         btn.setIconSize(QSize(90, 90))
 
                     # Use native Qt theming; no custom stylesheet.
 
                     # Connect click handler
-                    btn.clicked.connect(lambda checked, b=btn: self._on_background_clicked(b))
+                    btn.clicked.connect(
+                        lambda checked, b=btn: self._on_background_clicked(b)
+                    )
 
                     # Add to grid
                     self.bg_grid.addWidget(btn, row, col)
@@ -287,13 +306,17 @@ class ThumbnailSettingsTab(QWidget):
             none_btn.setCheckable(True)
             none_btn.setProperty("mat_name", None)
             # Use native Qt theming; no custom stylesheet.
-            none_btn.clicked.connect(lambda checked, b=none_btn: self._on_material_clicked(b))
+            none_btn.clicked.connect(
+                lambda checked, b=none_btn: self._on_material_clicked(b)
+            )
             self.mat_grid.addWidget(none_btn, row, col)
             self.mat_buttons[None] = none_btn
             col += 1
 
             # Navigate from src/gui/preferences/tabs to src/resources
-            mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+            mat_dir = (
+                Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+            )
             if mat_dir.exists():
                 for mat_file in sorted(mat_dir.glob("*.mtl")):
                     material_name = mat_file.stem
@@ -308,14 +331,18 @@ class ThumbnailSettingsTab(QWidget):
                     btn.setToolTip(material_name)
                     btn.setCheckable(True)
                     btn.setProperty("mat_name", material_name)
-                    btn.setProperty("is_default", True)  # Mark as default (shipped with app)
+                    btn.setProperty(
+                        "is_default", True
+                    )  # Mark as default (shipped with app)
 
                     # Look for material texture image
                     mat_image_path = mat_dir / f"{material_name}.png"
                     if mat_image_path.exists():
                         pixmap = QPixmap(str(mat_image_path))
                         if not pixmap.isNull():
-                            scaled = pixmap.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                            scaled = pixmap.scaled(
+                                90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                            )
                             btn.setIcon(QIcon(scaled))
                             btn.setIconSize(QSize(90, 90))
                     else:
@@ -325,7 +352,9 @@ class ThumbnailSettingsTab(QWidget):
                     # Use native Qt theming; no custom stylesheet.
 
                     # Connect click handler
-                    btn.clicked.connect(lambda checked, b=btn: self._on_material_clicked(b))
+                    btn.clicked.connect(
+                        lambda checked, b=btn: self._on_material_clicked(b)
+                    )
 
                     # Add to grid
                     self.mat_grid.addWidget(btn, row, col)
@@ -355,12 +384,19 @@ class ThumbnailSettingsTab(QWidget):
                 self.logger.info("=== THUMBNAIL SETTINGS LOAD ===")
 
             # Load from QSettings with fallback to ApplicationConfig
-            bg_image = settings.value("thumbnail/background_image", config.thumbnail_bg_image, type=str)
-            material = settings.value("thumbnail/material", config.thumbnail_material, type=str)
+            bg_image = settings.value(
+                "thumbnail/background_image", config.thumbnail_bg_image, type=str
+            )
+            material = settings.value(
+                "thumbnail/material", config.thumbnail_material, type=str
+            )
             bg_color = settings.value("thumbnail/background_color", "#404658", type=str)
 
             if self.logger:
-                self.logger.info("Loaded from QSettings: bg={bg_image}, material={material}, color=%s", bg_color)
+                self.logger.info(
+                    "Loaded from QSettings: bg={bg_image}, material={material}, color=%s",
+                    bg_color,
+                )
 
             # Update ApplicationConfig for runtime compatibility
             if bg_image:
@@ -380,7 +416,11 @@ class ThumbnailSettingsTab(QWidget):
                     # Old format: full path like "D:\...\Brick.png"
                     bg_name = Path(bg_image).stem
                     if self.logger:
-                        self.logger.info("Converting old path format to name: %s -> %s", bg_image, bg_name)
+                        self.logger.info(
+                            "Converting old path format to name: %s -> %s",
+                            bg_image,
+                            bg_name,
+                        )
                 else:
                     # New format: just the name like "Brick"
                     bg_name = bg_image
@@ -412,7 +452,9 @@ class ThumbnailSettingsTab(QWidget):
                 self.logger.info("=== THUMBNAIL SETTINGS LOAD COMPLETE ===")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
-                self.logger.error("Failed to load thumbnail settings: %s", e, exc_info=True)
+                self.logger.error(
+                    "Failed to load thumbnail settings: %s", e, exc_info=True
+                )
 
     def _on_background_clicked(self, button: QPushButton) -> None:
         """Handle background button click."""
@@ -440,7 +482,6 @@ class ThumbnailSettingsTab(QWidget):
             if self.logger:
                 self.logger.error("Failed to handle material click: %s", e)
 
-
     def _on_add_background(self) -> None:
         """Handle adding a new background image."""
         try:
@@ -448,15 +489,16 @@ class ThumbnailSettingsTab(QWidget):
 
             # Open file dialog to select image
             file_path, _ = QFileDialog.getOpenFileName(
-                self,
-                "Select Background Image",
-                "",
-                "Images (*.png *.jpg *.jpeg *.bmp)"
+                self, "Select Background Image", "", "Images (*.png *.jpg *.jpeg *.bmp)"
             )
 
             if file_path:
                 # Copy to backgrounds directory
-                bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+                bg_dir = (
+                    Path(__file__).parent.parent.parent.parent
+                    / "resources"
+                    / "backgrounds"
+                )
                 bg_dir.mkdir(parents=True, exist_ok=True)
 
                 source = Path(file_path)
@@ -468,13 +510,14 @@ class ThumbnailSettingsTab(QWidget):
                         self,
                         "File Exists",
                         f"Background '{source.stem}' already exists. Replace it?",
-                        QMessageBox.Yes | QMessageBox.No
+                        QMessageBox.Yes | QMessageBox.No,
                     )
                     if reply == QMessageBox.No:
                         return
 
                 # Copy file
                 import shutil
+
                 shutil.copy2(source, dest)
 
                 # Refresh the grid
@@ -491,9 +534,7 @@ class ThumbnailSettingsTab(QWidget):
         try:
             if not self.selected_bg_button:
                 QMessageBox.information(
-                    self,
-                    "No Selection",
-                    "Please select a background to remove."
+                    self, "No Selection", "Please select a background to remove."
                 )
                 return
 
@@ -513,10 +554,14 @@ class ThumbnailSettingsTab(QWidget):
                     self,
                     "Delete Background",
                     f"Permanently delete background '{bg_name}'?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.Yes:
-                    bg_dir = Path(__file__).parent.parent.parent.parent / "resources" / "backgrounds"
+                    bg_dir = (
+                        Path(__file__).parent.parent.parent.parent
+                        / "resources"
+                        / "backgrounds"
+                    )
                     bg_file = bg_dir / f"{bg_name}.png"
                     if bg_file.exists():
                         bg_file.unlink()
@@ -538,10 +583,7 @@ class ThumbnailSettingsTab(QWidget):
 
             # Open file dialog to select MTL file
             mtl_path, _ = QFileDialog.getOpenFileName(
-                self,
-                "Select Material File (.mtl)",
-                "",
-                "Material Files (*.mtl)"
+                self, "Select Material File (.mtl)", "", "Material Files (*.mtl)"
             )
 
             if not mtl_path:
@@ -552,18 +594,17 @@ class ThumbnailSettingsTab(QWidget):
                 self,
                 "Select Texture",
                 "Now select an optional texture image (PNG) for the material preview.\n\n"
-                "Click Cancel if you don't have a texture image."
+                "Click Cancel if you don't have a texture image.",
             )
 
             texture_path, _ = QFileDialog.getOpenFileName(
-                self,
-                "Select Texture Image (optional)",
-                "",
-                "Images (*.png)"
+                self, "Select Texture Image (optional)", "", "Images (*.png)"
             )
 
             # Copy to materials directory
-            mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+            mat_dir = (
+                Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+            )
             mat_dir.mkdir(parents=True, exist_ok=True)
 
             source_mtl = Path(mtl_path)
@@ -575,13 +616,14 @@ class ThumbnailSettingsTab(QWidget):
                     self,
                     "File Exists",
                     f"Material '{source_mtl.stem}' already exists. Replace it?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.No:
                     return
 
             # Copy MTL file
             import shutil
+
             shutil.copy2(source_mtl, dest_mtl)
 
             # Copy texture if provided
@@ -604,9 +646,7 @@ class ThumbnailSettingsTab(QWidget):
         try:
             if not self.selected_mat_button:
                 QMessageBox.information(
-                    self,
-                    "No Selection",
-                    "Please select a material to remove."
+                    self, "No Selection", "Please select a material to remove."
                 )
                 return
 
@@ -615,9 +655,7 @@ class ThumbnailSettingsTab(QWidget):
             # Can't remove "None" option
             if mat_name is None:
                 QMessageBox.information(
-                    self,
-                    "Cannot Remove",
-                    "The 'None' option cannot be removed."
+                    self, "Cannot Remove", "The 'None' option cannot be removed."
                 )
                 return
 
@@ -636,10 +674,14 @@ class ThumbnailSettingsTab(QWidget):
                     self,
                     "Delete Material",
                     f"Permanently delete material '{mat_name}'?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.Yes:
-                    mat_dir = Path(__file__).parent.parent.parent.parent / "resources" / "materials"
+                    mat_dir = (
+                        Path(__file__).parent.parent.parent.parent
+                        / "resources"
+                        / "materials"
+                    )
                     mtl_file = mat_dir / f"{mat_name}.mtl"
                     png_file = mat_dir / f"{mat_name}.png"
 
@@ -702,7 +744,7 @@ class ThumbnailSettingsTab(QWidget):
                 current_color,
                 self,
                 "Choose Background Color",
-                QColorDialog.ShowAlphaChannel
+                QColorDialog.ShowAlphaChannel,
             )
             if color.isValid():
                 self._bg_color = color.name()
@@ -718,7 +760,9 @@ class ThumbnailSettingsTab(QWidget):
             # We still reflect the chosen color via QPalette so users get feedback
             # without hard-coding full widget styles.
             palette = self.color_preview.palette()
-            palette.setColor(self.color_preview.backgroundRole(), QColor(self._bg_color))
+            palette.setColor(
+                self.color_preview.backgroundRole(), QColor(self._bg_color)
+            )
             self.color_preview.setAutoFillBackground(True)
             self.color_preview.setPalette(palette)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -727,11 +771,17 @@ class ThumbnailSettingsTab(QWidget):
 
     def get_settings(self) -> dict:
         """Get current thumbnail settings."""
-        settings = {"background_image": None, "material": None, "background_color": "#404658"}
+        settings = {
+            "background_image": None,
+            "material": None,
+            "background_color": "#404658",
+        }
 
         try:
             if self.selected_bg_button:
-                settings["background_image"] = self.selected_bg_button.property("bg_name")
+                settings["background_image"] = self.selected_bg_button.property(
+                    "bg_name"
+                )
 
             if self.selected_mat_button:
                 settings["material"] = self.selected_mat_button.property("mat_name")
@@ -758,17 +808,21 @@ class ThumbnailSettingsTab(QWidget):
                 self.logger.info("=== THUMBNAIL SETTINGS SAVE ===")
                 self.logger.info(
                     "Attempting to save: bg=%s, material=%s",
-                    settings_dict['background_image'],
-                    settings_dict['material']
+                    settings_dict["background_image"],
+                    settings_dict["material"],
                 )
 
             # Save to QSettings (persistent storage). We intentionally avoid an
             # explicit sync() call here to keep the UI responsive even when the
             # backing store is slow (e.g. network paths). QSettings will flush
             # changes automatically.
-            settings.setValue("thumbnail/background_image", settings_dict["background_image"])
+            settings.setValue(
+                "thumbnail/background_image", settings_dict["background_image"]
+            )
             settings.setValue("thumbnail/material", settings_dict["material"])
-            settings.setValue("thumbnail/background_color", settings_dict["background_color"])
+            settings.setValue(
+                "thumbnail/background_color", settings_dict["background_color"]
+            )
 
             # Also update ApplicationConfig for runtime compatibility
             config.thumbnail_bg_image = settings_dict["background_image"]
@@ -777,10 +831,20 @@ class ThumbnailSettingsTab(QWidget):
 
             if self.logger:
                 self.logger.info("✓ Content settings saved to QSettings (persistent)")
-                self.logger.info("QSettings thumbnail/background_image = %s", settings_dict['background_image'])
-                self.logger.info("QSettings thumbnail/material = %s", settings_dict['material'])
-                self.logger.info("QSettings thumbnail/background_color = %s", settings_dict['background_color'])
-                self.logger.info("ApplicationConfig also updated for runtime compatibility")
+                self.logger.info(
+                    "QSettings thumbnail/background_image = %s",
+                    settings_dict["background_image"],
+                )
+                self.logger.info(
+                    "QSettings thumbnail/material = %s", settings_dict["material"]
+                )
+                self.logger.info(
+                    "QSettings thumbnail/background_color = %s",
+                    settings_dict["background_color"],
+                )
+                self.logger.info(
+                    "ApplicationConfig also updated for runtime compatibility"
+                )
                 self.logger.info("=== THUMBNAIL SETTINGS SAVE COMPLETE ===")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:

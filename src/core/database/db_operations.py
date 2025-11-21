@@ -260,8 +260,12 @@ class DatabaseOperations:
                 )
 
                 # Create indexes
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_models_filename ON models(filename)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_models_format ON models(format)"
+                )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_models_file_hash ON models(file_hash)"
                 )
@@ -276,15 +280,21 @@ class DatabaseOperations:
                 )
 
                 # Create indexes for projects and files
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)"
+                )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)"
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)"
                 )
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)"
+                )
 
                 # Create materials and backgrounds tables for default resources
                 self._create_resources_tables(cursor)
@@ -343,7 +353,9 @@ class DatabaseOperations:
                 logger.info("file_hash column added successfully")
 
             # Migration 2: Add thumbnail_path column if it doesn't exist
-            has_thumbnail_path = any(col[1] == "thumbnail_path" for col in model_columns)
+            has_thumbnail_path = any(
+                col[1] == "thumbnail_path" for col in model_columns
+            )
 
             if not has_thumbnail_path:
                 logger.info("Adding thumbnail_path column to models table")
@@ -365,11 +377,15 @@ class DatabaseOperations:
 
             if "sort_order" not in category_col_names:
                 logger.info("Adding sort_order column to categories table")
-                cursor.execute("ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0")
+                cursor.execute(
+                    "ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0"
+                )
                 logger.info("sort_order column added successfully")
 
             # Migration 4: Add linked_model_id for deduplication tracking
-            has_linked_model_id = any(col[1] == "linked_model_id" for col in model_columns)
+            has_linked_model_id = any(
+                col[1] == "linked_model_id" for col in model_columns
+            )
 
             if not has_linked_model_id:
                 logger.info("Adding linked_model_id column to models table")
@@ -404,7 +420,9 @@ class DatabaseOperations:
                     )
                 """
                 )
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name)"
+                )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_projects_import_tag ON projects(import_tag)"
                 )
@@ -418,7 +436,9 @@ class DatabaseOperations:
 
             if "active_machine_id" not in project_col_names:
                 logger.info("Adding active_machine_id column to projects table")
-                cursor.execute("ALTER TABLE projects ADD COLUMN active_machine_id INTEGER")
+                cursor.execute(
+                    "ALTER TABLE projects ADD COLUMN active_machine_id INTEGER"
+                )
                 logger.info("active_machine_id column added successfully")
 
             if "feed_override_pct" not in project_col_names:
@@ -465,8 +485,12 @@ class DatabaseOperations:
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_files_project_id ON files(project_id)"
                 )
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_files_status ON files(status)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_files_file_hash ON files(file_hash)"
+                )
                 logger.info("files table created successfully")
 
             # Migration 7: Ensure new timing and metadata columns exist on gcode_metrics
@@ -476,21 +500,31 @@ class DatabaseOperations:
 
             if metrics_columns:
                 if "best_case_time_seconds" not in metrics_col_names:
-                    logger.info("Adding best_case_time_seconds column to gcode_metrics table")
+                    logger.info(
+                        "Adding best_case_time_seconds column to gcode_metrics table"
+                    )
                     cursor.execute(
                         "ALTER TABLE gcode_metrics ADD COLUMN best_case_time_seconds REAL"
                     )
                 if "time_correction_factor" not in metrics_col_names:
-                    logger.info("Adding time_correction_factor column to gcode_metrics table")
+                    logger.info(
+                        "Adding time_correction_factor column to gcode_metrics table"
+                    )
                     cursor.execute(
                         "ALTER TABLE gcode_metrics ADD COLUMN time_correction_factor REAL"
                     )
                 if "machine_id" not in metrics_col_names:
                     logger.info("Adding machine_id column to gcode_metrics table")
-                    cursor.execute("ALTER TABLE gcode_metrics ADD COLUMN machine_id INTEGER")
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN machine_id INTEGER"
+                    )
                 if "feed_override_pct" not in metrics_col_names:
-                    logger.info("Adding feed_override_pct column to gcode_metrics table")
-                    cursor.execute("ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL")
+                    logger.info(
+                        "Adding feed_override_pct column to gcode_metrics table"
+                    )
+                    cursor.execute(
+                        "ALTER TABLE gcode_metrics ADD COLUMN feed_override_pct REAL"
+                    )
 
             # Migration 8: Add spindle capability columns to machines
             cursor.execute("PRAGMA table_info(machines)")
@@ -499,13 +533,19 @@ class DatabaseOperations:
             if machine_columns:
                 if "max_spindle_rpm" not in machine_col_names:
                     logger.info("Adding max_spindle_rpm column to machines table")
-                    cursor.execute("ALTER TABLE machines ADD COLUMN max_spindle_rpm REAL")
+                    cursor.execute(
+                        "ALTER TABLE machines ADD COLUMN max_spindle_rpm REAL"
+                    )
                 if "max_bit_diameter_mm" not in machine_col_names:
                     logger.info("Adding max_bit_diameter_mm column to machines table")
-                    cursor.execute("ALTER TABLE machines ADD COLUMN max_bit_diameter_mm REAL")
+                    cursor.execute(
+                        "ALTER TABLE machines ADD COLUMN max_bit_diameter_mm REAL"
+                    )
                 if "spindle_power_w" not in machine_col_names:
                     logger.info("Adding spindle_power_w column to machines table")
-                    cursor.execute("ALTER TABLE machines ADD COLUMN spindle_power_w REAL")
+                    cursor.execute(
+                        "ALTER TABLE machines ADD COLUMN spindle_power_w REAL"
+                    )
                 if "drive_type" not in machine_col_names:
                     logger.info("Adding drive_type column to machines table")
                     cursor.execute(
@@ -543,9 +583,15 @@ class DatabaseOperations:
             )
             """
         )
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_name ON materials(name)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(type)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_materials_default ON materials(is_default)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_materials_name ON materials(name)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(type)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_materials_default ON materials(is_default)"
+        )
 
         # Backgrounds table for default background resources
         cursor.execute(
@@ -566,7 +612,9 @@ class DatabaseOperations:
             )
             """
         )
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_backgrounds_name ON backgrounds(name)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_backgrounds_name ON backgrounds(name)"
+        )
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_backgrounds_default ON backgrounds(is_default)"
         )

@@ -50,12 +50,15 @@ def main():
                 rss_mb = int(psutil.Process().memory_info().rss / (1024 * 1024))
             except Exception:
                 pass
-        print("Result:", {
-            "file": f,
-            "secs": round(t1 - t0, 2),
-            "tris": model.stats.triangle_count,
-            "rss_mb": rss_mb
-        })
+        print(
+            "Result:",
+            {
+                "file": f,
+                "secs": round(t1 - t0, 2),
+                "tris": model.stats.triangle_count,
+                "rss_mb": rss_mb,
+            },
+        )
         gc.collect()
 
 

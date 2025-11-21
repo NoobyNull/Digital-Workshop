@@ -232,4 +232,3 @@ def get_consolidation_folder_for_path(file_path: str) -> Optional[str]:
     """Convenience wrapper for consolidation folder lookup."""
 
     return _REGISTRY.get_consolidation_folder_for_path(file_path)
-

@@ -92,7 +92,9 @@ class CentralWidgetManager:
                 if hasattr(viewer, "model_loaded"):
                     viewer.model_loaded.connect(self.main_window._on_model_loaded)
                 if hasattr(viewer, "lighting_panel_requested"):
-                    viewer.lighting_panel_requested.connect(self.main_window._toggle_lighting_panel)
+                    viewer.lighting_panel_requested.connect(
+                        self.main_window._toggle_lighting_panel
+                    )
 
                 self.logger.info("3D viewer widget created")
             else:
@@ -151,9 +153,13 @@ class CentralWidgetManager:
             self.main_window.clo_widget = widget
             self.logger.info("Cut List Optimizer tab created successfully")
         except Exception as e:
-            self.logger.error("Failed to create Cut List Optimizer: %s", e, exc_info=True)
+            self.logger.error(
+                "Failed to create Cut List Optimizer: %s", e, exc_info=True
+            )
             tabs.addTab(
-                self._create_placeholder("Cut List Optimizer", "Component unavailable."),
+                self._create_placeholder(
+                    "Cut List Optimizer", "Component unavailable."
+                ),
                 "Cut List Optimizer",
             )
 
@@ -172,7 +178,8 @@ class CentralWidgetManager:
             self.logger.error("Failed to create Feeds & Speeds: %s", e, exc_info=True)
             tabs.addTab(
                 self._create_placeholder(
-                    "Feed and Speed", "Feeds & Speeds Calculator\n\nComponent unavailable."
+                    "Feed and Speed",
+                    "Feeds & Speeds Calculator\n\nComponent unavailable.",
                 ),
                 "Feed and Speed",
             )
@@ -231,7 +238,9 @@ class CentralWidgetManager:
             else:
                 missing.append(name)
 
-        self.logger.info("Tab creation summary: %s created, {len(missing)} missing", len(created))
+        self.logger.info(
+            "Tab creation summary: %s created, {len(missing)} missing", len(created)
+        )
         if created:
             self.logger.info("Successfully created tabs: %s", ", ".join(created))
         if missing:

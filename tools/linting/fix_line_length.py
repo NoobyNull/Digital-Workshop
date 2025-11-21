@@ -12,22 +12,26 @@ from pathlib import Path
 def fix_line_length():
     """Fix line length violations using black."""
     src_dir = Path("src")
-    
+
     print("Fixing line length violations with black...")
-    
+
     try:
         result = subprocess.run(
             [
-                "python", "-m", "black",
-                "--line-length", "100",
-                "--target-version", "py310",
-                str(src_dir)
+                "python",
+                "-m",
+                "black",
+                "--line-length",
+                "100",
+                "--target-version",
+                "py310",
+                str(src_dir),
             ],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=300,
         )
-        
+
         if result.returncode == 0:
             print("Successfully fixed line length violations")
             # Count reformatted files
@@ -36,7 +40,7 @@ def fix_line_length():
         else:
             print("Error fixing line length:")
             print(result.stderr)
-            
+
     except FileNotFoundError:
         print("black not found. Installing...")
         subprocess.run(["pip", "install", "black"], check=True)
@@ -48,4 +52,3 @@ def fix_line_length():
 
 if __name__ == "__main__":
     fix_line_length()
-

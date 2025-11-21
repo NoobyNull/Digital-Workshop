@@ -48,7 +48,9 @@ class ModelViewerController:
                 # Native Qt fallback
                 self.main_window.viewer_widget = QLabel("3D Viewer not available")
                 self.main_window.viewer_widget.setAlignment(Qt.AlignCenter)
-                self.logger.warning("Viewer3DWidget not available, using native Qt placeholder")
+                self.logger.warning(
+                    "Viewer3DWidget not available, using native Qt placeholder"
+                )
 
             # Connect viewer signals
             if hasattr(self.main_window.viewer_widget, "model_loaded"):
@@ -69,11 +71,15 @@ class ModelViewerController:
         except Exception as e:  # pragma: no cover - defensive fallback
             self.logger.warning("Failed to setup viewer widget: %s", e)
             # Native Qt fallback
-            self.main_window.viewer_widget = QLabel("3D Model Viewer\n\nComponent unavailable.")
+            self.main_window.viewer_widget = QLabel(
+                "3D Model Viewer\n\nComponent unavailable."
+            )
             self.main_window.viewer_widget.setAlignment(Qt.AlignCenter)
 
         # Always add the viewer widget as the first hero tab
-        self.main_window.hero_tabs.addTab(self.main_window.viewer_widget, "Model Previewer")
+        self.main_window.hero_tabs.addTab(
+            self.main_window.viewer_widget, "Model Previewer"
+        )
 
     def _setup_viewer_managers(self) -> None:
         """Set up viewer-related managers using native Qt integration."""
@@ -84,7 +90,9 @@ class ModelViewerController:
 
             # Material manager
             try:
-                self.main_window.material_manager = MaterialManager(get_database_manager())
+                self.main_window.material_manager = MaterialManager(
+                    get_database_manager()
+                )
             except Exception as e:  # pragma: no cover - defensive
                 self.main_window.material_manager = None
                 self.logger.warning("MaterialManager unavailable: %s", e)
@@ -92,7 +100,9 @@ class ModelViewerController:
             # Lighting manager
             try:
                 renderer = getattr(self.main_window.viewer_widget, "renderer", None)
-                self.main_window.lighting_manager = LightingManager(renderer) if renderer else None
+                self.main_window.lighting_manager = (
+                    LightingManager(renderer) if renderer else None
+                )
                 if self.main_window.lighting_manager:
                     self.main_window.lighting_manager.create_light()
             except Exception as e:  # pragma: no cover - defensive
@@ -130,8 +140,8 @@ class ModelViewerController:
             try:
                 from src.gui.materials.integration import MaterialLightingIntegrator
 
-                self.main_window.material_lighting_integrator = MaterialLightingIntegrator(
-                    self.main_window
+                self.main_window.material_lighting_integrator = (
+                    MaterialLightingIntegrator(self.main_window)
                 )
                 self.logger.info("MaterialLightingIntegrator created successfully")
             except Exception as e:  # pragma: no cover - defensive
@@ -206,9 +216,13 @@ class ModelViewerController:
                     self.main_window.viewer_widget.renderer.ResetCameraClippingRange()
                     self.main_window.viewer_widget.vtk_widget.GetRenderWindow().Render()
 
-                    self.logger.info("Restored saved camera view for model ID %s", model_id)
+                    self.logger.info(
+                        "Restored saved camera view for model ID %s", model_id
+                    )
                     self.main_window.status_label.setText("Restored saved view")
-                    QTimer.singleShot(2000, lambda: self.main_window.status_label.setText("Ready"))
+                    QTimer.singleShot(
+                        2000, lambda: self.main_window.status_label.setText("Ready")
+                    )
             else:
                 self.logger.debug("No saved camera view for model ID %s", model_id)
 

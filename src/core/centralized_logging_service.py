@@ -126,8 +126,12 @@ class CentralizedLoggingService:
         # Configuration
         self.max_security_events = self.config.get("max_security_events", 10000)
         self.max_performance_metrics = self.config.get("max_performance_metrics", 10000)
-        self.enable_correlation_tracking = self.config.get("enable_correlation_tracking", True)
-        self.enable_performance_logging = self.config.get("enable_performance_logging", True)
+        self.enable_correlation_tracking = self.config.get(
+            "enable_correlation_tracking", True
+        )
+        self.enable_performance_logging = self.config.get(
+            "enable_performance_logging", True
+        )
         self.enable_security_logging = self.config.get("enable_security_logging", True)
 
         # Setup security and performance loggers
@@ -211,7 +215,9 @@ class CentralizedLoggingService:
             KeyError,
             AttributeError,
         ) as handling_error:
-            self.logger.error("Error logging failed: %s", str(handling_error), exc_info=True)
+            self.logger.error(
+                "Error logging failed: %s", str(handling_error), exc_info=True
+            )
             return False
 
     def log_critical(self, message: str, **kwargs) -> None:
@@ -233,7 +239,9 @@ class CentralizedLoggingService:
 
                 # Maintain event history size
                 if len(self._security_events) > self.max_security_events:
-                    self._security_events = self._security_events[-self.max_security_events :]
+                    self._security_events = self._security_events[
+                        -self.max_security_events :
+                    ]
 
             # Log the security event
             log_level = {
@@ -262,7 +270,9 @@ class CentralizedLoggingService:
             )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Security event logging failed: %s", str(e), exc_info=True)
+            self.logger.error(
+                "Security event logging failed: %s", str(e), exc_info=True
+            )
 
     def log_performance_metric(self, metric: PerformanceMetric) -> None:
         """Log a performance metric."""
@@ -295,7 +305,9 @@ class CentralizedLoggingService:
             )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Performance metric logging failed: %s", str(e), exc_info=True)
+            self.logger.error(
+                "Performance metric logging failed: %s", str(e), exc_info=True
+            )
 
     def set_correlation_id(self, correlation_id: str) -> None:
         """Set correlation ID for current context."""
@@ -396,7 +408,9 @@ class CentralizedLoggingService:
 
             # Recent performance metrics
             recent_performance_metrics = [
-                m for m in self._performance_metrics if m.timestamp.timestamp() > hour_ago
+                m
+                for m in self._performance_metrics
+                if m.timestamp.timestamp() > hour_ago
             ]
 
             return {
@@ -405,13 +419,21 @@ class CentralizedLoggingService:
                     "recent": len(recent_security_events),
                     "by_type": {
                         event_type.value: len(
-                            [e for e in recent_security_events if e.event_type == event_type]
+                            [
+                                e
+                                for e in recent_security_events
+                                if e.event_type == event_type
+                            ]
                         )
                         for event_type in SecurityEventType
                     },
                     "by_severity": {
                         severity: len(
-                            [e for e in recent_security_events if e.severity.lower() == severity]
+                            [
+                                e
+                                for e in recent_security_events
+                                if e.severity.lower() == severity
+                            ]
                         )
                         for severity in ["low", "medium", "high", "critical"]
                     },
@@ -447,12 +469,16 @@ class CentralizedLoggingService:
             with self._lock:
                 # Clean up old security events
                 self._security_events = [
-                    e for e in self._security_events if e.timestamp.timestamp() > cutoff_time
+                    e
+                    for e in self._security_events
+                    if e.timestamp.timestamp() > cutoff_time
                 ]
 
                 # Clean up old performance metrics
                 self._performance_metrics = [
-                    m for m in self._performance_metrics if m.timestamp.timestamp() > cutoff_time
+                    m
+                    for m in self._performance_metrics
+                    if m.timestamp.timestamp() > cutoff_time
                 ]
 
             self.logger.info("Cleaned up logs older than %s days", days_to_keep)
@@ -462,7 +488,9 @@ class CentralizedLoggingService:
 
 
 # Decorator for automatic performance and error logging
-def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INFO) -> None:
+def log_operation(
+    operation_name: str = None, log_level: LogLevel = LogLevel.INFO
+) -> None:
     """
     Decorator for automatic operation logging with performance and error tracking.
 
@@ -520,7 +548,14 @@ def log_operation(operation_name: str = None, log_level: LogLevel = LogLevel.INF
 
                 return result
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as error:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as error:
                 # Calculate duration
                 duration = time.time() - start_time
 

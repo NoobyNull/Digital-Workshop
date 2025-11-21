@@ -91,7 +91,9 @@ class CodeQualityValidator:
         }
 
     # ----------------------------------------------------------------- helpers
-    def format_with_black(self, file_path: Path, fix_mode: bool = True) -> FormattingResult:
+    def format_with_black(
+        self, file_path: Path, fix_mode: bool = True
+    ) -> FormattingResult:
         file_path = Path(file_path)
         original_size = file_path.stat().st_size if file_path.exists() else 0
         start = time.perf_counter()
@@ -115,7 +117,9 @@ class CodeQualityValidator:
             else:
                 was_formatted = completed.returncode != 0
 
-            formatted_size = file_path.stat().st_size if file_path.exists() else original_size
+            formatted_size = (
+                file_path.stat().st_size if file_path.exists() else original_size
+            )
             changes = []
             return FormattingResult(
                 file_path=str(file_path),
@@ -191,7 +195,9 @@ class CodeQualityValidator:
             )
 
     # ------------------------------------------------------------- aggregation
-    def validate_file(self, file_path: Path, fix_mode: bool = True) -> Tuple[FormattingResult, LintingResult]:
+    def validate_file(
+        self, file_path: Path, fix_mode: bool = True
+    ) -> Tuple[FormattingResult, LintingResult]:
         formatting = self.format_with_black(file_path, fix_mode=fix_mode)
         linting = self.lint_with_pylint(file_path)
         return formatting, linting
@@ -203,7 +209,9 @@ class CodeQualityValidator:
             results.append(self.validate_file(python_file, fix_mode=fix_mode))
         return results
 
-    def calculate_compliance(self, results: Sequence[Tuple[FormattingResult, LintingResult]]) -> ComplianceResult:
+    def calculate_compliance(
+        self, results: Sequence[Tuple[FormattingResult, LintingResult]]
+    ) -> ComplianceResult:
         if not results:
             return ComplianceResult(
                 formatting_score=0.0,
@@ -221,7 +229,9 @@ class CodeQualityValidator:
         lint_scores = [lint.overall_score for _, lint in results]
         linting_score = mean(lint_scores) * 10 if lint_scores else 0.0
 
-        overall = formatting_score * self._format_weight + linting_score * self._lint_weight
+        overall = (
+            formatting_score * self._format_weight + linting_score * self._lint_weight
+        )
         passed = overall >= self.target_compliance
         violations: List[str] = []
         recommendations: List[str] = []
@@ -230,9 +240,13 @@ class CodeQualityValidator:
                 f"Overall compliance {overall:.2f}% is below target {self.target_compliance:.2f}%."
             )
             if formatted_files:
-                recommendations.append("Commit formatted changes before re-running validation.")
+                recommendations.append(
+                    "Commit formatted changes before re-running validation."
+                )
             if linting_score < self.target_compliance:
-                recommendations.append("Increase linting score by addressing warnings/errors.")
+                recommendations.append(
+                    "Increase linting score by addressing warnings/errors."
+                )
 
         return ComplianceResult(
             formatting_score=formatting_score,
@@ -251,7 +265,11 @@ class CodeQualityValidator:
     ) -> dict:
         total_files = len(results)
         formatting_issues = sum(1 for fmt, _ in results if fmt.was_formatted)
-        linting_errors = sum(1 for _, lint in results if any(issue.issue_type == "error" for issue in lint.issues))
+        linting_errors = sum(
+            1
+            for _, lint in results
+            if any(issue.issue_type == "error" for issue in lint.issues)
+        )
         issues_by_type = {}
         for _, lint in results:
             for issue in lint.issues:
@@ -323,4 +341,3 @@ class CodeQualityValidator:
         if score >= 6.0:
             return "Acceptable"
         return "Poor"
-

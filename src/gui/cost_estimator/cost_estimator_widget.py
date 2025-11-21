@@ -227,7 +227,9 @@ class CostEstimatorWidget(QWidget):
         box = QGroupBox("Terms & Notes")
         layout = QVBoxLayout()
         self.custom_terms_edit = QTextEdit()
-        self.custom_terms_edit.setPlaceholderText("Payment terms, delivery expectations, warranty notes…")
+        self.custom_terms_edit.setPlaceholderText(
+            "Payment terms, delivery expectations, warranty notes…"
+        )
         layout.addWidget(self.custom_terms_edit)
         box.setLayout(layout)
         return box
@@ -264,7 +266,9 @@ class CostEstimatorWidget(QWidget):
         }
         for label, key in self.import_sources.items():
             action = self.import_menu.addAction(label)
-            action.triggered.connect(lambda _=None, origin=key: self._apply_suggestions(origin))
+            action.triggered.connect(
+                lambda _=None, origin=key: self._apply_suggestions(origin)
+            )
 
     def _load_invoice_preferences(self) -> Dict[str, object]:
         """Read persisted invoice defaults from QSettings."""
@@ -301,7 +305,9 @@ class CostEstimatorWidget(QWidget):
 
         prefix = prefs.get("invoice_prefix") or "INV-"
         if not header.invoice_number:
-            header.invoice_number = f"{prefix}{QDate.currentDate().toString('yyyyMMdd-HHmm')}"
+            header.invoice_number = (
+                f"{prefix}{QDate.currentDate().toString('yyyyMMdd-HHmm')}"
+            )
 
         due_days = prefs.get("due_days")
         if (not header.due_date) and due_days is not None:
@@ -312,10 +318,15 @@ class CostEstimatorWidget(QWidget):
             header.due_date = QDate.currentDate().addDays(offset).toString("yyyy-MM-dd")
         return header
 
-    def _apply_preferences_to_controls(self, prefs: Optional[Dict[str, object]]) -> None:
+    def _apply_preferences_to_controls(
+        self, prefs: Optional[Dict[str, object]]
+    ) -> None:
         """Update UI controls (tax, terms) if user hasn't overridden them."""
         prefs = prefs or {}
-        if prefs.get("default_terms") and not self.custom_terms_edit.toPlainText().strip():
+        if (
+            prefs.get("default_terms")
+            and not self.custom_terms_edit.toPlainText().strip()
+        ):
             self.custom_terms_edit.setPlainText(prefs["default_terms"])
         if prefs.get("default_tax_pct") is not None:
             try:
@@ -353,7 +364,9 @@ class CostEstimatorWidget(QWidget):
 
     def _refresh_seed_data(self) -> None:
         if not self.current_project_id:
-            QMessageBox.information(self, "Select Project", "Please select a project first.")
+            QMessageBox.information(
+                self, "Select Project", "Please select a project first."
+            )
             return
         seed = self.data_service.collect_seed(self.current_project_id)
         self.suggestions = seed.suggestions or {}
@@ -436,12 +449,20 @@ class CostEstimatorWidget(QWidget):
 
     def _add_blank_item(self) -> None:
         self._insert_table_row(
-            InvoiceLineItem(description="New line item", category="General", quantity=1.0, unit="qty", rate=0.0)
+            InvoiceLineItem(
+                description="New line item",
+                category="General",
+                quantity=1.0,
+                unit="qty",
+                rate=0.0,
+            )
         )
         self._update_totals()
 
     def _remove_selected_items(self) -> None:
-        rows = sorted({index.row() for index in self.items_table.selectedIndexes()}, reverse=True)
+        rows = sorted(
+            {index.row() for index in self.items_table.selectedIndexes()}, reverse=True
+        )
         for row in rows:
             self.items_table.removeRow(row)
         self._update_totals()
@@ -449,7 +470,9 @@ class CostEstimatorWidget(QWidget):
     def _apply_suggestions(self, prefix: str) -> None:
         suggestions = self.suggestions.get(prefix) or []
         if not suggestions:
-            QMessageBox.information(self, "No Data", f"No {prefix.lower()} data available.")
+            QMessageBox.information(
+                self, "No Data", f"No {prefix.lower()} data available."
+            )
             return
         for item in suggestions:
             self._insert_table_row(item)
@@ -469,7 +492,11 @@ class CostEstimatorWidget(QWidget):
     def _update_logo_label(self) -> None:
         if self.logo_path and Path(self.logo_path).exists():
             pixmap = QPixmap(self.logo_path)
-            self.logo_label.setPixmap(pixmap.scaled(self.logo_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.logo_label.setPixmap(
+                pixmap.scaled(
+                    self.logo_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+                )
+            )
         else:
             self.logo_label.setPixmap(QPixmap())
             self.logo_label.setText("No Logo")
@@ -555,8 +582,12 @@ class CostEstimatorWidget(QWidget):
         invoice = self._build_invoice()
         base_name = self._sanitize_filename(invoice.header.invoice_number or "")
         try:
-            xml_path = self.storage.save_xml(self.current_project_id, invoice, filename=base_name or None)
-            pdf_path = self.storage.default_pdf_path(self.current_project_id, filename=base_name or None)
+            xml_path = self.storage.save_xml(
+                self.current_project_id, invoice, filename=base_name or None
+            )
+            pdf_path = self.storage.default_pdf_path(
+                self.current_project_id, filename=base_name or None
+            )
             self.pdf_exporter.export(invoice, pdf_path)
         except Exception as exc:  # noqa: BLE001
             logger.exception("Failed to save invoice: %s", exc)
@@ -571,7 +602,9 @@ class CostEstimatorWidget(QWidget):
 
     def _export_pdf_dialog(self) -> None:
         invoice = self._build_invoice()
-        default_name = self._sanitize_filename(invoice.header.invoice_number or "invoice")
+        default_name = self._sanitize_filename(
+            invoice.header.invoice_number or "invoice"
+        )
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Invoice PDF",
@@ -582,7 +615,9 @@ class CostEstimatorWidget(QWidget):
             return
         try:
             self.pdf_exporter.export(invoice, Path(path))
-            QMessageBox.information(self, "PDF Exported", f"Invoice exported to:\n{path}")
+            QMessageBox.information(
+                self, "PDF Exported", f"Invoice exported to:\n{path}"
+            )
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "Export Failed", str(exc))
 

@@ -357,7 +357,9 @@ class UnifiedProgressWindow(QDialog):
         if self.is_paused:
             self.time_label.setText(f"Elapsed: {elapsed_str} | Paused")
         else:
-            self.time_label.setText(f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}")
+            self.time_label.setText(
+                f"Elapsed: {elapsed_str} | Remaining: ~{remaining_str}"
+            )
 
     def _on_pause_resume_clicked(self) -> None:
         """Handle pause/resume button click."""
@@ -497,7 +499,9 @@ class UnifiedProgressWindow(QDialog):
         section = self.stage_sections.get(stage_name.lower())
         if section and section.isVisible():
             status_label = section.findChild(QLabel, f"{stage_name.lower()}_status")
-            progress_bar = section.findChild(QProgressBar, f"{stage_name.lower()}_progress")
+            progress_bar = section.findChild(
+                QProgressBar, f"{stage_name.lower()}_progress"
+            )
 
             if status_label:
                 icon = stage.get_status_icon()
@@ -540,12 +544,18 @@ class UnifiedProgressWindow(QDialog):
         section = self.stage_sections.get("thumbnails")
         if section and section.isVisible():
             current_label = section.findChild(QLabel, "thumbnail_current_label")
-            individual_progress = section.findChild(QProgressBar, "thumbnail_individual_progress")
-            individual_stage_label = section.findChild(QLabel, "thumbnail_individual_stage")
+            individual_progress = section.findChild(
+                QProgressBar, "thumbnail_individual_progress"
+            )
+            individual_stage_label = section.findChild(
+                QLabel, "thumbnail_individual_stage"
+            )
             batch_progress = section.findChild(QProgressBar, "thumbnail_batch_progress")
 
             if current_label:
-                current_label.setText(f"Current: {current_file} ({current_index}/{total_count})")
+                current_label.setText(
+                    f"Current: {current_file} ({current_index}/{total_count})"
+                )
 
             if individual_progress:
                 individual_progress.setValue(individual_percent)

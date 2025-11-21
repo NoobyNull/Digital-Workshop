@@ -133,7 +133,9 @@ class DatabaseException(CandyCadenceException):
     def __init__(
         self, message: str, operation: str = None, table_name: str = None, **kwargs
     ) -> None:
-        user_message = "A database operation failed. Your data may be temporarily unavailable."
+        user_message = (
+            "A database operation failed. Your data may be temporarily unavailable."
+        )
         recovery_suggestions = [
             "Check database connection",
             "Verify database file permissions",
@@ -149,7 +151,9 @@ class DatabaseException(CandyCadenceException):
 class DatabaseConnectionError(DatabaseException):
     """Raised when database connection fails."""
 
-    def __init__(self, database_path: str, connection_details: str = None, **kwargs) -> None:
+    def __init__(
+        self, database_path: str, connection_details: str = None, **kwargs
+    ) -> None:
         message = f"Database connection failed for: {database_path}"
         if connection_details:
             message += f" Details: {connection_details}"
@@ -182,7 +186,9 @@ class FileSystemException(CandyCadenceException):
     def __init__(
         self, message: str, file_path: str = None, operation: str = None, **kwargs
     ) -> None:
-        user_message = "A file operation failed. Please check file permissions and paths."
+        user_message = (
+            "A file operation failed. Please check file permissions and paths."
+        )
         recovery_suggestions = [
             "Check file path and permissions",
             "Verify the file exists",
@@ -202,7 +208,9 @@ FileSystemError = FileSystemException
 class FileNotFoundException(FileSystemException):
     """Raised when a required file is not found."""
 
-    def __init__(self, file_path: str, search_locations: List[str] = None, **kwargs) -> None:
+    def __init__(
+        self, file_path: str, search_locations: List[str] = None, **kwargs
+    ) -> None:
         message = f"File not found: {file_path}"
         user_message = f"The file '{Path(file_path).name}' could not be found."
 
@@ -232,7 +240,9 @@ class FileNotFoundException(FileSystemException):
 class ValidationException(CandyCadenceException):
     """Base exception for all validation-related errors."""
 
-    def __init__(self, message: str, field_name: str = None, value: Any = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, field_name: str = None, value: Any = None, **kwargs
+    ) -> None:
         user_message = "Data validation failed. Please check the input values."
         recovery_suggestions = [
             "Check the format of input data",
@@ -258,7 +268,9 @@ class MemoryException(CandyCadenceException):
     def __init__(
         self, message: str, operation: str = None, memory_usage: int = None, **kwargs
     ) -> None:
-        user_message = "The application ran out of memory. Try closing other applications."
+        user_message = (
+            "The application ran out of memory. Try closing other applications."
+        )
         recovery_suggestions = [
             "Close other applications",
             "Restart the application",
@@ -281,7 +293,9 @@ class OutOfMemoryError(MemoryException):
         if available_memory:
             message += f", Available: {available_memory} bytes"
 
-        user_message = "The application has run out of memory and cannot continue this operation."
+        user_message = (
+            "The application has run out of memory and cannot continue this operation."
+        )
 
         recovery_suggestions = [
             "Close other applications to free up memory",
@@ -310,7 +324,9 @@ class ConfigurationException(CandyCadenceException):
     def __init__(
         self, message: str, config_key: str = None, config_source: str = None, **kwargs
     ) -> None:
-        user_message = "A configuration error occurred. Some features may not work correctly."
+        user_message = (
+            "A configuration error occurred. Some features may not work correctly."
+        )
         recovery_suggestions = [
             "Reset to default settings",
             "Check configuration file",
@@ -362,9 +378,7 @@ class PerformanceException(CandyCadenceException):
     def __init__(
         self, message: str, operation: str = None, duration: float = None, **kwargs
     ) -> None:
-        user_message = (
-            "A performance issue was detected. The operation may take longer than expected."
-        )
+        user_message = "A performance issue was detected. The operation may take longer than expected."
         recovery_suggestions = [
             "Close other applications",
             "Use smaller files",
@@ -391,9 +405,7 @@ class TimeoutException(PerformanceException):
         if actual_duration:
             message += f" (actual duration: {actual_duration} seconds)"
 
-        user_message = (
-            f"The operation '{operation}' is taking longer than expected and has been cancelled."
-        )
+        user_message = f"The operation '{operation}' is taking longer than expected and has been cancelled."
 
         recovery_suggestions = [
             "Try the operation again with smaller data",
@@ -476,7 +488,9 @@ EXCEPTION_MAPPING = {
 }
 
 
-def create_exception_from_code(error_code: str, *args, **kwargs) -> CandyCadenceException:
+def create_exception_from_code(
+    error_code: str, *args, **kwargs
+) -> CandyCadenceException:
     """Create an exception instance from an error code."""
     exception_class = EXCEPTION_MAPPING.get(error_code, CandyCadenceException)
     return exception_class(*args, **kwargs)

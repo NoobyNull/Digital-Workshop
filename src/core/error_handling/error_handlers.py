@@ -76,13 +76,22 @@ class SpecificErrorHandler:
                 return func(*args, **kwargs)
             except self.expected_errors as e:
                 return self._handle_error(type(e), e, None)
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 # Re-raise unexpected exceptions
                 raise
 
         return wrapper
 
-    def _handle_error(self, exc_type: Type[Exception], exc_val: Exception, exc_tb) -> bool:
+    def _handle_error(
+        self, exc_type: Type[Exception], exc_val: Exception, exc_tb
+    ) -> bool:
         """
         Handle the specific error with proper categorization and reporting.
 
@@ -121,7 +130,9 @@ class SpecificErrorHandler:
             AttributeError,
         ) as reporting_error:
             # If error reporting itself fails, log and continue
-            self.logger.error("Error reporting failed: %s", reporting_error, exc_info=True)
+            self.logger.error(
+                "Error reporting failed: %s", reporting_error, exc_info=True
+            )
 
             # In case of reporting failure, still attempt recovery
             try:
@@ -134,7 +145,9 @@ class SpecificErrorHandler:
                 KeyError,
                 AttributeError,
             ) as recovery_error:
-                self.logger.error("Recovery attempt failed: %s", recovery_error, exc_info=True)
+                self.logger.error(
+                    "Recovery attempt failed: %s", recovery_error, exc_info=True
+                )
 
             # Reraise original error if requested
             if self.reraise:
@@ -171,7 +184,9 @@ class SpecificErrorHandler:
             KeyError,
             AttributeError,
         ) as recovery_error:
-            self.logger.error("Recovery strategy failed: %s", recovery_error, exc_info=True)
+            self.logger.error(
+                "Recovery strategy failed: %s", recovery_error, exc_info=True
+            )
             return False
 
 
@@ -179,7 +194,9 @@ class SpecificErrorHandler:
 class ShutdownErrorHandler(SpecificErrorHandler):
     """Specialized handler for shutdown operations."""
 
-    def __init__(self, operation_name: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self, operation_name: str, context_info: Optional[Dict[str, Any]] = None
+    ) -> None:
         super().__init__(
             context=ErrorContext.SHUTDOWN,
             expected_errors=(RuntimeError, OSError, IOError),
@@ -192,7 +209,9 @@ class ShutdownErrorHandler(SpecificErrorHandler):
 class VTKErrorHandler(SpecificErrorHandler):
     """Specialized handler for VTK operations."""
 
-    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self, operation: str, context_info: Optional[Dict[str, Any]] = None
+    ) -> None:
         super().__init__(
             context=ErrorContext.RENDERING,
             expected_errors=(RuntimeError, OSError),
@@ -235,7 +254,9 @@ class FileIOErrorHandler(SpecificErrorHandler):
 class MemoryErrorHandler(SpecificErrorHandler):
     """Specialized handler for memory-related errors."""
 
-    def __init__(self, operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self, operation: str, context_info: Optional[Dict[str, Any]] = None
+    ) -> None:
         super().__init__(
             context=ErrorContext.NORMAL_OPERATION,
             expected_errors=(MemoryError,),
@@ -268,7 +289,9 @@ def handle_shutdown_errors(
 
 
 @contextmanager
-def handle_vtk_errors(operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+def handle_vtk_errors(
+    operation: str, context_info: Optional[Dict[str, Any]] = None
+) -> None:
     """
     Context manager for VTK operations with specific error handling.
 
@@ -302,7 +325,9 @@ def handle_file_io_errors(
 
 
 @contextmanager
-def handle_memory_errors(operation: str, context_info: Optional[Dict[str, Any]] = None) -> None:
+def handle_memory_errors(
+    operation: str, context_info: Optional[Dict[str, Any]] = None
+) -> None:
     """
     Context manager for memory operations with specific error handling.
 
@@ -469,7 +494,14 @@ def monitor_operation(
 
                 return result
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 # Log failure with timing
                 duration = time.time() - start_time
                 logging.getLogger("operation_monitor").error(

@@ -107,7 +107,9 @@ class ToolTreeWidget(QTreeWidget):
             super().dragMoveEvent(event)
 
     def dropEvent(self, event):  # type: ignore[override]
-        if not (self._accept_drops and event.mimeData().hasFormat("application/x-dww-tool")):
+        if not (
+            self._accept_drops and event.mimeData().hasFormat("application/x-dww-tool")
+        ):
             return super().dropEvent(event)
 
         if self._drop_handler is None:
@@ -115,13 +117,19 @@ class ToolTreeWidget(QTreeWidget):
             return
 
         try:
-            data = bytes(event.mimeData().data("application/x-dww-tool")).decode("utf-8")
+            data = bytes(event.mimeData().data("application/x-dww-tool")).decode(
+                "utf-8"
+            )
             payload = json.loads(data)
         except Exception:
             event.ignore()
             return
 
-        target_item = self.itemAt(event.position().toPoint()) if hasattr(event, "position") else self.itemAt(event.pos())
+        target_item = (
+            self.itemAt(event.position().toPoint())
+            if hasattr(event, "position")
+            else self.itemAt(event.pos())
+        )
         target_folder = None
         if target_item:
             meta = target_item.data(0, Qt.UserRole)
@@ -185,7 +193,9 @@ class EditToolDialog(QDialog):
         self.folder_input = QLineEdit(tool.folder)
         layout.addRow("Folder:", self.folder_input)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addRow(buttons)
@@ -277,7 +287,9 @@ class ManageMachinesDialog(QDialog):
         for machine in self._machines:
             self.list_widget.addItem(machine.get("name") or "Unnamed")
         self.list_widget.addItem("+ Add new")
-        self.list_widget.setCurrentRow(0 if self._machines else self.list_widget.count() - 1)
+        self.list_widget.setCurrentRow(
+            0 if self._machines else self.list_widget.count() - 1
+        )
         self.list_widget.blockSignals(False)
         self._on_selected(self.list_widget.currentRow())
 
@@ -295,7 +307,9 @@ class ManageMachinesDialog(QDialog):
             return
         machine = self._machines[row]
         self.name_input.setText(machine.get("name", ""))
-        self.max_feed_input.setValue(float(machine.get("max_feed_mm_min", 600.0) or 600.0))
+        self.max_feed_input.setValue(
+            float(machine.get("max_feed_mm_min", 600.0) or 600.0)
+        )
         self.accel_input.setValue(float(machine.get("accel_mm_s2", 100.0) or 100.0))
         drive = machine.get("drive_type") or "ball_screw"
         idx = self.drive_combo.findData(drive)
@@ -434,7 +448,9 @@ class VectricToolImportDialog(QDialog):
         layout.setSpacing(8)
 
         if not self._installations:
-            layout.addWidget(QLabel("No Vectric tool databases were found under ProgramData."))
+            layout.addWidget(
+                QLabel("No Vectric tool databases were found under ProgramData.")
+            )
         else:
             layout.addWidget(QLabel("Select which Vectric tool databases to import:"))
             for product, version, db_path in self._installations:
@@ -542,8 +558,12 @@ class ToolTreeLayoutDialog(QDialog):
             level1 = self.settings.value(
                 "feeds_and_speeds/tree_group_level1", "tool_type", type=str
             )
-            level2 = self.settings.value("feeds_and_speeds/tree_group_level2", "none", type=str)
-            level3 = self.settings.value("feeds_and_speeds/tree_group_level3", "none", type=str)
+            level2 = self.settings.value(
+                "feeds_and_speeds/tree_group_level2", "none", type=str
+            )
+            level3 = self.settings.value(
+                "feeds_and_speeds/tree_group_level3", "none", type=str
+            )
             self._set_combo_value(self.level1_combo, level1 or "tool_type")
             self._set_combo_value(self.level2_combo, level2 or "none")
             self._set_combo_value(self.level3_combo, level3 or "none")
@@ -603,7 +623,9 @@ class ToolTreeLayoutDialog(QDialog):
             parts: list[str] = []
             for col in range(6):
                 parts.append(f"{col}:{1 if visible.get(col, True) else 0}")
-            self.settings.setValue("feeds_and_speeds/tool_tree_visible_columns", ",".join(parts))
+            self.settings.setValue(
+                "feeds_and_speeds/tool_tree_visible_columns", ",".join(parts)
+            )
             self.settings.sync()
         except Exception:
             # If saving fails, do not block closing the dialog
@@ -684,7 +706,13 @@ class FeedsAndSpeedsWidget(QWidget):
                 if not path.is_file():
                     continue
 
-                if path.suffix.lower() not in {".json", ".csv", ".vtdb", ".tdb", ".tool"}:
+                if path.suffix.lower() not in {
+                    ".json",
+                    ".csv",
+                    ".vtdb",
+                    ".tdb",
+                    ".tool",
+                }:
                     continue
 
                 provider_name = path.stem
@@ -846,7 +874,9 @@ class FeedsAndSpeedsWidget(QWidget):
         self.my_tools_tree.setSelectionMode(QTreeWidget.SingleSelection)
         self.my_tools_tree.itemSelectionChanged.connect(self._on_tool_selected)
         self.my_tools_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.my_tools_tree.customContextMenuRequested.connect(self._on_my_tools_context_menu)
+        self.my_tools_tree.customContextMenuRequested.connect(
+            self._on_my_tools_context_menu
+        )
         my_layout.addWidget(self.my_tools_tree)
 
         trees_splitter.addWidget(my_container)
@@ -884,7 +914,9 @@ class FeedsAndSpeedsWidget(QWidget):
         """
         try:
             settings = QSettings()
-            raw_value = settings.value("feeds_and_speeds/tool_tree_visible_columns", "", type=str)
+            raw_value = settings.value(
+                "feeds_and_speeds/tool_tree_visible_columns", "", type=str
+            )
             visible: dict[int, bool]
             if raw_value:
                 parts = [p for p in raw_value.split(",") if ":" in p]
@@ -916,7 +948,9 @@ class FeedsAndSpeedsWidget(QWidget):
             for col in range(self.tool_tree.columnCount()):
                 visible = not self.tool_tree.isColumnHidden(col)
                 parts.append(f"{col}:{1 if visible else 0}")
-            settings.setValue("feeds_and_speeds/tool_tree_visible_columns", ",".join(parts))
+            settings.setValue(
+                "feeds_and_speeds/tool_tree_visible_columns", ",".join(parts)
+            )
         except Exception as e:  # pragma: no cover - defensive
             self.logger.debug("Failed to save tool tree column visibility: %s", e)
 
@@ -1234,7 +1268,9 @@ class FeedsAndSpeedsWidget(QWidget):
             # Collect folders from settings and any tools that already carry a folder.
             folder_names = set(self.personal_toolbox_manager.list_folders())
             for tool in toolbox_tools:
-                folder = getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                folder = (
+                    getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                )
                 if folder:
                     folder_names.add(folder)
 
@@ -1247,11 +1283,15 @@ class FeedsAndSpeedsWidget(QWidget):
 
             groups: dict[str, list] = {}
             for tool in toolbox_tools:
-                folder = getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                folder = (
+                    getattr(tool, "folder", "") or tool.to_dict().get("folder") or ""
+                )
                 groups.setdefault(folder, []).append(tool)
 
             for folder, tools in groups.items():
-                parent_item = folder_nodes.get(folder, self.my_tools_tree.invisibleRootItem())
+                parent_item = folder_nodes.get(
+                    folder, self.my_tools_tree.invisibleRootItem()
+                )
                 self._populate_branch_with_grouping(
                     parent_item,
                     tools,
@@ -1431,7 +1471,9 @@ class FeedsAndSpeedsWidget(QWidget):
         """
         # Machine controls are created in _create_calculator_panel; guard
         # against calls during early construction.
-        if not hasattr(self, "machine_combo") or not hasattr(self, "feed_override_spin"):
+        if not hasattr(self, "machine_combo") or not hasattr(
+            self, "feed_override_spin"
+        ):
             return
 
         db_manager = getattr(self.tab_data_manager, "db_manager", None)
@@ -1528,10 +1570,14 @@ class FeedsAndSpeedsWidget(QWidget):
                     except (TypeError, ValueError):
                         pass
                     try:
-                        accel_mm_s2 = float(current_machine.get("accel_mm_s2", accel_mm_s2))
+                        accel_mm_s2 = float(
+                            current_machine.get("accel_mm_s2", accel_mm_s2)
+                        )
                     except (TypeError, ValueError):
                         pass
-                    drive_type = (current_machine.get("drive_type") or "ball_screw").strip()
+                    drive_type = (
+                        current_machine.get("drive_type") or "ball_screw"
+                    ).strip()
                     try:
                         max_spindle_rpm = (
                             float(current_machine.get("max_spindle_rpm"))
@@ -1561,7 +1607,9 @@ class FeedsAndSpeedsWidget(QWidget):
                 if self.current_project_id:
                     try:
                         override_pct = float(
-                            db_manager.get_project_feed_override(self.current_project_id)
+                            db_manager.get_project_feed_override(
+                                self.current_project_id
+                            )
                         )
                     except Exception as exc:
                         self.logger.warning(
@@ -1737,7 +1785,9 @@ class FeedsAndSpeedsWidget(QWidget):
         try:
             project = db_manager.get_project(self.current_project_id)
             if project:
-                material_name = project.get("material_name") or project.get("material_tag")
+                material_name = project.get("material_name") or project.get(
+                    "material_tag"
+                )
                 if material_name:
                     self._set_material_by_name(material_name)
         except Exception as exc:  # pragma: no cover - defensive
@@ -1816,7 +1866,10 @@ class FeedsAndSpeedsWidget(QWidget):
             diameter_value = 0.0
 
         flutes = (
-            geometry.get("number_of_flutes") or geometry.get("NOF") or geometry.get("flutes") or 2
+            geometry.get("number_of_flutes")
+            or geometry.get("NOF")
+            or geometry.get("flutes")
+            or 2
         )
         try:
             flutes_value = int(float(flutes))
@@ -1893,7 +1946,9 @@ class FeedsAndSpeedsWidget(QWidget):
             rpm_recommended = min(rpm_recommended, float(self.machine_max_spindle_rpm))
 
         # Simple chipload -> feed (IPM), then clamp to machine max feed (mm/min).
-        chipload_in = wood_catalog.estimate_chipload_inches(material.janka_lbf, diameter_in, flutes)
+        chipload_in = wood_catalog.estimate_chipload_inches(
+            material.janka_lbf, diameter_in, flutes
+        )
         feed_ipm = chipload_in * flutes * rpm_recommended
 
         if self.is_metric:
@@ -1930,7 +1985,9 @@ class FeedsAndSpeedsWidget(QWidget):
                 pass
         elif self.machine_max_bit_diameter_mm and not self.is_metric:
             try:
-                max_in = self.unit_converter.mm_to_inch(float(self.machine_max_bit_diameter_mm))
+                max_in = self.unit_converter.mm_to_inch(
+                    float(self.machine_max_bit_diameter_mm)
+                )
                 if diameter_in > max_in:
                     self.material_info_label.setText(
                         f"{self.material_info_label.text()} | Tool over machine bit diameter limit"
@@ -1973,10 +2030,18 @@ class FeedsAndSpeedsWidget(QWidget):
             surface_speed_label = f"{surface_speed:.1f} ft/min"
             mrr_label = f"{(stepdown * stepover * feed):.2f} in^3/min"
 
-        diameter_label = self.unit_converter.format_value(diameter, self.is_metric, "length")
-        stepdown_label = self.unit_converter.format_value(stepdown, self.is_metric, "length")
-        stepover_label = self.unit_converter.format_value(stepover, self.is_metric, "length")
-        feed_label = self.unit_converter.format_value(feed, self.is_metric, "feed_rate", decimals=2)
+        diameter_label = self.unit_converter.format_value(
+            diameter, self.is_metric, "length"
+        )
+        stepdown_label = self.unit_converter.format_value(
+            stepdown, self.is_metric, "length"
+        )
+        stepover_label = self.unit_converter.format_value(
+            stepover, self.is_metric, "length"
+        )
+        feed_label = self.unit_converter.format_value(
+            feed, self.is_metric, "feed_rate", decimals=2
+        )
         plunge_label = self.unit_converter.format_value(
             plunge, self.is_metric, "feed_rate", decimals=2
         )
@@ -2012,7 +2077,9 @@ class FeedsAndSpeedsWidget(QWidget):
     def _load_providers(self) -> None:
         """Refresh the tool tree from providers and personal toolbox."""
         try:
-            filter_text = self.search_input.text() if hasattr(self, "search_input") else ""
+            filter_text = (
+                self.search_input.text() if hasattr(self, "search_input") else ""
+            )
             self._rebuild_tool_tree(filter_text)
             self.logger.info("Tool tree refreshed from providers")
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -2192,10 +2259,14 @@ class FeedsAndSpeedsWidget(QWidget):
 
         # If not in properties, try direct fields (for legacy data)
         if not geometry and "geometry" in db_tool:
-            geometry = db_tool["geometry"] if isinstance(db_tool["geometry"], dict) else {}
+            geometry = (
+                db_tool["geometry"] if isinstance(db_tool["geometry"], dict) else {}
+            )
         if not start_values and "start_values" in db_tool:
             start_values = (
-                db_tool["start_values"] if isinstance(db_tool["start_values"], dict) else {}
+                db_tool["start_values"]
+                if isinstance(db_tool["start_values"], dict)
+                else {}
             )
 
         return Tool(
@@ -2221,7 +2292,9 @@ class FeedsAndSpeedsWidget(QWidget):
 
     def _refresh_tool_list(self) -> None:
         """Refresh tool trees to reflect current personal and vendor tools."""
-        self._rebuild_tool_tree(self.search_input.text() if hasattr(self, "search_input") else "")
+        self._rebuild_tool_tree(
+            self.search_input.text() if hasattr(self, "search_input") else ""
+        )
 
     def _on_search_changed(self) -> None:
         """Handle search input change."""
@@ -2265,7 +2338,9 @@ class FeedsAndSpeedsWidget(QWidget):
         else:
             self.selected_provider_id = None
 
-        self.selected_tool_label.setText(f"Selected: {tool_data.get('description', '')}")
+        self.selected_tool_label.setText(
+            f"Selected: {tool_data.get('description', '')}"
+        )
         self._update_calculator()
         if source == "my_tools":
             self.my_tools_tree.setCurrentItem(item)
@@ -2312,7 +2387,9 @@ class FeedsAndSpeedsWidget(QWidget):
                 self._rebuild_my_tools_tree(self.search_input.text())
         elif rename_action and action is rename_action:
             new_name = self._prompt_folder_name("Rename Folder", preset=folder)
-            if new_name and self.personal_toolbox_manager.rename_folder(folder, new_name):
+            if new_name and self.personal_toolbox_manager.rename_folder(
+                folder, new_name
+            ):
                 self._rebuild_my_tools_tree(self.search_input.text())
         elif delete_action and action is delete_action:
             if self.personal_toolbox_manager.delete_folder(folder):
@@ -2349,7 +2426,9 @@ class FeedsAndSpeedsWidget(QWidget):
         if action == add_action:
             self._on_add_tool()
 
-    def _handle_tool_drop(self, payload: Dict[str, Any], target_folder: Optional[str]) -> bool:
+    def _handle_tool_drop(
+        self, payload: Dict[str, Any], target_folder: Optional[str]
+    ) -> bool:
         """Handle drag/drop payloads into My Tools."""
         source = payload.get("source")
         tool_data = payload.get("tool")
@@ -2370,7 +2449,9 @@ class FeedsAndSpeedsWidget(QWidget):
                     f"Added '{ui_tool.description}' to My Tools{f'/{folder}' if folder else ''}.",
                 )
             else:
-                QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
+                QMessageBox.warning(
+                    self, "Already Added", "This tool is already in your toolbox."
+                )
         else:
             guid = tool_data.get("guid", "")
             if not guid:
@@ -2441,7 +2522,9 @@ class FeedsAndSpeedsWidget(QWidget):
             # Refresh tree so My Tools branch reflects the new tool
             self._rebuild_tool_tree(self.search_input.text())
         else:
-            QMessageBox.warning(self, "Already Added", "This tool is already in your toolbox.")
+            QMessageBox.warning(
+                self, "Already Added", "This tool is already in your toolbox."
+            )
 
     def _on_unit_toggle(self) -> None:
         """Handle unit toggle button."""
@@ -2549,7 +2632,9 @@ Calculated:
                 db_manager = getattr(self.tab_data_manager, "db_manager", None)
                 if db_manager and material:
                     db_manager.update_project(
-                        self.current_project_id, material_name=material.name, material_tag=material.name
+                        self.current_project_id,
+                        material_name=material.name,
+                        material_tag=material.name,
                     )
             except Exception as exc:  # pragma: no cover - best effort
                 self.logger.debug("Failed to persist project material tag: %s", exc)

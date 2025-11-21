@@ -177,7 +177,9 @@ class BackupManager:
             if not self.installer.backup_dir.exists():
                 return []
 
-            backups = sorted([d for d in self.installer.backup_dir.iterdir() if d.is_dir()])
+            backups = sorted(
+                [d for d in self.installer.backup_dir.iterdir() if d.is_dir()]
+            )
             logger.debug("Found %s backups", len(backups))
 
             return backups

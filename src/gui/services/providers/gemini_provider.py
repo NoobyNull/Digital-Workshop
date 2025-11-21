@@ -39,7 +39,9 @@ class GeminiProvider(BaseProvider):
     def list_available_models(self) -> list:
         """List available vision models from Google Gemini."""
         if not self.is_configured():
-            self.logger.info("Gemini provider not configured, returning empty model list")
+            self.logger.info(
+                "Gemini provider not configured, returning empty model list"
+            )
             return []
 
         self.logger.info("Returning available Gemini vision models")
@@ -50,7 +52,9 @@ class GeminiProvider(BaseProvider):
             "gemini-2.5-flash-lite-preview-06-17",
         ]
 
-    def analyze_image(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_image(
+        self, image_path: str, prompt: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Analyze image using Google's Gemini.
 
@@ -62,7 +66,9 @@ class GeminiProvider(BaseProvider):
             Structured analysis results
         """
         if not self.is_configured():
-            raise ValueError("Gemini provider is not configured. Please provide an API key.")
+            raise ValueError(
+                "Gemini provider is not configured. Please provide an API key."
+            )
 
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")

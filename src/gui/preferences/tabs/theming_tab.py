@@ -23,7 +23,6 @@ from PySide6.QtWidgets import (
 )
 
 
-
 class ThemingTab(QWidget):
     """Simplified theming tab with Material Design theme selection.
 
@@ -82,7 +81,9 @@ class ThemingTab(QWidget):
 
             # Set current mode
             current_theme, _ = self.service.get_current_theme()
-            self.mode_combo.setCurrentIndex({"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0))
+            self.mode_combo.setCurrentIndex(
+                {"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0)
+            )
             self.mode_combo.currentIndexChanged.connect(self._on_theme_mode_changed)
 
             mode_layout.addWidget(self.mode_combo)
@@ -125,7 +126,9 @@ class ThemingTab(QWidget):
                 return
 
             current_theme, _ = self.service.get_current_theme()
-            self.mode_combo.setCurrentIndex({"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0))
+            self.mode_combo.setCurrentIndex(
+                {"dark": 0, "light": 1, "auto": 2}.get(current_theme, 0)
+            )
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             pass
 
@@ -136,5 +139,3 @@ class ThemingTab(QWidget):
                 self.service.apply_theme(self.mode_combo.currentData())
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             pass
-
-

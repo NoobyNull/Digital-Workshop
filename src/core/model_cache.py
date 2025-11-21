@@ -77,7 +77,9 @@ class ModelCache:
     - Thread-safe operations
     """
 
-    def __init__(self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None) -> None:
+    def __init__(
+        self, cache_dir: str = "cache", max_memory_mb: Optional[float] = None
+    ) -> None:
         """
         Initialize the model cache.
 
@@ -97,7 +99,9 @@ class ModelCache:
             # Default to user local app data directory
             import os
 
-            app_data = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+            app_data = Path(
+                os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+            )
             from .path_manager import get_cache_directory
 
             self.cache_dir = get_cache_directory()
@@ -116,9 +120,12 @@ class ModelCache:
 
                 if config.use_manual_memory_override:
                     # Calculate cache limit as percentage of total system RAM
-                    total_system_memory_mb = int(psutil.virtual_memory().total / (1024**2))
+                    total_system_memory_mb = int(
+                        psutil.virtual_memory().total / (1024**2)
+                    )
                     cache_limit_mb = int(
-                        total_system_memory_mb * (config.manual_cache_limit_percent / 100)
+                        total_system_memory_mb
+                        * (config.manual_cache_limit_percent / 100)
                     )
                     self.max_memory_bytes = cache_limit_mb * 1024 * 1024
                     self.logger.info(
@@ -127,10 +134,23 @@ class ModelCache:
                     )
                 else:
                     # Use adaptive cache size from performance profile
-                    self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                self.logger.warning("Failed to check config override, using adaptive: %s", e)
-                self.max_memory_bytes = perf_profile.recommended_cache_size_mb * 1024 * 1024
+                    self.max_memory_bytes = (
+                        perf_profile.recommended_cache_size_mb * 1024 * 1024
+                    )
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
+                self.logger.warning(
+                    "Failed to check config override, using adaptive: %s", e
+                )
+                self.max_memory_bytes = (
+                    perf_profile.recommended_cache_size_mb * 1024 * 1024
+                )
         else:
             self.max_memory_bytes = max_memory_mb * 1024 * 1024
 
@@ -150,8 +170,12 @@ class ModelCache:
         # Adaptive settings based on performance level
         # Disk cache is 2x the memory cache size
         self.max_disk_cache_mb = (self.max_memory_bytes / (1024 * 1024)) * 2
-        self.compression_enabled = perf_profile.performance_level != PerformanceLevel.ULTRA
-        self.aggressive_eviction = perf_profile.performance_level == PerformanceLevel.MINIMAL
+        self.compression_enabled = (
+            perf_profile.performance_level != PerformanceLevel.ULTRA
+        )
+        self.aggressive_eviction = (
+            perf_profile.performance_level == PerformanceLevel.MINIMAL
+        )
 
         self.logger.info(
             f"Model cache initialized: {self.max_memory_bytes / (1024*1024):.1f}MB memory limit, "
@@ -314,7 +338,9 @@ class ModelCache:
         entries_to_evict = []
 
         # Sort by last access time (LRU)
-        sorted_entries = sorted(self.memory_cache.items(), key=lambda x: x[1].last_access_time)
+        sorted_entries = sorted(
+            self.memory_cache.items(), key=lambda x: x[1].last_access_time
+        )
 
         for key, entry in sorted_entries:
             if bytes_freed >= required_bytes:
@@ -485,7 +511,9 @@ class ModelCache:
                 self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug("Cache hit (memory): %s [{cache_level.value}]", file_path)
+                self.logger.debug(
+                    "Cache hit (memory): %s [{cache_level.value}]", file_path
+                )
                 return entry.data
 
             # Check disk cache
@@ -503,7 +531,9 @@ class ModelCache:
                     self.access_order.append(key)
 
                 self.stats.hit_count += 1
-                self.logger.debug("Cache hit (disk): %s [{cache_level.value}]", file_path)
+                self.logger.debug(
+                    "Cache hit (disk): %s [{cache_level.value}]", file_path
+                )
                 return entry.data
 
             # Cache miss
@@ -577,7 +607,9 @@ class ModelCache:
             # Update statistics
             self._update_stats()
 
-            self.logger.debug("Cached: %s [{cache_level.value}] ({data_size} bytes)", file_path)
+            self.logger.debug(
+                "Cached: %s [{cache_level.value}] ({data_size} bytes)", file_path
+            )
             return True
 
     def remove(self, file_path: str, cache_level: Optional[CacheLevel] = None) -> bool:
@@ -621,7 +653,14 @@ class ModelCache:
                             removed = True
                         conn.commit()
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Failed to remove from disk cache: %s", str(e))
 
             if removed:
@@ -650,7 +689,14 @@ class ModelCache:
                         conn.execute("DELETE FROM cache_entries")
                         conn.commit()
 
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error("Failed to clear disk cache: %s", str(e))
 
             # Reset statistics
@@ -669,13 +715,17 @@ class ModelCache:
 
         try:
             with sqlite3.connect(self.disk_cache_db) as conn:
-                cursor = conn.execute("SELECT COUNT(*), SUM(size_bytes) FROM cache_entries")
+                cursor = conn.execute(
+                    "SELECT COUNT(*), SUM(size_bytes) FROM cache_entries"
+                )
                 row = cursor.fetchone()
                 if row:
                     self.stats.disk_entries = row[0] or 0
                     self.stats.disk_size_bytes = row[1] or 0
 
-                self.stats.total_entries = self.stats.memory_entries + self.stats.disk_entries
+                self.stats.total_entries = (
+                    self.stats.memory_entries + self.stats.disk_entries
+                )
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to update statistics: %s", str(e))
@@ -722,7 +772,8 @@ class ModelCache:
             memory_usage_ratio = self.current_memory_bytes / self.max_memory_bytes
             if memory_usage_ratio > 0.9:
                 self.logger.info(
-                    "High memory usage (%.1f%%), evicting entries", memory_usage_ratio * 100
+                    "High memory usage (%.1f%%), evicting entries",
+                    memory_usage_ratio * 100,
                 )
                 self._evict_memory_entries(int(self.current_memory_bytes * 0.2))
 
@@ -740,10 +791,19 @@ class ModelCache:
                     )
                     deleted_count = cursor.rowcount
                     if deleted_count > 0:
-                        self.logger.info("Cleaned up %s old disk cache entries", deleted_count)
+                        self.logger.info(
+                            "Cleaned up %s old disk cache entries", deleted_count
+                        )
                     conn.commit()
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error("Failed to optimize disk cache: %s", str(e))
 
     def cleanup(self) -> None:

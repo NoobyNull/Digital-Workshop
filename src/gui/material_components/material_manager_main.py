@@ -13,6 +13,7 @@ Performance targets:
 """
 
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 from typing import Tuple, Dict, Optional, Any, List
 
 import numpy as np
@@ -70,51 +71,61 @@ class MaterialManager:
 
             # Cache hit
             if key in self.texture_cache:
-                self.logger.debug(f"Texture cache hit for species='{species_name}' size={w}x{h}")
+                self.logger.debug(
+                    f"Texture cache hit for species='{species_name}' size={w}x{h}"
+                )
                 return self.texture_cache[key]
 
             # Load from material provider - no fallback to procedural generation
             material = self.material_provider.get_material_by_name(species_name)
-            if material:
-                self.logger.debug(
-                    f"Material provider returned material for '{species_name}': {material}"
+            self.logger.debug(
+                "Material provider returned material for '%s': %s",
+                species_name,
+                material,
+            )
+            texture_path = material.get("texture_path") if material else None
+
+            if texture_path:
+                self.logger.info(
+                    f"Found texture path for '{species_name}': {texture_path}"
                 )
-                texture_path = material.get("texture_path")
-                if texture_path:
-                    self.logger.info(f"Found texture path for '{species_name}': {texture_path}")
-                    try:
-                        # Load actual texture image
-                        img = self._load_texture_image(texture_path, (w, h))
-                        self.logger.info(
-                            f"Successfully loaded texture image for '{species_name}' from {texture_path}, shape: {img.shape}"
-                        )
-                        self.texture_cache[key] = img
-                        return img
-                    except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-                        error_msg = (
-                            f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
-                        )
-                        self.logger.error(error_msg)
-                        raise RuntimeError(error_msg)
-                else:
-                    error_msg = (
-                        f"No texture_path found for '{species_name}' in material: {material}"
+                try:
+                    # Load actual texture image
+                    img = self._load_texture_image(texture_path, (w, h))
+                    self.logger.info(
+                        f"Successfully loaded texture image for '{species_name}' from {texture_path}, shape: {img.shape}"
                     )
+                    self.texture_cache[key] = img
+                    return img
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    error_msg = f"Failed to load texture for '{species_name}' from {texture_path}: {e}"
                     self.logger.error(error_msg)
                     raise RuntimeError(error_msg)
-            else:
-                error_msg = f"No material found for '{species_name}' from material provider"
-                self.logger.error(error_msg)
-                raise RuntimeError(error_msg)
 
-            # No fallback to procedural generation
-            raise RuntimeError(
-                f"MTL texture loading is mandatory - no procedural fallback available for '{species_name}'"
+            # Fallback: solid color texture when no material/texture defined
+            self.logger.info(
+                "No texture found for '%s'; using solid-color fallback", species_name
             )
+            solid_color = np.full((h, w, 3), 200, dtype=np.uint8)
+            self.texture_cache[key] = solid_color
+            return solid_color
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("generate_wood_texture error: %s", e, exc_info=True)
-            # No fallback - MTL texture loading is mandatory
             raise RuntimeError(f"MTL texture loading failed: {e}")
+
+    def refresh_materials(self) -> None:
+        """Manual refresh hook to rebuild material cache."""
+        try:
+            self.material_provider.refresh_materials(force=True)
+        except Exception as exc:
+            self.logger.error("Failed to refresh materials: %s", exc)
 
     def apply_material_to_actor(self, actor: vtk.vtkActor, species_name: str) -> bool:
         """
@@ -169,7 +180,9 @@ class MaterialManager:
                         f"[STL_TEXTURE_DEBUG] Material has texture path: {texture_path}"
                     )
                 else:
-                    self.logger.warning(f"[STL_TEXTURE_DEBUG] Material has no texture path")
+                    self.logger.warning(
+                        f"[STL_TEXTURE_DEBUG] Material has no texture path"
+                    )
             else:
                 self.logger.warning(
                     f"[STL_TEXTURE_DEBUG] No material found for species: {species_name}"
@@ -195,16 +208,21 @@ class MaterialManager:
                     "grain_pattern": "ring",
                     "roughness": 0.5,
                     "specular": mtl_props.get("specular", (0.5, 0.5, 0.5))[0],
-                    "shininess": mtl_props.get("shininess", 50.0) / 50.0,  # Normalize to [0,1]
+                    "shininess": mtl_props.get("shininess", 50.0)
+                    / 50.0,  # Normalize to [0,1]
                 }
-                self.logger.debug("[STL_TEXTURE_DEBUG] Created species from MTL: %s", species)
+                self.logger.debug(
+                    "[STL_TEXTURE_DEBUG] Created species from MTL: %s", species
+                )
 
                 # Use the MTL texture directly instead of calling generate_wood_texture
                 # which would fall back to procedural generation
                 try:
                     texture_path = material.get("texture_path")
                     if texture_path:
-                        self.logger.info(f"[STL_TEXTURE_DEBUG] ===== LOADING MTL TEXTURE =====")
+                        self.logger.info(
+                            f"[STL_TEXTURE_DEBUG] ===== LOADING MTL TEXTURE ====="
+                        )
                         self.logger.info(
                             f"[STL_TEXTURE_DEBUG] Loading MTL texture directly from: {texture_path}"
                         )
@@ -248,7 +266,9 @@ class MaterialManager:
                         # Configure texture properties
                         try:
                             texture.InterpolateOn()
-                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture interpolation")
+                            self.logger.info(
+                                "[STL_TEXTURE_DEBUG] Enabled texture interpolation"
+                            )
                         except (
                             OSError,
                             IOError,
@@ -257,11 +277,15 @@ class MaterialManager:
                             KeyError,
                             AttributeError,
                         ) as e:
-                            self.logger.warning("Failed to enable texture interpolation: %s", e)
+                            self.logger.warning(
+                                "Failed to enable texture interpolation: %s", e
+                            )
 
                         try:
                             texture.MipmapOn()
-                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture mipmaps")
+                            self.logger.info(
+                                "[STL_TEXTURE_DEBUG] Enabled texture mipmaps"
+                            )
                         except (
                             OSError,
                             IOError,
@@ -270,11 +294,15 @@ class MaterialManager:
                             KeyError,
                             AttributeError,
                         ) as e:
-                            self.logger.warning("Failed to enable texture mipmaps: %s", e)
+                            self.logger.warning(
+                                "Failed to enable texture mipmaps: %s", e
+                            )
 
                         try:
                             texture.RepeatOn()
-                            self.logger.info("[STL_TEXTURE_DEBUG] Enabled texture repeat")
+                            self.logger.info(
+                                "[STL_TEXTURE_DEBUG] Enabled texture repeat"
+                            )
                         except (
                             OSError,
                             IOError,
@@ -283,7 +311,9 @@ class MaterialManager:
                             KeyError,
                             AttributeError,
                         ) as e:
-                            self.logger.warning("Failed to enable texture repeat: %s", e)
+                            self.logger.warning(
+                                "Failed to enable texture repeat: %s", e
+                            )
 
                         # NEW DIAGNOSTIC: Check texture before assignment
                         self.logger.info(
@@ -291,9 +321,13 @@ class MaterialManager:
                         )
 
                         # Assign texture
-                        self.logger.info("[STL_TEXTURE_DEBUG] Assigning MTL texture to actor")
+                        self.logger.info(
+                            "[STL_TEXTURE_DEBUG] Assigning MTL texture to actor"
+                        )
                         actor.SetTexture(texture)
-                        self.logger.info("[STL_TEXTURE_DEBUG] MTL texture assigned to actor")
+                        self.logger.info(
+                            "[STL_TEXTURE_DEBUG] MTL texture assigned to actor"
+                        )
 
                         # Configure material/shading - SPECIAL HANDLING FOR STL TEXTURES
                         self.logger.info(
@@ -353,7 +387,14 @@ class MaterialManager:
                             "[STL_TEXTURE_DEBUG] ===== MTL TEXTURE APPLICATION COMPLETE ====="
                         )
                         return True
-                except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     self.logger.error(
                         f"[STL_TEXTURE_DEBUG] Failed to apply MTL texture: {e}",
                         exc_info=True,
@@ -400,7 +441,14 @@ class MaterialManager:
                 )
                 return True
 
-            except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            except (
+                OSError,
+                IOError,
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+            ) as e:
                 self.logger.error(
                     f"[STL_TEXTURE_DEBUG] Failed to apply solid color: {e}",
                     exc_info=True,
@@ -544,7 +592,7 @@ class MaterialManager:
         Fast, fully vectorized 2D value noise with bilinear interpolation, summed as FBM.
         Returns array in [0,1].
         """
-        rng = np.random.RandomState(seed)
+        rng = np.random.default_rng(seed)
         total = np.zeros((h, w), dtype=np.float32)
         amplitude = 1.0
         norm = 0.0
@@ -554,7 +602,7 @@ class MaterialManager:
             cells = max(1, cells)
 
             # Random lattice (cells+1 for inclusive bilinear)
-            grid = rng.rand(cells + 1, cells + 1).astype(np.float32)
+            grid = rng.random((cells + 1, cells + 1)).astype(np.float32)
 
             # Sample coordinates in lattice space
             xs = np.linspace(0.0, float(cells), w, endpoint=False, dtype=np.float32)
@@ -612,7 +660,9 @@ class MaterialManager:
         vtk_image.GetPointData().SetScalars(vtk_arr)
         return vtk_image
 
-    def _apply_material_properties(self, actor: vtk.vtkActor, species: Dict[str, Any]) -> None:
+    def _apply_material_properties(
+        self, actor: vtk.vtkActor, species: Dict[str, Any]
+    ) -> None:
         """
         Configure actor property using roughness and specular. Use PBR when available.
         """
@@ -659,7 +709,9 @@ class MaterialManager:
         appropriate material properties for lighting and shininess.
         """
         try:
-            self.logger.info("[STL_TEXTURE_DEBUG] Applying texture-safe material properties")
+            self.logger.info(
+                "[STL_TEXTURE_DEBUG] Applying texture-safe material properties"
+            )
 
             roughness = float(species.get("roughness", 0.5))
             roughness = max(0.0, min(1.0, roughness))
@@ -674,7 +726,9 @@ class MaterialManager:
             # will tint/override the texture.
             prop.SetAmbientColor(1.0, 1.0, 1.0)  # White ambient
             prop.SetDiffuseColor(1.0, 1.0, 1.0)  # White diffuse - KEY FIX!
-            prop.SetSpecularColor(specular, specular, specular)  # Use specular from material
+            prop.SetSpecularColor(
+                specular, specular, specular
+            )  # Use specular from material
 
             # Set shininess from material (with VTK compatibility check)
             shininess = float(species.get("shininess", 5.0))
@@ -722,7 +776,9 @@ class MaterialManager:
         except Exception:
             pass
 
-    def _load_texture_image(self, texture_path: Path, size: Tuple[int, int]) -> np.ndarray:
+    def _load_texture_image(
+        self, texture_path: Path, size: Tuple[int, int]
+    ) -> np.ndarray:
         """
         Load and resize a texture image from file.
 
@@ -757,15 +813,29 @@ class MaterialManager:
             try:
                 import cv2
 
-                img = cv2.imread(str(texture_path))
+                imread = getattr(cv2, "imread", None)
+                cvt_color = getattr(cv2, "cvtColor", None)
+                resize = getattr(cv2, "resize", None)
+                color_const = getattr(cv2, "COLOR_BGR2RGB", None)
+                lanczos = getattr(cv2, "INTER_LANCZOS4", None)
+
+                if not callable(imread) or not callable(cvt_color) or not callable(resize) or color_const is None:
+                    raise ValueError("OpenCV missing required imaging functions")
+
+                def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+                    return fn(*args, **kwargs)
+
+                img = _call(imread, str(texture_path))
                 if img is None:
                     raise ValueError(f"Could not load image: {texture_path}")
 
                 # Convert BGR to RGB
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                img = _call(cvt_color, img, color_const)
 
                 # Resize
-                img = cv2.resize(img, size, interpolation=cv2.INTER_LANCZOS4)
+                img = _call(
+                    resize, img, size, interpolation=lanczos if lanczos is not None else 1
+                )
 
                 return img
 
@@ -822,7 +892,9 @@ class MaterialManager:
                 return False
 
             num_points = points.GetNumberOfPoints()
-            self.logger.info("[STL_TEXTURE_DEBUG] Generating UVs for %s points", num_points)
+            self.logger.info(
+                "[STL_TEXTURE_DEBUG] Generating UVs for %s points", num_points
+            )
 
             # Create UV coordinates array
             uv_coords = vtk.vtkFloatArray()
@@ -870,7 +942,9 @@ class MaterialManager:
             # Update the mapper input
             mapper.SetInputData(input_data)
 
-            self.logger.info("[STL_TEXTURE_DEBUG] Successfully generated UV coordinates")
+            self.logger.info(
+                "[STL_TEXTURE_DEBUG] Successfully generated UV coordinates"
+            )
             return True
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:

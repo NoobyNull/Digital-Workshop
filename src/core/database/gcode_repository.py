@@ -67,7 +67,17 @@ class GcodeRepository:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (op_id, project_id, model_id, name, status, strategy, notes, timestamp, timestamp),
+                (
+                    op_id,
+                    project_id,
+                    model_id,
+                    name,
+                    status,
+                    strategy,
+                    notes,
+                    timestamp,
+                    timestamp,
+                ),
             )
             conn.commit()
 
@@ -80,7 +90,9 @@ class GcodeRepository:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM gcode_operations WHERE id = ?", (operation_id,))
+            cursor.execute(
+                "SELECT * FROM gcode_operations WHERE id = ?", (operation_id,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -198,7 +210,9 @@ class GcodeRepository:
             conn.commit()
             version_id = cursor.lastrowid
 
-        logger.info("Created G-code version %s for operation %s", version_id, operation_id)
+        logger.info(
+            "Created G-code version %s for operation %s", version_id, operation_id
+        )
         return version_id
 
     @log_function_call(logger)
@@ -253,7 +267,9 @@ class GcodeRepository:
 
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(f"UPDATE gcode_versions SET {set_clause} WHERE id = ?", params)
+            cursor.execute(
+                f"UPDATE gcode_versions SET {set_clause} WHERE id = ?", params
+            )
             conn.commit()
             success = cursor.rowcount > 0
 
@@ -338,7 +354,9 @@ class GcodeRepository:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM gcode_metrics WHERE version_id = ?", (version_id,))
+            cursor.execute(
+                "SELECT * FROM gcode_metrics WHERE version_id = ?", (version_id,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -413,7 +431,9 @@ class GcodeRepository:
         """Remove every snapshot tied to a version."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM gcode_tool_snapshots WHERE version_id = ?", (version_id,))
+            cursor.execute(
+                "DELETE FROM gcode_tool_snapshots WHERE version_id = ?", (version_id,)
+            )
             conn.commit()
             deleted = cursor.rowcount
 
@@ -426,7 +446,9 @@ class GcodeRepository:
         """Delete a single snapshot by its identifier."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM gcode_tool_snapshots WHERE id = ?", (snapshot_id,))
+            cursor.execute(
+                "DELETE FROM gcode_tool_snapshots WHERE id = ?", (snapshot_id,)
+            )
             conn.commit()
             deleted = cursor.rowcount > 0
 

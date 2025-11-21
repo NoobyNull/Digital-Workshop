@@ -40,7 +40,9 @@ class ThumbnailInspectorLabel(QLabel):
         self.thumbnail_path = None
         self.setCursor(Qt.PointingHandCursor)
 
-    def set_thumbnail(self, pixmap: QPixmap, thumbnail_path: Optional[str] = None) -> None:
+    def set_thumbnail(
+        self, pixmap: QPixmap, thumbnail_path: Optional[str] = None
+    ) -> None:
         """
         Set the thumbnail image.
 
@@ -77,7 +79,9 @@ class ThumbnailInspectorLabel(QLabel):
                     )
                     full_res_pixmap = self.full_resolution_pixmap
 
-            dialog = ThumbnailInspectorDialog(full_res_pixmap, self.thumbnail_path, parent=self)
+            dialog = ThumbnailInspectorDialog(
+                full_res_pixmap, self.thumbnail_path, parent=self
+            )
             dialog.exec()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to show thumbnail inspector: %s", e)
@@ -88,7 +92,9 @@ class ThumbnailInspectorDialog(QDialog):
     Dialog for viewing full-resolution thumbnails with zoom and pan controls.
     """
 
-    def __init__(self, pixmap: QPixmap, thumbnail_path: Optional[str] = None, parent=None) -> None:
+    def __init__(
+        self, pixmap: QPixmap, thumbnail_path: Optional[str] = None, parent=None
+    ) -> None:
         """
         Initialize the thumbnail inspector dialog.
 
@@ -233,7 +239,9 @@ class ThumbnailInspectorDialog(QDialog):
 
         if self.thumbnail_path:
             file_size = Path(self.thumbnail_path).stat().st_size / 1024
-            info_text = f"Zoom: {zoom_percent}% | Size: {size_info} | File: {file_size:.1f}KB"
+            info_text = (
+                f"Zoom: {zoom_percent}% | Size: {size_info} | File: {file_size:.1f}KB"
+            )
         else:
             info_text = f"Zoom: {zoom_percent}% | Size: {size_info}"
 

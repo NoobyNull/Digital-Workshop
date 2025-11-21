@@ -6,7 +6,9 @@ from src.core.search_engine import SearchEngine, parse_search_query_language
 def test_parse_search_query_language_understands_tags_inproject_and_lat() -> None:
     """Mini-language parsing should separate filters from free text and dedupe tags."""
     # Mixed free text + filters
-    query, filters = parse_search_query_language("lathe tag=recent tag!=Vehicle inProject LAT>=50")
+    query, filters = parse_search_query_language(
+        "lathe tag=recent tag!=Vehicle inProject LAT>=50"
+    )
     assert query == "lathe"
     assert filters["tags_include"] == ["recent"]
     assert filters["tags_exclude"] == ["Vehicle"]
@@ -19,7 +21,9 @@ def test_parse_search_query_language_understands_tags_inproject_and_lat() -> Non
     assert filters2 == {"tags_include": ["dirty"]}
 
     # Connectors with only filter tokens should not leak into free text
-    query3, filters3 = parse_search_query_language("LAT>=10 AND tag!=foo AND !inProject")
+    query3, filters3 = parse_search_query_language(
+        "LAT>=10 AND tag!=foo AND !inProject"
+    )
     assert query3 == ""
     assert filters3["tags_exclude"] == ["foo"]
     assert filters3["in_project"] is False
@@ -124,4 +128,3 @@ def test_search_engine_applies_tag_inproject_and_lat_filters(tmp_path) -> None:
     assert model1_id in ids  # 60 days old
     assert model2_id in ids  # 90 days old
     assert model3_id not in ids  # 1 day old
-

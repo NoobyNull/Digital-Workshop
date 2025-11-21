@@ -33,7 +33,9 @@ class CleanInstallMode:
             True if successful, False otherwise
         """
         logger.info("Executing CLEAN_INSTALL mode")
-        logger.warning("DESTRUCTIVE OPERATION: All Digital Workshop files and data will be deleted")
+        logger.warning(
+            "DESTRUCTIVE OPERATION: All Digital Workshop files and data will be deleted"
+        )
 
         try:
             # Step 1: Create final backup
@@ -84,7 +86,8 @@ class CleanInstallMode:
             return
 
         backup_dir = (
-            self.installer.backup_dir / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.installer.backup_dir
+            / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         )
         backup_dir.mkdir(parents=True, exist_ok=True)
 
@@ -94,7 +97,9 @@ class CleanInstallMode:
                 """Ignore backup directory during copy."""
                 return ["backups"] if "backups" in contents else []
 
-            shutil.copytree(self.installer.app_dir, backup_dir / "app_data", ignore=ignore_backups)
+            shutil.copytree(
+                self.installer.app_dir, backup_dir / "app_data", ignore=ignore_backups
+            )
             logger.info("Final backup created: %s", backup_dir)
         except Exception as e:
             logger.warning("Failed to create final backup: %s", e)
@@ -104,7 +109,9 @@ class CleanInstallMode:
         logger.warning("=" * 70)
         logger.warning("DESTRUCTIVE OPERATION WARNING")
         logger.warning("=" * 70)
-        logger.warning("This operation will DELETE ALL Digital Workshop files and data:")
+        logger.warning(
+            "This operation will DELETE ALL Digital Workshop files and data:"
+        )
         logger.warning("  - Application files: %s", self.installer.modules_dir)
         logger.warning("  - User data: %s", self.installer.data_dir)
         logger.warning("  - Configuration: %s", self.installer.config_dir)
@@ -129,7 +136,9 @@ class CleanInstallMode:
                             shutil.rmtree(item)
                         else:
                             item.unlink()
-                logger.info("Removed application files and data: %s", self.installer.app_dir)
+                logger.info(
+                    "Removed application files and data: %s", self.installer.app_dir
+                )
             except Exception as e:
                 logger.error("Failed to remove application directory: %s", e)
                 raise

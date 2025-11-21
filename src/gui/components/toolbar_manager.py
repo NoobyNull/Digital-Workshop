@@ -24,7 +24,9 @@ class ToolbarManager:
     and styling to provide a complete toolbar system for the main window.
     """
 
-    def __init__(self, main_window: QMainWindow, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    ) -> None:
         """
         Initialize the toolbar manager.
 
@@ -35,12 +37,15 @@ class ToolbarManager:
         self.main_window = main_window
         self.logger = logger or logging.getLogger(__name__)
         self.main_toolbar = None
+        # Backward-compatible alias expected by consumers
+        self.toolbar = None
 
     def setup_toolbar(self) -> None:
         """Set up the main application toolbar with icons and fallbacks."""
         self.logger.debug("Setting up toolbar")
 
         self.main_toolbar = self.main_window.addToolBar("Main")
+        self.toolbar = self.main_toolbar
         toolbar = self.main_toolbar
         toolbar.setObjectName("MainToolBar")
         try:
@@ -170,7 +175,9 @@ class ToolbarManager:
             if icons_ok:
                 self.main_window.statusBar().showMessage("Toolbar icons active", 2000)
             else:
-                self.main_window.statusBar().showMessage("Toolbar text-only (no qtawesome)", 2000)
+                self.main_window.statusBar().showMessage(
+                    "Toolbar text-only (no qtawesome)", 2000
+                )
         except Exception:
             pass
 

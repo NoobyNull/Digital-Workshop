@@ -51,13 +51,17 @@ class BackgroundProvider:
                 # Check for image preference
                 bg_image = getattr(self.settings, "thumbnail_bg_image", None)
                 if bg_image and self._validate_image_path(bg_image):
-                    self.logger.debug("Using background image from settings: %s", bg_image)
+                    self.logger.debug(
+                        "Using background image from settings: %s", bg_image
+                    )
                     return bg_image
 
                 # Check for color preference
                 bg_color = getattr(self.settings, "thumbnail_bg_color", None)
                 if bg_color:
-                    self.logger.debug("Using background color from settings: %s", bg_color)
+                    self.logger.debug(
+                        "Using background color from settings: %s", bg_color
+                    )
                     return self._parse_color(bg_color)
 
             # Fall back to default
@@ -135,15 +139,21 @@ class BackgroundProvider:
                     return jpeg_path
 
             # Not found
-            error_msg = f"Background '{name}' not found in {self.DEFAULT_BACKGROUNDS_DIR}"
+            error_msg = (
+                f"Background '{name}' not found in {self.DEFAULT_BACKGROUNDS_DIR}"
+            )
             self.logger.error(error_msg)
             raise FileNotFoundError(error_msg)
 
         except FileNotFoundError:
             raise
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error getting background '%s': %s", name, e, exc_info=True)
-            raise FileNotFoundError(f"Failed to get background '{name}': {e}")
+            self.logger.error(
+                "Error getting background '%s': %s", name, e, exc_info=True
+            )
+            raise FileNotFoundError(
+                f"Failed to get background '{name}': {e}"
+            ) from e
 
     def resolve_background(self, background: Union[str, Path]) -> Union[str, Path]:
         """
@@ -169,23 +179,30 @@ class BackgroundProvider:
             # If it's an absolute path that exists, return it
             if bg_path.is_absolute() and bg_path.exists():
                 self.logger.debug("Background is absolute path: %s", bg_path)
-                return bg_path
-
-            # If it contains path separators, it's a path (might be invalid)
-            if "/" in str(background) or "\\" in str(background):
+                resolved = bg_path
+            # If it contains path separators, treat it as a path (might be invalid)
+            elif "/" in str(background) or "\\" in str(background):
                 if bg_path.exists():
-                    return bg_path
+                    resolved = bg_path
                 else:
-                    self.logger.warning("Background path does not exist: %s", background)
-                    return background
+                    self.logger.warning(
+                        "Background path does not exist: %s", background
+                    )
+                    resolved = background
+            else:
+                # Otherwise, treat it as a name and look it up
+                self.logger.debug(
+                    "Treating '%s' as background name, looking up...", background
+                )
+                resolved = self.get_background_by_name(str(background))
 
-            # Otherwise, treat it as a name and look it up
-            self.logger.debug("Treating '%s' as background name, looking up...", background)
-            return self.get_background_by_name(str(background))
+            return resolved
 
         except FileNotFoundError:
             # Return original value if lookup fails
-            self.logger.warning("Could not resolve background '%s', returning as-is", background)
+            self.logger.warning(
+                "Could not resolve background '%s', returning as-is", background
+            )
             return background
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error resolving background: %s", e, exc_info=True)
@@ -215,7 +232,9 @@ class BackgroundProvider:
             # Check extension
             supported_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
             if path.suffix.lower() not in supported_extensions:
-                self.logger.warning("Unsupported background image format: %s", path.suffix)
+                self.logger.warning(
+                    "Unsupported background image format: %s", path.suffix
+                )
                 return False
 
             return True
@@ -224,7 +243,9 @@ class BackgroundProvider:
             self.logger.error("Error validating image path: %s", e, exc_info=True)
             return False
 
-    def _parse_color(self, color: Union[str, Tuple, List]) -> Tuple[float, float, float]:
+    def _parse_color(
+        self, color: Union[str, Tuple, List]
+    ) -> Tuple[float, float, float]:
         """
         Parse color from various formats to RGB tuple (0-1 range).
 
@@ -238,22 +259,22 @@ class BackgroundProvider:
             if isinstance(color, str):
                 # Hex color string
                 return self._hex_to_rgb(color)
-            elif isinstance(color, (tuple, list)) and len(color) == 3:
+
+            if isinstance(color, (tuple, list)) and len(color) == 3:
                 # Check if values are 0-1 or 0-255
                 r, g, b = color
                 if all(0 <= v <= 1 for v in color):
                     # Already 0-1 range
                     return (float(r), float(g), float(b))
-                elif all(0 <= v <= 255 for v in color):
+                if all(0 <= v <= 255 for v in color):
                     # 0-255 range, convert to 0-1
                     return (r / 255.0, g / 255.0, b / 255.0)
-                else:
-                    raise ValueError(f"RGB values out of range: {color}")
-            else:
-                raise ValueError(f"Unsupported color format: {color}")
+                raise ValueError(f"RGB values out of range: {color}")
+
+            raise ValueError(f"Unsupported color format: {color}")
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error parsing color %s: {e}", color, exc_info=True)
+            self.logger.error("Error parsing color %s: %s", color, e, exc_info=True)
             # Return default gray
             return (0.96, 0.96, 0.96)
 

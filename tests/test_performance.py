@@ -26,7 +26,7 @@ class TestPerformance:
     @pytest.fixture
     def installer(self, temp_app_dir):
         """Create installer instance."""
-        with patch.object(Installer, '__init__', lambda x: None):
+        with patch.object(Installer, "__init__", lambda x: None):
             installer = Installer()
             installer.app_dir = temp_app_dir
             installer.modules_dir = temp_app_dir / "modules"
@@ -36,14 +36,14 @@ class TestPerformance:
             installer.logs_dir = temp_app_dir / "logs"
             installer.manifest_file = temp_app_dir / "manifest.json"
             installer.version_file = temp_app_dir / "version.txt"
-            
+
             # Mock methods
             installer.create_directories = MagicMock()
             installer.detect_installation = MagicMock(return_value=None)
-            installer._load_manifest = MagicMock(return_value={'modules': {}})
+            installer._load_manifest = MagicMock(return_value={"modules": {}})
             installer._save_manifest = MagicMock()
             installer._update_version_file = MagicMock()
-            
+
             return installer
 
     @pytest.fixture
@@ -76,7 +76,9 @@ class TestPerformance:
 
         start_time = time.time()
 
-        result = full_install_mode.execute("0.1.5", ["core", "pyside6", "vtk", "opencv", "numpy"])
+        result = full_install_mode.execute(
+            "0.1.5", ["core", "pyside6", "vtk", "opencv", "numpy"]
+        )
 
         elapsed_time = time.time() - start_time
 
@@ -95,14 +97,19 @@ class TestPerformance:
         installer.logs_dir.mkdir(parents=True, exist_ok=True)
         installer.backup_dir.mkdir(parents=True, exist_ok=True)
 
-        installer.detect_installation = MagicMock(return_value={
-            'version': '0.1.4',
-            'modules': {'core': {'installed': True}, 'pyside6': {'installed': True}}
-        })
+        installer.detect_installation = MagicMock(
+            return_value={
+                "version": "0.1.4",
+                "modules": {
+                    "core": {"installed": True},
+                    "pyside6": {"installed": True},
+                },
+            }
+        )
 
         # Mock internal methods to avoid file operations
         patch_mode._create_backup = MagicMock()
-        patch_mode._compare_versions = MagicMock(return_value=['core'])
+        patch_mode._compare_versions = MagicMock(return_value=["core"])
         patch_mode._update_modules = MagicMock()
         patch_mode._run_migrations = MagicMock()
         patch_mode._verify_installation = MagicMock()
@@ -124,13 +131,13 @@ class TestPerformance:
         installer.app_dir.mkdir(parents=True, exist_ok=True)
         (installer.app_dir / "data").mkdir(exist_ok=True)
         (installer.app_dir / "data" / "test.txt").write_text("test data")
-        
+
         start_time = time.time()
-        
+
         result = reinstall_mode.execute("0.1.5", ["core", "pyside6"])
-        
+
         elapsed_time = time.time() - start_time
-        
+
         # In test environment, should be much faster
         # In production with actual file copying, should be < 10 minutes (600 seconds)
         assert elapsed_time < 600, f"Reinstall took {elapsed_time}s, expected < 600s"
@@ -162,7 +169,9 @@ class TestPerformance:
 
         # In test environment, should be much faster
         # In production with actual file copying, should be < 15 minutes (900 seconds)
-        assert elapsed_time < 900, f"Clean Install took {elapsed_time}s, expected < 900s"
+        assert (
+            elapsed_time < 900
+        ), f"Clean Install took {elapsed_time}s, expected < 900s"
         assert result is True
 
     def test_performance_comparison(self, patch_mode, installer):
@@ -175,10 +184,9 @@ class TestPerformance:
         installer.logs_dir.mkdir(parents=True, exist_ok=True)
         installer.backup_dir.mkdir(parents=True, exist_ok=True)
 
-        installer.detect_installation = MagicMock(return_value={
-            'version': '0.1.4',
-            'modules': {'core': {'installed': True}}
-        })
+        installer.detect_installation = MagicMock(
+            return_value={"version": "0.1.4", "modules": {"core": {"installed": True}}}
+        )
 
         # Measure patch mode
         start_patch = time.time()
@@ -187,4 +195,3 @@ class TestPerformance:
 
         # Patch should be the fastest mode
         assert patch_time < 300, f"Patch mode took {patch_time}s, expected < 300s"
-

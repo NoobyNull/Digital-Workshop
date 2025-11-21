@@ -87,12 +87,16 @@ class ToolDatabaseRepository:
                             tool_id,
                             prop_name,
                             str(prop_value),
-                            tool_data.get("property_types", {}).get(prop_name, "custom"),
+                            tool_data.get("property_types", {}).get(
+                                prop_name, "custom"
+                            ),
                         ),
                     )
 
                 conn.commit()
-                self.logger.info("Added tool: %s (ID: {tool_id})", tool_data.get("description"))
+                self.logger.info(
+                    "Added tool: %s (ID: {tool_id})", tool_data.get("description")
+                )
                 return tool_id
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -136,17 +140,19 @@ class ToolDatabaseRepository:
                         if prop_row["property_type"] == "geometry":
                             if "geometry" not in properties:
                                 properties["geometry"] = {}
-                            properties["geometry"][prop_row["property_name"]] = prop_row[
-                                "property_value"
-                            ]
+                            properties["geometry"][prop_row["property_name"]] = (
+                                prop_row["property_value"]
+                            )
                         elif prop_row["property_type"] == "start_values":
                             if "start_values" not in properties:
                                 properties["start_values"] = {}
-                            properties["start_values"][prop_row["property_name"]] = prop_row[
+                            properties["start_values"][prop_row["property_name"]] = (
+                                prop_row["property_value"]
+                            )
+                        else:
+                            properties[prop_row["property_name"]] = prop_row[
                                 "property_value"
                             ]
-                        else:
-                            properties[prop_row["property_name"]] = prop_row["property_value"]
 
                     tool["properties"] = properties
                     tools.append(tool)
@@ -157,7 +163,9 @@ class ToolDatabaseRepository:
             self.logger.error("Failed to get tools for provider %s: {e}", provider_id)
             return []
 
-    def search_tools(self, query: str, provider_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def search_tools(
+        self, query: str, provider_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Search for tools by description."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -267,10 +275,10 @@ class ToolDatabaseRepository:
         """Get all tools for a specific provider."""
         return self.get_tools_by_provider(provider_id)
 
-    def search_tools(
+    def search_tools_by_filters(
         self, tool_type: str = None, vendor: str = None, **kwargs
     ) -> List[Dict[str, Any]]:
-        """Search tools by type or vendor."""
+        """Search tools by type or vendor without clashing with text search."""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
@@ -361,7 +369,9 @@ class ToolDatabaseRepository:
                 for row in cursor.fetchall():
                     try:
                         # Deserialize JSON to restore original type
-                        properties[row["property_name"]] = json.loads(row["property_value"])
+                        properties[row["property_name"]] = json.loads(
+                            row["property_value"]
+                        )
                     except (json.JSONDecodeError, TypeError):
                         # If not valid JSON, keep as string
                         properties[row["property_name"]] = row["property_value"]
@@ -375,7 +385,9 @@ class ToolDatabaseRepository:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM tools WHERE provider_id = ?", (provider_id,))
+                cursor.execute(
+                    "SELECT COUNT(*) FROM tools WHERE provider_id = ?", (provider_id,)
+                )
                 result = cursor.fetchone()
                 return result[0] if result else 0
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -391,11 +403,17 @@ class ToolDatabaseRepository:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM tools WHERE provider_id = ?", (provider_id,))
+                cursor.execute(
+                    "DELETE FROM tools WHERE provider_id = ?", (provider_id,)
+                )
                 deleted = cursor.rowcount
                 conn.commit()
-                self.logger.info("Deleted %s tools for provider %s", deleted, provider_id)
+                self.logger.info(
+                    "Deleted %s tools for provider %s", deleted, provider_id
+                )
                 return deleted
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to delete tools for provider %s: %s", provider_id, e)
+            self.logger.error(
+                "Failed to delete tools for provider %s: %s", provider_id, e
+            )
             return 0

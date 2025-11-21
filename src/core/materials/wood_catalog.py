@@ -46,18 +46,24 @@ WOOD_MATERIALS: tuple[WoodMaterial, ...] = (
     WoodMaterial("Elm (Siberian)", 1320, 0.65, aliases=("Siberian Elm",)),
     WoodMaterial("Maple (Soft)", 950, 0.54, aliases=("Silver Maple", "Red Maple")),
     WoodMaterial("Maple (Hard)", 1450, 0.63, aliases=("Sugar Maple", "Rock Maple")),
-    WoodMaterial("Cherry (Black)", 950, 0.50, aliases=("American Cherry", "Black Cherry")),
+    WoodMaterial(
+        "Cherry (Black)", 950, 0.50, aliases=("American Cherry", "Black Cherry")
+    ),
     WoodMaterial("Oak (Red)", 1290, 0.63, aliases=("Northern Red Oak",)),
     WoodMaterial("Oak (White)", 1360, 0.68, aliases=("White Oak",)),
     WoodMaterial("Hickory (Shagbark)", 1820, 0.72, aliases=("Shagbark Hickory",)),
-    WoodMaterial("Walnut (Black)", 1010, 0.55, aliases=("American Walnut", "Black Walnut")),
+    WoodMaterial(
+        "Walnut (Black)", 1010, 0.55, aliases=("American Walnut", "Black Walnut")
+    ),
     WoodMaterial("Walnut (Claro)", 1130, 0.57, aliases=("Claro Walnut",)),
     WoodMaterial("Osage Orange", 2620, 0.76, aliases=("Hedge", "Bois d'Arc")),
     WoodMaterial("Locust (Black)", 1700, 0.69, aliases=("Black Locust",)),
     WoodMaterial("Mesquite", 2345, 0.77, aliases=("Honey Mesquite",)),
     # Exotic (Bell Forest core catalog)
     WoodMaterial("Afrormosia", 1560, 0.66, aliases=("African Teak",)),
-    WoodMaterial("African Mahogany (Khaya)", 1100, 0.55, aliases=("Khaya", "Khaya Mahogany")),
+    WoodMaterial(
+        "African Mahogany (Khaya)", 1100, 0.55, aliases=("Khaya", "Khaya Mahogany")
+    ),
     WoodMaterial("Anegre", 990, 0.45, aliases=("Aningeria",)),
     WoodMaterial("Anigre (Quartered)", 990, 0.45, aliases=("Quartered Anegre",)),
     WoodMaterial("Bocote", 2010, 0.73, aliases=("Mexican Bocote",)),
@@ -72,7 +78,9 @@ WOOD_MATERIALS: tuple[WoodMaterial, ...] = (
     WoodMaterial("Ipe", 3680, 1.08, aliases=("Brazilian Walnut", "Lapacho")),
     WoodMaterial("Jatoba", 2690, 0.91, aliases=("Brazilian Cherry",)),
     WoodMaterial("Kingwood", 2710, 1.01, aliases=("Violetwood",)),
-    WoodMaterial("Lacewood (Australian)", 840, 0.53, aliases=("Silky Oak", "Australian Lacewood")),
+    WoodMaterial(
+        "Lacewood (Australian)", 840, 0.53, aliases=("Silky Oak", "Australian Lacewood")
+    ),
     WoodMaterial("Leopardwood", 2150, 0.91, aliases=("Roupala",)),
     WoodMaterial("Makore", 1100, 0.66, aliases=("African Cherry",)),
     WoodMaterial("Marblewood", 2530, 1.05, aliases=("Angelim Rajado",)),
@@ -82,7 +90,9 @@ WOOD_MATERIALS: tuple[WoodMaterial, ...] = (
     WoodMaterial("Pau Ferro", 1960, 0.85, aliases=("Bolivian Rosewood", "Morado")),
     WoodMaterial("Peruvian Walnut", 1080, 0.59, aliases=("Tropical Walnut",)),
     WoodMaterial("Purpleheart", 2520, 0.86, aliases=("Amaranth", "Peltogyne")),
-    WoodMaterial("Rosewood (East Indian)", 2440, 0.83, aliases=("EIR", "Dalbergia latifolia")),
+    WoodMaterial(
+        "Rosewood (East Indian)", 2440, 0.83, aliases=("EIR", "Dalbergia latifolia")
+    ),
     WoodMaterial("Rosewood (Honduran)", 2200, 0.90, aliases=("Yucatan Rosewood",)),
     WoodMaterial("Santos Mahogany", 2200, 0.86, aliases=("Cabreuva",)),
     WoodMaterial("Sapele", 1410, 0.64, aliases=("Sapelli",)),
@@ -107,7 +117,9 @@ def find_wood(name_or_alias: str) -> Optional[WoodMaterial]:
     """Find a wood by name or alias (case-insensitive)."""
     needle = _canonical(name_or_alias)
     for mat in WOOD_MATERIALS:
-        if _canonical(mat.name) == needle or needle in (_canonical(a) for a in mat.aliases):
+        if _canonical(mat.name) == needle or needle in (
+            _canonical(a) for a in mat.aliases
+        ):
             return mat
     return None
 
