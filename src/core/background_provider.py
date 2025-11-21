@@ -325,7 +325,6 @@ class BackgroundProvider:
 
             # Update settings
             self.settings.thumbnail_bg_color = hex_color
-            self.settings.thumbnail_bg_image = None  # Clear image when setting color
 
             self.logger.info("Background color set to: %s", hex_color)
             return True

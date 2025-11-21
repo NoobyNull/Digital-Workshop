@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QProgressDialog,
     QGridLayout,
+    QSizePolicy,
 )
 from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
@@ -72,6 +73,7 @@ from src.gui.background_tasks.import_background_monitor import ImportBackgroundM
 # Import modular pipeline
 from src.core.import_pipeline import (
     create_pipeline,
+    ImportStage,
     ImportTask,
     PipelineProgress,
     PipelineResult,
@@ -263,8 +265,10 @@ class ImportWorker(QThread):
                 type=str,
             )
 
-            # Use background image if set, otherwise use background color
-            background = bg_image if bg_image else bg_color
+            # Prefer tuple(image, color) when both are set so the renderer can apply both.
+            background = (bg_image, bg_color) if bg_image and bg_color else (
+                bg_image or bg_color
+            )
 
             self.logger.debug(
                 "Thumbnail preferences: bg_image=%s, bg_color=%s, material=%s",
@@ -461,6 +465,8 @@ class PipelineImportWorker(QThread):
             pipeline.signals.progress_updated.connect(self._on_progress_updated)
             pipeline.signals.task_started.connect(self._on_task_started)
             pipeline.signals.stage_started.connect(self._on_stage_started)
+            pipeline.signals.stage_completed.connect(self._on_stage_completed)
+            pipeline.signals.stage_failed.connect(self._on_stage_failed)
             pipeline.signals.task_completed.connect(self._on_task_completed)
             pipeline.signals.task_failed.connect(self._on_task_failed)
             pipeline.signals.pipeline_completed.connect(self._on_pipeline_completed)
@@ -588,7 +594,49 @@ class PipelineImportWorker(QThread):
     def _on_stage_started(self, task: ImportTask, stage_name: str) -> None:
         """Handle stage started signal."""
         stage_display = stage_name.replace("_", " ").title()
+        # Update UI stage label + log via signals (UI owns labels).
+        self.stage_changed.emit(stage_display, f"{task.filename}: {stage_display}")
         self.file_progress.emit(task.filename, 0, f"{stage_display}...")
+
+    def _on_stage_completed(self, result) -> None:
+        """Handle per-stage completion signal to capture thumbnails and status."""
+        try:
+            stage = getattr(result, "stage", None)
+            task = getattr(result, "task", None)
+        except Exception:
+            stage = None
+            task = None
+
+        thumb_stage = getattr(ImportStage, "THUMBNAIL_GENERATION", None)
+        thumb_stage_value = thumb_stage.value if thumb_stage else "thumbnail_generation"
+
+        if (getattr(stage, "value", stage) == thumb_stage_value) and task:
+            if getattr(task, "thumbnail_path", None):
+                self.generated_thumbnails.append(
+                    (str(task.file_path), str(task.thumbnail_path))
+                )
+                # Persist thumbnail path to the model library so icons update.
+                try:
+                    db_manager = get_database_manager()
+                    if getattr(task, "model_id", None) and db_manager is not None:
+                        if hasattr(db_manager, "update_model_thumbnail"):
+                            db_manager.update_model_thumbnail(
+                                task.model_id, task.thumbnail_path
+                            )
+                        elif hasattr(db_manager, "update_model_thumbnail_path"):
+                            db_manager.update_model_thumbnail_path(
+                                task.model_id, task.thumbnail_path
+                            )
+                except Exception as exc:
+                    self.logger.warning(
+                        "Failed to persist thumbnail for %s: %s", task.filename, exc
+                    )
+
+    def _on_stage_failed(self, task: ImportTask, stage_name: str, error: str) -> None:
+        """Handle per-stage failure with clearer UI feedback."""
+        stage_display = stage_name.replace("_", " ").title()
+        self.file_progress.emit(task.filename, 0, f"{stage_display} failed: {error}")
+        self.stage_changed.emit("Failed", f"{stage_display} failed: {error}")
 
     def _on_task_completed(self, task: ImportTask) -> None:
         """Handle task completed signal."""
@@ -597,6 +645,13 @@ class PipelineImportWorker(QThread):
         # Emit model_imported signal so UI can refresh immediately
         if task.model_id:
             self.model_imported.emit(task.model_id)
+            # Refresh library grid/list to pick up new thumbnail paths when available
+            try:
+                parent = self.parent()
+                if parent and hasattr(parent, "_on_model_imported_during_import"):
+                    getattr(parent, "_on_model_imported_during_import")(task.model_id)
+            except Exception:
+                pass
 
     def _on_task_failed(self, task: ImportTask, error: str) -> None:
         """Handle task failed signal."""
@@ -697,6 +752,10 @@ class ImportDialog(QDialog):
         self.pending_label.setVisible(False)
         self.pending_button = QPushButton("Import Pending")
         self.pending_button.setVisible(False)
+        self._default_splitter_sizes = [320, 170, 320]
+        self._settings = QSettings()
+        self.time_timer = QTimer(self)
+        self.time_timer.timeout.connect(self._update_time_elapsed)
         self._last_plain_log_message: Optional[str] = None
         self._file_start_times: dict[str, float] = {}
         self._worker_rows: List[Dict[str, Any]] = []
@@ -953,12 +1012,12 @@ class ImportDialog(QDialog):
         self.splitter = QSplitter(Qt.Vertical)
 
         # === File Selection Section ===
-        file_section = self._create_file_selection_section()
-        self.splitter.addWidget(file_section)
+        self.file_section = self._create_file_selection_section()
+        self.splitter.addWidget(self.file_section)
 
         # === Options Section ===
-        options_section = self._create_options_section()
-        self.splitter.addWidget(options_section)
+        self.options_section = self._create_options_section()
+        self.splitter.addWidget(self.options_section)
 
         # === Progress Section ===
         progress_section = self._create_progress_section()
@@ -968,8 +1027,13 @@ class ImportDialog(QDialog):
         self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 1)
         self.splitter.setStretchFactor(2, 3)
-        self.splitter.setSizes([320, 170, 320])
+        self.splitter.setSizes(self._default_splitter_sizes)
         main_layout.addWidget(self.splitter, 1)
+
+        # Timer for elapsed time display (runs during imports)
+        if not hasattr(self, "time_timer"):
+            self.time_timer = QTimer(self)
+            self.time_timer.timeout.connect(self._update_time_elapsed)
 
         # === Status bar ===
         self.status_label = QLabel("Ready to import")
@@ -1117,6 +1181,24 @@ class ImportDialog(QDialog):
         )
         layout.addWidget(self.prep_workers_spin)
 
+        # User-adjustable batch size to control queue/backlog visibility
+        default_cap = int(
+            self._settings.value(
+                "import/batch_size",
+                getattr(ImportFileManager, "MAX_IMPORT_FILES", 500),
+                type=int,
+            )
+            or 500
+        )
+        self.batch_size_spin = QSpinBox()
+        self.batch_size_spin.setRange(10, 2000)
+        self.batch_size_spin.setValue(max(10, min(2000, default_cap)))
+        self.batch_size_spin.setSuffix(" files per batch")
+        self.batch_size_spin.setToolTip(
+            "How many files to process before queuing the remainder as pending batches."
+        )
+        layout.addWidget(self.batch_size_spin)
+
         self.enable_ai_tagging_check = QCheckBox(
             "Enable AI auto-tagging after thumbnails"
         )
@@ -1130,6 +1212,9 @@ class ImportDialog(QDialog):
         # Keep UI changes reflected in preferences
         self.enable_ai_tagging_check.toggled.connect(
             lambda checked: settings.setValue("ai/auto_tag_import", bool(checked))
+        )
+        self.batch_size_spin.valueChanged.connect(
+            lambda value: settings.setValue("import/batch_size", int(value))
         )
         layout.addWidget(self.enable_ai_tagging_check)
         warning = QLabel(
@@ -1267,12 +1352,37 @@ class ImportDialog(QDialog):
         self.concurrency_combo.currentIndexChanged.connect(
             lambda _: self._on_concurrency_changed(self.concurrency_combo.currentData())
         )
+        if hasattr(self, "batch_size_spin"):
+            self.batch_size_spin.valueChanged.connect(self._on_batch_size_changed)
+            self._on_batch_size_changed(self.batch_size_spin.value())
+
+    def _collapse_to_progress_only(self) -> None:
+        """Hide selection/options panes and give space to progress during import."""
+        if hasattr(self, "file_section"):
+            self.file_section.setVisible(False)
+        if hasattr(self, "options_section"):
+            self.options_section.setVisible(False)
+        self.progress_section.setVisible(True)
+        # Bias splitter toward progress area
+        try:
+            total_height = max(1, sum(self.splitter.sizes()))
+            self.splitter.setSizes([1, 1, max(240, total_height - 2)])
+        except Exception:
+            self.splitter.setSizes([0, 0, 1])
+
+    def _restore_full_layout(self) -> None:
+        """Restore default splitter layout after an import ends."""
+        if hasattr(self, "file_section"):
+            self.file_section.setVisible(True)
+        if hasattr(self, "options_section"):
+            self.options_section.setVisible(True)
+        self.progress_section.setVisible(False)
+        try:
+            self.splitter.setSizes(self._default_splitter_sizes)
+        except Exception:
+            pass
         if hasattr(self, "prep_workers_spin"):
             self.prep_workers_spin.valueChanged.connect(self._on_prep_workers_changed)
-
-        # Update time elapsed timer
-        self.time_timer = QTimer(self)
-        self.time_timer.timeout.connect(self._update_time_elapsed)
 
     def _on_add_files(self) -> None:
         """Handle add files button click."""
@@ -1724,9 +1834,9 @@ class ImportDialog(QDialog):
             1024 * 1024
         )
         try:
-            cap = int(getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)) or 500
+            cap = self._get_batch_size()
         except Exception:
-            cap = 500
+            cap = getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)
 
         msg = (
             f"Import {file_count} file(s) ({total_size:.2f} MB)?\n\n"
@@ -1771,6 +1881,7 @@ class ImportDialog(QDialog):
 
         # Show progress section
         self.progress_section.setVisible(True)
+        self._collapse_to_progress_only()
         self._expand_progress_section()
         self._background_mode = False
         self._background_monitor = None
@@ -1795,10 +1906,7 @@ class ImportDialog(QDialog):
         # Move archive files (.zip) to the end of the queue and confirm handling with the user.
         self.selected_files = self._handle_archives(self.selected_files)
 
-        try:
-            cap = int(getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)) or 500
-        except Exception:
-            cap = 500
+        cap = self._get_batch_size()
 
         # Slice into batches and persist any remainder as pending.
         paths = list(self.selected_files)
@@ -2276,6 +2384,51 @@ class ImportDialog(QDialog):
         self._update_import_button_state()
         self._update_pending_label()
         self._file_start_times.clear()
+
+        # Restore full layout if it was collapsed for progress-only view.
+        self._restore_full_layout()
+
+    def _get_batch_size(self) -> int:
+        """Return the configured batch size, clamped to sane bounds."""
+        try:
+            if hasattr(self, "batch_size_spin"):
+                value = int(self.batch_size_spin.value())
+            else:
+                value = int(
+                    self._settings.value(
+                        "import/batch_size",
+                        getattr(ImportFileManager, "MAX_IMPORT_FILES", 500),
+                        type=int,
+                    )
+                    or 500
+                )
+        except Exception:
+            value = getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)
+        return max(10, min(2000, value or 500))
+
+    def _on_batch_size_changed(self, value: int) -> None:
+        """Persist batch size changes."""
+        try:
+            self._settings.setValue("import/batch_size", int(value))
+        except Exception:
+            self.logger.debug("Failed to persist batch size")
+
+    def reject(self) -> None:
+        """
+        Ensure the importer stops when the window is closed (title bar X or Esc).
+
+        This cancels any running worker to avoid background processing after
+        the dialog is dismissed.
+        """
+        if self.import_worker and self.import_worker.isRunning():
+            self._log_message("Closing import window: cancelling active import...")
+            self.status_label.setText("Cancelling...")
+            try:
+                self.import_worker.cancel()
+                self.import_worker.wait()
+            except Exception as exc:
+                self.logger.warning("Failed to cancel import on close: %s", exc)
+        super().reject()
 
     def _update_time_elapsed(self) -> None:
         """Update elapsed time display."""

@@ -58,6 +58,16 @@ class ThumbnailSettingsTab(QWidget):
         self._load_hidden_items()
         self._setup_ui()
         self._load_settings()
+        self._sync_selection_checks()
+
+    def _apply_selection_style(self, button: QPushButton, selected: bool) -> None:
+        """Visual cue for selection without reliance on focus ring."""
+        if selected:
+            button.setStyleSheet("border: 2px solid #4fa3ff;")
+            button.setChecked(True)
+        else:
+            button.setStyleSheet("")
+            button.setChecked(False)
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -264,6 +274,7 @@ class ThumbnailSettingsTab(QWidget):
                     btn.setProperty(
                         "is_default", True
                     )  # Mark as default (shipped with app)
+                    btn.setFocusPolicy(Qt.NoFocus)
 
                     # Load and scale image
                     pixmap = QPixmap(str(bg_file))
@@ -284,6 +295,8 @@ class ThumbnailSettingsTab(QWidget):
                     # Add to grid
                     self.bg_grid.addWidget(btn, row, col)
                     self.bg_buttons[bg_name] = btn
+                    # Initial visual state
+                    self._apply_selection_style(btn, False)
 
                     col += 1
                     if col >= max_cols:
@@ -305,12 +318,14 @@ class ThumbnailSettingsTab(QWidget):
             none_btn.setFixedSize(100, 100)
             none_btn.setCheckable(True)
             none_btn.setProperty("mat_name", None)
+            none_btn.setFocusPolicy(Qt.NoFocus)
             # Use native Qt theming; no custom stylesheet.
             none_btn.clicked.connect(
                 lambda checked, b=none_btn: self._on_material_clicked(b)
             )
             self.mat_grid.addWidget(none_btn, row, col)
             self.mat_buttons[None] = none_btn
+            self._apply_selection_style(none_btn, False)
             col += 1
 
             # Navigate from src/gui/preferences/tabs to src/resources
@@ -334,6 +349,7 @@ class ThumbnailSettingsTab(QWidget):
                     btn.setProperty(
                         "is_default", True
                     )  # Mark as default (shipped with app)
+                    btn.setFocusPolicy(Qt.NoFocus)
 
                     # Look for material texture image
                     mat_image_path = mat_dir / f"{material_name}.png"
@@ -359,6 +375,7 @@ class ThumbnailSettingsTab(QWidget):
                     # Add to grid
                     self.mat_grid.addWidget(btn, row, col)
                     self.mat_buttons[material_name] = btn
+                    self._apply_selection_style(btn, False)
 
                     col += 1
                     if col >= max_cols:
@@ -461,10 +478,11 @@ class ThumbnailSettingsTab(QWidget):
         try:
             # Uncheck previous selection
             if self.selected_bg_button and self.selected_bg_button != button:
-                self.selected_bg_button.setChecked(False)
+                self._apply_selection_style(self.selected_bg_button, False)
 
             # Update selection
             self.selected_bg_button = button
+            self._sync_selection_checks()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to handle background click: %s", e)
@@ -474,10 +492,11 @@ class ThumbnailSettingsTab(QWidget):
         try:
             # Uncheck previous selection
             if self.selected_mat_button and self.selected_mat_button != button:
-                self.selected_mat_button.setChecked(False)
+                self._apply_selection_style(self.selected_mat_button, False)
 
             # Update selection
             self.selected_mat_button = button
+            self._sync_selection_checks()
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to handle material click: %s", e)
@@ -768,6 +787,13 @@ class ThumbnailSettingsTab(QWidget):
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             if self.logger:
                 self.logger.error("Failed to update color preview: %s", e)
+
+    def _sync_selection_checks(self) -> None:
+        """Ensure current selections stay visually checked."""
+        if self.selected_bg_button:
+            self._apply_selection_style(self.selected_bg_button, True)
+        if self.selected_mat_button:
+            self._apply_selection_style(self.selected_mat_button, True)
 
     def get_settings(self) -> dict:
         """Get current thumbnail settings."""

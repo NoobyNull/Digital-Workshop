@@ -71,7 +71,7 @@ def create_pipeline(
         DatabaseStage(db_manager, thread_pool),
         HashingStage(db_manager, thread_pool),
         ImagePairingStage(db_manager, thread_pool=thread_pool),
-        ThumbnailStage(thumbnail_generator, thread_pool),
+        ThumbnailStage(thumbnail_generator, thread_pool, db_manager=db_manager),
     ]
 
     # Create resume detector

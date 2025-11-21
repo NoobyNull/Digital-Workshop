@@ -373,21 +373,24 @@ class GcodePreviewerWidget(QWidget):
         # viewer here and let the main window own the tools side.
         if self.use_external_tools:
             try:
-            if self.renderer is None:
-                self.renderer = GcodeRenderer()
+                if self.renderer is None:
+                    self.renderer = GcodeRenderer()
 
-            self.vtk_widget = VTKWidget(
-                self.renderer, embed_camera_toolbar=not self.use_external_tools
-            )
-            try:
-                self.vtk_widget.set_interaction_guard(lambda: self.loading_in_progress)
-            except Exception:
-                pass
-            layout.addWidget(self.vtk_widget)
-        except (
-            OSError,
-            IOError,
-            ValueError,
+                self.vtk_widget = VTKWidget(
+                    self.renderer, embed_camera_toolbar=not self.use_external_tools
+                )
+                try:
+                    self.vtk_widget.set_interaction_guard(
+                        lambda: self.loading_in_progress
+                    )
+                except Exception:
+                    pass
+                layout.addWidget(self.vtk_widget)
+                return
+            except (
+                OSError,
+                IOError,
+                ValueError,
                 TypeError,
                 KeyError,
                 AttributeError,
@@ -395,8 +398,7 @@ class GcodePreviewerWidget(QWidget):
                 self.logger.error("Failed to initialize VTK viewer: %s", e)
                 placeholder = QLabel("VTK Viewer unavailable")
                 layout.addWidget(placeholder)
-
-            return
+                return
 
         # Default embedded layout: splitter with 3D view and right-hand tools panel
         self.splitter = QSplitter(Qt.Horizontal)

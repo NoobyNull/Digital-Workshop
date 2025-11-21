@@ -72,7 +72,7 @@ class ThumbnailGenerator:
         model_path: str,
         file_hash: str,
         output_dir: Path,
-        background: Optional[Union[str, Tuple[float, float, float]]] = None,
+        background: Optional[Union[str, Tuple[float, float, float], Tuple[str, str]]] = None,
         size: Optional[Tuple[int, int]] = None,
         material: Optional[str] = None,
         force_regenerate: bool = False,
@@ -180,6 +180,8 @@ class ThumbnailGenerator:
             Loaded Model object or None on failure
         """
         try:
+            suffix = Path(model_path).suffix.lower()
+
             # Try Trimesh first for fast loading (PREFERRED for thumbnails)
             from src.parsers.trimesh_loader import get_trimesh_loader
 
@@ -195,8 +197,16 @@ class ThumbnailGenerator:
                     )
                     return model
 
-            # Fallback to standard parser with LAZY LOADING for speed
-            # Lazy loading is sufficient for thumbnail generation
+            # If not STL, avoid STL parser fallback; treat as unsupported for thumbnails.
+            if suffix != ".stl":
+                self.logger.warning(
+                    "Trimesh could not load %s (.%s); skipping STL fallback for non-STL format",
+                    model_path,
+                    suffix.lstrip("."),
+                )
+                return None
+
+            # Fallback to standard parser with LAZY LOADING for speed (STL only)
             self.logger.debug("Trimesh unavailable, using STL parser with lazy loading")
             parser = STLParser()
             model = parser.parse_file(model_path, lazy_loading=True)
@@ -212,6 +222,8 @@ class ThumbnailGenerator:
 
             return model
 
+            return model
+
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error loading model %s: {e}", model_path, exc_info=True)
             return None
@@ -220,7 +232,7 @@ class ThumbnailGenerator:
         self,
         model: Model,
         output_path: Path,
-        background: Optional[Union[str, Tuple[float, float, float]]],
+        background: Optional[Union[str, Tuple[float, float, float], Tuple[str, str]]],
         size: Tuple[int, int],
         material: Optional[str] = None,
     ) -> Tuple[bool, Optional["CameraParameters"]]:
@@ -300,48 +312,62 @@ class ThumbnailGenerator:
             engine.setup_lighting()
             engine.setup_camera(bounds, zoom_factor=1.05)
 
-            # Set background AFTER model and camera are set up
-            if background is None:
-                # Professional studio background: dark teal-gray
-                self.logger.debug("Background is None, using default color")
-                engine.set_background_color((0.25, 0.35, 0.40))
-            elif isinstance(background, str):
-                self.logger.debug("Background is string: %s", background)
-                if background.startswith("#"):
-                    self.logger.debug("Background is hex color: %s", background)
-                    engine.set_background_color(background)
+            # Normalize and prefer image; color acts as frame/fill behind it.
+            bg_color_value = None
+            bg_image_value = None
+            if isinstance(background, (tuple, list)) and len(background) == 2:
+                first, second = background
+                if isinstance(first, str) and first.startswith("#"):
+                    bg_color_value = first
+                    if isinstance(second, str) and second:
+                        bg_image_value = second
                 else:
-                    # Resolve background name to path using BackgroundProvider
-                    from src.core.background_provider import BackgroundProvider
-
-                    bg_provider = BackgroundProvider()
-
-                    try:
-                        # Try to resolve as a background name
-                        resolved_path = bg_provider.get_background_by_name(background)
-                        self.logger.info(
-                            "Resolved background '%s' to: %s", background, resolved_path
-                        )
-                        engine.set_background_image(str(resolved_path))
-                    except FileNotFoundError:
-                        # Not a valid background name, check if it's a path
-                        if Path(background).exists():
-                            self.logger.info("Background is path: %s", background)
-                            engine.set_background_image(background)
-                        else:
-                            self.logger.warning(
-                                f"Background '{background}' not found, using default color"
-                            )
-                            # Professional studio background: dark teal-gray
-                            engine.set_background_color((0.25, 0.35, 0.40))
+                    if isinstance(first, str) and first:
+                        bg_image_value = first
+                    if isinstance(second, str) and second.startswith("#"):
+                        bg_color_value = second
             elif isinstance(background, (tuple, list)) and len(background) == 3:
-                self.logger.debug("Background is RGB tuple: %s", background)
-                engine.set_background_color(background)
+                bg_color_value = background
+            elif isinstance(background, str):
+                if background.startswith("#"):
+                    bg_color_value = background
+                else:
+                    bg_image_value = background
+            # else None -> defaults
+
+            # Resolve background image if specified
+            resolved_image_path = None
+            if bg_image_value:
+                from src.core.background_provider import BackgroundProvider
+
+                bg_provider = BackgroundProvider()
+                try:
+                    resolved_image_path = bg_provider.get_background_by_name(
+                        bg_image_value
+                    )
+                    self.logger.info(
+                        "Resolved background '%s' to: %s",
+                        bg_image_value,
+                        resolved_image_path,
+                    )
+                except FileNotFoundError:
+                    if Path(bg_image_value).exists():
+                        resolved_image_path = Path(bg_image_value)
+                    else:
+                        self.logger.warning(
+                            "Background '%s' not found; falling back to color", bg_image_value
+                        )
+                        resolved_image_path = None
+
+            # Apply color first so it shows behind the image plane edges
+            if bg_color_value is not None:
+                engine.set_background_color(bg_color_value)
             else:
-                self.logger.warning(
-                    f"Unknown background type: {type(background)}, using default color"
-                )
                 engine.set_background_color((0.25, 0.35, 0.40))
+
+            # Then apply image if available
+            if resolved_image_path:
+                engine.set_background_image(str(resolved_image_path))
 
             # Render and capture
             engine.render()

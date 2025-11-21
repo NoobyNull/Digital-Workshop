@@ -171,22 +171,28 @@ class PreferencesDialog(QDialog):
             except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError):
                 pass
 
+    def _save_silent(self) -> None:
+        """Persist settings without closing signals or prompts."""
+        try:
+            self.general_tab.save_settings()
+            self.viewer_settings_tab.save_settings()
+            self.thumbnail_settings_tab.save_settings()
+            self.invoice_tab.save_settings()
+            self.import_tab.save_settings()
+            self.ai_tab.save_settings()
+            self.advanced_tab.save_settings()
+            self._was_saved = True
+        except Exception:
+            # Silent save best-effort; failures will be logged inside tabs.
+            pass
+
     def reject(self) -> None:
-        """Warn if the user closes without saving changes."""
+        """
+        Auto-save on close to keep preferences even when the user just closes the dialog.
 
-        from PySide6.QtWidgets import QMessageBox
-
-        if not self._was_saved:
-            reply = QMessageBox.warning(
-                self,
-                "Unsaved Changes",
-                "You have not saved your changes. Close without saving?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
-            )
-            if reply != QMessageBox.Yes:
-                return
-
+        This replaces the old "unsaved changes" prompt with best-effort persistence.
+        """
+        self._save_silent()
         super().reject()
 
     def _reset_to_defaults(self) -> None:

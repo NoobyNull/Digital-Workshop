@@ -105,7 +105,7 @@ class ApplicationConfig:
     logging_profile: Optional["LoggingProfile"] = None
 
     # Thumbnail Generation Configuration
-    thumbnail_bg_color: str = "#404658"  # Professional dark teal-gray background color
+    thumbnail_bg_color: str = "#404658"  # Frame/fill color behind background image
     thumbnail_bg_image: Optional[str] = "Green"  # Default background selection
     thumbnail_material: Optional[str] = "pine"  # Default wood species name
 

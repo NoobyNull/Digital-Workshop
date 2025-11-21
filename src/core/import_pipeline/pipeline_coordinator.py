@@ -174,16 +174,30 @@ class PipelineCoordinator(QObject):
                     )
                     continue
 
+                # Notify stage start for UI/telemetry
+                try:
+                    stage_name = stage.stage_name.value  # type: ignore[attr-defined]
+                except Exception:
+                    stage_name = None
+                if stage_name:
+                    self.signals.stage_started.emit(task, stage_name)
+
                 # Execute stage
                 result = stage.execute(task)
 
                 # Check if stage failed
                 if not result.success:
                     self._record_failure()
+                    self.signals.stage_failed.emit(
+                        task, stage_name or "unknown_stage", result.error_message or "Unknown error"
+                    )
                     self.signals.task_failed.emit(
                         task, result.error_message or "Unknown error"
                     )
                     return
+                else:
+                    # Inform listeners of per-stage completion to update UI/logs.
+                    self.signals.stage_completed.emit(result)
 
             # All stages completed successfully
             task.current_stage = ImportStage.COMPLETE

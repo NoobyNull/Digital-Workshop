@@ -35,6 +35,7 @@ class ThumbnailStage(BaseStage):
         self,
         thumbnail_generator,
         thread_pool: Optional[QThreadPool] = None,
+        db_manager=None,
     ):
         """
         Initialize the thumbnail stage.
@@ -42,9 +43,11 @@ class ThumbnailStage(BaseStage):
         Args:
             thumbnail_generator: ThumbnailGenerator instance
             thread_pool: Optional thread pool for async operations
+            db_manager: Optional database manager for persisting thumbnail paths
         """
         super().__init__(thread_pool)
         self.thumbnail_generator = thumbnail_generator
+        self.db_manager = db_manager
 
     @staticmethod
     def _get_thumbnail_directory() -> Path:
@@ -209,12 +212,47 @@ class ThumbnailStage(BaseStage):
                         task.filename,
                         Path(task.thumbnail_path).name,
                     )
+                    # Persist thumbnail to database if model_id known
+                    if (
+                        self.db_manager is not None
+                        and getattr(task, "model_id", None) is not None
+                    ):
+                        try:
+                            if hasattr(self.db_manager, "update_model_thumbnail"):
+                                self.db_manager.update_model_thumbnail(
+                                    task.model_id, task.thumbnail_path
+                                )
+                        except Exception as exc:
+                            self.logger.warning(
+                                "Failed to persist thumbnail for model %s: %s",
+                                task.model_id,
+                                exc,
+                            )
                 else:
                     self.logger.warning(
                         "Thumbnail generation returned None for %s", task.filename
                     )
 
             task.status = ImportStatus.COMPLETED
+
+            # Persist thumbnail to database when available
+            if (
+                thumbnail_generated
+                and task.thumbnail_path
+                and self.db_manager is not None
+                and getattr(task, "model_id", None) is not None
+            ):
+                try:
+                    if hasattr(self.db_manager, "update_model_thumbnail"):
+                        self.db_manager.update_model_thumbnail(
+                            task.model_id, task.thumbnail_path
+                        )
+                except Exception as exc:
+                    self.logger.warning(
+                        "Failed to persist thumbnail for model %s: %s",
+                        task.model_id,
+                        exc,
+                    )
 
             duration = time.time() - start_time
 

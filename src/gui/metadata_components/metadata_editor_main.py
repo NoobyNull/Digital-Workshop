@@ -835,8 +835,10 @@ class MetadataEditorWidget(QWidget):
                 "thumbnail/background_color", config.thumbnail_bg_color, type=str
             )
 
-            # Use background image if set, otherwise use background color
-            background = bg_image if bg_image else bg_color
+            # Prefer tuple(image, color) when both are set so the renderer can apply both.
+            background = (bg_image, bg_color) if bg_image and bg_color else (
+                bg_image or bg_color
+            )
 
             # Generate thumbnail using coordinator with dedicated window
             coordinator = ThumbnailGenerationCoordinator(parent=self)
