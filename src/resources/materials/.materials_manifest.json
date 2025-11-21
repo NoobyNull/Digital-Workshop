@@ -1,0 +1,268 @@
+{
+  "materials": {
+    "bambu_board": {
+      "texture_sig": [
+        1760709043.893909,
+        1144165,
+        "d5d0c52f3d62431dfdfae1371860bfb4fc7f7eaf"
+      ],
+      "mtl_sig": [
+        1760709043.8909104,
+        283,
+        "d699d87a16c66460e9c21c197c7e276d8c631f49"
+      ],
+      "properties": {
+        "material_name": "bambu_board",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "bambu_board.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\bambu_board.png"
+      }
+    },
+    "cherry": {
+      "texture_sig": [
+        1760709043.9024312,
+        1471247,
+        "f4cc0c6af7cc8602540fc56e4c1a8987dce9de50"
+      ],
+      "mtl_sig": [
+        1760709043.893909,
+        273,
+        "d664173e230ea4c6e8a1db4bbb489d3acfcfb3ed"
+      ],
+      "properties": {
+        "material_name": "cherry",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "cherry.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\cherry.png"
+      }
+    },
+    "maple": {
+      "texture_sig": [
+        1760709043.906432,
+        1337550,
+        "1c307703d7e74e6295064624c2c4f0a7fe1ef6d8"
+      ],
+      "mtl_sig": [
+        1760709043.9024312,
+        271,
+        "3ea7ceacfd7e83af403b7ad41e5af5f00496cb24"
+      ],
+      "properties": {
+        "material_name": "maple",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "maple.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\maple.png"
+      }
+    },
+    "paduc": {
+      "texture_sig": [
+        1760709043.925496,
+        1441465,
+        "f11768085bb2d0f78502a15d1dd91b7059964b25"
+      ],
+      "mtl_sig": [
+        1760709043.9169662,
+        271,
+        "222a38964961a7f22bbf9948bfee145a41e2b6f5"
+      ],
+      "properties": {
+        "material_name": "paduc",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "paduc.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\paduc.png"
+      }
+    },
+    "pine": {
+      "texture_sig": [
+        1760709043.9334953,
+        1468256,
+        "1a8ee5b16731e5530436cdd4222760fd2762401d"
+      ],
+      "mtl_sig": [
+        1760709043.925496,
+        269,
+        "282d58b02b5fe1ee0b14b0d96368eeac7eefed33"
+      ],
+      "properties": {
+        "material_name": "pine",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "pine.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\pine.png"
+      }
+    },
+    "purpleheart": {
+      "texture_sig": [
+        1760709043.9430017,
+        1640201,
+        "2d164b3935ccd5f7c8be71cf7de0fc2488057cdf"
+      ],
+      "mtl_sig": [
+        1760709043.934497,
+        283,
+        "a1fb26ac758a487c11f013e4d4cc0c86569c3423"
+      ],
+      "properties": {
+        "material_name": "purpleheart",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "purpleheart.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\purpleheart.png"
+      }
+    },
+    "red_oak": {
+      "texture_sig": [
+        1760709043.9500017,
+        1357113,
+        "6f410bf0d6766d56edd8e804977582d3e4a466d1"
+      ],
+      "mtl_sig": [
+        1760709043.9440036,
+        275,
+        "dd2e4b0695f812900b9729047d34f29319fea799"
+      ],
+      "properties": {
+        "material_name": "red_oak",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "red_oak.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\red_oak.png"
+      }
+    },
+    "sapele": {
+      "texture_sig": [
+        1760709043.9595098,
+        1647878,
+        "10779048cbeb891b4f7511f5ba58ec9a677358ca"
+      ],
+      "mtl_sig": [
+        1760709043.9500017,
+        273,
+        "77c58cec5d734d55310c02c1c2a6903a4a86ab08"
+      ],
+      "properties": {
+        "material_name": "sapele",
+        "shininess": 250.0,
+        "ambient": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "diffuse": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specular": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "diffuse_map": "sapele.png",
+        "diffuse_map_resolved": "D:\\Digital Workshop\\src\\resources\\materials\\sapele.png"
+      }
+    }
+  }
+}

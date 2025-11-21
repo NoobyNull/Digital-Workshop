@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 
 from ..layout.flow_layout import FlowLayout
 
@@ -44,16 +45,43 @@ class ProjectHierarchyTree(QTreeWidget):
     """QTreeWidget with drag/drop notifications."""
 
     itemsDropped = Signal(list)
+    externalPathsDropped = Signal(list, object)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        # Allow internal moves plus external drops (file system).
+        self.setDragDropMode(QAbstractItemView.DragDrop)
         self.setDropIndicatorShown(True)
         self.setDefaultDropAction(Qt.MoveAction)
 
-    def dropEvent(self, event) -> None:  # type: ignore[override]
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # type: ignore[override]
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            return
+        super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:  # type: ignore[override]
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            return
+        super().dragMoveEvent(event)
+
+    def dropEvent(self, event: QDropEvent) -> None:  # type: ignore[override]
+        # External drop (e.g., from OS) ships URLs.
+        if event.mimeData().hasUrls():
+            paths = []
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    paths.append(url.toLocalFile())
+            if paths:
+                # Pass along drop target so caller can resolve the owning project.
+                target_item = self.itemAt(event.position().toPoint())
+                self.externalPathsDropped.emit(paths, target_item)
+                event.acceptProposedAction()
+                return
+
         dragged = list(self.selectedItems())
         super().dropEvent(event)
         if dragged:
@@ -108,6 +136,9 @@ class ProjectTreeWidget(QWidget):
         self.tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_widget.customContextMenuRequested.connect(self._on_context_menu)
         self.tree_widget.itemsDropped.connect(self._handle_items_dropped)
+        self.tree_widget.externalPathsDropped.connect(
+            self._handle_external_paths_dropped
+        )
         layout.addWidget(self.tree_widget)
 
         # Buttons
@@ -451,22 +482,14 @@ class ProjectTreeWidget(QWidget):
                 return
 
             # Get the project item (could be a file or category, need to find parent project)
-            item_type = current_item.data(0, Qt.UserRole + 1)
-            project_item = current_item
-
-            # If not a project, find the parent project
-            if item_type != "project":
-                parent = current_item.parent()
-                while parent and parent.data(0, Qt.UserRole + 1) != "project":
-                    parent = parent.parent()
-                if not parent:
-                    QMessageBox.warning(
-                        self,
-                        "Invalid Selection",
-                        "Please select a project or item within a project.",
-                    )
-                    return
-                project_item = parent
+            project_item = self._find_project_item(current_item)
+            if not project_item:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Selection",
+                    "Please select a project or item within a project.",
+                )
+                return
 
             project_id = project_item.data(0, Qt.UserRole)
 
@@ -617,6 +640,136 @@ class ProjectTreeWidget(QWidget):
             return " / ".join(parts)
 
         return [(full_name(group), group.get("id")) for group in groups]
+
+    def _find_project_item(
+        self, item: QTreeWidgetItem | None
+    ) -> QTreeWidgetItem | None:
+        """Return the project item for a given tree item (or None)."""
+        cursor = item
+        while cursor and cursor.data(0, Qt.UserRole + 1) != "project":
+            cursor = cursor.parent()
+        if cursor and cursor.data(0, Qt.UserRole + 1) == "project":
+            return cursor
+        return None
+
+    def _collect_files_recursively(self, paths: List[str]) -> List[str]:
+        """Expand a mix of files/folders into a unique file list."""
+        collected: list[str] = []
+        seen: set[str] = set()
+
+        for raw in paths:
+            try:
+                path = Path(raw)
+            except (OSError, ValueError):
+                logger.warning("Skipping invalid drop path: %s", raw)
+                continue
+
+            if not path.exists():
+                logger.warning("Dropped path does not exist: %s", path)
+                continue
+
+            if path.is_file():
+                norm = str(path)
+                if norm not in seen:
+                    seen.add(norm)
+                    collected.append(norm)
+                continue
+
+            if path.is_dir():
+                for child in path.rglob("*"):
+                    if child.is_file():
+                        norm = str(child)
+                        if norm not in seen:
+                            seen.add(norm)
+                            collected.append(norm)
+
+        return collected
+
+    def _handle_external_paths_dropped(
+        self, paths: List[str], target_item: QTreeWidgetItem | None
+    ) -> None:
+        """Handle OS drag-and-drop of files/folders into the Projects pane."""
+        try:
+            project_item = self._find_project_item(
+                target_item or self.tree_widget.currentItem()
+            )
+            if not project_item:
+                QMessageBox.warning(
+                    self,
+                    "Drop Target Needed",
+                    "Drop files or folders onto a project to add them.",
+                )
+                return
+
+            project_id = project_item.data(0, Qt.UserRole)
+            files = self._collect_files_recursively(paths)
+
+            if not files:
+                QMessageBox.information(
+                    self, "No Files Found", "Nothing to add from the dropped paths."
+                )
+                return
+
+            existing = {
+                f.get("file_path")
+                for f in self.db_manager.get_files_by_project(project_id)
+                if f.get("file_path")
+            }
+
+            added_count = 0
+            skipped_duplicates = 0
+
+            for file_path in files:
+                if file_path in existing:
+                    skipped_duplicates += 1
+                    continue
+
+                try:
+                    file_name = Path(file_path).name
+                    try:
+                        file_size = Path(file_path).stat().st_size
+                    except (OSError, IOError):
+                        file_size = None
+
+                    self.db_manager.add_file(
+                        project_id=project_id,
+                        file_path=file_path,
+                        file_name=file_name,
+                        file_size=file_size,
+                        status="linked",
+                        link_type="original",
+                        original_path=file_path,
+                    )
+                    added_count += 1
+                    logger.info("Added dropped file to project %s: %s", project_id, file_path)
+                except (
+                    OSError,
+                    IOError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
+                    logger.warning("Failed to add dropped file %s: %s", file_path, e)
+
+            if added_count > 0:
+                self._refresh_project_tree()
+                summary = f"Added {added_count} file(s)"
+                if skipped_duplicates:
+                    summary += f" ({skipped_duplicates} already linked and skipped)"
+                QMessageBox.information(self, "Files Added", summary)
+            else:
+                QMessageBox.warning(
+                    self,
+                    "No Files Added",
+                    "No new files were added from the dropped paths.",
+                )
+
+        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error("Error handling dropped paths: %s", str(e))
+            QMessageBox.critical(
+                self, "Error", f"Failed to handle dropped files: {str(e)}"
+            )
 
     def _handle_items_dropped(self, items: List[QTreeWidgetItem]) -> None:
         changed = False

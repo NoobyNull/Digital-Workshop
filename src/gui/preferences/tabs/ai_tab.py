@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QVBoxLayout,
     QWidget,
+    QTextEdit,
 )
 
 
@@ -163,8 +164,9 @@ class AITab(QWidget):
         prompt_desc.setWordWrap(True)
         prompt_layout.addWidget(prompt_desc)
 
-        self.prompt_edit = QLineEdit()
+        self.prompt_edit = QTextEdit()
         self.prompt_edit.setPlaceholderText("Describe this image in detail...")
+        self.prompt_edit.setMinimumHeight(160)
         prompt_layout.addWidget(self.prompt_edit)
 
         layout.addWidget(prompt_group)
@@ -279,6 +281,14 @@ class AITab(QWidget):
             from PySide6.QtCore import QSettings
 
             settings = QSettings()
+            try:
+                from src.gui.services.ai_description_service import (
+                    AIDescriptionService,
+                )
+
+                default_prompt = AIDescriptionService()._get_default_prompt("default")  # type: ignore[attr-defined]  # noqa: SLF001
+            except Exception:
+                default_prompt = ""
 
             # Load provider selection (default to local Ollama)
             provider_id = settings.value("ai/provider_id", "ollama", type=str)
@@ -293,7 +303,11 @@ class AITab(QWidget):
 
             # Load custom prompt
             prompt = settings.value("ai/custom_prompt", "", type=str)
-            self.prompt_edit.setText(prompt)
+            if prompt:
+                self.prompt_edit.setText(prompt)
+            else:
+                # Show default prompt so the user can see/edit it
+                self.prompt_edit.setText(default_prompt)
 
             # Load batch settings
             batch_size = settings.value("ai/batch_size", 5, type=int)
@@ -361,7 +375,7 @@ class AITab(QWidget):
                 settings.setValue(f"{group}/enabled", enabled)
 
             # Save custom prompt
-            prompt = self.prompt_edit.text().strip()
+            prompt = self.prompt_edit.toPlainText().strip()
             settings.setValue("ai/custom_prompt", prompt)
 
             # Save batch settings

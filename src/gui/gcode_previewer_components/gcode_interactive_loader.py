@@ -224,6 +224,13 @@ class InteractiveGcodeLoader(QWidget):
 
     def _setup_connections(self) -> None:
         """Setup signal/slot connections."""
+        self.load_button.clicked.connect(self._on_load_clicked)
+        self.cancel_button.clicked.connect(self.cancel_loading)
+
+    def _on_load_clicked(self) -> None:
+        """Trigger loading through the parent previewer's load flow."""
+        # Re-emit a standard signal so the main previewer can handle validation/dialog.
+        self.loading_started.emit()
 
     def load_file(self, filepath: str) -> None:
         """Start loading a G-code file.

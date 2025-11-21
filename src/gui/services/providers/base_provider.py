@@ -71,14 +71,14 @@ class BaseProvider(ABC):
         Returns:
             Default prompt string
         """
-        return """
-        Analyze this image and provide a structured response in JSON format with the following fields:
-        - title: A concise, descriptive title for the image
-        - description: A detailed description of what's in the image
-        - metadata_keywords: A list of relevant keywords that describe the image content, style, and context
-        
-        Please ensure your response is valid JSON format.
-        """
+        return (
+            "Analyze this image and return ONLY valid JSON with these fields:\n"
+            "- title: A concise, descriptive title of what the image shows\n"
+            "- category: Brief category for the subject (e.g., wildlife, architecture)\n"
+            "- description: Describe what the image is representing (e.g., 'A hunting dog on alert' "
+            "rather than 'A carving of a dog') focusing on subject and scene, not medium\n"
+            "- metadata_keywords: An array of keywords for the subject/context/style\n"
+        )
 
     def parse_response(self, response_text: str) -> Dict[str, Any]:
         """
@@ -105,6 +105,7 @@ class BaseProvider(ABC):
                 return {
                     "title": "Image Analysis",
                     "description": response_text.strip(),
+                    "category": "Uncategorized",
                     "metadata_keywords": [],
                 }
 
@@ -115,8 +116,20 @@ class BaseProvider(ABC):
                 result["title"] = "Image Analysis"
             if "description" not in result:
                 result["description"] = str(result)
+            if "category" not in result:
+                result["category"] = "Uncategorized"
             if "metadata_keywords" not in result:
                 result["metadata_keywords"] = []
+
+            # Normalize keywords to list
+            if isinstance(result["metadata_keywords"], str):
+                result["metadata_keywords"] = [
+                    kw.strip()
+                    for kw in result["metadata_keywords"].split(",")
+                    if kw.strip()
+                ]
+            if not isinstance(result["metadata_keywords"], list):
+                result["metadata_keywords"] = [str(result["metadata_keywords"])]
 
             return result
 

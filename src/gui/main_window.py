@@ -2700,6 +2700,15 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setVisible(True)
                 self.progress_bar.setRange(0, 0)
 
+                # Update Project Details from database if possible, otherwise fallback to file info
+                if hasattr(self, "project_details_widget") and self.project_details_widget:
+                    db_manager = get_database_manager()
+                    model_data = db_manager.get_model_by_path(file_path)
+                    if model_data:
+                        self.project_details_widget.set_model(model_data)
+                    else:
+                        self.project_details_widget.show_file(file_path)
+
                 # This is a project file, not a library model; clear any
                 # library model id and load directly from path.
                 self.current_model_id = None
@@ -2707,6 +2716,8 @@ class MainWindow(QMainWindow):
                     self.model_loader_manager.load_stl_model(file_path)
 
             elif tab_name == "G Code Previewer":
+                if hasattr(self, "project_details_widget") and self.project_details_widget:
+                    self.project_details_widget.show_file(file_path)
                 self.gcode_previewer_controller.open_gcode_file(file_path)
 
         except Exception as e:  # noqa: BLE001

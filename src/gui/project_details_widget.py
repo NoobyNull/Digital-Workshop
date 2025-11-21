@@ -8,6 +8,7 @@ Shows:
 
 import shutil
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
@@ -177,6 +178,38 @@ class ProjectDetailsWidget(QWidget):
                 parent_dock.show()
         except Exception:
             pass
+
+    def show_file(self, file_path: str) -> None:
+        """Populate the panel with basic metadata for a project file (non-model)."""
+        try:
+            path = Path(file_path)
+            if not path.exists():
+                self.clear()
+                return
+
+            try:
+                stat = path.stat()
+                file_size = stat.st_size
+                date_added = datetime.fromtimestamp(stat.st_mtime).isoformat()
+            except (OSError, ValueError):
+                file_size = 0
+                date_added = "-"
+
+            model_like = {
+                "id": None,
+                "filename": path.name,
+                "format": (path.suffix.lstrip(".") or "file").upper(),
+                "file_size": file_size,
+                "dimensions": None,
+                "triangle_count": 0,
+                "vertex_count": 0,
+                "date_added": date_added,
+                "file_path": str(path),
+            }
+            self.set_model(model_like)
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error("Failed to show file in Project Details: %s", exc)
+            self.clear()
 
     def _update_model_info(self, model_data: Dict[str, Any]) -> None:
         """Update model information display."""

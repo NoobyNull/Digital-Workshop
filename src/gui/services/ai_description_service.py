@@ -246,26 +246,30 @@ class AIDescriptionService(QObject):
             },
             "custom_prompts": {
                 "default": """Analyze this image and provide a structured response in JSON format with the following fields:
-- title: A concise, descriptive title for the image (string)
-- description: A detailed description including objects, colors, textures, and overall composition (string)
-- metadata_keywords: A list of relevant keywords that describe the image content, style, and context (array of strings)
+- title: A concise, descriptive title for what the image shows (string)
+- category: Brief category for the subject (e.g., wildlife, architecture) (string)
+- description: Describe what the image is representing (e.g., "A hunting dog on alert"), focusing on the subject/scene rather than the medium or depiction (string)
+- metadata_keywords: A list of relevant keywords that describe the image content, subject, and context (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
                 "mechanical": """Analyze this mechanical part and provide a structured response in JSON format with the following fields:
 - title: A concise title for the mechanical part (string)
-- description: Describe its function, materials, manufacturing considerations, and technical specifications (string)
+- category: Brief category (e.g., fastener, bracket, housing) (string)
+- description: Describe what the part is representing and its function; avoid medium wording. Include materials and key specs. (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
                 "artistic": """Analyze this artistic work and provide a structured response in JSON format with the following fields:
-- title: A concise title for the artwork (string)
-- description: Describe the style, techniques, colors, composition, and artistic intent (string)
+- title: A concise title for what the artwork depicts (string)
+- category: Brief category for the subject/genre (e.g., portrait, landscape) (string)
+- description: Describe what the image is representing (subject/scene) and then note style/techniques, avoiding medium-first phrasing (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
                 "architectural": """Analyze this architectural image and provide a structured response in JSON format with the following fields:
-- title: A concise title for the building or structure (string)
-- description: Describe the building style, materials, design elements, and spatial relationships (string)
+- title: A concise title for what the structure is (string)
+- category: Brief category for the structure (e.g., residential, commercial, civic, bridge) (string)
+- description: Describe what the structure represents (type, setting) and its style/materials; avoid medium phrasing (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
@@ -281,26 +285,30 @@ Return ONLY valid JSON, no additional text.""",
         """Get default prompt for a specific type."""
         defaults = {
             "default": """Analyze this image and provide a structured response in JSON format with the following fields:
-- title: A concise, descriptive title for the image (string)
-- description: A detailed description including objects, colors, textures, and overall composition (string)
-- metadata_keywords: A list of relevant keywords that describe the image content, style, and context (array of strings)
+- title: A concise, descriptive title for what the image shows (string)
+- category: Brief category for the subject (e.g., wildlife, architecture) (string)
+- description: Describe what the image is representing (e.g., "A hunting dog on alert"), focusing on subject/scene rather than medium (string)
+- metadata_keywords: A list of relevant keywords that describe the image content, subject, and context (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
             "mechanical": """Analyze this mechanical part and provide a structured response in JSON format with the following fields:
 - title: A concise title for the mechanical part (string)
-- description: Describe its function, materials, manufacturing considerations, and technical specifications (string)
+- category: Brief category (e.g., fastener, bracket, housing) (string)
+- description: Describe what the part is representing and its function; avoid medium wording. Include materials and key specs. (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
             "artistic": """Analyze this artistic work and provide a structured response in JSON format with the following fields:
-- title: A concise title for the artwork (string)
-- description: Describe the style, techniques, colors, composition, and artistic intent (string)
+- title: A concise title for what the artwork depicts (string)
+- category: Brief category for the subject/genre (e.g., portrait, landscape) (string)
+- description: Describe what the image is representing (subject/scene) and then note style/techniques, avoiding medium-first phrasing (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",
             "architectural": """Analyze this architectural image and provide a structured response in JSON format with the following fields:
-- title: A concise title for the building or structure (string)
-- description: Describe the building style, materials, design elements, and spatial relationships (string)
+- title: A concise title for what the structure is (string)
+- category: Brief category for the structure (e.g., residential, commercial, civic, bridge) (string)
+- description: Describe what the structure represents (type, setting) and its style/materials; avoid medium phrasing (string)
 - metadata_keywords: A list of relevant keywords (array of strings)
 
 Return ONLY valid JSON, no additional text.""",

@@ -603,6 +603,17 @@ class AIDescriptionWidget(QWidget):
 
         self.results_layout.addWidget(keywords_group)
 
+        # Category section
+        category_group = QGroupBox("Category")
+        category_layout = QVBoxLayout(category_group)
+
+        self.category_result = QLabel("No category")
+        self.category_result.setWordWrap(True)
+        self.category_result.setStyleSheet("color: #495057; padding: 5px;")
+        category_layout.addWidget(self.category_result)
+
+        self.results_layout.addWidget(category_group)
+
         # Apply button
         self.apply_button = QPushButton("Apply to Model Metadata")
         self.apply_button.setEnabled(False)
@@ -708,6 +719,10 @@ class AIDescriptionWidget(QWidget):
         self.description_result.setText(result.get("description", "No description"))
         self.description_result.setStyleSheet("color: #212529; padding: 5px;")
 
+        # Update category
+        self.category_result.setText(result.get("category", "Uncategorized"))
+        self.category_result.setStyleSheet("color: #212529; padding: 5px;")
+
         # Update keywords
         keywords = result.get("metadata_keywords", [])
         self.keywords_result.clear()
@@ -724,6 +739,7 @@ class AIDescriptionWidget(QWidget):
         """Copy results to clipboard."""
 
         result_text = f"Title: {self.title_result.text()}\n\n"
+        result_text += f"Category: {self.category_result.text()}\n\n"
         result_text += f"Description: {self.description_result.text()}\n\n"
         result_text += f"Keywords: {', '.join([self.keywords_result.item(i).text() for i in range(self.keywords_result.count())])}"
 

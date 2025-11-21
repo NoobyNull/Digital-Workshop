@@ -20,7 +20,7 @@ Example:
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 from enum import Enum
 
 from PySide6.QtWidgets import (
@@ -324,6 +324,8 @@ class PipelineImportWorker(QThread):
         generate_thumbnails: bool,
         run_analysis: bool,
         concurrency_mode: str,
+        prep_workers: Optional[int] = None,
+        pipeline_workers: Optional[int] = None,
     ):
         """Initialize pipeline import worker."""
         super().__init__()
@@ -340,6 +342,8 @@ class PipelineImportWorker(QThread):
         self.generated_thumbnails: List[Tuple[str, str]] = []
 
         self.logger = get_logger(__name__)
+        self._prep_workers_override = prep_workers
+        self._pipeline_workers_override = pipeline_workers
 
         # Explicit cancellation tracking so that "cancelled" status
         # is only reported when a real cancel request occurs.
@@ -403,7 +407,11 @@ class PipelineImportWorker(QThread):
                 )
             else:
                 concurrency = self.import_settings.get_concurrency()
-                prep_workers = concurrency.prep_workers
+                prep_workers = (
+                    self._prep_workers_override
+                    if self._prep_workers_override
+                    else concurrency.prep_workers
+                )
                 self.logger.info(
                     "Preparing %d files with up to %s workers (concurrent mode)",
                     total_files,
@@ -428,12 +436,17 @@ class PipelineImportWorker(QThread):
             if self.concurrency_mode == "serial":
                 pipeline_workers = 1
             else:
-                pipeline_workers = max(
-                    1,
-                    min(
-                        concurrency.queue_limit,
-                        concurrency.thumbnail_workers,
-                    ),
+                concurrency = self.import_settings.get_concurrency()
+                pipeline_workers = (
+                    self._pipeline_workers_override
+                    if self._pipeline_workers_override
+                    else max(
+                        1,
+                        min(
+                            concurrency.queue_limit,
+                            concurrency.thumbnail_workers,
+                        ),
+                    )
                 )
             pipeline = create_pipeline(
                 db_manager,
@@ -685,6 +698,9 @@ class ImportDialog(QDialog):
         self.pending_button.setVisible(False)
         self._last_plain_log_message: Optional[str] = None
         self._file_start_times: dict[str, float] = {}
+        self._worker_rows: List[Dict[str, Any]] = []
+        self._worker_assignments: Dict[str, int] = {}
+        self._worker_capacity: int = 0
         self.import_settings = ImportSettings()
         self._concurrency_mode: str = self.import_settings.get_mode()
 
@@ -780,6 +796,119 @@ class ImportDialog(QDialog):
             self.root_dir_button.setText("Browse...")
 
         self._update_import_button_state()
+
+    # ----- Worker progress helpers -----
+
+    def _init_worker_rows(self, count: int) -> None:
+        """Create/reset worker progress rows."""
+        count = max(1, int(count))
+        self._worker_capacity = count
+        self._worker_assignments.clear()
+
+        # Clear existing widgets
+        while self.workers_layout.count():
+            item = self.workers_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        self._worker_rows = []
+
+        for idx in range(count):
+            row_widget = QGroupBox(f"Worker {idx + 1}")
+            row_layout = QVBoxLayout(row_widget)
+
+            title = QLabel("Idle")
+            row_layout.addWidget(title)
+
+            bar = QProgressBar()
+            bar.setRange(0, 100)
+            bar.setValue(0)
+            bar.setTextVisible(True)
+            bar.setFormat("Idle")
+            row_layout.addWidget(bar)
+
+            stage = QLabel("Waiting")
+            stage.setStyleSheet("color: #666;")
+            row_layout.addWidget(stage)
+
+            self.workers_layout.addWidget(row_widget)
+            self._worker_rows.append(
+                {"title": title, "bar": bar, "stage": stage, "file": None}
+            )
+
+        self.workers_group.setVisible(True)
+
+    def _describe_worker_stage(self, message: str) -> str:
+        """Normalize a message into a compact stage label."""
+        msg = (message or "").lower()
+        if "hash" in msg:
+            return "Hashing"
+        if "copy" in msg or "move" in msg:
+            return "Copy/Moving"
+        if "thumbnail" in msg or "generate" in msg:
+            return "Generating"
+        if "tag" in msg or "ai" in msg:
+            return "AI tagging"
+        if "db" in msg or "database" in msg or "persist" in msg:
+            return "Updating DB"
+        if "load" in msg or "processing" in msg:
+            return "Loading"
+        return message or "Working"
+
+    def _assign_worker_slot(self, filename: str) -> int:
+        """Assign a file to an available worker slot, reusing when needed."""
+        if filename in self._worker_assignments:
+            return self._worker_assignments[filename]
+
+        # Find an idle slot
+        for idx, row in enumerate(self._worker_rows):
+            if row["file"] is None:
+                row["file"] = filename
+                self._worker_assignments[filename] = idx
+                return idx
+
+        # Reuse oldest slot if none idle
+        idx = len(self._worker_assignments) % self._worker_capacity
+        for existing, slot in list(self._worker_assignments.items()):
+            if slot == idx:
+                self._worker_assignments.pop(existing, None)
+                break
+        self._worker_assignments[filename] = idx
+        self._worker_rows[idx]["file"] = filename
+        return idx
+
+    def _release_worker_slot(self, filename: str) -> None:
+        """Mark a worker slot as idle."""
+        idx = self._worker_assignments.pop(filename, None)
+        if idx is None or idx >= len(self._worker_rows):
+            return
+
+        row = self._worker_rows[idx]
+        row["file"] = None
+        row["title"].setText(f"Worker {idx + 1}: Idle")
+        row["bar"].setValue(0)
+        row["bar"].setFormat("Idle")
+        row["stage"].setText("Waiting")
+
+    def _update_worker_slot(self, filename: str, percent: int, message: str) -> None:
+        """Update worker UI for a given file."""
+        if not hasattr(self, "workers_group"):
+            return
+
+        slot = self._assign_worker_slot(filename)
+        if slot >= len(self._worker_rows):
+            return
+
+        row = self._worker_rows[slot]
+        stage_text = self._describe_worker_stage(message)
+        row["title"].setText(f"Worker {slot + 1}: {filename}")
+        row["bar"].setValue(max(0, min(100, percent)))
+        row["bar"].setFormat(f"{filename} - {stage_text} (%p%)")
+        row["stage"].setText(stage_text)
+
+        if percent >= 100 or "completed" in message.lower() or "failed" in message.lower():
+            self._release_worker_slot(filename)
 
     def _setup_ui(self) -> None:
         """Setup the dialog user interface."""
@@ -1018,6 +1147,12 @@ class ImportDialog(QDialog):
         self.progress_label = QLabel("0 / 0")
         progress_layout.addWidget(self.progress_label)
         layout.addLayout(progress_layout)
+
+        # Worker detail (one row per concurrent worker)
+        self.workers_group = QGroupBox("Workers")
+        self.workers_layout = QVBoxLayout(self.workers_group)
+        self.workers_group.setVisible(False)
+        layout.addWidget(self.workers_group)
 
         # Current file progress
         file_layout = QHBoxLayout()
@@ -1690,6 +1825,30 @@ class ImportDialog(QDialog):
         ):
             self._persist_prep_worker_setting()
 
+        # Compute worker capacities for UI and worker overrides.
+        try:
+            concurrency_settings = self.import_settings.get_concurrency()
+        except Exception:
+            concurrency_settings = None
+
+        prep_workers_used = (
+            1
+            if self._concurrency_mode == "serial"
+            else (
+                self.prep_workers_spin.value()
+                if hasattr(self, "prep_workers_spin")
+                else (concurrency_settings.prep_workers if concurrency_settings else 1)
+            )
+        )
+        pipeline_workers_used = 1
+        if self._concurrency_mode == "concurrent" and concurrency_settings:
+            pipeline_workers_used = max(
+                1, min(concurrency_settings.queue_limit, concurrency_settings.thumbnail_workers)
+            )
+
+        worker_slots = max(prep_workers_used, pipeline_workers_used, 1)
+        self._init_worker_rows(worker_slots)
+
         # Use the new pipeline-based worker for complete import functionality
         self.import_worker = PipelineImportWorker(
             self.selected_files,
@@ -1698,6 +1857,8 @@ class ImportDialog(QDialog):
             self.generate_thumbnails_check.isChecked(),
             self.run_analysis_check.isChecked(),
             self._concurrency_mode,
+            prep_workers=prep_workers_used,
+            pipeline_workers=pipeline_workers_used,
         )
 
         # Connect worker signals
@@ -1751,6 +1912,9 @@ class ImportDialog(QDialog):
                 "completed" if percent >= 100 or "Completed" in message else "failed"
             )
             self._log_message(f"{filename}: {status} in {elapsed:.1f}s")
+
+        # Update per-worker UI
+        self._update_worker_slot(filename, percent, message)
 
         self.file_progress_bar.setValue(percent)
 

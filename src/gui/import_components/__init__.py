@@ -10,5 +10,6 @@ This package provides user interface components for importing 3D models with:
 """
 
 from src.gui.import_components.import_dialog import ImportDialog
+from src.gui.import_components.reorg_preview_dialog import ReorgPreviewDialog
 
-__all__ = ["ImportDialog"]
+__all__ = ["ImportDialog", "ReorgPreviewDialog"]
