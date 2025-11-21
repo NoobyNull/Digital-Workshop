@@ -42,6 +42,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QCheckBox,
     QProgressDialog,
+    QGridLayout,
 )
 from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
@@ -805,7 +806,7 @@ class ImportDialog(QDialog):
         self._worker_capacity = count
         self._worker_assignments.clear()
 
-        # Clear existing widgets
+        # Clear existing widgets (grid)
         while self.workers_layout.count():
             item = self.workers_layout.takeAt(0)
             widget = item.widget()
@@ -814,11 +815,16 @@ class ImportDialog(QDialog):
 
         self._worker_rows = []
 
+        columns = 2 if count > 1 else 1
         for idx in range(count):
             row_widget = QGroupBox(f"Worker {idx + 1}")
+            row_widget.setMinimumSize(180, 180)
+            row_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             row_layout = QVBoxLayout(row_widget)
+            row_layout.setSpacing(6)
 
             title = QLabel("Idle")
+            title.setStyleSheet("font-weight: bold;")
             row_layout.addWidget(title)
 
             bar = QProgressBar()
@@ -826,13 +832,19 @@ class ImportDialog(QDialog):
             bar.setValue(0)
             bar.setTextVisible(True)
             bar.setFormat("Idle")
+            bar.setMinimumHeight(24)
             row_layout.addWidget(bar)
 
             stage = QLabel("Waiting")
             stage.setStyleSheet("color: #666;")
+            stage.setWordWrap(True)
             row_layout.addWidget(stage)
 
-            self.workers_layout.addWidget(row_widget)
+            row_layout.addStretch()
+
+            r = idx // columns
+            c = idx % columns
+            self.workers_layout.addWidget(row_widget, r, c)
             self._worker_rows.append(
                 {"title": title, "bar": bar, "stage": stage, "file": None}
             )
@@ -1149,8 +1161,9 @@ class ImportDialog(QDialog):
         layout.addLayout(progress_layout)
 
         # Worker detail (one row per concurrent worker)
-        self.workers_group = QGroupBox("Workers")
-        self.workers_layout = QVBoxLayout(self.workers_group)
+        self.workers_group = QGroupBox("Concurrent Workers")
+        self.workers_layout = QGridLayout(self.workers_group)
+        self.workers_layout.setSpacing(12)
         self.workers_group.setVisible(False)
         layout.addWidget(self.workers_group)
 

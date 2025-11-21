@@ -174,14 +174,8 @@ class LibraryUIManager:
     def create_recent_models_panel(self, parent_layout: QVBoxLayout) -> None:
         """Create the MRU list panel that surfaces recently opened models."""
 
-        try:
-            panel = RecentModelsPanel()
-            panel.setMaximumHeight(220)
-            parent_layout.addWidget(panel)
-            self.library_widget.recent_models_panel = panel
-        except Exception:
-            self.library_widget.recent_models_panel = None
-            logger.warning("Failed to create recent models panel", exc_info=True)
+        # Disable the MRU panel to avoid wasted space / distraction.
+        self.library_widget.recent_models_panel = None
 
     def create_file_browser(self, parent_layout: QVBoxLayout) -> None:
         """Create file browser UI.

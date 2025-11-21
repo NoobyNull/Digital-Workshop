@@ -7,7 +7,7 @@ This is a thin coordinator that delegates to specialized components via the faca
 from typing import Optional, List, Dict, Any
 
 from PySide6.QtCore import Signal, Qt, QEvent
-from PySide6.QtWidgets import QWidget, QSizePolicy
+from PySide6.QtWidgets import QWidget, QSizePolicy, QMenu
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QCloseEvent, QWheelEvent
 
 from src.core.logging_config import get_logger
@@ -96,6 +96,13 @@ class ModelLibraryWidget(QWidget):
         from PySide6.QtCore import QTimer
 
         QTimer.singleShot(200, self.restore_column_visibility)
+        # Provide a fallback context menu on empty space to access import actions even when the view doesn't fire its own menu.
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_fallback_context_menu)
+
+        # Provide a fallback context menu on the widget itself so users can always reach Import.
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_fallback_context_menu)
 
     # ==================== Public API ====================
 
@@ -151,6 +158,22 @@ class ModelLibraryWidget(QWidget):
                 )
         else:
             self.logger.debug("[DELAYED] No saved column order found")
+
+    def _show_fallback_context_menu(self, pos) -> None:
+        """Show a minimal import menu when right-clicking empty space."""
+        try:
+            menu = QMenu(self)
+            import_action = menu.addAction("Import Models…")
+            import_url_action = menu.addAction("Import from URL…")
+            # Map the widget-local position to global so the menu appears where the user clicked.
+            global_pos = self.mapToGlobal(pos)
+            action = menu.exec(global_pos)
+            if action == import_action:
+                self.import_requested.emit([])
+            elif action == import_url_action:
+                self.import_url_requested.emit()
+        except Exception as exc:
+            self.logger.warning("Failed to show fallback context menu: %s", exc)
 
     def get_selected_model_id(self) -> Optional[int]:
         """

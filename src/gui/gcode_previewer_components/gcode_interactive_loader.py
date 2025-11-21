@@ -160,6 +160,7 @@ class InteractiveGcodeLoader(QWidget):
 
     # Signals
     loading_started = Signal()
+    loading_cancelled = Signal()
     loading_complete = Signal(list)  # Emits all moves
     chunk_loaded = Signal(list)  # Emits chunk of moves
     progress_updated = Signal(int, str)  # (percentage, message)
@@ -269,6 +270,7 @@ class InteractiveGcodeLoader(QWidget):
         self.progress_bar.setVisible(False)
         self.load_button.setEnabled(True)
         self.cancel_button.setEnabled(False)
+        self.loading_cancelled.emit()
 
     def _on_progress_updated(self, progress: int, message: str) -> None:
         """Handle progress update."""

@@ -175,6 +175,7 @@ class GcodePreviewerWidget(QWidget):
         self.layer_filters: Dict[str, QCheckBox] = {}
         self.progress_bar: Optional[QProgressBar] = None
         self._camera_fit_done: bool = False
+        self.loading_in_progress: bool = False
 
         self.current_file: Optional[str] = None
         self.moves = []
@@ -372,17 +373,21 @@ class GcodePreviewerWidget(QWidget):
         # viewer here and let the main window own the tools side.
         if self.use_external_tools:
             try:
-                if self.renderer is None:
-                    self.renderer = GcodeRenderer()
+            if self.renderer is None:
+                self.renderer = GcodeRenderer()
 
-                self.vtk_widget = VTKWidget(
-                    self.renderer, embed_camera_toolbar=not self.use_external_tools
-                )
-                layout.addWidget(self.vtk_widget)
-            except (
-                OSError,
-                IOError,
-                ValueError,
+            self.vtk_widget = VTKWidget(
+                self.renderer, embed_camera_toolbar=not self.use_external_tools
+            )
+            try:
+                self.vtk_widget.set_interaction_guard(lambda: self.loading_in_progress)
+            except Exception:
+                pass
+            layout.addWidget(self.vtk_widget)
+        except (
+            OSError,
+            IOError,
+            ValueError,
                 TypeError,
                 KeyError,
                 AttributeError,
@@ -405,6 +410,10 @@ class GcodePreviewerWidget(QWidget):
             self.vtk_widget = VTKWidget(
                 self.renderer, embed_camera_toolbar=not self.use_external_tools
             )
+            try:
+                self.vtk_widget.set_interaction_guard(lambda: self.loading_in_progress)
+            except Exception:
+                pass
             self.splitter.addWidget(self.vtk_widget)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Failed to initialize VTK viewer: %s", e)
@@ -511,6 +520,23 @@ class GcodePreviewerWidget(QWidget):
         # has been created.
         self._connect_tools_signals()
 
+    def _set_loading_state(self, active: bool) -> None:
+        """Track whether a G-code load is in progress and guard interactions."""
+        self.loading_in_progress = active
+        # Keep renderer responsive for renders even when blocking camera input.
+        if active and self.progress_bar is not None:
+            self.progress_bar.setVisible(True)
+        if not active and self.progress_bar is not None and self.progress_bar.value() >= 100:
+            self.progress_bar.setVisible(False)
+
+    def _cancel_active_load(self) -> None:
+        """Cancel any active interactive load and reset UI."""
+        try:
+            if self.interactive_loader:
+                self.interactive_loader.cancel_loading()
+        finally:
+            self._set_loading_state(False)
+
     def _connect_tools_signals(self) -> None:
         """Connect signals for the tools-side widgets.
 
@@ -532,6 +558,10 @@ class GcodePreviewerWidget(QWidget):
             # The Load G-code button in the right-hand loader panel should behave
             # like the main "Load" action and use the central validation logic.
             self.interactive_loader.load_button.clicked.connect(self._on_load_file)
+            self.interactive_loader.loading_started.connect(
+                lambda: self._set_loading_state(True)
+            )
+            self.interactive_loader.loading_cancelled.connect(self._on_loader_cancelled)
             self.interactive_loader.loading_complete.connect(
                 self._on_interactive_loader_complete
             )
@@ -1045,14 +1075,16 @@ class GcodePreviewerWidget(QWidget):
             if not validated_path:
                 return
 
-            # Stop any existing loader
+            # Stop any existing loaders (legacy thread or interactive)
             if self.loader_thread and self.loader_thread.isRunning():
                 self.loader_thread.cancel()
                 self.loader_thread.wait(5000)  # Wait max 5 seconds
+            self._cancel_active_load()
 
             # Show progress UI immediately
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
+            self._set_loading_state(True)
 
             # Get file info (quick operation)
             file_path = Path(validated_path)
@@ -2409,6 +2441,12 @@ class GcodePreviewerWidget(QWidget):
         self.logger.error("Loader error: %s", error_msg)
         self._show_status_message(f"G-code load error: {error_msg}", 5000)
         self.progress_bar.setVisible(False)
+        self._set_loading_state(False)
+
+    def _on_loader_cancelled(self) -> None:
+        """Handle load cancellation (user or programmatic)."""
+        self._show_status_message("G-code load cancelled", 3000)
+        self._set_loading_state(False)
 
     def _on_timeline_frame_changed(self, frame_index: int) -> None:
         """Handle frame change from timeline."""
@@ -2484,6 +2522,7 @@ class GcodePreviewerWidget(QWidget):
         self._show_status_message("G-code load complete", 3000)
 
         self.gcode_loaded.emit(self.current_file)
+        self._set_loading_state(False)
         self.logger.info(
             "Interactive loader finished: %s moves", f"{len(self.moves):,}"
         )

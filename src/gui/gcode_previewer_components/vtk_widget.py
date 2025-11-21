@@ -96,6 +96,7 @@ class VTKWidget(QWidget):
 
         self.renderer = renderer
         self.gcode_renderer = renderer
+        self._interaction_guard: Optional[Callable[[], bool]] = None
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -155,18 +156,33 @@ class VTKWidget(QWidget):
         if self._inline_toolbar is not None:
             self._inline_toolbar.setVisible(visible)
 
+    def set_interaction_guard(self, guard: Callable[[], bool]) -> None:
+        """Set a callable that returns True to temporarily block camera interaction."""
+        self._interaction_guard = guard
+
+    def _interaction_allowed(self) -> bool:
+        return not (self._interaction_guard and self._interaction_guard())
+
     def _on_mouse_press(self, event: QMouseEvent) -> None:
+        if not self._interaction_allowed():
+            return
         self.camera_controller.handle_mouse_press(event)
 
     def _on_mouse_move(self, event: QMouseEvent) -> None:
+        if not self._interaction_allowed():
+            return
         viewport_size = (self.vtk_widget.width(), self.vtk_widget.height())
         self.camera_controller.handle_mouse_move(event, viewport_size)
         self.update_render()
 
     def _on_mouse_release(self, event: QMouseEvent) -> None:
+        if not self._interaction_allowed():
+            return
         self.camera_controller.handle_mouse_release(event)
 
     def _on_wheel(self, event: QWheelEvent) -> None:
+        if not self._interaction_allowed():
+            return
         self.camera_controller.handle_wheel(event)
         self.update_render()
 
