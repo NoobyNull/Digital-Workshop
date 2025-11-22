@@ -25,22 +25,20 @@ from src.core.logging_config import LoggingProfile, get_logger, setup_logging
 from src.core.nuclear_reset import NuclearReset
 
 
-def _maybe_attach_parent_console() -> None:
+def _maybe_attach_parent_console() -> bool:
     """
     Attach to the parent console if available (Windows).
 
-    This keeps the GUI build windowless on double-click, but when launched
-    from a terminal it binds stdout/stderr to that console so CLI output
-    (e.g., --help) is visible.
+    Returns True if a console is present or attached; False otherwise.
     """
     if os.name != "nt":
-        return
+        return False
     try:
         kernel32 = ctypes.windll.kernel32
         if kernel32.GetConsoleWindow():
-            return  # already have a console (e.g., dev run)
+            return True  # already have a console (e.g., dev run)
         if not kernel32.AttachConsole(-1):  # ATTACH_PARENT_PROCESS
-            return
+            return False
         for std_name, handle_id in (("stdout", -11), ("stderr", -12)):
             handle = kernel32.GetStdHandle(handle_id)
             if handle in (0, None, -1):
@@ -52,9 +50,10 @@ def _maybe_attach_parent_console() -> None:
                 continue
             stream = os.fdopen(fd, "w", buffering=1, encoding="utf-8", errors="replace")
             setattr(sys, std_name, stream)
+        return True
     except Exception:
         # Best effort: if attaching fails, continue silently
-        return
+        return False
 
 
 def parse_arguments() -> None:
@@ -272,10 +271,9 @@ def _import_settings(config: ApplicationConfig, infile: str) -> int:
 
 def main() -> None:
     """Main function to start the Digital Workshop application."""
-    _maybe_attach_parent_console()
-    has_console = False
+    has_console = _maybe_attach_parent_console()
     try:
-        if os.name == "nt":
+        if os.name == "nt" and not has_console:
             has_console = bool(ctypes.windll.kernel32.GetConsoleWindow())
     except Exception:
         has_console = False

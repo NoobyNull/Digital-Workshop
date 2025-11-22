@@ -12,7 +12,7 @@ from vtk.util import numpy_support as vtk_np
 
 from src.core.logging_config import get_logger, log_function_call
 from src.core.data_structures import Model
-from src.parsers.stl_parser import STLModel
+from src.parsers import STLModel
 
 
 logger = get_logger(__name__)

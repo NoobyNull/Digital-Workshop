@@ -8,6 +8,8 @@ import sys
 import subprocess
 import shutil
 import argparse
+import os
+import stat
 from pathlib import Path
 
 BUILD_SYSTEM_DIR = Path(__file__).resolve().parent
@@ -29,11 +31,21 @@ def clean_build_artifacts():
     """Remove previous build artifacts."""
     print("\n[INFO] Cleaning previous build artifacts...")
     
+    def _handle_remove_error(func, path, exc_info):
+        try:
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        except Exception:
+            print(f"[WARN] Could not remove {path}: {exc_info[1]}")
+
     dirs_to_remove = [PROJECT_ROOT / 'build', PROJECT_ROOT / 'dist']
     for dir_path in dirs_to_remove:
         if dir_path.exists():
             print(f"[INFO] Removing {dir_path.relative_to(PROJECT_ROOT)}")
-            shutil.rmtree(dir_path)
+            try:
+                shutil.rmtree(dir_path, onerror=_handle_remove_error)
+            except Exception as e:
+                print(f"[WARN] Failed to remove {dir_path}: {e}")
     
     # Remove .spec file cache
     spec_cache = SPEC_PATH.with_suffix('.spec.cache')

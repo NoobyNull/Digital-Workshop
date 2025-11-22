@@ -129,19 +129,39 @@ build_windows_exe:
     Write-Host "Revision: $revisionTag"
 
     Write-Host "== Building Windows executable via PyInstaller =="
-    python build_system/build_exe.py
+    $Env:DW_BUILD_MODE = "both"
+    python build_system/build_exe.py --mode both
 
     $distDir = if ($Env:DIST_DIR) { $Env:DIST_DIR } else { "dist" }
     $exeBaseName = if ($Env:EXE_NAME) { $Env:EXE_NAME } else { "Digital Workshop" }
-    $exePath = Join-Path $distDir "$exeBaseName.exe"
-    if (-not (Test-Path $exePath)) { Write-Error "EXE not found at $exePath" }
+    $onefilePath = Join-Path $distDir "$exeBaseName.exe"
+    $onedirPath  = Join-Path $distDir "$exeBaseName" "$exeBaseName.exe"
+    if (-not (Test-Path $onefilePath)) {
+      Write-Warning "Onefile EXE not found at $onefilePath"
+    }
+    if (-not (Test-Path $onedirPath)) {
+      Write-Warning "Onedir EXE not found at $onedirPath"
+    }
+    if ((-not (Test-Path $onefilePath)) -and (-not (Test-Path $onedirPath))) {
+      Write-Error "No build artifacts found."
+    }
+
+    $primaryExe = if (Test-Path $onefilePath) { $onefilePath } else { $onedirPath }
 
     $versionedName = "$exeBaseName.$revision.exe"
     $versionedExePath = Join-Path $distDir $versionedName
-    Rename-Item -Path $exePath -NewName $versionedName -Force
+    Copy-Item -Path $primaryExe -Destination $versionedExePath -Force
 
     $latestExePath = Join-Path $distDir "$exeBaseName.latest.exe"
     Copy-Item -Path $versionedExePath -Destination $latestExePath -Force
+
+    # Zip the onedir payload if present
+    $onedirZip = $null
+    if (Test-Path (Split-Path $onedirPath)) {
+      $onedirZip = Join-Path $distDir "$exeBaseName.$revision.onedir.zip"
+      if (Test-Path $onedirZip) { Remove-Item $onedirZip -Force }
+      Compress-Archive -Path (Join-Path $distDir $exeBaseName "*") -DestinationPath $onedirZip -Force
+    }
 
     python scripts/generate_changelog.py --build-number $revision --output (Join-Path $distDir "changes-$revision.txt")
 
@@ -174,13 +194,11 @@ build_windows_exe:
     $revisionDir = Join-Path $revisionRoot $revisionTag
     New-Item -ItemType Directory -Force -Path $revisionDir | Out-Null
 
-    $zipPath = Join-Path $distDir "$exeBaseName.$revision.zip"
-    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-    Compress-Archive -Path (Join-Path $distDir "*") -DestinationPath $zipPath -Force
-
     Copy-Item -Path $versionedExePath -Destination (Join-Path $revisionDir $versionedName) -Force
     Copy-Item -Path $latestExePath -Destination (Join-Path $revisionDir "$exeBaseName.latest.exe") -Force
-    Copy-Item -Path $zipPath -Destination (Join-Path $revisionDir (Split-Path -Leaf $zipPath)) -Force
+    if ($onedirZip -and (Test-Path $onedirZip)) {
+      Copy-Item -Path $onedirZip -Destination (Join-Path $revisionDir (Split-Path -Leaf $onedirZip)) -Force
+    }
     Copy-Item -Path (Join-Path $distDir "changes-$revision.txt") -Destination (Join-Path $revisionDir "changes-$revision.txt") -Force
     Copy-Item -Path $infoPath -Destination (Join-Path $revisionDir "build-info.txt") -Force
     Copy-Item -Path $releaseInfoPath -Destination (Join-Path $revisionDir "release-$revision.json") -Force
@@ -209,7 +227,8 @@ build_windows_exe:
       revision = $revision
       tag = $revisionTag
       exe = $versionedName
-      zip = (Split-Path -Leaf $zipPath)
+      onefile = (Split-Path -Leaf $versionedExePath)
+      onedir_zip = $onedirZip ? (Split-Path -Leaf $onedirZip) : ""
       commit = $Env:CI_COMMIT_SHA
       pipeline = $Env:CI_PIPELINE_URL
       timestamp = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
