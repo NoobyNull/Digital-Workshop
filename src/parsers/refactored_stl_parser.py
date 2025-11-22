@@ -198,7 +198,9 @@ class RefactoredSTLParser(RefactoredBaseParser):
             raise
 
     def parse_file(
-        self, file_path: Path, progress_callback: Optional[StreamingProgressCallback] = None
+        self,
+        file_path: Path,
+        progress_callback: Optional[StreamingProgressCallback] = None,
     ) -> Dict[str, Any]:
         """Backward-compatible entry point expected by callers."""
         return self.parse(file_path, progress_callback)  # type: ignore[arg-type]
@@ -209,6 +211,22 @@ class STLParser(RefactoredSTLParser):
 
     def __init__(self) -> None:
         super().__init__()
+
+    def parse_file(
+        self,
+        file_path: Path,
+        progress_callback: Optional[StreamingProgressCallback] = None,
+        *,
+        lazy_loading: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Accept an optional ``lazy_loading`` flag for compatibility with older callers.
+
+        The refactored parser does not currently support lazy loading; the flag is
+        accepted and ignored to preserve call signatures.
+        """
+        _ = lazy_loading  # kept for signature compatibility
+        return super().parse_file(file_path, progress_callback)
 
     def _parse_binary_stl(
         self,
@@ -1330,7 +1348,3 @@ class STLParser(RefactoredSTLParser):
             "author": "Candy-Cadence Development Team",
             "description": "Enhanced STL parser with streaming support, GPU acceleration, and improved error handling",
         }
-
-
-# Alias for backward compatibility
-STLParser = RefactoredSTLParser

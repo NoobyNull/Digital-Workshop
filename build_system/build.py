@@ -22,11 +22,13 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(SCRIPT_DIR / f'build_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
-        logging.StreamHandler()
-    ]
+        logging.FileHandler(
+            SCRIPT_DIR / f'build_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+        ),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -40,8 +42,9 @@ BUILD_CONFIG = {
     "dist_dir": "dist",
     "build_dir": "build",
     "installer_dir": "config",
-    "assets_dir": "resources"
+    "assets_dir": "resources",
 }
+
 
 class ModularBuildManager:
     """Manages modular per-module compilation for Digital Workshop."""
@@ -115,7 +118,7 @@ class ModularBuildManager:
                 "app_name": self.config["app_name"],
                 "version": self.config["version"],
                 "build_date": datetime.now().isoformat(),
-                "modules": {}
+                "modules": {},
             }
 
             # Collect module information
@@ -133,14 +136,14 @@ class ModularBuildManager:
                         "version": self.config["version"],
                         "size_bytes": total_size,
                         "size_mb": round(total_size / (1024 * 1024), 2),
-                        "path": str(module_dir.relative_to(self.project_root))
+                        "path": str(module_dir.relative_to(self.project_root)),
                     }
 
             # Save manifest
             manifest_file = self.modules_dir / "manifest.json"
             manifest_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(manifest_file, 'w') as f:
+            with open(manifest_file, "w") as f:
                 json.dump(manifest, f, indent=2)
 
             logger.info("Manifest generated: %s", manifest_file)
@@ -173,14 +176,14 @@ class ModularBuildManager:
                     # Hash all files in module
                     for file_path in sorted(module_dir.rglob("*")):
                         if file_path.is_file():
-                            with open(file_path, 'rb') as f:
+                            with open(file_path, "rb") as f:
                                 hasher.update(f.read())
 
                     checksums[module] = hasher.hexdigest()
 
             # Save checksums
             checksums_file = self.modules_dir / "checksums.json"
-            with open(checksums_file, 'w') as f:
+            with open(checksums_file, "w") as f:
                 json.dump(checksums, f, indent=2)
 
             logger.info("Checksums generated: %s", checksums_file)
@@ -199,42 +202,51 @@ class BuildManager:
         self.config = config or BUILD_CONFIG
         self.project_root = PROJECT_ROOT
         self.start_time = datetime.now()
-        
+
     def clean_build_dirs(self):
         """Clean previous build directories."""
         logger.info("Cleaning previous build directories...")
-        
+
         dirs_to_clean = [
             self.project_root / self.config["build_dir"],
             self.project_root / self.config["dist_dir"],
         ]
-        
+
         for dir_path in dirs_to_clean:
             if dir_path.exists():
                 logger.info(f"Removing directory: {dir_path}")
                 shutil.rmtree(dir_path)
-    
+
     def check_dependencies(self):
         """Check if required build tools are available."""
         logger.info("Checking build dependencies...")
 
         # Check Python
         python_version = sys.version_info
-        logger.info(f"Python version: {python_version.major}.{python_version.minor}.{python_version.micro}")
+        logger.info(
+            f"Python version: {python_version.major}.{python_version.minor}.{python_version.micro}"
+        )
 
         if python_version < (3, 8):
-            raise RuntimeError("Python 3.8 or higher is required for building Digital Workshop")
+            raise RuntimeError(
+                "Python 3.8 or higher is required for building Digital Workshop"
+            )
 
         # Check PyInstaller
         try:
-            result = subprocess.run([sys.executable, "-m", "PyInstaller", "--version"],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-m", "PyInstaller", "--version"],
+                capture_output=True,
+                text=True,
+            )
             if result.returncode == 0:
                 logger.info(f"PyInstaller version: {result.stdout.strip()}")
             else:
                 raise RuntimeError("PyInstaller not found")
         except Exception as e:
-            logger.error("PyInstaller not found. Please install it with: pip install pyinstaller")
+            logger.error(
+                "PyInstaller not found. Please install it with: pip install pyinstaller"
+            )
             raise
 
         # Check NSIS (optional warning)
@@ -243,11 +255,15 @@ class BuildManager:
             if result.returncode == 0:
                 logger.info("NSIS compiler found")
             else:
-                logger.warning("NSIS compiler not found. Installer creation will be skipped.")
+                logger.warning(
+                    "NSIS compiler not found. Installer creation will be skipped."
+                )
         except FileNotFoundError:
-            logger.warning("NSIS compiler not found. Installer creation will be skipped.")
+            logger.warning(
+                "NSIS compiler not found. Installer creation will be skipped."
+            )
             logger.warning("Please install NSIS from https://nsis.sourceforge.io/")
-    
+
     def create_app_icon(self):
         """Create a placeholder application icon if it doesn't exist.
 
@@ -272,7 +288,12 @@ class BuildManager:
                 # Inner panel to suggest a machine control enclosure
                 panel_margin = 32
                 draw.rectangle(
-                    [panel_margin, panel_margin, size - panel_margin, size - panel_margin],
+                    [
+                        panel_margin,
+                        panel_margin,
+                        size - panel_margin,
+                        size - panel_margin,
+                    ],
                     fill=(15, 23, 42, 255),
                 )
 
@@ -302,55 +323,61 @@ class BuildManager:
                 img.save(
                     icon_path,
                     format="ICO",
-                    sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)],
+                    sizes=[
+                        (256, 256),
+                        (128, 128),
+                        (64, 64),
+                        (48, 48),
+                        (32, 32),
+                        (16, 16),
+                    ],
                 )
                 logger.info(f"Created placeholder icon: {icon_path}")
             except ImportError:
                 logger.warning("PIL not available. Skipping icon creation.")
-                logger.warning("Please create app_icon.ico manually in resources/icons/")
+                logger.warning(
+                    "Please create app_icon.ico manually in resources/icons/"
+                )
             except Exception as e:
                 logger.error(f"Failed to create icon: {e}")
 
     def run_pyinstaller(self):
         """Run PyInstaller to create the executable."""
         logger.info("Running PyInstaller...")
-        
+
         spec_file = self.project_root / self.config["spec_file"]
         if not spec_file.exists():
             raise RuntimeError(f"PyInstaller spec file not found: {spec_file}")
-        
+
         cmd = [sys.executable, "-m", "PyInstaller", str(spec_file), "--clean"]
-        
+
         logger.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.run(cmd, cwd=self.project_root)
-        
+
         if result.returncode != 0:
             raise RuntimeError("PyInstaller build failed")
-        
+
         logger.info("PyInstaller build completed successfully")
-    
+
     def check_installer_assets(self):
         """Check if required installer assets exist."""
         logger.info("Checking installer assets...")
-        
-        required_assets = [
-            "license.txt",
-            "readme.txt"
-        ]
-        
+
+        required_assets = ["license.txt", "readme.txt"]
+
         missing_assets = []
         for asset in required_assets:
             asset_path = self.project_root / self.config["assets_dir"] / asset
             if not asset_path.exists():
                 missing_assets.append(asset)
-        
+
         if missing_assets:
             logger.warning(f"Missing installer assets: {missing_assets}")
             logger.warning("Please create these files in installer/assets/ directory")
             return False
-        
+
         return True
-    
+
     def create_installer(self):
         """Create the Inno Setup installer."""
         logger.info("Creating Inno Setup installer...")
@@ -371,15 +398,21 @@ class BuildManager:
 
         if not iscc_exe:
             try:
-                result = subprocess.run(["where", "ISCC.exe"], capture_output=True, text=True, check=False)
+                result = subprocess.run(
+                    ["where", "ISCC.exe"], capture_output=True, text=True, check=False
+                )
                 if result.returncode == 0:
-                    iscc_exe = result.stdout.strip().split('\n')[0]
+                    iscc_exe = result.stdout.strip().split("\n")[0]
             except Exception:
                 pass
 
         if not iscc_exe:
-            logger.error("Inno Setup compiler (ISCC.exe) not found. Cannot create installer.")
-            logger.info("Please install Inno Setup from: https://jrsoftware.org/isdl.php")
+            logger.error(
+                "Inno Setup compiler (ISCC.exe) not found. Cannot create installer."
+            )
+            logger.info(
+                "Please install Inno Setup from: https://jrsoftware.org/isdl.php"
+            )
             return False
 
         # Check installer assets
@@ -395,7 +428,9 @@ class BuildManager:
         cmd = [iscc_exe, str(installer_script)]
 
         logger.info(f"Running command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, cwd=self.project_root, capture_output=True, text=True
+        )
 
         if result.returncode != 0:
             logger.error("Inno Setup installer creation failed")
@@ -418,15 +453,19 @@ class BuildManager:
 
         logger.info("NSIS installer created successfully")
         return True
-    
+
     def run_tests(self):
         """Run the test suite to ensure quality."""
         logger.info("Running test suite...")
-        
+
         try:
-            result = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-v"], 
-                                  cwd=self.project_root, capture_output=True, text=True)
-            
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", "tests/", "-v"],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+            )
+
             if result.returncode == 0:
                 logger.info("All tests passed")
                 return True
@@ -438,23 +477,23 @@ class BuildManager:
         except Exception as e:
             logger.warning(f"Failed to run tests: {e}")
             return False
-    
+
     def create_build_report(self):
         """Create a build report with summary information."""
         logger.info("Creating build report...")
-        
+
         end_time = datetime.now()
         duration = end_time - self.start_time
-        
+
         report = {
             "build_date": end_time.isoformat(),
             "duration_seconds": duration.total_seconds(),
             "app_name": self.config["app_name"],
             "version": self.config["version"],
             "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-            "success": True
+            "success": True,
         }
-        
+
         # Check if executable was created
         exe_path = (
             self.project_root
@@ -463,45 +502,55 @@ class BuildManager:
             / f"{self.config['app_name']}.exe"
         )
         report["executable_created"] = exe_path.exists()
-        
+
         if exe_path.exists():
             exe_size = exe_path.stat().st_size / (1024 * 1024)  # Size in MB
             report["executable_size_mb"] = round(exe_size, 2)
-        
+
         # Check if installer was created
-        installer_path = self.project_root / self.config["dist_dir"] / f"{self.config['app_name']}-Setup-{self.config['version']}.exe"
+        installer_path = (
+            self.project_root
+            / self.config["dist_dir"]
+            / f"{self.config['app_name']}-Setup-{self.config['version']}.exe"
+        )
         report["installer_created"] = installer_path.exists()
-        
+
         if installer_path.exists():
             installer_size = installer_path.stat().st_size / (1024 * 1024)  # Size in MB
             report["installer_size_mb"] = round(installer_size, 2)
-        
+
         # Save report
         report_path = self.project_root / self.config["dist_dir"] / "build_report.json"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
-        
+
         logger.info(f"Build report saved to: {report_path}")
-        
+
         # Print summary
         logger.info("=" * 50)
         logger.info("BUILD SUMMARY")
         logger.info("=" * 50)
         logger.info(f"Application: {report['app_name']} v{report['version']}")
         logger.info(f"Build duration: {duration.total_seconds():.2f} seconds")
-        logger.info(f"Executable created: {'Yes' if report['executable_created'] else 'No'}")
-        if report['executable_created']:
+        logger.info(
+            f"Executable created: {'Yes' if report['executable_created'] else 'No'}"
+        )
+        if report["executable_created"]:
             logger.info(f"Executable size: {report['executable_size_mb']} MB")
-        logger.info(f"Installer created: {'Yes' if report['installer_created'] else 'No'}")
-        if report['installer_created']:
+        logger.info(
+            f"Installer created: {'Yes' if report['installer_created'] else 'No'}"
+        )
+        if report["installer_created"]:
             logger.info(f"Installer size: {report['installer_size_mb']} MB")
         logger.info("=" * 50)
-        
+
         return report
-    
+
     def build(self, run_tests_flag=False, create_installer_flag=True):
         """Run the complete build process."""
-        logger.info(f"Starting build for {self.config['app_name']} v{self.config['version']}")
+        logger.info(
+            f"Starting build for {self.config['app_name']} v{self.config['version']}"
+        )
 
         try:
             # Clean previous builds
@@ -525,14 +574,16 @@ class BuildManager:
             if create_installer_flag:
                 installer_success = self.create_installer()
                 if not installer_success:
-                    logger.error("Installer creation failed - build will continue but installer will not be available")
+                    logger.error(
+                        "Installer creation failed - build will continue but installer will not be available"
+                    )
 
             # Create build report
             report = self.create_build_report()
 
             logger.info("Build completed successfully!")
             return report
-            
+
         except Exception as e:
             logger.error(f"Build failed: {e}")
             # Create failure report
@@ -541,50 +592,58 @@ class BuildManager:
                 "app_name": self.config["app_name"],
                 "version": self.config["version"],
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
-            
-            report_path = self.project_root / self.config["dist_dir"] / "build_report.json"
+
+            report_path = (
+                self.project_root / self.config["dist_dir"] / "build_report.json"
+            )
             report_path.parent.mkdir(exist_ok=True)
-            with open(report_path, 'w') as f:
+            with open(report_path, "w") as f:
                 json.dump(report, f, indent=2)
-            
+
             raise
+
 
 def main():
     """Main function to run the build script."""
     parser = argparse.ArgumentParser(description="Build Digital Workshop application")
     parser.add_argument("--no-tests", action="store_true", help="Skip running tests")
-    parser.add_argument("--no-installer", action="store_true", help="Skip creating installer")
-    parser.add_argument("--clean-only", action="store_true", help="Only clean build directories")
+    parser.add_argument(
+        "--no-installer", action="store_true", help="Skip creating installer"
+    )
+    parser.add_argument(
+        "--clean-only", action="store_true", help="Only clean build directories"
+    )
     parser.add_argument("--config", help="Path to build configuration file")
-    
+
     args = parser.parse_args()
-    
+
     # Load custom configuration if provided
     config = BUILD_CONFIG
     if args.config:
-        with open(args.config, 'r') as f:
+        with open(args.config, "r") as f:
             config = json.load(f)
-    
+
     # Initialize build manager
     build_manager = BuildManager(config)
-    
+
     # Handle clean-only option
     if args.clean_only:
         build_manager.clean_build_dirs()
         logger.info("Build directories cleaned")
         return
-    
+
     # Run the build process
     try:
         build_manager.build(
             run_tests_flag=not args.no_tests,
-            create_installer_flag=not args.no_installer
+            create_installer_flag=not args.no_installer,
         )
     except Exception as e:
         logger.error(f"Build failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

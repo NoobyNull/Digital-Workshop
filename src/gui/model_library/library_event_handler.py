@@ -551,9 +551,7 @@ class LibraryEventHandler:
                 return
 
             # Load the model
-            from src.parsers.refactored_stl_parser import (
-                RefactoredSTLParser as STLParser,
-            )
+            from src.parsers.stl_parser import STLParser
 
             self.logger.info("Loading model for analysis: %s", file_path)
             parser = STLParser()

@@ -16,7 +16,7 @@ from vtk.util import numpy_support as vtk_np
 from src.core.logging_config import get_logger
 from src.core.view_optimizer import ViewOptimizer
 from src.core.vtk_rendering_engine import VTKRenderingEngine
-from src.parsers.refactored_stl_parser import RefactoredSTLParser as STLParser
+from src.parsers.stl_parser import STLParser
 from src.core.data_structures import Model
 from src.core.material_provider import MaterialProvider
 

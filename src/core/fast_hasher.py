@@ -12,12 +12,13 @@ Performance targets:
 - Files over 500MB: hash in < 5 seconds
 """
 
-import xxhash
 import json
 import time
-from pathlib import Path
-from typing import Optional, Callable, List, Dict
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, List, Optional
+
+import xxhash
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
@@ -94,10 +95,9 @@ class FastHasher:
         """
         if file_size < self.SMALL_FILE_THRESHOLD:
             return self.CHUNK_SIZE_SMALL
-        elif file_size < self.MEDIUM_FILE_THRESHOLD:
+        if file_size < self.MEDIUM_FILE_THRESHOLD:
             return self.CHUNK_SIZE_MEDIUM
-        else:
-            return self.CHUNK_SIZE_LARGE
+        return self.CHUNK_SIZE_LARGE
 
     def hash_file(
         self,
@@ -236,9 +236,9 @@ class FastHasher:
                 success=True,
             )
 
-        except PermissionError as e:
+        except PermissionError as exc:
             error_msg = f"Permission denied: {file_path}"
-            self.logger.error("%s: {e}", error_msg)
+            self.logger.error("%s: %s", error_msg, exc)
             return HashResult(
                 file_path=file_path,
                 hash_value=None,
@@ -248,9 +248,16 @@ class FastHasher:
                 error=error_msg,
             )
 
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            error_msg = f"Failed to hash file: {e}"
-            self.logger.error("Error hashing %s: {e}", file_path, exc_info=True)
+        except (
+            OSError,
+            IOError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
+            error_msg = f"Failed to hash file: {exc}"
+            self.logger.error("Error hashing %s: %s", file_path, exc, exc_info=True)
             return HashResult(
                 file_path=file_path,
                 hash_value=None,

@@ -114,7 +114,9 @@ class MainWindow(QMainWindow):
                 self.ai_service = AIDescriptionService()
                 self.logger.info("AI Description Service initialized (licensed)")
             except Exception as e:
-                self.logger.warning("Failed to initialize AI Description Service: %s", e)
+                self.logger.warning(
+                    "Failed to initialize AI Description Service: %s", e
+                )
                 self.ai_service = None
         else:
             self.logger.info("AI Description Service locked - activation required")
@@ -169,7 +171,9 @@ class MainWindow(QMainWindow):
                 self.layout_controller.restore_window_geometry_from_settings(
                     default_width, default_height
                 )
-                self.layout_controller.log_geometry("Geometry after restore-from-settings")
+                self.layout_controller.log_geometry(
+                    "Geometry after restore-from-settings"
+                )
             else:
                 self.layout_controller.apply_default_window_geometry(
                     default_width, default_height
@@ -399,9 +403,7 @@ class MainWindow(QMainWindow):
 
         # Log the hero tab lineup to help diagnose missing tabs in builds
         try:
-            titles = [
-                self.hero_tabs.tabText(i) for i in range(self.hero_tabs.count())
-            ]
+            titles = [self.hero_tabs.tabText(i) for i in range(self.hero_tabs.count())]
             self.logger.info("Hero tabs initialized: %s", titles)
         except Exception:
             self.logger.debug("Failed to list hero tabs during setup", exc_info=True)
@@ -1093,8 +1095,12 @@ class MainWindow(QMainWindow):
                 # CRITICAL FIX: Defer BOTH geometry and dock layout restoration to next event loop
                 # This ensures the window is fully visible before we try to restore its state
                 # Use 0ms delay to minimize visible flash while still deferring to event loop
-                QTimer.singleShot(0, self.layout_controller.deferred_geometry_restoration)
-                QTimer.singleShot(0, self.layout_controller.deferred_dock_layout_restoration)
+                QTimer.singleShot(
+                    0, self.layout_controller.deferred_geometry_restoration
+                )
+                QTimer.singleShot(
+                    0, self.layout_controller.deferred_dock_layout_restoration
+                )
             else:
                 self.logger.debug("Window show event (not first show)")
 
@@ -1550,7 +1556,9 @@ class MainWindow(QMainWindow):
                     f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}"
                 )
             else:
-                self.logger.warning("AI service not available or locked, skipping reload")
+                self.logger.warning(
+                    "AI service not available or locked, skipping reload"
+                )
 
             self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
@@ -1684,12 +1692,18 @@ class MainWindow(QMainWindow):
         if dlg.exec() == dlg.Accepted:
             if self.license_manager.is_ai_unlocked() and self.ai_service is None:
                 try:
-                    from src.gui.services.ai_description_service import AIDescriptionService
+                    from src.gui.services.ai_description_service import (
+                        AIDescriptionService,
+                    )
 
                     self.ai_service = AIDescriptionService()
-                    self.logger.info("AI Description Service initialized after activation")
+                    self.logger.info(
+                        "AI Description Service initialized after activation"
+                    )
                 except Exception as e:
-                    self.logger.warning("Failed to initialize AI Description Service: %s", e)
+                    self.logger.warning(
+                        "Failed to initialize AI Description Service: %s", e
+                    )
 
     def _generate_library_screenshots(self) -> None:
         """Generate thumbnails for all models in the library with applied materials."""

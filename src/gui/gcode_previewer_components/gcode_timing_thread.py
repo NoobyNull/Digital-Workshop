@@ -44,10 +44,14 @@ class GcodeTimingThread(BaseWorker):
                 accel_mm_s2=self.accel_mm_s2,
                 feed_override_pct=self.feed_override_pct,
             )
+            result: Dict[str, float]
             if isinstance(timing, dict):
-                self.finished.emit(timing)
+                result = timing
+            elif hasattr(timing, "_asdict"):
+                result = timing._asdict()  # type: ignore[assignment]
             else:
-                self.finished.emit(timing._asdict())  # type: ignore[attr-defined]
+                result = dict(timing)
+            self.finished.emit(result)
         except Exception as exc:  # pragma: no cover - defensive
             self.logger.error("G-code timing failed: %s", exc, exc_info=True)
             self.error_occurred.emit(str(exc))

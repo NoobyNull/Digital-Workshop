@@ -471,7 +471,7 @@ class STLGPUParser(BaseParser):
         self.logger.warning("Using CPU fallback for STL parsing")
 
         # Import and use refactored parser inside the fallback to avoid hard dependency here
-        from src.parsers.refactored_stl_parser import RefactoredSTLParser as STLParser
+        from src.parsers.stl_parser import STLParser
 
         original_parser = STLParser()
         if hasattr(original_parser, "parse_file"):
@@ -505,9 +505,7 @@ class STLGPUParser(BaseParser):
 
         # ASCII fallback to original parser
         self.logger.info("ASCII STL detected, using CPU parser")
-        from src.parsers.refactored_stl_parser import (
-            RefactoredSTLParser as STLParser,
-        )
+        from src.parsers.stl_parser import STLParser
 
         original_parser = STLParser()
         if hasattr(original_parser, "parse_file"):

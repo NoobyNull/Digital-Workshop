@@ -135,7 +135,10 @@ class ProjectEventsController:
 
         # Clear library model context and load directly from path
         self.main.current_model_id = None
-        if hasattr(self.main, "model_loader_manager") and self.main.model_loader_manager:
+        if (
+            hasattr(self.main, "model_loader_manager")
+            and self.main.model_loader_manager
+        ):
             self.main.model_loader_manager.load_stl_model(str(path_obj))
 
     def _load_gcode_file(self, path_obj: Path) -> None:

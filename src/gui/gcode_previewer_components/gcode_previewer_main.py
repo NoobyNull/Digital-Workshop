@@ -74,48 +74,6 @@ class GcodeToolsPanelContainer(QWidget):
             self._tools_widget if visible else self._empty_widget
         )
 
-    """Background worker that computes aggregate timing for a set of moves.
-
-    This runs a single pass of ``analyze_gcode_moves`` off the GUI thread and
-    returns the aggregated metrics as a plain dictionary.
-    """
-
-    finished = Signal(dict)
-    error_occurred = Signal(str)
-
-    def __init__(
-        self,
-        moves: list,
-        *,
-        max_feed_mm_min: float,
-        accel_mm_s2: float,
-        feed_override_pct: float,
-        parent: Optional[QWidget] = None,
-    ) -> None:
-        super().__init__(parent)
-        # Copy the moves list so that subsequent UI actions (such as clearing
-        # or reloading) do not race with the timing computation.
-        self._moves = list(moves)
-        self._max_feed_mm_min = float(max_feed_mm_min)
-        self._accel_mm_s2 = float(accel_mm_s2)
-        self._feed_override_pct = float(feed_override_pct)
-        self._logger = get_logger(__name__)
-
-    def run(self) -> None:  # pragma: no cover - UI thread helper
-        try:
-            timing = analyze_gcode_moves(
-                self._moves,
-                max_feed_mm_min=self._max_feed_mm_min,
-                accel_mm_s2=self._accel_mm_s2,
-                feed_override_pct=self._feed_override_pct,
-            )
-            self.finished.emit(timing)
-        except (ValueError, ZeroDivisionError, OverflowError, TypeError) as exc:
-            # Numerical or data-related issues in timing analysis: log and report
-            # to the UI so the user can adjust machine parameters or toolpath.
-            self._logger.warning("Timing computation failed: %s", exc)
-            self.error_occurred.emit(str(exc))
-
 
 class GcodePreviewerWidget(QWidget):
     """Main widget for G-code preview and visualization."""

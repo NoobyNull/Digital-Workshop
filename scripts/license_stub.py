@@ -73,7 +73,9 @@ class LicenseWorker(QThread):
 
     def run(self) -> None:
         try:
-            status, data = post_license(self.endpoint, {"key": self.key, "system_id": self.system_id})
+            status, data = post_license(
+                self.endpoint, {"key": self.key, "system_id": self.system_id}
+            )
             msg = ""
         except Exception as exc:
             status, data, msg = -1, {}, str(exc)
@@ -102,7 +104,9 @@ class LicenseStubDialog(QDialog):
         layout.addWidget(self.key_edit, 1, 1, 1, 2)
 
         layout.addWidget(QLabel("Endpoint:"), 2, 0)
-        self.endpoint_edit = QLineEdit(os.getenv("DW_LICENSE_ENDPOINT", "https://reg.yax.family/api/verify"))
+        self.endpoint_edit = QLineEdit(
+            os.getenv("DW_LICENSE_ENDPOINT", "https://reg.yax.family/api/verify")
+        )
         layout.addWidget(self.endpoint_edit, 2, 1, 1, 2)
 
         self.simulate_btn = QPushButton("Simulate (local)")
@@ -163,7 +167,9 @@ class LicenseStubDialog(QDialog):
         token = data.get("token") or data.get("license_token")
         proof = data.get("proof")
         if token:
-            expected = compute_proof(self.system_id, self.key_edit.text().strip(), token)
+            expected = compute_proof(
+                self.system_id, self.key_edit.text().strip(), token
+            )
             self._append_output(f"Expected proof for returned token: {expected}")
             if proof:
                 self._append_output(f"Matches server proof: {proof == expected}")

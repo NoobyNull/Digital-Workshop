@@ -41,7 +41,9 @@ def run_git(
     if DRY_RUN and mutating:
         print(f"[dry-run] git {' '.join(args)}")
         # Return a successful stub so callers can continue
-        return subprocess.CompletedProcess(args=["git", *args], returncode=0, stdout="", stderr="")
+        return subprocess.CompletedProcess(
+            args=["git", *args], returncode=0, stdout="", stderr=""
+        )
 
     result = subprocess.run(
         ["git", *args],
@@ -50,19 +52,27 @@ def run_git(
         capture_output=True,
     )
     if check and result.returncode != 0:
-        raise ReleaseError(f"git {' '.join(args)} failed: {result.stderr.strip() or result.stdout.strip()}")
+        raise ReleaseError(
+            f"git {' '.join(args)} failed: {result.stderr.strip() or result.stdout.strip()}"
+        )
     return result
 
 
 def ensure_clean_working_tree() -> None:
     """Abort if there are local modifications."""
-    status = run_git(["status", "--porcelain"], check=True, mutating=False).stdout.strip()
+    status = run_git(
+        ["status", "--porcelain"], check=True, mutating=False
+    ).stdout.strip()
     if status:
-        raise ReleaseError("Working tree has uncommitted changes. Commit or stash before running the release.")
+        raise ReleaseError(
+            "Working tree has uncommitted changes. Commit or stash before running the release."
+        )
 
 
 def get_current_branch() -> str:
-    return run_git(["branch", "--show-current"], check=True, mutating=False).stdout.strip()
+    return run_git(
+        ["branch", "--show-current"], check=True, mutating=False
+    ).stdout.strip()
 
 
 def fetch_all() -> None:
@@ -132,7 +142,9 @@ def build_changelog(base: Optional[str], head: str) -> Tuple[str, str]:
 def create_tag(tag_name: str, message: str) -> None:
     existing = run_git(["tag", "-l", tag_name], check=False).stdout.strip()
     if existing:
-        raise ReleaseError(f"Tag {tag_name} already exists. Choose a new version or delete the tag first.")
+        raise ReleaseError(
+            f"Tag {tag_name} already exists. Choose a new version or delete the tag first."
+        )
     run_git(["tag", "-a", tag_name, "-m", message], check=True)
 
 
@@ -191,11 +203,17 @@ def main() -> int:
             raise merge_error
 
         version = read_version(args.version)
-        tag_name = f"{args.tag_prefix}{version}" if not version.startswith(args.tag_prefix) else version
+        tag_name = (
+            f"{args.tag_prefix}{version}"
+            if not version.startswith(args.tag_prefix)
+            else version
+        )
         last_tag = get_last_tag(args.tag_prefix)
         range_used, changelog = build_changelog(last_tag, args.target_branch)
 
-        tag_message = f"Release {tag_name}\n\nRange: {range_used}\n\nChanges:\n{changelog}"
+        tag_message = (
+            f"Release {tag_name}\n\nRange: {range_used}\n\nChanges:\n{changelog}"
+        )
 
         print(f"Creating annotated tag {tag_name} from {args.target_branch}...")
         create_tag(tag_name, tag_message)

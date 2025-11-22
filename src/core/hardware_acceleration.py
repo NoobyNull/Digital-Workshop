@@ -101,7 +101,9 @@ class HardwareAccelerationManager:
         caps.recommended_backend = self._select_backend(caps)
         if not caps.available_backends:
             # No GPU-capable backend detected at all; treat as fatal so callers can abort startup.
-            raise RuntimeError("No hardware acceleration backends detected (CUDA/OpenCL/OpenGL)")
+            raise RuntimeError(
+                "No hardware acceleration backends detected (CUDA/OpenCL/OpenGL)"
+            )
         self._caps = caps
         self.logger.info(
             f"Hardware detection complete. Recommended backend: {caps.recommended_backend.value}"
@@ -130,6 +132,7 @@ class HardwareAccelerationManager:
                     capture_output=True,
                     text=True,
                     timeout=NVIDIA_SMI_TIMEOUT,
+                    check=False,
                 )
                 if res.returncode == 0:
                     for idx, line in enumerate(
@@ -161,9 +164,7 @@ class HardwareAccelerationManager:
                         f"nvidia-smi returned non-zero exit code {res.returncode}"
                     )
             except subprocess.TimeoutExpired as e:
-                msg = (
-                    f"nvidia-smi timed out after {e.timeout}s; CUDA capability cannot be confirmed"
-                )
+                msg = f"nvidia-smi timed out after {e.timeout}s; CUDA capability cannot be confirmed"
                 notes.append(msg)
                 self.logger.warning(msg)
             except (

@@ -85,9 +85,7 @@ class ImportWorker(BaseWorker):
         self.thumbnail_service = (
             ImportThumbnailService() if self.generate_thumbnails else None
         )
-        self.analysis_service = (
-            ImportAnalysisService() if self.run_analysis else None
-        )
+        self.analysis_service = ImportAnalysisService() if self.run_analysis else None
 
     def run(self) -> None:
         """Execute the import process."""

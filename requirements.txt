@@ -21,7 +21,7 @@ numpy>=1.24.0
 
 # Required: Image processing for MTL texture loading
 Pillow>=10.0.0
-opencv-python>=4.7.0,<4.8.0
+opencv-python>=4.8.1.78,<4.9.0
 numpy>=1.24.0,<2.0.0
 beautifulsoup4>=4.12.0
 

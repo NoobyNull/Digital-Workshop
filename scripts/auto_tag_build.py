@@ -21,7 +21,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_SYSTEM = REPO_ROOT / "build_system"
 
 
-def run(cmd: List[str], cwd: Optional[Path] = None, check: bool = True) -> subprocess.CompletedProcess:
+def run(
+    cmd: List[str], cwd: Optional[Path] = None, check: bool = True
+) -> subprocess.CompletedProcess:
     print(f"[RUN] {' '.join(cmd)}")
     return subprocess.run(cmd, cwd=cwd, check=check, text=True)
 
@@ -29,7 +31,9 @@ def run(cmd: List[str], cwd: Optional[Path] = None, check: bool = True) -> subpr
 def get_next_tag(prefix: str = "V") -> str:
     """Compute next tag like V0001, V0002 based on existing tags."""
     try:
-        result = run(["git", "tag", "--list", f"{prefix}[0-9][0-9][0-9][0-9]"], check=False)
+        result = run(
+            ["git", "tag", "--list", f"{prefix}[0-9][0-9][0-9][0-9]"], check=False
+        )
         tags = [t.strip() for t in result.stdout.splitlines() if t.strip()]
     except Exception:
         tags = []

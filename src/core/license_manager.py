@@ -8,21 +8,18 @@ locally via QSettings. Only intended to guard hosted AI functionality.
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import platform
 import socket
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import requests
 from PySide6.QtCore import QSettings
 
 
-DEFAULT_ENDPOINT = os.getenv(
-    "DW_LICENSE_ENDPOINT", "https://reg.yax.family/api/verify"
-)
+DEFAULT_ENDPOINT = os.getenv("DW_LICENSE_ENDPOINT", "https://reg.yax.family/api/verify")
 
 
 def _compute_system_id() -> str:
@@ -161,7 +158,9 @@ class LicenseManager:
         if self.logger:
             self.logger.info("License state updated: %s", status)
 
-    def _verify_proof(self, key: str, token: Optional[str], proof: Optional[str]) -> bool:
+    def _verify_proof(
+        self, key: str, token: Optional[str], proof: Optional[str]
+    ) -> bool:
         """
         Verify server response using a double-salt (system_id + key) hash.
 

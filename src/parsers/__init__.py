@@ -15,8 +15,13 @@ from .base_parser import (
     ParseError,
     ProgressCallback,
 )
-from .refactored_stl_parser import RefactoredSTLParser as STLParser
-from .stl_components.stl_models import STLFormat, STLModel, STLParseError, STLProgressCallback
+from .stl_parser import STLParser, RefactoredSTLParser
+from .stl_components.stl_models import (
+    STLFormat,
+    STLModel,
+    STLParseError,
+    STLProgressCallback,
+)
 from .obj_parser import OBJParser, OBJMaterial, OBJFace
 from .threemf_parser import (
     ThreeMFParser,
@@ -39,6 +44,7 @@ __all__ = [
     "ProgressCallback",
     # STL parser
     "STLParser",
+    "RefactoredSTLParser",
     "STLFormat",
     "STLModel",
     "STLParseError",

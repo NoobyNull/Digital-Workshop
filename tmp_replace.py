@@ -1,5 +1,6 @@
 from pathlib import Path
-path = Path('src/gui/CLO/cut_list_optimizer_widget.py')
+
+path = Path("src/gui/CLO/cut_list_optimizer_widget.py")
 text = path.read_text()
 old = """
 # Add + button (column 6)
@@ -36,6 +37,6 @@ new = """
         self.ui_refs["pieces_table"].setCellWidget(row, 8, add_container)
 """
 if old not in text:
-    raise SystemExit('old add button block not found')
+    raise SystemExit("old add button block not found")
 text = text.replace(old, new, 1)
 path.write_text(text)

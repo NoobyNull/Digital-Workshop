@@ -34,7 +34,9 @@ class UIEventsController:
         dlg.viewer_settings_changed.connect(self.on_viewer_settings_changed)
         dlg.ai_settings_changed.connect(self.on_ai_settings_changed)
         if hasattr(dlg, "general_settings_changed"):
-            dlg.general_settings_changed.connect(self.main._on_workspace_settings_changed)
+            dlg.general_settings_changed.connect(
+                self.main._on_workspace_settings_changed
+            )
         dlg.exec_()
 
     def on_theme_changed(self) -> None:
@@ -58,18 +60,6 @@ class UIEventsController:
             except Exception as viewer_err:
                 self.logger.error(
                     "Failed to reload viewer settings: %s", viewer_err, exc_info=True
-                )
-
-            try:
-                from src.gui.services.enhanced_viewer_service import EnhancedViewerService
-
-                EnhancedViewerService.get_instance().reload_settings()
-                self.logger.info("Enhanced viewer service settings reloaded")
-            except Exception as service_err:
-                self.logger.warning(
-                    "Failed to reload enhanced viewer service: %s",
-                    service_err,
-                    exc_info=True,
                 )
 
             try:
@@ -135,7 +125,9 @@ class UIEventsController:
             service = ThemeService.instance()
             current_theme, _ = service.get_current_theme()
             themes = ["light", "dark", "auto"]
-            current_index = themes.index(current_theme) if current_theme in themes else 0
+            current_index = (
+                themes.index(current_theme) if current_theme in themes else 0
+            )
             next_theme = themes[(current_index + 1) % len(themes)]
             service.apply_theme(next_theme, "qt-material")
             theme_names = {"light": "Light", "dark": "Dark", "auto": "System"}
@@ -144,7 +136,9 @@ class UIEventsController:
             if callable(updater):
                 updater()
             if self.logger:
-                self.logger.info("Cycled theme from %s to %s", current_theme, next_theme)
+                self.logger.info(
+                    "Cycled theme from %s to %s", current_theme, next_theme
+                )
         except Exception as exc:
             if self.logger:
                 self.logger.error("Failed to cycle theme: %s", exc)
@@ -161,7 +155,9 @@ class UIEventsController:
         except Exception as exc:
             if self.logger:
                 self.logger.error("Error showing help dialog: %s", exc)
-            QMessageBox.warning(self.main, "Help Error", f"Could not open help system: {exc}")
+            QMessageBox.warning(
+                self.main, "Help Error", f"Could not open help system: {exc}"
+            )
 
     # Screenshots / thumbnails ---------------------------------------------
     def on_screenshot_progress(self, current: int, total: int) -> None:
@@ -188,7 +184,9 @@ class UIEventsController:
                 )
         except Exception as exc:
             if self.logger:
-                self.logger.warning("Failed to handle screenshot generated event: %s", exc)
+                self.logger.warning(
+                    "Failed to handle screenshot generated event: %s", exc
+                )
 
     def on_screenshot_error(self, error_message: str) -> None:
         """Handle screenshot generation error."""
@@ -209,7 +207,10 @@ class UIEventsController:
             if hasattr(self.main, "status_label"):
                 self.main.status_label.setText("Screenshots generated successfully")
 
-            if hasattr(self.main, "model_library_widget") and self.main.model_library_widget:
+            if (
+                hasattr(self.main, "model_library_widget")
+                and self.main.model_library_widget
+            ):
                 self.main.model_library_widget.refresh_models_from_database()
 
             QMessageBox.information(
@@ -224,18 +225,25 @@ class UIEventsController:
             QTimer.singleShot(3000, lambda: self._set_status("Ready"))
         except Exception as exc:
             if self.logger:
-                self.logger.error("Failed to handle screenshots finished event: %s", exc)
+                self.logger.error(
+                    "Failed to handle screenshots finished event: %s", exc
+                )
 
     def on_library_thumbnails_completed(self) -> None:
         """Handle library thumbnail generation completion."""
         try:
-            if hasattr(self.main, "model_library_widget") and self.main.model_library_widget:
+            if (
+                hasattr(self.main, "model_library_widget")
+                and self.main.model_library_widget
+            ):
                 self.main.model_library_widget.refresh_models_from_database()
             if self.logger:
                 self.logger.info("Library thumbnail generation completed")
         except Exception as exc:
             if self.logger:
-                self.logger.error("Failed to handle library thumbnails completion: %s", exc)
+                self.logger.error(
+                    "Failed to handle library thumbnails completion: %s", exc
+                )
 
     # ----------------------------------------------------------------------
     def _set_status(self, text: str, clear_after_ms: Optional[int] = None) -> None:

@@ -72,7 +72,6 @@ from src.gui.workers.base_worker import BaseWorker
 # Import modular pipeline
 from src.core.import_pipeline import (
     create_pipeline,
-    ImportStage,
     ImportTask,
     PipelineProgress,
     PipelineResult,

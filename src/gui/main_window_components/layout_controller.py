@@ -666,7 +666,9 @@ class LayoutController:
             self.apply_default_window_geometry(default_width, default_height)
         except Exception as exc:
             if self.logger:
-                self.logger.warning("Failed to apply default geometry after show: %s", exc)
+                self.logger.warning(
+                    "Failed to apply default geometry after show: %s", exc
+                )
 
     def deferred_dock_layout_restoration(self) -> None:
         """Restore dock layout after the window is shown to avoid repaint issues."""
@@ -674,7 +676,9 @@ class LayoutController:
 
         try:
             if self.logger:
-                self.logger.debug("Starting deferred dock layout restoration after show")
+                self.logger.debug(
+                    "Starting deferred dock layout restoration after show"
+                )
 
             settings = QSettings()
             dock_state = settings.value("window_state", None) or settings.value(

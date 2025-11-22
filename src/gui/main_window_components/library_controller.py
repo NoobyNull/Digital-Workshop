@@ -16,7 +16,7 @@ from src.core.data_structures import ModelFormat
 from src.core.model_cache import CacheLevel, get_model_cache
 from src.parsers.format_detector import FormatDetector
 from src.parsers.obj_parser import OBJParser
-from src.parsers.refactored_stl_parser import RefactoredSTLParser as STLParser
+from src.parsers.stl_parser import STLParser
 from src.parsers.step_parser import STEPParser
 from src.parsers.threemf_parser import ThreeMFParser
 
@@ -39,7 +39,9 @@ class LibraryController:
                 else:
                     library.refresh_models_from_database()
                 if self.logger:
-                    self.logger.debug("Model library refreshed for model ID: %d", model_id)
+                    self.logger.debug(
+                        "Model library refreshed for model ID: %d", model_id
+                    )
         except Exception as exc:
             if self.logger:
                 self.logger.error(
@@ -101,7 +103,9 @@ class LibraryController:
             editor = getattr(self.main, "metadata_editor", None)
             if not editor:
                 if self.logger:
-                    self.logger.debug("Metadata editor not available for model %s", model_id)
+                    self.logger.debug(
+                        "Metadata editor not available for model %s", model_id
+                    )
                 return
 
             editor.load_model_metadata(model_id)
@@ -151,7 +155,9 @@ class LibraryController:
             elif fmt == ModelFormat.STEP:
                 parser = STEPParser()
             else:
-                QMessageBox.warning(self.main, "Error", f"Unsupported model format: {fmt}")
+                QMessageBox.warning(
+                    self.main, "Error", f"Unsupported model format: {fmt}"
+                )
                 return
 
             model_cache = get_model_cache()

@@ -264,7 +264,9 @@ class MenuManager:
 
         # License / Activation
         license_action = QAction("Activate &AI Service...", self.main_window)
-        license_action.setStatusTip("Enter license key to enable hosted AI descriptions")
+        license_action.setStatusTip(
+            "Enter license key to enable hosted AI descriptions"
+        )
         license_action.setIcon(_std_icon(QStyle.SP_DialogYesButton))
         license_action.triggered.connect(self._call("show_license_dialog"))
         help_menu.addAction(license_action)
