@@ -1,0 +1,345 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.11"
+  BASE_VERSION_FALLBACK: "0.1.6"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Black (informational)
+        continue-on-error: true
+        run: |
+          mkdir -p quality
+          black --check . 2>&1 | tee quality/black.txt
+
+      - name: Pylint (informational)
+        continue-on-error: true
+        run: |
+          mkdir -p quality
+          pylint src 2>&1 | tee quality/pylint.txt
+
+      - name: Dependency health (informational)
+        continue-on-error: true
+        run: |
+          mkdir -p quality
+          pip list --outdated > quality/outdated.txt
+          pip check > quality/pip-check.txt
+
+      - name: Upload quality reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-${{ github.run_id }}
+          path: quality
+          if-no-files-found: warn
+
+  vulnerabilities:
+    runs-on: ubuntu-latest
+    outputs:
+      has_vulns: ${{ steps.audit.outputs.has_vulns }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install audit tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pip install pip-audit
+
+      - name: Run pip-audit (report only on develop)
+        id: audit
+        shell: bash
+        run: |
+          mkdir -p reports
+          set +e
+          pip-audit -r requirements.txt -r requirements-dev.txt -f json -o reports/pip-audit.json
+          STATUS=$?
+          if [ "$STATUS" -eq 0 ]; then
+            echo "has_vulns=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vulns=true" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerabilities-${{ github.run_id }}
+          path: reports
+          if-no-files-found: warn
+
+  smoke:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          python - <<'PY'
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path("src").resolve()))
+
+from src.core.installation_detector import get_installation_type
+from src.core.path_manager import (
+    ensure_directories_exist,
+    get_cache_directory,
+    get_data_directory,
+    get_log_directory,
+)
+
+ensure_directories_exist()
+required = [
+    Path(get_cache_directory()),
+    Path(get_data_directory()),
+    Path(get_log_directory()),
+]
+missing = [str(p) for p in required if not p.exists()]
+if missing:
+    raise SystemExit(f"Smoke failed: missing expected directories {missing}")
+
+print(f"Smoke OK: install_type={get_installation_type()}, dirs ready.")
+PY
+
+  build:
+    runs-on: windows-latest
+    needs:
+      - smoke
+      - vulnerabilities
+    if: ${{ needs.smoke.result == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Enforce vulnerability gate (main only)
+        if: ${{ github.ref == 'refs/heads/main' && needs.vulnerabilities.outputs.has_vulns == 'true' }}
+        shell: pwsh
+        run: |
+          Write-Host "Vulnerabilities detected; blocking release build."
+          exit 1
+
+      - name: Compute version and build numbers
+        id: versioning
+        shell: pwsh
+        run: |
+          $pattern = '^V-(?<ver>\d+\.\d+\.\d+)-B(?<build>\d+)$'
+          $tags = git tag --list "V-*-B*" | Sort-Object -Descending
+          $baseVersion = "${{ env.BASE_VERSION_FALLBACK }}"
+          $pyVersion = python - <<'PY'
+from src.core.version_manager import VersionManager
+print(VersionManager().get_base_version())
+PY
+          if ($LASTEXITCODE -eq 0 -and $pyVersion.Trim()) {
+            $baseVersion = $pyVersion.Trim()
+          }
+          $buildNumber = 0
+          foreach ($t in $tags) {
+            if ($t -match $pattern) {
+              $baseVersion = $Matches['ver']
+              $buildNumber = [int]$Matches['build']
+              break
+            }
+          }
+          $isRelease = "${{ github.ref }}" -eq "refs/heads/main"
+          if ($isRelease) {
+            $effectiveBuild = $buildNumber + 1
+          } else {
+            $effectiveBuild = $buildNumber
+          }
+          $buildToken = "B{0:D5}" -f $effectiveBuild
+          $tagName = "V-$baseVersion-$buildToken"
+          $artifactSuffix = if ($isRelease) { $buildToken } else { "$buildToken-dev" }
+          echo "BASE_VERSION=$baseVersion" >> $env:GITHUB_ENV
+          echo "EFFECTIVE_BUILD=$effectiveBuild" >> $env:GITHUB_ENV
+          echo "BUILD_TOKEN=$buildToken" >> $env:GITHUB_ENV
+          echo "TAG_NAME=$tagName" >> $env:GITHUB_ENV
+          echo "ARTIFACT_SUFFIX=$artifactSuffix" >> $env:GITHUB_ENV
+          echo "IS_RELEASE=$isRelease" >> $env:GITHUB_ENV
+
+      - name: Build (onedir + onefile)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path build_logs -Force | Out-Null
+          python build_system/build_exe.py --mode both 2>&1 | Tee-Object build_logs/build_exe.log
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          pwsh build_system/make_installers.ps1 -SkipBuild -DistDir dist -AppName "Digital Workshop" 2>&1 | Tee-Object build_logs/installer.log
+
+      - name: Prepare artifacts
+        shell: pwsh
+        run: |
+          $tag = $env:TAG_NAME
+          $onefileSrc = "dist/Digital Workshop.exe"
+          $onefileDest = "dist/Digital-Workshop_$tag.exe"
+          if (Test-Path $onefileSrc) {
+            Move-Item -Path $onefileSrc -Destination $onefileDest -Force
+          }
+
+          $onedirSrc = "dist/Digital Workshop"
+          $onedirZip = "dist/Digital-Workshop_${tag}_onedir.zip"
+          if (Test-Path $onedirSrc) {
+            if (Test-Path $onedirZip) { Remove-Item $onedirZip -Force }
+            Compress-Archive -Path "$onedirSrc/*" -DestinationPath $onedirZip -Force
+          }
+
+          $portableSrc = "dist/Digital Workshop-portable"
+          $portableZip = "dist/Digital-Workshop_${tag}_portable.zip"
+          if (Test-Path $portableSrc) {
+            if (Test-Path $portableZip) { Remove-Item $portableZip -Force }
+            Compress-Archive -Path "$portableSrc/*" -DestinationPath $portableZip -Force
+          }
+
+          $installerSrc = "dist/Digital Workshop-Setup.exe"
+          $installerDest = "dist/Digital-Workshop_${tag}_Setup.exe"
+          if (Test-Path $installerSrc) {
+            Move-Item -Path $installerSrc -Destination $installerDest -Force
+          }
+
+          $latestDir = "dist/latest"
+          New-Item -ItemType Directory -Path $latestDir -Force | Out-Null
+          if (Test-Path $onefileDest) {
+            Copy-Item $onefileDest "$latestDir/Digital-Workshop_latest.exe" -Force
+          }
+          if (Test-Path $onedirZip) {
+            Copy-Item $onedirZip "$latestDir/Digital-Workshop_latest_onedir.zip" -Force
+          }
+          if (Test-Path $portableZip) {
+            Copy-Item $portableZip "$latestDir/Digital-Workshop_latest_portable.zip" -Force
+          }
+          if (Test-Path $installerDest) {
+            Copy-Item $installerDest "$latestDir/Digital-Workshop_latest_Setup.exe" -Force
+          }
+
+      - name: Upload build artifacts (versioned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ env.TAG_NAME }}
+          path: |
+            dist/Digital-Workshop_${{ env.TAG_NAME }}*.exe
+            dist/Digital-Workshop_${{ env.TAG_NAME }}*.zip
+          if-no-files-found: error
+
+      - name: Upload latest aliases
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest
+          path: dist/latest/*
+          if-no-files-found: error
+
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_id }}
+          path: build_logs
+          if-no-files-found: warn
+
+      - name: Tag release (main only)
+        if: env.IS_RELEASE == 'True'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a $env:TAG_NAME -m "Release $env:TAG_NAME"
+          git push origin $env:TAG_NAME
+
+      - name: Cleanup on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force dist,build -ErrorAction SilentlyContinue

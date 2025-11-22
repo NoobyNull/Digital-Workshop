@@ -91,6 +91,8 @@ ehthumbs.db
 *.code-workspace
 .DS_Store
 Icon?
+.git/hooks/pre-push
+scripts/prepush_check.py
 
 # -------------------------------------------------------------------
 # Tool-specific scratch space
