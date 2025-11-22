@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.logging_config import get_logger, get_activity_logger
+from src.core.license_manager import LicenseManager
 from src.core.database_manager import get_database_manager
 from src.gui.main_window_components.thumbnail_backfill_controller import (
     ThumbnailBackfillController,
@@ -75,6 +76,7 @@ class MainWindow(QMainWindow):
         self.logger = get_logger(__name__)
         self.controller = MainWindowController()
         self.activity_logger = get_activity_logger(__name__)
+        self.license_manager = LicenseManager(self.logger)
         self.thumb_backfill_controller = ThumbnailBackfillController(self)
         self.layout_controller = LayoutController(self)
         self.logger.info("Initializing main window")
@@ -103,15 +105,19 @@ class MainWindow(QMainWindow):
         self.project_events_controller: Optional["ProjectEventsController"] = None
         self.ui_events_controller: Optional["UIEventsController"] = None
 
-        # Initialize AI Description Service
-        try:
-            from src.gui.services.ai_description_service import AIDescriptionService
+        # Initialize AI Description Service (gated by license)
+        self.ai_service = None
+        if self.license_manager.is_ai_unlocked():
+            try:
+                from src.gui.services.ai_description_service import AIDescriptionService
 
-            self.ai_service = AIDescriptionService()
-            self.logger.info("AI Description Service initialized")
-        except Exception as e:
-            self.logger.warning("Failed to initialize AI Description Service: %s", e)
-            self.ai_service = None
+                self.ai_service = AIDescriptionService()
+                self.logger.info("AI Description Service initialized (licensed)")
+            except Exception as e:
+                self.logger.warning("Failed to initialize AI Description Service: %s", e)
+                self.ai_service = None
+        else:
+            self.logger.info("AI Description Service locked - activation required")
 
         # Hide window during initialization to prevent blinking
         self.hide()
@@ -390,6 +396,15 @@ class MainWindow(QMainWindow):
 
         # Ensure sidebars reflect the active tab after startup
         self._sync_sidebars_with_active_tab()
+
+        # Log the hero tab lineup to help diagnose missing tabs in builds
+        try:
+            titles = [
+                self.hero_tabs.tabText(i) for i in range(self.hero_tabs.count())
+            ]
+            self.logger.info("Hero tabs initialized: %s", titles)
+        except Exception:
+            self.logger.debug("Failed to list hero tabs during setup", exc_info=True)
 
         self.logger.info("Native central widget setup completed - Qt handling layout")
 
@@ -1535,7 +1550,7 @@ class MainWindow(QMainWindow):
                     f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}"
                 )
             else:
-                self.logger.warning("AI service not available, skipping reload")
+                self.logger.warning("AI service not available or locked, skipping reload")
 
             self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as e:
@@ -1656,6 +1671,25 @@ class MainWindow(QMainWindow):
     def _show_about(self) -> None:
         """Show about dialog."""
         self.actions_controller.show_about()
+
+    def show_license_dialog(self) -> None:
+        """Show license activation dialog for AI service."""
+        try:
+            from src.gui.dialogs.license_dialog import LicenseDialog
+        except Exception as exc:
+            self.logger.error("Failed to load license dialog: %s", exc)
+            return
+
+        dlg = LicenseDialog(self.license_manager, self)
+        if dlg.exec() == dlg.Accepted:
+            if self.license_manager.is_ai_unlocked() and self.ai_service is None:
+                try:
+                    from src.gui.services.ai_description_service import AIDescriptionService
+
+                    self.ai_service = AIDescriptionService()
+                    self.logger.info("AI Description Service initialized after activation")
+                except Exception as e:
+                    self.logger.warning("Failed to initialize AI Description Service: %s", e)
 
     def _generate_library_screenshots(self) -> None:
         """Generate thumbnails for all models in the library with applied materials."""

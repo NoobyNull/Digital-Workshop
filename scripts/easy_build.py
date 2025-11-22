@@ -67,7 +67,7 @@ def quick_build():
         return False
 
     # Verify build
-    exe_path = Path("dist/Digital Workshop.exe")
+    exe_path = Path("dist") / "Digital Workshop" / "Digital Workshop.exe"
     if exe_path.exists():
         size_mb = exe_path.stat().st_size / (1024 / 1024)
         print(f"✅ Build successful! EXE size: {size_mb:.1f} MB")
@@ -94,7 +94,7 @@ def full_build():
         return False
 
     # Verify build
-    exe_path = Path("dist/Digital Workshop.exe")
+    exe_path = Path("dist") / "Digital Workshop" / "Digital Workshop.exe"
     if exe_path.exists():
         size_mb = exe_path.stat().st_size / (1024 / 1024)
         print(f"✅ Full build successful! EXE size: {size_mb:.1f} MB")
@@ -149,7 +149,7 @@ def show_build_info():
     print("=" * 40)
 
     # Check if EXE exists
-    exe_path = Path("dist/Digital Workshop.exe")
+    exe_path = Path("dist") / "Digital Workshop" / "Digital Workshop.exe"
     if exe_path.exists():
         stat = exe_path.stat()
         size_mb = stat.st_size / (1024 / 1024)

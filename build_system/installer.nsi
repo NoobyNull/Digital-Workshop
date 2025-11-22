@@ -1,5 +1,5 @@
 ; NSIS installer for Digital Workshop
-; Usage: makensis /DAPP_NAME="Digital Workshop" /DAPP_EXE="Digital Workshop.exe" /DDIST_DIR="..\dist" /DOUTFILE="..\dist\DigitalWorkshop-Setup.exe" installer.nsi
+; Usage: makensis /DAPP_NAME="Digital Workshop" /DAPP_EXE="Digital Workshop.exe" /DAPP_DIR="..\dist\Digital Workshop" /DDIST_DIR="..\dist" /DOUTFILE="..\dist\DigitalWorkshop-Setup.exe" installer.nsi
 
 !ifndef APP_NAME
 !define APP_NAME "Digital Workshop"
@@ -8,6 +8,10 @@
 !ifndef APP_EXE
 !define APP_EXE "Digital Workshop.exe"
 !endif
+
+!ifndef APP_DIR
+!define APP_DIR "..\dist\${APP_NAME}"
+endif
 
 !ifndef DIST_DIR
 !define DIST_DIR "..\dist"
@@ -33,7 +37,7 @@ UninstPage instfiles
 
 Section "Install"
   SetOutPath "$INSTDIR"
-  File "${DIST_DIR}\${APP_EXE}"
+  File /r "${APP_DIR}\*.*"
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
@@ -46,11 +50,9 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
-  Delete "$INSTDIR\${APP_EXE}"
-  Delete "$INSTDIR\Uninstall.exe"
+  RMDir /r "$INSTDIR"
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
-  RMDir "$INSTDIR"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 SectionEnd

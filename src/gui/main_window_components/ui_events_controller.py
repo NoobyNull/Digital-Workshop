@@ -100,7 +100,9 @@ class UIEventsController:
                     list(self.main.ai_service.providers.keys()),
                 )
             else:
-                self.logger.warning("AI service not available, skipping reload")
+                self.logger.warning(
+                    "AI service not available or locked, skipping reload"
+                )
             self.logger.info("=== AI SETTINGS CHANGE HANDLING COMPLETE ===")
         except Exception as exc:
             self.logger.error("ERROR reloading AI service: %s", exc, exc_info=True)

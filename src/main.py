@@ -11,6 +11,7 @@ import dataclasses
 import os
 import sys
 import time
+import ctypes
 
 try:  # Windows-only, used for CLI nuclear reset countdown
     import msvcrt  # type: ignore[import]
@@ -22,6 +23,38 @@ from src.core.application_config import ApplicationConfig
 from src.core.exception_handler import ExceptionHandler
 from src.core.logging_config import LoggingProfile, get_logger, setup_logging
 from src.core.nuclear_reset import NuclearReset
+
+
+def _maybe_attach_parent_console() -> None:
+    """
+    Attach to the parent console if available (Windows).
+
+    This keeps the GUI build windowless on double-click, but when launched
+    from a terminal it binds stdout/stderr to that console so CLI output
+    (e.g., --help) is visible.
+    """
+    if os.name != "nt":
+        return
+    try:
+        kernel32 = ctypes.windll.kernel32
+        if kernel32.GetConsoleWindow():
+            return  # already have a console (e.g., dev run)
+        if not kernel32.AttachConsole(-1):  # ATTACH_PARENT_PROCESS
+            return
+        for std_name, handle_id in (("stdout", -11), ("stderr", -12)):
+            handle = kernel32.GetStdHandle(handle_id)
+            if handle in (0, None, -1):
+                continue
+            if msvcrt is None:
+                continue
+            fd = msvcrt.open_osfhandle(handle, 0)
+            if fd < 0:
+                continue
+            stream = os.fdopen(fd, "w", buffering=1, encoding="utf-8", errors="replace")
+            setattr(sys, std_name, stream)
+    except Exception:
+        # Best effort: if attaching fails, continue silently
+        return
 
 
 def parse_arguments() -> None:
@@ -120,9 +153,16 @@ Examples:
     return parser.parse_args()
 
 
-def _build_logging_profile(args, base_level: str) -> LoggingProfile:
-    """Construct the runtime logging profile from CLI arguments."""
-    enable_console = args.log_console or args.log_human
+def _build_logging_profile(
+    args, base_level: str, has_console: bool = False
+) -> LoggingProfile:
+    """
+    Construct the runtime logging profile from CLI arguments.
+
+    If a console is present (launched from a terminal), default to echoing logs there.
+    Double-click launches stay quiet unless the user opts in.
+    """
+    enable_console = args.log_console or args.log_human or has_console
     return LoggingProfile(
         log_level=base_level,
         enable_console=enable_console,
@@ -232,6 +272,14 @@ def _import_settings(config: ApplicationConfig, infile: str) -> int:
 
 def main() -> None:
     """Main function to start the Digital Workshop application."""
+    _maybe_attach_parent_console()
+    has_console = False
+    try:
+        if os.name == "nt":
+            has_console = bool(ctypes.windll.kernel32.GetConsoleWindow())
+    except Exception:
+        has_console = False
+
     args = parse_arguments()
     log_level = args.log_level if args.log_level is not None else "INFO"
 
@@ -282,7 +330,7 @@ def main() -> None:
         return 1
 
     # Normal application startup logging
-    profile = _build_logging_profile(args, log_level)
+    profile = _build_logging_profile(args, log_level, has_console=has_console)
     setup_logging(profile=profile)
 
     logger = get_logger(__name__)

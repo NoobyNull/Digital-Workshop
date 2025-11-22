@@ -40,7 +40,7 @@ The same tooling used in GitLab CI works inside GitHub Actions when mirrored:
    ```bash
    $env:DW_BUILD_NUMBER = $env:GITHUB_RUN_NUMBER
    python scripts/generate_changelog.py --build-number $env:DW_BUILD_NUMBER --output dist/changes-$env:DW_BUILD_NUMBER.txt
-   Rename-Item "dist/Digital Workshop.exe" "Digital Workshop.$env:DW_BUILD_NUMBER.exe"
+   Rename-Item "dist/Digital Workshop/Digital Workshop.exe" "dist/Digital Workshop/Digital Workshop.$env:DW_BUILD_NUMBER.exe"
    git tag build-$env:DW_BUILD_NUMBER
    ```
 4. **Upload artifacts:** publish the renamed EXE + `dist/changes-*.txt` + `build-info.txt`.

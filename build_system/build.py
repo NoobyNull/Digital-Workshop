@@ -456,7 +456,12 @@ class BuildManager:
         }
         
         # Check if executable was created
-        exe_path = self.project_root / self.config["dist_dir"] / f"{self.config['app_name']}.exe"
+        exe_path = (
+            self.project_root
+            / self.config["dist_dir"]
+            / self.config["app_name"]
+            / f"{self.config['app_name']}.exe"
+        )
         report["executable_created"] = exe_path.exists()
         
         if exe_path.exists():

@@ -5,6 +5,7 @@ Provides vendor-agnostic detection for NVIDIA CUDA, AMD/Intel OpenCL, and gracef
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -28,6 +29,12 @@ except Exception:
     numba_cuda = None  # type: ignore
 
 from .logging_config import get_logger
+
+# Default timeout for invoking vendor CLI tools (can override via DW_NVIDIA_SMI_TIMEOUT env)
+try:
+    NVIDIA_SMI_TIMEOUT = float(os.environ.get("DW_NVIDIA_SMI_TIMEOUT", "5"))
+except Exception:
+    NVIDIA_SMI_TIMEOUT = 5.0
 
 
 class AccelBackend(Enum):
@@ -92,6 +99,9 @@ class HardwareAccelerationManager:
         # Scoring and recommendation
         caps.performance_score = self._score(caps)
         caps.recommended_backend = self._select_backend(caps)
+        if not caps.available_backends:
+            # No GPU-capable backend detected at all; treat as fatal so callers can abort startup.
+            raise RuntimeError("No hardware acceleration backends detected (CUDA/OpenCL/OpenGL)")
         self._caps = caps
         self.logger.info(
             f"Hardware detection complete. Recommended backend: {caps.recommended_backend.value}"
@@ -115,7 +125,12 @@ class HardwareAccelerationManager:
                     "--query-gpu=name,memory.total,driver_version",
                     "--format=csv,noheader,nounits",
                 ]
-                res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+                res = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=NVIDIA_SMI_TIMEOUT,
+                )
                 if res.returncode == 0:
                     for idx, line in enumerate(
                         [l.strip() for l in res.stdout.splitlines() if l.strip()]
@@ -145,6 +160,12 @@ class HardwareAccelerationManager:
                     notes.append(
                         f"nvidia-smi returned non-zero exit code {res.returncode}"
                     )
+            except subprocess.TimeoutExpired as e:
+                msg = (
+                    f"nvidia-smi timed out after {e.timeout}s; CUDA capability cannot be confirmed"
+                )
+                notes.append(msg)
+                self.logger.warning(msg)
             except (
                 OSError,
                 IOError,
