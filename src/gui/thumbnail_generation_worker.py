@@ -15,13 +15,14 @@ Features:
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.import_thumbnail_service import ImportThumbnailService
+from src.gui.workers.base_worker import BaseWorker
 
 
-class ThumbnailGenerationWorker(QThread):
+class ThumbnailGenerationWorker(BaseWorker):
     """Background worker for generating thumbnails during import."""
 
     # Signals - Batch level
@@ -59,7 +60,6 @@ class ThumbnailGenerationWorker(QThread):
         self.material = material
         self.force_regenerate = force_regenerate
         self.thumbnail_service = ImportThumbnailService()
-        self._stop_requested = False
 
     def run(self) -> None:
         """Generate thumbnails for all files in the list."""
@@ -75,7 +75,7 @@ class ThumbnailGenerationWorker(QThread):
 
             # Process each file
             for idx, (model_path, file_hash) in enumerate(self.file_info_list):
-                if self._stop_requested:
+                if self.is_cancel_requested():
                     self.logger.info("Thumbnail generation stopped by user")
                     break
 

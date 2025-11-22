@@ -4,13 +4,14 @@ Progressive model loading worker thread.
 Handles background loading of 3D model geometry with progress reporting.
 """
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.model_cache import get_model_cache, CacheLevel
+from src.gui.workers.base_worker import BaseWorker
 
 
-class ProgressiveLoadWorker(QThread):
+class ProgressiveLoadWorker(BaseWorker):
     """
     Worker thread for progressive model loading.
 
@@ -32,7 +33,6 @@ class ProgressiveLoadWorker(QThread):
         """
         super().__init__()
         self.file_path = file_path
-        self.should_cancel = False
         self.logger = get_logger(__name__)
 
     def run(self) -> None:
@@ -78,4 +78,4 @@ class ProgressiveLoadWorker(QThread):
 
     def cancel(self) -> None:
         """Cancel the loading process."""
-        self.should_cancel = True
+        self.request_cancel()

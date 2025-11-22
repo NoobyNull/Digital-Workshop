@@ -836,8 +836,10 @@ class MetadataEditorWidget(QWidget):
             )
 
             # Prefer tuple(image, color) when both are set so the renderer can apply both.
-            background = (bg_image, bg_color) if bg_image and bg_color else (
-                bg_image or bg_color
+            background = (
+                (bg_image, bg_color)
+                if bg_image and bg_color
+                else (bg_image or bg_color)
             )
 
             # Generate thumbnail using coordinator with dedicated window

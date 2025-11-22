@@ -142,9 +142,7 @@ class ReorgPreviewDialog(QDialog):
                 break
 
         if not files:
-            QMessageBox.information(
-                self, "No files", "No files found in this folder."
-            )
+            QMessageBox.information(self, "No files", "No files found in this folder.")
             self._preview_rows = []
             self._refresh_table()
             return
@@ -194,7 +192,9 @@ class ReorgPreviewDialog(QDialog):
         """Recompute destinations when template changes."""
         if not self._preview_rows:
             return
-        self._preview_rows = [self._build_preview_row(r.source) for r in self._preview_rows]
+        self._preview_rows = [
+            self._build_preview_row(r.source) for r in self._preview_rows
+        ]
         self._refresh_table()
 
     def _refresh_table(self) -> None:

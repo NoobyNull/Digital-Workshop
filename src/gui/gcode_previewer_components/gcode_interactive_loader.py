@@ -2,7 +2,7 @@
 
 import os
 from typing import List, Optional
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,11 +13,13 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.logging_config import get_logger
+from src.gui.components.ui_primitives import set_busy_state, set_progress
 from .gcode_parser import GcodeParser, GcodeMove
 from .gcode_renderer import GcodeRenderer
+from src.gui.workers.base_worker import BaseWorker
 
 
-class GcodeLoaderWorker(QThread):
+class GcodeLoaderWorker(BaseWorker):
     """Worker thread for loading G-code files progressively."""
 
     # Signals
@@ -36,7 +38,6 @@ class GcodeLoaderWorker(QThread):
         super().__init__()
         self.filepath = filepath
         self.chunk_size = chunk_size
-        self._is_cancelled = False
         self.parser = GcodeParser()
         self.logger = get_logger(__name__)
         self._process_events_counter = 0
@@ -47,12 +48,10 @@ class GcodeLoaderWorker(QThread):
 
     def cancel(self) -> None:
         """Cancel loading."""
-        self._is_cancelled = True
-        # Log cancellation request (safe even if logger was not initialized for some reason)
-        if hasattr(self, "logger"):
-            self.logger.info(
-                "Interactive G-code load cancel requested for %s", self.filepath
-            )
+        self.request_cancel()
+        self.logger.info(
+            "Interactive G-code load cancel requested for %s", self.filepath
+        )
 
     def run(self) -> None:
         """Run the loading process with true streaming."""
@@ -79,7 +78,7 @@ class GcodeLoaderWorker(QThread):
 
             with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
-                    if self._is_cancelled:
+                    if self.is_cancel_requested():
                         self.logger.info(
                             "Interactive G-code load cancelled while reading %s",
                             self.filepath,
@@ -126,7 +125,7 @@ class GcodeLoaderWorker(QThread):
                         lines_buffer.clear()
 
                 # Process remaining lines
-                if lines_buffer and not self._is_cancelled:
+                if lines_buffer and not self.is_cancel_requested():
                     try:
                         moves = self.parser.parse_lines(lines_buffer)
                         all_moves.extend(moves)
@@ -245,9 +244,8 @@ class InteractiveGcodeLoader(QWidget):
         self.all_moves = []
         self.status_label.setText(f"Loading: {filepath}")
         self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.load_button.setEnabled(False)
-        self.cancel_button.setEnabled(True)
+        set_progress(self.progress_bar, self.status_label, 0, f"Loading: {filepath}")
+        set_busy_state(self.load_button, self.cancel_button, True)
 
         self.loading_started.emit()
 
@@ -268,14 +266,12 @@ class InteractiveGcodeLoader(QWidget):
 
         self.status_label.setText("Loading cancelled")
         self.progress_bar.setVisible(False)
-        self.load_button.setEnabled(True)
-        self.cancel_button.setEnabled(False)
+        set_busy_state(self.load_button, self.cancel_button, False)
         self.loading_cancelled.emit()
 
     def _on_progress_updated(self, progress: int, message: str) -> None:
         """Handle progress update."""
-        self.progress_bar.setValue(progress)
-        self.status_label.setText(message)
+        set_progress(self.progress_bar, self.status_label, progress, message)
         # Re-emit for external listeners such as the main previewer widget.
         self.progress_updated.emit(progress, message)
 
@@ -309,8 +305,7 @@ class InteractiveGcodeLoader(QWidget):
 
         self.status_label.setText("Loading complete")
         self.progress_bar.setVisible(False)
-        self.load_button.setEnabled(True)
-        self.cancel_button.setEnabled(False)
+        set_busy_state(self.load_button, self.cancel_button, False)
 
         self.loading_complete.emit(all_moves)
 

@@ -8,14 +8,15 @@ for all models in the library with applied materials.
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.gui.screenshot_generator import ScreenshotGenerator
+from src.gui.workers.base_worker import BaseWorker
 
 
-class BatchScreenshotWorker(QThread):
+class BatchScreenshotWorker(BaseWorker):
     """Background worker for generating screenshots of multiple models."""
 
     # Signals
@@ -51,7 +52,6 @@ class BatchScreenshotWorker(QThread):
             background_image=background_image,
             material_name=material_name,
         )
-        self._stop_requested = False
 
     def run(self) -> None:
         """Generate screenshots for all models in the library."""
@@ -71,7 +71,7 @@ class BatchScreenshotWorker(QThread):
 
             # Process each model
             for idx, model in enumerate(models):
-                if self._stop_requested:
+                if self.is_cancel_requested():
                     self.logger.info("Batch screenshot generation stopped by user")
                     break
 
@@ -170,5 +170,5 @@ class BatchScreenshotWorker(QThread):
 
     def stop(self) -> None:
         """Request the worker to stop processing."""
-        self._stop_requested = True
+        self.request_cancel()
         self.logger.info("Stop requested for batch screenshot generation")

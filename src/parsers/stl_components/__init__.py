@@ -1,21 +1,14 @@
 """
 STL Parser Components - Modular STL file parsing.
 
-This package provides a comprehensive STL file parser with support for both
-binary and ASCII formats, hardware acceleration, and progress reporting.
-
-Public API:
-- STLParser: Main parser class
-- STLFormat: Format type enum
-- STLModel: Model data structure
-- STLParseError: Custom exception
+This package provides STL data models and exceptions. Parser implementation
+is provided by refactored_stl_parser; we avoid importing it here to prevent
+cycles during package initialization.
 """
 
 from .stl_models import STLFormat, STLModel, STLParseError, STLProgressCallback
-from .stl_parser_main import STLParser
 
 __all__ = [
-    "STLParser",
     "STLFormat",
     "STLModel",
     "STLParseError",

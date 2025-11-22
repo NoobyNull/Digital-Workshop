@@ -189,7 +189,9 @@ class PipelineCoordinator(QObject):
                 if not result.success:
                     self._record_failure()
                     self.signals.stage_failed.emit(
-                        task, stage_name or "unknown_stage", result.error_message or "Unknown error"
+                        task,
+                        stage_name or "unknown_stage",
+                        result.error_message or "Unknown error",
                     )
                     self.signals.task_failed.emit(
                         task, result.error_message or "Unknown error"

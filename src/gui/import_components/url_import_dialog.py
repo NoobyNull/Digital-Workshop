@@ -19,7 +19,7 @@ from urllib.parse import (
 )
 
 from bs4 import BeautifulSoup
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -37,9 +37,10 @@ from src.core.import_file_manager import FileManagementMode
 from src.core.services.library_settings import LibrarySettings
 from src.core.database_manager import get_database_manager
 from src.core.model_tags import TAG_DOWNLOADED
+from src.gui.workers.base_worker import BaseWorker
 
 
-class UrlDownloadWorker(QThread):
+class UrlDownloadWorker(BaseWorker):
     """Background worker that streams a URL to disk."""
 
     progress = Signal(int)

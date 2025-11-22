@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from PySide6.QtCore import Signal, QThread
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.performance_monitor import get_performance_monitor
@@ -20,9 +20,10 @@ from .gui_service_interfaces import (
     UIState,
 )
 from ..viewer_3d.viewer_widget_facade import Viewer3DWidget
+from src.gui.workers.base_worker import BaseWorker
 
 
-class ModelLoadingWorker(QThread):
+class ModelLoadingWorker(BaseWorker):
     """Worker thread for loading models asynchronously."""
 
     # Signals

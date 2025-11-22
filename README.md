@@ -22,8 +22,9 @@ python src/main.py
 - `python scripts/easy_build.py full` - run tests + build artifacts (mirrors CI).
 - Build numbers follow GitLab/GitHub pipeline IID -> `Digital Workshop.XXXXX.exe`.
 
-### Release Push (develop → main)
+### Release Push (develop -> main)
 - `python scripts/auto_release_push.py --version 0.1.6` - pushes `develop`, fast-forwards `main`, creates an annotated tag `v0.1.6` with recent commit summaries, and pushes both branch and tag so CI can build the Windows EXE. Run on a clean tree.
+- Add `--dry-run` to see the planned git operations without mutating branches or tags.
 
 ### Test Coverage
 ```bash

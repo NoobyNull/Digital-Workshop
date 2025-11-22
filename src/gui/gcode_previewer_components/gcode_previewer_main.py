@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 from pathlib import Path
 import json
 import os
-import sqlite3
+
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -24,13 +24,12 @@ from PySide6.QtWidgets import (
     QCheckBox,
 )
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtCore import Qt, Signal, QThread, QUrl
+from PySide6.QtCore import Qt, Signal, QUrl
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.services.tab_data_manager import TabDataManager
 from src.core.materials import wood_catalog
-from src.core.kinematics.gcode_timing import analyze_gcode_moves
 from src.gui.widgets.add_tool_dialog import AddToolDialog
 from src.gui.dialogs.tool_snapshot_dialog import ToolSnapshotDialog
 from .gcode_parser import GcodeParser
@@ -44,6 +43,8 @@ from .gcode_loader_thread import GcodeLoaderThread
 from .gcode_timeline import GcodeTimeline
 from .gcode_interactive_loader import InteractiveGcodeLoader
 from .gcode_tools_widget import GcodeToolsWidget
+from .gcode_timing_thread import GcodeTimingThread
+from .gcode_previewer_controller import GcodePreviewerController
 
 
 MAX_GCODE_FILE_SIZE_BYTES = 500 * 1024 * 1024  # 500MB
@@ -73,8 +74,6 @@ class GcodeToolsPanelContainer(QWidget):
             self._tools_widget if visible else self._empty_widget
         )
 
-
-class GcodeTimingThread(QThread):
     """Background worker that computes aggregate timing for a set of moves.
 
     This runs a single pass of ``analyze_gcode_moves`` off the GUI thread and
@@ -241,7 +240,6 @@ class GcodePreviewerWidget(QWidget):
             try:
                 project_row = self.db_manager.get_project(project_id)
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -528,7 +526,11 @@ class GcodePreviewerWidget(QWidget):
         # Keep renderer responsive for renders even when blocking camera input.
         if active and self.progress_bar is not None:
             self.progress_bar.setVisible(True)
-        if not active and self.progress_bar is not None and self.progress_bar.value() >= 100:
+        if (
+            not active
+            and self.progress_bar is not None
+            and self.progress_bar.value() >= 100
+        ):
             self.progress_bar.setVisible(False)
 
     def _cancel_active_load(self) -> None:
@@ -914,7 +916,6 @@ class GcodePreviewerWidget(QWidget):
                 if self.db_manager.delete_gcode_tool_snapshot(snapshot_id):
                     deleted += 1
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1156,7 +1157,6 @@ class GcodePreviewerWidget(QWidget):
                     self.current_project_id
                 )
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1175,7 +1175,6 @@ class GcodePreviewerWidget(QWidget):
                 try:
                     machine = self.db_manager.get_machine(machine_id)
                 except (
-                    sqlite3.Error,
                     OSError,
                     IOError,
                     ValueError,
@@ -1193,7 +1192,6 @@ class GcodePreviewerWidget(QWidget):
                     self.db_manager.get_project_feed_override(self.current_project_id)
                 )
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1213,7 +1211,6 @@ class GcodePreviewerWidget(QWidget):
             try:
                 machine = self.db_manager.get_default_machine()
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1287,7 +1284,6 @@ class GcodePreviewerWidget(QWidget):
                 project_id=self.current_project_id
             )
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1310,7 +1306,6 @@ class GcodePreviewerWidget(QWidget):
             try:
                 versions = self.db_manager.list_gcode_versions(op_id)
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1357,7 +1352,6 @@ class GcodePreviewerWidget(QWidget):
                     notes="Auto-created by G-code Previewer",
                 )
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1383,7 +1377,6 @@ class GcodePreviewerWidget(QWidget):
                 )
                 self.current_version_id = version_id
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -1511,7 +1504,6 @@ class GcodePreviewerWidget(QWidget):
                 self.current_version_id
             )
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1620,7 +1612,6 @@ class GcodePreviewerWidget(QWidget):
             if replace_existing:
                 self.db_manager.delete_gcode_tool_snapshots(self.current_version_id)
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1650,7 +1641,6 @@ class GcodePreviewerWidget(QWidget):
                 metadata=metadata_payload,
             )
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1701,7 +1691,6 @@ class GcodePreviewerWidget(QWidget):
         try:
             metrics = self.db_manager.get_gcode_metrics(self.current_version_id)
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1731,7 +1720,6 @@ class GcodePreviewerWidget(QWidget):
         try:
             version_row = self.db_manager.get_gcode_version(self.current_version_id)
         except (
-            sqlite3.Error,
             OSError,
             IOError,
             ValueError,
@@ -1873,7 +1861,6 @@ class GcodePreviewerWidget(QWidget):
                         file_hash=fingerprint,
                     )
             except (
-                sqlite3.Error,
                 OSError,
                 IOError,
                 ValueError,
@@ -2033,7 +2020,7 @@ class GcodePreviewerWidget(QWidget):
         self.logger.info("Edited G-code saved to %s", path)
         if not self.current_project_id:
             return
-        link_gcode_file_to_project(
+        self.controller.link_gcode_file_to_project(
             self.db_manager, self.current_project_id, path, self.logger
         )
 
@@ -2538,46 +2525,3 @@ class GcodePreviewerWidget(QWidget):
 
         # Update statistics
         self._update_statistics()
-
-
-def link_gcode_file_to_project(
-    db_manager, project_id: str, file_path: str, logger
-) -> bool:
-    """Link an edited G-code file to a project record using the database manager.
-
-    Returns True when the file record was created successfully, False otherwise.
-    """
-    if db_manager is None or not project_id or not file_path:
-        return False
-
-    try:
-        file_size = Path(file_path).stat().st_size
-    except (OSError, IOError, ValueError):
-        file_size = None
-
-    try:
-        db_manager.add_file(
-            project_id,
-            file_path,
-            Path(file_path).name,
-            file_size=file_size,
-            status="gcode-editor",
-            link_type="gcode-editor",
-        )
-        if logger:
-            logger.info(
-                "Linked edited G-code file %s to project %s", file_path, project_id
-            )
-        return True
-    except (
-        sqlite3.Error,
-        OSError,
-        IOError,
-        ValueError,
-        TypeError,
-        KeyError,
-        AttributeError,
-    ) as exc:
-        if logger:
-            logger.warning("Failed to link edited G-code to project: %s", exc)
-        return False

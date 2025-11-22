@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -31,11 +31,12 @@ from PySide6.QtWidgets import (
 from src.core.logging_config import get_logger
 from src.core.nuclear_reset import NuclearReset
 from src.gui.theme import SPACING_16
+from src.gui.workers.base_worker import BaseWorker
 
 logger = get_logger(__name__)
 
 
-class NuclearResetWorker(QThread):
+class NuclearResetWorker(BaseWorker):
     """Worker thread for executing nuclear reset."""
 
     progress_updated = Signal(str)  # Status message

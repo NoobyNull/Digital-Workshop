@@ -16,7 +16,7 @@ from vtk.util import numpy_support as vtk_np
 from src.core.logging_config import get_logger
 from src.core.view_optimizer import ViewOptimizer
 from src.core.vtk_rendering_engine import VTKRenderingEngine
-from src.parsers.stl_parser import STLParser
+from src.parsers.refactored_stl_parser import RefactoredSTLParser as STLParser
 from src.core.data_structures import Model
 from src.core.material_provider import MaterialProvider
 
@@ -72,7 +72,9 @@ class ThumbnailGenerator:
         model_path: str,
         file_hash: str,
         output_dir: Path,
-        background: Optional[Union[str, Tuple[float, float, float], Tuple[str, str]]] = None,
+        background: Optional[
+            Union[str, Tuple[float, float, float], Tuple[str, str]]
+        ] = None,
         size: Optional[Tuple[int, int]] = None,
         material: Optional[str] = None,
         force_regenerate: bool = False,
@@ -355,7 +357,8 @@ class ThumbnailGenerator:
                         resolved_image_path = Path(bg_image_value)
                     else:
                         self.logger.warning(
-                            "Background '%s' not found; falling back to color", bg_image_value
+                            "Background '%s' not found; falling back to color",
+                            bg_image_value,
                         )
                         resolved_image_path = None
 

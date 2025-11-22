@@ -8,16 +8,14 @@ import gc
 from pathlib import Path
 from typing import List
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.model_cache import CacheLevel, get_model_cache
 from src.core.performance_monitor import get_performance_monitor
-from src.parsers.format_detector import FormatDetector, ModelFormat
-from src.parsers.obj_parser import OBJParser
-from src.parsers.step_parser import STEPParser
-from src.parsers.stl_parser import STLParser
-from src.parsers.threemf_parser import ThreeMFParser
+from src.parsers.format_detector import FormatDetector
+from src.parsers.canonical_registry import get_parser_for_format, ParserNotFoundError
+from src.gui.workers.base_worker import BaseWorker
 from src.gui.components.detailed_progress_tracker import (
     DetailedProgressTracker,
     LoadingStage,
@@ -27,7 +25,7 @@ from src.gui.components.detailed_progress_tracker import (
 logger = get_logger(__name__)
 
 
-class ModelLoadWorker(QThread):
+class ModelLoadWorker(BaseWorker):
     """Worker thread for loading models in the background."""
 
     model_loaded = Signal(dict)
@@ -127,17 +125,12 @@ class ModelLoadWorker(QThread):
                     if model is None:
                         # Detect format
                         fmt = FormatDetector().detect_format(Path(file_path))
-                        # pylint: disable=abstract-class-instantiated
-                        if fmt == ModelFormat.STL:
-                            parser = STLParser()
-                        elif fmt == ModelFormat.OBJ:
-                            parser = OBJParser()
-                        elif fmt == ModelFormat.THREE_MF:
-                            parser = ThreeMFParser()
-                        elif fmt == ModelFormat.STEP:
-                            parser = STEPParser()
-                        else:
-                            raise ValueError(f"Unsupported model format: {fmt}")
+                        try:
+                            parser = get_parser_for_format(fmt)
+                        except ParserNotFoundError as exc:
+                            raise ValueError(
+                                f"Unsupported model format: {fmt}"
+                            ) from exc
 
                         # Parse with progress tracking
                         tracker.start_stage(LoadingStage.PARSING, f"Parsing {filename}")

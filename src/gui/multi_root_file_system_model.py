@@ -15,13 +15,13 @@ from PySide6.QtCore import (
     QModelIndex,
     QFileInfo,
     QMimeData,
-    QThread,
     Signal,
 )
 from PySide6.QtWidgets import QApplication, QStyle
 
 from src.core.logging_config import get_logger
 from src.core.root_folder_manager import RootFolderManager, RootFolder
+from src.gui.workers.base_worker import BaseWorker
 
 
 @dataclass
@@ -66,7 +66,7 @@ class TreeNode:
         return 0
 
 
-class DirectoryIndexer(QThread):
+class DirectoryIndexer(BaseWorker):
     """
     Background thread for indexing directory contents to prevent UI freezing.
     """

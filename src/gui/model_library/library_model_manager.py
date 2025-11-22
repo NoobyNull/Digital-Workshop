@@ -416,6 +416,10 @@ class LibraryModelManager:
             status_text = f"{message} ({int(progress_percent)}%)"
 
         self.library_widget.status_label.setText(status_text)
+        try:
+            self.library_widget.progress_updated.emit(progress_percent, status_text)
+        except Exception:
+            pass
 
     def on_load_error(self, error_message: str) -> None:
         """Handle load error."""
@@ -461,6 +465,10 @@ class LibraryModelManager:
         self.library_widget.progress_bar.setVisible(False)
         self.library_widget.status_label.setText("Ready")
         self.library_widget.models_added.emit(self.get_selected_models())
+        try:
+            self.library_widget.load_finished.emit()
+        except Exception:
+            pass
 
         if self.library_widget.model_loader:
             try:

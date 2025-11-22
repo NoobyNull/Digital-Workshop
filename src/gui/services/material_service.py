@@ -9,12 +9,13 @@ from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from PySide6.QtCore import Signal, QThread
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QImage
 
 from src.core.logging_config import get_logger
 from src.core.settings_manager import get_settings_manager
 from .gui_service_interfaces import IMaterialService, IViewerUIService
+from src.gui.workers.base_worker import BaseWorker
 
 
 class MaterialCategory(Enum):
@@ -57,7 +58,7 @@ class MaterialInfo:
     version: str = "1.0"
 
 
-class MaterialValidationWorker(QThread):
+class MaterialValidationWorker(BaseWorker):
     """Worker thread for validating materials asynchronously."""
 
     validation_completed = Signal(

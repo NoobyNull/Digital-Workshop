@@ -25,7 +25,10 @@ class MenuManager:
     """
 
     def __init__(
-        self, main_window: QMainWindow, logger: Optional[logging.Logger] = None
+        self,
+        main_window: QMainWindow,
+        logger: Optional[logging.Logger] = None,
+        handlers: Optional[object] = None,
     ) -> None:
         """
         Initialize the menu manager.
@@ -36,6 +39,7 @@ class MenuManager:
         """
         self.main_window = main_window
         self.logger = logger or logging.getLogger(__name__)
+        self.handlers = handlers or main_window
 
         # Action references for external access
         self.show_metadata_action = None
@@ -70,7 +74,7 @@ class MenuManager:
         open_action.setShortcut(QKeySequence.Open)
         open_action.setStatusTip("Open a 3D model file")
         open_action.setIcon(_std_icon(QStyle.SP_DirOpenIcon))
-        open_action.triggered.connect(self._open_model)
+        open_action.triggered.connect(self._call("import_models"))
         file_menu.addAction(open_action)
 
         # Import Models action
@@ -78,7 +82,7 @@ class MenuManager:
         import_action.setShortcut(QKeySequence("Ctrl+I"))
         import_action.setStatusTip("Import 3D models into the library")
         import_action.setIcon(_std_icon(QStyle.SP_FileDialogNewFolder))
-        import_action.triggered.connect(self._import_models)
+        import_action.triggered.connect(self._call("import_models"))
         file_menu.addAction(import_action)
 
         import_url_action = QAction("Import from &URL...", self.main_window)
@@ -86,7 +90,7 @@ class MenuManager:
             "Download a model from a URL and add it to the library"
         )
         import_url_action.setIcon(_std_icon(QStyle.SP_ArrowDown))
-        import_url_action.triggered.connect(self._import_from_url)
+        import_url_action.triggered.connect(self._call("open_import_from_url_dialog"))
         file_menu.addAction(import_url_action)
 
         rebuild_action = QAction("Rebuild Managed Library...", self.main_window)
@@ -94,7 +98,7 @@ class MenuManager:
             "Scan the managed Projects folder and re-import existing files into the database"
         )
         rebuild_action.setIcon(_std_icon(QStyle.SP_FileDialogContentsView))
-        rebuild_action.triggered.connect(self._rebuild_managed_library)
+        rebuild_action.triggered.connect(self._call("start_library_rebuild"))
         file_menu.addAction(rebuild_action)
 
         file_menu.addSeparator()
@@ -113,7 +117,7 @@ class MenuManager:
         self.edit_model_action.setStatusTip("Analyze model for errors and fix them")
         self.edit_model_action.setIcon(_std_icon(QStyle.SP_DialogApplyButton))
         self.edit_model_action.setEnabled(False)
-        self.edit_model_action.triggered.connect(self._edit_model)
+        self.edit_model_action.triggered.connect(self._call("edit_model"))
         edit_menu.addAction(self.edit_model_action)
 
         edit_menu.addSeparator()
@@ -122,7 +126,7 @@ class MenuManager:
         prefs_action = QAction("&Preferences...", self.main_window)
         prefs_action.setStatusTip("Open application preferences")
         prefs_action.setIcon(_std_icon(QStyle.SP_FileDialogDetailedView))
-        prefs_action.triggered.connect(self._show_preferences)
+        prefs_action.triggered.connect(self._call("show_preferences"))
         edit_menu.addAction(prefs_action)
 
         # View menu
@@ -133,14 +137,14 @@ class MenuManager:
         zoom_in_action.setShortcut(QKeySequence.ZoomIn)
         zoom_in_action.setStatusTip("Zoom in on the 3D view")
         zoom_in_action.setIcon(_std_icon(QStyle.SP_ArrowUp))
-        zoom_in_action.triggered.connect(self._zoom_in)
+        zoom_in_action.triggered.connect(self._call("zoom_in"))
         view_menu.addAction(zoom_in_action)
 
         zoom_out_action = QAction("Zoom &Out", self.main_window)
         zoom_out_action.setShortcut(QKeySequence.ZoomOut)
         zoom_out_action.setStatusTip("Zoom out from the 3D view")
         zoom_out_action.setIcon(_std_icon(QStyle.SP_ArrowDown))
-        zoom_out_action.triggered.connect(self._zoom_out)
+        zoom_out_action.triggered.connect(self._call("zoom_out"))
         view_menu.addAction(zoom_out_action)
 
         view_menu.addSeparator()
@@ -149,7 +153,7 @@ class MenuManager:
         reset_view_action = QAction("&Reset View", self.main_window)
         reset_view_action.setStatusTip("Reset the 3D view to default")
         reset_view_action.setIcon(_std_icon(QStyle.SP_BrowserReload))
-        reset_view_action.triggered.connect(self._reset_view)
+        reset_view_action.triggered.connect(self._call("reset_view"))
         view_menu.addAction(reset_view_action)
 
         # Save view action
@@ -157,14 +161,14 @@ class MenuManager:
         save_view_action.setShortcut(QKeySequence("Ctrl+S"))
         save_view_action.setStatusTip("Save current camera view for this model")
         save_view_action.setIcon(_std_icon(QStyle.SP_DialogSaveButton))
-        save_view_action.triggered.connect(self._save_current_view)
+        save_view_action.triggered.connect(self._call("save_current_view"))
         view_menu.addAction(save_view_action)
 
         # Reset dock layout action (helps when a floating dock is hard to re-dock)
         reset_layout_action = QAction("Reset &Layout", self.main_window)
         reset_layout_action.setStatusTip("Restore default dock layout")
         reset_layout_action.setIcon(_std_icon(QStyle.SP_DialogResetButton))
-        reset_layout_action.triggered.connect(self._reset_dock_layout)
+        reset_layout_action.triggered.connect(self._call("reset_dock_layout"))
         view_menu.addAction(reset_layout_action)
 
         # Metadata Manager restoration action
@@ -177,7 +181,9 @@ class MenuManager:
         self.show_metadata_action.setStatusTip("Restore the Metadata Manager panel")
         self.show_metadata_action.setToolTip("Show the Metadata Manager (Ctrl+Shift+M)")
         self.show_metadata_action.setIcon(_std_icon(QStyle.SP_FileDialogInfoView))
-        self.show_metadata_action.triggered.connect(self._restore_metadata_manager)
+        self.show_metadata_action.triggered.connect(
+            self._call("restore_metadata_manager")
+        )
         view_menu.addAction(self.show_metadata_action)
 
         # Model Library restoration action
@@ -193,7 +199,9 @@ class MenuManager:
             "Show the Model Library (Ctrl+Shift+L)"
         )
         self.show_model_library_action.setIcon(_std_icon(QStyle.SP_DirIcon))
-        self.show_model_library_action.triggered.connect(self._restore_model_library)
+        self.show_model_library_action.triggered.connect(
+            self._call("restore_model_library")
+        )
         view_menu.addAction(self.show_model_library_action)
 
         # Reload stylesheet action
@@ -201,7 +209,9 @@ class MenuManager:
         reload_stylesheet_action = QAction("&Reload Stylesheet", self.main_window)
         reload_stylesheet_action.setStatusTip("Reload and apply the main stylesheet")
         reload_stylesheet_action.setIcon(_std_icon(QStyle.SP_BrowserReload))
-        reload_stylesheet_action.triggered.connect(self._reload_stylesheet_action)
+        reload_stylesheet_action.triggered.connect(
+            self._call("reload_stylesheet_action")
+        )
         view_menu.addAction(reload_stylesheet_action)
 
         # Layout Edit Mode toggle
@@ -219,7 +229,9 @@ class MenuManager:
             "Toggle Layout Edit Mode (Ctrl+Shift+E)"
         )
         self.toggle_layout_edit_action.setIcon(_std_icon(QStyle.SP_TitleBarShadeButton))
-        self.toggle_layout_edit_action.toggled.connect(self._set_layout_edit_mode)
+        self.toggle_layout_edit_action.toggled.connect(
+            self._call("set_layout_edit_mode")
+        )
         view_menu.addAction(self.toggle_layout_edit_action)
 
         # Tools menu
@@ -233,7 +245,9 @@ class MenuManager:
             "Generate thumbnails for all models in the library with applied materials"
         )
         generate_thumbnails_action.setIcon(_std_icon(QStyle.SP_MediaPlay))
-        generate_thumbnails_action.triggered.connect(self._generate_library_screenshots)
+        generate_thumbnails_action.triggered.connect(
+            self._call("generate_library_screenshots")
+        )
         tools_menu.addAction(generate_thumbnails_action)
 
         # Help menu
@@ -243,7 +257,7 @@ class MenuManager:
         tips_action = QAction("&Tips & Tricks", self.main_window)
         tips_action.setStatusTip("View helpful tips and tutorials")
         tips_action.setIcon(_std_icon(QStyle.SP_MessageBoxInformation))
-        tips_action.triggered.connect(self._show_tips)
+        tips_action.triggered.connect(self._call("show_tips"))
         help_menu.addAction(tips_action)
 
         help_menu.addSeparator()
@@ -252,7 +266,7 @@ class MenuManager:
         about_action = QAction("&About Digital Workshop", self.main_window)
         about_action.setStatusTip("Show information about Digital Workshop")
         about_action.setIcon(_std_icon(QStyle.SP_MessageBoxInformation))
-        about_action.triggered.connect(self._show_about)
+        about_action.triggered.connect(self._call("show_about"))
         help_menu.addAction(about_action)
 
         # qt-material handles menubar styling automatically
@@ -261,108 +275,22 @@ class MenuManager:
     def _apply_bar_palettes(self) -> None:
         """Apply palette colors (no-op - qt-material handles this)."""
 
-    # Action handler methods (these would need to be connected to actual implementations)
-    def _open_model(self) -> None:
-        """Handle open model action."""
-        # This would need to be connected to the main window's model loading logic
-        if hasattr(self.main_window, "_open_model"):
-            self.main_window._open_model()
+    def _call(self, name: str):
+        """Return a callable that forwards to handlers if present."""
 
-    def _import_models(self) -> None:
-        """Handle import models action."""
-        if hasattr(self.main_window, "_import_models"):
-            self.main_window._import_models()
+        def _wrapper(*args, **kwargs):
+            target = getattr(self.handlers, name, None)
+            if callable(target):
+                target(*args, **kwargs)
 
-    def _import_from_url(self) -> None:
-        """Handle import from URL action."""
-        if hasattr(self.main_window, "_open_import_from_url_dialog"):
-            self.main_window._open_import_from_url_dialog()
-
-    def _rebuild_managed_library(self) -> None:
-        """Handle rebuild managed library action."""
-        if hasattr(self.main_window, "_start_library_rebuild"):
-            self.main_window._start_library_rebuild()
-
-    def _edit_model(self) -> None:
-        """Handle edit model action."""
-        if hasattr(self.main_window, "_edit_model"):
-            self.main_window._edit_model()
-
-    def _show_preferences(self) -> None:
-        """Show preferences dialog."""
-        if hasattr(self.main_window, "_show_preferences"):
-            self.main_window._show_preferences()
-
-    def _zoom_in(self) -> None:
-        """Handle zoom in action."""
-        if hasattr(self.main_window, "_zoom_in"):
-            self.main_window._zoom_in()
-
-    def _zoom_out(self) -> None:
-        """Handle zoom out action."""
-        if hasattr(self.main_window, "_zoom_out"):
-            self.main_window._zoom_out()
-
-    def _reset_view(self) -> None:
-        """Handle reset view action."""
-        if hasattr(self.main_window, "_reset_view"):
-            self.main_window._reset_view()
-
-    def _save_current_view(self) -> None:
-        """Handle save current view action."""
-        if hasattr(self.main_window, "_save_current_view"):
-            self.main_window._save_current_view()
-
-    def _reset_dock_layout(self) -> None:
-        """Handle reset dock layout action."""
-        if hasattr(self.main_window, "_reset_dock_layout"):
-            self.main_window._reset_dock_layout()
-
-    def _restore_metadata_manager(self) -> None:
-        """Handle restore metadata manager action."""
-        if hasattr(self.main_window, "_restore_metadata_manager"):
-            self.main_window._restore_metadata_manager()
-
-    def _restore_model_library(self) -> None:
-        """Handle restore model library action."""
-        if hasattr(self.main_window, "_restore_model_library"):
-            self.main_window._restore_model_library()
-
-    def _reload_stylesheet_action(self) -> None:
-        """Handle reload stylesheet action."""
-        if hasattr(self.main_window, "_reload_stylesheet_action"):
-            self.main_window._reload_stylesheet_action()
-
-    def _set_layout_edit_mode(self, enabled: bool) -> None:
-        """Handle layout edit mode toggle."""
-        if hasattr(self.main_window, "_set_layout_edit_mode"):
-            # Show message when user toggles from menu (not during initialization)
-            self.main_window._set_layout_edit_mode(enabled, show_message=True)
-
-    def _show_tips(self) -> None:
-        """Show tips and tricks dialog."""
-        try:
-            from src.gui.walkthrough import WalkthroughDialog
-
-            dialog = WalkthroughDialog(self.main_window)
-            dialog.exec()
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Failed to show tips dialog: %s", e)
-
-    def _show_about(self) -> None:
-        """Handle show about action."""
-        if hasattr(self.main_window, "_show_about"):
-            self.main_window._show_about()
-
-    def _generate_library_screenshots(self) -> None:
-        """Handle generate library screenshots action."""
-        if hasattr(self.main_window, "_generate_library_screenshots"):
-            self.main_window._generate_library_screenshots()
+        return _wrapper
 
 
 # Convenience function for easy menu setup
 def setup_main_window_menus(
-    main_window: QMainWindow, logger: Optional[logging.Logger] = None
+    main_window: QMainWindow,
+    logger: Optional[logging.Logger] = None,
+    handlers: Optional[object] = None,
 ) -> MenuManager:
     """
     Convenience function to set up menus for a main window.
@@ -374,6 +302,6 @@ def setup_main_window_menus(
     Returns:
         MenuManager instance for further menu operations
     """
-    manager = MenuManager(main_window, logger)
+    manager = MenuManager(main_window, logger, handlers=handlers)
     manager.setup_menu_bar()
     return manager

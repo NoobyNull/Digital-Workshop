@@ -8,16 +8,17 @@ without blocking the main GUI thread.
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.import_thumbnail_service import (
     ImportThumbnailService,
     ThumbnailGenerationResult,
 )
+from src.gui.workers.base_worker import BaseWorker
 
 
-class ThumbnailRegenerationWorker(QThread):
+class ThumbnailRegenerationWorker(BaseWorker):
     """
     Worker thread for regenerating thumbnails without blocking the GUI.
 
@@ -55,11 +56,13 @@ class ThumbnailRegenerationWorker(QThread):
         self.file_hash = file_hash
         self.material = material
         self.background = background
-        self._is_cancelled = False
+        # Bridge base signals to legacy names for existing UI wiring.
+        self.progress.connect(self.progress_updated)
+        self.error.connect(self.error_occurred)
 
     def cancel(self) -> None:
         """Request cancellation of the thumbnail generation."""
-        self._is_cancelled = True
+        self.request_cancel()
         self.logger.info("Thumbnail regeneration cancelled by user")
 
     def run(self) -> None:
@@ -73,10 +76,10 @@ class ThumbnailRegenerationWorker(QThread):
             )
 
             # Emit initial progress
-            self.progress_updated.emit(0, 100, f"Loading {model_name}...")
+            self.emit_progress(0, 100, f"Loading {model_name}...")
 
             # Check for cancellation
-            if self._is_cancelled:
+            if self.is_cancel_requested():
                 self.logger.info("Thumbnail regeneration cancelled before start")
                 self.finished.emit()
                 return
@@ -85,7 +88,7 @@ class ThumbnailRegenerationWorker(QThread):
             thumbnail_service = ImportThumbnailService()
 
             # Emit progress
-            self.progress_updated.emit(25, 100, f"Rendering {model_name}...")
+            self.emit_progress(25, 100, f"Rendering {model_name}...")
 
             # Generate thumbnail with force_regenerate=True
             result: ThumbnailGenerationResult = thumbnail_service.generate_thumbnail(
@@ -97,36 +100,36 @@ class ThumbnailRegenerationWorker(QThread):
             )
 
             # Check for cancellation after generation
-            if self._is_cancelled:
+            if self.is_cancel_requested():
                 self.logger.info("Thumbnail regeneration cancelled after generation")
                 self.finished.emit()
                 return
 
             # Emit progress
-            self.progress_updated.emit(90, 100, "Finalizing...")
+            self.emit_progress(90, 100, "Finalizing...")
 
             # Check result
             if result.success:
                 self.logger.info(
                     "Thumbnail regenerated successfully: %s", result.thumbnail_path
                 )
-                self.progress_updated.emit(100, 100, "Complete!")
+                self.emit_progress(100, 100, "Complete!")
                 self.thumbnail_generated.emit(result)
             else:
                 error_msg = result.error or "Unknown error during thumbnail generation"
                 self.logger.error("Thumbnail regeneration failed: %s", error_msg)
-                self.error_occurred.emit(error_msg)
+                self.error.emit(error_msg)
 
         except Exception as e:
             error_msg = f"Thumbnail regeneration failed: {str(e)}"
             self.logger.error("%s", error_msg, exc_info=True)
-            self.error_occurred.emit(error_msg)
+            self.error.emit(error_msg)
 
         finally:
             self.finished.emit()
 
 
-class BatchThumbnailRegenerationWorker(QThread):
+class BatchThumbnailRegenerationWorker(BaseWorker):
     """
     Worker thread for regenerating multiple thumbnails in batch.
 
@@ -163,11 +166,13 @@ class BatchThumbnailRegenerationWorker(QThread):
         self.models_data = models_data
         self.material = material
         self.background = background
-        self._is_cancelled = False
+        # Bridge base signals for existing slots.
+        self.progress.connect(self.progress_updated)
+        self.error.connect(lambda msg: None)  # errors are per-model below
 
     def cancel(self) -> None:
         """Request cancellation of the batch thumbnail generation."""
-        self._is_cancelled = True
+        self.request_cancel()
         self.logger.info("Batch thumbnail regeneration cancelled by user")
 
     def run(self) -> None:
@@ -186,7 +191,7 @@ class BatchThumbnailRegenerationWorker(QThread):
 
             for idx, model_data in enumerate(self.models_data):
                 # Check for cancellation
-                if self._is_cancelled:
+                if self.is_cancel_requested():
                     self.logger.info(
                         "Batch thumbnail regeneration cancelled at %d/%d", idx, total
                     )
@@ -198,7 +203,7 @@ class BatchThumbnailRegenerationWorker(QThread):
                 model_name = Path(file_path).name
 
                 # Emit progress
-                self.progress_updated.emit(
+                self.emit_progress(
                     idx + 1, total, f"Regenerating {model_name} ({idx + 1}/{total})..."
                 )
 

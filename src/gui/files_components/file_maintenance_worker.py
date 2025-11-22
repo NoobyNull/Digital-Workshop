@@ -10,9 +10,10 @@ from PySide6.QtCore import Signal, QThread
 
 from src.core.logging_config import get_logger
 from src.core.model_sidecar_service import regenerate_sidecars_for_dirty_models
+from src.gui.workers.base_worker import BaseWorker
 
 
-class FileMaintenanceWorker(QThread):
+class FileMaintenanceWorker(BaseWorker):
     """Worker thread for file maintenance operations."""
 
     progress = Signal(int, int, str)  # current, total, message
@@ -23,7 +24,6 @@ class FileMaintenanceWorker(QThread):
         super().__init__()
         self.operation = operation
         self.logger = get_logger(__name__)
-        self._stop_requested = False
 
     def run(self) -> None:
         """Execute the maintenance operation."""
@@ -46,22 +46,22 @@ class FileMaintenanceWorker(QThread):
                     progress_callback=lambda current, total, message: self.progress.emit(
                         current, total, message
                     ),
-                    stop_flag_getter=lambda: self._stop_requested,
+                    stop_flag_getter=self.is_cancel_requested,
                 )
             elif self.operation == "full_maintenance":
                 result = self._recalculate_hashes(db_manager, calculate_file_hash)
-                if not self._stop_requested:
+                if not self.is_cancel_requested():
                     result2 = self._match_files(db_manager, calculate_file_hash)
                     result["processed"] += result2["processed"]
                     result["updated"] += result2["updated"]
                     result["errors"] += result2["errors"]
-                if not self._stop_requested:
+                if not self.is_cancel_requested():
                     result3 = self._regenerate_thumbnails(db_manager)
                     result["processed"] += result3["processed"]
                     result["updated"] += result3["updated"]
                     result["errors"] += result3["errors"]
 
-            if not self._stop_requested:
+            if not self.is_cancel_requested():
                 self.finished.emit(result)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -77,7 +77,7 @@ class FileMaintenanceWorker(QThread):
             total = len(models)
 
             for idx, model in enumerate(models):
-                if self._stop_requested:
+                if self.is_cancel_requested():
                     break
 
                 model_id = model.get("id")
@@ -126,7 +126,7 @@ class FileMaintenanceWorker(QThread):
             total = len(models)
 
             for idx, model in enumerate(models):
-                if self._stop_requested:
+                if self.is_cancel_requested():
                     break
 
                 model_id = model.get("id")

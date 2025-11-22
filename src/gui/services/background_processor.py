@@ -12,13 +12,14 @@ Classes:
 import logging
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from src.core.database_manager import get_database_manager
+from src.gui.workers.base_worker import BaseWorker
 
 
-class BackgroundHasher(QThread):
+class BackgroundHasher(BaseWorker):
     """
     Background thread for hashing model files to detect duplicates.
 
@@ -54,13 +55,17 @@ class BackgroundHasher(QThread):
             models = db_manager.get_models_needing_hash()
 
             for model in models:
-                if self._is_stopped:
+                if self.is_cancel_requested() or self._is_stopped:
                     break
 
-                while self._is_paused and not self._is_stopped:
+                while (
+                    self._is_paused
+                    and not self._is_stopped
+                    and not self.is_cancel_requested()
+                ):
                     self.msleep(100)  # Sleep for 100ms while paused
 
-                if self._is_stopped:
+                if self.is_cancel_requested() or self._is_stopped:
                     break
 
                 try:
@@ -125,6 +130,7 @@ class BackgroundHasher(QThread):
     def stop(self) -> None:
         """Stop the background processing."""
         self._is_stopped = True
+        self.request_cancel()
 
     def is_paused(self) -> bool:
         """Check if the thread is paused."""

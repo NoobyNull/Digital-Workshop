@@ -34,6 +34,9 @@ from PySide6.QtCore import Qt, QSettings, QMimeData, QByteArray
 from PySide6.QtGui import QDrag
 
 from src.core.logging_config import get_logger
+from src.gui.feeds_and_speeds.feeds_and_speeds_controller import (
+    FeedsAndSpeedsController,
+)
 from src.parsers.tool_database_manager import ToolDatabaseManager
 from src.parsers.tool_parsers.vtdb_tool_parser import VTDBToolParser
 from src.core.database.provider_repository import ProviderRepository

@@ -18,7 +18,10 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QTextEdit
 from src.core.logging_config import get_logger, get_activity_logger
 from src.core.database_manager import get_database_manager
 from src.core.model_recent_service import record_model_access
-from src.parsers.stl_parser import STLParser, STLProgressCallback
+from src.parsers.refactored_stl_parser import (
+    RefactoredSTLParser as STLParser,
+    STLProgressCallback,
+)
 
 
 class ModelLoader:

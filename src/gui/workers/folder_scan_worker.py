@@ -7,12 +7,13 @@ emitting progress and results so the UI remains responsive.
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
+from src.gui.workers.base_worker import BaseWorker
 
 
-class FolderScanWorker(QThread):
+class FolderScanWorker(BaseWorker):
     """Worker thread for scanning a folder for model files without blocking the GUI.
 
     Signals:
@@ -33,12 +34,15 @@ class FolderScanWorker(QThread):
         self.root_folder = root_folder
         # Normalize extensions to lowercase with leading dot
         self.extensions = {ext.lower() for ext in extensions}
-        self._is_cancelled = False
+        # Bridge base progress to legacy signal for existing UI wiring.
+        self.progress.connect(
+            lambda current, _, path: self.progress_updated.emit(current, path)
+        )
 
     def cancel(self) -> None:
         """Request cancellation of the scan."""
 
-        self._is_cancelled = True
+        self.request_cancel()
         self.logger.info("Folder scan cancelled by user for: %s", self.root_folder)
 
     def run(self) -> None:  # type: ignore[override]
@@ -58,7 +62,7 @@ class FolderScanWorker(QThread):
             last_emit_count = 0
 
             for path in root_path.rglob("*"):
-                if self._is_cancelled:
+                if self.is_cancel_requested():
                     self.logger.info(
                         "Folder scan cancelled mid-run after %d files: %s",
                         len(files),
@@ -82,7 +86,7 @@ class FolderScanWorker(QThread):
 
                 if len(files) - last_emit_count >= emit_interval:
                     last_emit_count = len(files)
-                    self.progress_updated.emit(len(files), str(path.parent))
+                    self.emit_progress(len(files), emit_interval, str(path.parent))
 
             self.logger.info(
                 "Folder scan completed for %s: %d files found", root_path, len(files)

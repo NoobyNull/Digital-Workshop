@@ -90,6 +90,13 @@ class BaseProvider(ABC):
         Returns:
             Structured dictionary with title, description, and metadata_keywords
         """
+        if not response_text:
+            return {
+                "title": "Image Analysis",
+                "description": "",
+                "metadata_keywords": [],
+                "category": "Uncategorized",
+            }
         try:
             # Try to extract JSON from the response
             if "```json" in response_text:

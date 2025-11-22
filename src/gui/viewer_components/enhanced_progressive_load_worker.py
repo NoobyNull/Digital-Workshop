@@ -8,22 +8,20 @@ the model becomes available for display.
 
 from pathlib import Path
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.model_cache import get_model_cache, CacheLevel
 from src.parsers.format_detector import FormatDetector, ModelFormat
-from src.parsers.obj_parser import OBJParser
-from src.parsers.step_parser import STEPParser
-from src.parsers.stl_parser import STLParser
-from src.parsers.threemf_parser import ThreeMFParser
+from src.parsers.canonical_registry import get_parser_for_format, ParserNotFoundError
 from src.gui.components.detailed_progress_tracker import (
     DetailedProgressTracker,
     LoadingStage,
 )
+from src.gui.workers.base_worker import BaseWorker
 
 
-class EnhancedProgressiveLoadWorker(QThread):
+class EnhancedProgressiveLoadWorker(BaseWorker):
     """
     Enhanced worker thread for progressive model loading with accurate parsing progress.
 
@@ -107,16 +105,10 @@ class EnhancedProgressiveLoadWorker(QThread):
             tracker.start_stage(LoadingStage.METADATA, "Detecting file format...")
             fmt = FormatDetector().detect_format(file_path)
 
-            if fmt == ModelFormat.STL:
-                parser = STLParser()
-            elif fmt == ModelFormat.OBJ:
-                parser = OBJParser()
-            elif fmt == ModelFormat.THREE_MF:
-                parser = ThreeMFParser()
-            elif fmt == ModelFormat.STEP:
-                parser = STEPParser()
-            else:
-                raise Exception(f"Unsupported model format: {fmt}")
+            try:
+                parser = get_parser_for_format(fmt)
+            except ParserNotFoundError as exc:
+                raise Exception(f"Unsupported model format: {fmt}") from exc
 
             tracker.complete_stage(f"Format detected: {fmt.value}")
 

@@ -5,18 +5,9 @@ This module provides the main application window with menu bar, toolbar,
 status bar, and dockable widgets for 3D model management.
 """
 
-from pathlib import Path
 from typing import Dict, List, Optional
 
-from PySide6.QtCore import (
-    Qt,
-    QTimer,
-    Signal,
-    QSettings,
-    QObject,
-    QThread,
-    Slot,
-)
+from PySide6.QtCore import Qt, QTimer, Signal, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -28,23 +19,13 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QTabWidget,
     QSizePolicy,
-    QMenu,
 )
 
 from src.core.logging_config import get_logger, get_activity_logger
-from src.core.fast_hasher import FastHasher
 from src.core.database_manager import get_database_manager
-from src.core.data_structures import ModelFormat
-from src.core.model_cache import get_model_cache, CacheLevel
-from src.core.import_thumbnail_service import ImportThumbnailService
-from src.parsers.stl_parser import STLParser
-from src.parsers.obj_parser import OBJParser
-from src.parsers.threemf_parser import ThreeMFParser
-from src.parsers.step_parser import STEPParser
-from src.parsers.format_detector import FormatDetector
-from src.gui.preferences import PreferencesDialog
-from src.gui.window.dock_snapping import DockDragHandler, SnapOverlayLayer
-from src.gui.project_details_widget import ProjectDetailsWidget
+from src.gui.main_window_components.thumbnail_backfill_controller import (
+    ThumbnailBackfillController,
+)
 from src.core.deduplication_manager import DeduplicationManager
 from src.gui.deduplication_dialog import DeduplicationDialog
 from src.gui.theme import MIN_WIDGET_SIZE
@@ -58,66 +39,13 @@ from src.gui.main_window_components.gcode_previewer_controller import (
 from src.gui.main_window_components.project_details_controller import (
     ProjectDetailsController,
 )
-
-
-class ThumbnailBackfillWorker(QObject):
-    """
-    Background worker to regenerate thumbnails for models missing them.
-
-    Emits progress and completion signals so the UI stays responsive.
-    """
-
-    progress = Signal(int, int)  # processed, total
-    finished = Signal(int, int)  # completed, total
-    failed = Signal(str)
-
-    def __init__(self, logger) -> None:
-        super().__init__()
-        self._logger = logger
-
-    @Slot()
-    def run(self) -> None:
-        """Execute the backfill in a background thread."""
-        try:
-            db_manager = get_database_manager()
-            models = db_manager.get_all_models()
-            missing = [m for m in models if not m.get("thumbnail_path")]
-            total = len(missing)
-
-            if total == 0:
-                self.finished.emit(0, 0)
-                return
-
-            thumbnail_service = ImportThumbnailService()
-            hasher = FastHasher()
-            completed = 0
-
-            for idx, model in enumerate(missing, 1):
-                file_path = model.get("file_path")
-                if not file_path or not Path(file_path).exists():
-                    continue
-                try:
-                    hash_result = hasher.hash_file(file_path)
-                    file_hash = hash_result.hash_value if hash_result.success else None
-                    if not file_hash:
-                        continue
-                    thumbnail_service.generate_thumbnail(
-                        model_path=file_path,
-                        file_hash=file_hash,
-                        material="default",
-                        background=None,
-                        force_regenerate=False,
-                    )
-                    completed += 1
-                except Exception as exc:  # pragma: no cover - best effort
-                    self._logger.debug(
-                        "Thumbnail backfill failed for %s: %s", file_path, exc
-                    )
-                self.progress.emit(idx, total)
-
-            self.finished.emit(completed, total)
-        except Exception as exc:  # pragma: no cover - best effort
-            self.failed.emit(str(exc))
+from src.gui.main_window_components.main_window_controller import MainWindowController
+from src.gui.main_window_components.layout_controller import LayoutController
+from src.gui.main_window_components.library_controller import LibraryController
+from src.gui.main_window_components.project_events_controller import (
+    ProjectEventsController,
+)
+from src.gui.main_window_components.ui_events_controller import UIEventsController
 
 
 class MainWindow(QMainWindow):
@@ -145,9 +73,10 @@ class MainWindow(QMainWindow):
 
         # Initialize logger
         self.logger = get_logger(__name__)
+        self.controller = MainWindowController()
         self.activity_logger = get_activity_logger(__name__)
-        self._thumb_backfill_worker = None
-        self._thumb_backfill_thread = None
+        self.thumb_backfill_controller = ThumbnailBackfillController(self)
+        self.layout_controller = LayoutController(self)
         self.logger.info("Initializing main window")
 
         # UI preference defaults (overridden via QSettings)
@@ -155,6 +84,24 @@ class MainWindow(QMainWindow):
         self.startup_tab_mode: str = "restore_last"
         self.layout_edit_mode: bool = False
         self._dock_context_handlers: Dict[str, bool] = {}
+        self.hero_tabs: Optional[QTabWidget] = None
+        self.model_library_dock: Optional[QDockWidget] = None
+        self.model_library_widget = None
+        self.metadata_dock = None
+        self.metadata_editor = None
+        self.metadata_tabs: Optional[QTabWidget] = None
+        self.clo_widget = None
+        self.feeds_and_speeds_widget = None
+        self.cost_estimator_widget = None
+        self.current_model_id: Optional[int] = None
+        self._window_shown: bool = False
+        self.project_manager_controller: Optional[ProjectManagerController] = None
+        self.model_viewer_controller: Optional[ModelViewerController] = None
+        self.gcode_previewer_controller: Optional[GcodePreviewController] = None
+        self.project_details_controller: Optional[ProjectDetailsController] = None
+        self.library_controller: Optional["LibraryController"] = None
+        self.project_events_controller: Optional["ProjectEventsController"] = None
+        self.ui_events_controller: Optional["UIEventsController"] = None
 
         # Initialize AI Description Service
         try:
@@ -177,11 +124,6 @@ class MainWindow(QMainWindow):
             from src.core.application_config import ApplicationConfig
 
             config = ApplicationConfig.get_default()
-            min_width = config.minimum_window_width
-            min_height = config.minimum_window_height
-
-            from PySide6.QtCore import QSettings
-
             settings = QSettings()
             self.maximize_on_startup = settings.value(
                 "window/maximize_on_startup", config.maximize_on_startup, type=bool
@@ -205,8 +147,6 @@ class MainWindow(QMainWindow):
             )
         except Exception as e:
             self.logger.warning("Failed to load window settings from config: %s", e)
-            min_width = 800
-            min_height = 600
             default_width, default_height = 1200, 800
             self.maximize_on_startup = False
             self.remember_window_size = True
@@ -220,13 +160,15 @@ class MainWindow(QMainWindow):
         try:
             if self.remember_window_location:
                 # Try saved geometry first
-                self._restore_window_geometry_from_settings(
+                self.layout_controller.restore_window_geometry_from_settings(
                     default_width, default_height
                 )
-                self._log_geometry("Geometry after restore-from-settings")
+                self.layout_controller.log_geometry("Geometry after restore-from-settings")
             else:
-                self._apply_default_window_geometry(default_width, default_height)
-                self._log_geometry("Geometry after applying defaults")
+                self.layout_controller.apply_default_window_geometry(
+                    default_width, default_height
+                )
+                self.layout_controller.log_geometry("Geometry after applying defaults")
             restoration_time = time.time() - restoration_start
             self.logger.info("Window geometry initialized in %.3fs", restoration_time)
         except Exception as e:
@@ -239,8 +181,8 @@ class MainWindow(QMainWindow):
         # Window geometry restoration now happens during initialization for proper timing
         # Restore dock layout/state now that UI components exist
         try:
-            self._restore_window_state()
-            self._log_geometry("Geometry after state restore")
+            self.layout_controller.restore_window_state()
+            self.layout_controller.log_geometry("Geometry after state restore")
         except Exception as e:
             self.logger.warning("Failed to restore window state: %s", e)
 
@@ -276,7 +218,16 @@ class MainWindow(QMainWindow):
         from src.gui.components.toolbar_manager import ToolbarManager
         from src.gui.components.status_bar_manager import StatusBarManager
 
-        self.menu_manager = MenuManager(self, self.logger)
+        from src.gui.main_window_components.actions_controller import ActionsController
+        from src.gui.main_window_components.metadata_controller import (
+            MetadataController,
+        )
+
+        self.actions_controller = ActionsController(self)
+        self.metadata_controller = MetadataController(self)
+        self.menu_manager = MenuManager(
+            self, self.logger, handlers=self.actions_controller
+        )
         self.toolbar_manager = ToolbarManager(self, self.logger)
         self.status_bar_manager = StatusBarManager(self, self.logger)
         self.dedup_manager = DeduplicationManager(get_database_manager())
@@ -307,7 +258,9 @@ class MainWindow(QMainWindow):
         self.theme_button = self.status_bar_manager.theme_button
 
         # Update initial theme icon
-        self.status_bar_manager._update_theme_icon()
+        updater = getattr(self.status_bar_manager, "_update_theme_icon", None)
+        if callable(updater):
+            updater()
 
         # Expose status bar components for easy access
         self.status_label = self.status_bar_manager.status_label
@@ -321,11 +274,7 @@ class MainWindow(QMainWindow):
         self.show_metadata_action = self.menu_manager.show_metadata_action
         self.show_model_library_action = self.menu_manager.show_model_library_action
 
-        # Initialize controllers
-        self.project_manager_controller = ProjectManagerController(self)
-        self.model_viewer_controller = ModelViewerController(self)
-        self.gcode_previewer_controller = GcodePreviewController(self)
-        self.project_details_controller = ProjectDetailsController(self)
+        self._init_controllers()
 
         # Use native Qt dock system instead of custom dock manager
         self._setup_native_dock_widgets()
@@ -361,9 +310,7 @@ class MainWindow(QMainWindow):
         self.status_bar_manager.setup_status_timer()
 
         # Set up periodic window state save timer (every 5 seconds)
-        # This ensures window position/size is saved periodically, not just on close
-        # Protects against data loss if the app crashes
-        self._setup_periodic_window_state_save()
+        self.layout_controller.setup_periodic_window_state_save()
 
         # Let PySide6 handle all layout management naturally
         # Removed custom layout timers and forced layout updates
@@ -510,12 +457,14 @@ class MainWindow(QMainWindow):
 
                 # Connect native Qt signals
                 self.model_library_widget.model_selected.connect(
-                    self._on_model_selected
+                    self.library_controller.on_model_selected
                 )
                 self.model_library_widget.model_double_clicked.connect(
                     self.model_viewer_controller.on_model_double_clicked
                 )
-                self.model_library_widget.models_added.connect(self._on_models_added)
+                self.model_library_widget.models_added.connect(
+                    self.library_controller.on_models_added
+                )
 
                 if hasattr(self.model_library_widget, "import_requested"):
                     self.model_library_widget.import_requested.connect(
@@ -524,6 +473,14 @@ class MainWindow(QMainWindow):
                 if hasattr(self.model_library_widget, "import_url_requested"):
                     self.model_library_widget.import_url_requested.connect(
                         self._open_import_from_url_dialog
+                    )
+                if hasattr(self.model_library_widget, "progress_updated"):
+                    self.model_library_widget.progress_updated.connect(
+                        self._on_model_library_progress
+                    )
+                if hasattr(self.model_library_widget, "load_finished"):
+                    self.model_library_widget.load_finished.connect(
+                        self._on_model_library_load_finished
                     )
 
                 self.model_library_dock.setWidget(self.model_library_widget)
@@ -572,98 +529,8 @@ class MainWindow(QMainWindow):
             self.project_details_controller.setup_project_details_dock()
 
     def _setup_metadata_dock(self) -> None:
-        """Set up metadata dock using native Qt."""
-        try:
-            self.metadata_dock = QDockWidget("Metadata Editor", self)
-            self.metadata_dock.setObjectName("MetadataDock")
-
-            # Configure with native Qt dock features
-            self.metadata_dock.setAllowedAreas(
-                Qt.LeftDockWidgetArea
-                | Qt.RightDockWidgetArea
-                | Qt.TopDockWidgetArea
-                | Qt.BottomDockWidgetArea
-            )
-            # Start with layout locked (only closable, not movable)
-            self.metadata_dock.setFeatures(QDockWidget.DockWidgetClosable)
-
-            # Create metadata widget using native Qt
-            try:
-                from src.gui.metadata_editor import MetadataEditorWidget
-
-                self.metadata_editor = MetadataEditorWidget(self)
-
-                # Connect native Qt signals
-                self.metadata_editor.metadata_saved.connect(self._on_metadata_saved)
-                self.metadata_editor.metadata_changed.connect(self._on_metadata_changed)
-
-                # Create tab widget for metadata sections
-                self.metadata_tabs = QTabWidget(self)
-                self.metadata_tabs.setObjectName("MetadataTabs")
-                self.metadata_tabs.addTab(self.metadata_editor, "Metadata")
-
-                # Add placeholder tabs using native Qt
-                notes_widget = QLabel(
-                    "Notes\n\n"
-                    "Add project or model-specific notes here.\n"
-                    "Future: rich text, timestamps, and attachments."
-                )
-                notes_widget.setAlignment(Qt.AlignCenter)
-                notes_widget.setWordWrap(True)
-                self.metadata_tabs.addTab(notes_widget, "Notes")
-
-                history_widget = QLabel(
-                    "History\n\n"
-                    "Timeline of edits and metadata changes will appear here."
-                )
-                history_widget.setAlignment(Qt.AlignCenter)
-                history_widget.setWordWrap(True)
-                self.metadata_tabs.addTab(history_widget, "History")
-
-                self.metadata_dock.setWidget(self.metadata_tabs)
-                self.logger.info("Metadata dock created successfully")
-
-            except Exception as e:
-                self.logger.warning("Failed to create metadata editor: %s", e)
-                # Native Qt fallback
-                fallback_widget = QLabel("Metadata Editor\n\nComponent unavailable.")
-                fallback_widget.setAlignment(Qt.AlignCenter)
-                fallback_widget.setWordWrap(True)
-                self.metadata_dock.setWidget(fallback_widget)
-
-            # Add to main window using native Qt dock system
-            self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-
-            # Register for snapping functionality
-            try:
-                self._register_dock_for_snapping(self.metadata_dock)
-            except Exception as e:
-                self.logger.debug("Failed to register dock for snapping: %s", e)
-
-            # Tabify with properties dock using native Qt
-            try:
-                self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
-                self.logger.info(
-                    "Properties and Metadata docks tabified using native Qt"
-                )
-            except Exception as e:
-                self.logger.debug("Could not tabify docks: %s", e)
-
-            # Set minimum width to prevent zero-width widgets
-            self.metadata_dock.setMinimumWidth(MIN_WIDGET_SIZE)
-            self.metadata_dock.setMaximumWidth(500)
-            self.metadata_dock.setSizePolicy(
-                QSizePolicy.Preferred, QSizePolicy.Expanding
-            )
-
-            # Connect visibility signal for menu synchronization
-            self.metadata_dock.visibilityChanged.connect(
-                lambda visible: self._update_metadata_action_state()
-            )
-            # Qt handles layout persistence automatically
-
-        except Exception as e:
-            self.logger.error("Failed to setup metadata dock: %s", e)
+        """Set up metadata dock using the metadata controller."""
+        self.metadata_controller.setup_metadata_dock()
 
     def _load_native_dock_layout(self) -> None:
         """Load saved dock layout using native Qt methods.
@@ -684,7 +551,7 @@ class MainWindow(QMainWindow):
     def _add_placeholder_tabs(self) -> None:
         """Add placeholder tabs for other features using native Qt widgets."""
 
-        def create_placeholder(title: str, content: str) -> QWidget:
+        def create_placeholder(_title: str, content: str) -> QWidget:
             """Create a native Qt placeholder widget."""
             widget = QWidget()
             layout = QVBoxLayout(widget)
@@ -947,7 +814,7 @@ class MainWindow(QMainWindow):
                     dock.setFeatures(QDockWidget.DockWidgetClosable)
                 if dock.isFloating():
                     edge = dock.property("_last_dock_edge") or "right"
-                    self._snap_dock_to_edge(dock, edge)
+                    self.layout_controller.snap_dock_to_edge(dock, edge)
 
             # Persist state for next launch
             settings = QSettings()
@@ -1127,9 +994,6 @@ class MainWindow(QMainWindow):
     def _apply_dock_tab_positions(self) -> None:
         """Apply dock tab positions from settings."""
         try:
-            from PySide6.QtCore import QSettings
-            from PySide6.QtWidgets import QTabWidget
-
             settings = QSettings()
 
             # Get tab position settings
@@ -1161,140 +1025,11 @@ class MainWindow(QMainWindow):
 
     def _reset_dock_layout_and_save(self) -> None:
         """Reset dock layout to default positions and save settings."""
-        try:
-            self.logger.info("Resetting dock layout to defaults")
-
-            # Reset dock layout using native Qt methods
-            # Clear ALL saved layout state
-            from PySide6.QtCore import QSettings
-
-            settings = QSettings()
-
-            # Remove ALL layout-related QSettings keys
-            layout_keys = [
-                "window_geometry",
-                "window_state",
-                "window/width",
-                "window/height",
-                "window/x",
-                "window/y",
-                "window/maximized",
-                "window/default_width",
-                "window/default_height",
-                "ui/layout_edit_mode",
-                "metadata_panel/visible",
-                "library_panel/visible",
-            ]
-            for key in layout_keys:
-                if settings.contains(key):
-                    settings.remove(key)
-                    self.logger.debug("Cleared QSettings key: %s", key)
-
-            # Restore default window size: 50% width, 100% height (snapped to middle wide, full height)
-            applied_defaults = False
-            default_geometry = settings.value("ui/default_window_geometry")
-            default_state = settings.value("ui/default_window_state")
-
-            if default_geometry:
-                if self.restoreGeometry(default_geometry):
-                    applied_defaults = True
-                    self.logger.info(
-                        "Restored default window geometry from saved template"
-                    )
-
-            if default_state and self.restoreState(default_state):
-                applied_defaults = True
-                self.logger.info("Restored default dock layout from saved template")
-
-            if not applied_defaults:
-                try:
-                    from src.core.application_config import ApplicationConfig
-
-                    default_width, default_height = (
-                        ApplicationConfig.calculate_default_window_size()
-                    )
-                    self.resize(default_width, default_height)
-                    self.logger.info(
-                        f"Reset window size to default: {default_width}x{default_height}"
-                    )
-                except Exception as e:
-                    self.logger.warning(
-                        "Failed to calculate default window size: %s", e
-                    )
-                    self.resize(1200, 800)
-
-            if not applied_defaults:
-                # Restore default dock positions manually
-                if hasattr(self, "model_library_dock") and self.model_library_dock:
-                    self.removeDockWidget(self.model_library_dock)
-                    self.addDockWidget(Qt.LeftDockWidgetArea, self.model_library_dock)
-
-                if hasattr(self, "properties_dock") and self.properties_dock:
-                    self.removeDockWidget(self.properties_dock)
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.properties_dock)
-
-                if hasattr(self, "metadata_dock") and self.metadata_dock:
-                    self.removeDockWidget(self.metadata_dock)
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.metadata_dock)
-                    try:
-                        self.tabifyDockWidget(self.properties_dock, self.metadata_dock)
-                    except Exception as e:
-                        self.logger.debug("Could not tabify docks: %s", e)
-
-                if hasattr(self, "gcode_tools_dock") and self.gcode_tools_dock:
-                    self.removeDockWidget(self.gcode_tools_dock)
-                    self.addDockWidget(Qt.RightDockWidgetArea, self.gcode_tools_dock)
-                    try:
-                        if hasattr(self, "metadata_dock") and self.metadata_dock:
-                            self.tabifyDockWidget(
-                                self.metadata_dock, self.gcode_tools_dock
-                            )
-                    except Exception as e:
-                        self.logger.debug("Could not tabify G-code tools dock: %s", e)
-
-                if hasattr(self, "camera_controls_dock") and self.camera_controls_dock:
-                    self.removeDockWidget(self.camera_controls_dock)
-                    self._place_camera_controls_bottom()
-
-                for dock_attr in (
-                    "model_library_dock",
-                    "properties_dock",
-                    "metadata_dock",
-                    "gcode_tools_dock",
-                    "camera_controls_dock",
-                ):
-                    dock = getattr(self, dock_attr, None)
-                    if dock:
-                        dock.setVisible(True)
-
-            # Save the new layout state
-            self._save_window_settings()
-
-            self.logger.info("Dock layout reset to defaults and saved")
-            self.statusBar().showMessage("Layout reset to defaults", 3000)
-
-        except Exception as e:
-            self.logger.error("Failed to reset dock layout: %s", e)
-            self.statusBar().showMessage("Failed to reset layout", 3000)
+        self.layout_controller.reset_layout()
 
     def _save_current_layout_as_default(self) -> None:
         """Persist the current window/dock layout as the default template."""
-        try:
-            geometry = self.saveGeometry()
-            state = self.saveState()
-            settings = QSettings()
-            settings.setValue("ui/default_window_geometry", geometry)
-            settings.setValue("ui/default_window_state", state)
-            settings.setValue("ui/default_window_width", self.width())
-            settings.setValue("ui/default_window_height", self.height())
-            settings.setValue("ui/default_window_x", self.x())
-            settings.setValue("ui/default_window_y", self.y())
-            settings.sync()
-            self.logger.info("Saved current layout as default reset template")
-            self.statusBar().showMessage("Current layout saved as default", 3000)
-        except Exception as exc:
-            self.logger.warning("Failed to save current layout as default: %s", exc)
-            self.statusBar().showMessage("Failed to save layout", 3000)
+        self.layout_controller.save_current_layout_as_default()
 
     def _restore_window_geometry_early(self) -> None:
         """Restore saved window geometry and state during initialization phase.
@@ -1302,324 +1037,9 @@ class MainWindow(QMainWindow):
         This method is called during __init__ to ensure proper timing coordination
         between window creation and state restoration, eliminating race conditions.
         """
-
-        try:
-            # Respect saved geometry only if remember_window_location is enabled
-            settings = QSettings()
-            remember_loc = settings.value("window/remember_location", True, type=bool)
-            if remember_loc and settings.contains("window_geometry"):
-                geometry_data = settings.value("window_geometry")
-                if geometry_data and self.restoreGeometry(geometry_data):
-                    self.logger.info(
-                        "Window geometry restored successfully during init"
-                    )
-                    return
-
-            # Fallback: use default dimensions/position
-            default_width, default_height = self._calculate_centered_default_size()
-            self._apply_default_window_geometry(default_width, default_height)
-            self.logger.debug("Applied default centered geometry during init")
-        except Exception as e:
-            self.logger.warning(
-                "FAILED to apply default window geometry during init: %s", e
-            )
-            # Don't re-raise - continue initialization anyway
-
-    def _restore_window_geometry_from_settings(
-        self, default_width: int, default_height: int
-    ) -> None:
-        """Restore geometry from QSettings if available, else apply defaults."""
-        settings = QSettings()
-        remember_loc = settings.value(
-            "window/remember_location",
-            getattr(self, "remember_window_location", True),
-            type=bool,
+        self.layout_controller.restore_window_geometry_from_settings(
+            self.width(), self.height()
         )
-        remember_size = settings.value(
-            "window/remember_window_size",
-            getattr(self, "remember_window_size", True),
-            type=bool,
-        )
-
-        if (remember_loc or remember_size) and settings.contains("window_geometry"):
-            geometry_data = settings.value("window_geometry")
-            if geometry_data and self.restoreGeometry(geometry_data):
-                self.logger.info("Window geometry restored from saved settings")
-                return
-
-        # Fallback: use explicit width/height if present
-        width = settings.value("window/width", default_width, type=int)
-        height = settings.value("window/height", default_height, type=int)
-        x_pos = settings.value("window/x", -1, type=int)
-        y_pos = settings.value("window/y", -1, type=int)
-
-        width = max(800, min(width, 3840))
-        height = max(600, min(height, 2160))
-
-        if remember_loc and x_pos >= 0 and y_pos >= 0:
-            self.move(x_pos, y_pos)
-        if remember_size:
-            self.resize(width, height)
-        self.logger.info(
-            "Window geometry applied from explicit settings: %sx%s at (%s,%s)",
-            width,
-            height,
-            x_pos,
-            y_pos,
-        )
-
-        # Apply maximized state if it was saved and remembering size is enabled
-        if remember_size:
-            is_maximized = settings.value("window/maximized", False, type=bool)
-            if is_maximized:
-                self.showMaximized()
-
-    def _restore_window_state(self) -> None:
-        """Restore saved window geometry and state from QSettings.
-
-        DEPRECATED: This method is kept for compatibility but window geometry
-        restoration now happens during initialization via _restore_window_geometry_early().
-        This method is only used for manual restoration requests.
-        """
-        try:
-            settings = QSettings()
-
-            # Try to restore window geometry (size and position)
-            if settings.contains("window_geometry"):
-                geometry_data = settings.value("window_geometry")
-                if geometry_data:
-                    if self.restoreGeometry(geometry_data):
-                        self.logger.info("Window geometry restored successfully")
-                    else:
-                        self.logger.debug(
-                            "Failed to restore window geometry, using defaults"
-                        )
-
-            # Try to restore window state (maximized/normal, dock layout)
-            if settings.contains("window_state"):
-                state_data = settings.value("window_state")
-                if state_data:
-                    if self.restoreState(state_data):
-                        self.logger.info("Window state restored successfully")
-                    else:
-                        self.logger.debug(
-                            "Failed to restore window state, using defaults"
-                        )
-        except Exception as e:
-            self.logger.warning("Failed to restore window state: %s", e)
-
-    def _log_geometry(self, label: str) -> None:
-        """Log current window geometry details for diagnostics."""
-        try:
-            self.logger.info(
-                "%s: size=%sx%s pos=(%s,%s) maximized=%s",
-                label,
-                self.width(),
-                self.height(),
-                self.x(),
-                self.y(),
-                self.isMaximized(),
-            )
-        except Exception:
-            pass
-
-    def _save_window_settings(self) -> None:
-        """Save dock state and active tab; optionally persist geometry/position."""
-        try:
-            settings = QSettings()
-            self._ensure_dock_object_names()
-            state = self.saveState()
-            settings.setValue("window_state", state)
-
-            remember_loc = settings.value(
-                "window/remember_location",
-                getattr(self, "remember_window_location", True),
-                type=bool,
-            )
-            remember_size = settings.value(
-                "window/remember_window_size",
-                getattr(self, "remember_window_size", True),
-                type=bool,
-            )
-            if remember_loc or remember_size:
-                geometry = self.saveGeometry()
-                settings.setValue("window_geometry", geometry)
-                if remember_size:
-                    settings.setValue("window/width", self.width())
-                    settings.setValue("window/height", self.height())
-                    settings.setValue("window/maximized", self.isMaximized())
-                if remember_loc:
-                    settings.setValue("window/x", self.x())
-                    settings.setValue("window/y", self.y())
-
-            # Save current tab index
-            if hasattr(self, "hero_tabs") and self.hero_tabs:
-                settings.setValue(
-                    "ui/active_hero_tab_index", self.hero_tabs.currentIndex()
-                )
-
-            settings.sync()
-            self.logger.info(
-                "Window state saved%s",
-                "" if (remember_loc or remember_size) else " (geometry not persisted)",
-            )
-        except Exception as e:
-            self.logger.error("Failed to save window state: %s", e)
-
-    def _setup_periodic_window_state_save(self) -> None:
-        """Set up periodic window state saving (every 5 seconds).
-
-        This ensures window position/size is saved periodically, not just on close.
-        Protects against data loss if the app crashes.
-        """
-        try:
-            from PySide6.QtCore import QTimer
-
-            # Create timer for periodic saves
-            self._window_state_save_timer = QTimer()
-            self._window_state_save_timer.timeout.connect(
-                self._periodic_save_window_state
-            )
-
-            # Save every 5 seconds
-            self._window_state_save_timer.start(5000)
-
-            self.logger.debug(
-                "Periodic window state save timer started (5 second interval)"
-            )
-        except Exception as e:
-            self.logger.warning("Failed to set up periodic window state save: %s", e)
-
-    def _periodic_save_window_state(self) -> None:
-        """Periodically save window state without verbose logging.
-
-        This is called every 5 seconds to ensure window position/size is saved.
-        Uses silent logging to avoid cluttering the logs.
-        """
-        try:
-            # Avoid geometry churn when docks are floating or the window is minimized
-            if self.isMinimized():
-                self.logger.debug("Periodic save skipped (window minimized)")
-                return
-            try:
-                docks = self.findChildren(QDockWidget)
-                if any(d.isFloating() for d in docks):
-                    self.logger.debug("Periodic save skipped (floating docks present)")
-                    return
-            except Exception:
-                pass
-
-            settings = QSettings()
-
-            # Save dock layout and optionally geometry/position
-            self._ensure_dock_object_names()
-            state = self.saveState()
-            settings.setValue("window_state", state)
-
-            remember_loc = settings.value(
-                "window/remember_location",
-                getattr(self, "remember_window_location", True),
-                type=bool,
-            )
-            remember_size = settings.value(
-                "window/remember_window_size",
-                getattr(self, "remember_window_size", True),
-                type=bool,
-            )
-            if remember_loc or remember_size:
-                geometry = self.saveGeometry()
-                settings.setValue("window_geometry", geometry)
-                if remember_size:
-                    settings.setValue("window/width", self.width())
-                    settings.setValue("window/height", self.height())
-                    settings.setValue("window/maximized", self.isMaximized())
-                if remember_loc:
-                    settings.setValue("window/x", self.x())
-                    settings.setValue("window/y", self.y())
-
-            # Sync to disk
-            settings.sync()
-
-            # Silent logging - only log at debug level to avoid spam
-            self.logger.debug(
-                "Periodic save: dock layout%s",
-                " + geometry" if (remember_loc or remember_size) else " only",
-            )
-        except Exception as e:
-            self.logger.warning("Failed to periodically save window state: %s", e)
-
-    def _ensure_dock_object_names(self) -> None:
-        """Ensure every dock has a stable objectName before saving/restoring state."""
-        try:
-            for dock in self.findChildren(QDockWidget):
-                name = dock.objectName().strip()
-                if not name:
-                    safe = (
-                        dock.windowTitle().replace(" ", "").replace("/", "_")
-                        or f"Dock{hex(id(dock))}"
-                    )
-                    dock.setObjectName(safe)
-        except Exception:
-            pass
-
-    def _place_camera_controls_bottom(self, dock: Optional[QDockWidget] = None) -> None:
-        """Place the camera controls dock along the bottom edge (no forced width split)."""
-        try:
-            # Remove any legacy spacers that might have been created previously
-            if hasattr(self, "_camera_bottom_spacers"):
-                try:
-                    for spacer in getattr(self, "_camera_bottom_spacers") or []:
-                        try:
-                            self.removeDockWidget(spacer)
-                        except Exception:
-                            pass
-                    delattr(self, "_camera_bottom_spacers")
-                except Exception:
-                    pass
-
-            if dock is None:
-                dock = getattr(self, "camera_controls_dock", None)
-                if dock is None:
-                    return
-
-            if not dock.objectName():
-                dock.setObjectName("CameraControlsDock")
-
-            # Allow the dock to size dynamically
-            try:
-                dock.setMinimumWidth(1)
-                dock.setMaximumWidth(16777215)  # Qt max default
-                dock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            except Exception:
-                pass
-
-            # Ensure it lives in the bottom area
-            self.addDockWidget(Qt.BottomDockWidgetArea, dock)
-            dock.setProperty("_last_dock_edge", "bottom")
-        except Exception:
-            pass
-
-    def _ensure_default_window_settings(
-        self, default_width: int, default_height: int
-    ) -> None:
-        """Seed QSettings with a default window position/size if none exist."""
-        try:
-            settings = QSettings()
-            missing = not all(
-                settings.contains(key)
-                for key in ("window/width", "window/height", "window/x", "window/y")
-            )
-            if missing:
-                # Place near top-left to avoid off-screen restore
-                settings.setValue("window/width", max(800, default_width))
-                settings.setValue("window/height", max(600, default_height))
-                settings.setValue("window/x", 50)
-                settings.setValue("window/y", 50)
-                settings.setValue("window/maximized", False)
-                settings.sync()
-                self.logger.info("Seeded default window location/size into QSettings")
-        except Exception as e:
-            self.logger.debug("Failed to seed default window settings: %s", e)
 
     def _on_model_loaded(self, info: str) -> None:
         """Handle model loaded signal from viewer."""
@@ -1658,10 +1078,8 @@ class MainWindow(QMainWindow):
                 # CRITICAL FIX: Defer BOTH geometry and dock layout restoration to next event loop
                 # This ensures the window is fully visible before we try to restore its state
                 # Use 0ms delay to minimize visible flash while still deferring to event loop
-                from PySide6.QtCore import QTimer
-
-                QTimer.singleShot(0, self._deferred_geometry_restoration)
-                QTimer.singleShot(0, self._deferred_dock_layout_restoration)
+                QTimer.singleShot(0, self.layout_controller.deferred_geometry_restoration)
+                QTimer.singleShot(0, self.layout_controller.deferred_dock_layout_restoration)
             else:
                 self.logger.debug("Window show event (not first show)")
 
@@ -1672,113 +1090,6 @@ class MainWindow(QMainWindow):
         self.logger.debug("showEvent completed in %.3fs", total_time)
 
         super().showEvent(event)
-
-    def _deferred_geometry_restoration(self) -> None:
-        """
-        Deferred window geometry restoration after window is shown.
-
-        Apply a centered default only when no prior geometry is available.
-        """
-        try:
-            settings = QSettings()
-            has_saved_geometry = settings.contains("window_geometry") or (
-                settings.contains("window/width") and settings.contains("window/height")
-            )
-
-            remember_loc = settings.value(
-                "window/remember_location",
-                getattr(self, "remember_window_location", True),
-                type=bool,
-            )
-            remember_size = settings.value(
-                "window/remember_window_size",
-                getattr(self, "remember_window_size", True),
-                type=bool,
-            )
-
-            if has_saved_geometry and (remember_loc or remember_size):
-                self.logger.info(
-                    "Skipping post-show centering; saved geometry present and respected"
-                )
-                return
-
-            self.logger.info(
-                "Applying default centered geometry (post-show, no saved geometry)"
-            )
-            default_width, default_height = self._calculate_centered_default_size()
-            self._apply_default_window_geometry(default_width, default_height)
-        except Exception as e:
-            self.logger.warning("Failed to apply default geometry after show: %s", e)
-
-    def _deferred_dock_layout_restoration(self) -> None:
-        """
-        Deferred dock layout restoration to prevent recursive repaint errors.
-
-        CRITICAL FIX: This method is called via QTimer.singleShot after the window
-        is fully shown to prevent recursive repaint errors when multiple widgets
-        are being repainted simultaneously during dock layout restoration.
-        """
-        try:
-            self.logger.debug("Starting deferred dock layout restoration after show")
-
-            # Restore dock layout from QSettings
-            settings = QSettings()
-
-            # Try window_state first (the actual saved state), then window/dock_state as fallback
-            dock_state = settings.value("window_state", None)
-            if not dock_state:
-                dock_state = settings.value("window/dock_state", None)
-
-            if dock_state:
-                # Restore the dock layout
-                self.restoreState(dock_state)
-                self.logger.debug("Dock layout restored from QSettings")
-            else:
-                self.logger.debug("No saved dock layout found")
-
-        except Exception as e:
-            self.logger.warning("Failed to restore dock layout: %s", e)
-        finally:
-            # After restore, ensure all docks are registered for snapping/overlays
-            try:
-                self._refresh_dock_snapping()
-            except Exception:
-                pass
-
-    def _calculate_centered_default_size(self) -> tuple[int, int]:
-        """Calculate an 80% height 4:3 window size based on the primary screen."""
-        try:
-            from PySide6.QtWidgets import QApplication
-
-            screen = self.screen() or QApplication.primaryScreen()
-            if screen:
-                geom = screen.availableGeometry()
-                target_height = int(geom.height() * 0.8)
-                target_width = int(target_height * 4 / 3)
-                return max(800, target_width), max(600, target_height)
-        except Exception:
-            pass
-        # Fallback dimensions
-        return 1200, 800
-
-    def _apply_default_window_geometry(self, width: int, height: int) -> None:
-        """Apply default geometry centered on the current screen."""
-        try:
-            from PySide6.QtWidgets import QApplication
-
-            screen = self.screen() or QApplication.primaryScreen()
-            if screen:
-                geom = screen.availableGeometry()
-                w = min(width, geom.width())
-                h = min(height, geom.height())
-                x = geom.x() + (geom.width() - w) // 2
-                y = geom.y() + (geom.height() - h) // 2
-                self.setGeometry(x, y, w, h)
-                return
-        except Exception:
-            pass
-        # Fallback: simple resize
-        self.resize(width, height)
 
     def closeEvent(self, event) -> None:
         """Handle window close event - save settings before closing.
@@ -1870,7 +1181,7 @@ class MainWindow(QMainWindow):
             self.logger.info(
                 "FIX: Saving window geometry and state (size, position, maximized state, dock layout)"
             )
-            self._save_window_settings()
+            self.layout_controller.save_window_settings()
             settings_time = time.time() - settings_start
             self.logger.info(
                 f"SUCCESS: Window geometry/state saved in {settings_time:.3f}s"
@@ -1929,32 +1240,12 @@ class MainWindow(QMainWindow):
     # Old dock creation methods removed - using native Qt dock system
 
     def _restore_metadata_manager(self) -> None:
-        """Restore and show the Metadata Manager panel if it was closed or missing."""
-        try:
-            # Native Qt dock system handles restoration automatically
-            if hasattr(self, "metadata_dock") and self.metadata_dock:
-                self.metadata_dock.show()
-                self.metadata_dock.raise_()
-                self.statusBar().showMessage("Metadata Manager restored", 2000)
-            else:
-                self.logger.warning("Metadata dock not available")
-        except Exception as e:
-            self.logger.error("Failed to restore Metadata Manager: %s", e)
-
-    # Old dock creation methods removed - using native Qt dock system
+        """Delegate to actions controller."""
+        self.actions_controller.restore_metadata_manager()
 
     def _restore_model_library(self) -> None:
-        """Restore and show the Model Library panel if it was closed or missing."""
-        try:
-            # Native Qt dock system handles restoration automatically
-            if hasattr(self, "model_library_dock") and self.model_library_dock:
-                self.model_library_dock.show()
-                self.model_library_dock.raise_()
-                self.statusBar().showMessage("Model Library restored", 2000)
-            else:
-                self.logger.warning("Model Library dock not available")
-        except Exception as e:
-            self.logger.error("Failed to restore Model Library: %s", e)
+        """Delegate to actions controller."""
+        self.actions_controller.restore_model_library()
 
     def _update_library_action_state(self) -> None:
         """Enable/disable 'Show Model Library' based on panel visibility."""
@@ -1980,258 +1271,31 @@ class MainWindow(QMainWindow):
         Args:
             model_id: Database ID of the imported model
         """
-        try:
-            # Refresh model library to show the newly imported model
-            if hasattr(self, "model_library_widget") and self.model_library_widget:
-                self.model_library_widget._load_models_from_database()
-                self.logger.debug("Model library refreshed for model ID: %d", model_id)
-        except Exception as e:
-            self.logger.error(
-                "Failed to refresh model library for model %d: %s", model_id, e
-            )
+        self.library_controller.on_model_imported_during_import(model_id)
 
     def _import_models(self) -> None:
         """Show the import models dialog."""
-        self._open_import_dialog()
+        self.actions_controller.import_models()
 
     def _on_model_library_import_requested(self, file_paths: List[str]) -> None:
         """Handle import requests initiated from the model library."""
-        try:
-            cleaned_paths: List[str] = []
-            for path in file_paths or []:
-                if not path:
-                    continue
-                p = Path(path)
-                if p.exists() and p.is_file():
-                    cleaned_paths.append(str(p))
-
-            if cleaned_paths:
-                self._open_import_dialog(cleaned_paths)
-            else:
-                # If nothing valid, fall back to opening an empty dialog
-                self._open_import_dialog()
-        except Exception as e:
-            self.logger.error(
-                "Failed to handle model library import request: %s", e, exc_info=True
-            )
-            QMessageBox.critical(
-                self,
-                "Import Error",
-                f"Failed to start import for selected files:\n\n{str(e)}",
-            )
+        self.actions_controller.on_model_library_import_requested(file_paths)
 
     def _open_import_dialog(self, initial_files: Optional[List[str]] = None) -> None:
         """Open the unified import dialog, optionally pre-populated with files."""
-        try:
-            from src.gui.import_components.import_dialog import ImportDialog
-            from src.core.root_folder_manager import RootFolderManager
-            from src.core.database.import_migration import migrate_import_schema
-
-            # Ensure database schema is migrated
-            db_manager = get_database_manager()
-            success, error = migrate_import_schema(db_manager)
-            if not success:
-                self.logger.warning("Database migration warning: %s", error)
-
-            # Create and show import dialog
-            root_folder_mgr = RootFolderManager.get_instance()
-            dialog = ImportDialog(self, root_folder_mgr)
-
-            # Pre-populate with initial files if provided
-            if initial_files:
-                try:
-                    cleaned: List[str] = []
-                    for path in initial_files:
-                        if not path:
-                            continue
-                        p = Path(path)
-                        if p.exists() and p.is_file():
-                            cleaned.append(str(p))
-                    if cleaned:
-                        dialog._add_files(cleaned)
-                except Exception as e:
-                    self.logger.warning(
-                        "Failed to pre-populate ImportDialog with initial files: %s",
-                        e,
-                        exc_info=True,
-                    )
-
-            result = dialog.exec()
-            if dialog.was_backgrounded():
-                message = "Import running in background…"
-                self.status_label.setText(message)
-                if hasattr(self, "statusBar"):
-                    self.statusBar().showMessage(message, 5000)
-                return
-
-            if result:
-                # Import completed successfully
-                import_result = dialog.get_import_result()
-                if import_result:
-                    self.activity_logger.info(
-                        f"Import completed: {import_result.processed_files} files imported"
-                    )
-                    self.status_label.setText(
-                        f"Import complete: {import_result.processed_files} file(s) imported"
-                    )
-
-                    # Final refresh to ensure everything is up to date
-                    # (Individual models were already added during import via _on_model_imported_during_import)
-                    if (
-                        hasattr(self, "model_library_widget")
-                        and self.model_library_widget
-                    ):
-                        self.model_library_widget._load_models_from_database()
-
-                    # Clear status after delay
-                    QTimer.singleShot(5000, lambda: self.status_label.setText("Ready"))
-
-        except Exception as e:
-            self.logger.error("Failed to show import dialog: %s", e, exc_info=True)
-            QMessageBox.critical(
-                self,
-                "Import Error",
-                f"Failed to open import dialog:\n\n{str(e)}",
-            )
+        self.actions_controller.open_import_dialog(initial_files)
 
     def _open_import_from_url_dialog(self) -> None:
         """Open the URL importer dialog."""
-
-        try:
-            from src.gui.import_components.url_import_dialog import UrlImportDialog
-
-            dialog = UrlImportDialog(self)
-            dialog.exec()
-        except Exception as exc:
-            self.logger.error(
-                "Failed to open Import from URL dialog: %s", exc, exc_info=True
-            )
-            QMessageBox.critical(
-                self,
-                "Import Error",
-                f"Failed to open Import from URL dialog:\n\n{exc}",
-            )
+        self.actions_controller.open_import_from_url_dialog()
 
     def _start_library_rebuild(self) -> None:
         """Kick off the managed library rebuild workflow."""
-
-        try:
-            from src.gui.background_tasks.library_rebuild_service import (
-                LibraryRebuildService,
-            )
-
-            if self.library_rebuild_service is None:
-                self.library_rebuild_service = LibraryRebuildService(self)
-            self.library_rebuild_service.start()
-        except Exception as exc:
-            self.logger.error(
-                "Failed to start managed library rebuild: %s", exc, exc_info=True
-            )
-            QMessageBox.critical(
-                self,
-                "Rebuild Error",
-                f"Failed to start managed library rebuild:\n\n{exc}",
-            )
+        self.actions_controller.start_library_rebuild()
 
     def _backfill_thumbnails_library(self) -> None:
         """Generate thumbnails for any model in the database missing one (entire library)."""
-        if getattr(self, "_thumb_backfill_thread", None):
-            running = self._thumb_backfill_thread.isRunning()
-            if running:
-                QMessageBox.information(
-                    self, "Thumbnails", "Thumbnail backfill is already running."
-                )
-                return
-
-        worker = ThumbnailBackfillWorker(self.logger)
-        thread = QThread(self)
-        self._thumb_backfill_worker = worker
-        self._thumb_backfill_thread = thread
-
-        worker.moveToThread(thread)
-        thread.started.connect(worker.run)
-        worker.progress.connect(self._on_thumb_backfill_progress)
-        worker.finished.connect(self._on_thumb_backfill_finished)
-        worker.failed.connect(self._on_thumb_backfill_failed)
-        worker.finished.connect(thread.quit)
-        worker.failed.connect(thread.quit)
-        thread.finished.connect(thread.deleteLater)
-
-        # Kick off the work
-        thread.start()
-        try:
-            self.statusBar().showMessage("Starting thumbnail backfill...", 2000)
-        except Exception:
-            pass
-        if hasattr(self, "status_bar_manager") and self.status_bar_manager:
-            try:
-                self.status_bar_manager.thumb_button.setEnabled(False)
-            except Exception:
-                pass
-
-    @Slot(int, int)
-    def _on_thumb_backfill_progress(self, processed: int, total: int) -> None:
-        """Update status with backfill progress."""
-        try:
-            self.statusBar().showMessage(
-                f"Backfilling thumbnails ({processed}/{total})", 2000
-            )
-        except Exception:
-            pass
-
-    @Slot(int, int)
-    def _on_thumb_backfill_finished(self, completed: int, total: int) -> None:
-        """Handle successful backfill completion."""
-        try:
-            self.statusBar().showMessage("Thumbnail backfill complete", 3000)
-            if total == 0:
-                QMessageBox.information(
-                    self, "Thumbnails", "All models already have thumbnails."
-                )
-            else:
-                QMessageBox.information(
-                    self,
-                    "Thumbnails",
-                    f"Backfilled thumbnails for {completed} of {total} model(s).",
-                )
-            if hasattr(self, "model_library_widget"):
-                self.model_library_widget._refresh_model_display()
-        except Exception:
-            pass
-        finally:
-            self._cleanup_thumb_backfill()
-
-    @Slot(str)
-    def _on_thumb_backfill_failed(self, message: str) -> None:
-        """Handle backfill failure."""
-        try:
-            QMessageBox.critical(self, "Thumbnails", f"Backfill failed:\n{message}")
-            self.logger.error("Thumbnail backfill failed: %s", message)
-        except Exception:
-            pass
-        finally:
-            self._cleanup_thumb_backfill()
-
-    def _cleanup_thumb_backfill(self) -> None:
-        """Reset backfill worker references and re-enable UI controls."""
-        if hasattr(self, "_thumb_backfill_thread") and self._thumb_backfill_thread:
-            try:
-                self._thumb_backfill_thread.quit()
-                self._thumb_backfill_thread.wait(1000)
-            except Exception:
-                pass
-        if hasattr(self, "_thumb_backfill_worker") and self._thumb_backfill_worker:
-            try:
-                self._thumb_backfill_worker.deleteLater()
-            except Exception:
-                pass
-            self._thumb_backfill_worker = None
-        self._thumb_backfill_thread = None
-        if hasattr(self, "status_bar_manager") and self.status_bar_manager:
-            try:
-                self.status_bar_manager.thumb_button.setEnabled(True)
-            except Exception:
-                pass
+        self.thumb_backfill_controller.start()
 
     def _scan_duplicates(self) -> None:
         """Run duplicate scan and let the user resolve collisions."""
@@ -2263,9 +1327,7 @@ class MainWindow(QMainWindow):
 
     def _reload_stylesheet_action(self) -> None:
         """Reload and re-apply the Material Design theme."""
-        # Theme is managed by ThemeService and applied globally
-        self.logger.info("Theme is managed by Material Design system")
-        self.statusBar().showMessage("Material Design theme active", 2000)
+        self.actions_controller.reload_stylesheet_action()
 
     # ===== END_EXTRACT_TO: src/gui/model/model_loader.py =====
 
@@ -2278,17 +1340,7 @@ class MainWindow(QMainWindow):
         Args:
             model_ids: List of IDs of added models
         """
-        self.logger.info("Added %s models to library", len(model_ids))
-
-        # Update status
-        if model_ids:
-            self.status_label.setText(f"Added {len(model_ids)} models to library")
-
-            # Start background hasher to process new models
-            self._start_background_hasher()
-
-            # Clear status after a delay
-            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
+        self.library_controller.on_models_added(model_ids)
 
     def _on_model_selected(self, model_id: int) -> None:
         """
@@ -2300,30 +1352,7 @@ class MainWindow(QMainWindow):
         Args:
             model_id: ID of the selected model
         """
-        try:
-            # Store the current model ID
-            self.current_model_id = model_id
-
-            # Enable the Edit Model action
-            if hasattr(self.menu_manager, "edit_model_action"):
-                self.menu_manager.edit_model_action.setEnabled(True)
-            if hasattr(self.toolbar_manager, "edit_model_action"):
-                self.toolbar_manager.edit_model_action.setEnabled(True)
-
-            # Update project details widget
-            if hasattr(self, "project_details_widget"):
-                db_manager = get_database_manager()
-                model_data = db_manager.get_model(model_id)
-                if model_data:
-                    self.project_details_widget.set_model(model_data)
-
-            # Synchronize metadata tab to selected model
-            self._sync_metadata_to_selected_model(model_id)
-
-            self.logger.debug("Model selected: %s", model_id)
-
-        except Exception as e:
-            self.logger.error("Failed to handle model selection: %s", e)
+        self.library_controller.on_model_selected(model_id)
 
     def _sync_metadata_to_selected_model(self, model_id: int) -> None:
         """
@@ -2335,114 +1364,11 @@ class MainWindow(QMainWindow):
         Args:
             model_id: ID of the selected model
         """
-        try:
-            # Check if metadata editor exists
-            if not hasattr(self, "metadata_editor") or self.metadata_editor is None:
-                self.logger.debug(
-                    "Metadata editor not available for model %s", model_id
-                )
-                return
-
-            # Load metadata for the selected model
-            self.metadata_editor.load_model_metadata(model_id)
-            self.logger.debug("Metadata synchronized for model %s", model_id)
-
-            # Switch to metadata tab to show the loaded metadata
-            if hasattr(self, "metadata_tabs") and self.metadata_tabs:
-                self.metadata_tabs.setCurrentIndex(0)  # Switch to Metadata tab
-                self.logger.debug("Switched to Metadata tab for model %s", model_id)
-
-        except Exception as e:
-            self.logger.warning(
-                f"Failed to synchronize metadata for model {model_id}: {e}"
-            )
+        self.library_controller.sync_metadata_to_selected_model(model_id)
 
     def _edit_model(self) -> None:
         """Analyze the currently selected model for errors."""
-        try:
-            # Check if a model is currently selected
-            if not hasattr(self, "current_model_id") or self.current_model_id is None:
-                from PySide6.QtWidgets import QMessageBox
-
-                QMessageBox.information(
-                    self,
-                    "No Model Selected",
-                    "Please select a model from the library first.",
-                )
-                return
-
-            # Get the model from database
-            db_manager = get_database_manager()
-            model_data = db_manager.get_model(self.current_model_id)
-
-            if not model_data:
-                from PySide6.QtWidgets import QMessageBox
-
-                QMessageBox.warning(self, "Error", "Model not found in database")
-                return
-
-            # Load the model file
-            file_path = model_data.get("file_path")
-            if not file_path:
-                from PySide6.QtWidgets import QMessageBox
-
-                QMessageBox.warning(self, "Error", "Model file path not found")
-                return
-
-            # Load full geometry (not just metadata) for analysis
-            model_cache = get_model_cache()
-            cached_model = model_cache.get(file_path, CacheLevel.GEOMETRY_FULL)
-            if cached_model and cached_model.triangles:
-                model = cached_model
-            else:
-                # Load full geometry from file
-                fmt = FormatDetector().detect_format(Path(file_path))
-                if fmt == ModelFormat.STL:
-                    parser = STLParser()
-                elif fmt == ModelFormat.OBJ:
-                    parser = OBJParser()
-                elif fmt == ModelFormat.THREE_MF:
-                    parser = ThreeMFParser()
-                elif fmt == ModelFormat.STEP:
-                    parser = STEPParser()
-                else:
-                    from PySide6.QtWidgets import QMessageBox
-
-                    QMessageBox.critical(
-                        self, "Error", f"Unsupported model format: {fmt}"
-                    )
-                    return
-
-                model = parser.parse_file(file_path)
-                if model:
-                    # Cache the full geometry for future use
-                    model_cache.put(file_path, CacheLevel.GEOMETRY_FULL, model)
-
-            # Validate model has geometry (either triangles or array-based)
-            if not model or (not model.triangles and not model.vertex_array):
-                from PySide6.QtWidgets import QMessageBox
-
-                QMessageBox.critical(
-                    self, "Error", f"Failed to load model geometry: {file_path}"
-                )
-                return
-
-            # Open model analyzer dialog
-            from src.gui.model_editor.model_analyzer_dialog import ModelAnalyzerDialog
-
-            dialog = ModelAnalyzerDialog(model, file_path, self)
-
-            if dialog.exec() == 1:  # QDialog.Accepted
-                # Model was fixed and saved, reload it
-                self.activity_logger.info(f"Model analyzed and fixed")
-                # Reload the model in the viewer
-                self._on_model_double_clicked(self.current_model_id)
-
-        except Exception as e:
-            self.logger.error("Failed to analyze model: %s", e)
-            from PySide6.QtWidgets import QMessageBox
-
-            QMessageBox.critical(self, "Error", f"Failed to analyze model: {str(e)}")
+        self.library_controller.edit_model()
 
     def _start_background_hasher(self) -> None:
         """Start the background hasher thread to process unhashed models."""
@@ -2458,70 +1384,27 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to start background hasher: %s", e)
 
-    def _connect_model_library_status_updates(self) -> None:
-        """Connect model library progress updates to main window status bar."""
-        try:
-            if not hasattr(self.model_library_widget, "model_loader"):
-                return
-
-            # We need to monitor the model loader when it's created
-            # Store reference to original _load_models method
-            original_load_models = self.model_library_widget._load_models
-
-            def _load_models_with_status_update(file_paths):
-                """Wrapper to connect status updates when loading starts."""
-                # Call original method
-                original_load_models(file_paths)
-
-                # Connect progress signals if model_loader exists
-                if (
-                    hasattr(self.model_library_widget, "model_loader")
-                    and self.model_library_widget.model_loader
-                ):
-                    try:
-                        self.model_library_widget.model_loader.progress_updated.connect(
-                            self._on_model_library_progress
-                        )
-                    except Exception as e:
-                        self.logger.debug("Could not connect progress signal: %s", e)
-
-            # Replace the method
-            self.model_library_widget._load_models = _load_models_with_status_update
-
-            self.logger.debug("Model library status updates connected")
-        except Exception as e:
-            self.logger.warning("Failed to connect model library status updates: %s", e)
-
     def _on_model_library_progress(self, progress_percent: float, message: str) -> None:
-        """Handle progress updates from model library."""
+        """Update main status bar with library load progress via public signal."""
         try:
-            # Update main window status bar
             if hasattr(self, "status_label"):
-                # Get total files from model loader if available
-                if (
-                    hasattr(self.model_library_widget, "model_loader")
-                    and self.model_library_widget.model_loader
-                ):
-                    total_files = len(self.model_library_widget.model_loader.file_paths)
-                    current_item = int((progress_percent / 100.0) * total_files) + 1
-                    current_item = min(current_item, total_files)
-
-                    if total_files > 1:
-                        status_text = f"{message} ({current_item} of {total_files} = {int(progress_percent)}%)"
-                    else:
-                        status_text = f"{message} ({int(progress_percent)}%)"
-                else:
-                    status_text = f"{message} ({int(progress_percent)}%)"
-
-                self.status_label.setText(status_text)
-
-            # Update progress bar
+                self.status_label.setText(message)
             if hasattr(self, "progress_bar"):
                 self.progress_bar.setVisible(True)
                 self.progress_bar.setRange(0, 100)
                 self.progress_bar.setValue(int(progress_percent))
         except Exception as e:
             self.logger.debug("Failed to update status from model library: %s", e)
+
+    def _on_model_library_load_finished(self) -> None:
+        """Hide progress bar and reset status when library finishes loading."""
+        try:
+            if hasattr(self, "progress_bar"):
+                self.progress_bar.setVisible(False)
+            if hasattr(self, "status_label"):
+                self.status_label.setText("Ready")
+        except Exception as e:
+            self.logger.debug("Failed to finalize library load UI: %s", e)
 
     def _on_metadata_saved(self, model_id: int) -> None:
         """
@@ -2533,14 +1416,9 @@ class MainWindow(QMainWindow):
         try:
             self.logger.info("Metadata saved for model ID: %s", model_id)
             self.status_label.setText("Metadata saved")
-
-            # Update the model library to reflect changes
             if hasattr(self, "model_library_widget"):
-                self.model_library_widget._load_models_from_database()
-
-            # Clear status after a delay
+                self.model_library_widget.refresh_models_from_database()
             QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
-
         except Exception as e:
             self.logger.error("Failed to handle metadata saved event: %s", str(e))
 
@@ -2566,65 +1444,7 @@ class MainWindow(QMainWindow):
         Args:
             project_id: ID of the opened project
         """
-        try:
-            self.logger.info("Project opened: %s", project_id)
-            self.status_label.setText(f"Project opened: {project_id}")
-
-            # Set current project for all tabs that support tab data save/load
-            if hasattr(self, "clo_widget") and self.clo_widget:
-                try:
-                    self.clo_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Cut List Optimizer: {project_id}"
-                    )
-                except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Cut List Optimizer: {e}"
-                    )
-
-            if (
-                hasattr(self, "feeds_and_speeds_widget")
-                and self.feeds_and_speeds_widget
-            ):
-                try:
-                    self.feeds_and_speeds_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Feed and Speed: {project_id}"
-                    )
-                except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Feed and Speed: {e}"
-                    )
-
-            if hasattr(self, "cost_estimator_widget") and self.cost_estimator_widget:
-                try:
-                    self.cost_estimator_widget.set_current_project(project_id)
-                    self.logger.debug(
-                        f"Set current project for Cost Estimator: {project_id}"
-                    )
-                except Exception as e:
-                    self.logger.warning(
-                        f"Failed to set project for Cost Estimator: {e}"
-                    )
-
-            if hasattr(self, "viewer_widget") and self.viewer_widget:
-                try:
-                    if hasattr(self.viewer_widget, "set_current_project"):
-                        self.viewer_widget.set_current_project(project_id)
-                        self.logger.debug(
-                            f"Set current project for Model Viewer: {project_id}"
-                        )
-                except Exception as e:
-                    self.logger.warning(f"Failed to set project for Model Viewer: {e}")
-
-            # Attach the project to the G-code previewer so that timing
-            # calculations use the correct machine and feed override.
-            self.gcode_previewer_controller.set_current_project(project_id)
-
-            QTimer.singleShot(3000, lambda: self.status_label.setText("Ready"))
-
-        except Exception as e:
-            self.logger.error("Failed to handle project opened event: %s", str(e))
+        self.project_events_controller.on_project_opened(project_id)
 
     def _on_project_created(self, project_id: str) -> None:
         """
@@ -2675,62 +1495,7 @@ class MainWindow(QMainWindow):
         The project tree already decides which hero tab should be used and
         emits that as ``tab_name``. Here we just perform the actual load.
         """
-        try:
-            if not file_path:
-                return
-
-            path_obj = Path(file_path)
-            if not path_obj.exists():
-                self.logger.warning(
-                    "Selected project file does not exist: %s", file_path
-                )
-                QMessageBox.warning(
-                    self,
-                    "File Not Found",
-                    f"The selected file no longer exists on disk:\n{file_path}",
-                )
-                return
-
-            # For model files, mirror the behaviour of the model library path
-            # (status text + indeterminate progress). G-code previewer manages
-            # its own progress UI internally.
-            if tab_name == "Model Previewer":
-                filename = path_obj.name
-                self.status_label.setText(f"Loading: {filename}")
-                self.progress_bar.setVisible(True)
-                self.progress_bar.setRange(0, 0)
-
-                # Update Project Details from database if possible, otherwise fallback to file info
-                if hasattr(self, "project_details_widget") and self.project_details_widget:
-                    db_manager = get_database_manager()
-                    model_data = db_manager.get_model_by_path(file_path)
-                    if model_data:
-                        self.project_details_widget.set_model(model_data)
-                    else:
-                        self.project_details_widget.show_file(file_path)
-
-                # This is a project file, not a library model; clear any
-                # library model id and load directly from path.
-                self.current_model_id = None
-                if hasattr(self, "model_loader_manager") and self.model_loader_manager:
-                    self.model_loader_manager.load_stl_model(file_path)
-
-            elif tab_name == "G Code Previewer":
-                if hasattr(self, "project_details_widget") and self.project_details_widget:
-                    self.project_details_widget.show_file(file_path)
-                self.gcode_previewer_controller.open_gcode_file(file_path)
-
-        except Exception as e:  # noqa: BLE001
-            self.logger.error("Failed to open project file %s: %s", file_path, e)
-            QMessageBox.critical(
-                self,
-                "Open File Error",
-                f"Failed to open the selected file:\n{file_path}\n\n{e}",
-            )
-            if hasattr(self, "progress_bar"):
-                self.progress_bar.setVisible(False)
-            if hasattr(self, "status_label"):
-                self.status_label.setText("Ready")
+        self.project_events_controller.on_project_file_selected(file_path, tab_name)
 
     def _update_project_manager_action_state(self) -> None:
         """Update project manager action state based on dock visibility."""
@@ -2747,122 +1512,15 @@ class MainWindow(QMainWindow):
 
     def _show_preferences(self) -> None:
         """Show preferences dialog."""
-        self.logger.info("Opening preferences dialog")
-        dlg = PreferencesDialog(
-            self,
-            on_reset_layout=self._reset_dock_layout_and_save,
-            on_save_layout_default=self._save_current_layout_as_default,
-        )
-        # Connect theme change signal to update main window stylesheet
-        dlg.theme_changed.connect(self._on_theme_changed)
-        # Connect viewer settings change signal to update VTK scene
-        dlg.viewer_settings_changed.connect(self._on_viewer_settings_changed)
-        # Connect AI settings change signal to reload AI service
-        dlg.ai_settings_changed.connect(self._on_ai_settings_changed)
-        # React to general/workspace settings changes (sidebar sync, startup tab, etc.)
-        if hasattr(dlg, "general_settings_changed"):
-            dlg.general_settings_changed.connect(self._on_workspace_settings_changed)
-        dlg.exec_()
+        self.ui_events_controller.show_preferences()
 
     def _on_theme_changed(self) -> None:
         """Handle theme change from preferences dialog."""
-        # Qt-material handles theme changes automatically through the application
-        # No need to manually update main window stylesheet
-        self.logger.debug("Theme changed - qt-material handling automatically")
-
-        # Update theme button icon
-        self.status_bar_manager._update_theme_icon()
+        self.ui_events_controller.on_theme_changed()
 
     def _on_viewer_settings_changed(self) -> None:
         """Handle viewer settings change from preferences dialog."""
-        try:
-            self.logger.info("=== VIEWER SETTINGS CHANGED SIGNAL RECEIVED ===")
-
-            if not hasattr(self, "viewer_widget"):
-                self.logger.error("ERROR: Main window has no viewer_widget attribute")
-                return
-
-            if not self.viewer_widget:
-                self.logger.error("ERROR: viewer_widget is None")
-                return
-
-            self.logger.info(
-                "viewer_widget type: %s", type(self.viewer_widget).__name__
-            )
-            self.logger.info(
-                f"viewer_widget has scene_manager: {hasattr(self.viewer_widget, 'scene_manager')}"
-            )
-
-            # Reload settings from QSettings and apply them
-            if hasattr(self.viewer_widget, "scene_manager"):
-                try:
-                    scene_manager = self.viewer_widget.scene_manager
-                    self.logger.info(
-                        f"scene_manager type: {type(scene_manager).__name__}"
-                    )
-
-                    # Reload all settings from QSettings
-                    if hasattr(scene_manager, "reload_settings_from_qsettings"):
-                        self.logger.info(
-                            "Calling scene_manager.reload_settings_from_qsettings()"
-                        )
-                        scene_manager.reload_settings_from_qsettings()
-                        self.logger.info(
-                            "✓ Viewer settings reloaded and applied successfully"
-                        )
-                    else:
-                        self.logger.warning(
-                            "WARNING: scene_manager has no reload_settings_from_qsettings method"
-                        )
-                        # Fallback to just rendering
-                        if hasattr(scene_manager, "render"):
-                            scene_manager.render()
-                            self.logger.info("Fallback: Scene re-rendered")
-
-                except Exception as e:
-                    self.logger.error(
-                        f"ERROR in scene_manager path: {e}", exc_info=True
-                    )
-            else:
-                self.logger.warning(
-                    "WARNING: viewer_widget has no scene_manager attribute"
-                )
-
-                # Also try direct render if available
-                if hasattr(self.viewer_widget, "render"):
-                    try:
-                        self.viewer_widget.render()
-                        self.logger.info("Fallback: Viewer re-rendered directly")
-                    except Exception as e:
-                        self.logger.error("ERROR in direct render: %s", e)
-
-            # Also notify Cut List Optimizer layout view so its grid updates live
-            try:
-                if hasattr(self, "clo_widget") and self.clo_widget:
-                    clo_widget = self.clo_widget
-                    if (
-                        hasattr(clo_widget, "board_visualizer")
-                        and clo_widget.board_visualizer
-                    ):
-                        visualizer = clo_widget.board_visualizer
-                        if hasattr(visualizer, "reload_settings_from_qsettings"):
-                            self.logger.info(
-                                "Reloading CLO grid settings from QSettings"
-                            )
-                            visualizer.reload_settings_from_qsettings()
-                            self.logger.info("✓ CLO grid settings reloaded and applied")
-            except Exception as clo_error:
-                self.logger.error(
-                    "Failed to reload CLO grid settings after viewer settings change: %s",
-                    clo_error,
-                    exc_info=True,
-                )
-
-            self.logger.info("=== VIEWER SETTINGS CHANGE HANDLING COMPLETE ===")
-        except Exception as e:
-            self.logger.error(
-                f"FATAL ERROR applying viewer settings: {e}", exc_info=True
-            )
+        self.ui_events_controller.on_viewer_settings_changed()
 
     def _on_ai_settings_changed(self) -> None:
         """Handle AI settings change from preferences dialog."""
@@ -2872,10 +1530,7 @@ class MainWindow(QMainWindow):
             # Reload AI service with new settings
             if self.ai_service:
                 self.logger.info("Reloading AI service configuration...")
-                # Reload config from QSettings
-                self.ai_service.config = self.ai_service._load_config()
-                # Re-initialize providers with new config
-                self.ai_service._initialize_providers()
+                self.ai_service.reload_configuration()
                 self.logger.info(
                     f"✓ AI service reloaded. Available providers: {list(self.ai_service.providers.keys())}"
                 )
@@ -2933,42 +1588,15 @@ class MainWindow(QMainWindow):
 
     def _zoom_in(self) -> None:
         """Handle zoom in action."""
-        self.logger.debug("Zoom in requested")
-        self.status_label.setText("Zoomed in")
-
-        # Forward to viewer widget if available
-        if hasattr(self.viewer_widget, "zoom_in"):
-            self.viewer_widget.zoom_in()
-        else:
-            QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+        self.actions_controller.zoom_in()
 
     def _zoom_out(self) -> None:
         """Handle zoom out action."""
-        self.logger.debug("Zoom out requested")
-        self.status_label.setText("Zoomed out")
-
-        # Forward to viewer widget if available
-        if hasattr(self.viewer_widget, "zoom_out"):
-            self.viewer_widget.zoom_out()
-        else:
-            QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+        self.actions_controller.zoom_out()
 
     def _reset_view(self) -> None:
         """Handle reset view action."""
-        self.logger.debug("Reset view requested")
-        self.status_label.setText("View reset")
-
-        # Forward to viewer widget if available
-        if hasattr(self.viewer_widget, "reset_view"):
-            self.viewer_widget.reset_view()
-            # Reset save view button when view is reset
-            try:
-                if hasattr(self.viewer_widget, "reset_save_view_button"):
-                    self.viewer_widget.reset_save_view_button()
-            except Exception as e:
-                self.logger.warning("Failed to reset save view button: %s", e)
-        else:
-            QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
+        self.actions_controller.reset_view()
 
     def _cycle_theme(self) -> None:
         """Cycle through Light, Dark, and System themes."""
@@ -2999,7 +1627,9 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(2000, lambda: self.status_label.setText("Ready"))
 
             # Update theme button icon
-            self.status_bar_manager._update_theme_icon()
+            updater = getattr(self.status_bar_manager, "_update_theme_icon", None)
+            if callable(updater):
+                updater()
 
             self.logger.info("Cycled theme from %s to {next_theme}", current_theme)
 
@@ -3010,87 +1640,7 @@ class MainWindow(QMainWindow):
 
     def _save_current_view(self) -> None:
         """Save the current camera view for the loaded model."""
-        try:
-            # Check if a model is currently loaded
-            if (
-                not hasattr(self.viewer_widget, "current_model")
-                or not self.viewer_widget.current_model
-            ):
-                QMessageBox.information(
-                    self, "Save View", "No model is currently loaded."
-                )
-                return
-
-            # Get the model ID from the current model
-            model = self.viewer_widget.current_model
-            if not hasattr(model, "file_path") or not model.file_path:
-                QMessageBox.warning(
-                    self, "Save View", "Cannot save view: model file path not found."
-                )
-                return
-
-            # Find the model ID in the database by file path
-            db_manager = get_database_manager()
-            models = db_manager.get_all_models()
-            model_id = None
-            for m in models:
-                if m.get("file_path") == model.file_path:
-                    model_id = m.get("id")
-                    break
-
-            if not model_id:
-                QMessageBox.warning(self, "Save View", "Model not found in database.")
-                return
-
-            # Get camera state from viewer
-            if hasattr(self.viewer_widget, "renderer"):
-                camera = self.viewer_widget.renderer.GetActiveCamera()
-                if camera:
-                    pos = camera.GetPosition()
-                    focal = camera.GetFocalPoint()
-                    view_up = camera.GetViewUp()
-
-                    camera_data = {
-                        "position_x": pos[0],
-                        "position_y": pos[1],
-                        "position_z": pos[2],
-                        "focal_x": focal[0],
-                        "focal_y": focal[1],
-                        "focal_z": focal[2],
-                        "view_up_x": view_up[0],
-                        "view_up_y": view_up[1],
-                        "view_up_z": view_up[2],
-                    }
-
-                    # Save to database
-                    success = db_manager.save_camera_orientation(model_id, camera_data)
-
-                    if success:
-                        self.status_label.setText("View saved for this model")
-                        self.logger.info("Saved camera view for model ID %s", model_id)
-                        # Reset save view button after successful save
-                        try:
-                            if hasattr(self.viewer_widget, "reset_save_view_button"):
-                                self.viewer_widget.reset_save_view_button()
-                        except Exception as e:
-                            self.logger.warning(
-                                f"Failed to reset save view button: {e}"
-                            )
-                        QTimer.singleShot(
-                            3000, lambda: self.status_label.setText("Ready")
-                        )
-                    else:
-                        QMessageBox.warning(
-                            self, "Save View", "Failed to save view to database."
-                        )
-                else:
-                    QMessageBox.warning(self, "Save View", "Camera not available.")
-            else:
-                QMessageBox.warning(self, "Save View", "Viewer not initialized.")
-
-        except Exception as e:
-            self.logger.error("Failed to save current view: %s", e)
-            QMessageBox.warning(self, "Save View", f"Failed to save view: {str(e)}")
+        self.actions_controller.save_current_view()
 
     def _show_help(self) -> None:
         """Show searchable help dialog."""
@@ -3105,86 +1655,11 @@ class MainWindow(QMainWindow):
 
     def _show_about(self) -> None:
         """Show about dialog."""
-        self.logger.info("Showing about dialog")
-
-        about_text = (
-            "<h3>Digital Workshop</h3>"
-            "<p>Version 1.0.0</p>"
-            "<p>A desktop application for managing and viewing 3D models.</p>"
-            "<p><b>Supported formats:</b> STL, OBJ, STEP, MF3</p>"
-            "<p><b>Requirements:</b> Windows 7+, Python 3.8+, PySide5</p>"
-            "<br>"
-            "<p>&copy; 2023 Digital Workshop Development Team</p>"
-        )
-
-        QMessageBox.about(self, "About Digital Workshop", about_text)
+        self.actions_controller.show_about()
 
     def _generate_library_screenshots(self) -> None:
         """Generate thumbnails for all models in the library with applied materials."""
-        try:
-            from src.gui.thumbnail_generation_coordinator import (
-                ThumbnailGenerationCoordinator,
-            )
-            from src.core.application_config import ApplicationConfig
-            from src.core.database_manager import get_database_manager
-
-            # Get all models from database
-            db_manager = get_database_manager()
-            models = db_manager.get_all_models()
-
-            if not models:
-                QMessageBox.information(
-                    self,
-                    "No Models",
-                    "No models found in the library. Import some models first.",
-                )
-                return
-
-            # Load thumbnail settings
-            config = ApplicationConfig.get_default()
-            bg_image = config.thumbnail_bg_image
-            material = config.thumbnail_material
-
-            # Build file info list: (file_path, file_hash)
-            file_info_list = []
-            for model in models:
-                file_path = model.get("file_path")
-                file_hash = model.get("file_hash")
-                if file_path and file_hash and Path(file_path).exists():
-                    file_info_list.append((file_path, file_hash))
-
-            if not file_info_list:
-                QMessageBox.warning(
-                    self,
-                    "No Valid Models",
-                    "No valid model files found. Check that model files still exist.",
-                )
-                return
-
-            # Create coordinator and generate thumbnails
-            coordinator = ThumbnailGenerationCoordinator(parent=self)
-            coordinator.generate_thumbnails(
-                file_info_list=file_info_list,
-                background=bg_image,
-                material=material,
-            )
-
-            # Connect completion signal to reload library
-            coordinator.generation_completed.connect(
-                self._on_library_thumbnails_completed
-            )
-
-            self.logger.info(
-                "Started thumbnail generation for %s models", len(file_info_list)
-            )
-
-        except Exception as e:
-            self.logger.error("Failed to start thumbnail generation: %s", e)
-            QMessageBox.critical(
-                self,
-                "Thumbnail Generation Error",
-                f"Failed to start thumbnail generation:\n{e}",
-            )
+        self.actions_controller.generate_library_screenshots()
 
     def _on_screenshot_progress(self, current: int, total: int) -> None:
         """Handle screenshot generation progress."""
@@ -3221,7 +1696,7 @@ class MainWindow(QMainWindow):
 
             # Reload model library to display new thumbnails
             if hasattr(self, "model_library_widget") and self.model_library_widget:
-                self.model_library_widget._load_models_from_database()
+                self.model_library_widget.refresh_models_from_database()
 
             QMessageBox.information(
                 self,
@@ -3242,7 +1717,7 @@ class MainWindow(QMainWindow):
         try:
             # Reload model library to display new thumbnails
             if hasattr(self, "model_library_widget") and self.model_library_widget:
-                self.model_library_widget._load_models_from_database()
+                self.model_library_widget.refresh_models_from_database()
 
             self.logger.info("Library thumbnail generation completed")
 
@@ -3276,220 +1751,21 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error("Failed to switch tab: %s", e)
 
-    def _snap_dock_to_edge(self, dock: QDockWidget, edge: str) -> None:
-        """Snap a floating dock widget to the specified edge of the main window.
-
-        Args:
-            dock: The dock widget to snap
-            edge: The edge to snap to ('left', 'right', 'top', 'bottom')
-        """
-        try:
-            area_map = {
-                "left": Qt.LeftDockWidgetArea,
-                "right": Qt.RightDockWidgetArea,
-                "top": Qt.TopDockWidgetArea,
-                "bottom": Qt.BottomDockWidgetArea,
-            }
-            target_area = area_map.get(edge)
-            if target_area is None:
-                self.logger.warning("Invalid snap edge: %s", edge)
-                return
-
-            # Check if this dock is allowed to dock to the target area
-            allowed = dock.allowedAreas()
-            if not (allowed & target_area):
-                self.logger.debug(
-                    f"Dock {dock.windowTitle()} not allowed in {edge} area"
-                )
-                return
-
-            # Identify an existing dock already in the target area to tabify/split with
-            neighbors = [
-                d
-                for d in self.findChildren(QDockWidget)
-                if d is not dock and self.dockWidgetArea(d) == target_area
-            ]
-            neighbor = neighbors[0] if neighbors else None
-
-            # Perform the snap operation
-            dock.setFloating(False)
-            self.addDockWidget(target_area, dock)
-            dock.raise_()
-            dock.setProperty("_last_dock_edge", edge)
-
-            # If a neighbor exists in the target area, tabify/split to allow partial width
-            if neighbor:
-                try:
-                    if target_area == Qt.BottomDockWidgetArea:
-                        self.splitDockWidget(neighbor, dock, Qt.Horizontal)
-                    else:
-                        self.tabifyDockWidget(neighbor, dock)
-                except Exception as tab_exc:
-                    self.logger.debug(
-                        "Failed to arrange dock '%s' with '%s': %s",
-                        dock.windowTitle(),
-                        neighbor.windowTitle(),
-                        tab_exc,
-                    )
-
-            self.logger.info(f"Snapped dock '{dock.windowTitle()}' to {edge} area")
-
-            # Save the new layout
-            self._save_window_settings()
-
-        except Exception as e:
-            self.logger.warning("Failed to snap dock to %s: %s", edge, e)
-
-    def _register_dock_for_snapping(self, dock: QDockWidget) -> None:
-        """Register a dock widget for snapping + context controls."""
-        try:
-            # Allow bypassing snapping for freer placement (default: disabled)
-            settings = QSettings()
-            snapping_enabled = settings.value("dock_snapping/enabled", True, type=bool)
-            if not snapping_enabled:
-                self.logger.info(
-                    "Dock snapping was disabled in settings; re-enabling for dock '%s'",
-                    dock.windowTitle(),
-                )
-                settings.setValue("dock_snapping/enabled", True)
-
-            # Ensure the dock has a stable objectName for saveState/restoreState
-            if not dock.objectName():
-                safe_name = dock.windowTitle().replace(" ", "").replace("/", "_")
-                dock.setObjectName(safe_name)
-            else:
-                # If duplicate names exist, make this one unique
-                existing_names = {
-                    d.objectName() for d in self.findChildren(QDockWidget)
-                }
-                if list(existing_names).count(dock.objectName()) > 1:
-                    safe_name = f"{dock.objectName()}_{id(dock)}"
-                    dock.setObjectName(safe_name)
-
-            dock.setAllowedAreas(
-                Qt.LeftDockWidgetArea
-                | Qt.RightDockWidgetArea
-                | Qt.TopDockWidgetArea
-                | Qt.BottomDockWidgetArea
-            )
-            dock.setObjectName(dock.objectName() or dock.windowTitle().replace(" ", ""))
-            dock.setContextMenuPolicy(Qt.CustomContextMenu)
-
-            def _show_menu(point):
-                self._show_dock_context_menu(dock, point)
-
-            dock.customContextMenuRequested.connect(_show_menu)
-            dock.topLevelChanged.connect(
-                lambda floating, d=dock: self._on_dock_top_level_changed(d, floating)
-            )
-            self._on_dock_top_level_changed(dock, dock.isFloating())
-            # initialize overlay/handlers once
-            if not hasattr(self, "_snap_layer") or self._snap_layer is None:
-                self._snap_layer = SnapOverlayLayer(self)
-                self._snap_handlers = {}
-
-            handler = DockDragHandler(self, dock, self._snap_layer, self.logger)
-            if not hasattr(self, "_snap_handlers"):
-                self._snap_handlers = {}
-            self._snap_handlers[dock.objectName()] = handler
-            dock.installEventFilter(handler)
-
-            self.logger.debug(
-                "Registered dock '%s' for snapping/context menus (ghost overlays will appear when floating)",
-                dock.windowTitle(),
-            )
-        except Exception as exc:
-            self.logger.warning("Failed to prepare dock context menu: %s", exc)
-
     def _refresh_dock_snapping(self) -> None:
         """Ensure all current docks are registered for snapping/overlays."""
-        try:
-            if not hasattr(self, "_snap_layer") or self._snap_layer is None:
-                self._snap_layer = SnapOverlayLayer(self)
-                self._snap_handlers = {}
-            for dock in self.findChildren(QDockWidget):
-                try:
-                    if not dock.objectName():
-                        dock.setObjectName(
-                            dock.windowTitle().replace(" ", "").replace("/", "_")
-                        )
-                    if (
-                        not hasattr(self, "_snap_handlers")
-                        or dock.objectName() not in self._snap_handlers
-                    ):
-                        self._register_dock_for_snapping(dock)
-                except Exception:
-                    continue
-        except Exception as e:
-            self.logger.debug("Failed to refresh dock snapping registration: %s", e)
+        self.layout_controller.refresh_dock_snapping()
 
     def _edge_from_area(self, area: Qt.DockWidgetArea) -> Optional[str]:
-        mapping = {
-            Qt.LeftDockWidgetArea: "left",
-            Qt.RightDockWidgetArea: "right",
-            Qt.TopDockWidgetArea: "top",
-            Qt.BottomDockWidgetArea: "bottom",
-        }
-        return mapping.get(area)
+        return self.layout_controller.edge_from_area(area)
 
     def _on_dock_top_level_changed(self, dock: QDockWidget, floating: bool) -> None:
-        if floating:
-            return
-        area = self.dockWidgetArea(dock)
-        edge = self._edge_from_area(area)
-        if edge:
-            dock.setProperty("_last_dock_edge", edge)
+        self.layout_controller.on_dock_top_level_changed(dock, floating)
 
     def _show_dock_context_menu(self, dock: QDockWidget, point) -> None:
-        menu = QMenu(dock)
-        edit_enabled = self.layout_edit_mode
-
-        def add_snap_action(text: str, edge: str) -> None:
-            action = menu.addAction(
-                text, lambda e=edge: self._snap_dock_to_edge(dock, e)
-            )
-            action.setEnabled(edit_enabled)
-
-        add_snap_action("Dock Left", "left")
-        add_snap_action("Dock Right", "right")
-        add_snap_action("Dock Top", "top")
-        add_snap_action("Dock Bottom", "bottom")
-
-        menu.addSeparator()
-        last_edge = dock.property("_last_dock_edge") or "right"
-        re_dock_action = menu.addAction(
-            "Re-dock to Previous Edge", lambda: self._snap_dock_to_edge(dock, last_edge)
-        )
-        re_dock_action.setEnabled(edit_enabled)
-
-        tab_menu = menu.addMenu("Stack With...")
-        others = [d for d in self.findChildren(QDockWidget) if d is not dock]
-        if not others:
-            tab_menu.setEnabled(False)
-        else:
-            for other in others:
-                action = tab_menu.addAction(
-                    other.windowTitle(),
-                    lambda o=other: self._tabify_docks(o, dock),
-                )
-                action.setEnabled(edit_enabled)
-
-        menu.addSeparator()
-        reset_action = menu.addAction(
-            "Reset All Docks to Default Layout", self._reset_dock_layout_and_save
-        )
-        reset_action.setEnabled(True)
-
-        menu.exec(dock.mapToGlobal(point))
+        self.layout_controller.show_dock_context_menu(dock, point)
 
     def _tabify_docks(self, base: QDockWidget, target: QDockWidget) -> None:
-        try:
-            if target.isFloating():
-                target.setFloating(False)
-            self.tabifyDockWidget(base, target)
-            target.raise_()
-        except Exception as exc:
-            self.logger.warning("Failed to tabify docks: %s", exc)
+        self.layout_controller.tabify_docks(base, target)
 
     # ===== END_EXTRACT_TO: src/gui/materials/integration.py =====
 
@@ -3498,3 +1774,11 @@ class MainWindow(QMainWindow):
     # ===== END_EXTRACT_TO: src/gui/services/background_processor.py =====
 
     # ===== END_EXTRACT_TO: src/gui/core/event_coordinator.py =====
+    def _init_controllers(self) -> None:
+        self.project_manager_controller = ProjectManagerController(self)
+        self.model_viewer_controller = ModelViewerController(self)
+        self.gcode_previewer_controller = GcodePreviewController(self)
+        self.project_details_controller = ProjectDetailsController(self)
+        self.library_controller = LibraryController(self)
+        self.project_events_controller = ProjectEventsController(self)
+        self.ui_events_controller = UIEventsController(self)

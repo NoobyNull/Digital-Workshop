@@ -34,7 +34,7 @@ from src.parsers.base_parser import (
     ProgressCallback,
     LoadingState,
 )
-from src.parsers.stl_parser_original import STLFormat, STLParseError
+from src.parsers.stl_components import STLFormat, STLParseError
 
 
 @dataclass
@@ -122,7 +122,7 @@ class STLGPUParser(BaseParser):
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             self.logger.error("Error detecting STL format: %s", e)
-            raise STLParseError(f"Failed to detect STL format: {e}")
+            raise STLParseError(f"Failed to detect STL format: {e}") from e
 
     @log_function_call
     def _get_triangle_count(self, file_path: Path) -> int:
@@ -211,9 +211,7 @@ class STLGPUParser(BaseParser):
             # Phase 3: Execute GPU kernels
             kernel_start = time.time()
             success = self._execute_gpu_kernels(
-                raw_buffer,
-                vertex_buffer,
-                normal_buffer,
+                (raw_buffer, vertex_buffer, normal_buffer),
                 triangle_count,
                 progress_callback,
             )
@@ -264,7 +262,13 @@ class STLGPUParser(BaseParser):
             if progress_callback:
                 progress_callback.report(100.0, "GPU parsing completed")
 
-            self.logger.info(".2f" ".2f")
+            total_time = time.time() - self.parse_start_time
+            self.logger.info(
+                "GPU parsing completed in %.2fs (GPU: %.2fs, CPU assist: %.2fs)",
+                total_time,
+                self.gpu_time,
+                self.cpu_time,
+            )
 
             return Model(
                 header=header,
@@ -292,18 +296,17 @@ class STLGPUParser(BaseParser):
             ) as fallback_e:
                 raise STLParseError(
                     f"GPU parsing failed and CPU fallback also failed: {e}, {fallback_e}"
-                )
+                ) from fallback_e
 
     def _execute_gpu_kernels(
         self,
-        raw_buffer: Any,
-        vertex_buffer: Any,
-        normal_buffer: Any,
+        buffers: Tuple[Any, Any, Any],
         triangle_count: int,
         progress_callback: Optional[ProgressCallback],
     ) -> bool:
         """Execute GPU kernels for triangle processing with granular progress tracking."""
         try:
+            _, vertex_buffer, _ = buffers
             # Create kernel parameters
             params = {
                 "triangle_count": triangle_count,
@@ -316,7 +319,7 @@ class STLGPUParser(BaseParser):
 
             # Execute triangle processing kernel with progress updates
             success = self._execute_triangle_processing_kernel(
-                raw_buffer, vertex_buffer, normal_buffer, params, progress_callback
+                buffers, params, progress_callback
             )
 
             if not success:
@@ -356,14 +359,13 @@ class STLGPUParser(BaseParser):
 
     def _execute_triangle_processing_kernel(
         self,
-        raw_buffer: Any,
-        vertex_buffer: Any,
-        normal_buffer: Any,
+        buffers: Tuple[Any, Any, Any],
         params: Dict,
         progress_callback: Optional[ProgressCallback],
     ) -> bool:
         """Execute triangle processing kernel with granular progress updates."""
         try:
+            raw_buffer, vertex_buffer, normal_buffer = buffers
             triangle_count = params["triangle_count"]
             chunk_size = params["chunk_size"]
 
@@ -430,7 +432,7 @@ class STLGPUParser(BaseParser):
             return vertex_array, normal_array
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            raise STLParseError(f"GPU result transfer failed: {e}")
+            raise STLParseError(f"GPU result transfer failed: {e}") from e
 
     def _compute_bounds_from_arrays(
         self, vertex_array: np.ndarray
@@ -468,23 +470,15 @@ class STLGPUParser(BaseParser):
         """CPU fallback parsing when GPU is unavailable."""
         self.logger.warning("Using CPU fallback for STL parsing")
 
-        # Import and use original parser
-        from src.parsers.stl_parser_original import STLParser
+        # Import and use refactored parser inside the fallback to avoid hard dependency here
+        from src.parsers.refactored_stl_parser import RefactoredSTLParser as STLParser
 
         original_parser = STLParser()
-
-        # Convert progress callback if needed
-        stl_callback = None
-        if progress_callback:
-
-            class STLCallbackAdapter:
-
-                def report(self, progress: float, message: str) -> None:
-                    progress_callback.report(progress, message)
-
-            stl_callback = STLCallbackAdapter()
-
-        return original_parser._parse_binary_stl(file_path, stl_callback)
+        if hasattr(original_parser, "parse_file"):
+            parsed = original_parser.parse_file(file_path, progress_callback)
+        else:
+            parsed = original_parser.parse(file_path, progress_callback)
+        return self._convert_result_to_model(parsed, file_path)
 
     @log_function_call
     def _parse_file_internal(
@@ -508,56 +502,100 @@ class STLGPUParser(BaseParser):
         # Parse based on format (GPU acceleration for binary only)
         if format_type == STLFormat.BINARY:
             return self._parse_binary_stl_gpu(file_path_obj, progress_callback)
-        else:
-            # ASCII fallback to original parser
-            self.logger.info("ASCII STL detected, using CPU parser")
-            from src.parsers.stl_parser_original import STLParser
 
-            original_parser = STLParser()
-            return original_parser._parse_ascii_stl(file_path_obj, progress_callback)
+        # ASCII fallback to original parser
+        self.logger.info("ASCII STL detected, using CPU parser")
+        from src.parsers.refactored_stl_parser import (
+            RefactoredSTLParser as STLParser,
+        )
+
+        original_parser = STLParser()
+        if hasattr(original_parser, "parse_file"):
+            parsed = original_parser.parse_file(file_path_obj, progress_callback)
+        else:
+            parsed = original_parser.parse(file_path_obj, progress_callback)
+        return self._convert_result_to_model(parsed, file_path_obj)
+
+    def _convert_result_to_model(self, parsed: Any, file_path: Path) -> Model:
+        """
+        Normalize legacy/refactored parser outputs to a Model instance.
+
+        The refactored parser returns dict structures; this adapter builds the
+        Model + ModelStats required by BaseParser callers.
+        """
+        if isinstance(parsed, Model):
+            return parsed
+
+        stats_dict = (parsed or {}).get("stats", {}) if isinstance(parsed, dict) else {}
+        min_bounds = stats_dict.get("min_bounds") or (0.0, 0.0, 0.0)
+        max_bounds = stats_dict.get("max_bounds") or (0.0, 0.0, 0.0)
+        model_stats = ModelStats(
+            vertex_count=stats_dict.get("vertex_count", 0),
+            triangle_count=stats_dict.get("triangle_count", 0),
+            min_bounds=Vector3D(*min_bounds),
+            max_bounds=Vector3D(*max_bounds),
+            file_size_bytes=stats_dict.get("file_size_bytes", file_path.stat().st_size),
+            format_type=ModelFormat.STL,
+            parsing_time_seconds=stats_dict.get("parsing_time_seconds", 0.0),
+        )
+        return Model(
+            header=(
+                (parsed or {}).get("header", "STL Model")
+                if isinstance(parsed, dict)
+                else "STL Model"
+            ),
+            triangles=[],
+            stats=model_stats,
+            format_type=ModelFormat.STL,
+            loading_state=LoadingState.ARRAY_GEOMETRY,
+            file_path=str(file_path),
+            vertex_array=(
+                (parsed or {}).get("vertex_array") if isinstance(parsed, dict) else None
+            ),
+            normal_array=(
+                (parsed or {}).get("normal_array") if isinstance(parsed, dict) else None
+            ),
+        )
 
     def validate_file(self, file_path: str) -> Tuple[bool, str]:
         """Validate STL file (same as original parser)."""
         try:
             file_path_obj = Path(file_path)
 
+            reason = ""
             if not file_path_obj.exists():
-                return False, "File does not exist"
+                reason = "File does not exist"
+            elif file_path_obj.stat().st_size == 0:
+                reason = "File is empty"
+            else:
+                format_type = self._detect_format(file_path_obj)
+                if format_type == STLFormat.UNKNOWN:
+                    reason = "Unable to determine STL format"
+                elif format_type == STLFormat.BINARY:
+                    with open(file_path_obj, "rb") as file:
+                        file.seek(self.BINARY_HEADER_SIZE)
+                        count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
+                        if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
+                            reason = "Invalid binary STL format"
+                        else:
+                            triangle_count = int.from_bytes(
+                                count_bytes, byteorder="little"
+                            )
+                            if triangle_count == 0:
+                                reason = "No triangles in file"
+                            else:
+                                file.seek(0, 2)
+                                file_size = file.tell()
+                                expected_size = (
+                                    self.BINARY_HEADER_SIZE
+                                    + self.BINARY_TRIANGLE_COUNT_SIZE
+                                    + (triangle_count * self.BINARY_TRIANGLE_SIZE)
+                                )
 
-            if file_path_obj.stat().st_size == 0:
-                return False, "File is empty"
+                                if file_size != expected_size:
+                                    reason = "File size doesn't match expected binary STL format"
 
-            format_type = self._detect_format(file_path_obj)
-            if format_type == STLFormat.UNKNOWN:
-                return False, "Unable to determine STL format"
-
-            # Basic validation for binary files
-            if format_type == STLFormat.BINARY:
-                with open(file_path_obj, "rb") as file:
-                    file.seek(self.BINARY_HEADER_SIZE)
-                    count_bytes = file.read(self.BINARY_TRIANGLE_COUNT_SIZE)
-                    if len(count_bytes) != self.BINARY_TRIANGLE_COUNT_SIZE:
-                        return False, "Invalid binary STL format"
-
-                    triangle_count = int.from_bytes(count_bytes, byteorder="little")
-                    if triangle_count == 0:
-                        return False, "No triangles in file"
-
-                    file.seek(0, 2)
-                    file_size = file.tell()
-                    expected_size = (
-                        self.BINARY_HEADER_SIZE
-                        + self.BINARY_TRIANGLE_COUNT_SIZE
-                        + (triangle_count * self.BINARY_TRIANGLE_SIZE)
-                    )
-
-                    if file_size != expected_size:
-                        return (
-                            False,
-                            "File size doesn't match expected binary STL format",
-                        )
-
-            return True, ""
+            return reason == "", reason
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             return False, f"Validation error: {str(e)}"
@@ -587,10 +625,11 @@ class STLGPUParser(BaseParser):
             "transfer_ratio": self.transfer_time / total_time if total_time > 0 else 0,
         }
 
-# BaseParser required implementations (metadata only wrapper)
+    # BaseParser required implementations (metadata only wrapper)
     def _parse_metadata_only_internal(self, file_path: str) -> Model:
         model = self._parse_file_internal(file_path)
         return self._create_metadata_model(model)
+
 
 # Mark as concrete for lint tools
 STLGPUParser.__abstractmethods__ = frozenset()

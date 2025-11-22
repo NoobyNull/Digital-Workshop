@@ -32,13 +32,15 @@ from dataclasses import dataclass
 from enum import Enum
 from collections import defaultdict
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.cancellation_token import CancellationToken
-from src.core.data_structures import Model, Vector3D, Triangle
-from src.parsers.stl_parser import STLParser
+from src.core.data_structures import Model, ModelFormat, Vector3D, Triangle
+from src.parsers.canonical_registry import get_parser_for_format, ParserNotFoundError
+from src.parsers.format_detector import FormatDetector
 from src.core.database_manager import get_database_manager
+from src.gui.workers.base_worker import BaseWorker
 
 
 class AnalysisStatus(Enum):
@@ -106,7 +108,7 @@ class BatchAnalysisResult:
     results: List[GeometryAnalysisResult]
 
 
-class AnalysisWorker(QThread):
+class AnalysisWorker(BaseWorker):
     """
     Background worker thread for model geometry analysis.
 
@@ -165,7 +167,7 @@ class AnalysisWorker(QThread):
             self.analysis_failed.emit(self.model_id, str(e))
 
 
-class BatchAnalysisWorker(QThread):
+class BatchAnalysisWorker(BaseWorker):
     """
     Background worker for batch analysis of multiple models.
     """
@@ -470,32 +472,34 @@ class ImportAnalysisService:
         Returns:
             Loaded Model object
         """
-        file_ext = Path(file_path).suffix.lower()
+        detected_format = FormatDetector().detect_format(Path(file_path))
 
-        # For now, we support STL files
-        if file_ext == ".stl":
-            parser = STLParser()
+        try:
+            parser = get_parser_for_format(detected_format)
+        except ParserNotFoundError as exc:
+            raise ValueError(f"Unsupported file format: {detected_format}") from exc
 
-            # Create progress wrapper if needed
-            parser_progress = None
-            if progress_callback:
+        # Backward-compatibility: current analysis pipeline expects STL models.
+        if detected_format != ModelFormat.STL:
+            raise ValueError(f"Unsupported file format: {detected_format}")
 
-                def parser_progress_wrapper(percent, message) -> None:
-                    # Map parser progress (0-100) to our range (0-40)
-                    mapped_percent = int(percent * 0.4)
-                    progress_callback(mapped_percent, 100, message)
+        # Create progress wrapper if needed
+        parser_progress = None
+        if progress_callback:
 
-                class ProgressWrapper:
+            def parser_progress_wrapper(percent, message) -> None:
+                # Map parser progress (0-100) to our range (0-40)
+                mapped_percent = int(percent * 0.4)
+                progress_callback(mapped_percent, 100, message)
 
-                    def report(self, percent, message) -> None:
-                        parser_progress_wrapper(percent, message)
+            class ProgressWrapper:
+                def report(self, percent, message) -> None:
+                    parser_progress_wrapper(percent, message)
 
-                parser_progress = ProgressWrapper()
+            parser_progress = ProgressWrapper()
 
-            model = parser.parse_file(file_path, parser_progress)
-            return model
-        else:
-            raise ValueError(f"Unsupported file format: {file_ext}")
+        model = parser.parse_file(file_path, parser_progress)
+        return model
 
     def _perform_geometry_analysis(
         self,

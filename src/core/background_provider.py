@@ -151,9 +151,7 @@ class BackgroundProvider:
             self.logger.error(
                 "Error getting background '%s': %s", name, e, exc_info=True
             )
-            raise FileNotFoundError(
-                f"Failed to get background '{name}': {e}"
-            ) from e
+            raise FileNotFoundError(f"Failed to get background '{name}': {e}") from e
 
     def resolve_background(self, background: Union[str, Path]) -> Union[str, Path]:
         """

@@ -866,9 +866,7 @@ class RefactoredSTEPParser(RefactoredBaseParser):
         """Simple validation hook."""
         return file_path.exists() and file_path.suffix.lower() in (".step", ".stp")
 
-    def _parse_stream_internal(
-        self, file_path: Path
-    ) -> Iterator[Any]:
+    def _parse_stream_internal(self, file_path: Path) -> Iterator[Any]:
         """Yield a single chunk for streamed consumption."""
         yield self._parse_file_internal(file_path)
 
@@ -882,7 +880,12 @@ class RefactoredSTEPParser(RefactoredBaseParser):
 
     def _create_metadata_model(self, model: Dict[str, Any]) -> Dict[str, Any]:
         """Create a metadata-only representation from the parsed model dict."""
-        return {"metadata_only": True, "source": model.get("source", ""), "stats": model.get("stats", {})}
+        return {
+            "metadata_only": True,
+            "source": model.get("source", ""),
+            "stats": model.get("stats", {}),
+        }
+
 
 # Mark as concrete for lint tools
 RefactoredSTEPParser.__abstractmethods__ = frozenset()

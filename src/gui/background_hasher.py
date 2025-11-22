@@ -9,15 +9,16 @@ Enhanced to use the new FastHasher for optimal performance.
 
 from pathlib import Path
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.logging_config import get_logger
 from src.core.database_manager import get_database_manager
 from src.core.fast_hasher import FastHasher
 from src.core.cancellation_token import CancellationToken
+from src.gui.workers.base_worker import BaseWorker
 
 
-class BackgroundHasher(QThread):
+class BackgroundHasher(BaseWorker):
     """
     Background worker thread that processes unhashed models.
 
@@ -59,6 +60,8 @@ class BackgroundHasher(QThread):
         self._running = False
         self._paused = False
         self.cancellation_token.cancel()
+        # Also mark base cancellation to align with new worker contract.
+        self.request_cancel()
         self.logger.info("Background hashing stopped")
 
     def is_paused(self) -> bool:

@@ -37,6 +37,11 @@ class AIDescriptionService(QObject):
         self.config = self._load_config()
         self._initialize_providers()
 
+    def reload_configuration(self) -> None:
+        """Public helper to reload configuration and reinitialize providers."""
+        self.config = self._load_config()
+        self._initialize_providers()
+
     def _load_config(self) -> Dict[str, Any]:
         """Load AI description configuration."""
         try:

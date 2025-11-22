@@ -741,7 +741,9 @@ class ProjectTreeWidget(QWidget):
                         original_path=file_path,
                     )
                     added_count += 1
-                    logger.info("Added dropped file to project %s: %s", project_id, file_path)
+                    logger.info(
+                        "Added dropped file to project %s: %s", project_id, file_path
+                    )
                 except (
                     OSError,
                     IOError,

@@ -477,7 +477,9 @@ class LibraryEventHandler:
 
             # Prefer tuple(image, color) when both are set so the renderer can apply both.
             background = (
-                (bg_image, bg_color) if bg_image and bg_color else (bg_image or bg_color)
+                (bg_image, bg_color)
+                if bg_image and bg_color
+                else (bg_image or bg_color)
             )
 
             # Generate thumbnail with current preferences
@@ -549,7 +551,9 @@ class LibraryEventHandler:
                 return
 
             # Load the model
-            from src.parsers.stl_parser import STLParser
+            from src.parsers.refactored_stl_parser import (
+                RefactoredSTLParser as STLParser,
+            )
 
             self.logger.info("Loading model for analysis: %s", file_path)
             parser = STLParser()

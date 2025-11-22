@@ -24,14 +24,25 @@ from typing import Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILD_PY = PROJECT_ROOT / "build_system" / "build.py"
+DRY_RUN = False
 
 
 class ReleaseError(RuntimeError):
     """Raised when the release automation hits a fatal condition."""
 
 
-def run_git(args: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a git command in the repo root and optionally raise on failure."""
+def run_git(
+    args: list[str], *, check: bool = True, mutating: bool = True
+) -> subprocess.CompletedProcess:
+    """Run a git command in the repo root and optionally raise on failure.
+
+    Dry-run mode skips mutating commands but still surfaces what would run.
+    """
+    if DRY_RUN and mutating:
+        print(f"[dry-run] git {' '.join(args)}")
+        # Return a successful stub so callers can continue
+        return subprocess.CompletedProcess(args=["git", *args], returncode=0, stdout="", stderr="")
+
     result = subprocess.run(
         ["git", *args],
         cwd=PROJECT_ROOT,
@@ -45,33 +56,33 @@ def run_git(args: list[str], *, check: bool = True) -> subprocess.CompletedProce
 
 def ensure_clean_working_tree() -> None:
     """Abort if there are local modifications."""
-    status = run_git(["status", "--porcelain"], check=True).stdout.strip()
+    status = run_git(["status", "--porcelain"], check=True, mutating=False).stdout.strip()
     if status:
         raise ReleaseError("Working tree has uncommitted changes. Commit or stash before running the release.")
 
 
 def get_current_branch() -> str:
-    return run_git(["branch", "--show-current"], check=True).stdout.strip()
+    return run_git(["branch", "--show-current"], check=True, mutating=False).stdout.strip()
 
 
 def fetch_all() -> None:
-    run_git(["fetch", "--all", "--tags"], check=True)
+    run_git(["fetch", "--all", "--tags"], check=True, mutating=True)
 
 
 def push_branch(branch: str) -> None:
-    run_git(["push", "origin", branch], check=True)
+    run_git(["push", "origin", branch], check=True, mutating=True)
 
 
 def checkout_branch(branch: str) -> None:
-    run_git(["checkout", branch], check=True)
+    run_git(["checkout", branch], check=True, mutating=True)
 
 
 def pull_ff(branch: str) -> None:
-    run_git(["pull", "--ff-only", "origin", branch], check=True)
+    run_git(["pull", "--ff-only", "origin", branch], check=True, mutating=True)
 
 
 def merge_ff(source: str) -> None:
-    run_git(["merge", "--ff-only", source], check=True)
+    run_git(["merge", "--ff-only", source], check=True, mutating=True)
 
 
 def read_version(version_override: Optional[str]) -> str:
@@ -90,6 +101,7 @@ def get_last_tag(tag_prefix: str) -> Optional[str]:
     result = run_git(
         ["describe", "--abbrev=0", "--tags", f"--match={tag_prefix}*"],
         check=False,
+        mutating=False,
     )
     if result.returncode != 0:
         return None
@@ -110,7 +122,7 @@ def build_changelog(base: Optional[str], head: str) -> Tuple[str, str]:
         range_expr = head
         args = ["log", head, "-n", "20", "--no-merges", "--pretty=format:- %h %s"]
 
-    result = run_git(args, check=False)
+    result = run_git(args, check=False, mutating=False)
     lines = [line for line in result.stdout.splitlines() if line.strip()]
     if not lines:
         lines = ["- No commit summaries available (empty range)."]
@@ -147,11 +159,18 @@ def parse_args() -> argparse.Namespace:
         default="v",
         help="Prefix for the annotated tag (default: v).",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Plan mode: print actions and run read-only checks, but do not modify branches, tags, or remotes.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    global DRY_RUN
+    DRY_RUN = args.dry_run
     starting_branch = get_current_branch()
 
     try:

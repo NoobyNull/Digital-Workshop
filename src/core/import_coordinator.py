@@ -382,7 +382,8 @@ class ImportCoordinatorWorker(QThread):
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             future_map = {
-                pool.submit(run_file, file_info): file_info for file_info in sorted_files
+                pool.submit(run_file, file_info): file_info
+                for file_info in sorted_files
             }
             completed = processed_global_index
             for future in as_completed(future_map):
@@ -457,9 +458,7 @@ class ImportCoordinatorWorker(QThread):
             ]
 
             # Find image-model pairs
-            pairs, unpaired_models, _ = pairing_service.find_pairs(
-                all_file_paths
-            )
+            pairs, unpaired_models, _ = pairing_service.find_pairs(all_file_paths)
 
             # Track paired thumbnails
             paired_count = 0

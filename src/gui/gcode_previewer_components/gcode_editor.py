@@ -25,8 +25,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtCore import Signal, Qt, QRegularExpression
 
-SEARCH_FORWARD_ICON = "\u25BC"
-SEARCH_BACK_ICON = "\u25B2"
+SEARCH_FORWARD_ICON = "\u25bc"
+SEARCH_BACK_ICON = "\u25b2"
 
 
 class GcodeSyntaxHighlighter(QSyntaxHighlighter):

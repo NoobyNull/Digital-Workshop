@@ -37,6 +37,11 @@ from src.parsers.refactored_base_parser import (
     RefactoredBaseParser,
     StreamingProgressCallback,
 )
+from src.parsers.stl_components.stl_models import (
+    STLFormat,
+    STLModel,
+    STLProgressCallback,
+)
 from src.core.interfaces.parser_interfaces import (
     ModelFormat,
     ParseError,
@@ -191,6 +196,19 @@ class RefactoredSTLParser(RefactoredBaseParser):
             }
             self.logging_service.log_error(e, error_context)
             raise
+
+    def parse_file(
+        self, file_path: Path, progress_callback: Optional[StreamingProgressCallback] = None
+    ) -> Dict[str, Any]:
+        """Backward-compatible entry point expected by callers."""
+        return self.parse(file_path, progress_callback)  # type: ignore[arg-type]
+
+
+class STLParser(RefactoredSTLParser):
+    """Compatibility alias that exposes the refactored parser under the canonical name."""
+
+    def __init__(self) -> None:
+        super().__init__()
 
     def _parse_binary_stl(
         self,

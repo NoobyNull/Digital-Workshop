@@ -1,6 +1,5 @@
 """
 Import Dialog for 3D Model Import Process.
-
 Provides a comprehensive user interface for importing 3D models with:
 - File/directory selection with drag-and-drop support
 - File management preference selection (keep organized vs leave in place)
@@ -9,7 +8,6 @@ Provides a comprehensive user interface for importing 3D models with:
 - Cancellation support for long operations
 - Import results summary with statistics
 - Error display with recovery options
-
 Example:
     >>> from src.gui.import_components import ImportDialog
     >>> dialog = ImportDialog()
@@ -18,11 +16,9 @@ Example:
 """
 
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any
 from enum import Enum
-
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -45,11 +41,9 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QSizePolicy,
 )
-from PySide6.QtCore import Qt, Signal, QThread, QTimer, QSize, QSettings
+from PySide6.QtCore import Qt, Signal, QTimer, QSize, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QFont
-
 from src.core.logging_config import get_logger
-from src.core.cancellation_token import CancellationToken
 from src.core.application_config import ApplicationConfig
 from src.core.services.library_settings import LibraryMode, LibrarySettings
 from src.core.services.import_settings import ImportSettings
@@ -62,13 +56,18 @@ from src.core.import_file_manager import (
     ImportFileInfo,
     ImportSession,
 )
-from src.core.import_thumbnail_service import ImportThumbnailService
-from src.core.import_analysis_service import ImportAnalysisService
 from src.core.import_coordinator import ImportCoordinator
 from src.gui.services.ai_description_service import AIDescriptionService
 from src.gui.thumbnail_generation_coordinator import ThumbnailGenerationCoordinator
 from src.gui.workers.folder_scan_worker import FolderScanWorker
 from src.gui.background_tasks.import_background_monitor import ImportBackgroundMonitor
+from src.gui.import_components.import_workers import (
+    ImportJobConfig,
+    ImportWorker,
+    PipelineImportWorker,
+)
+from src.gui.import_components.import_dialog_controller import ImportDialogController
+from src.gui.workers.base_worker import BaseWorker
 
 # Import modular pipeline
 from src.core.import_pipeline import (
@@ -97,619 +96,9 @@ class ImportStage(Enum):
     CANCELLED = "cancelled"
 
 
-class ImportWorker(QThread):
-    """
-    Background worker thread for import process.
-
-    Handles all import operations without blocking the UI thread.
-    """
-
-    # Signals for progress communication
-    stage_changed = Signal(str, str)  # stage, message
-    file_progress = Signal(str, int, str)  # filename, percent, message
-    overall_progress = Signal(int, int, int)  # current, total, percent
-    thumbnail_progress = Signal(int, int, str)  # current, total, current_file
-    import_completed = Signal(object)  # ImportResult
-    import_failed = Signal(str)  # error_message
-
-    def __init__(
-        self,
-        file_paths: List[str],
-        mode: FileManagementMode,
-        root_directory: Optional[str],
-        generate_thumbnails: bool,
-        run_analysis: bool,
-    ):
-        """
-        Initialize import worker.
-
-        Args:
-            file_paths: List of file paths to import
-            mode: File management mode
-            root_directory: Root directory for organized mode
-            generate_thumbnails: Whether to generate thumbnails
-            run_analysis: Whether to run background analysis
-        """
-        super().__init__()
-        self.file_paths = file_paths
-        self.mode = mode
-        self.root_directory = root_directory
-        self.generate_thumbnails = generate_thumbnails
-        self.run_analysis = run_analysis
-
-        self.logger = get_logger(__name__)
-        self.cancellation_token = CancellationToken()
-
-        # Initialize services
-        self.file_manager = ImportFileManager()
-        self.import_settings = ImportSettings()
-        self.thumbnail_service = (
-            ImportThumbnailService() if generate_thumbnails else None
-        )
-        self.analysis_service = ImportAnalysisService() if run_analysis else None
-
-    def run(self) -> None:
-        """Execute the import process."""
-        try:
-            self.stage_changed.emit("validation", "Validating files and settings...")
-
-            # Start import session
-            success, error, session = self.file_manager.start_import_session(
-                self.file_paths, self.mode, self.root_directory, DuplicateAction.SKIP
-            )
-
-            if not success:
-                self.import_failed.emit(error)
-                return
-
-            total_files = len(session.files)
-            files_to_process = []
-
-            # Process each file
-            for idx, file_info in enumerate(session.files):
-                if self.cancellation_token.is_cancelled():
-                    break
-
-                file_name = Path(file_info.original_path).name
-
-                # Report overall progress
-                self.overall_progress.emit(
-                    idx, total_files, int((idx / total_files) * 100)
-                )
-
-                # Process file (hashing + copying if needed)
-                self.stage_changed.emit("hashing", f"Processing {file_name}...")
-
-                def file_progress_callback(message, percent) -> None:
-                    self.file_progress.emit(file_name, percent, message)
-
-                success, error = self.file_manager.process_file(
-                    file_info, session, file_progress_callback, self.cancellation_token
-                )
-
-                if not success:
-                    self.logger.warning("Failed to process %s: {error}", file_name)
-                    continue
-
-                # Collect files for thumbnail generation (don't generate here - it blocks!)
-                if self.generate_thumbnails and file_info.file_hash:
-                    files_to_process.append(
-                        (
-                            file_info.managed_path or file_info.original_path,
-                            file_info.file_hash,
-                        )
-                    )
-
-            # Generate thumbnails in separate worker (truly non-blocking)
-            if files_to_process:
-                self.stage_changed.emit(
-                    "thumbnails",
-                    f"Generating thumbnails for {len(files_to_process)} files...",
-                )
-                self._generate_thumbnails_with_window(files_to_process)
-
-            # Complete import session
-            result = self.file_manager.complete_import_session(
-                session, not self.cancellation_token.is_cancelled()
-            )
-
-            # Start background analysis if enabled
-            if self.run_analysis and result.processed_files > 0:
-                self.stage_changed.emit("analysis", "Queueing background analysis...")
-                # Analysis runs in background, doesn't block completion
-                file_model_pairs = [
-                    (f.managed_path or f.original_path, idx + 1)
-                    for idx, f in enumerate(session.files)
-                    if f.import_status == "completed"
-                ]
-                if file_model_pairs:
-                    self.analysis_service.start_batch_analysis(
-                        file_model_pairs, cancellation_token=self.cancellation_token
-                    )
-
-            self.import_completed.emit(result)
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Import worker failed: %s", e, exc_info=True)
-            self.import_failed.emit(str(e))
-
-    def cancel(self) -> None:
-        """Cancel the import operation."""
-        self.cancellation_token.cancel()
-
-    def _generate_thumbnails_with_window(
-        self, files_to_process: List[Tuple[str, str]]
-    ) -> None:
-        """
-        Generate thumbnails using dedicated window.
-
-        Args:
-            files_to_process: List of (model_path, file_hash) tuples
-        """
-        try:
-            config = ApplicationConfig.get_default()
-            settings = QSettings()
-
-            # Get current thumbnail preferences
-            bg_image = settings.value(
-                "thumbnail/background_image",
-                config.thumbnail_bg_image,
-                type=str,
-            )
-            material = settings.value(
-                "thumbnail/material", config.thumbnail_material, type=str
-            )
-            bg_color = settings.value(
-                "thumbnail/background_color",
-                config.thumbnail_bg_color,
-                type=str,
-            )
-
-            # Prefer tuple(image, color) when both are set so the renderer can apply both.
-            background = (bg_image, bg_color) if bg_image and bg_color else (
-                bg_image or bg_color
-            )
-
-            self.logger.debug(
-                "Thumbnail preferences: bg_image=%s, bg_color=%s, material=%s",
-                bg_image,
-                bg_color,
-                material,
-            )
-
-            # Create coordinator and generate thumbnails
-            coordinator = ThumbnailGenerationCoordinator()
-            # Capture generated thumbnail paths for downstream tagging.
-            captured: List[Tuple[str, str]] = []
-            coordinator.thumbnail_generated.connect(
-                lambda file_path, thumb_path: captured.append((file_path, thumb_path))
-            )
-            coordinator.generate_thumbnails(
-                file_info_list=files_to_process,
-                background=background,
-                material=material,
-            )
-
-            # Wait for completion
-            coordinator.wait_for_completion()
-            self.generated_thumbnails = captured
-
-            self.logger.info("Thumbnail generation completed")
-
-        except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.warning("Failed to generate thumbnails: %s", e)
-
-
-class PipelineImportWorker(QThread):
-    """
-    Pipeline-based import worker using the modular import pipeline.
-
-    This worker uses the complete pipeline system with:
-    - Database insertion
-    - File hashing
-    - Image pairing (automatic preview detection)
-    - Thumbnail generation
-    """
-
-    # Signals for progress communication
-    stage_changed = Signal(str, str)  # stage, message
-    file_progress = Signal(str, int, str)  # filename, percent, message
-    overall_progress = Signal(int, int, int)  # current, total, percent
-    thumbnail_progress = Signal(int, int, str)  # current, total, current_file
-    model_imported = Signal(int)  # model_id - emitted after each model is imported
-    import_completed = Signal(object)  # ImportResult
-    import_cancelled = Signal(object, str)  # ImportResult | None, reason
-    import_failed = Signal(str)  # error_message
-
-    def __init__(
-        self,
-        file_paths: List[str],
-        mode: FileManagementMode,
-        root_directory: Optional[str],
-        generate_thumbnails: bool,
-        run_analysis: bool,
-        concurrency_mode: str,
-        prep_workers: Optional[int] = None,
-        pipeline_workers: Optional[int] = None,
-    ):
-        """Initialize pipeline import worker."""
-        super().__init__()
-        self.file_paths = file_paths
-        self.mode = mode
-        self.root_directory = root_directory
-        self.generate_thumbnails = generate_thumbnails
-        self.run_analysis = run_analysis
-        self.concurrency_mode = (
-            concurrency_mode
-            if concurrency_mode in ("serial", "concurrent")
-            else "serial"
-        )
-        self.generated_thumbnails: List[Tuple[str, str]] = []
-
-        self.logger = get_logger(__name__)
-        self._prep_workers_override = prep_workers
-        self._pipeline_workers_override = pipeline_workers
-
-        # Explicit cancellation tracking so that "cancelled" status
-        # is only reported when a real cancel request occurs.
-        self.cancellation_token = CancellationToken()
-        self._cancel_requested: bool = False
-
-        # Initialize file manager for session management
-        self.file_manager = ImportFileManager()
-        self.import_settings = ImportSettings()
-
-        # Track pipeline results
-        self.session = None
-        self.pipeline_result = None
-        self._pipeline = None
-
-    def run(self) -> None:
-        """Execute the pipeline-based import process.
-
-        This worker intentionally reuses ImportFileManager.process_file to
-        perform the actual file-management work (hashing + keep-organized
-        copying) *before* handing the files off to the modular pipeline for
-        database/image/thumbnail processing. That way, Keep Organized behaves
-        exactly like the older import path while still benefiting from the
-        new pipeline.
-        """
-        try:
-            self.stage_changed.emit("validation", "Validating files and settings...")
-
-            # Start import session (validates files, creates session)
-            success, error, session = self.file_manager.start_import_session(
-                self.file_paths, self.mode, self.root_directory, DuplicateAction.SKIP
-            )
-
-            if not success:
-                self.import_failed.emit(error)
-                return
-
-            self.session = session
-            total_files = len(session.files)
-            if total_files == 0:
-                self.import_failed.emit("No valid files to import")
-                return
-
-            # Initialize progress counters so the UI knows the total upfront.
-            self.overall_progress.emit(0, total_files, 0)
-
-            # Log initial cancellation state for diagnostics but do not
-            # treat it as a user cancellation.
-            initial_cancelled = self.cancellation_token.is_cancelled()
-            self.logger.debug(
-                "Starting file preparation: total_files=%d, cancellation_token_initial=%s, cancel_flag=%s",
-                total_files,
-                initial_cancelled,
-                self._cancel_requested,
-            )
-
-            if self.concurrency_mode == "serial":
-                prep_workers = 1
-                self.logger.info(
-                    "Preparing %d files in SERIAL mode (1 worker)", total_files
-                )
-            else:
-                concurrency = self.import_settings.get_concurrency()
-                prep_workers = (
-                    self._prep_workers_override
-                    if self._prep_workers_override
-                    else concurrency.prep_workers
-                )
-                self.logger.info(
-                    "Preparing %d files with up to %s workers (concurrent mode)",
-                    total_files,
-                    prep_workers,
-                )
-
-            prepared_count = self._prepare_files_concurrently(session, prep_workers)
-
-            if self._cancel_requested:
-                self.logger.info("Import cancelled during file preparation")
-                self._emit_cancelled_result("Import cancelled during file preparation")
-                return
-
-            if prepared_count == 0:
-                self.logger.warning("No files could be prepared for pipeline import")
-                self.import_failed.emit("No valid files to import after preparation")
-                return
-
-            # Create pipeline
-            db_manager = get_database_manager()
-            thumbnail_generator = ThumbnailGenerator()
-            if self.concurrency_mode == "serial":
-                pipeline_workers = 1
-            else:
-                concurrency = self.import_settings.get_concurrency()
-                pipeline_workers = (
-                    self._pipeline_workers_override
-                    if self._pipeline_workers_override
-                    else max(
-                        1,
-                        min(
-                            concurrency.queue_limit,
-                            concurrency.thumbnail_workers,
-                        ),
-                    )
-                )
-            pipeline = create_pipeline(
-                db_manager,
-                thumbnail_generator,
-                max_workers=pipeline_workers,
-            )
-            self._pipeline = pipeline
-
-            # Connect pipeline signals
-            pipeline.signals.pipeline_started.connect(self._on_pipeline_started)
-            pipeline.signals.progress_updated.connect(self._on_progress_updated)
-            pipeline.signals.task_started.connect(self._on_task_started)
-            pipeline.signals.stage_started.connect(self._on_stage_started)
-            pipeline.signals.stage_completed.connect(self._on_stage_completed)
-            pipeline.signals.stage_failed.connect(self._on_stage_failed)
-            pipeline.signals.task_completed.connect(self._on_task_completed)
-            pipeline.signals.task_failed.connect(self._on_task_failed)
-            pipeline.signals.pipeline_completed.connect(self._on_pipeline_completed)
-            pipeline.signals.pipeline_failed.connect(self._on_pipeline_failed)
-            pipeline.signals.pipeline_cancelled.connect(self._on_pipeline_cancelled)
-
-            # Create import tasks from successfully processed session files
-            tasks = []
-            for file_info in session.files:
-                if file_info.import_status != "completed":
-                    continue
-
-                file_path = file_info.managed_path or file_info.original_path
-                file_format = Path(file_path).suffix.lower().lstrip(".")
-                task = ImportTask(
-                    file_path=file_path,
-                    filename=Path(file_path).name,
-                    format=file_format,
-                    file_size=file_info.file_size,
-                    triangle_count=0,  # Will be determined during processing
-                )
-                tasks.append(task)
-
-            if not tasks:
-                self.logger.warning(
-                    "All files failed during preparation; skipping pipeline execution",
-                )
-                self.import_failed.emit("All files failed during preparation")
-                return
-
-            self.logger.info(
-                "Starting pipeline import of %d prepared files", len(tasks)
-            )
-
-            # Execute pipeline (results come via signals)
-            self.stage_changed.emit(
-                "processing", "Processing files through pipeline..."
-            )
-            pipeline.execute(tasks)
-            self._pipeline = None
-
-        except Exception as e:  # pragma: no cover - defensive logging
-            self.logger.error("Pipeline import failed: %s", e, exc_info=True)
-            self.import_failed.emit(str(e))
-
-    def _prepare_files_concurrently(
-        self, session: ImportSession, max_workers: int
-    ) -> int:
-        """Hash and copy files using multiple workers."""
-
-        max_workers = max(1, int(max_workers))
-        self.stage_changed.emit("hashing", "Preparing files...")
-        prepared_count = 0
-        processed_count = 0
-        total_files = len(session.files)
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [
-                executor.submit(self._prepare_single_file, file_info, session)
-                for file_info in session.files
-            ]
-
-            for future in as_completed(futures):
-                success, message = future.result()
-                processed_count += 1
-                if success:
-                    prepared_count += 1
-                elif message and message != "cancelled":
-                    self.logger.warning("Failed to prepare file: %s", message)
-
-                percent = (
-                    int((processed_count / total_files) * 100) if total_files else 0
-                )
-                self.overall_progress.emit(processed_count, total_files, percent)
-
-                if self._cancel_requested:
-                    break
-
-        return prepared_count
-
-    def _prepare_single_file(
-        self, file_info: ImportFileInfo, session: ImportSession
-    ) -> Tuple[bool, Optional[str]]:
-        """Prepare a single file for import."""
-
-        if self._cancel_requested or self.cancellation_token.is_cancelled():
-            return False, "cancelled"
-
-        file_name = Path(file_info.original_path).name
-
-        def file_progress_callback(message: str, percent: int) -> None:
-            self.file_progress.emit(file_name, percent, message)
-
-        success, error = self.file_manager.process_file(
-            file_info,
-            session,
-            progress_callback=file_progress_callback,
-            cancellation_token=self.cancellation_token,
-        )
-        if success:
-            return True, None
-        return False, error
-
-    def _on_pipeline_started(self, total_tasks: int) -> None:
-        """Handle pipeline started signal and initialize overall progress."""
-        # At the very beginning, nothing has been processed yet.
-        self.overall_progress.emit(0, total_tasks, 0)
-
-    def _on_progress_updated(self, progress: PipelineProgress) -> None:
-        """Handle pipeline progress updates and forward to the UI.
-
-        We treat "current" as the number of tasks that are no longer pending
-        (completed + failed), so the user sees how many files have been fully
-        processed out of the total.
-        """
-        total = progress.total_tasks
-        processed = progress.completed_tasks + progress.failed_tasks
-        percent = int(progress.progress_percentage) if total > 0 else 0
-        self.overall_progress.emit(processed, total, percent)
-
-    def _on_task_started(self, task: ImportTask) -> None:
-        """Handle task started signal."""
-        self.file_progress.emit(task.filename, 0, "Starting import...")
-
-    def _on_stage_started(self, task: ImportTask, stage_name: str) -> None:
-        """Handle stage started signal."""
-        stage_display = stage_name.replace("_", " ").title()
-        # Update UI stage label + log via signals (UI owns labels).
-        self.stage_changed.emit(stage_display, f"{task.filename}: {stage_display}")
-        self.file_progress.emit(task.filename, 0, f"{stage_display}...")
-
-    def _on_stage_completed(self, result) -> None:
-        """Handle per-stage completion signal to capture thumbnails and status."""
-        try:
-            stage = getattr(result, "stage", None)
-            task = getattr(result, "task", None)
-        except Exception:
-            stage = None
-            task = None
-
-        thumb_stage = getattr(ImportStage, "THUMBNAIL_GENERATION", None)
-        thumb_stage_value = thumb_stage.value if thumb_stage else "thumbnail_generation"
-
-        if (getattr(stage, "value", stage) == thumb_stage_value) and task:
-            if getattr(task, "thumbnail_path", None):
-                self.generated_thumbnails.append(
-                    (str(task.file_path), str(task.thumbnail_path))
-                )
-                # Persist thumbnail path to the model library so icons update.
-                try:
-                    db_manager = get_database_manager()
-                    if getattr(task, "model_id", None) and db_manager is not None:
-                        if hasattr(db_manager, "update_model_thumbnail"):
-                            db_manager.update_model_thumbnail(
-                                task.model_id, task.thumbnail_path
-                            )
-                        elif hasattr(db_manager, "update_model_thumbnail_path"):
-                            db_manager.update_model_thumbnail_path(
-                                task.model_id, task.thumbnail_path
-                            )
-                except Exception as exc:
-                    self.logger.warning(
-                        "Failed to persist thumbnail for %s: %s", task.filename, exc
-                    )
-
-    def _on_stage_failed(self, task: ImportTask, stage_name: str, error: str) -> None:
-        """Handle per-stage failure with clearer UI feedback."""
-        stage_display = stage_name.replace("_", " ").title()
-        self.file_progress.emit(task.filename, 0, f"{stage_display} failed: {error}")
-        self.stage_changed.emit("Failed", f"{stage_display} failed: {error}")
-
-    def _on_task_completed(self, task: ImportTask) -> None:
-        """Handle task completed signal."""
-        self.file_progress.emit(task.filename, 100, "Completed")
-
-        # Emit model_imported signal so UI can refresh immediately
-        if task.model_id:
-            self.model_imported.emit(task.model_id)
-            # Refresh library grid/list to pick up new thumbnail paths when available
-            try:
-                parent = self.parent()
-                if parent and hasattr(parent, "_on_model_imported_during_import"):
-                    getattr(parent, "_on_model_imported_during_import")(task.model_id)
-            except Exception:
-                pass
-
-    def _on_task_failed(self, task: ImportTask, error: str) -> None:
-        """Handle task failed signal."""
-        self.logger.warning("Task failed for %s: %s", task.filename, error)
-        self.file_progress.emit(task.filename, 0, f"Failed: {error}")
-
-    def _on_pipeline_completed(self, result: PipelineResult) -> None:
-        """Handle pipeline completion signal."""
-        self.logger.info(
-            "Pipeline completed: %d/%d", result.successful_tasks, result.total_tasks
-        )
-
-        # Complete session
-        if self.session:
-            import_result = self.file_manager.complete_import_session(
-                self.session, success=(result.failed_tasks == 0)
-            )
-            self.import_completed.emit(import_result)
-
-    def _on_pipeline_failed(self, error: str) -> None:
-        """Handle pipeline failure signal."""
-        self.logger.error("Pipeline failed: %s", error)
-        self.import_failed.emit(error)
-
-    def cancel(self) -> None:
-        """Cancel the import operation.
-
-        This sets an explicit flag in addition to cancelling the shared
-        CancellationToken so that we never report a cancellation unless a
-        real cancel request was issued.
-        """
-        self._cancel_requested = True
-        self.cancellation_token.cancel()
-        if self._pipeline:
-            self._pipeline.cancel()
-        self.logger.info("Import cancellation requested")
-
-    def _on_pipeline_cancelled(self) -> None:
-        """Handle pipeline cancellation event."""
-
-        self.logger.info("Pipeline cancelled by request")
-        self._emit_cancelled_result("Import cancelled during processing")
-
-    def _emit_cancelled_result(self, reason: str) -> None:
-        """Emit the cancellation signal with session stats if available."""
-
-        result = None
-        if self.session:
-            result = self.file_manager.complete_import_session(
-                self.session, success=False
-            )
-        self.import_cancelled.emit(result, reason)
-
-
 class ImportDialog(QDialog):
     """
     Main import dialog for 3D model import process.
-
     Provides a comprehensive interface for importing 3D models with:
     - File/directory selection with drag-and-drop
     - File management preference selection
@@ -717,7 +106,6 @@ class ImportDialog(QDialog):
     - Real-time progress updates
     - Cancellation support
     - Import results summary
-
     Example:
         >>> dialog = ImportDialog(parent=main_window)
         >>> if dialog.exec() == QDialog.Accepted:
@@ -727,15 +115,14 @@ class ImportDialog(QDialog):
 
     def __init__(self, parent=None, root_folder_manager=None) -> None:
         """Initialize the import dialog.
-
         Args:
             parent: Parent widget
             root_folder_manager: Optional RootFolderManager instance
         """
         super().__init__(parent)
         self.logger = get_logger(__name__)
+        self.controller = ImportDialogController()
         self.root_folder_manager = root_folder_manager
-
         # State
         self.current_stage = ImportStage.IDLE
         self.import_result: Optional[ImportResult] = None
@@ -744,7 +131,6 @@ class ImportDialog(QDialog):
         self.start_time: Optional[float] = None
         self.folder_scan_worker: Optional[FolderScanWorker] = None
         self.folder_scan_dialog = None
-
         self._managed_mode_confirmed = False
         self._background_monitor = None
         self._background_mode = False
@@ -763,17 +149,14 @@ class ImportDialog(QDialog):
         self._worker_capacity: int = 0
         self.import_settings = ImportSettings()
         self._concurrency_mode: str = self.import_settings.get_mode()
-
         # Setup UI
         self._setup_ui()
         self._connect_signals()
         self._apply_concurrency_mode_ui(self._concurrency_mode)
         self._apply_library_preferences()
         self._update_pending_label()
-
         # Enable drag and drop
         self.setAcceptDrops(True)
-
         self.logger.info("ImportDialog initialized")
 
     def _apply_concurrency_mode_ui(self, mode: str) -> None:
@@ -821,7 +204,6 @@ class ImportDialog(QDialog):
 
     def _apply_library_preferences(self) -> None:
         """Initialize mode/root directory from global library settings.
-
         This keeps the import dialog aligned with the first-launch
         library configuration (leave-in-place vs consolidated).
         """
@@ -832,7 +214,6 @@ class ImportDialog(QDialog):
         except Exception as exc:  # pragma: no cover - defensive logging
             self.logger.warning("Failed to read library settings: %s", exc)
             return
-
         if mode == LibraryMode.CONSOLIDATED:
             # Consolidated mode: keep files organized under the configured root
             try:
@@ -840,7 +221,6 @@ class ImportDialog(QDialog):
             except OSError as exc:
                 self.logger.error("Failed to prepare Projects folder: %s", exc)
                 projects_root = base_root
-
             self.keep_organized_radio.setChecked(True)
             self.leave_in_place_radio.setChecked(False)
             self.root_dir_path.setText(
@@ -854,26 +234,21 @@ class ImportDialog(QDialog):
             self.leave_in_place_radio.setChecked(True)
             self.root_dir_path.setText("Not selected")
             self.root_dir_button.setText("Browse...")
-
         self._update_import_button_state()
 
     # ----- Worker progress helpers -----
-
     def _init_worker_rows(self, count: int) -> None:
         """Create/reset worker progress rows."""
         count = max(1, int(count))
         self._worker_capacity = count
         self._worker_assignments.clear()
-
         # Clear existing widgets (grid)
         while self.workers_layout.count():
             item = self.workers_layout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
-
         self._worker_rows = []
-
         columns = 2 if count > 1 else 1
         for idx in range(count):
             row_widget = QGroupBox(f"Worker {idx + 1}")
@@ -881,11 +256,9 @@ class ImportDialog(QDialog):
             row_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             row_layout = QVBoxLayout(row_widget)
             row_layout.setSpacing(6)
-
             title = QLabel("Idle")
             title.setStyleSheet("font-weight: bold;")
             row_layout.addWidget(title)
-
             bar = QProgressBar()
             bar.setRange(0, 100)
             bar.setValue(0)
@@ -893,21 +266,17 @@ class ImportDialog(QDialog):
             bar.setFormat("Idle")
             bar.setMinimumHeight(24)
             row_layout.addWidget(bar)
-
             stage = QLabel("Waiting")
             stage.setStyleSheet("color: #666;")
             stage.setWordWrap(True)
             row_layout.addWidget(stage)
-
             row_layout.addStretch()
-
             r = idx // columns
             c = idx % columns
             self.workers_layout.addWidget(row_widget, r, c)
             self._worker_rows.append(
                 {"title": title, "bar": bar, "stage": stage, "file": None}
             )
-
         self.workers_group.setVisible(True)
 
     def _describe_worker_stage(self, message: str) -> str:
@@ -931,14 +300,12 @@ class ImportDialog(QDialog):
         """Assign a file to an available worker slot, reusing when needed."""
         if filename in self._worker_assignments:
             return self._worker_assignments[filename]
-
         # Find an idle slot
         for idx, row in enumerate(self._worker_rows):
             if row["file"] is None:
                 row["file"] = filename
                 self._worker_assignments[filename] = idx
                 return idx
-
         # Reuse oldest slot if none idle
         idx = len(self._worker_assignments) % self._worker_capacity
         for existing, slot in list(self._worker_assignments.items()):
@@ -954,7 +321,6 @@ class ImportDialog(QDialog):
         idx = self._worker_assignments.pop(filename, None)
         if idx is None or idx >= len(self._worker_rows):
             return
-
         row = self._worker_rows[idx]
         row["file"] = None
         row["title"].setText(f"Worker {idx + 1}: Idle")
@@ -966,19 +332,20 @@ class ImportDialog(QDialog):
         """Update worker UI for a given file."""
         if not hasattr(self, "workers_group"):
             return
-
         slot = self._assign_worker_slot(filename)
         if slot >= len(self._worker_rows):
             return
-
         row = self._worker_rows[slot]
         stage_text = self._describe_worker_stage(message)
         row["title"].setText(f"Worker {slot + 1}: {filename}")
         row["bar"].setValue(max(0, min(100, percent)))
         row["bar"].setFormat(f"{filename} - {stage_text} (%p%)")
         row["stage"].setText(stage_text)
-
-        if percent >= 100 or "completed" in message.lower() or "failed" in message.lower():
+        if (
+            percent >= 100
+            or "completed" in message.lower()
+            or "failed" in message.lower()
+        ):
             self._release_worker_slot(filename)
 
     def _setup_ui(self) -> None:
@@ -987,12 +354,10 @@ class ImportDialog(QDialog):
         # Default to the attached reference image height (820x768) so the progress area is visible.
         self.setMinimumSize(820, 768)
         self.resize(980, 768)
-
         # Main layout
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 15)
-
         # Title and description
         title_label = QLabel("Import 3D Models")
         title_font = QFont()
@@ -1000,176 +365,141 @@ class ImportDialog(QDialog):
         title_font.setBold(True)
         title_label.setFont(title_font)
         main_layout.addWidget(title_label)
-
         desc_label = QLabel(
             "Select 3D model files to import into your library. "
             "You can drag and drop files or folders, or use the browse button."
         )
         desc_label.setWordWrap(True)
         main_layout.addWidget(desc_label)
-
         # Create splitter for file list and options
         self.splitter = QSplitter(Qt.Vertical)
-
         # === File Selection Section ===
         self.file_section = self._create_file_selection_section()
         self.splitter.addWidget(self.file_section)
-
         # === Options Section ===
         self.options_section = self._create_options_section()
         self.splitter.addWidget(self.options_section)
-
         # === Progress Section ===
         progress_section = self._create_progress_section()
         self.splitter.addWidget(progress_section)
-
         # Set splitter sizes
         self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 1)
         self.splitter.setStretchFactor(2, 3)
         self.splitter.setSizes(self._default_splitter_sizes)
         main_layout.addWidget(self.splitter, 1)
-
         # Timer for elapsed time display (runs during imports)
         if not hasattr(self, "time_timer"):
             self.time_timer = QTimer(self)
             self.time_timer.timeout.connect(self._update_time_elapsed)
-
         # === Status bar ===
         self.status_label = QLabel("Ready to import")
         main_layout.addWidget(self.status_label)
-
         # === Buttons ===
         button_layout = QHBoxLayout()
         button_layout.addStretch()
-
         self.import_button = QPushButton("Start Import")
         self.import_button.setMinimumWidth(120)
         self.import_button.setEnabled(False)
         button_layout.addWidget(self.import_button)
-
         self.background_button = QPushButton("Run in Background")
         self.background_button.setEnabled(False)
         self.background_button.setToolTip(
             "Start an import before sending it to the background."
         )
         button_layout.addWidget(self.background_button)
-
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setMinimumWidth(120)
         button_layout.addWidget(self.cancel_button)
-
         main_layout.addLayout(button_layout)
 
     def _create_file_selection_section(self) -> QGroupBox:
         """Create the file selection section."""
         group = QGroupBox("Files to Import")
         layout = QVBoxLayout(group)
-
         # File list
         self.file_list = QListWidget()
         self.file_list.setSelectionMode(QListWidget.ExtendedSelection)
         self.file_list.setMinimumHeight(150)
         layout.addWidget(self.file_list)
-
         # Buttons
         button_layout = QHBoxLayout()
-
         self.add_files_button = QPushButton("Add Files...")
         self.add_files_button.setToolTip("Select individual model files to import")
         button_layout.addWidget(self.add_files_button)
-
         self.add_folder_button = QPushButton("Add Folder...")
         self.add_folder_button.setToolTip("Select a folder containing model files")
         button_layout.addWidget(self.add_folder_button)
-
         self.import_from_url_button = QPushButton("Import from URL...")
         self.import_from_url_button.setToolTip(
             "Download and import a model from the web"
         )
         button_layout.addWidget(self.import_from_url_button)
-
         self.remove_button = QPushButton("Remove Selected")
         self.remove_button.setEnabled(False)
         button_layout.addWidget(self.remove_button)
-
         self.clear_button = QPushButton("Clear All")
         self.clear_button.setEnabled(False)
         button_layout.addWidget(self.clear_button)
-
         button_layout.addStretch()
         layout.addLayout(button_layout)
-
         # Drop zone hint
         hint_label = QLabel("💡 Tip: You can drag and drop files or folders here")
         layout.addWidget(hint_label)
-
         return group
 
     def _create_options_section(self) -> QGroupBox:
         """Create the import options section."""
         group = QGroupBox("Import Options")
         layout = QVBoxLayout(group)
-
         # File Management Mode
         mode_label = QLabel("File Management:")
         layout.addWidget(mode_label)
-
         self.keep_organized_radio = QRadioButton("Keep Organized")
         self.keep_organized_radio.setToolTip(
             "Copy files to managed directory with organized folder structure"
         )
         self.keep_organized_radio.setChecked(True)
         layout.addWidget(self.keep_organized_radio)
-
         # Root directory selection (for keep organized mode) - indented under Keep Organized
         root_layout = QHBoxLayout()
         root_layout.addSpacing(20)
         self.root_dir_label = QLabel("Root Directory:")
         root_layout.addWidget(self.root_dir_label)
-
         self.root_dir_path = QLabel("Not selected")
         root_layout.addWidget(self.root_dir_path, 1)
-
         self.root_dir_button = QPushButton("Browse...")
         self.root_dir_button.setMaximumWidth(100)
         root_layout.addWidget(self.root_dir_button)
         layout.addLayout(root_layout)
-
         self.leave_in_place_radio = QRadioButton("Leave in Place")
         self.leave_in_place_radio.setToolTip(
             "Track files in their original locations without copying"
         )
         layout.addWidget(self.leave_in_place_radio)
-
         # Additional options
         layout.addSpacing(10)
         options_label = QLabel("Processing Options:")
         layout.addWidget(options_label)
-
         self.generate_thumbnails_check = QCheckBox("Generate Thumbnails")
         self.generate_thumbnails_check.setChecked(True)
         self.generate_thumbnails_check.setToolTip(
             "Generate preview thumbnails during import"
         )
         layout.addWidget(self.generate_thumbnails_check)
-
         self.run_analysis_check = QCheckBox("Run Background Analysis")
         self.run_analysis_check.setChecked(True)
         self.run_analysis_check.setToolTip(
             "Analyze model geometry in the background after import"
         )
         layout.addWidget(self.run_analysis_check)
-
         layout.addSpacing(8)
         concurrency_label = QLabel("Execution Mode:")
         layout.addWidget(concurrency_label)
-
         self.concurrency_combo = QComboBox()
         self.concurrency_combo.addItem("Serial (safer for drag/drop)", "serial")
         self.concurrency_combo.addItem("Concurrent (faster for folders)", "concurrent")
         layout.addWidget(self.concurrency_combo)
-
         # User-adjustable parallel workers (applies when mode = concurrent)
         concurrency = self.import_settings.get_concurrency()
         self.prep_workers_spin = QSpinBox()
@@ -1180,7 +510,6 @@ class ImportDialog(QDialog):
             "How many files to process in parallel (only used in Concurrent mode)."
         )
         layout.addWidget(self.prep_workers_spin)
-
         # User-adjustable batch size to control queue/backlog visibility
         default_cap = int(
             self._settings.value(
@@ -1198,7 +527,6 @@ class ImportDialog(QDialog):
             "How many files to process before queuing the remainder as pending batches."
         )
         layout.addWidget(self.batch_size_spin)
-
         self.enable_ai_tagging_check = QCheckBox(
             "Enable AI auto-tagging after thumbnails"
         )
@@ -1223,60 +551,49 @@ class ImportDialog(QDialog):
         )
         warning.setWordWrap(True)
         layout.addWidget(warning)
-
         return group
 
     def _create_progress_section(self) -> QGroupBox:
         """Create the progress tracking section."""
         group = QGroupBox("Import Progress")
         layout = QVBoxLayout(group)
-
         # Overall progress
         progress_layout = QHBoxLayout()
         progress_layout.addWidget(QLabel("Overall:"))
-
         self.overall_progress_bar = QProgressBar()
         self.overall_progress_bar.setRange(0, 100)
         self.overall_progress_bar.setValue(0)
         self.overall_progress_bar.setTextVisible(True)
         progress_layout.addWidget(self.overall_progress_bar, 1)
-
         self.progress_label = QLabel("0 / 0")
         progress_layout.addWidget(self.progress_label)
         layout.addLayout(progress_layout)
-
         # Worker detail (one row per concurrent worker)
         self.workers_group = QGroupBox("Concurrent Workers")
         self.workers_layout = QGridLayout(self.workers_group)
         self.workers_layout.setSpacing(12)
         self.workers_group.setVisible(False)
         layout.addWidget(self.workers_group)
-
         # Current file progress
         file_layout = QHBoxLayout()
         file_layout.addWidget(QLabel("Current:"))
-
         self.file_progress_bar = QProgressBar()
         self.file_progress_bar.setRange(0, 100)
         self.file_progress_bar.setValue(0)
         self.file_progress_bar.setTextVisible(True)
         file_layout.addWidget(self.file_progress_bar, 1)
         layout.addLayout(file_layout)
-
         # Pending batch status
         pending_layout = QHBoxLayout()
         pending_layout.addWidget(self.pending_label, 1)
         self.pending_button.setMaximumWidth(150)
         pending_layout.addWidget(self.pending_button)
         layout.addLayout(pending_layout)
-
         # Thumbnail generation status
         thumbnail_layout = QHBoxLayout()
         thumbnail_layout.addWidget(QLabel("Thumbnails:"))
-
         self.thumbnail_status_label = QLabel("Waiting...")
         thumbnail_layout.addWidget(self.thumbnail_status_label, 1)
-
         self.thumbnail_progress_bar = QProgressBar()
         self.thumbnail_progress_bar.setRange(0, 100)
         self.thumbnail_progress_bar.setValue(0)
@@ -1284,43 +601,34 @@ class ImportDialog(QDialog):
         self.thumbnail_progress_bar.setMaximumWidth(150)
         thumbnail_layout.addWidget(self.thumbnail_progress_bar)
         layout.addLayout(thumbnail_layout)
-
         # Stage indicator
         stage_layout = QHBoxLayout()
         stage_layout.addWidget(QLabel("Stage:"))
-
         self.stage_label = QLabel("Idle")
         stage_layout.addWidget(self.stage_label, 1)
-
         self.time_label = QLabel("")
         self.time_label.setAlignment(Qt.AlignRight)
         stage_layout.addWidget(self.time_label)
         layout.addLayout(stage_layout)
-
         # Status/Error display
         self.progress_text = QTextEdit()
         self.progress_text.setReadOnly(True)
         self.progress_text.setMinimumHeight(200)
         self.progress_text.setPlaceholderText("Import progress will be shown here...")
         layout.addWidget(self.progress_text)
-
         # Initially hide progress section
         group.setVisible(False)
         self.progress_section = group
-
         return group
 
     def _expand_progress_section(self) -> None:
         """Ensure the progress pane is visible with a reasonable size."""
-
         if not hasattr(self, "splitter"):
             return
-
         sizes = self.splitter.sizes()
         if len(sizes) < 3:
             self.splitter.setSizes([320, 180, 240])
             return
-
         # If the progress panel was hidden, its size can collapse to 0.
         # Guarantee it gets a sensible share of space when shown.
         progress_min = 260
@@ -1339,12 +647,9 @@ class ImportDialog(QDialog):
         self.import_from_url_button.clicked.connect(self._on_import_from_url)
         self.remove_button.clicked.connect(self._on_remove_selected)
         self.clear_button.clicked.connect(self._on_clear_all)
-
         self.file_list.itemSelectionChanged.connect(self._on_file_selection_changed)
-
         self.keep_organized_radio.toggled.connect(self._on_mode_changed)
         self.root_dir_button.clicked.connect(self._on_select_root_directory)
-
         self.import_button.clicked.connect(self._on_start_import)
         self.pending_button.clicked.connect(self._start_pending_import)
         self.background_button.clicked.connect(self._send_to_background)
@@ -1391,7 +696,6 @@ class ImportDialog(QDialog):
         file_dialog.setNameFilter(
             "3D Model Files (*.stl *.obj *.step *.stp *.3mf *.ply);;All Files (*.*)"
         )
-
         if file_dialog.exec():
             files = file_dialog.selectedFiles()
             self._add_files(files)
@@ -1402,7 +706,6 @@ class ImportDialog(QDialog):
         folder = QFileDialog.getExistingDirectory(
             self, "Select Folder Containing Model Files"
         )
-
         if folder:
             self._start_folder_scan(folder)
 
@@ -1422,14 +725,12 @@ class ImportDialog(QDialog):
         if self.folder_scan_worker is not None and self.folder_scan_worker.isRunning():
             self.logger.info("Folder scan already in progress")
             return
-
         model_extensions = [".stl", ".obj", ".step", ".stp", ".3mf", ".ply"]
         self.folder_scan_worker = FolderScanWorker(folder, model_extensions)
         self.folder_scan_worker.progress_updated.connect(self._on_folder_scan_progress)
         self.folder_scan_worker.scan_completed.connect(self._on_folder_scan_completed)
         self.folder_scan_worker.error_occurred.connect(self._on_folder_scan_error)
         self.folder_scan_worker.cancelled.connect(self._on_folder_scan_cancelled)
-
         self.folder_scan_dialog = QProgressDialog(
             "Scanning folder for 3D model files...",
             "Cancel",
@@ -1443,14 +744,12 @@ class ImportDialog(QDialog):
         self.folder_scan_dialog.setAutoReset(False)
         self.folder_scan_dialog.canceled.connect(self._on_folder_scan_dialog_canceled)
         self.folder_scan_dialog.show()
-
         self.folder_scan_worker.start()
 
     def _on_folder_scan_progress(self, count: int, current_path: str) -> None:
         """Update progress dialog during folder scan."""
         if self.folder_scan_dialog is None:
             return
-
         if current_path:
             self.folder_scan_dialog.setLabelText(
                 f"Scanning folder for 3D model files...\n"
@@ -1472,9 +771,7 @@ class ImportDialog(QDialog):
                 pass
             self.folder_scan_dialog.close()
             self.folder_scan_dialog = None
-
         self.folder_scan_worker = None
-
         if files:
             self._add_files(files)
             self._apply_concurrency_mode_ui("concurrent")
@@ -1491,7 +788,6 @@ class ImportDialog(QDialog):
         if self.folder_scan_dialog is not None:
             self.folder_scan_dialog.close()
             self.folder_scan_dialog = None
-
         self.folder_scan_worker = None
         QMessageBox.critical(
             self,
@@ -1504,7 +800,6 @@ class ImportDialog(QDialog):
         if self.folder_scan_dialog is not None:
             self.folder_scan_dialog.close()
             self.folder_scan_dialog = None
-
         self.folder_scan_worker = None
         self._log_message("Folder scan cancelled by user")
 
@@ -1516,16 +811,13 @@ class ImportDialog(QDialog):
     def _add_files(self, files: List[str]) -> None:
         """
         Add files to the import list.
-
         Collects all failures and shows a summary at the end instead of
         showing a dialog for each failed file.
-
         Args:
             files: List of file paths to add
         """
         added_count = 0
         failed_files = []
-
         for file_path in files:
             # Check if file already in list
             if file_path not in self.selected_files:
@@ -1533,13 +825,11 @@ class ImportDialog(QDialog):
                     # Add to list widget
                     file_name = Path(file_path).name
                     file_size = Path(file_path).stat().st_size / (1024 * 1024)  # MB
-
                     self.selected_files.append(file_path)
                     item = QListWidgetItem(f"{file_name} ({file_size:.2f} MB)")
                     item.setData(Qt.UserRole, file_path)
                     item.setToolTip(file_path)
                     self.file_list.addItem(item)
-
                     added_count += 1
                 except (
                     OSError,
@@ -1552,12 +842,10 @@ class ImportDialog(QDialog):
                     # Collect failed files instead of showing dialog
                     failed_files.append((Path(file_path).name, str(exc)))
                     self.logger.warning("Failed to add file %s: %s", file_path, exc)
-
         if added_count > 0:
             self._update_import_button_state()
             self._log_message(f"Added {added_count} file(s)")
             self.status_label.setText(f"{len(self.selected_files)} file(s) selected")
-
         # Show summary of failures if any
         if failed_files:
             self._show_import_failures_summary(failed_files, added_count)
@@ -1567,22 +855,18 @@ class ImportDialog(QDialog):
     ) -> None:
         """
         Show a summary dialog of all failed files instead of individual dialogs.
-
         Args:
             failed_files: List of (filename, error_reason) tuples
             added_count: Number of files successfully added
         """
         failure_count = len(failed_files)
-
         # Build failure list
         failure_list = "\n".join(
             f"  • {name}: {reason}"
             for name, reason in failed_files[:20]  # Show first 20
         )
-
         if failure_count > 20:
             failure_list += f"\n  ... and {failure_count - 20} more"
-
         # Build message
         message = (
             f"Import Summary:\n\n"
@@ -1590,24 +874,20 @@ class ImportDialog(QDialog):
             f"✗ Failed to add: {failure_count} file(s)\n\n"
             f"Failed files:\n{failure_list}"
         )
-
         # Log failures
         self._log_message(f"\n⚠️  {failure_count} file(s) failed to add:")
         for name, reason in failed_files:
             self._log_message(f"  • {name}: {reason}")
-
         # Show summary dialog
         QMessageBox.warning(self, "Import Summary - Some Files Failed", message)
 
     def _on_remove_selected(self) -> None:
         """Remove selected files from the list."""
         selected_items = self.file_list.selectedItems()
-
         for item in selected_items:
             file_path = item.data(Qt.UserRole)
             self.selected_files.remove(file_path)
             self.file_list.takeItem(self.file_list.row(item))
-
         self._update_import_button_state()
         self.status_label.setText(f"{len(self.selected_files)} file(s) selected")
 
@@ -1627,12 +907,10 @@ class ImportDialog(QDialog):
         """Handle file management mode change."""
         if not checked:
             return
-
         managed = self.keep_organized_radio.isChecked()
         self.root_dir_label.setEnabled(managed)
         self.root_dir_path.setEnabled(managed)
         self.root_dir_button.setEnabled(managed)
-
         settings = LibrarySettings()
         if managed:
             settings.set_mode(LibraryMode.CONSOLIDATED)
@@ -1654,7 +932,6 @@ class ImportDialog(QDialog):
                 self.root_dir_path.setText("Not selected")
                 self._update_import_button_state()
                 return
-
             self.root_dir_path.setText(str(projects_root))
             self.root_dir_button.setText("Change Folder...")
             if not self._managed_mode_confirmed:
@@ -1675,11 +952,9 @@ class ImportDialog(QDialog):
             self.root_dir_button.setText("Browse...")
             self.root_dir_path.setText("Not selected")
             self._managed_mode_confirmed = False
-
         manager = self.root_folder_manager or RootFolderManager.get_instance()
         if manager is not None:
             manager.reload_from_settings()
-
         self._update_import_button_state()
 
     def _on_select_root_directory(self) -> None:
@@ -1693,10 +968,8 @@ class ImportDialog(QDialog):
                 else str(LibrarySettings().get_default_projects_root())
             ),
         )
-
         if not folder:
             return
-
         selected = Path(folder)
         try:
             selected.mkdir(parents=True, exist_ok=True)
@@ -1705,14 +978,12 @@ class ImportDialog(QDialog):
                 self, "Projects Folder Error", f"Unable to use that folder:\n\n{exc}"
             )
             return
-
         settings = LibrarySettings()
         settings.set_mode(LibraryMode.CONSOLIDATED)
         settings.set_base_root(selected)
         self.root_dir_path.setText(str(selected))
         self.root_dir_button.setText("Change Folder...")
         self._managed_mode_confirmed = False
-
         if not self._confirm_managed_mode(str(selected)):
             self.keep_organized_radio.setChecked(False)
             self.leave_in_place_radio.setChecked(True)
@@ -1720,16 +991,13 @@ class ImportDialog(QDialog):
             self.root_dir_path.setText("Not selected")
             self._update_import_button_state()
             return
-
         manager = self.root_folder_manager or RootFolderManager.get_instance()
         if manager is not None:
             manager.reload_from_settings()
-
         self._update_import_button_state()
 
     def _confirm_managed_mode(self, target_path: str) -> bool:
         """Prompt user before enabling managed storage."""
-
         message = (
             "Digital Workshop will take ownership of organizing your imports.\n\n"
             f"All files brought in through this import dialog will be moved into:\n"
@@ -1748,13 +1016,11 @@ class ImportDialog(QDialog):
     def _update_import_button_state(self) -> None:
         """Update import button enabled state."""
         has_files = len(self.selected_files) > 0
-
         if self.keep_organized_radio.isChecked():
             has_root_dir = self.root_dir_path.text() != "Not selected"
             can_import = has_files and has_root_dir
         else:
             can_import = has_files
-
         self.import_button.setEnabled(
             can_import and self.current_stage == ImportStage.IDLE
         )
@@ -1767,7 +1033,6 @@ class ImportDialog(QDialog):
         except Exception as exc:
             self.logger.warning("Unable to read pending batches: %s", exc)
             batch_count = 0
-
         has_pending = batch_count > 0
         if has_pending:
             self.pending_label.setText(
@@ -1775,7 +1040,6 @@ class ImportDialog(QDialog):
             )
         else:
             self.pending_label.setText("")
-
         self.pending_label.setVisible(has_pending)
         self.pending_button.setVisible(has_pending)
         self.pending_button.setEnabled(has_pending)
@@ -1789,26 +1053,22 @@ class ImportDialog(QDialog):
                 "Please wait for the current import to finish before starting pending batches.",
             )
             return
-
         try:
             batches = ImportCoordinator._load_pending_batches()
         except Exception as exc:
             self.logger.warning("Failed to load pending batches: %s", exc)
             batches = []
-
         if not batches:
             QMessageBox.information(
                 self, "No Pending Imports", "There are no pending batches to import."
             )
             self._update_pending_label()
             return
-
         # Flatten so the standard start flow can re-slice and re-persist.
         files = [path for batch in batches for path in batch]
         remaining = batches[1:] if len(batches) > 1 else []
         ImportCoordinator._save_pending_batches(remaining)
         self._update_pending_label()
-
         # Replace the current selection with the pending batch contents.
         self.selected_files.clear()
         self.file_list.clear()
@@ -1827,7 +1087,6 @@ class ImportDialog(QDialog):
                     "Please select a root directory for organized storage mode.",
                 )
                 return
-
         # Confirm import
         file_count = len(self.selected_files)
         total_size = sum(Path(f).stat().st_size for f in self.selected_files) / (
@@ -1837,15 +1096,12 @@ class ImportDialog(QDialog):
             cap = self._get_batch_size()
         except Exception:
             cap = getattr(ImportFileManager, "MAX_IMPORT_FILES", 500)
-
         msg = (
             f"Import {file_count} file(s) ({total_size:.2f} MB)?\n\n"
             f"Mode: {'Keep Organized' if self.keep_organized_radio.isChecked() else 'Leave in Place'}\n"
         )
-
         if self.keep_organized_radio.isChecked():
             msg += f"Root Directory: {self.root_dir_path.text()}\n"
-
         msg += f"Generate Thumbnails: {'Yes' if self.generate_thumbnails_check.isChecked() else 'No'}\n"
         msg += f"Run Analysis: {'Yes' if self.run_analysis_check.isChecked() else 'No'}"
         if file_count > cap:
@@ -1853,14 +1109,11 @@ class ImportDialog(QDialog):
                 f"\n\nNote: Imports run in batches of {cap}. The first batch will start now and the "
                 f"remaining {file_count - cap} file(s) will stay queued as pending batches."
             )
-
         reply = QMessageBox.question(
             self, "Confirm Import", msg, QMessageBox.Yes | QMessageBox.No
         )
-
         if reply != QMessageBox.Yes:
             return
-
         # Start import
         self._start_import_worker()
 
@@ -1878,19 +1131,16 @@ class ImportDialog(QDialog):
         self.generate_thumbnails_check.setEnabled(False)
         self.run_analysis_check.setEnabled(False)
         self.background_button.setEnabled(False)
-
         # Show progress section
         self.progress_section.setVisible(True)
         self._collapse_to_progress_only()
         self._expand_progress_section()
         self._background_mode = False
         self._background_monitor = None
-
         # Update UI state
         self.current_stage = ImportStage.VALIDATION
         self.start_time = time.time()
         self.time_timer.start(1000)  # Update every second
-
         # Clear progress display
         self.progress_text.clear()
         self._last_plain_log_message = None
@@ -1902,12 +1152,9 @@ class ImportDialog(QDialog):
             self.thumbnail_status_label.setText("Waiting...")
         else:
             self.thumbnail_status_label.setText("Disabled")
-
         # Move archive files (.zip) to the end of the queue and confirm handling with the user.
         self.selected_files = self._handle_archives(self.selected_files)
-
         cap = self._get_batch_size()
-
         # Slice into batches and persist any remainder as pending.
         paths = list(self.selected_files)
         batches = (
@@ -1916,14 +1163,11 @@ class ImportDialog(QDialog):
         pending_batches = batches[1:] if len(batches) > 1 else []
         ImportCoordinator._save_pending_batches(pending_batches)
         self._update_pending_label()
-
         if not batches:
             QMessageBox.warning(self, "No Files", "No files available to import.")
             self._reset_controls()
             return
-
         self.selected_files = batches[0]
-
         # Create and start worker
         mode = (
             FileManagementMode.KEEP_ORGANIZED
@@ -1935,7 +1179,6 @@ class ImportDialog(QDialog):
             if mode == FileManagementMode.KEEP_ORGANIZED
             else None
         )
-
         # Capture current concurrency mode (UI could have been changed manually).
         current_mode = self.concurrency_combo.currentData() or "serial"
         self._concurrency_mode = (
@@ -1945,13 +1188,11 @@ class ImportDialog(QDialog):
             self, "prep_workers_spin"
         ):
             self._persist_prep_worker_setting()
-
         # Compute worker capacities for UI and worker overrides.
         try:
             concurrency_settings = self.import_settings.get_concurrency()
         except Exception:
             concurrency_settings = None
-
         prep_workers_used = (
             1
             if self._concurrency_mode == "serial"
@@ -1964,24 +1205,28 @@ class ImportDialog(QDialog):
         pipeline_workers_used = 1
         if self._concurrency_mode == "concurrent" and concurrency_settings:
             pipeline_workers_used = max(
-                1, min(concurrency_settings.queue_limit, concurrency_settings.thumbnail_workers)
+                1,
+                min(
+                    concurrency_settings.queue_limit,
+                    concurrency_settings.thumbnail_workers,
+                ),
             )
-
         worker_slots = max(prep_workers_used, pipeline_workers_used, 1)
         self._init_worker_rows(worker_slots)
-
+        config = ImportJobConfig(
+            generate_thumbnails=self.generate_thumbnails_check.isChecked(),
+            run_analysis=self.run_analysis_check.isChecked(),
+            concurrency_mode=self._concurrency_mode,
+            prep_workers=prep_workers_used,
+            pipeline_workers=pipeline_workers_used,
+        )
         # Use the new pipeline-based worker for complete import functionality
         self.import_worker = PipelineImportWorker(
             self.selected_files,
             mode,
             root_dir,
-            self.generate_thumbnails_check.isChecked(),
-            self.run_analysis_check.isChecked(),
-            self._concurrency_mode,
-            prep_workers=prep_workers_used,
-            pipeline_workers=pipeline_workers_used,
+            config=config,
         )
-
         # Connect worker signals
         self.import_worker.stage_changed.connect(self._on_stage_changed)
         self.import_worker.file_progress.connect(self._on_file_progress)
@@ -1991,16 +1236,13 @@ class ImportDialog(QDialog):
         self.import_worker.import_completed.connect(self._on_import_completed)
         self.import_worker.import_cancelled.connect(self._on_import_cancelled)
         self.import_worker.import_failed.connect(self._on_import_failed)
-
         # Allow parent window to connect to model_imported signal for real-time updates
         parent = self.parent()
         if parent and hasattr(parent, "_on_model_imported_during_import"):
             handler = getattr(parent, "_on_model_imported_during_import")
             self.import_worker.model_imported.connect(handler)
-
         # Start worker
         self.import_worker.start()
-
         self._log_message("Import started...")
         self.status_label.setText("Importing...")
         self.background_button.setEnabled(True)
@@ -2019,12 +1261,10 @@ class ImportDialog(QDialog):
 
         now = time.time()
         started = self._file_start_times.get(filename)
-
         # First sighting of this file: log start and record timestamp
         if started is None:
             self._file_start_times[filename] = now
             self._log_message(f"{filename}: started")
-
         # Only log on completion/failure to avoid spam
         if percent >= 100 or "Completed" in message or "Failed" in message:
             start_time = self._file_start_times.pop(filename, now)
@@ -2033,10 +1273,8 @@ class ImportDialog(QDialog):
                 "completed" if percent >= 100 or "Completed" in message else "failed"
             )
             self._log_message(f"{filename}: {status} in {elapsed:.1f}s")
-
         # Update per-worker UI
         self._update_worker_slot(filename, percent, message)
-
         self.file_progress_bar.setValue(percent)
 
     def _on_overall_progress(self, current: int, total: int, percent: int) -> None:
@@ -2057,14 +1295,12 @@ class ImportDialog(QDialog):
 
     def _send_to_background(self) -> None:
         """Detach the running import and let it continue in the background."""
-
         if (
             self._background_mode
             or not self.import_worker
             or not self.import_worker.isRunning()
         ):
             return
-
         parent = self.parent()
         if parent is None:
             QMessageBox.warning(
@@ -2073,29 +1309,23 @@ class ImportDialog(QDialog):
                 "A parent window is required to show background status updates.",
             )
             return
-
         self._background_mode = True
         self.background_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
         self.time_timer.stop()
         self.status_label.setText("Import running in background…")
         self._log_message("Sending import to background...")
-
         # Route progress updates to the main window status bar.
         self._background_monitor = ImportBackgroundMonitor(parent, self.import_worker)
-
         # Disconnect dialog slots so Qt does not emit to a closed dialog.
         self._disconnect_worker_signals()
-
         # Close the dialog without cancelling the worker.
         self.done(QDialog.Rejected)
 
     def _disconnect_worker_signals(self) -> None:
         """Disconnect worker signals from dialog slots."""
-
         if not self.import_worker:
             return
-
         signal_handlers = [
             (self.import_worker.stage_changed, self._on_stage_changed),
             (self.import_worker.file_progress, self._on_file_progress),
@@ -2105,7 +1335,6 @@ class ImportDialog(QDialog):
             (self.import_worker.import_cancelled, self._on_import_cancelled),
             (self.import_worker.import_failed, self._on_import_failed),
         ]
-
         for signal, handler in signal_handlers:
             try:
                 signal.disconnect(handler)
@@ -2114,16 +1343,13 @@ class ImportDialog(QDialog):
 
     def was_backgrounded(self) -> bool:
         """Return True if the dialog handed the import off to the background."""
-
         return self._background_mode
 
     def _on_model_imported(self, model_id: int) -> None:
         """
         Handle individual model import completion.
-
         This is called after each model is successfully imported, allowing
         the UI to refresh incrementally instead of waiting for all imports.
-
         Args:
             model_id: Database ID of the imported model
         """
@@ -2138,13 +1364,10 @@ class ImportDialog(QDialog):
 
     def _handle_archives(self, files: List[str]) -> List[str]:
         """Move archives to the end of the queue and ask user how to handle them."""
-
         zips = [f for f in files if Path(f).suffix.lower() == ".zip"]
         if not zips:
             return files
-
         base_list = [f for f in files if f not in zips]
-
         message_lines = [
             "Archive files were detected in the import list.",
             "",
@@ -2156,7 +1379,6 @@ class ImportDialog(QDialog):
             *[f" • {Path(z).name}" for z in zips],
         ]
         message = "\n".join(message_lines)
-
         reply = QMessageBox.question(
             self,
             "Archive Detected",
@@ -2164,12 +1386,10 @@ class ImportDialog(QDialog):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
-
         if reply == QMessageBox.No:
             # Skip archives entirely
             self._log_message("User chose to ignore archive files; skipping them.")
             return base_list
-
         # Keep archives, but push them to the end so regular files finish first.
         self._log_message(
             "Archives moved to end of queue; will be unpacked when reached."
@@ -2182,10 +1402,8 @@ class ImportDialog(QDialog):
         self.import_result = result
         self.time_timer.stop()
         self.background_button.setEnabled(False)
-
         if self._background_mode:
             return
-
         # Show results
         duration = result.duration_seconds
         self._log_message(
@@ -2197,7 +1415,6 @@ class ImportDialog(QDialog):
             f"  • Duplicates: {result.duplicate_count}\n"
             f"  • Total size: {result.total_size_bytes / (1024 * 1024):.2f} MB"
         )
-
         self.overall_progress_bar.setValue(100)
         self.file_progress_bar.setValue(100)
         self.thumbnail_progress_bar.setValue(100)
@@ -2207,11 +1424,9 @@ class ImportDialog(QDialog):
             f"Import completed: {result.processed_files} file(s) imported"
         )
         self._update_pending_label()
-
         # Show completion message
         if self.enable_ai_tagging_check.isChecked():
             self._run_ai_tagging(result)
-
         QMessageBox.information(
             self,
             "Import Complete",
@@ -2220,20 +1435,16 @@ class ImportDialog(QDialog):
             f"Failed: {result.failed_files}\n"
             f"Skipped: {result.skipped_files}",
         )
-
         # Close dialog
         self.accept()
 
     def _on_import_cancelled(self, result: Optional[ImportResult], reason: str) -> None:
         """Handle cancellation signal from the worker."""
-
         self.current_stage = ImportStage.CANCELLED
         self.time_timer.stop()
         self.background_button.setEnabled(False)
-
         if result:
             self.import_result = result
-
         summary = ""
         if result:
             summary = (
@@ -2241,16 +1452,13 @@ class ImportDialog(QDialog):
                 f"Failed: {result.failed_files}\n"
                 f"Skipped: {result.skipped_files}"
             )
-
         self._log_message(f"Import cancelled: {reason}{summary}")
         self.stage_label.setText("Cancelled")
         self.status_label.setText("Import cancelled")
         self._update_pending_label()
         self._file_start_times.clear()
-
         if self._background_mode:
             return
-
         QMessageBox.information(
             self,
             "Import Cancelled",
@@ -2263,20 +1471,16 @@ class ImportDialog(QDialog):
         self.current_stage = ImportStage.FAILED
         self.time_timer.stop()
         self.background_button.setEnabled(False)
-
         if self._background_mode:
             return
-
         self._log_message(f"\n❌ Import failed: {error_message}")
         self.stage_label.setText("Failed")
         self.status_label.setText("Import failed")
         self._update_pending_label()
         self._file_start_times.clear()
-
         QMessageBox.critical(
             self, "Import Failed", f"Import failed with error:\n\n{error_message}"
         )
-
         # Re-enable controls
         self._reset_controls()
 
@@ -2286,13 +1490,11 @@ class ImportDialog(QDialog):
             ai_enabled = bool(QSettings().value("ai/auto_tag_import", False, type=bool))
             if not ai_enabled:
                 return
-
             db_manager = get_database_manager()
             ai_service = AIDescriptionService()
         except Exception as exc:
             self._log_message(f"AI tagging unavailable: {exc}")
             return
-
         thumb_map = {}
         if self.import_worker and hasattr(self.import_worker, "generated_thumbnails"):
             try:
@@ -2306,7 +1508,6 @@ class ImportDialog(QDialog):
                 }
             except Exception:
                 thumb_map = {}
-
         processed = 0
         tagged = 0
         for file_info in getattr(
@@ -2337,7 +1538,6 @@ class ImportDialog(QDialog):
                     tagged += 1
             except Exception as exc:
                 self._log_message(f"AI tagging skipped for {path}: {exc}")
-
         if tagged:
             self._log_message(
                 f"AI tagging applied to {tagged} of {processed} imported file(s)."
@@ -2354,7 +1554,6 @@ class ImportDialog(QDialog):
                 "Any files already processed will remain imported.",
                 QMessageBox.Yes | QMessageBox.No,
             )
-
             if reply == QMessageBox.Yes:
                 self._log_message("Cancelling import...")
                 self.status_label.setText("Cancelling...")
@@ -2369,7 +1568,6 @@ class ImportDialog(QDialog):
         # Return to idle state so the user can restart the import
         self.current_stage = ImportStage.IDLE
         self.import_worker = None
-
         self.add_files_button.setEnabled(True)
         self.add_folder_button.setEnabled(True)
         self.remove_button.setEnabled(True)
@@ -2384,7 +1582,6 @@ class ImportDialog(QDialog):
         self._update_import_button_state()
         self._update_pending_label()
         self._file_start_times.clear()
-
         # Restore full layout if it was collapsed for progress-only view.
         self._restore_full_layout()
 
@@ -2416,7 +1613,6 @@ class ImportDialog(QDialog):
     def reject(self) -> None:
         """
         Ensure the importer stops when the window is closed (title bar X or Esc).
-
         This cancels any running worker to avoid background processing after
         the dialog is dismissed.
         """
@@ -2441,19 +1637,15 @@ class ImportDialog(QDialog):
     def _log_message(self, message: str) -> None:
         """
         Add a message to the progress log.
-
         Args:
             message: Message to log
         """
         # Avoid spamming the log with per-millisecond updates; only log when the content changes.
         if message == self._last_plain_log_message:
             return
-
         self._last_plain_log_message = message
-
         timestamp = time.strftime("%H:%M:%S")
         self.progress_text.append(f"[{timestamp}] {message}")
-
         # Auto-scroll to bottom
         scrollbar = self.progress_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
@@ -2468,11 +1660,9 @@ class ImportDialog(QDialog):
         """Handle drop event."""
         files = []
         has_directory = False
-
         for url in event.mimeData().urls():
             file_path = url.toLocalFile()
             path = Path(file_path)
-
             if path.is_file():
                 # Single file
                 if path.suffix.lower() in {
@@ -2491,7 +1681,6 @@ class ImportDialog(QDialog):
                 for ext in model_extensions:
                     files.extend(str(p) for p in path.rglob(f"*{ext}"))
                     files.extend(str(p) for p in path.rglob(f"*{ext.upper()}"))
-
         if files:
             self._add_files(files)
             # Default concurrency per source: serial for files, concurrent for directories.
@@ -2501,7 +1690,6 @@ class ImportDialog(QDialog):
     def get_import_result(self) -> Optional[ImportResult]:
         """
         Get the import result after completion.
-
         Returns:
             ImportResult object if import completed, None otherwise
         """

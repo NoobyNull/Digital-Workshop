@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
-from PySide6.QtCore import QObject, Signal, QThread, QTimer
+from PySide6.QtCore import QObject, Signal, QTimer
 
 from src.core.logging_config import get_logger
 from src.core.settings_manager import get_settings_manager
@@ -17,6 +17,7 @@ from .gui_service_interfaces import (
     IViewerUIService,
     UIState,
 )
+from src.gui.workers.base_worker import BaseWorker
 
 
 class ThemeValidationError(Exception):
@@ -107,7 +108,7 @@ class ThemePreviewWidget(QObject):
             pass
 
 
-class ThemeValidationWorker(QThread):
+class ThemeValidationWorker(BaseWorker):
     """Worker thread for validating themes asynchronously."""
 
     validation_completed = Signal(str, bool, str)  # theme_name, is_valid, error_message

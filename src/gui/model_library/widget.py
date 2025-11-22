@@ -51,6 +51,8 @@ class ModelLibraryWidget(QWidget):
     models_added = Signal(list)
     import_requested = Signal(list)
     import_url_requested = Signal()
+    progress_updated = Signal(float, str)
+    load_finished = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
@@ -192,6 +194,14 @@ class ModelLibraryWidget(QWidget):
             List of model IDs
         """
         return self.facade.get_selected_models()
+
+    def refresh_models_from_database(self) -> None:
+        """Public wrapper to reload models from the database."""
+        self._load_models_from_database()
+
+    def load_models(self, file_paths: List[str]) -> None:
+        """Public wrapper to load models from provided file paths."""
+        self._load_models(file_paths)
 
     def refresh_recent_models(self) -> None:
         """Refresh the MRU panel with the latest database entries."""

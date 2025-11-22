@@ -77,15 +77,21 @@ class LibraryRebuildService(QObject):
         if confirm != QMessageBox.Yes:
             return
 
-        from src.gui.import_components.import_dialog import PipelineImportWorker
+        from src.gui.import_components.import_workers import (
+            ImportJobConfig,
+            PipelineImportWorker,
+        )
 
+        config = ImportJobConfig(
+            generate_thumbnails=True,
+            run_analysis=True,
+            concurrency_mode="concurrent",
+        )
         worker = PipelineImportWorker(
             file_paths=files,
             mode=FileManagementMode.LEAVE_IN_PLACE,
             root_directory=None,
-            generate_thumbnails=True,
-            run_analysis=True,
-            concurrency_mode="concurrent",
+            config=config,
         )
         self.worker = worker
         self.monitor = ImportBackgroundMonitor(self.main_window, worker)

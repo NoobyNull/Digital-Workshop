@@ -819,7 +819,12 @@ class MaterialManager:
                 color_const = getattr(cv2, "COLOR_BGR2RGB", None)
                 lanczos = getattr(cv2, "INTER_LANCZOS4", None)
 
-                if not callable(imread) or not callable(cvt_color) or not callable(resize) or color_const is None:
+                if (
+                    not callable(imread)
+                    or not callable(cvt_color)
+                    or not callable(resize)
+                    or color_const is None
+                ):
                     raise ValueError("OpenCV missing required imaging functions")
 
                 def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -834,7 +839,10 @@ class MaterialManager:
 
                 # Resize
                 img = _call(
-                    resize, img, size, interpolation=lanczos if lanczos is not None else 1
+                    resize,
+                    img,
+                    size,
+                    interpolation=lanczos if lanczos is not None else 1,
                 )
 
                 return img

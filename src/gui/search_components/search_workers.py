@@ -7,15 +7,16 @@ without blocking the UI.
 
 from typing import Any, Dict, Optional
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 
 from src.core.search_engine import get_search_engine
 from src.core.logging_config import get_logger
+from src.gui.workers.base_worker import BaseWorker
 
 logger = get_logger(__name__)
 
 
-class SearchWorker(QThread):
+class SearchWorker(BaseWorker):
     """
     Worker thread for performing search operations without blocking the UI.
     """
@@ -51,9 +52,13 @@ class SearchWorker(QThread):
         Execute the search operation.
         """
         try:
+            if self.is_cancel_requested():
+                return
             results = self.search_engine.search(
                 self.query, self.filters, self.limit, self.offset
             )
+            if self.is_cancel_requested():
+                return
             self.search_completed.emit(results)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = f"Search failed: {str(e)}"
@@ -61,7 +66,7 @@ class SearchWorker(QThread):
             self.search_failed.emit(error_msg)
 
 
-class SearchSuggestionWorker(QThread):
+class SearchSuggestionWorker(BaseWorker):
     """
     Worker thread for getting search suggestions.
     """
@@ -86,9 +91,13 @@ class SearchSuggestionWorker(QThread):
         Get search suggestions.
         """
         try:
+            if self.is_cancel_requested():
+                return
             suggestions = self.search_engine.get_search_suggestions(
                 self.query, self.limit
             )
+            if self.is_cancel_requested():
+                return
             self.suggestions_ready.emit(suggestions)
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error("Failed to get suggestions: %s", str(e))

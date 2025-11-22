@@ -1,12 +1,13 @@
 """Background G-code file loader with progressive rendering."""
 
 from typing import List
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 from src.core.logging_config import get_logger
 from .gcode_parser import GcodeParser, GcodeMove
+from src.gui.workers.base_worker import BaseWorker
 
 
-class GcodeLoaderThread(QThread):
+class GcodeLoaderThread(BaseWorker):
     """Load G-code file in background and emit moves progressively."""
 
     # Signals
@@ -29,7 +30,6 @@ class GcodeLoaderThread(QThread):
         self.logger = get_logger(__name__)
         self.parser = GcodeParser()
         self.all_moves: List[GcodeMove] = []
-        self._stop_requested = False
 
     def run(self) -> None:
         """Run the loader in background thread."""
@@ -45,7 +45,7 @@ class GcodeLoaderThread(QThread):
             # Parse lines and emit batches
             batch = []
             for line_num, line in enumerate(lines, 1):
-                if self._stop_requested:
+                if self.is_cancel_requested():
                     self.logger.info("Loading cancelled by user")
                     return
 
@@ -88,4 +88,4 @@ class GcodeLoaderThread(QThread):
 
     def stop(self) -> None:
         """Request the loader to stop."""
-        self._stop_requested = True
+        self.request_cancel()

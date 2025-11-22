@@ -262,7 +262,9 @@ class MaterialProvider:
             self.logger.debug("Final properties: %s", properties)
 
         except (OSError, IOError, ValueError, TypeError, KeyError, AttributeError) as e:
-            self.logger.error("Error parsing MTL file %s: %s", mtl_path, e, exc_info=True)
+            self.logger.error(
+                "Error parsing MTL file %s: %s", mtl_path, e, exc_info=True
+            )
 
         return properties
 
@@ -411,7 +413,9 @@ class MaterialProvider:
             watcher.directoryChanged.connect(self._on_materials_changed)  # type: ignore[attr-defined]
             watcher.fileChanged.connect(self._on_materials_changed)  # type: ignore[attr-defined]
             self._watcher = watcher
-            self.logger.debug("Material directory watch enabled at %s", self.DEFAULT_MATERIALS_DIR)
+            self.logger.debug(
+                "Material directory watch enabled at %s", self.DEFAULT_MATERIALS_DIR
+            )
         except Exception as exc:  # pragma: no cover - watcher is best-effort
             self.logger.debug("Material directory watch not enabled: %s", exc)
             self._watcher = None
